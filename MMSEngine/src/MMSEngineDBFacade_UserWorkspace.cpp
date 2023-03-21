@@ -3,6 +3,7 @@
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/StringUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "JSONUtils.h"
 
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
@@ -1371,98 +1372,29 @@ string MMSEngineDBFacade::createCode(
 		code = to_string(e());
 
         {
-            string flags;
+			Json::Value permissionsRoot;
             {
-                if (admin)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("ADMIN");
-                }
+				permissionsRoot["admin"] = admin;
 
-                if (createRemoveWorkspace)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("CREATEREMOVE_WORKSPACE");
-                }
-
-                if (ingestWorkflow)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("INGEST_WORKFLOW");
-                }
-
-                if (createProfiles)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("CREATE_PROFILES");
-                }
-
-                if (deliveryAuthorization)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("DELIVERY_AUTHORIZATION");
-                }
-
-                if (shareWorkspace)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("SHARE_WORKSPACE");
-                }
-
-                if (editMedia)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_MEDIA");
-                }
-
-                if (editConfiguration)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_CONFIGURATION");
-                }
-
-                if (killEncoding)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("KILL_ENCODING");
-                }
-
-                if (cancelIngestionJob)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("CANCEL_INGESTIONJOB");
-                }
-
-                if (editEncodersPool)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_ENCODERSPOOL");
-                }
-
-                if (applicationRecorder)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("APPLICATION_RECORDER");
-                }
-            }
+				permissionsRoot["createRemoveWorkspace"] = createRemoveWorkspace;
+				permissionsRoot["ingestWorkflow"] = ingestWorkflow;
+				permissionsRoot["createProfiles"] = createProfiles;
+				permissionsRoot["deliveryAuthorization"] = deliveryAuthorization;
+				permissionsRoot["shareWorkspace"] = shareWorkspace;
+				permissionsRoot["editMedia"] = editMedia;
+				permissionsRoot["editConfiguration"] = editConfiguration;
+				permissionsRoot["killEncoding"] = killEncoding;
+				permissionsRoot["cancelIngestionJob"] = cancelIngestionJob;
+				permissionsRoot["editEncodersPool"] = editEncodersPool;
+				permissionsRoot["applicationRecorder"] = applicationRecorder;
+			}
+			string permissions = JSONUtils::toString(permissionsRoot);
 
 			try
 			{
 				lastSQLCommand = 
 					"insert into MMS_Code (code, workspaceKey, userKey, userEmail, "
-					"type, flags, creationDate) values ("
+					"type, permissions, creationDate) values ("
 					"?, ?, ?, ?, ?, ?, NOW())";
 				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1478,7 +1410,7 @@ string MMSEngineDBFacade::createCode(
 				else
 					preparedStatement->setString(queryParameterIndex++, userEmail);
 				preparedStatement->setString(queryParameterIndex++, toString(codeType));
-				preparedStatement->setString(queryParameterIndex++, flags);
+				preparedStatement->setString(queryParameterIndex++, permissions);
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				preparedStatement->executeUpdate();
@@ -1489,7 +1421,7 @@ string MMSEngineDBFacade::createCode(
 					+ ", userKey: " + to_string(userKey)
 					+ ", userEmail: " + userEmail
 					+ ", type: " + toString(codeType)
-					+ ", flags: " + flags
+					+ ", permissions: " + permissions
 					+ ", elapsed (secs): @"
 						+ to_string(chrono::duration_cast<chrono::seconds>(
 						chrono::system_clock::now() - startSql).count()) + "@"
@@ -1983,94 +1915,25 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     {
 		// create the API of the user for each existing Workspace
         {
-            string flags;
+			Json::Value permissionsRoot;
             {
                 bool admin = false;
 
-                if (admin)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("ADMIN");
-                }
+				permissionsRoot["admin"] = admin;
 
-                if (createRemoveWorkspace)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("CREATEREMOVE_WORKSPACE");
-                }
-
-                if (ingestWorkflow)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("INGEST_WORKFLOW");
-                }
-
-                if (createProfiles)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("CREATE_PROFILES");
-                }
-
-                if (deliveryAuthorization)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("DELIVERY_AUTHORIZATION");
-                }
-
-                if (shareWorkspace)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("SHARE_WORKSPACE");
-                }
-
-                if (editMedia)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_MEDIA");
-                }
-
-                if (editConfiguration)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_CONFIGURATION");
-                }
-
-                if (killEncoding)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("KILL_ENCODING");
-                }
-
-                if (cancelIngestionJob)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("CANCEL_INGESTIONJOB");
-                }
-
-                if (editEncodersPool)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("EDIT_ENCODERSPOOL");
-                }
-
-                if (applicationRecorder)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("APPLICATION_RECORDER");
-                }
+				permissionsRoot["createRemoveWorkspace"] = createRemoveWorkspace;
+				permissionsRoot["ingestWorkflow"] = ingestWorkflow;
+				permissionsRoot["createProfiles"] = createProfiles;
+				permissionsRoot["deliveryAuthorization"] = deliveryAuthorization;
+				permissionsRoot["shareWorkspace"] = shareWorkspace;
+				permissionsRoot["editMedia"] = editMedia;
+				permissionsRoot["editConfiguration"] = editConfiguration;
+				permissionsRoot["killEncoding"] = killEncoding;
+				permissionsRoot["cancelIngestionJob"] = cancelIngestionJob;
+				permissionsRoot["editEncodersPool"] = editEncodersPool;
+				permissionsRoot["applicationRecorder"] = applicationRecorder;
             }
+			string permissions = JSONUtils::toString(permissionsRoot);
 
             unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
 			default_random_engine e(seed);
@@ -2083,7 +1946,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
           
 			lastSQLCommand = 
 				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
-				"flags, creationDate, expirationDate) values ("
+				"permissions, creationDate, expirationDate) values ("
 				"?, ?, ?, ?, ?, ?, NOW(), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
 			shared_ptr<sql::PreparedStatement> preparedStatementAPIKey (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2093,7 +1956,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			preparedStatementAPIKey->setInt64(queryParameterIndex++, workspaceKey);
 			preparedStatementAPIKey->setInt(queryParameterIndex++, isOwner);
 			preparedStatementAPIKey->setInt(queryParameterIndex++, isDefault);
-			preparedStatementAPIKey->setString(queryParameterIndex++, flags);
+			preparedStatementAPIKey->setString(queryParameterIndex++, permissions);
 			char        strExpirationDate [64];
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
@@ -2125,7 +1988,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", isOwner: " + to_string(isOwner)
 				+ ", isDefault: " + to_string(isDefault)
-				+ ", flags: " + flags
+				+ ", permissions: " + permissions
 				+ ", strExpirationDate: " + strExpirationDate
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -2440,12 +2303,12 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
         }
         
         int64_t     userKey;
-        string      flags;
+        string		permissions;
         int64_t     workspaceKey;
 		CodeType codeType;
         {
             lastSQLCommand = 
-                "select userKey, flags, workspaceKey, type "
+                "select userKey, permissions, workspaceKey, type "
 				"from MMS_Code "
 				"where code = ? and type in (?, ?) and "
 				"DATE_ADD(creationDate, INTERVAL ? DAY) >= NOW()";
@@ -2474,7 +2337,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             if (resultSet->next())
             {
                 userKey = resultSet->getInt64("userKey");
-                flags = resultSet->getString("flags");
+				permissions = resultSet->getString("permissions");
                 workspaceKey = resultSet->getInt64("workspaceKey");
 				codeType = MMSEngineDBFacade::toCodeType(resultSet->getString("type"));
             }
@@ -2490,8 +2353,8 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
                 throw runtime_error(errorMessage);                    
             }
-        }
-        
+		}
+
         // check if the apiKey is already present (maybe this is the second time the confirmRegistration API is called
         bool apiKeyAlreadyPresent = false;
         {
@@ -2614,9 +2477,9 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             
             lastSQLCommand = 
                 "insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
-				"flags, creationDate, expirationDate) values ("
+				"permissions, creationDate, expirationDate) values ("
                 "                        ?,      ?,       ?,            ?,       ?, "
-				"?,     NOW(),        STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+				"?,           NOW(),        STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
@@ -2624,7 +2487,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt(queryParameterIndex++, isOwner);
             preparedStatement->setInt(queryParameterIndex++, isDefault);
-            preparedStatement->setString(queryParameterIndex++, flags);
+            preparedStatement->setString(queryParameterIndex++, permissions);
 			char        strExpirationDate [64];
             {
                 chrono::system_clock::time_point apiKeyExpirationDate =
@@ -2656,7 +2519,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", isOwner: " + to_string(isOwner)
 				+ ", isDefault: " + to_string(isDefault)
-				+ ", flags: " + flags
+				+ ", permissions: " + permissions
 				+ ", strExpirationDate: " + strExpirationDate
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -2861,17 +2724,13 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 
     try
     {
-		string flags;
+		Json::Value permissionsRoot;
 		{
 			bool admin = true;
 
-			if (admin)
-			{
-				if (flags != "")
-					flags.append(",");
-				flags.append("ADMIN");
-			}
+			permissionsRoot["admin"] = admin;
 		}
+		string permissions = JSONUtils::toString(permissionsRoot);
 
 		bool isOwner = false;
 		bool isDefault = false;
@@ -2967,7 +2826,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 
 			lastSQLCommand = 
 				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
-				"flags, creationDate, expirationDate) values ("
+				"permissions, creationDate, expirationDate) values ("
 				"?, ?, ?, ?, ?, ?, NOW(), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
 			shared_ptr<sql::PreparedStatement> preparedStatementAPIKey (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2977,7 +2836,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 			preparedStatementAPIKey->setInt64(queryParameterIndex++, workspaceKey);
 			preparedStatementAPIKey->setInt(queryParameterIndex++, isOwner);
 			preparedStatementAPIKey->setInt(queryParameterIndex++, isDefault);
-			preparedStatementAPIKey->setString(queryParameterIndex++, flags);
+			preparedStatementAPIKey->setString(queryParameterIndex++, permissions);
 			char        strExpirationDate [64];
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
@@ -3009,7 +2868,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", isOwner: " + to_string(isOwner)
 				+ ", isDefault: " + to_string(isDefault)
-				+ ", flags: " + flags
+				+ ", permissions: " + permissions
 				+ ", strExpirationDate: " + strExpirationDate
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -3082,7 +2941,8 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 		bool isOwner = false;
         {
             lastSQLCommand = 
-                "select isOwner, flags from MMS_APIKey where workspaceKey = ? and userKey = ?";
+                "select isOwner, permissions "
+				"from MMS_APIKey where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -3100,9 +2960,10 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 			);
             if (resultSet->next())
             {
-                string flags = resultSet->getString("flags");
-                
-                admin = flags.find("ADMIN") == string::npos ? false : true;
+				string permissions = resultSet->getString("permissions");
+				Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+
+				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
                 isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";
             }
         }
@@ -3421,7 +3282,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
 {
     shared_ptr<Workspace> workspace;
     int64_t         userKey;
-    string          flags;
+    Json::Value		permissionsRoot;
     string          lastSQLCommand;
 
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -3443,7 +3304,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
         
         {
             lastSQLCommand = 
-                "select userKey, workspaceKey, flags from MMS_APIKey "
+                "select userKey, workspaceKey, permissions from MMS_APIKey "
 				"where apiKey = ? and expirationDate >= NOW()";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3462,7 +3323,8 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
             {
                 userKey = resultSet->getInt64("userKey");
                 workspaceKey = resultSet->getInt64("workspaceKey");
-                flags = resultSet->getString("flags");
+                string permissions = resultSet->getString("permissions");
+				permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
             }
             else
             {
@@ -3476,7 +3338,6 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
             }
         }
 
-        
         workspace = getWorkspace(workspaceKey);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -3566,18 +3427,18 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
     }
 
     return make_tuple(userKey, workspace,
-        flags.find("ADMIN") == string::npos ? false : true,
-        flags.find("CREATEREMOVE_WORKSPACE") == string::npos ? false : true,
-        flags.find("INGEST_WORKFLOW") == string::npos ? false : true,
-        flags.find("CREATE_PROFILES") == string::npos ? false : true,
-        flags.find("DELIVERY_AUTHORIZATION") == string::npos ? false : true,
-        flags.find("SHARE_WORKSPACE") == string::npos ? false : true,
-        flags.find("EDIT_MEDIA") == string::npos ? false : true,
-        flags.find("EDIT_CONFIGURATION") == string::npos ? false : true,
-        flags.find("KILL_ENCODING") == string::npos ? false : true,
-        flags.find("CANCEL_INGESTIONJOB") == string::npos ? false : true,
-        flags.find("EDIT_ENCODERSPOOL") == string::npos ? false : true,
-        flags.find("APPLICATION_RECORDER") == string::npos ? false : true
+		JSONUtils::asBool(permissionsRoot, "admin", false),
+		JSONUtils::asBool(permissionsRoot, "createRemoveWorkspace", false),
+		JSONUtils::asBool(permissionsRoot, "ingestWorkflow", false),
+		JSONUtils::asBool(permissionsRoot, "createProfiles", false),
+		JSONUtils::asBool(permissionsRoot, "deliveryAuthorization", false),
+		JSONUtils::asBool(permissionsRoot, "shareWorkspace", false),
+		JSONUtils::asBool(permissionsRoot, "editMedia", false),
+		JSONUtils::asBool(permissionsRoot, "editConfiguration", false),
+		JSONUtils::asBool(permissionsRoot, "killEncoding", false),
+		JSONUtils::asBool(permissionsRoot, "cancelIngestionJob", false),
+		JSONUtils::asBool(permissionsRoot, "editEncodersPool", false),
+		JSONUtils::asBool(permissionsRoot, "applicationRecorder", false)
     );
 }
 
@@ -4001,7 +3862,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
-					"a.flags, "
+					"a.permissions, "
                     "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                     "from MMS_APIKey a, MMS_Workspace w "
 					"where a.workspaceKey = w.workspaceKey "
@@ -4012,7 +3873,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
-					"a.flags, "
+					"a.permissions, "
                     "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                     "from MMS_APIKey a, MMS_Workspace w "
 					"where a.workspaceKey = w.workspaceKey "
@@ -4146,13 +4007,13 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 				"w.languageCode, "
 				"a.apiKey, a.isOwner, a.isDefault, "
 				"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
-				"a.flags, "
+				"a.permissions, "
 				"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
 				"from MMS_APIKey a, MMS_Workspace w "
 				"where a.workspaceKey = w.workspaceKey "
 				"and a.userKey = ? and a.isDefault = 1 "
 				"and NOW() < a.expirationDate "
-				"and (FIND_IN_SET('ADMIN', a.flags) > 0 or w.isEnabled = 1) "
+				"and (JSON_EXTRACT(a.permissions, '$.admin') = true or w.isEnabled = 1) "
 				"limit 1";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4182,13 +4043,13 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
-					"a.flags, "
+					"a.permissions, "
 					"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
 					"from MMS_APIKey a, MMS_Workspace w "
 					"where a.workspaceKey = w.workspaceKey "
 					"and a.userKey = ? "
 					"and NOW() < a.expirationDate "
-					"and (FIND_IN_SET('ADMIN', a.flags) > 0 or w.isEnabled = 1) "
+					"and (JSON_EXTRACT(a.permissions, '$.admin') = true or w.isEnabled = 1) "
 					"limit 1";
 				shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4363,88 +4224,78 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			field = "expirationDate";
 			userAPIKeyRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
 
-			string flags = resultSet->getString("flags");
+			string permissions = resultSet->getString("permissions");
+			Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
 
 			field = "admin";
-			bool admin = flags.find("ADMIN") == string::npos ? false : true;
+			bool admin = JSONUtils::asBool(permissionsRoot, "admin", false);
 			userAPIKeyRoot[field] = admin;
 
 			field = "createRemoveWorkspace";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("CREATEREMOVE_WORKSPACE") == string::npos 
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "createRemoveWorkspace", false);
 
 			field = "ingestWorkflow";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("INGEST_WORKFLOW") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "ingestWorkflow", false);
 
 			field = "createProfiles";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("CREATE_PROFILES") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "createProfiles", false);
 
 			field = "deliveryAuthorization";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("DELIVERY_AUTHORIZATION") == string::npos 
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "deliveryAuthorization", false);
 
 			field = "shareWorkspace";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("SHARE_WORKSPACE") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "shareWorkspace", false);
 
 			field = "editMedia";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("EDIT_MEDIA") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "editMedia", false);
                 
 			field = "editConfiguration";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("EDIT_CONFIGURATION") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "editConfiguration", false);
 
 			field = "killEncoding";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("KILL_ENCODING") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "killEncoding", false);
 
 			field = "cancelIngestionJob";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("CANCEL_INGESTIONJOB") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "cancelIngestionJob", false);
 
 			field = "editEncodersPool";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("EDIT_ENCODERSPOOL") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "editEncodersPool", false);
 
 			field = "applicationRecorder";
 			if(admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = flags.find("APPLICATION_RECORDER") == string::npos
-					? false : true;
+				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "applicationRecorder", false);
 
 			field = "userAPIKey";
 			workspaceDetailRoot[field] = userAPIKeyRoot;
@@ -4559,7 +4410,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 		bool isOwner = false;
         {
             lastSQLCommand = 
-                "select isOwner, flags from MMS_APIKey "
+                "select isOwner, permissions from MMS_APIKey "
 				"where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4580,9 +4431,10 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 			);
             if (resultSet->next())
             {
-                string flags = resultSet->getString("flags");
+                string permissions = resultSet->getString("permissions");
+				Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
                 
-                admin = flags.find("ADMIN") == string::npos ? false : true;
+                admin = JSONUtils::asBool(permissionsRoot, "admin", false);
                 isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";
             }
             else
@@ -4807,87 +4659,30 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 			}
         }
 
-        string flags;
         {
-			if (admin)
-                flags.append("ADMIN");
-            if (newCreateRemoveWorkspace)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("CREATEREMOVE_WORKSPACE");
-            }
-            if (newIngestWorkflow)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("INGEST_WORKFLOW");
-            }
-            if (newCreateProfiles)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("CREATE_PROFILES");
-            }
-            if (newDeliveryAuthorization)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("DELIVERY_AUTHORIZATION");
-            }
-            if (newShareWorkspace)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("SHARE_WORKSPACE");
-            }
-            if (newEditMedia)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("EDIT_MEDIA");
-            }
-            if (newEditConfiguration)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("EDIT_CONFIGURATION");
-            }
-            if (newKillEncoding)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("KILL_ENCODING");
-            }
+			Json::Value permissionsRoot;
+			permissionsRoot["admin"] = admin;
+			permissionsRoot["createRemoveWorkspace"] = newCreateRemoveWorkspace;
+			permissionsRoot["ingestWorkflow"] = newIngestWorkflow;
+			permissionsRoot["createProfiles"] = newCreateProfiles;
+			permissionsRoot["deliveryAuthorization"] = newDeliveryAuthorization;
+			permissionsRoot["shareWorkspace"] = newShareWorkspace;
+			permissionsRoot["editMedia"] = newEditMedia;
+			permissionsRoot["editConfiguration"] = newEditConfiguration;
+			permissionsRoot["killEncoding"] = newKillEncoding;
+			permissionsRoot["cancelIngestionJob"] = newCancelIngestionJob;
+			permissionsRoot["editEncodersPool"] = newEditEncodersPool;
+			permissionsRoot["applicationRecorder"] = newApplicationRecorder;
 
-            if (newCancelIngestionJob)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("CANCEL_INGESTIONJOB");
-            }
-
-            if (newEditEncodersPool)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("EDIT_ENCODERSPOOL");
-            }
-
-            if (newApplicationRecorder)
-            {
-                if (flags != "")
-                    flags.append(",");
-                flags.append("APPLICATION_RECORDER");
-            }
+			string permissions = JSONUtils::toString(permissionsRoot);
 
 			lastSQLCommand =
-				"update MMS_APIKey set flags = ? "
+				"update MMS_APIKey set permissions = ? "
 				"where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, flags);
+            preparedStatement->setString(queryParameterIndex++, permissions);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
@@ -4895,7 +4690,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", flags: " + flags
+				+ ", permissions: " + permissions
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", userKey: " + to_string(userKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -4907,7 +4702,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", workspaceKey: " + to_string(workspaceKey)
                         + ", userKey: " + to_string(userKey)
-                        + ", flags: " + flags
+                        + ", permissions: " + permissions
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -4923,7 +4718,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 				"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 				"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
-				"a.flags, "
+				"a.permissions, "
 				"DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
 				"from MMS_APIKey a, MMS_Workspace w "
 				"where a.workspaceKey = w.workspaceKey "
