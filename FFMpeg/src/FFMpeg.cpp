@@ -10668,14 +10668,14 @@ void FFMpeg::liveProxy2(
 			{
 				// signal: 3 is what the LiveProxy playlist is changed and
 				//		we need to use the new playlist
-				// e.what() is like:
+				// lastPartOfFfmpegOutputFile is like:
 				//	Child has exit abnormally because of an uncaught signal. Terminating signal: 3
 				// 2023-02-18: ho verificato che SIGQUIT non ha funzionato e il processo non si è stoppato,
 				//	mentre ha funzionato SIGTERM, per cui ora sto usando SIGTERM
-				if (string(e.what()).find("signal 3") != string::npos		// SIGQUIT
-					|| string(e.what()).find("signal: 3") != string::npos
-					|| string(e.what()).find("signal 15") != string::npos	// SIGTERM
-					|| string(e.what()).find("signal: 15") != string::npos
+				if (lastPartOfFfmpegOutputFile.find("signal 3") != string::npos		// SIGQUIT
+					|| lastPartOfFfmpegOutputFile.find("signal: 3") != string::npos
+					|| lastPartOfFfmpegOutputFile.find("signal 15") != string::npos	// SIGTERM
+					|| lastPartOfFfmpegOutputFile.find("signal: 15") != string::npos
 				)
 				{
 					stoppedBySigQuitOrTerm = true;

@@ -31,20 +31,20 @@ getAlarmDescription()
 		"alarm_memory_usage")
 			echo "Memory Usage too high"
 			;;
-		"alarm_nginx_rate_gui_limit")
-			echo "Nginx Rate GUI Limit overcome"
+		"alarm_nginx_gui_error")
+			echo "Nginx GUI Error"
 			;;
-		"alarm_nginx_rate_api_limit")
-			echo "Nginx Rate API Limit overcome"
+		"alarm_nginx_api_error")
+			echo "Nginx API Error"
 			;;
-		"alarm_nginx_rate_delivery_limit")
-			echo "Nginx Rate Delivery Limit overcome"
+		"alarm_nginx_delivery_error")
+			echo "Nginx Delivery Error"
 			;;
-		"alarm_nginx_rate_binary_limit")
-			echo "Nginx Rate Binary Limit overcome"
+		"alarm_nginx_binary_error")
+			echo "Nginx Binary Error"
 			;;
-		"alarm_nginx_rate_encoder_limit")
-			echo "Nginx Rate Encoder Limit overcome"
+		"alarm_nginx_encoder_error")
+			echo "Nginx Encoder Error"
 			;;
 		"alarm_mms_engine_service_running")
 			echo "mms engine service is not running"
@@ -207,111 +207,112 @@ memory_usage()
 	fi
 }
 
-nginx_rate_encoder_limit()
+nginx_api_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-encoder.error.log | grep "\"mmsEncoderLimit\"" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-api.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
 
-	if [ $nginxRateLimitCount -eq 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_encoder_limit, nginx rate Encoder limit is fine: $nginxRateLimitCount" >> $debugFilename
+	if [ $nginxErrorsCount -eq 0 ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_api_error, nginx API error is fine: $nginxErrorsCount" >> $debugFilename
 
-		alarmNotificationPathFileName="/tmp/alarm_nginx_rate_encoder_limit"
+		alarmNotificationPathFileName="/tmp/alarm_nginx_api_error"
 		if [ -f "$alarmNotificationPathFileName" ]; then
 			rm -f $alarmNotificationPathFileName
 		fi
 
 		return 0
 	else
-		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_encoder_limit" "alarm_nginx_rate_encoder_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		alarmNotificationPeriod=$((60 * 60))		#60 minuti
+		notify "$(hostname)" "alarm_nginx_api_error" "alarm_nginx_api_error" $alarmNotificationPeriod "got ${nginxErrorsCount} times"
 		return 1
 	fi
 }
 
-nginx_rate_binary_limit()
+nginx_binary_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-binary.error.log | grep "\"mmsBinaryLimit\"" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-binary.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
 
-	if [ $nginxRateLimitCount -eq 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_binary_limit, nginx rate Binary limit is fine: $nginxRateLimitCount" >> $debugFilename
+	if [ $nginxErrorsCount -eq 0 ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_binary_error, nginx Binary error is fine: $nginxErrorsCount" >> $debugFilename
 
-		alarmNotificationPathFileName="/tmp/alarm_nginx_rate_binary_limit"
+		alarmNotificationPathFileName="/tmp/alarm_nginx_binary_error"
 		if [ -f "$alarmNotificationPathFileName" ]; then
 			rm -f $alarmNotificationPathFileName
 		fi
 
 		return 0
 	else
-		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_binary_limit" "alarm_nginx_rate_binary_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		alarmNotificationPeriod=$((60 * 60))		#60 minuti
+		notify "$(hostname)" "alarm_nginx_binary_error" "alarm_nginx_binary_error" $alarmNotificationPeriod "got ${nginxErrorsCount} times"
 		return 1
 	fi
 }
 
-nginx_rate_delivery_limit()
+nginx_delivery_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-delivery*.error.log | grep "\"mmsDeliveryLimit\"" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-delivery*.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
 
-	if [ $nginxRateLimitCount -eq 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_delivery_limit, nginx rate Delivery limit is fine: $nginxRateLimitCount" >> $debugFilename
+	if [ $nginxErrorsCount -eq 0 ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_delivery_error, nginx Delivery error is fine: $nginxErrorsCount" >> $debugFilename
 
+		alarmNotificationPathFileName="/tmp/alarm_nginx_delivery_error"
 		if [ -f "$alarmNotificationPathFileName" ]; then
 			rm -f $alarmNotificationPathFileName
 		fi
 
 		return 0
 	else
-		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_delivery_limit" "alarm_nginx_rate_delivery_limit" $alarmNotificationPeriod "${nginxRateLimitCount} times"
+		alarmNotificationPeriod=$((60 * 60))		#60 minuti
+		notify "$(hostname)" "alarm_nginx_delivery_error" "alarm_nginx_delivery_error" $alarmNotificationPeriod "got ${nginxErrorsCount} times"
 		return 1
 	fi
 }
 
-nginx_rate_api_limit()
+nginx_encoder_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-api.error.log | grep "\"mmsAPILimit\"" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-encoder.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
 
-	if [ $nginxRateLimitCount -eq 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_api_limit, nginx rate API limit is fine: $nginxRateLimitCount" >> $debugFilename
+	if [ $nginxErrorsCount -eq 0 ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_encoder_error, nginx Encoder error is fine: $nginxErrorsCount" >> $debugFilename
 
-		alarmNotificationPathFileName="/tmp/alarm_nginx_rate_api_limit"
+		alarmNotificationPathFileName="/tmp/alarm_nginx_encoder_error"
 		if [ -f "$alarmNotificationPathFileName" ]; then
 			rm -f $alarmNotificationPathFileName
 		fi
 
 		return 0
 	else
-		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_api_limit" "alarm_nginx_rate_api_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		alarmNotificationPeriod=$((60 * 60))		#60 minuti
+		notify "$(hostname)" "alarm_nginx_encoder_error" "alarm_nginx_encoder_error" $alarmNotificationPeriod "got ${nginxErrorsCount} times"
 		return 1
 	fi
 }
 
-nginx_rate_gui_limit()
+nginx_gui_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxRateLimitCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-gui.error.log | grep "\"mmsGUILimit\"" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-gui.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
 
-	if [ $nginxRateLimitCount -eq 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_rate_gui_limit, nginx rate GUI limit is fine: $nginxRateLimitCount" >> $debugFilename
+	if [ $nginxErrorsCount -eq 0 ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_gui_error, nginx GUI error is fine: $nginxErrorsCount" >> $debugFilename
 
-		alarmNotificationPathFileName="/tmp/alarm_nginx_rate_gui_limit"
+		alarmNotificationPathFileName="/tmp/alarm_nginx_gui_error"
 		if [ -f "$alarmNotificationPathFileName" ]; then
 			rm -f $alarmNotificationPathFileName
 		fi
 
 		return 0
 	else
-		alarmNotificationPeriod=$((60 * 30))		#30 minuti
-		notify "$(hostname)" "alarm_nginx_rate_gui_limit" "alarm_nginx_rate_gui_limit" $alarmNotificationPeriod "overcame ${nginxRateLimitCount} times"
+		alarmNotificationPeriod=$((60 * 60))		#60 minuti
+		notify "$(hostname)" "alarm_nginx_gui_error" "alarm_nginx_gui_error" $alarmNotificationPeriod "got ${nginxErrorsCount} times"
 		return 1
 	fi
 }

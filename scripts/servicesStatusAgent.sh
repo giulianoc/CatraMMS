@@ -58,7 +58,7 @@ do
 			;;
 		"api")
 			echo "" >> $debugFilename
-			nginx_rate_api_limit
+			nginx_api_error
 
 			echo "" >> $debugFilename
 			healthCheckURL=$2
@@ -70,20 +70,20 @@ do
 			;;
 		"gui")
 			echo "" >> $debugFilename
-			nginx_rate_gui_limit
+			nginx_gui_error
 
 			;;
 		"delivery")
 			echo "" >> $debugFilename
-			nginx_rate_binary_limit
+			nginx_binary_error
 
 			echo "" >> $debugFilename
-			nginx_rate_delivery_limit
+			nginx_delivery_error
 
 			;;
 		"encoder" | "externalEncoder")
 			echo "" >> $debugFilename
-			nginx_rate_encoder_limit
+			nginx_encoder_error
 
 			echo "" >> $debugFilename
 			healthCheckURL=$2

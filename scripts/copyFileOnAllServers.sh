@@ -19,15 +19,15 @@ do
 done
 
 #cibortv-transcoder-4
-#echo "scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@79.10.202.50:$destDirectoryPathName"
-#scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@79.10.202.50:$destDirectoryPathName
+echo "scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@79.10.202.50:$destDirectoryPathName"
+scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@79.10.202.50:$destDirectoryPathName
 
 #aruba-1 aruba-2
-#for server in ru001940.arubabiz.net ru001941.arubabiz.net
-#do
-#	echo "scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem $sourceFilePathName mms@$server:$destDirectoryPathName"
-#	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem $sourceFilePathName mms@$server:$destDirectoryPathName
-#done
+for server in ru001940.arubabiz.net ru001941.arubabiz.net
+do
+	echo "scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem $sourceFilePathName mms@$server:$destDirectoryPathName"
+	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem $sourceFilePathName mms@$server:$destDirectoryPathName
+done
 
 #hetzner-test-api-1 hetzner-test-engine-1 hetzner-test-engine-2 hetzner-test-transcoder-1 hetzner-api-1 hetzner-api-2 hetzner-engine-1 hetzner-engine-3 hetzner-transcoder-2 hetzner-transcoder-3 hetzner-transcoder-5
 for server in 138.201.245.228 5.75.228.47 49.12.74.56 49.12.33.127 159.69.251.50 168.119.250.162 167.235.14.44 167.235.14.105 78.46.72.77 78.46.93.238 46.4.98.135
