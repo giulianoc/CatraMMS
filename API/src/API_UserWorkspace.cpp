@@ -1175,6 +1175,7 @@ void API::confirmRegistration(
 
             vector<string> emailBody;
             emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+            emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Thank you for choosing the CatraMMS services</p>"));
             emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Your registration is now completed and you can enjoy working with MMS</p>"));
             emailBody.push_back(
 					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")

@@ -211,7 +211,7 @@ nginx_api_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-api.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-api.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_api_error, nginx API error is fine: $nginxErrorsCount" >> $debugFilename
@@ -233,7 +233,7 @@ nginx_binary_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-binary.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-binary.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_binary_error, nginx Binary error is fine: $nginxErrorsCount" >> $debugFilename
@@ -255,7 +255,7 @@ nginx_delivery_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-delivery*.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-delivery*.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_delivery_error, nginx Delivery error is fine: $nginxErrorsCount" >> $debugFilename
@@ -277,7 +277,7 @@ nginx_encoder_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-encoder.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-encoder.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_encoder_error, nginx Encoder error is fine: $nginxErrorsCount" >> $debugFilename
@@ -299,7 +299,7 @@ nginx_gui_error()
 {
 	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-gui.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-gui.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_gui_error, nginx GUI error is fine: $nginxErrorsCount" >> $debugFilename

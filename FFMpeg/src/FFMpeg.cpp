@@ -10689,7 +10689,7 @@ void FFMpeg::liveProxy2(
 							+ to_string(currentNumberOfRepeatingSameInput)
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", lastPartOfFfmpegOutputFile: " + regex_replace(lastPartOfFfmpegOutputFile, regex("\n"), " ")
 						+ ", e.what(): " + e.what()
 					;
 				}
@@ -10706,7 +10706,7 @@ void FFMpeg::liveProxy2(
 							chrono::system_clock::now() - startFfmpegCommand).count()) + "@"
 						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", lastPartOfFfmpegOutputFile: " + regex_replace(lastPartOfFfmpegOutputFile, regex("\n"), " ")
 						+ ", e.what(): " + e.what()
 					;
 				}
@@ -15689,28 +15689,42 @@ void FFMpeg::renameOutputFfmpegPathFileName(
 	string outputFfmpegPathFileName
 )
 {
-	char	sNow [64];
+	string debugOutputFfmpegPathFileName;
+	try
+	{
+		char	sNow [64];
 
-	time_t	utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
-	tm		tmUtcNow;
-	localtime_r (&utcNow, &tmUtcNow);
-	sprintf (sNow, "%04d-%02d-%02d-%02d-%02d-%02d",
-		tmUtcNow. tm_year + 1900,
-		tmUtcNow. tm_mon + 1,
-		tmUtcNow. tm_mday,
-		tmUtcNow. tm_hour,
-		tmUtcNow. tm_min,
-		tmUtcNow. tm_sec);
+		time_t	utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+		tm		tmUtcNow;
+		localtime_r (&utcNow, &tmUtcNow);
+		sprintf (sNow, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcNow. tm_year + 1900,
+			tmUtcNow. tm_mon + 1,
+			tmUtcNow. tm_mday,
+			tmUtcNow. tm_hour,
+			tmUtcNow. tm_min,
+			tmUtcNow. tm_sec);
 
-	string debugOutputFfmpegPathFileName = outputFfmpegPathFileName + "." + sNow;
+		debugOutputFfmpegPathFileName = outputFfmpegPathFileName + "." + sNow;
 
-	_logger->info(__FILEREF__ + "move"
-		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName
-		+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
-	);
-	// fs::rename works only if source and destination are on the same file systems
-	fs::rename(outputFfmpegPathFileName, debugOutputFfmpegPathFileName);
+		_logger->info(__FILEREF__ + "move"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName
+			+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
+		);
+		// fs::rename works only if source and destination are on the same file systems
+		if (fs::exists(outputFfmpegPathFileName))
+			fs::rename(outputFfmpegPathFileName, debugOutputFfmpegPathFileName);
+	}
+	catch(exception e)
+	{
+		_logger->error(__FILEREF__ + "move failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName
+			+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
+		);
+	}
 }
 
