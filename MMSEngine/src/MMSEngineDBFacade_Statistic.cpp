@@ -76,10 +76,13 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 
 		// update upToNextRequestInSeconds
 		{
+			// lastSQLCommand = 
+			// 	"select requestStatisticKey from MMS_RequestStatistic "
+			// 	"where workspaceKey = ? and requestStatisticKey < ? and userId = ? "
+			// 	"order by requestStatisticKey desc limit 1";
 			lastSQLCommand = 
-				"select requestStatisticKey from MMS_RequestStatistic "
-				"where workspaceKey = ? and requestStatisticKey < ? and userId = ? "
-				"order by requestStatisticKey desc limit 1";
+				"select max(requestStatisticKey) as maxRequestStatisticKey from MMS_RequestStatistic "
+				"where workspaceKey = ? and requestStatisticKey < ? and userId = ? ";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -101,7 +104,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 			);
             if (resultSet->next())
             {
-				int64_t previoudRequestStatisticKey = resultSet->getInt64("requestStatisticKey");
+				int64_t previoudRequestStatisticKey = resultSet->getInt64("maxRequestStatisticKey");
 
 				{
 					lastSQLCommand = 
