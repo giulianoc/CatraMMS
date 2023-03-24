@@ -946,6 +946,31 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+		// se l'encoder che vogliamo rimuovere da un workspace è all'interno di qualche EncodersPool,
+		// bisogna rimuoverlo
+        {
+            lastSQLCommand = 
+                "delete from MMS_EncoderEncodersPoolMapping "
+				"where encodersPoolKey in (select encodersPoolKey from MMS_EncodersPool where workspaceKey = ?) "
+				"and encoderKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, encoderKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", encoderKey: " + to_string(encoderKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+        }
+
         {
             lastSQLCommand = 
                 "delete from MMS_EncoderWorkspaceMapping "

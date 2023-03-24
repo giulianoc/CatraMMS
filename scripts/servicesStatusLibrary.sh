@@ -7,7 +7,7 @@ if [ ! -f "$debugFilename" ]; then
 	echo "" > $debugFilename
 else
 	filesize=$(stat -c %s $debugFilename)
-	if [ $filesize -gt 1000000 ]
+	if [ $filesize -gt 10000000 ]
 	then
 		echo "" > $debugFilename
 	fi

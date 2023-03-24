@@ -980,7 +980,11 @@ else
 fi
 firewall-rules $moduleType
 
-read -n 1 -s -r -p "verificare ~/mms/conf/*"
+read -n 1 -s -r -p "verificare ~/mms/conf/* e attivare il crontab -u mms ~/mms/conf/crontab.txt"
+echo ""
+echo ""
+
+read -n 1 -s -r -p "in case of engine ibrido, cambiare hostname (istruzioni nel doc Hetzner info)"
 echo ""
 echo ""
 
@@ -1003,11 +1007,6 @@ if [ "$moduleType" == "storage" ]; then
 	echo "- exportfs -ra"
 else
 	echo ""
-	echo "in caso di hetzner engine/transcoder ibrido, 1. assegna il server al vSwitch (tramite hetzner WEB page), 2. decidere un nuovo IP e scriverlo nel documento Hetzner Info su google drive, 3. aggiungere la configurazione di un nuovo IP internal in /etc/netplan/01-netcfg.yaml"
-	echo "- copiare files in ~mms/ conf and scripts, see doc ... (scp -P 9255 mms/conf/* mms@135.125.97.201:~/mms/conf), check files and crontab -u mms ~/mms/conf/crontab.txt"
-	echo ""
-	echo "- in case of engine ibrido, cambiare hostname (di default è quello assegnato da hetzner). In caso di engine è importante cambiare il nome dell'hostname perchè viene inserito nel DB. Per cambiare hostname seguire le istruzioni: https://www.cyberciti.biz/faq/ubuntu-20-04-lts-change-hostname-permanently. In caso di transcoder ibridi, non è essenziale cambiare l'hostname ma è una buona cosa farlo per evitare di lasciare quei nomi strani decisi da hetzner."
-	echo ""
 	echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add db-master e db-slaves)"
 	echo ""
 	echo "- run the commands as mms user <sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001> for the others repositories"
@@ -1020,10 +1019,6 @@ else
 	echo "10.24.71.41:zpool-127340/mmsRepository0000	/mmsRepository0000	nfs	rw,_netdev,mountproto=tcp	0	0"
 	echo "if the NAS Repository does not have the access to the IP of the new server, add it, go to the OVH Site, login to the CiborTV project, click on Server → NAS e CDN, Aggiungi un accesso per mmsStorage, Aggiungi un accesso per mmsRepository0000"
 	echo ""
-fi
-
-if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-	echo "add the new hostname in every /etc/hosts of every api and engine servers"
 fi
 
 echo "if a temporary user has to be removed <deluser test>"

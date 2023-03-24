@@ -564,9 +564,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
 			// 2023-03-18: aggiunto per le performance del metodo MMSEngineDBFacade::addRequestStatistic,
 			//	in particolare per velocizzare
-			//		select requestStatisticKey from MMS_RequestStatistic
+			//		select max(requestStatisticKey) from MMS_RequestStatistic
 			//		where workspaceKey = ? and requestStatisticKey < ? and userId = ?
-			//		order by requestStatisticKey desc limit 1
             lastSQLCommand = 
 				"create index MMS_RequestStatistic_idx4 on MMS_RequestStatistic (workspaceKey, userId, requestStatisticKey)";
             statement->execute(lastSQLCommand);    
