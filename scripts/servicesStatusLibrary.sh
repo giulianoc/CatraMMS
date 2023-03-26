@@ -442,7 +442,7 @@ mms_encoder_service_running()
 	httpStatus=$(curl -k --output $outputHealthCheckURL -w "%{http_code}" --max-time 20 "$healthCheckURL")
 	if [ $httpStatus -ne 200 ]
 	then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): mms_encoder_service_running failed, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): mms_encoder_service_running failed, httpStatus: $httpStatus, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
 
 		failuresNumberFileName=/tmp/alarm_mms_encoder_service_running.failuresNumber.txt
 		if [ -s $failuresNumberFileName ]
@@ -456,7 +456,7 @@ mms_encoder_service_running()
 		notify "$(hostname)" "alarm_mms_encoder_service_running" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL, failuresNumber: $failuresNumber"
 
 		#fix management
-		maxFailuresNumber=6
+		maxFailuresNumber=1000
 		if [ $failuresNumber -ge $maxFailuresNumber ]
 		then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, service is restarted" >> $debugFilename

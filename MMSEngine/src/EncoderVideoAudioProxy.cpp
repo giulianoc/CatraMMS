@@ -2240,18 +2240,46 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
             }
 
 			vector<string> otherHeaders;
-			Json::Value encodeContentResponse = MMSCURL::httpPostStringAndGetJson(
-				_logger,
-				_encodingItem->_ingestionJobKey,
-				ffmpegEncoderURL,
-				_ffmpegEncoderTimeoutInSeconds,
-				_ffmpegEncoderUser,
-				_ffmpegEncoderPassword,
-				body,
-				"application/json", // contentType
-				otherHeaders
-			);
+			Json::Value encodeContentResponse;
+			try
+			{
+				encodeContentResponse = MMSCURL::httpPostStringAndGetJson(
+					_logger,
+					_encodingItem->_ingestionJobKey,
+					ffmpegEncoderURL,
+					_ffmpegEncoderTimeoutInSeconds,
+					_ffmpegEncoderUser,
+					_ffmpegEncoderPassword,
+					body,
+					"application/json", // contentType
+					otherHeaders
+				);
+			}
+			catch(runtime_error e)
+			{
+				string error = e.what();
+				if (error.find(EncodingIsAlreadyRunning().what()) != string::npos)
+				{
+					// 2023-03-26:
+					// Questo scenario indica che per il DB "l'encoding è da eseguire"
+					// mentre abbiamo un Encoder che lo sta già eseguendo
+					// Si tratta di una inconsistenza che non dovrebbe mai accadere.
+					// Oggi pero' ho visto questo scenario e l'ho risolto facendo ripartire
+					// sia l'encoder che gli engines
+					// Gestire questo scenario rende il sistema piu' robusto e recupera
+					// facilmente una situazione che altrimenti richiederebbe una gestione manuale
+					// Inoltre senza guardare nel log, non si riuscirebbe a capire che siamo
+					// in questo scenario.
 
+					// La gestione di questo scenario consiste nell'ignorare questa eccezione
+					// facendo andare avanti la procedura, come se non avesse generato alcun errore
+				}
+				else
+					throw e;
+			}
+
+			/* 2023-03-26; non si verifica mai, se FFMPEGEncoder genera un errore, ritorna
+				un HTTP status diverso da 200 e quindi MMSCURL genera un eccezione
             {
                 string field = "error";
                 if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
@@ -2269,6 +2297,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 					throw runtime_error(errorMessage);
                 }
             }
+			*/
 		}
 		else
 		{
@@ -6208,18 +6237,46 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				}
 
 				vector<string> otherHeaders;
-				Json::Value liveRecorderContentResponse = MMSCURL::httpPostStringAndGetJson(
-					_logger,
-					_encodingItem->_ingestionJobKey,
-					ffmpegEncoderURL,
-					_ffmpegEncoderTimeoutInSeconds,
-					_ffmpegEncoderUser,
-					_ffmpegEncoderPassword,
-					body,
-					"application/json", // contentType
-					otherHeaders
-				);
+				Json::Value liveRecorderContentResponse;
+				try
+				{
+					liveRecorderContentResponse = MMSCURL::httpPostStringAndGetJson(
+						_logger,
+						_encodingItem->_ingestionJobKey,
+						ffmpegEncoderURL,
+						_ffmpegEncoderTimeoutInSeconds,
+						_ffmpegEncoderUser,
+						_ffmpegEncoderPassword,
+						body,
+						"application/json", // contentType
+						otherHeaders
+					);
+				}
+				catch(runtime_error e)
+				{
+					string error = e.what();
+					if (error.find(EncodingIsAlreadyRunning().what()) != string::npos)
+					{
+						// 2023-03-26:
+						// Questo scenario indica che per il DB "l'encoding è da eseguire"
+						// mentre abbiamo un Encoder che lo sta già eseguendo
+						// Si tratta di una inconsistenza che non dovrebbe mai accadere.
+						// Oggi pero' ho visto questo scenario e l'ho risolto facendo ripartire
+						// sia l'encoder che gli engines
+						// Gestire questo scenario rende il sistema piu' robusto e recupera
+						// facilmente una situazione che altrimenti richiederebbe una gestione manuale
+						// Inoltre senza guardare nel log, non si riuscirebbe a capire che siamo
+						// in questo scenario.
 
+						// La gestione di questo scenario consiste nell'ignorare questa eccezione
+						// facendo andare avanti la procedura, come se non avesse generato alcun errore
+					}
+					else
+						throw e;
+				}
+
+				/* 2023-03-26; non si verifica mai, se FFMPEGEncoder genera un errore, ritorna
+					un HTTP status diverso da 200 e quindi MMSCURL genera un eccezione
 				{
 					string field = "error";
 					if (JSONUtils::isMetadataPresent(liveRecorderContentResponse, field))
@@ -6237,6 +6294,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						throw runtime_error(errorMessage);
 					}
 				}
+				*/
 			}
 			else
 			{
@@ -7944,18 +8002,46 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
 
 				vector<string> otherHeaders;
-				Json::Value liveProxyContentResponse = MMSCURL::httpPostStringAndGetJson(
-					_logger,
-					_encodingItem->_ingestionJobKey,
-					ffmpegEncoderURL,
-					_ffmpegEncoderTimeoutInSeconds,
-					_ffmpegEncoderUser,
-					_ffmpegEncoderPassword,
-					body,
-					"application/json", // contentType
-					otherHeaders
-				);
+				Json::Value liveProxyContentResponse;
+				try
+				{
+					liveProxyContentResponse = MMSCURL::httpPostStringAndGetJson(
+						_logger,
+						_encodingItem->_ingestionJobKey,
+						ffmpegEncoderURL,
+						_ffmpegEncoderTimeoutInSeconds,
+						_ffmpegEncoderUser,
+						_ffmpegEncoderPassword,
+						body,
+						"application/json", // contentType
+						otherHeaders
+					);
+				}
+				catch(runtime_error e)
+				{
+					string error = e.what();
+					if (error.find(EncodingIsAlreadyRunning().what()) != string::npos)
+					{
+						// 2023-03-26:
+						// Questo scenario indica che per il DB "l'encoding è da eseguire"
+						// mentre abbiamo un Encoder che lo sta già eseguendo
+						// Si tratta di una inconsistenza che non dovrebbe mai accadere.
+						// Oggi pero' ho visto questo scenario e l'ho risolto facendo ripartire
+						// sia l'encoder che gli engines
+						// Gestire questo scenario rende il sistema piu' robusto e recupera
+						// facilmente una situazione che altrimenti richiederebbe una gestione manuale
+						// Inoltre senza guardare nel log, non si riuscirebbe a capire che siamo
+						// in questo scenario.
 
+						// La gestione di questo scenario consiste nell'ignorare questa eccezione
+						// facendo andare avanti la procedura, come se non avesse generato alcun errore
+					}
+					else
+						throw e;
+				}
+
+				/* 2023-03-26; non si verifica mai, se FFMPEGEncoder genera un errore, ritorna
+					un HTTP status diverso da 200 e quindi MMSCURL genera un eccezione
 				{
 					string field = "error";
 					if (JSONUtils::isMetadataPresent(liveProxyContentResponse, field))
@@ -7973,6 +8059,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						throw runtime_error(errorMessage);
 					}
 				}
+				*/
 			}
 			else
 			{
