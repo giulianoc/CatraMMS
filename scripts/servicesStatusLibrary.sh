@@ -46,6 +46,9 @@ getAlarmDescription()
 		"alarm_nginx_encoder_error")
 			echo "Nginx Encoder Error"
 			;;
+		"alarm_nginx_integration_error")
+			echo "Nginx Integration Error"
+			;;
 		"alarm_mms_engine_service_running")
 			echo "mms engine service is not running"
 			;;
@@ -69,6 +72,9 @@ getAlarmDescription()
 			;;
 		"alarm_mms_call_api_service")
 			echo "mms call api service not working or too slow"
+			;;
+		"alarm_mms_api_timing_check_service")
+			echo "mms api too slow"
 			;;
 		*)
 			echo "Unknown alarmType: $alarmType"
@@ -317,6 +323,28 @@ nginx_gui_error()
 	fi
 }
 
+nginx_integration_error()
+{
+	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+	dateFilter=$(date +'%Y/%m/%d %H:')
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/*.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
+
+	if [ $nginxErrorsCount -eq 0 ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_integration_error, nginx Integration error is fine: $nginxErrorsCount" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_nginx_integration_error"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		alarmNotificationPeriod=$((60 * 60))		#60 minuti
+		notify "$(hostname)" "alarm_nginx_integration_error" "alarm_nginx_integration_error" $alarmNotificationPeriod "got ${nginxErrorsCount} times"
+		return 1
+	fi
+}
+
 mms_engine_service_running()
 {
 	pgrep -f mmsEngineService > /dev/null
@@ -410,40 +438,40 @@ mms_encoder_service_running()
 {
 	healthCheckURL=$1
 
-	httpStatus=$(curl -k --silent --output /dev/null -w "%{http_code}" --max-time 10 "$healthCheckURL")
+	outputHealthCheckURL=/tmp/mms_encoder_service_running.healthCheckURL.response
+	httpStatus=$(curl -k --output $outputHealthCheckURL -w "%{http_code}" --max-time 20 "$healthCheckURL")
 	if [ $httpStatus -ne 200 ]
 	then
-		alarmNotificationPeriod=$((60 * 1))		#1 minuti
-		notify "$(hostname)" "alarm_mms_encoder_service_running" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): mms_encoder_service_running failed, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
 
-		#fix management
 		failuresNumberFileName=/tmp/alarm_mms_encoder_service_running.failuresNumber.txt
-		maxFailuresNumber=2
 		if [ -s $failuresNumberFileName ]
 		then
 			#exist and is not empty
 			failuresNumber=$(cat $failuresNumberFileName)
-
-			if [ $failuresNumber -ge $maxFailuresNumber ]
-			then
-				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, service is restarted" >> $debugFilename
-
-				~/mmsStopALL.sh
-				sleep 1
-				~/mmsStartALL.sh
-
-				rm -f $failuresNumberFileName
-			else
-				failuresNumber=$((failuresNumber+1))
-
-				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, one more failure: $failuresNumber, serviceStatus: $serviceStatus, healthCheckURL: $healthCheckURL" >> $debugFilename
-
-				echo "$failuresNumber" > $failuresNumberFileName
-			fi
 		else
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, first failure, serviceStatus: $serviceStatus, healthCheckURL: $healthCheckURL" >> $debugFilename
+			failuresNumber=0
+		fi
+		alarmNotificationPeriod=$((60 * 1))		#1 minuti
+		notify "$(hostname)" "alarm_mms_encoder_service_running" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL, failuresNumber: $failuresNumber"
 
-			echo "1" > $failuresNumberFileName
+		#fix management
+		maxFailuresNumber=6
+		if [ $failuresNumber -ge $maxFailuresNumber ]
+		then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, service is restarted" >> $debugFilename
+
+			~/mmsStopALL.sh
+			sleep 1
+			~/mmsStartALL.sh
+
+			rm -f $failuresNumberFileName
+		else
+			failuresNumber=$((failuresNumber+1))
+
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, one more failure: $failuresNumber, serviceStatus: $serviceStatus, healthCheckURL: $healthCheckURL" >> $debugFilename
+
+			echo "$failuresNumber" > $failuresNumberFileName
 		fi
 
 		return 1
@@ -586,7 +614,7 @@ mms_api_timing_check_service()
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
-		notify "$(hostname)" "alarm_mms_call_api_service" "alarm_mms_call_api_service" $alarmNotificationPeriod "$warningMessage"
+		notify "$(hostname)" "alarm_mms_api_timing_check_service" "alarm_mms_api_timing_check_service" $alarmNotificationPeriod "$warningMessage"
 		return 1
 	fi
 }

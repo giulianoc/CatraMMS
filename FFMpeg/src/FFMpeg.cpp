@@ -10271,8 +10271,8 @@ void FFMpeg::liveProxy2(
 		int pushListenTimeout;
 		int64_t utcProxyPeriodStart;
 		Json::Value inputDrawTextDetailsRoot;
-		vector<tuple<int, int64_t, string, string, int, int, string, long>> inputVideoTracks;
-		vector<tuple<int, int64_t, string, long, int, long, string>> inputAudioTracks;
+		// vector<tuple<int, int64_t, string, string, int, int, string, long>> inputVideoTracks;
+		// vector<tuple<int, int64_t, string, long, int, long, string>> inputAudioTracks;
 		try
 		{
 			_logger->info(__FILEREF__ + "liveProxyInput..."
@@ -10282,15 +10282,15 @@ void FFMpeg::liveProxy2(
 				+ ", timedInput: " + to_string(timedInput)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			tuple<long, string, string, int, int64_t, Json::Value,
-				vector<tuple<int, int64_t, string, string, int, int, string, long>>,
-				vector<tuple<int, int64_t, string, long, int, long, string>>
+			tuple<long, string, string, int, int64_t, Json::Value
+				// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
+				// vector<tuple<int, int64_t, string, long, int, long, string>>
 				> inputDetails = liveProxyInput(
 				ingestionJobKey, encodingJobKey, externalEncoder,
 				currentInputRoot, ffmpegInputArgumentList);
 			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
 				endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
-				inputDrawTextDetailsRoot, inputVideoTracks, inputAudioTracks) = inputDetails;
+				inputDrawTextDetailsRoot /*, inputVideoTracks, inputAudioTracks*/) = inputDetails;
 
 			{
 				ostringstream ffmpegInputArgumentListStream;
@@ -10344,7 +10344,7 @@ void FFMpeg::liveProxy2(
 			liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,
 				otherOutputOptionsBecauseOfMaxWidth,
 				inputDrawTextDetailsRoot,
-				inputVideoTracks, inputAudioTracks,
+				// inputVideoTracks, inputAudioTracks,
 				streamingDurationInSeconds,
 				outputsRoot, ffmpegOutputArgumentList);
 
@@ -11104,9 +11104,9 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
-tuple<long, string, string, int, int64_t, Json::Value,
-	vector<tuple<int, int64_t, string, string, int, int, string, long>>,
-	vector<tuple<int, int64_t, string, long, int, long, string>>
+tuple<long, string, string, int, int64_t, Json::Value
+	// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
+	// vector<tuple<int, int64_t, string, long, int, long, string>>
 	>
 	FFMpeg::liveProxyInput(
 		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
@@ -11118,8 +11118,12 @@ tuple<long, string, string, int, int64_t, Json::Value,
 	int pushListenTimeout = -1;
 	int64_t utcProxyPeriodStart = -1;
 	Json::Value inputDrawTextDetailsRoot = Json::nullValue;
-	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
-	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+	// 2023-03-26: vengono per ora commentate perchè
+	// - sembra non siano utilizzate in questo momento
+	// - getMediaInfo impiega qualche secondo per calcolarle e, in caso di LiveChannel, serve
+	//		maggiore velocità in caso di switch da un input all'altro
+	// vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+	// vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 
 
 	// "inputRoot": {
@@ -11226,6 +11230,7 @@ tuple<long, string, string, int, int64_t, Json::Value,
 			+ ", streamSourceType: " + streamSourceType
 		);
 
+		/* 2023-03-26: vedi commento sopra in questo metodo
 		if (streamSourceType == "IP_PULL"
 			|| streamSourceType == "IP_PUSH"
 			|| streamSourceType == "TV")
@@ -11247,6 +11252,7 @@ tuple<long, string, string, int, int64_t, Json::Value,
 				// throw e;
 			}
 		}
+		*/
 
 		if (streamSourceType == "IP_PULL" && maxWidth != -1)
 		{
@@ -11627,6 +11633,7 @@ tuple<long, string, string, int, int64_t, Json::Value,
 			+ ", url: " + url
 		);
 
+		/* 2023-03-26: vedi commento sopra in questo metodo
 		{
 			try
 			{
@@ -11645,6 +11652,7 @@ tuple<long, string, string, int, int64_t, Json::Value,
 				// throw e;
 			}
 		}
+		*/
 
 		time_t utcNow;
 		{
@@ -12106,7 +12114,7 @@ tuple<long, string, string, int, int64_t, Json::Value,
 
 	return make_tuple(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth,
 		endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
-		inputDrawTextDetailsRoot, videoTracks, audioTracks);
+		inputDrawTextDetailsRoot);	// , videoTracks, audioTracks);
 }
 
 void FFMpeg::liveProxyOutput(
@@ -12114,8 +12122,8 @@ void FFMpeg::liveProxyOutput(
 	bool externalEncoder,
 	string otherOutputOptionsBecauseOfMaxWidth,
 	Json::Value inputDrawTextDetailsRoot,
-	vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
-	vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
+	// vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
+	// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
 	long streamingDurationInSeconds,
 	Json::Value outputsRoot,
 	vector<string>& ffmpegOutputArgumentList)

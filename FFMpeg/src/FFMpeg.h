@@ -570,9 +570,9 @@ private:
 		Json::Value* inputsRoot, mutex* inputsRootMutex,
 		int currentInputIndex, bool timedInput, Json::Value* newInputRoot);
 
-	tuple<long, string, string, int, int64_t, Json::Value, 
-		vector<tuple<int, int64_t, string, string, int, int, string, long>>,
-		vector<tuple<int, int64_t, string, long, int, long, string>>
+	tuple<long, string, string, int, int64_t, Json::Value
+		// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
+		// vector<tuple<int, int64_t, string, long, int, long, string>>
 		>
 		liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList);
@@ -581,8 +581,8 @@ private:
 		bool externalEncoder,
 		string otherOutputOptionsBecauseOfMaxWidth,
 		Json::Value inputDrawTextDetailsRoot,
-		vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
-		vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
+		// vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
+		// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
 		long streamingDurationInSeconds,
 		Json::Value outputsRoot,
 		vector<string>& ffmpegOutputArgumentList);

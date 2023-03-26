@@ -29,22 +29,23 @@ echo "" >> $debugFilename
 memory_usage
 
 #to be executed just once (by api-1 test-api-1 server)
-if [ "$(hostname)" = "api-1" ]
-then
-	echo "" >> $debugFilename
-	mms_call_api_service
-elif [ "$(hostname)" = "test-api-1" ]
-then
-	echo "" >> $debugFilename
-	mms_call_api_service "https://mms-api-test.catramms-cloud.com/catramms/1.0.1/mediaItem?start=0&rows=50" "MTpITlZPb1ZoSHgweW9XTkl4RnUtVGhCQTF2QVBFS1dzeG5lR2d6ZTZlb2RmZThQU35BMnhwd0tCZ0RSNDBDaVZk"
-elif [ "$(hostname)" == "ip-172-31-40-201" ]
-then
-	echo "" >> $debugFilename
-	mms_call_api_service "https://mms-api.cibortv-mms.com/catramms/1.0.1/mediaItem?start=0&rows=50" "MjpQS3FKdER0bm1Ud2lPaWE4RjRVN3V4MWF4QTF6S21lSllUUmhvbk1GRTV1cENmRlo3VS1TaWQ0YThkU2Zrc0Rt"
-else
-	echo "" >> $debugFilename
-	echo "mms_call_api_service no to be called. hostname: $(hostname)" >> $debugFilename
-fi
+#2023-03-25: commentata perchè abbiamo mms_api_timing_check_service che monitora i tempi di tutte le API
+#if [ "$(hostname)" = "api-1" ]
+#then
+#	echo "" >> $debugFilename
+#	mms_call_api_service
+#elif [ "$(hostname)" = "test-api-1" ]
+#then
+#	echo "" >> $debugFilename
+#	mms_call_api_service "https://mms-api-test.catramms-cloud.com/catramms/1.0.1/mediaItem?start=0&rows=50" "MTpITlZPb1ZoSHgweW9XTkl4RnUtVGhCQTF2QVBFS1dzeG5lR2d6ZTZlb2RmZThQU35BMnhwd0tCZ0RSNDBDaVZk"
+#elif [ "$(hostname)" == "ip-172-31-40-201" ]
+#then
+#	echo "" >> $debugFilename
+#	mms_call_api_service "https://mms-api.cibortv-mms.com/catramms/1.0.1/mediaItem?start=0&rows=50" "MjpQS3FKdER0bm1Ud2lPaWE4RjRVN3V4MWF4QTF6S21lSllUUmhvbk1GRTV1cENmRlo3VS1TaWQ0YThkU2Zrc0Rt"
+#else
+#	echo "" >> $debugFilename
+#	echo "mms_call_api_service no to be called. hostname: $(hostname)" >> $debugFilename
+#fi
 
 while [ -n "$1" ]
 do
@@ -90,20 +91,23 @@ do
 			shift
 			mms_encoder_service_running $healthCheckURL
 
-			echo "" >> $debugFilename
-			ffmpeg_filter_detect blackdetect
+			#echo "" >> $debugFilename
+			#ffmpeg_filter_detect blackdetect
 
-			echo "" >> $debugFilename
-			ffmpeg_filter_detect blackframe
+			#echo "" >> $debugFilename
+			#ffmpeg_filter_detect blackframe
 
-			echo "" >> $debugFilename
-			ffmpeg_filter_detect freezedetect
+			#echo "" >> $debugFilename
+			#ffmpeg_filter_detect freezedetect
 
-			echo "" >> $debugFilename
-			ffmpeg_filter_detect silencedetect
+			#echo "" >> $debugFilename
+			#ffmpeg_filter_detect silencedetect
 
 			;;
 		"integration")
+			echo "" >> $debugFilename
+			nginx_integration_error
+
 			;;
         *) echo "$1 is not an option" >> $debugFilename
 			;;

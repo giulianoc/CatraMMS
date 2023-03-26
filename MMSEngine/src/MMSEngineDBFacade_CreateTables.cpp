@@ -2185,7 +2185,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
-        
+
 		/*
         try
         {
