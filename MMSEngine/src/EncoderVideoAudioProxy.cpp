@@ -2273,6 +2273,14 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 
 					// La gestione di questo scenario consiste nell'ignorare questa eccezione
 					// facendo andare avanti la procedura, come se non avesse generato alcun errore
+					_logger->error(__FILEREF__
+						+ "inconsistency: DB says the encoding has to be executed but the Encoder is already executing it. We will manage it"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", body: " + body
+						+ ", e.what: " + e.what()
+					);
 				}
 				else
 					throw e;
@@ -6270,6 +6278,14 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 						// La gestione di questo scenario consiste nell'ignorare questa eccezione
 						// facendo andare avanti la procedura, come se non avesse generato alcun errore
+						_logger->error(__FILEREF__
+							+ "inconsistency: DB says the encoding has to be executed but the Encoder is already executing it. We will manage it"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", body: " + body
+							+ ", e.what: " + e.what()
+						);
 					}
 					else
 						throw e;
@@ -8035,6 +8051,14 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 						// La gestione di questo scenario consiste nell'ignorare questa eccezione
 						// facendo andare avanti la procedura, come se non avesse generato alcun errore
+						_logger->error(__FILEREF__
+							+ "inconsistency: DB says the encoding has to be executed but the Encoder is already executing it. We will manage it"
+							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							+ ", body: " + body
+							+ ", e.what: " + e.what()
+						);
 					}
 					else
 						throw e;
