@@ -110,7 +110,7 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 								outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
 							}
 
-							pair<string, int> lastRecordedAssetInfo;
+							tuple<string, int, int64_t> lastRecordedAssetInfo;
 
 							if (liveRecording->_segmenterType == "streamSegmenter")
 							{
@@ -128,7 +128,8 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 									liveRecording->_segmentListFileName,
 									liveRecording->_recordedFileNamePrefix,
 									liveRecording->_lastRecordedAssetFileName,
-									liveRecording->_lastRecordedAssetDurationInSeconds);
+									liveRecording->_lastRecordedAssetDurationInSeconds,
+									liveRecording->_lastRecordedSegmentUtcStartTimeInMillisecs);
 							}
 							else // if (liveRecording->_segmenterType == "hlsSegmenter")
 							{
@@ -146,11 +147,16 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 									liveRecording->_segmentListFileName,
 									liveRecording->_recordedFileNamePrefix,
 									liveRecording->_lastRecordedAssetFileName,
-									liveRecording->_lastRecordedAssetDurationInSeconds);
+									liveRecording->_lastRecordedAssetDurationInSeconds,
+									liveRecording->_lastRecordedSegmentUtcStartTimeInMillisecs);
 							}
 
-							liveRecording->_lastRecordedAssetFileName			= lastRecordedAssetInfo.first;
-							liveRecording->_lastRecordedAssetDurationInSeconds	= lastRecordedAssetInfo.second;
+							tie(liveRecording->_lastRecordedAssetFileName,
+								liveRecording->_lastRecordedAssetDurationInSeconds,
+								liveRecording->_lastRecordedSegmentUtcStartTimeInMillisecs)
+								= lastRecordedAssetInfo;
+							// liveRecording->_lastRecordedAssetFileName			= lastRecordedAssetInfo.first;
+							// liveRecording->_lastRecordedAssetDurationInSeconds	= lastRecordedAssetInfo.second;
 						}
 					}
 					catch(runtime_error e)
@@ -487,7 +493,7 @@ void LiveRecorderDaemons::stopVirtualVODIngestionThread()
 	this_thread::sleep_for(chrono::seconds(_liveRecorderVirtualVODIngestionInSeconds));
 }
 
-pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
+tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	string streamSourceType,
 	bool externalEncoder,
@@ -499,13 +505,15 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
-	double lastRecordedAssetDurationInSeconds)
+	double lastRecordedAssetDurationInSeconds,
+	int64_t lastRecordedSegmentUtcStartTimeInMillisecs)
 {
 
 	// it is assigned to lastRecordedAssetFileName because in case no new files are present,
 	// the same lastRecordedAssetFileName has to be returned
 	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
 	double newLastRecordedAssetDurationInSeconds = lastRecordedAssetDurationInSeconds;
+	int64_t newLastRecordedSegmentUtcStartTimeInMillisecs = lastRecordedSegmentUtcStartTimeInMillisecs;
     try
     {
 		_logger->info(__FILEREF__ + "processStreamSegmenterOutput"
@@ -532,7 +540,7 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 				+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
             _logger->warn(errorMessage);
 
-			return make_pair(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds);
+			return make_tuple(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds, newLastRecordedSegmentUtcStartTimeInMillisecs);
             // throw runtime_error(errorMessage);
         }
 
@@ -604,6 +612,7 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
 
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
 			newLastRecordedAssetDurationInSeconds = segmentDurationInSeconds;
+			newLastRecordedSegmentUtcStartTimeInMillisecs = utcCurrentRecordedFileCreationTime * 1000;
 
 			/*
 			 * 2019-10-17: we just saw that, even if the real duration is 59 seconds,
@@ -912,10 +921,10 @@ pair<string, double> LiveRecorderDaemons::processStreamSegmenterOutput(
         throw e;
     }
 
-	return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
+	return make_tuple(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds, newLastRecordedSegmentUtcStartTimeInMillisecs);
 }
 
-pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
+tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	string streamSourceType,
 	bool externalEncoder,
@@ -927,11 +936,13 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 	string segmentListFileName,
 	string recordedFileNamePrefix,
 	string lastRecordedAssetFileName,
-	double lastRecordedAssetDurationInSeconds)
+	double lastRecordedAssetDurationInSeconds,
+	int64_t lastRecordedSegmentUtcStartTimeInMillisecs)
 {
 
 	string newLastRecordedAssetFileName = lastRecordedAssetFileName;
 	double newLastRecordedAssetDurationInSeconds = lastRecordedAssetDurationInSeconds;
+	int64_t newLastRecordedSegmentUtcStartTimeInMillisecs = lastRecordedSegmentUtcStartTimeInMillisecs;
 
     try
     {
@@ -976,7 +987,8 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
 				_logger->warn(errorMessage);
 
-				return make_pair(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds);
+				return make_tuple(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds,
+					newLastRecordedSegmentUtcStartTimeInMillisecs);
 				// throw runtime_error(errorMessage);
 			}
 
@@ -997,6 +1009,7 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 					+ ", currentSegmentFileName: " + currentSegmentFileName
 					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
 					+ ", newLastRecordedAssetFileName: " + newLastRecordedAssetFileName
+					+ ", newLastRecordedSegmentUtcStartTimeInMillisecs: " + to_string(newLastRecordedSegmentUtcStartTimeInMillisecs)
 				);
 
 				// #EXTINF:14.640000,
@@ -1092,7 +1105,8 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 					}
 
 					// ingest the asset and initilize
-					// newLastRecordedAssetFileName and newLastRecordedAssetDurationInSeconds
+					// newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds and
+					// newLastRecordedSegmentUtcStartTimeInMillisecs
 					{
 						int64_t toBeIngestedSegmentUtcEndTimeInMillisecs =
 							toBeIngestedSegmentUtcStartTimeInMillisecs + (toBeIngestedSegmentDuration * 1000);
@@ -1112,7 +1126,27 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 								", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName
 							);
 
-							return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
+							return make_tuple(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds,
+								newLastRecordedSegmentUtcStartTimeInMillisecs);
+						}
+						else if (toBeIngestedSegmentUtcStartTimeInMillisecs <= newLastRecordedSegmentUtcStartTimeInMillisecs)
+						{
+							// toBeIngestedSegmentUtcStartTimeInMillisecs: indica il nuovo RecordedSegmentUtcStartTime
+							// newLastRecordedSegmentUtcStartTimeInMillisecs: indica il precedente RecordedSegmentUtcStartTime
+							// 2023-03-28: nella registrazione delle partite ho notato che una volta che la partita è terminata,
+							//		poichè per sicurezza avevo messo un orario di fine registrazione parecchio piu
+							//		avanti, sono ancora stati ingestati 200 media items con orari simili, l'ultimo media item
+							//		di soli 30 minuti piu avanti anzicchè 200 minuti piu avanti.
+							//		Questo controllo garantisce anche che i tempi 'start time' siano consistenti (sempre crescenti)
+
+							_logger->warn(__FILEREF__ + "media item not ingested because his start time <= last ingested start time"
+								+ ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
+								+ ", toBeIngestedSegmentUtcStartTimeInMillisecs (new start time): " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs)
+								+ ", newLastRecordedSegmentUtcStartTimeInMillisecs (previous start time): " + to_string(newLastRecordedSegmentUtcStartTimeInMillisecs)
+							);
+
+							return make_tuple(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds,
+								newLastRecordedSegmentUtcStartTimeInMillisecs);
 						}
 
 						// initialize metadata and ingest the asset
@@ -1322,6 +1356,7 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 
 						newLastRecordedAssetFileName = toBeIngestedSegmentFileName;
 						newLastRecordedAssetDurationInSeconds = toBeIngestedSegmentDuration;
+						newLastRecordedSegmentUtcStartTimeInMillisecs = toBeIngestedSegmentUtcStartTimeInMillisecs;
 					}
 
 					ingestionNumber++;
@@ -1345,7 +1380,7 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 				&& !toBeIngested					// file name does not exist into the playlist
 			)
 			{
-				// 2022-08-12: this scenario happens when the 'monitorin' kills the recording process,
+				// 2022-08-12: this scenario happens when the 'monitor process' kills the recording process,
 				//	so the playlist is reset and start from scratch.
 
 				_logger->warn(__FILEREF__ + "Filename not found: probable the playlist was reset (may be because of a kill of the monitor process)"
@@ -1360,10 +1395,12 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
 					+ ", currentSegmentFileName: " + currentSegmentFileName
 					+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
 					+ ", newLastRecordedAssetFileName: " + newLastRecordedAssetFileName
+					+ ", newLastRecordedSegmentUtcStartTimeInMillisecs: " + to_string(newLastRecordedSegmentUtcStartTimeInMillisecs)
 				);
 
 				newLastRecordedAssetFileName = "";
 				newLastRecordedAssetDurationInSeconds = 0.0;
+				newLastRecordedSegmentUtcStartTimeInMillisecs = -1;
 			}
 		}
 	}
@@ -1393,7 +1430,8 @@ pair<string, double> LiveRecorderDaemons::processHLSSegmenterOutput(
         throw e;
     }
 
-	return make_pair(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds);
+	return make_tuple(newLastRecordedAssetFileName, newLastRecordedAssetDurationInSeconds,
+		newLastRecordedSegmentUtcStartTimeInMillisecs);
 }
 
 void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(

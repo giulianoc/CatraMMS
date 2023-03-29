@@ -452,11 +452,11 @@ mms_encoder_service_running()
 		else
 			failuresNumber=0
 		fi
+		maxFailuresNumber=1000
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
-		notify "$(hostname)" "alarm_mms_encoder_service_running" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL, failuresNumber: $failuresNumber"
+		notify "$(hostname)" "alarm_mms_encoder_service_running" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL, failuresNumber: $failuresNumber/$maxFailuresNumber"
 
 		#fix management
-		maxFailuresNumber=1000
 		if [ $failuresNumber -ge $maxFailuresNumber ]
 		then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_encoder_service_running, service is restarted" >> $debugFilename

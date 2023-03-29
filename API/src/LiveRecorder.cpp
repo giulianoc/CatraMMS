@@ -189,6 +189,7 @@ void LiveRecorder::encodeContent(
 
 		_liveRecording->_lastRecordedAssetFileName			= "";
 		_liveRecording->_lastRecordedAssetDurationInSeconds	= 0.0;
+		_liveRecording->_lastRecordedSegmentUtcStartTimeInMillisecs	= -1;
 
         _liveRecording->_streamSourceType = JSONUtils::asString(metadataRoot["encodingParametersRoot"],
 			"streamSourceType", "IP_PULL");

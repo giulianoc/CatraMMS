@@ -104,37 +104,40 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 			);
             if (resultSet->next())
             {
-				int64_t previoudRequestStatisticKey = resultSet->getInt64("maxRequestStatisticKey");
-
+				if (!resultSet->isNull("maxRequestStatisticKey"))
 				{
-					lastSQLCommand = 
-						"update MMS_RequestStatistic "
-						"set upToNextRequestInSeconds = TIMESTAMPDIFF(SECOND, requestTimestamp, NOW()) "
-						"where requestStatisticKey = ?";
-					shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
-							conn->_sqlConnection->prepareStatement(lastSQLCommand));
-					int queryParameterIndex = 1;
-					preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, previoudRequestStatisticKey);
+					int64_t previoudRequestStatisticKey = resultSet->getInt64("maxRequestStatisticKey");
 
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", lastSQLCommand: " + lastSQLCommand
-						+ ", previoudRequestStatisticKey: " + to_string(previoudRequestStatisticKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
-					);
-					if (rowsUpdated != 1)
 					{
-						string errorMessage = __FILEREF__ + "no update was done"
+						lastSQLCommand = 
+							"update MMS_RequestStatistic "
+							"set upToNextRequestInSeconds = TIMESTAMPDIFF(SECOND, requestTimestamp, NOW()) "
+							"where requestStatisticKey = ?";
+						shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (
+							conn->_sqlConnection->prepareStatement(lastSQLCommand));
+						int queryParameterIndex = 1;
+						preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, previoudRequestStatisticKey);
+
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+						_logger->info(__FILEREF__ + "@SQL statistics@"
+							+ ", lastSQLCommand: " + lastSQLCommand
 							+ ", previoudRequestStatisticKey: " + to_string(previoudRequestStatisticKey)
 							+ ", rowsUpdated: " + to_string(rowsUpdated)
-							+ ", lastSQLCommand: " + lastSQLCommand
-						;
-						_logger->error(errorMessage);
+							+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+								chrono::system_clock::now() - startSql).count()) + "@"
+						);
+						if (rowsUpdated != 1)
+						{
+							string errorMessage = __FILEREF__ + "no update was done"
+								+ ", previoudRequestStatisticKey: " + to_string(previoudRequestStatisticKey)
+								+ ", rowsUpdated: " + to_string(rowsUpdated)
+								+ ", lastSQLCommand: " + lastSQLCommand
+							;
+							_logger->error(errorMessage);
 
-						throw runtime_error(errorMessage);
+							throw runtime_error(errorMessage);
+						}
 					}
 				}
             }

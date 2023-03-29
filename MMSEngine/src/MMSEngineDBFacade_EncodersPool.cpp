@@ -559,7 +559,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails (
 				string errorMessage = string("Encoder was not found")
 					+ ", encoderKey: " + to_string(encoderKey)
 				;
-				_logger->error(errorMessage);
+				_logger->error(__FILEREF__ + errorMessage);
 
 				throw EncoderNotFound(errorMessage);
 			}
@@ -597,7 +597,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails (
         }
 
         throw se;
-    }    
+    }
     catch(EncoderNotFound e)
     {        
         _logger->error(__FILEREF__ + "Encoder Not Found"

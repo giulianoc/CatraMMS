@@ -48,7 +48,7 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 
 
 
-		pair<string, double> processStreamSegmenterOutput(
+		tuple<string, double, int64_t> processStreamSegmenterOutput(
 			int64_t ingestionJobKey, int64_t encodingJobKey,
 			string streamSourceType,
 			bool externalEncoder,
@@ -60,9 +60,10 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 			string segmentListFileName,
 			string recordedFileNamePrefix,
 			string lastRecordedAssetFileName,
-			double lastRecordedAssetDurationInSeconds);
+			double lastRecordedAssetDurationInSeconds,
+			int64_t lastRecordedSegmentUtcStartTimeInMillisecs);
 
-		pair<string, double> processHLSSegmenterOutput(
+		tuple<string, double, int64_t> processHLSSegmenterOutput(
 			int64_t ingestionJobKey, int64_t encodingJobKey,
 			string streamSourceType,
 			bool externalEncoder,
@@ -74,7 +75,8 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 			string segmentListFileName,
 			string recordedFileNamePrefix,
 			string lastRecordedAssetFileName,
-			double lastRecordedAssetDurationInSeconds);
+			double lastRecordedAssetDurationInSeconds,
+			int64_t lastRecordedSegmentUtcStartTimeInMillisecs);
 
 		void ingestRecordedMediaInCaseOfInternalTranscoder(
 			int64_t ingestionJobKey,

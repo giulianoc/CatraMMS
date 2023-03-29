@@ -88,6 +88,7 @@ class FFMPEGEncoderBase {
 			string					_recordedFileNamePrefix;
 			string					_lastRecordedAssetFileName;
 			double					_lastRecordedAssetDurationInSeconds;
+			int64_t					_lastRecordedSegmentUtcStartTimeInMillisecs;
 			string					_channelLabel;
 			string					_segmenterType;
 			chrono::system_clock::time_point	_recordingStart;
