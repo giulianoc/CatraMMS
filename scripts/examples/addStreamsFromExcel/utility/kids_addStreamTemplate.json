@@ -9,14 +9,16 @@
 	"region": "",
 	"country": "",
 	"imageUniqueName": "__title__",
+	"position": __position__,
 	"userData": {
 		"staging": true,
 		"production": true,
 		"year": __year__,
 		"categories": [__categories__],
 		"channelName": "__title__",
-		"language": "__language__",
-		"duration": "__duration__"
+		"episodeTitle": "__episodeTitle__",
+		"episodeNumber": "__episodeNumber__",
+		"language": "__language__"
 	}
 }
 

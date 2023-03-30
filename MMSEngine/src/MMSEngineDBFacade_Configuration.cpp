@@ -3892,7 +3892,8 @@ Json::Value MMSEngineDBFacade::modifyStream(
 
 void MMSEngineDBFacade::removeStream(
     int64_t workspaceKey,
-    int64_t confKey)
+    int64_t confKey,
+	string label)
 {
     string      lastSQLCommand;
     
@@ -3902,18 +3903,36 @@ void MMSEngineDBFacade::removeStream(
 
     try
     {
+		if (confKey == -1 && label == "")
+		{
+			string errorMessage = __FILEREF__ + "Wrong input"
+				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);                    
+		}
+
         conn = connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
-        {
-            lastSQLCommand = 
-                "delete from MMS_Conf_Stream where confKey = ? and workspaceKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (
-					conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, confKey);
+		{
+			if (confKey != -1)
+				lastSQLCommand = 
+					"delete from MMS_Conf_Stream where confKey = ? and workspaceKey = ?";
+			else
+				lastSQLCommand = 
+					"delete from MMS_Conf_Stream where label = ? and workspaceKey = ?";
+			shared_ptr<sql::PreparedStatement> preparedStatement (
+				conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			if (confKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			else
+				preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -3921,6 +3940,7 @@ void MMSEngineDBFacade::removeStream(
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
 				+ ", confKey: " + to_string(confKey)
+				+ ", label: " + label
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
@@ -3929,9 +3949,10 @@ void MMSEngineDBFacade::removeStream(
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no delete was done"
-                        + ", confKey: " + to_string(confKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
+                    + ", confKey: " + to_string(confKey)
+					+ ", label: " + label
+                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                    + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->warn(errorMessage);
 

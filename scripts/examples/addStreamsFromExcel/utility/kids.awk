@@ -7,14 +7,16 @@ BEGIN {
 }
 
 {
-	#position=$1
-	title=$2;
-	year=$3
-	movieURL=$5
+	position=$2
+	title=$3
+	year=$4
+	movieURL=$8
 	language=$1
-	genre=$4
-	description=$7
-	duration=$9
+	genre=$5
+	episodeNumber=$6
+	episodeTitle=$7
+	description=$9
+	#duration=$9
 
 	if (NR == 1 && title == "Titolo")
 	{
@@ -36,6 +38,9 @@ BEGIN {
 		gsub(/\//, "\\/", movieURL);
 		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", movieURL);
 
+		gsub(/\//, "\\/", episodeTitle);
+		gsub(/\"/, "\\\\\\\\\\\\\\\\\\\"", episodeTitle);
+
 		if (year == "")
 			year = "null";
 
@@ -52,9 +57,9 @@ BEGIN {
 			categories=categories"\\\""category"\\\"";
 		}
 
-		printf("sed \"s/__title__/%s/g\" ./utility/kids_addStreamTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__language__/%s/g\" | sed \"s/__duration__/%s/g\" > ./outputAddStream.json\n", title, movieURL, description, year, categories, language, duration) >> outputPathName;
+		printf("sed \"s/__title__/%s/g\" ./utility/kids_addStreamTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__position__/%s/g\" | sed \"s/__language__/%s/g\" | sed \"s/__episodeTitle__/%s/g\" | sed \"s/__episodeNumber__/%s/g\"> ./outputAddStream.json\n", title, movieURL, description, year, categories, position, language, episodeTitle, episodeNumber) >> outputPathName;
 
-		printf("curl -k -u %s:%s -d @./outputAddStream.json -H \"Content-Type: application/json\" https://%s/catramms/1.0.1/conf/stream\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
+		printf("curl -k -X POST -u %s:%s -d @./outputAddStream.json -H \"Content-Type: application/json\" https://%s/catramms/1.0.1/conf/stream\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
 	}
 	else
 	{

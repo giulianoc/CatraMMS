@@ -2230,7 +2230,8 @@ public:
 
     void removeStream(
         int64_t workspaceKey,
-        int64_t confKey);
+        int64_t confKey,
+		string label);
 
     Json::Value getStreamList (
         int64_t workspaceKey, int64_t liveURLKey,

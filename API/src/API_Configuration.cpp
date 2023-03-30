@@ -2544,21 +2544,39 @@ void API::removeStream(
         string sResponse;
         try
         {
-            int64_t confKey;
-            auto confKeyIt = queryParameters.find("confKey");
-            if (confKeyIt == queryParameters.end())
+			int64_t confKey = -1;
+			auto confKeyIt = queryParameters.find("confKey");
+			if (confKeyIt != queryParameters.end())
+				confKey = stoll(confKeyIt->second);
+
+			string label;
+			auto labelIt = queryParameters.find("label");
+			if (labelIt != queryParameters.end() && labelIt->second != "")
+			{
+				label = labelIt->second;
+
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				//	That  because if we have really a + char (%2B into the string), and we do the replace
+				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				string plus = "\\+";
+				string plusDecoded = " ";
+				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+
+				label = curlpp::unescape(firstDecoding);
+			}
+
+			if (confKey == -1 && label == "")
             {
-                string errorMessage = string("The 'confKey' parameter is not found");
+                string errorMessage = string("The 'confKey/label' parameter is not found");
                 _logger->error(__FILEREF__ + errorMessage);
 
                 sendError(request, 400, errorMessage);
 
                 throw runtime_error(errorMessage);
             }
-            confKey = stoll(confKeyIt->second);
-            
+
             _mmsEngineDBFacade->removeStream(
-                workspace->_workspaceKey, confKey);
+                workspace->_workspaceKey, confKey, label);
 
             sResponse = (
                     string("{ ") 

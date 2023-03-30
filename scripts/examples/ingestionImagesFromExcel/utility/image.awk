@@ -8,8 +8,8 @@ BEGIN {
 }
 
 {
-	title=$2;
-	imageURL=$8;
+	title=$3;
+	imageURL=$10;
 
 	if (NR == 1 && title == "Titolo")
 	{
