@@ -4,6 +4,23 @@ BEGIN {
 	outputPathName="./output.sh"
 
 	printf("#!/bin/bash\n\n") > outputPathName;
+
+#for (i = 0; i <= 255; i++) {
+#	ord[sprintf("%c", i)] = i
+#}
+}
+
+function escape(str, c, len, res) {
+    len = length(str)
+    res = ""
+    for (i = 1; i <= len; i++) {
+	c = substr(str, i, 1);
+	if (c ~ /[0-9A-Za-z]/)
+	    res = res c
+	else
+	    res = res "%" sprintf("%02X", ord[c])
+    }
+    return res
 }
 
 {
@@ -60,6 +77,8 @@ BEGIN {
 		printf("sed \"s/__title__/%s/g\" ./utility/kids_addStreamTemplate.json | sed \"s/__url__/%s/g\" | sed \"s/__description__/%s/g\" | sed \"s/__year__/%s/g\" | sed \"s/__categories__/%s/g\" | sed \"s/__position__/%s/g\" | sed \"s/__language__/%s/g\" | sed \"s/__episodeTitle__/%s/g\" | sed \"s/__episodeNumber__/%s/g\"> ./outputAddStream.json\n", title, movieURL, description, year, categories, position, language, episodeTitle, episodeNumber) >> outputPathName;
 
 		printf("curl -k -X POST -u %s:%s -d @./outputAddStream.json -H \"Content-Type: application/json\" https://%s/catramms/1.0.1/conf/stream\n", userKey, apiKey, mmsApiHostname) >> outputPathName;
+		#title=escape(title)
+		#printf("curl -k -X DELETE -u %s:%s \"https://%s/catramms/1.0.1/conf/stream?label=%s\"\n", userKey, apiKey, mmsApiHostname, title) >> outputPathName;
 	}
 	else
 	{

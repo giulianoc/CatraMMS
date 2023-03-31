@@ -379,40 +379,40 @@ mms_api_service_running()
 {
 	healthCheckURL=$1
 
-	httpStatus=$(curl -k --silent --output /dev/null -w "%{http_code}" --max-time 10 "$healthCheckURL")
+	outputHealthCheckURL=/tmp/mms_api_service_running.healthCheckURL.response
+	httpStatus=$(curl -k --output $outputHealthCheckURL -w "%{http_code}" --max-time 20 "$healthCheckURL")
 	if [ $httpStatus -ne 200 ]
 	then
-		alarmNotificationPeriod=$((60 * 1))		#1 minuti
-		notify "$(hostname)" "alarm_mms_api_service_running" "alarm_mms_api_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): mms_api_service_running failed, httpStatus: $httpStatus, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
 
-		#fix management
 		failuresNumberFileName=/tmp/alarm_mms_api_service_running.failuresNumber.txt
-		maxFailuresNumber=2
 		if [ -s $failuresNumberFileName ]
 		then
 			#exist and is not empty
 			failuresNumber=$(cat $failuresNumberFileName)
-
-			if [ $failuresNumber -ge $maxFailuresNumber ]
-			then
-				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, service is restarted" >> $debugFilename
-
-				~/mmsStopALL.sh
-				sleep 1
-				~/mmsStartALL.sh
-
-				rm -f $failuresNumberFileName
-			else
-				failuresNumber=$((failuresNumber+1))
-
-				echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, one more failure: $failuresNumber, healthCheckURL: $healthCheckURL" >> $debugFilename
-
-				echo "$failuresNumber" > $failuresNumberFileName
-			fi
 		else
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, first failure, healthCheckURL: $healthCheckURL" >> $debugFilename
+			failuresNumber=0
+		fi
+		maxFailuresNumber=3
+		alarmNotificationPeriod=$((60 * 1))		#1 minuti
+		notify "$(hostname)" "alarm_mms_api_service_running" "alarm_mms_api_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL"
 
-			echo "1" > $failuresNumberFileName
+		#fix management
+		if [ $failuresNumber -ge $maxFailuresNumber ]
+		then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, service is restarted" >> $debugFilename
+
+			~/mmsStopALL.sh
+			sleep 1
+			~/mmsStartALL.sh
+
+			rm -f $failuresNumberFileName
+		else
+			failuresNumber=$((failuresNumber+1))
+
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_service_running, one more failure: $failuresNumber, healthCheckURL: $healthCheckURL" >> $debugFilename
+
+			echo "$failuresNumber" > $failuresNumberFileName
 		fi
 
 		return 1

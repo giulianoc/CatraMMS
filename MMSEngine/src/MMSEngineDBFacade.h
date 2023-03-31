@@ -2199,7 +2199,7 @@ public:
 		Json::Value userData);
 
 	Json::Value modifyStream(
-		int64_t confKey,
+		int64_t confKey, string labelKey,
 		int64_t workspaceKey,
 		bool labelToBeModified, string label,
 		bool sourceTypeToBeModified, string sourceType,

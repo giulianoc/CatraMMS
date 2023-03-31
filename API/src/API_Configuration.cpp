@@ -2431,21 +2431,39 @@ void API::modifyStream(
         string sResponse;
         try
         {
-            int64_t confKey;
-            auto confKeyIt = queryParameters.find("confKey");
-            if (confKeyIt == queryParameters.end())
+			int64_t confKey = -1;
+			auto confKeyIt = queryParameters.find("confKey");
+			if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
+				confKey = stoll(confKeyIt->second);
+
+			string labelKey;
+			auto labelIt = queryParameters.find("label");
+			if (labelIt != queryParameters.end() && labelIt->second != "")
+			{
+				labelKey = labelIt->second;
+
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				//	That  because if we have really a + char (%2B into the string), and we do the replace
+				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				string plus = "\\+";
+				string plusDecoded = " ";
+				string firstDecoding = regex_replace(labelKey, regex(plus), plusDecoded);
+
+				labelKey = curlpp::unescape(firstDecoding);
+			}
+
+			if (confKey == -1 && labelKey == "")
             {
-                string errorMessage = string("The 'confKey' parameter is not found");
+                string errorMessage = string("The 'confKey/label' parameter is not found");
                 _logger->error(__FILEREF__ + errorMessage);
 
                 sendError(request, 400, errorMessage);
 
                 throw runtime_error(errorMessage);
             }
-            confKey = stoll(confKeyIt->second);
 
 			Json::Value streamRoot = _mmsEngineDBFacade->modifyStream(
-                confKey, workspace->_workspaceKey,
+                confKey, labelKey, workspace->_workspaceKey,
 				labelToBeModified, label,
 				sourceTypeToBeModified, sourceType,
 				encodersPoolKeyToBeModified, encodersPoolKey,
@@ -2546,7 +2564,7 @@ void API::removeStream(
         {
 			int64_t confKey = -1;
 			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt != queryParameters.end())
+			if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
 				confKey = stoll(confKeyIt->second);
 
 			string label;

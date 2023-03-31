@@ -3219,7 +3219,7 @@ Json::Value MMSEngineDBFacade::addStream(
 }
 
 Json::Value MMSEngineDBFacade::modifyStream(
-    int64_t confKey,
+    int64_t confKey, string labelKey,
     int64_t workspaceKey,
     bool labelToBeModified, string label,
 
@@ -3492,9 +3492,12 @@ Json::Value MMSEngineDBFacade::modifyStream(
                 throw runtime_error(errorMessage);                    
             }
 
-            lastSQLCommand = 
-                string("update MMS_Conf_Stream ") + setSQL + " "
-				"where confKey = ? and workspaceKey = ?";
+            lastSQLCommand = "update MMS_Conf_Stream " + setSQL + " where ";
+			if (confKey != -1)
+				lastSQLCommand += "confKey = ? ";
+			else
+				lastSQLCommand += "label = ? ";
+			lastSQLCommand += "and workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3714,7 +3717,10 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				else
 					preparedStatement->setString(queryParameterIndex++, sUserData);
 			}
-            preparedStatement->setInt64(queryParameterIndex++, confKey);
+			if (confKey != -1)
+				preparedStatement->setInt64(queryParameterIndex++, confKey);
+			else
+				preparedStatement->setString(queryParameterIndex++, labelKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -3753,6 +3759,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				+ ", sUserData (" + to_string(userDataToBeModified) + "): "
 					+ sUserData
 				+ ", confKey: " + to_string(confKey)
+				+ ", labelKey: " + labelKey
 				+ ", workspaceKey: " + to_string(workspaceKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
 				+ ", elapsed (secs): @"
@@ -14043,7 +14050,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 		bool channelDataToBeModified = true;
 
 		modifyStream(
-			confKey,
+			confKey, "",
 			workspace->_workspaceKey,
 			labelToBeModified, label,
 			sourceTypeToBeModified, sourceType,

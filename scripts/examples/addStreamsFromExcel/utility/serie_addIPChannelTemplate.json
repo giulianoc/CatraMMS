@@ -10,9 +10,9 @@
 	"country": "",
 	"imageUniqueName": "__serieTitle__",
 	"position": __position__,
-	"channelData": {
+	"userData": {
 		"staging": true,
-		"production": true,
+		"production": false,
 		"year": __year__,
 		"categories": [__categories__],
 		"channelName": "__serieTitle__",
