@@ -3785,8 +3785,9 @@ Json::Value MMSEngineDBFacade::modifyStream(
 		{
 			int start = 0;
 			int rows = 1;
-			string label;
-			bool labelLike = true;
+			// string label;
+			// se viene usata la labelKey come chiave per la modifica, labelLike sarà false
+			bool labelLike = confKey == -1 ? false : true;
 			string url;
 			string sourceType;
 			string type;
@@ -3796,7 +3797,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 			string labelOrder;
 			Json::Value streamListRoot = getStreamList (
 				conn, workspaceKey, confKey,
-				start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder);
+				start, rows, labelKey, labelLike, url, sourceType, type, name, region, country, labelOrder);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
