@@ -11181,6 +11181,10 @@ tuple<long, string, string, int, int64_t, Json::Value
 		field = "url";
 		url = JSONUtils::asString(streamInputRoot, field, "");
 
+		int64_t useVideoTrackFromMediaItemKey;
+		field = "useVideoTrackFromMediaItemKey";
+		useVideoTrackFromMediaItemKey = JSONUtils::asInt64(streamInputRoot, field, -1);
+
 		string userAgent;
 		field = "userAgent";
 		userAgent = JSONUtils::asString(streamInputRoot, field, "");

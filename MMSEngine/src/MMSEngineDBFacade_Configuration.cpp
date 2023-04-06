@@ -13261,6 +13261,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
 Json::Value MMSEngineDBFacade::getStreamInputRoot(
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 	string configurationLabel,
+	string useVideoTrackFromPhysicalPathName, string useVideoTrackFromPhysicalDeliveryURL,
 	int maxWidth, string userAgent, string otherInputOptions,
 	string taskEncodersPoolLabel, Json::Value drawTextDetailsRoot
 )
@@ -13359,6 +13360,12 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 
 		field = "configurationLabel";
 		streamInputRoot[field] = configurationLabel;
+
+		field = "useVideoTrackFromPhysicalPathName";
+		streamInputRoot[field] = useVideoTrackFromPhysicalPathName;
+
+		field = "useVideoTrackFromPhysicalDeliveryURL";
+		streamInputRoot[field] = useVideoTrackFromPhysicalDeliveryURL;
 
 		field = "streamSourceType";
 		streamInputRoot[field] = streamSourceType;

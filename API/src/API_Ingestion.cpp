@@ -4461,6 +4461,7 @@ void API::changeLiveProxyPlaylist(
 							_mmsEngineDBFacade->getStreamInputRoot(
 							workspace, broadcasterIngestionJobKey,
 							broadcastDefaultConfigurationLabel,
+							"", "", // useVideoTrackFromPhysicalPathName, useVideoTrackFromPhysicalDeliveryURL
 							maxWidth, userAgent, otherInputOptions,
 							"", drawTextDetailsRoot);
 					}

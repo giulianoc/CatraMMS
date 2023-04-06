@@ -55,7 +55,7 @@ if [ ! -f "/opt/catramms/CatraMMS-$version.tar.gz" ]; then
 	exit
 fi
 
-sleepIfNeeded
+#sleepIfNeeded
 removePreviousVersions
 
 mmsStopALL.sh

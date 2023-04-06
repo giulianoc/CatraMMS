@@ -2634,6 +2634,7 @@ public:
 	Json::Value getStreamInputRoot(
 		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 		string configurationLabel,
+		string useVideoTrackFromPhysicalPathName, string useVideoTrackFromPhysicalDeliveryURL,
 		int maxWidth, string userAgent, string otherInputOptions,
 		string taskEncodersPoolLabel, Json::Value drawTextDetailsRoot);
 

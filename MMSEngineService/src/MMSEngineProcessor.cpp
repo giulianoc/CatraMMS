@@ -12904,6 +12904,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		bool timePeriod = false;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
+		int64_t useVideoTrackFromMediaItemKey = -1;
 		string taskEncodersPoolLabel;
 		{
 			{
@@ -12918,6 +12919,9 @@ void MMSEngineProcessor::manageLiveProxy(
 					throw runtime_error(errorMessage);
 				}
 				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
+
+				field = "useVideoTrackFromMediaItemKey";
+				useVideoTrackFromMediaItemKey = JSONUtils::asInt64(parametersRoot, field, -1);
 
 				{
 					bool warningIfMissing = false;
@@ -13031,6 +13035,68 @@ void MMSEngineProcessor::manageLiveProxy(
 			outputsRoot = parametersRoot[field];
         }
 
+		string useVideoTrackFromPhysicalPathName;
+		string useVideoTrackFromPhysicalDeliveryURL;
+		if (useVideoTrackFromMediaItemKey != -1)
+		{
+			int64_t sourcePhysicalPathKey;
+
+			_logger->info(__FILEREF__ + "useVideoTrackFromMediaItemKey"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", useVideoTrackFromMediaItemKey: " + to_string(useVideoTrackFromMediaItemKey)
+			);
+
+			{
+				int64_t encodingProfileKey = -1;
+				bool warningIfMissing = false;
+				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails =
+					_mmsStorage->getPhysicalPathDetails(useVideoTrackFromMediaItemKey, encodingProfileKey,
+					warningIfMissing,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true);
+				tie(sourcePhysicalPathKey, useVideoTrackFromPhysicalPathName, ignore, ignore, ignore,
+					ignore, ignore) = physicalPathDetails;
+			}
+
+			// calculate delivery URL in case of an external encoder
+			{
+				int64_t utcNow;
+				{
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					utcNow = chrono::system_clock::to_time_t(now);
+				}
+
+				pair<string, string> deliveryAuthorizationDetails =
+					_mmsDeliveryAuthorization->createDeliveryAuthorization(
+					-1,	// userKey,
+					workspace,
+					"",	// clientIPAddress,
+
+					-1,	// mediaItemKey,
+					"",	// uniqueName,
+					-1,	// encodingProfileKey,
+					"",	// encodingProfileLabel,
+
+					sourcePhysicalPathKey,
+
+					-1,	// ingestionJobKey,	(in case of live)
+					-1,	// deliveryCode,
+
+					365 * 24 * 60 * 60,	// ttlInSeconds, 365 days!!!
+					999999,	// maxRetries,
+					false,	// save,
+					"MMS_SignedToken",	// deliveryType,
+
+					false,	// warningIfMissingMediaItemKey,
+					true,	// filteredByStatistic
+					""		// userId (it is not needed it filteredByStatistic is true
+				);
+
+				tie(useVideoTrackFromPhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+			}
+		}
+
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
 			workspace, ingestionJobKey, false);
 
@@ -13058,6 +13124,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			Json::Value streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
 				workspace, ingestionJobKey, configurationLabel,
+				useVideoTrackFromPhysicalPathName, useVideoTrackFromPhysicalDeliveryURL,
 				maxWidth, userAgent, otherInputOptions, taskEncodersPoolLabel,
 				drawTextDetailsRoot);
 

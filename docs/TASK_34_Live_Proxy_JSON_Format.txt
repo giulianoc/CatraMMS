@@ -10,6 +10,11 @@
 		// mandatory, it identifies the channel
 		"ConfigurationLabel": "",
 
+		// nel caso il canale è un canale con solo audio (ad esempio una radio),
+		// è possibile aggiungere una traccia video da recuperare da un MediaItemKey
+		// default: -1
+		"useVideoTrackFromMediaItemKey": 1234,
+
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
 		// In case this field is initialized here, it overrides the one specified by the channel
