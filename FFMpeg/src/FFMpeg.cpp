@@ -10300,6 +10300,8 @@ void FFMpeg::liveProxy2(
 				_logger->info(__FILEREF__ + "liveProxy: ffmpegInputArgumentList"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", externalEncoder: " + to_string(externalEncoder)
+					+ ", currentInputRoot: " + JSONUtils::toString(currentInputRoot)
 					+ ", ffmpegInputArgumentList: " + ffmpegInputArgumentListStream.str()
 				);
 			}
@@ -11181,15 +11183,16 @@ tuple<long, string, string, int, int64_t, Json::Value
 		field = "url";
 		url = JSONUtils::asString(streamInputRoot, field, "");
 
-		int64_t useVideoTrackFromMediaItemKey;
-		field = "useVideoTrackFromMediaItemKey";
-		useVideoTrackFromMediaItemKey = JSONUtils::asInt64(streamInputRoot, field, -1);
+		field = "useVideoTrackFromPhysicalPathName";
+		string useVideoTrackFromPhysicalPathName = JSONUtils::asString(streamInputRoot, field, "");
+
+		field = "useVideoTrackFromPhysicalDeliveryURL";
+		string useVideoTrackFromPhysicalDeliveryURL = JSONUtils::asString(streamInputRoot, field, "");
 
 		string userAgent;
 		field = "userAgent";
 		userAgent = JSONUtils::asString(streamInputRoot, field, "");
 
-		// int pushListenTimeout = -1;
 		field = "pushListenTimeout";
 		pushListenTimeout = JSONUtils::asInt(streamInputRoot, field, -1);
 
@@ -11533,8 +11536,42 @@ tuple<long, string, string, int, int64_t, Json::Value
 			}
 			else if (streamSourceType == "IP_PULL")
 			{
+				// this is a streaming
 				ffmpegInputArgumentList.push_back("-i");
 				ffmpegInputArgumentList.push_back(url);
+
+				if (useVideoTrackFromPhysicalPathName != "" && !externalEncoder)
+				{
+					// this is a file
+
+					ffmpegInputArgumentList.push_back("-stream_loop");
+					// number of times input stream shall be looped. Loop 0 means no loop, loop -1 means infinite loop
+					ffmpegInputArgumentList.push_back("-1");
+
+					ffmpegInputArgumentList.push_back("-i");
+					ffmpegInputArgumentList.push_back(useVideoTrackFromPhysicalPathName);
+
+					ffmpegInputArgumentList.push_back("-map");
+					ffmpegInputArgumentList.push_back("0:a");
+					ffmpegInputArgumentList.push_back("-map");
+					ffmpegInputArgumentList.push_back("1:v");
+				}
+				else if (useVideoTrackFromPhysicalDeliveryURL != "" && externalEncoder)
+				{
+					// this is a file
+
+					ffmpegInputArgumentList.push_back("-stream_loop");
+					// number of times input stream shall be looped. Loop 0 means no loop, loop -1 means infinite loop
+					ffmpegInputArgumentList.push_back("-1");
+
+					ffmpegInputArgumentList.push_back("-i");
+					ffmpegInputArgumentList.push_back(useVideoTrackFromPhysicalDeliveryURL);
+
+					ffmpegInputArgumentList.push_back("-map");
+					ffmpegInputArgumentList.push_back("0:a");
+					ffmpegInputArgumentList.push_back("-map");
+					ffmpegInputArgumentList.push_back("1:v");
+				}
 			}
 			else if (streamSourceType == "TV")
 			{
@@ -12491,6 +12528,9 @@ void FFMpeg::liveProxyOutput(
 			// Il problema 'sopra' che, a seguito del codec mp2 veniva generato un errore,
 			// è stato risolto aggiungendo un encoding in uscita.
 			// Per questo motivo sotto viene commentato
+
+			// 2023-04-06: La logica negata è sbagliata, perchè il filtro aac_adtstoasc funziona solamente
+			//	con aac. Infatti ora ho trovato un caso di mp3 che non funziona con aac_adtstoasc
 			{
 				/*
 				bool aacFilterToBeAdded = true;

@@ -10,8 +10,9 @@
 		// mandatory, it identifies the channel
 		"ConfigurationLabel": "",
 
-		// nel caso il canale è un canale con solo audio (ad esempio una radio),
-		// è possibile aggiungere una traccia video da recuperare da un MediaItemKey
+		// In case if is a only audio channel, for example a radio, it is possible to add
+		// a video track to be retrieved from a MediaItemKey (video item). This video could be generated
+		// using a Slideshow Task using cfr as video sync method.
 		// default: -1
 		"useVideoTrackFromMediaItemKey": 1234,
 
