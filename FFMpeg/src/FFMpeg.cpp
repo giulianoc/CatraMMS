@@ -15274,24 +15274,36 @@ string FFMpeg::getFilter(
 				ffmpegTextPosition_X_InPixel = "w - (text_w + 20)";
 
 			// t (timestamp): 0, 1, 2, ...
-			else if (textPosition_X_InPixel == "leftToRight_slow")
+			else if (textPosition_X_InPixel == "leftToRight_5")
 				ffmpegTextPosition_X_InPixel = "(5 * t) - text_w";
-			else if (textPosition_X_InPixel == "leftToRight_false")
+			else if (textPosition_X_InPixel == "leftToRight_10")
 				ffmpegTextPosition_X_InPixel = "(10 * t) - text_w";
-			else if (textPosition_X_InPixel == "loopLeftToRight_slow")
+			else if (textPosition_X_InPixel == "loopLeftToRight_5")
 				ffmpegTextPosition_X_InPixel = "mod(5 * t\\, w + text_w) - text_w";
-			else if (textPosition_X_InPixel == "loopLeftToRight_fast")
+			else if (textPosition_X_InPixel == "loopLeftToRight_10")
 				ffmpegTextPosition_X_InPixel = "mod(10 * t\\, w + text_w) - text_w";
 
 			// 15 and 30 sono stati decisi usando un video 1920x1080
-			else if (textPosition_X_InPixel == "rightToLeft_slow")
-				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * t)";
-			else if (textPosition_X_InPixel == "rightToLeft_fast")
+			else if (textPosition_X_InPixel == "rightToLeft_15")
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * t)";
-			else if (textPosition_X_InPixel == "loopRightToLeft_slow")
-				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * mod(t\\, 30))";
-			else if (textPosition_X_InPixel == "loopRightToLeft_fast")
+			else if (textPosition_X_InPixel == "rightToLeft_30")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * t)";
+			else if (textPosition_X_InPixel == "loopRightToLeft_15")
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * mod(t\\, 15))";
+			else if (textPosition_X_InPixel == "loopRightToLeft_slow" || textPosition_X_InPixel == "loopRightToLeft_30")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * mod(t\\, 30))";
+			else if (textPosition_X_InPixel == "loopRightToLeft_60")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 60) * mod(t\\, 60))";
+			else if (textPosition_X_InPixel == "loopRightToLeft_90")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 90) * mod(t\\, 90))";
+			else if (textPosition_X_InPixel == "loopRightToLeft_120")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 120) * mod(t\\, 120))";
+			else if (textPosition_X_InPixel == "loopRightToLeft_150")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 150) * mod(t\\, 150))";
+			else if (textPosition_X_InPixel == "loopRightToLeft_180")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 180) * mod(t\\, 180))";
+			else if (textPosition_X_InPixel == "loopRightToLeft_210")
+				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 210) * mod(t\\, 210))";
 			else
 			{
 				ffmpegTextPosition_X_InPixel = 

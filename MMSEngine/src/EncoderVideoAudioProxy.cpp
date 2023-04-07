@@ -8185,6 +8185,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				+ ", _maxEncoderNotReachableFailures: " + to_string(_maxEncoderNotReachableFailures)
 				+ ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
 				+ ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
+				+ ", alwaysRetry: " + to_string(alwaysRetry)
 			);
 
 			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
@@ -8347,21 +8348,21 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 								// update EncodingJob failures number to notify the GUI EncodingJob is failing
 								try
 								{
-									_logger->info(__FILEREF__
-										+ "check and update encodingJob FailuresNumber"
-										+ ", _ingestionJobKey: "
-											+ to_string(_encodingItem->_ingestionJobKey)
-										+ ", _encodingJobKey: "
-											+ to_string(_encodingItem->_encodingJobKey)
-										+ ", currentAttemptsNumberInCaseOfErrors: "
-											+ to_string(currentAttemptsNumberInCaseOfErrors)
-									);
-
 									bool isKilled =
 										_mmsEngineDBFacade->updateEncodingJobFailuresNumber (
 											_encodingItem->_encodingJobKey, 
 											currentAttemptsNumberInCaseOfErrors
 									);
+
+									_logger->info(__FILEREF__
+										+ "check and update encodingJob FailuresNumber"
+										+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+										+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+										+ ", currentAttemptsNumberInCaseOfErrors: "
+											+ to_string(currentAttemptsNumberInCaseOfErrors)
+										+ ", isKilled: " + to_string(isKilled)
+									);
+
 									if (isKilled)
 									{
 										_logger->info(__FILEREF__
