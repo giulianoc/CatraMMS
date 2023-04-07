@@ -15,15 +15,15 @@
 #include "MMSDeliveryAuthorization.h"
 #include "MMSCURL.h"                                                                                          
 #include "AWSSigner.h"
+#include <regex>
 #include <fstream>
-#ifdef __LOCALENCODER__
-#else
-    #include <curlpp/cURLpp.hpp>
-    #include <curlpp/Easy.hpp>
-    #include <curlpp/Options.hpp>
-    #include <curlpp/Exception.hpp>
-    #include <curlpp/Infos.hpp>
-#endif
+/*
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/Exception.hpp>
+#include <curlpp/Infos.hpp>
+*/
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/System.h"
 #include "catralibraries/StringUtils.h"
@@ -8289,7 +8289,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 								+ to_string(_encodingItem->_encodingJobKey)
 							+ ", _currentUsedFFMpegEncoderHost: "
 								+ _currentUsedFFMpegEncoderHost
-							+ ", encodingErrorMessage: " + encodingErrorMessage
+							+ ", encodingErrorMessage: " + regex_replace(encodingErrorMessage, regex("\n"), " ")
 						;
 						_logger->error(errorMessage);
 

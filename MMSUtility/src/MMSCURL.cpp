@@ -1002,7 +1002,7 @@ string MMSCURL::httpGet(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-					+ ", sResponse: " + sResponse
+					+ ", sResponse: " + regex_replace(sResponse, regex("\n"), " ")
 				;
 				logger->info(message);
 			}
