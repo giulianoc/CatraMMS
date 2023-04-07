@@ -1565,8 +1565,8 @@ pair<string, string> MMSCURL::httpPostPutString(
 			{
 				string message = __FILEREF__ + "httpPostPutString success test"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", sHeaderResponse: " + sHeaderResponse
-					+ ", sBodyResponse: " + sBodyResponse
+					+ ", sHeaderResponse: " + regex_replace(sHeaderResponse, regex("\n"), " ")
+					+ ", sBodyResponse: " + regex_replace(sBodyResponse, regex("\n"), " ")
 				;
 				logger->info(message);
 			}

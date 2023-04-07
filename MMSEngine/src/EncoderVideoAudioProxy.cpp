@@ -8056,7 +8056,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							+ ", body: " + body
+							+ ", body: " + regex_replace(body, regex("\n"), " ")
 							+ ", e.what: " + e.what()
 						);
 					}
@@ -8176,6 +8176,16 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			int encoderNotReachableFailures = 0;
 			int encodingPid;
 			int lastEncodingPid = 0;
+
+			_logger->info(__FILEREF__ + "starting loop"
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", encodingFinished: " + to_string(encodingFinished)
+				+ ", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures)
+				+ ", _maxEncoderNotReachableFailures: " + to_string(_maxEncoderNotReachableFailures)
+				+ ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
+				+ ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
+			);
 
 			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
 			//  in case the transcoder is down (once I had to upgrade his operative system),
