@@ -8180,8 +8180,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			// 2020-11-28: the next while, it was added encodingStatusFailures condition because,
 			//  in case the transcoder is down (once I had to upgrade his operative system),
 			//  the engine has to select another encoder and not remain in the next loop indefinitely
-            while(!(encodingFinished || encoderNotReachableFailures >=
-				_maxEncoderNotReachableFailures))
+            while(!(encodingFinished
+				|| encoderNotReachableFailures >= _maxEncoderNotReachableFailures
+				|| currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors))
             // while(!encodingFinished)
             {
 				_logger->info(__FILEREF__ + "sleep_for"
