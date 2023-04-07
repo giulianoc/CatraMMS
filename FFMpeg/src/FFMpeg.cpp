@@ -15290,6 +15290,7 @@ string FFMpeg::getFilter(
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * t)";
 			else if (textPosition_X_InPixel == "loopRightToLeft_15")
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * mod(t\\, 15))";
+// loopRightToLeft_slow deve essere rimosso
 			else if (textPosition_X_InPixel == "loopRightToLeft_slow" || textPosition_X_InPixel == "loopRightToLeft_30")
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * mod(t\\, 30))";
 			else if (textPosition_X_InPixel == "loopRightToLeft_60")
@@ -15325,22 +15326,22 @@ string FFMpeg::getFilter(
 				ffmpegTextPosition_Y_InPixel = "20";
 
 			// t (timestamp): 0, 1, 2, ...
-			else if (textPosition_Y_InPixel == "bottomToTop_slow")
+			else if (textPosition_Y_InPixel == "bottomToTop_50")
 				ffmpegTextPosition_Y_InPixel = "h - (t * 50)";
-			else if (textPosition_Y_InPixel == "bottomToTop_false")
+			else if (textPosition_Y_InPixel == "bottomToTop_100")
 				ffmpegTextPosition_Y_InPixel = "h - (t * 100)";
-			else if (textPosition_Y_InPixel == "loopBottomToTop_slow")
+			else if (textPosition_Y_InPixel == "loopBottomToTop_50")
 				ffmpegTextPosition_Y_InPixel = "h - mod(t * 50\\, h)";
-			else if (textPosition_Y_InPixel == "loopBottomToTop_fast")
+			else if (textPosition_Y_InPixel == "loopBottomToTop_100")
 				ffmpegTextPosition_Y_InPixel = "h - mod(t * 100\\, h)";
 
-			else if (textPosition_Y_InPixel == "topToBottom_slow")
+			else if (textPosition_Y_InPixel == "topToBottom_50")
 				ffmpegTextPosition_Y_InPixel = "t * 50";
-			else if (textPosition_Y_InPixel == "topToBottom_fast")
+			else if (textPosition_Y_InPixel == "topToBottom_100")
 				ffmpegTextPosition_Y_InPixel = "t * 100";
-			else if (textPosition_Y_InPixel == "loopTopToBottom_slow")
+			else if (textPosition_Y_InPixel == "loopTopToBottom_50")
 				ffmpegTextPosition_Y_InPixel = "mod(t * 50\\, h)";
-			else if (textPosition_Y_InPixel == "loopTopToBottom_fast")
+			else if (textPosition_Y_InPixel == "loopTopToBottom_100")
 				ffmpegTextPosition_Y_InPixel = "mod(t * 100\\, h)";
 			else
 			{
