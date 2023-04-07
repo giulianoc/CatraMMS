@@ -8192,7 +8192,8 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			//  the engine has to select another encoder and not remain in the next loop indefinitely
             while(!(encodingFinished
 				|| encoderNotReachableFailures >= _maxEncoderNotReachableFailures
-				|| currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors))
+				// || currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors
+			))
             // while(!encodingFinished)
             {
 				_logger->info(__FILEREF__ + "sleep_for"

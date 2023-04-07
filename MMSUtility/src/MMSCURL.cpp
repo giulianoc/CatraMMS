@@ -1495,7 +1495,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
 				+ ", contentType: " + contentType
-				+ ", body: " + body
+				+ ", body: " + regex_replace(body, regex("\n"), " ")
 			);
 
 			// store response headers in the response                                                         
@@ -1517,7 +1517,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 					+ ", url: " + url
 					+ ", @MMS statistics@ - elapsed (secs): @" + to_string(
 						chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
-					+ ", response.str(): " + response.str()
+					+ ", response.str(): " + regex_replace(response.str(), regex("\n"), " ")
 					+ ", responseCode: " + to_string(responseCode)
 				;
 				logger->error(message);
