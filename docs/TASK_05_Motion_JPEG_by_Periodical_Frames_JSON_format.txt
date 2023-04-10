@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Motion-JPEG-by-Periodical-Frames",
+	"type": "Motion-JPEG-by-Periodical-Frames",
 
 	"Parameters": {
 		// mandatory

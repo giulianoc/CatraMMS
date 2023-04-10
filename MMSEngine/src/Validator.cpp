@@ -38,7 +38,7 @@ Validator::~Validator() {
 
 void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root)
 {
-    string field = "Type";
+    string field = "type";
     if (!JSONUtils::isMetadataPresent(root, field))
     {
         string sRoot = JSONUtils::toString(root);
@@ -75,7 +75,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
     }    
     Json::Value taskRoot = root[field];                        
 
-    field = "Type";
+    field = "type";
     if (!JSONUtils::isMetadataPresent(taskRoot, field))
     {
         string sRoot = JSONUtils::toString(root);
@@ -151,7 +151,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     {
         Json::Value taskRoot = tasksRoot[taskIndex];
         
-        field = "Type";
+        field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -228,7 +228,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         }    
         Json::Value taskRoot = onSuccessRoot[field];                        
 
-        string field = "Type";
+        string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
@@ -271,7 +271,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         }    
         Json::Value taskRoot = onErrorRoot[field];                        
 
-        string field = "Type";
+        string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
@@ -314,7 +314,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         }    
         Json::Value taskRoot = onCompleteRoot[field];                        
 
-        string field = "Type";
+        string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
@@ -347,7 +347,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
 		dependencies;
 
-    string field = "Type";
+    string field = "type";
     if (!JSONUtils::isMetadataPresent(taskRoot, field))
     {
         string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -364,7 +364,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     field = "label";
 	label = JSONUtils::asString(taskRoot, field, "");
 
-    string type = JSONUtils::asString(taskRoot, "Type", "");
+    string type = JSONUtils::asString(taskRoot, "type", "");
     if (type == "Add-Content")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::AddContent;
@@ -6930,7 +6930,7 @@ void Validator::validateCrossReference(
 	if (mediaItemKeyMandatory)
 	{
 		vector<string> crossReferenceMandatoryFields = {
-			"Type",
+			"type",
 			"MediaItemKey"
 		};
 		for (string mandatoryField: crossReferenceMandatoryFields)
@@ -6953,7 +6953,7 @@ void Validator::validateCrossReference(
 	else
 	{
 		vector<string> crossReferenceMandatoryFields = {
-			"Type",
+			"type",
 		};
 		for (string mandatoryField: crossReferenceMandatoryFields)
 		{
@@ -6973,7 +6973,7 @@ void Validator::validateCrossReference(
 		}
 	}
 
-	string field = "Type";
+	string field = "type";
 	string sCrossReferenceType = JSONUtils::asString(crossReferenceRoot, field, "");
 	MMSEngineDBFacade::CrossReferenceType crossReferenceType;
 	try

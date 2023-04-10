@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My Local Copy",
 
-	"Type": "Local-Copy",
+	"type": "Local-Copy",
 
 	"Parameters": {
 		"References": [

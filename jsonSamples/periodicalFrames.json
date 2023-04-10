@@ -1,12 +1,12 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
 		"Title": "My Title of the content"
 	},
 	"Task": {
 		"label": "my label",
-		"Type": "Periodical-Frames",
+		"type": "Periodical-Frames",
 		"Parameters": {
 			"ReferenceMediaItemKey": 11,
 			"StartTimeInSeconds": 2.5,

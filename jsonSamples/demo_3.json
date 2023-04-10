@@ -1,18 +1,18 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
 		"TitleOfVideo_1": "My Title of the video_1 content",
 		"TitleOfVideo_2": "My Title of the video_2 content"
 	},
 	"Task": {
-		"Type": "GroupOfTasks",
+		"type": "GroupOfTasks",
 		"Parameters": {
 			"ExecutionType": "parallel",
 			"Tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
            				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
@@ -23,7 +23,7 @@
 				},
 				{
 					"label": "${TitleOfVideo_2}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
            				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",

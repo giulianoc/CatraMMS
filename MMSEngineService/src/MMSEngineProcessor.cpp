@@ -14766,7 +14766,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				concatDemuxerRoot[field] = "Concat from " + to_string(utcFirstChunkStartTime) + " (" + firstChunkStartTime
 					+ ") to " + to_string(utcLastChunkEndTime) + " (" + lastChunkEndTime + ")";
 
-				field = "Type";
+				field = "type";
 				concatDemuxerRoot[field] = "Concat-Demuxer";
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
@@ -14827,7 +14827,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
 
-				field = "Type";
+				field = "type";
 				cutRoot[field] = "Cut";
 
 				Json::Value cutParametersRoot = concatDemuxerParametersRoot;
@@ -14985,7 +14985,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
 
-				field = "Type";
+				field = "type";
 				workflowRoot[field] = "Workflow";
 
 				field = "Task";
@@ -15696,7 +15696,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				concatDemuxerRoot[field] = "Concat from " + to_string(utcFirstChunkStartTimeInMilliSecs) + " (" + firstChunkStartTime
 					+ ") to " + to_string(utcLastChunkEndTimeInMilliSecs) + " (" + lastChunkEndTime + ")";
 
-				field = "Type";
+				field = "type";
 				concatDemuxerRoot[field] = "Concat-Demuxer";
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
@@ -15757,7 +15757,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
 
-				field = "Type";
+				field = "type";
 				cutRoot[field] = "Cut";
 
 				Json::Value cutParametersRoot = concatDemuxerParametersRoot;
@@ -15917,7 +15917,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
 
-				field = "Type";
+				field = "type";
 				workflowRoot[field] = "Workflow";
 
 				field = "Task";
@@ -16901,7 +16901,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						+ " to YouTube (" + youTubeConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
-					field = "Type";
+					field = "type";
 					proxyRoot[field] = "Live-Proxy";
 
 					liveProxyParametersRoot = parametersRoot;
@@ -16993,7 +16993,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					proxyLabel = "VOD-Proxy MediaItem to YouTube (" + youTubeConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
-					field = "Type";
+					field = "type";
 					proxyRoot[field] = "VOD-Proxy";
 
 					vodProxyParametersRoot = parametersRoot;
@@ -17086,7 +17086,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				string field = "label";
 				workflowRoot[field] = ingestionJobLabel + ". " + proxyLabel;
 
-				field = "Type";
+				field = "type";
 				workflowRoot[field] = "Workflow";
 
 				field = "Task";
@@ -17547,7 +17547,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						+ " to Facebook (" + facebookConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
-					field = "Type";
+					field = "type";
 					proxyRoot[field] = "Live-Proxy";
 
 					liveProxyParametersRoot = parametersRoot;
@@ -17664,7 +17664,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 					proxyLabel = "Proxy MediaItem to Facebook (" + facebookConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
-					field = "Type";
+					field = "type";
 					proxyRoot[field] = "VOD-Proxy";
 
 					vodProxyParametersRoot = parametersRoot;
@@ -17763,7 +17763,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				string field = "label";
 				workflowRoot[field] = ingestionJobLabel + ". " + proxyLabel;
 
-				field = "Type";
+				field = "type";
 				workflowRoot[field] = "Workflow";
 
 				field = "Task";
@@ -22371,7 +22371,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
             throw runtime_error(errorMessage);
         }
         
-        string field = "Type";
+        string field = "type";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -22742,7 +22742,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
         Json::Value crossReferenceRoot;
 
-		field = "Type";
+		field = "type";
 		crossReferenceRoot[field] =
 			MMSEngineDBFacade::toString(crossReferenceType);
 
@@ -22759,7 +22759,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
         Json::Value crossReferenceRoot;
 
-		field = "Type";
+		field = "type";
 		crossReferenceRoot[field] =
 			MMSEngineDBFacade::toString(crossReferenceType);
 
@@ -22788,7 +22788,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
         Json::Value crossReferenceRoot;
 
-		field = "Type";
+		field = "type";
 		crossReferenceRoot[field] =
 			MMSEngineDBFacade::toString(crossReferenceType);
 

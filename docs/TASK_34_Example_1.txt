@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My Live Proxy",
 
-	"Type": "Live-Proxy",
+	"type": "Live-Proxy",
 
 	"Parameters": {
 		"ConfigurationLabel": "my live proxy"

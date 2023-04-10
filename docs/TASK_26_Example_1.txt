@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My YouTube POST",
 
-	"Type": "Post-On-YouTube",
+	"type": "Post-On-YouTube",
 
 	"Parameters": {
 		"References": [

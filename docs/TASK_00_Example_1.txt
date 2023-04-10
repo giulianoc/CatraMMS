@@ -1,19 +1,19 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "GroupOfTasks example",
 	"Variables": {
-		"TitleOfVideo_1": { "Value": "My Title of the video_1 content", "Type": "string", "Description": "..." },
-		"TitleOfVideo_2": { "Value": "My Title of the video_2 content", "Type": "string", "Description": "..." }
+		"TitleOfVideo_1": { "Value": "My Title of the video_1 content", "type": "string", "Description": "..." },
+		"TitleOfVideo_2": { "Value": "My Title of the video_2 content", "type": "string", "Description": "..." }
 	},
 	"Task": {
-		"Type": "GroupOfTasks",
+		"type": "GroupOfTasks",
 		"Parameters": {
 			"ExecutionType": "parallel",
 
 			"Tasks": [
 				{
 					"label": "...",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
 						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
@@ -23,7 +23,7 @@
 				},
 				{
 					"label": "...",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
 						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",

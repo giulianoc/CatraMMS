@@ -1,12 +1,12 @@
 {
-    "Type": "Workflow",
+    "type": "Workflow",
     "label": "1",
     "Variables": {
         "TitleOfVideo": "My Title of the video content"
     },
     "Task": {
         "label": "My video",
-        "Type": "Add-Content",
+        "type": "Add-Content",
         "Parameters": {
             "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/05/15/2577986.mp4",
             "FileFormat": "mp4",
@@ -17,7 +17,7 @@
         "OnSuccess": {
             "Task": {
                 "label": "my label",
-                "Type": "Encode",
+                "type": "Encode",
                 "Parameters": {
                     "EncodingPriority": "Low",
                     "EncodingProfilesSetLabel": "PredefinedProfiles"
@@ -26,7 +26,7 @@
         },
 		"OnComplete": {
 			"Task": {
-				"Type": "Email-Notification",
+				"type": "Email-Notification",
 				"Parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",
 					"Subject": "Task finished",

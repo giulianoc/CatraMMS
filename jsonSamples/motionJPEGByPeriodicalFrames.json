@@ -1,12 +1,12 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
 		"Title": "My Title of the content"
 	},
 	"Task": {
 		"label": "my label",
-		"Type": "Motion-JPEG-by-Periodical-Frames",
+		"type": "Motion-JPEG-by-Periodical-Frames",
 		"Parameters": {
 			"ReferenceMediaItemKey": 11,
 			"StartTimeInSeconds": 1.5,

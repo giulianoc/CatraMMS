@@ -3,7 +3,7 @@
 	label="My Workflow",
 
 	// mandatory
-	"Type": "Slideshow",
+	"type": "Slideshow",
 
 	"Parameters": {
 		// mandatory. It references images and audios (audios are optional)

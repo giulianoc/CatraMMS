@@ -4,80 +4,80 @@
       "Position": 0,
 	  "IsNull": false,
       "Description": "Title of the Picture",
-      "Type": "string",
+      "type": "string",
       "Value": "My Title"
     },
     "ImageTags": {
       "Position": 1,
 	  "IsNull": false,
       "Description": "string representing a json array of strings. i.e.: [\"tag 1\", \"tag 2\"]",
-      "Type": "jsonArray",
+      "type": "jsonArray",
       "Value": [ "FACE" ]
     },
     "InstantInSeconds": {
       "Position": 2,
 	  "IsNull": false,
       "Description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
-      "Type": "decimal",
+      "type": "decimal",
       "Value": 60
     },
     "UniqueName": {
       "Position": 3,
 	  "IsNull": false,
-      "Type": "string",
+      "type": "string",
       "Value": ""
     },
     "AllowUniqueNameOverride": {
       "Position": 4,
 	  "IsNull": false,
-      "Type": "boolean",
+      "type": "boolean",
       "Value": false
     },
     "ImageRetention": {
       "Position": 5,
 	  "IsNull": false,
-      "Type": "string",
+      "type": "string",
       "Value": "1d"
     },
     "Ingester": {
       "Position": 6,
 	  "IsNull": false,
-      "Type": "string",
+      "type": "string",
       "Value": "Admin"
     },
     "InitialFramesNumberToBeSkipped": {
       "Position": 7,
 	  "IsNull": false,
       "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
-      "Type": "integer",
+      "type": "integer",
       "Value": 1500
     },
     "ImageUserData": {
       "Position": 8,
 	  "IsNull": false,
-      "Type": "jsonObject",
+      "type": "jsonObject",
 	  "Value": {},
       "Description": "string representing a json object. i.e: {\"data 1\": \"value 1\", \"data 2\": 32 }"
     },
     "ProcessingStartingFrom": {
       "IsNull": true,
       "Position": 9,
-      "Type": "datetime",
+      "type": "datetime",
       "Value": ""
     },
     "References": {
       "Position": 10,
 	  "IsNull": false,
       "Description": "string representing a json array of ONE References. i.e.: [{\"mediaItemKey\", 123456}]",
-      "Type": "jsonArray",
+      "type": "jsonArray",
       "Value": [ ]
     }
   },
   "label": "Best Picture of the Video",
-  "Type": "Workflow",
+  "type": "Workflow",
   "Task": {
     "label": "${Title}",
-    "Type": "GroupOfTasks",
+    "type": "GroupOfTasks",
     "Parameters": {
       "ExecutionType": "parallel",
 	  "ProcessingStartingFrom": "${ProcessingStartingFrom}",
@@ -87,10 +87,10 @@
       ],
       "Tasks": [{
         "label": "Frame Containing Face: ${Title}",
-        "Type": "Face-Recognition",
+        "type": "Face-Recognition",
         "OnError": {"Task": {
           "label": "Frame: ${Title}",
-          "Type": "Frame",
+          "type": "Frame",
           "OnSuccess": {"Task": {
 			"label": "Encoding profiles (Frame): ${Title}",
 			"Parameters": {
@@ -105,7 +105,7 @@
 							"EncodingProfileLabel": "MMS_JPG_W240",
 							"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 						},
-						"Type": "Encode"
+						"type": "Encode"
 					},
 					{
 						"label": "Encode image MMS_PNG_W240 (Frame): ${Title}",
@@ -115,11 +115,11 @@
 							"EncodingProfileLabel": "MMS_PNG_W240",
 							"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 						},
-						"Type": "Encode"
+						"type": "Encode"
 					}
 				]
 			  },
-			"Type": "GroupOfTasks"
+			"type": "GroupOfTasks"
 			}},
           "Parameters": {
             "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
@@ -149,7 +149,7 @@
 						"EncodingProfileLabel": "MMS_JPG_W240",
 						"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 					},
-					"Type": "Encode"
+					"type": "Encode"
 				},
 				{
 					"label": "Encode image MMS_PNG_W240 (FrameContainingFace): ${Title}",
@@ -159,11 +159,11 @@
 						"EncodingProfileLabel": "MMS_PNG_W240",
 						"ProcessingStartingFrom": "${ProcessingStartingFrom}"
 					},
-					"Type": "Encode"
+					"type": "Encode"
 				}
 			]
           },
-          "Type": "GroupOfTasks"
+          "type": "GroupOfTasks"
 		}},
         "Parameters": {
           "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",

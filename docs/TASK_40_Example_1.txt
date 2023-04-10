@@ -11,8 +11,8 @@
       ],
       "TimePeriod": false
     },
-    "Type": "VOD-Proxy"
+    "type": "VOD-Proxy"
   },
-  "Type": "Workflow"
+  "type": "Workflow"
 }
 

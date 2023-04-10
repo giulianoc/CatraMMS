@@ -1,12 +1,12 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "Type": "string", "Description": "..." }
+		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"Task": {
 		"label": "My video",
-		"Type": "Add-Content",
+		"type": "Add-Content",
 		"Parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
@@ -16,7 +16,7 @@
 		"OnSuccess": {
 			"Task": {
 				"label": "my label",
-				"Type": "Encode",
+				"type": "Encode",
 				"Parameters": {
 					"EncodingPriority": "Low",
 					"EncodingProfilesSetKey": 1
@@ -25,7 +25,7 @@
 		},
 		"OnComplete": {
 			"Task": {
-				"Type": "Email-Notification",
+				"type": "Email-Notification",
 				"Parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",
 					"Subject": "Task finished",

@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Live-Recorder",
+	"type": "Live-Recorder",
 
 	// The Workflow ingested by the MMS Task Manager to add the generated Chunks
 	// will have the following variables:

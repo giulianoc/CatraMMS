@@ -1,20 +1,20 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "My workflow",
 	"Variables": {
-		"TitleOfVideo_1": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
-		"TitleOfVideo_2": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
-		"TitleOfConcatVideo": { "Value": "My Title of the frame content", "Type": "string", "Description": "..." },
-		"TitleOfCutVideo": { "Value": "My Title of the frame content", "Type": "string", "Description": "..." }
+		"TitleOfVideo_1": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"TitleOfVideo_2": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"TitleOfConcatVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." },
+		"TitleOfCutVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
 	"Task": {
-		"Type": "GroupOfTasks",
+		"type": "GroupOfTasks",
 		"Parameters": {
 			"ExecutionType": "parallel",
 			"Tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
 						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
@@ -25,7 +25,7 @@
 				},
 				{
 					"label": "${TitleOfVideo_2}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
 						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
@@ -39,7 +39,7 @@
 		"OnSuccess": {
 			"Task": {
 				"label": "My concat",
-				"Type": "Concat-Demuxer",
+				"type": "Concat-Demuxer",
 				"Parameters": {
 					"UserData": { "MyData": "this is my frame data" },
 					"Title": "${TitleOfConcatVideo}"
@@ -47,7 +47,7 @@
 				"OnSuccess": {
 					"Task": {
 						"label": "My cut",
-						"Type": "Cut",
+						"type": "Cut",
 						"Parameters": {
 							"StartTimeInSeconds": 1200.0,
 							"EndTimeInSeconds": 3000.0,
@@ -57,7 +57,7 @@
 						"OnSuccess": {
 							"Task": {
 								"label": "my encode",
-								"Type": "Encode",
+								"type": "Encode",
 								"Parameters": {
 									"EncodingPriority": "Low",
 									"EncodingProfilesSetLabel": "Sport"
@@ -70,7 +70,7 @@
 		},
 		"OnComplete": {
 			"Task": {
-				"Type": "Email-Notification",
+				"type": "Email-Notification",
 				"Parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",
 					"Subject": "Task finished",

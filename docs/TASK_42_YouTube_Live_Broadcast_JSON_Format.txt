@@ -3,7 +3,7 @@
 	"label"="My YouTube Live Broadcast",
 
 	// mandatory
-	"Type": "YouTube-Live-Broadcast",
+	"type": "YouTube-Live-Broadcast",
 
 	"Parameters": {
 

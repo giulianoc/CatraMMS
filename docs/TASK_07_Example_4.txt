@@ -1,5 +1,5 @@
 {
-    "Type": "Workflow",
+    "type": "Workflow",
     "label": "My workflow",
 	"Variables": [
 		{ "Name": "TitleOfVideo_1", "Value": "My Title of the video_1 content" },
@@ -8,13 +8,13 @@
 		{ "Name": "TitleOfCutVideo", "Value": "My Title of the concat video content" }
 	],
     "Task": {
-        "Type": "GroupOfTasks",
+        "type": "GroupOfTasks",
         "Parameters": { 
 			"ExecutionType": "parallel",
 			"Tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": { 
 						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
@@ -25,7 +25,7 @@
 				},          
 				{           
 					"label": "${TitleOfVideo_2}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": { 
                             "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
@@ -38,26 +38,26 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Type": "GroupOfTasks",
+				"type": "GroupOfTasks",
 				"Parameters": {
 					"ExecutionType": "sequential",
 					"Tasks": [
 						{
 							"label": "My concat",
-							"Type": "Concat-Demuxer",
+							"type": "Concat-Demuxer",
 							"Parameters": {
 								"UserData": { "MyData": "this is my frame data" },
 								"Title": "${TitleOfConcatVideo}"
 							},
 							"OnSuccess": {
 								"Task": {
-									"Type": "GroupOfTasks",
+									"type": "GroupOfTasks",
 									"Parameters": {
 										"ExecutionType": "sequential",
 										"Tasks": [
 											{
 												"label": "My cut",
-												"Type": "Cut",
+												"type": "Cut",
 												"Parameters": {
 													"StartTimeInSeconds": 1200.0,
 													"EndTimeInSeconds": 3000.0,
@@ -67,7 +67,7 @@
 												"OnSuccess": {
 													"Task": {
 														"label": "my encode",
-														"Type": "Encode",
+														"type": "Encode",
 														"Parameters": {
 															"EncodingPriority": "Low",
 															"EncodingProfilesSetLabel": "Sport"
@@ -77,7 +77,7 @@
 											},
 											{
 												"label": "Remove of the concat content",
-												"Type": "Remove-Content",
+												"type": "Remove-Content",
 												"Parameters": {
 												}
 											}
@@ -88,7 +88,7 @@
 						},
 						{
 							"label": "Remove of the first two source contents",
-							"Type": "Remove-Content",
+							"type": "Remove-Content",
 							"Parameters": {
 							}
 						}
@@ -99,7 +99,7 @@
         "OnComplete": {
             "Task": {
                 "label": "Email task",
-                "Type": "Email-Notification",
+                "type": "Email-Notification",
                 "Parameters": {
                     "EmailAddress": "giulianoc@catrasoftware.it",
                     "Subject": "Task finished",

@@ -3,7 +3,7 @@
 	"label"="My FTP Delivery",
 
 	// mandatory
-	"Type": "FTP-Delivery",
+	"type": "FTP-Delivery",
 
 	"Parameters": {
 		// mandatory

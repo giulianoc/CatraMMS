@@ -1,10 +1,10 @@
 {
   "label": "ingestContent ${title}",
-  "Type": "Workflow",
+  "type": "Workflow",
   "Task":
   {
     "label": "Add Content ${title}",
-    "Type": "Add-Content",
+    "type": "Add-Content",
     "Parameters": {
       "Title": "${title}",
       "AllowUniqueNameOverride": false,
@@ -16,13 +16,13 @@
       "Task":
       {
         "label": "${title}",
-        "Type": "GroupOfTasks",
+        "type": "GroupOfTasks",
         "Parameters": {
           "ExecutionType": "parallel",
           "Tasks": [
             {
               "label": "Generate Picture ${title}",
-              "Type": "Workflow-As-Library",
+              "type": "Workflow-As-Library",
               "Parameters": {
                 "Title": "${title}",
                 "WorkflowAsLibraryType": "MMS",
@@ -39,7 +39,7 @@
             },
             {
               "label": "Encode ${title}",
-              "Type": "Encode",
+              "type": "Encode",
               "Parameters": {
                 "ContentType": "video",
                 "EncodingPriority": "Low",

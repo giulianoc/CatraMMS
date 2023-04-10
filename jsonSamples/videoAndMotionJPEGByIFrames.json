@@ -1,5 +1,5 @@
 {
-    "Type": "Workflow",
+    "type": "Workflow",
     "label": "My Workflow",
     "Variables": {
         "TitleOfVideo": "My Title of the video content",
@@ -7,7 +7,7 @@
     },
     "Task": {
         "label": "My Ingestion",
-        "Type": "Content-Ingestion",
+        "type": "Content-Ingestion",
         "Parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
             "FileFormat": "mp4",
@@ -17,7 +17,7 @@
         "OnSuccess": {
             "Task": {
                 "label": "My Motion JPEG by I-Frames",
-                "Type": "Motion-JPEG-by-I-Frames",
+                "type": "Motion-JPEG-by-I-Frames",
                 "Parameters": {
                     "StartTimeInSeconds": 0.0,
                     "MaxFramesNumber": 5,

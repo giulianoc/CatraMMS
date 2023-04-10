@@ -1,12 +1,12 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "My Workflow",
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
 	"Task": {
 		"label": "My Task",
-		"Type": "Add-Content",
+		"type": "Add-Content",
 		"Parameters": {
 			"FileFormat": "mpg",
 			"ContentType": "video",

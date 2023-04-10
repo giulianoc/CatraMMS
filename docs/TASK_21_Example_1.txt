@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My FTP Delivery",
 
-	"Type": "FTP-Delivery",
+	"type": "FTP-Delivery",
 
 	"Parameters": {
 		"References": [

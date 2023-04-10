@@ -1,5 +1,5 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
 		"TitleOfVideo": "My Title of the video content",
@@ -7,7 +7,7 @@
 	},
 	"Task": {
 		"label": "...",
-		"Type": "Add-Content",
+		"type": "Add-Content",
 		"Parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
@@ -17,7 +17,7 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Type": "I-Frames",
+				"type": "I-Frames",
 				"Parameters": {
 					"StartTimeInSeconds": 0.0,
 					"MaxFramesNumber": 5,

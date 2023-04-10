@@ -1,12 +1,12 @@
 {
-    "Type": "Workflow",
+    "type": "Workflow",
     "label": "1",
     "Variables": {
         "TitleOfVideo": "My Title of the video content"
     },
     "Task": {
         "label": "My video (push)",
-        "Type": "Add-Content",
+        "type": "Add-Content",
         "Parameters": {
             "FileFormat": "mp4",
             "UserData": { "MyData": "this is my video data" },
@@ -16,7 +16,7 @@
         "OnSuccess": {
             "Task": {
                 "label": "my label",
-                "Type": "Encode",
+                "type": "Encode",
                 "Parameters": {
                     "EncodingPriority": "Low",
                     "EncodingProfilesSetLabel": "Sport"

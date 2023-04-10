@@ -1,12 +1,12 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "My workflow",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "Type": "string", "Description": "..." }
+		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"Task": {
 		"label": "my label",
-		"Type": "Slideshow",
+		"type": "Slideshow",
 		"Parameters": {
 			"References": [
 				{ "mediaItemKey": 100 },

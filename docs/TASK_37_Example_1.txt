@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My Live Grid",
 
-	"Type": "Live-Grid",
+	"type": "Live-Grid",
 
 	"Parameters": {
 		"ConfigurationLabel": [

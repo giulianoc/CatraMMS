@@ -3,7 +3,7 @@
 	"label"="My Facebook Live Broadcast",
 
 	// mandatory
-	"Type": "Facebook-Live-Broadcast",
+	"type": "Facebook-Live-Broadcast",
 
 	"Parameters": {
 

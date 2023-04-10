@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Cut",
+	"type": "Cut",
 
 	"Parameters": {
 

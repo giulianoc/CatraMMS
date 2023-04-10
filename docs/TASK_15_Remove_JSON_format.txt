@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Remove-Content",
+	"type": "Remove-Content",
 
 	"Parameters": {
 		// mandatory

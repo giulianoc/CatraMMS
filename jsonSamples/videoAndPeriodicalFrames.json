@@ -1,5 +1,5 @@
 {
-    "Type": "Workflow",
+    "type": "Workflow",
     "label": "Workflow n. Z",
     "Variables": {
         "TitleOfVideo": "My Title of the video content",
@@ -7,7 +7,7 @@
     },
     "Task": {
         "label": "My Ingestion n. 123",
-        "Type": "Content-Ingestion",
+        "type": "Content-Ingestion",
         "Parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
             "FileFormat": "mp4",
@@ -17,7 +17,7 @@
         "OnSuccess": {
             "Task": {
                 "label": "My Periodical-Frames",
-                "Type": "Periodical-Frames",
+                "type": "Periodical-Frames",
                 "Parameters": {
                     "StartTimeInSeconds": 2.5,
                     "PeriodInSeconds": 2,

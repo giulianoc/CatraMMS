@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Media-Cross-Reference",
+	"type": "Media-Cross-Reference",
 
 	"Parameters": {
 		// mandatory
@@ -34,7 +34,7 @@
 		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// mandatory. Possible values: ImageOfVideo, ImageOfAudio, FaceOfVideo, CutOfVideo, CutOfAudio
-		"Type": "imageOfVideo"
+		"type": "imageOfVideo"
 
 		// mandatory only for CutOfVideo and CutOfAudio
 		"Parameters": {

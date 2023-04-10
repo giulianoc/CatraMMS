@@ -1,5 +1,5 @@
 {
-    "Type": "Workflow",
+    "type": "Workflow",
     "label": "Workflow n. X",
     "Variables": {
         "TitleOfVideo": "My Title of the video content",
@@ -7,7 +7,7 @@
     },
     "Task": {
         "label": "Task n. X",
-        "Type": "Content-Ingestion",
+        "type": "Content-Ingestion",
         "Parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
             "FileFormat": "mp4",
@@ -16,7 +16,7 @@
         },
         "OnSuccess": {
             "Task": {
-                "Type": "Frame",
+                "type": "Frame",
                 "Parameters": {
                     "InstantInSeconds": 2.5,
                     "UserData": { "MyData": "this is my frame data" },

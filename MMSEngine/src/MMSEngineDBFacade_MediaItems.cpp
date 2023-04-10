@@ -5549,7 +5549,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			{
                 Json::Value crossReferenceRoot = parametersRoot[field];
 
-				field = "Type";
+				field = "type";
 				MMSEngineDBFacade::CrossReferenceType crossReferenceType =
 					MMSEngineDBFacade::toCrossReferenceType(JSONUtils::asString(crossReferenceRoot, field, ""));
 

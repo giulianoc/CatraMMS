@@ -3,7 +3,7 @@
 	"label"="My Extract Tracks",
 
 	// mandatory
-	"Type": "Extract-Tracks",
+	"type": "Extract-Tracks",
 
 	"Parameters": {
 		// mandatory

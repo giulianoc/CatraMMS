@@ -3,7 +3,7 @@
 	"label"="My Countdown",
 
 	// mandatory
-	"Type": "Countdown",
+	"type": "Countdown",
 
 	"Parameters": {
 

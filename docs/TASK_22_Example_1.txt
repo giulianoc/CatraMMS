@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My HTTP Callback",
 
-	"Type": "HTTP-Callback",
+	"type": "HTTP-Callback",
 
 	"Parameters": {
 		"Protocol": "http",

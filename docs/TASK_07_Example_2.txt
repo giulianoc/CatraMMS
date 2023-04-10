@@ -1,20 +1,20 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"TitleOfVideo_1": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
-		"TitleOfVideo_2": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
-		"TitleOfConcatVideo": { "Value": "My Title of the frame content", "Type": "string", "Description": "..." }
+		"TitleOfVideo_1": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"TitleOfVideo_2": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"TitleOfConcatVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
 	"Task": {
-		"Type": "GroupOfTasks",
+		"type": "GroupOfTasks",
 		"Parameters": {
 			"ExecutionType": "parallel",
 
 			"Tasks": [
 				{
 					"label": "...",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
 						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
@@ -24,7 +24,7 @@
 				},
 				{
 					"label": "...",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
 						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
@@ -36,7 +36,7 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Type": "Concat-Demuxer",
+				"type": "Concat-Demuxer",
 				"Parameters": {
 					"userData": { "MyData": "this is my frame data" },
 					"Title": "${TitleOfConcatVideo}"

@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My YouTube Live Broadcast",
 
-	"Type": "YouTube-Live-Broadcast",
+	"type": "YouTube-Live-Broadcast",
 
 	"Parameters": {
 		"ConfigurationLabel": "my live proxy"

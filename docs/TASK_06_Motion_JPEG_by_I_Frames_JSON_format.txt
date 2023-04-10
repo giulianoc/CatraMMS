@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Motion-JPEG-by-I-Frames",
+	"type": "Motion-JPEG-by-I-Frames",
 
 	"Parameters": {
 		// mandatory

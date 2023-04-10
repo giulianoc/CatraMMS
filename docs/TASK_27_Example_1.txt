@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My Face Recognition",
 
-	"Type": "Face-Recognition",
+	"type": "Face-Recognition",
 
 	"Parameters": {
 		"References": [

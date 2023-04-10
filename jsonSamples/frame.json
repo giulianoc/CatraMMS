@@ -1,12 +1,12 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
 	"Task": {
 		"label": "my label",
-		"Type": "Frame",
+		"type": "Frame",
 		"Parameters": {
 			"ReferenceMediaItemKey": 11,
 			"InstantInSeconds": 2.5,

@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Add-Content",
+	"type": "Add-Content",
 
 	"Parameters": {
 		// mandatory in case of a pull (http/https/ftp/ftps/move/copy/externalStorage)
@@ -64,7 +64,7 @@
 		//	it is possible to specify this image is for a specific Video
 		"CrossReference": {
 			// mandatory. Possible values: ImageOfVideo (or VideoOfImage), ImageOfAudio (or AudioOfImage), FaceOfVideo, CutOfVideo, CutOfAudio
-			"Type": "ImageOfVideo",
+			"type": "ImageOfVideo",
 
 			// mandatory
 			"MediaItemKey": 222,

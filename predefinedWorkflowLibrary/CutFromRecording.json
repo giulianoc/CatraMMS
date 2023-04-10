@@ -22,7 +22,7 @@
               "WorkflowAsLibraryLabel": "Best Picture of the Video",
               "WorkflowAsLibraryType": "MMS"
             },
-            "Type": "Workflow-As-Library"
+            "type": "Workflow-As-Library"
           },
           {
             "label": "Cut encoding",
@@ -31,16 +31,16 @@
               "EncodingPriority": "Low",
               "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
             },
-            "Type": "Encode"
+            "type": "Encode"
           },
           {
             "label": "Generate MP4 profile",
             "Parameters": {"OutputFileFormat": "mp4"},
-            "Type": "Change-File-Format"
+            "type": "Change-File-Format"
           }
         ]
       },
-      "Type": "GroupOfTasks"
+      "type": "GroupOfTasks"
     }},
     "Parameters": {
       "AllowUniqueNameOverride": false,
@@ -55,43 +55,43 @@
       "Retention": "${MediaItemRetention}",
       "Title": "${MediaItemTitle}"
     },
-    "Type": "Live-Cut"
+    "type": "Live-Cut"
   },
-  "Type": "Workflow",
+  "type": "Workflow",
   "Variables": {
     "LiveCutEnd": {
       "Description": "End of the LiveCut",
       "IsNull": false,
       "Position": 1,
-      "Type": "datetime-millisecs",
+      "type": "datetime-millisecs",
       "Value": "2022-01-24T21:09:05.011Z"
     },
     "LiveCutStart": {
       "Description": "Start of the LiveCut",
       "IsNull": false,
       "Position": 0,
-      "Type": "datetime-millisecs",
+      "type": "datetime-millisecs",
       "Value": "2022-01-24T21:07:34.088Z"
     },
     "MediaItemRetention": {
       "Description": "Media item retention",
       "IsNull": false,
       "Position": 4,
-      "Type": "string",
+      "type": "string",
       "Value": ""
     },
     "MediaItemTitle": {
       "Description": "Media item title",
       "IsNull": false,
       "Position": 3,
-      "Type": "string",
+      "type": "string",
       "Value": ""
     },
     "RecordingCode": {
       "Description": "Recording Code",
       "IsNull": false,
       "Position": 2,
-      "Type": "integer",
+      "type": "integer",
       "Value": 0
     }
   }

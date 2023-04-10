@@ -13,5 +13,5 @@
 		"label": "Image label",
 		"Title": "My Title"
 	},
-	"Type": "Workflow-As-Library"
+	"type": "Workflow-As-Library"
 }

@@ -3,7 +3,7 @@
 	"label"="My Workflow Library label",
 
 	// mandatory
-	"Type": "Workflow-As-Library",
+	"type": "Workflow-As-Library",
 
 	"Parameters": {
 

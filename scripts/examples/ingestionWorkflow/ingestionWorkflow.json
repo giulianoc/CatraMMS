@@ -12,8 +12,8 @@
 			"title": "Pescara Calcio vs Olbia Calcio 1905 - 2021-08-19 20:45",
 			"userData": {"groupName":"CI","awayTeamName":"Olbia Calcio 1905","start":1629398700000,"homeTeamName":"Pescara Calcio","matchId":363615}
 		},
-		"Type": "Workflow-As-Library"
+		"type": "Workflow-As-Library"
 	},
-	"Type": "Workflow"
+	"type": "Workflow"
 }
 

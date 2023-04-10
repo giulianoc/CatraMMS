@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Periodical-Frames",
+	"type": "Periodical-Frames",
 
 	"Parameters": {
 		// mandatory

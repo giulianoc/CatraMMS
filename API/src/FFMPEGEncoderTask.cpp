@@ -695,7 +695,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 		string field = "label";
 		addContentRoot[field] = label;
 
-		field = "Type";
+		field = "type";
 		addContentRoot[field] = "Add-Content";
 
 		Json::Value addContentParametersRoot;
@@ -779,7 +779,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 		field = "label";
 		workflowRoot[field] = label;
 
-		field = "Type";
+		field = "type";
 		workflowRoot[field] = "Workflow";
 
 		field = "Task";

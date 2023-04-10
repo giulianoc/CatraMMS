@@ -3,7 +3,7 @@
 	"label"="My HTTP Callback",
 
 	// mandatory
-	"Type": "HTTP-Callback",
+	"type": "HTTP-Callback",
 
 	"Parameters": {
 		// mandatory

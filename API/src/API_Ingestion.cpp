@@ -80,7 +80,7 @@ void API::ingestion(
             validator.validateIngestedRootMetadata(workspace->_workspaceKey, 
 				requestBodyRoot);
 
-            string field = "Type";
+            string field = "type";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -111,7 +111,7 @@ void API::ingestion(
             }
             Json::Value& taskRoot = requestBodyRoot[field];                        
 
-            field = "Type";
+            field = "type";
             if (!JSONUtils::isMetadataPresent(taskRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -310,13 +310,13 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 		 * Definition of the Variables into the Workflow:
 		"Variables": {
 			"var n. 1": {
-				"Type": "int",	// or string
+				"type": "int",	// or string
 				"IsNull": false,
 				"Value": 10,
 				"Description": "..."
 			},
 			"var n. 2": {
-				"Type": "string",
+				"type": "string",
 				"IsNull": false,
 				"Value": "...",
 				"Description": "..."
@@ -339,7 +339,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 					"label": "Image label",
 					"Title": "My Title"
 				},
-				"Type": "Workflow-As-Library"
+				"type": "Workflow-As-Library"
 			}
 		 */
 		string field = "Variables";
@@ -370,7 +370,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 					{
 						Json::Value variableDetails = (*it);
 
-						field = "Type";
+						field = "type";
 						string variableType = JSONUtils::asString(variableDetails, field, "");
 
 						field = "IsNull";
@@ -935,7 +935,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         /* string& responseBody, */ Json::Value& responseBodyTasksRoot)
 {
-    string field = "Type";
+    string field = "type";
     string type = JSONUtils::asString(taskRoot, field, "");
 
     string taskLabel;
@@ -1119,7 +1119,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 						field = "label";
 						newTaskRoot[field] = localLabel;
 
-						field = "Type";
+						field = "type";
 						newTaskRoot[field] = "Encode";
 
 						Json::Value newParametersRoot = parametersRoot;
@@ -1153,7 +1153,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					field = "label";
 					newTaskRoot[field] = localLabel;
 
-					field = "Type";
+					field = "type";
 					newTaskRoot[field] = "Encode";
 
 					Json::Value newParametersRoot = parametersRoot;
@@ -1178,7 +1178,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					field = "label";
 					newTaskRoot[field] = localLabel;
 
-					field = "Type";
+					field = "type";
 					newTaskRoot[field] = "Encode";
 
 					Json::Value newParametersRoot = parametersRoot;
@@ -1208,7 +1208,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 			Json::Value newTasksGroupRoot;
 
-			field = "Type";
+			field = "type";
 			newTasksGroupRoot[field] = "GroupOfTasks";
 
 			field = "Parameters";
@@ -1278,7 +1278,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				field = "label";
 				newTaskRoot[field] = localLabel;
 
-				field = "Type";
+				field = "type";
 				newTaskRoot[field] = "Face-Recognition";
 
 				Json::Value newParametersRoot = parametersRoot;
@@ -1319,7 +1319,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 			Json::Value newTasksGroupRoot;
 
-			field = "Type";
+			field = "type";
 			newTasksGroupRoot[field] = "GroupOfTasks";
 
 			field = "Parameters";
@@ -1609,7 +1609,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				newGroupOfTasksParametersRoot[field] = newTasksRoot;
 			}
         
-			field = "Type";
+			field = "type";
 			newGroupOfTasksRoot[field] = "GroupOfTasks";
 
 			field = "Parameters";
@@ -1922,7 +1922,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     {
         Json::Value& taskRoot = tasksRoot[taskIndex];
 
-        string field = "Type";
+        string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2343,7 +2343,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         Json::Value& taskRoot = onSuccessRoot[field];                        
 
-        string field = "Type";
+        string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2430,7 +2430,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         Json::Value& taskRoot = onErrorRoot[field];                        
 
-        string field = "Type";
+        string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2518,7 +2518,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         Json::Value& taskRoot = onCompleteRoot[field];                        
 
-        string field = "Type";
+        string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"

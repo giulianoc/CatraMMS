@@ -2,7 +2,7 @@
   "label": "Proxy of a Picture",
   "Task": {
     "label": "Proxy of a Picture (Slideshow)",
-    "Type": "Slideshow",
+    "type": "Slideshow",
     "Parameters": {
       "AllowUniqueNameOverride": false,
       "DurationOfEachSlideInSeconds": 15,
@@ -16,7 +16,7 @@
     },
     "OnSuccess": {"Task": {
       "label": "Proxy of a Picture (VOD-Proxy)",
-      "Type": "VOD-Proxy",
+      "type": "VOD-Proxy",
       "Parameters": {
         "Outputs": [{
           "DeliveryCode": 765234,
@@ -27,5 +27,5 @@
       }
     }}
   },
-  "Type": "Workflow"
+  "type": "Workflow"
 }

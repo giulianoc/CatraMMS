@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Concat-Demuxer",
+	"type": "Concat-Demuxer",
 
 	"Parameters": {
 		// mandatory

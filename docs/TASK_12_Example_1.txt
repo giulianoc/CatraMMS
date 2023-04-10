@@ -1,9 +1,9 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Task": {
 		"label": "my label",
-		"Type": "Encode",
+		"type": "Encode",
 		"Parameters": {
 			"References": [
 				{ "mediaItemKey": 11 }

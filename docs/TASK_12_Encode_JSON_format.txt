@@ -3,7 +3,7 @@
 	"label": "my label",
 
 	// mandatory
-	"Type": "Encode",
+	"type": "Encode",
 
 	"Parameters": {
 		// mandatory

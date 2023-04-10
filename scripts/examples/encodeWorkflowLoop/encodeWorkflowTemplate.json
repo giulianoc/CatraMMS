@@ -7,7 +7,7 @@
                         "EncodingProfileLabel": "MMS_H264_veryfast_360p25_aac_92",
                         "References": [{"physicalPathKey": __REFERENCEPHYSICALPATHKEY__}]
                 },
-                "Type": "Encode"
+                "type": "Encode"
         },
-        "Type": "Workflow"
+        "type": "Workflow"
 }

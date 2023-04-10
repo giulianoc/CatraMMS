@@ -5,8 +5,8 @@
     "Parameters": {
       "ConfigurationLabel": "Channel A"
     },
-    "Type": "Check-Streaming"
+    "type": "Check-Streaming"
   },
-  "Type": "Workflow"
+  "type": "Workflow"
 }
 

@@ -1,12 +1,12 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "Workflow n. X",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "Type": "string", "Description": "..." }
+		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"Task": {
 		"label": "Task n. Y",
-		"Type": "Periodical-Frames",
+		"type": "Periodical-Frames",
 		"Parameters": {
 			"References": [
 				{ "mediaItemKey": 11 }

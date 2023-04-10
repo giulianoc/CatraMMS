@@ -16,7 +16,7 @@
                 "EncodingPriority": "Low",
                 "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
               },
-              "Type": "Encode"
+              "type": "Encode"
             },
             {
               "label": "Creation picture for the VOD",
@@ -34,18 +34,18 @@
                 "WorkflowAsLibraryLabel": "Best Picture of the Video",
                 "WorkflowAsLibraryType": "MMS"
               },
-              "Type": "Workflow-As-Library"
+              "type": "Workflow-As-Library"
             }
           ]
         },
-        "Type": "GroupOfTasks"
+        "type": "GroupOfTasks"
       }},
       "Parameters": {
         "AllowUniqueNameOverride": false,
         "Ingester": "Giuliano Catrambone",
         "Retention": "1h"
       },
-      "Type": "Concat-Demuxer"
+      "type": "Concat-Demuxer"
     }},
     "Parameters": {
       "ExecutionType": "parallel",
@@ -58,7 +58,7 @@
             "EncodingPriority": "Low",
             "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
           },
-          "Type": "Encode"
+          "type": "Encode"
         }},
         "Parameters": {
           "ActAsServerListenTimeout": -1,
@@ -79,10 +79,10 @@
           "Retention": "1h",
           "SegmentDuration": 60
         },
-        "Type": "Live-Recorder"
+        "type": "Live-Recorder"
       }]
     },
-    "Type": "GroupOfTasks"
+    "type": "GroupOfTasks"
   },
-  "Type": "Workflow"
+  "type": "Workflow"
 }

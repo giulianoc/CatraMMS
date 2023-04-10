@@ -1,7 +1,7 @@
 "Task": {
 	"label"="My Facebook POST",
 
-	"Type": "Post-On-Facebook",
+	"type": "Post-On-Facebook",
 
 	"Parameters": {
 		"References": [

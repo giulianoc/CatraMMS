@@ -1,12 +1,12 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "Type": "string", "Description": "..." }
+		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"Task": {
 		"label": "my label",
-		"Type": "Overlay-Text-On-Video",
+		"type": "Overlay-Text-On-Video",
 		"Parameters": {
 			"References": [
 				{ "mediaItemKey": 12 }

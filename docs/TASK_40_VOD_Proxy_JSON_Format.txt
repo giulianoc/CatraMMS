@@ -3,7 +3,7 @@
 	"label"="My VOD Proxy",
 
 	// mandatory
-	"Type": "VOD-Proxy",
+	"type": "VOD-Proxy",
 
 	"Parameters": {
 		// mandatory

@@ -1,9 +1,9 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "My Workflow...",
 	"Task": {
 		"label": "my label ...",
-		"Type": "Remove-Content",
+		"type": "Remove-Content",
 		"Parameters": {
 			"References": [
 				{ "mediaItemKey": 11 }

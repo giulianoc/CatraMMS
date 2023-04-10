@@ -3,7 +3,7 @@
 	label="Picture In Picture Label",
 
 	// mandatory
-	"Type": "Picture-In-Picture",
+	"type": "Picture-In-Picture",
 
 	"Parameters": {
 		// Optional. This tag is used in the scenario where one Video is inherit from the parent Task

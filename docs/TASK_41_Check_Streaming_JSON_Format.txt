@@ -3,7 +3,7 @@
 	"label"="My Check Streaming",
 
 	// mandatory
-	"Type": "Check-Streaming",
+	"type": "Check-Streaming",
 
 	"Parameters": {
 		// The Streaming to be checked could be specified using the Channel Configuration Label

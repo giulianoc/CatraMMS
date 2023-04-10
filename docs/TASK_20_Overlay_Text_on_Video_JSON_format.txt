@@ -3,7 +3,7 @@
 	label="Overlay X",
 
 	// mandatory
-	"Type": "Overlay-Text-On-Video",
+	"type": "Overlay-Text-On-Video",
 
 	"Parameters": {
 		// mandatory

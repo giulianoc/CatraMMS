@@ -1823,10 +1823,10 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 		/*
 		{
         	"label": "<workflow label>",
-        	"Type": "Workflow",
+        	"type": "Workflow",
         	"Task": {
                 "label": "<task label 1>",
-                "Type": "Add-Content"
+                "type": "Add-Content"
                 "Parameters": {
                         "FileFormat": "ts",
                         "Ingester": "Giuliano",
@@ -1845,7 +1845,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 		string field = "label";
 		addContentRoot[field] = to_string(utcChunkStartTime);
 
-		field = "Type";
+		field = "type";
 		addContentRoot[field] = "Add-Content";
 
 		{
@@ -1919,7 +1919,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 		field = "label";
 		workflowRoot[field] = addContentTitle;
 
-		field = "Type";
+		field = "type";
 		workflowRoot[field] = "Workflow";
 
 		{
@@ -1928,7 +1928,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			{
 				Json::Value variableWorkflowRoot;
 
-				field = "Type";
+				field = "type";
 				variableWorkflowRoot[field] = "integer";
 
 				field = "Value";
@@ -1958,7 +1958,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			{
 				Json::Value variableWorkflowRoot;
 
-				field = "Type";
+				field = "type";
 				variableWorkflowRoot[field] = "string";
 
 				field = "Value";
@@ -1974,7 +1974,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			{
 				Json::Value variableWorkflowRoot;
 
-				field = "Type";
+				field = "type";
 				variableWorkflowRoot[field] = "integer";
 
 				field = "Value";
@@ -1989,7 +1989,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			{
 				Json::Value variableWorkflowRoot;
 
-				field = "Type";
+				field = "type";
 				variableWorkflowRoot[field] = "integer";
 
 				field = "Value";
@@ -2004,7 +2004,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			{
 				Json::Value variableWorkflowRoot;
 
-				field = "Type";
+				field = "type";
 				variableWorkflowRoot[field] = "string";
 
 				field = "Value";
@@ -3079,10 +3079,10 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 	{
 		// {
         // 	"label": "<workflow label>",
-        // 	"Type": "Workflow",
+        // 	"type": "Workflow",
         //	"Task": {
         //        "label": "<task label 1>",
-        //        "Type": "Add-Content"
+        //        "type": "Add-Content"
         //        "Parameters": {
         //                "FileFormat": "m3u8",
         //                "Ingester": "Giuliano",
@@ -3157,7 +3157,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		field = "label";
 		addContentRoot[field] = addContentLabel;
 
-		field = "Type";
+		field = "type";
 		addContentRoot[field] = "Add-Content";
 
 		Json::Value addContentParametersRoot;
@@ -3207,7 +3207,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 
 				Json::Value crossReferenceRoot;
 
-				field = "Type";
+				field = "type";
 				crossReferenceRoot[field] = "VideoOfImage";
 
 				field = "MediaItemKey";
@@ -3256,7 +3256,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		field = "label";
 		workflowRoot[field] = addContentLabel + " (virtual VOD)";
 
-		field = "Type";
+		field = "type";
 		workflowRoot[field] = "Workflow";
 
 		field = "Task";

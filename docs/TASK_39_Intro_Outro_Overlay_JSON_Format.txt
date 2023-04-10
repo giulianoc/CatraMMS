@@ -3,7 +3,7 @@
 	"label"="My Intro And Outro Overlay",
 
 	// mandatory
-	"Type": "Intro-Outro-Overlay",
+	"type": "Intro-Outro-Overlay",
 
 	"Parameters": {
 

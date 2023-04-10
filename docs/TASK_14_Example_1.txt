@@ -1,9 +1,9 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Task": {
 		"label": "my label",
-		"Type": "Email-Notification",
+		"type": "Email-Notification",
 		"Parameters": {
 			"References": [
 				{ "ingestionJobKey": 11 }

@@ -3,7 +3,7 @@
 	label="...",
 
 	// mandatory
-	"Type": "Change-File-Format",
+	"type": "Change-File-Format",
 
 	"Parameters": {
 

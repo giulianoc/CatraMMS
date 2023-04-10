@@ -3,7 +3,7 @@
 	"label"="My YouTube POST",
 
 	// mandatory
-	"Type": "Post-On-YouTube",
+	"type": "Post-On-YouTube",
 
 	"Parameters": {
 		// mandatory

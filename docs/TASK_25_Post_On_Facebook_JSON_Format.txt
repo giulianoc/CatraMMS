@@ -3,7 +3,7 @@
 	"label"="My Facebook POST",
 
 	// mandatory
-	"Type": "Post-On-Facebook",
+	"type": "Post-On-Facebook",
 
 	"Parameters": {
 		// mandatory

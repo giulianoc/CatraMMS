@@ -3,7 +3,7 @@
 	"label"="My Live Grid",
 
 	// mandatory
-	"Type": "Live-Grid",
+	"type": "Live-Grid",
 
 	"Parameters": {
 

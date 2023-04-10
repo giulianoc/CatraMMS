@@ -3,7 +3,7 @@
 	"label"="My Live Proxy",
 
 	// mandatory
-	"Type": "Live-Proxy",
+	"type": "Live-Proxy",
 
 	"Parameters": {
 

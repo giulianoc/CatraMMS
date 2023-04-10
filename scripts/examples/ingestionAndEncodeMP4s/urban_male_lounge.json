@@ -10,7 +10,7 @@
 			"Retention": "10y",
 			"Title": "urban_male_lounge"
 		},
-		"Type": "Add-Content",
+		"type": "Add-Content",
 		"OnSuccess": {
 			"Task": {
 				"label": "encode urban_male_lounge",
@@ -20,10 +20,10 @@
 					"EncodingPriority": "Low",
 					"EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
 				},
-				"Type": "Encode"
+				"type": "Encode"
 			}
 		}
 	},
-	"Type": "Workflow"
+	"type": "Workflow"
 }
 

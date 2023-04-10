@@ -1,5 +1,5 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
 		"TitleOfVideo_1": "My Title of the video_1 content",
@@ -8,13 +8,13 @@
 		"TitleOfCutVideo": "My Title of the concat video content"
 	},
 	"Task": {
-		"Type": "GroupOfTasks",
+		"type": "GroupOfTasks",
 		"Parameters": {
 			"ExecutionType": "parallel",
 			"Tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
 		            	"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
@@ -25,7 +25,7 @@
 				},
 			{
 				"label": "${TitleOfVideo_2}",
-				"Type": "Add-Content",
+				"type": "Add-Content",
 					"Parameters": {
             			"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
@@ -38,7 +38,7 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Type": "Concat-Demuxer",
+				"type": "Concat-Demuxer",
 				"Parameters": {
 					"UserData": { "MyData": "this is my frame data" },
 					"Title": "${TitleOfConcatVideo}",
@@ -46,7 +46,7 @@
 				},
 				"OnSuccess": {
 					"Task": {
-						"Type": "Cut",
+						"type": "Cut",
 						"Parameters": {
 							"StartTimeInSeconds": 5.0,
 							"EndTimeInSeconds": 3600.0,
@@ -56,7 +56,7 @@
 						"OnSuccess": {
 							"Task": {
 								"label": "my label",
-								"Type": "Encode",
+								"type": "Encode",
 								"Parameters": {
 									"EncodingPriority": "Low",
 									"EncodingProfilesSetLabel": "Sport"
@@ -69,7 +69,7 @@
 		},
 		"OnComplete": {
 			"Task": {
-				"Type": "Email-Notification",
+				"type": "Email-Notification",
 				"Parameters": {
 					"EmailAddress": "aaa@bbb.it",
 					"Subject": "Task finished",

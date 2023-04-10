@@ -1,9 +1,9 @@
 {
 	"label": "__title__",
-	"Type": "Workflow",
+	"type": "Workflow",
 	"Task": {
 		"label": "__title__",
-		"Type": "Add-Content",
+		"type": "Add-Content",
 		"Parameters": {
 			"Title": "__title__",
 			"SourceURL": "__url__",
@@ -15,13 +15,13 @@
 		"OnSuccess": {
 			"Task": {
 				"label": "Encodes __title__",
-				"Type": "GroupOfTasks",
+				"type": "GroupOfTasks",
 				"Parameters": {
 					"ExecutionType": "parallel",
 					"Tasks": [
 						{
 							"label": "Encode __title__ W240",
-							"Type": "Encode",
+							"type": "Encode",
 							"Parameters": {
 								"ContentType": "image",
 								"EncodingPriority": "Low",
@@ -30,7 +30,7 @@
 						},
 						{
 							"label": "Encode __title__ H700",
-							"Type": "Encode",
+							"type": "Encode",
 							"Parameters": {
 								"ContentType": "image",
 								"EncodingPriority": "Low",

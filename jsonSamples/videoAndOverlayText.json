@@ -1,5 +1,5 @@
 {
-    "Type": "Workflow",
+    "type": "Workflow",
     "label": "1",
     "Variables": {
         "TitleOfVideo": "My Title of the video content",
@@ -7,7 +7,7 @@
     },
     "Task": {
         "label": "My video",
-        "Type": "Add-Content",
+        "type": "Add-Content",
         "Parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
             "FileFormat": "mp4",
@@ -17,7 +17,7 @@
         "OnSuccess": {
             "Task": {
                 "label": "my label",
-                "Type": "Overlay-Text-On-Video",
+                "type": "Overlay-Text-On-Video",
                 "Parameters": {
                     "Text": "This video is for adult",                                  
                     "TextPosition_X_InPixel": "(video_width-text_width)/2",

@@ -1,5 +1,5 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "1",
 	"Variables": {
 		"TitleOfVideo_1": "My Title of the video_1 content",
@@ -7,13 +7,13 @@
 		"TitleOfOverlayVideo_1": "My Title of the overlay content"
 	},
 	"Task": {
-		"Type": "GroupOfTasks",
+		"type": "GroupOfTasks",
 		"Parameters": {
 			"ExecutionType": "parallel",
 			"Tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
            				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
@@ -24,7 +24,7 @@
 				},
 				{
 					"label": "${TitleOfImage_1}",
-					"Type": "Add-Content",
+					"type": "Add-Content",
 					"Parameters": {
            				"SourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
 						"FileFormat": "jpg",
@@ -35,7 +35,7 @@
 					"OnSuccess": {
 						"Task": {
 							"label": "my image encode",
-							"Type": "Encode",
+							"type": "Encode",
 							"Parameters": {
 								"EncodingPriority": "Low",
 								"EncodingProfileLabel": "Profile Logo"
@@ -48,7 +48,7 @@
 		"OnSuccess": {
 			"Task": {
 				"label": "my overlay",
-				"Type": "Overlay-Image-On-Video",
+				"type": "Overlay-Image-On-Video",
 				"Parameters": {
 					"ImagePosition_X_InPixel": "video_width-image_width-10",
 					"ImagePosition_Y_InPixel": "video_height-image_height-10",

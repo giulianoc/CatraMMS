@@ -21,8 +21,8 @@
       }],
       "TimePeriod": false
     },
-    "Type": "Live-Proxy"
+    "type": "Live-Proxy"
   },
-  "Type": "Workflow"
+  "type": "Workflow"
 }
 

@@ -1,13 +1,13 @@
 {
-	"Type": "Workflow",
+	"type": "Workflow",
 	"label": "My Workflow",
 	"Variables": {
-		"TitleOfVideo": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
-		"TitleOfFrame": { "Value": "My Title of the frame content", "Type": "string", "Description": "..." }
+		"TitleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"TitleOfFrame": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
 	"Task": {
 		"label": "My Ingestion",
-		"Type": "Add-Content",
+		"type": "Add-Content",
 		"Parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
@@ -17,7 +17,7 @@
 		"OnSuccess": {
 			"Task": {
 				"label": "My Motion JPEG by I-Frames",
-				"Type": "Motion-JPEG-by-I-Frames",
+				"type": "Motion-JPEG-by-I-Frames",
 				"Parameters": {
 					"StartTimeInSeconds": 0.0,
 					"MaxFramesNumber": 5,

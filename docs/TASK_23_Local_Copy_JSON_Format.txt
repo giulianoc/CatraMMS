@@ -3,7 +3,7 @@
 	"label"="My Local Copy",
 
 	// mandatory
-	"Type": "Local-Copy",
+	"type": "Local-Copy",
 
 	"Parameters": {
 		// mandatory

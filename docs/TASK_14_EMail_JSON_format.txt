@@ -3,7 +3,7 @@
 	label="My task...",
 
 	// mandatory
-	"Type": "Email-Notification",
+	"type": "Email-Notification",
 
 	"Parameters": {
 		// optional
