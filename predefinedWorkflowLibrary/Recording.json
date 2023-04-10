@@ -1,16 +1,16 @@
 {
-  "Label": "Recording",
+  "label": "Recording",
   "Task": {
-    "Label": "<no label>",
+    "label": "<no label>",
     "OnSuccess": {"Task": {
-      "Label": "VOD creation",
+      "label": "VOD creation",
       "OnSuccess": {"Task": {
-        "Label": "<no label>",
+        "label": "<no label>",
         "Parameters": {
           "ExecutionType": "parallel",
           "Tasks": [
             {
-              "Label": "VOD encoding",
+              "label": "VOD encoding",
               "Parameters": {
                 "ContentType": "video",
                 "EncodingPriority": "Low",
@@ -19,7 +19,7 @@
               "Type": "Encode"
             },
             {
-              "Label": "Creation picture for the VOD",
+              "label": "Creation picture for the VOD",
               "Parameters": {
                 "AllowUniqueNameOverride": false,
                 "ImageRetention": "1d",
@@ -50,9 +50,9 @@
     "Parameters": {
       "ExecutionType": "parallel",
       "Tasks": [{
-        "Label": "Recorder",
+        "label": "Recorder",
         "OnSuccess": {"Task": {
-          "Label": "Chunk encoding",
+          "label": "Chunk encoding",
           "Parameters": {
             "ContentType": "video",
             "EncodingPriority": "Low",

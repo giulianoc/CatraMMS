@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	Label="...",
+	label="...",
 
 	// mandatory
 	"Type": "Remove-Content",

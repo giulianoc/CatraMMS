@@ -1,7 +1,7 @@
 {
-        "Label": "Encode __REFERENCEPHYSICALPATHKEY__",
+        "label": "Encode __REFERENCEPHYSICALPATHKEY__",
         "Task": {
-                "Label": "Encode",
+                "label": "Encode",
                 "Parameters": {
                         "EncodingPriority": "Low",
                         "EncodingProfileLabel": "MMS_H264_veryfast_360p25_aac_92",

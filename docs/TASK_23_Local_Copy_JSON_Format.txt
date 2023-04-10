@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Local Copy",
+	"label"="My Local Copy",
 
 	// mandatory
 	"Type": "Local-Copy",

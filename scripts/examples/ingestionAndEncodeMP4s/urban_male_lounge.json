@@ -1,7 +1,7 @@
 {
-	"Label": "urban_male_lounge.mp4",
+	"label": "urban_male_lounge.mp4",
 	"Task": {
-		"Label": "urban_male_lounge.mp4",
+		"label": "urban_male_lounge.mp4",
 		"Parameters": {
 			"AllowUniqueNameOverride": false,
 			"FileFormat": "mp4",
@@ -13,7 +13,7 @@
 		"Type": "Add-Content",
 		"OnSuccess": {
 			"Task": {
-				"Label": "encode urban_male_lounge",
+				"label": "encode urban_male_lounge",
 				"Parameters": {
 					"ContentType": "video",
 					"EncodersPool": "irl-3",

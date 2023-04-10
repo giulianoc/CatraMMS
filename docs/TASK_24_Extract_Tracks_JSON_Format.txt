@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Extract Tracks",
+	"label"="My Extract Tracks",
 
 	// mandatory
 	"Type": "Extract-Tracks",

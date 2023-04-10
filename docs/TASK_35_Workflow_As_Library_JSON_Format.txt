@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Workflow Library label",
+	"label"="My Workflow Library label",
 
 	// mandatory
 	"Type": "Workflow-As-Library",

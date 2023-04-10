@@ -1,7 +1,7 @@
 {
-  "Label": "Proxy From Capture",
+  "label": "Proxy From Capture",
   "Task": {
-    "Label": "Proxy From Capture",
+    "label": "Proxy From Capture",
     "Parameters": {
       "ActAsServerListenTimeout": -1,
       "CaptureLive": {

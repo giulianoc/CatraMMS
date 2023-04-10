@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Check Streaming",
+	"label"="My Check Streaming",
 
 	// mandatory
 	"Type": "Check-Streaming",

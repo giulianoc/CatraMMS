@@ -1,5 +1,5 @@
 {
-	"Label" : "MMS_HLS_H264_3000Kb_medium_720p30_high422_AAC_160",
+	"label" : "MMS_HLS_H264_3000Kb_medium_720p30_high422_AAC_160",
 	"FileFormat" : "hls",
 	"HLS" : 
 	{

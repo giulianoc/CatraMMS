@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My Live Grid",
+	"label"="My Live Grid",
 
 	"Type": "Live-Grid",
 

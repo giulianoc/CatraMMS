@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My ",
+	"label"="My ",
 
 	"Type": "Intro-Outro-Overlay",
 

@@ -1,6 +1,6 @@
 {
 	// mandatory
-	"Label": "Sport",
+	"label": "Sport",
 
 	// mandatory: 3gp, mp4, webm, segment, (avi, hls, mov, mpeg)
 	"FileFormat": "mp4",

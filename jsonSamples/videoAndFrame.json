@@ -1,12 +1,12 @@
 {
     "Type": "Workflow",
-    "Label": "Workflow n. X",
+    "label": "Workflow n. X",
     "Variables": {
         "TitleOfVideo": "My Title of the video content",
         "TitleOfFrame": "My Title of the frame content"
     },
     "Task": {
-        "Label": "Task n. X",
+        "label": "Task n. X",
         "Type": "Content-Ingestion",
         "Parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",

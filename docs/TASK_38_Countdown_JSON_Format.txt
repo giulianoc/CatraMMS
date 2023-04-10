@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Countdown",
+	"label"="My Countdown",
 
 	// mandatory
 	"Type": "Countdown",

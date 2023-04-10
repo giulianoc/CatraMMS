@@ -1,8 +1,8 @@
 {
-	"Label": "Sport",
+	"label": "Sport",
 	"Profiles": [
 		{
-			"Label": "Profile_1",
+			"label": "Profile_1",
 			"FileFormat": "mp4",
 			"Video": {
 				"Codec": "libx264",
@@ -18,7 +18,7 @@
 			}
 		},
 		{
-			"Label": "Profile_2",
+			"label": "Profile_2",
 			"FileFormat": "mp4",
 			"Video": {
 				"Codec": "libx264",

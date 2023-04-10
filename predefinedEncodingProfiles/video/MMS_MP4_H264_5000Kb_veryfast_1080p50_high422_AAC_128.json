@@ -1,5 +1,5 @@
 {
-	"Label" : "MMS_MP4_H264_5000Kb_veryfast_1080p50_high422_AAC_128",
+	"label" : "MMS_MP4_H264_5000Kb_veryfast_1080p50_high422_AAC_128",
 	"FileFormat" : "mp4",
 	"Video" : 
 	{

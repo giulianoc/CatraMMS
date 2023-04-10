@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Live Proxy",
+	"label"="My Live Proxy",
 
 	// mandatory
 	"Type": "Live-Proxy",

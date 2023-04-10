@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My Face Identification",
+	"label"="My Face Identification",
 
 	"Type": "Face-Identification",
 

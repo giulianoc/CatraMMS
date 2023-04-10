@@ -44,7 +44,7 @@ void API::addEncoder(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -233,7 +233,7 @@ void API::modifyEncoder(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				label = JSONUtils::asString(requestBodyRoot, field, "");            
@@ -798,7 +798,7 @@ void API::addEncodersPool(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -941,7 +941,7 @@ void API::modifyEncodersPool(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"

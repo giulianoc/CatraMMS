@@ -1,11 +1,11 @@
 {
     "Type": "Workflow",
-    "Label": "My workflow",
+    "label": "My workflow",
     "Variables": {
         "Title": "My Title of the content"
     },
     "Task": {
-        "Label": "my label",
+        "label": "my label",
         "Type": "Slideshow",
         "Parameters": {
             "References": [

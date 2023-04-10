@@ -1,11 +1,11 @@
 {
 	"Type": "Workflow",
-	"Label": "Workflow n. X",
+	"label": "Workflow n. X",
 	"Variables": {
 		"Title": { "Value": "My Title of the content", "Type": "string", "Description": "..." }
 	},
 	"Task": {
-		"Label": "Task n. Y",
+		"label": "Task n. Y",
 		"Type": "Periodical-Frames",
 		"Parameters": {
 			"References": [

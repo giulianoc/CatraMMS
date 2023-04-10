@@ -1,7 +1,7 @@
 {
-  "Label": "Proxy of a Picture",
+  "label": "Proxy of a Picture",
   "Task": {
-    "Label": "Proxy of a Picture (Slideshow)",
+    "label": "Proxy of a Picture (Slideshow)",
     "Type": "Slideshow",
     "Parameters": {
       "AllowUniqueNameOverride": false,
@@ -15,7 +15,7 @@
       "VideoSyncMethod": "cfr"
     },
     "OnSuccess": {"Task": {
-      "Label": "Proxy of a Picture (VOD-Proxy)",
+      "label": "Proxy of a Picture (VOD-Proxy)",
       "Type": "VOD-Proxy",
       "Parameters": {
         "Outputs": [{

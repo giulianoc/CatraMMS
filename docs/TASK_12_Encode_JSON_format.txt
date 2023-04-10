@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label": "my label",
+	"label": "my label",
 
 	// mandatory
 	"Type": "Encode",

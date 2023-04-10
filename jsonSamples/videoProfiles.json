@@ -1,5 +1,5 @@
 {
-	"Label": "PredefinedProfiles",
+	"label": "PredefinedProfiles",
 	"Profiles": [
 		"MMS_H264_veryfast_1080p30_aac_160",
 		"MMS_H264_veryfast_360p25_aac_92",

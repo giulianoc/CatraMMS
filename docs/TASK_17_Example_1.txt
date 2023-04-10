@@ -1,5 +1,5 @@
 {
-	"Label": "Profile_1",
+	"label": "Profile_1",
 	"FileFormat": "mp4",
 	"Audio": {
 		"Codec": "aac",

@@ -1,6 +1,6 @@
 {
 	// mandatory
-	"Label": "Sport",
+	"label": "Sport",
 
 	"Profiles": [
 		"encoding profile label 1",

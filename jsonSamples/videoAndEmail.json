@@ -1,11 +1,11 @@
 {
 	"Type": "Workflow",
-	"Label": "My workflow",
+	"label": "My workflow",
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
 	"Task": {
-		"Label": "This is my video",
+		"label": "This is my video",
 		"Type": "Add-Content",
 		"Parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
@@ -16,7 +16,7 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Label": "Email task",
+				"label": "Email task",
 				"Type": "Email-Notification",
 				"Parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",

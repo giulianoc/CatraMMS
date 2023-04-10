@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Facebook Live Broadcast",
+	"label"="My Facebook Live Broadcast",
 
 	// mandatory
 	"Type": "Facebook-Live-Broadcast",

@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	Label="My Workflow",
+	label="My Workflow",
 
 	// mandatory
 	"Type": "Slideshow",

@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My Facebook Live Broadcast",
+	"label"="My Facebook Live Broadcast",
 
 	"Type": "Facebook-Live-Broadcast",
 

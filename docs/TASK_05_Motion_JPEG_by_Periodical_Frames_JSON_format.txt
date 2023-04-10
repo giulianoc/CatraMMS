@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	Label="...",
+	label="...",
 
 	// mandatory
 	"Type": "Motion-JPEG-by-Periodical-Frames",

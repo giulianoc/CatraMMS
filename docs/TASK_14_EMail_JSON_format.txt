@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	Label="My task...",
+	label="My task...",
 
 	// mandatory
 	"Type": "Email-Notification",

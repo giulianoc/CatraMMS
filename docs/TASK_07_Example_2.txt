@@ -1,6 +1,6 @@
 {
 	"Type": "Workflow",
-	"Label": "1",
+	"label": "1",
 	"Variables": {
 		"TitleOfVideo_1": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
 		"TitleOfVideo_2": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
@@ -13,7 +13,7 @@
 
 			"Tasks": [
 				{
-					"Label": "...",
+					"label": "...",
 					"Type": "Add-Content",
 					"Parameters": {
 						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
@@ -23,7 +23,7 @@
 					}
 				},
 				{
-					"Label": "...",
+					"label": "...",
 					"Type": "Add-Content",
 					"Parameters": {
 						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",

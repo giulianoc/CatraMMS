@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My Live Recorder",
+	"label"="My Live Recorder",
 
 	"Type": "Live-Recorder",
 

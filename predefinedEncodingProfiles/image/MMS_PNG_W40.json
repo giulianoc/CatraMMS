@@ -1,5 +1,5 @@
 {
-	"Label": "MMS_PNG_W40",
+	"label": "MMS_PNG_W40",
 	"FileFormat": "PNG",
 	"Image": {
 		"Width": 40,

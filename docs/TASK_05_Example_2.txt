@@ -1,12 +1,12 @@
 {
 	"Type": "Workflow",
-	"Label": "My Workflow",
+	"label": "My Workflow",
 	"Variables": {
 		"TitleOfVideo": { "Value": "My Title of the video content", "Type": "string", "Description": "..." },
 		"TitleOfFrame": { "Value": "My Title of the frame content", "Type": "string", "Description": "..." }
 	},
 	"Task": {
-		"Label": "My ingestion",
+		"label": "My ingestion",
 		"Type": "Add-Content",
 		"Parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
@@ -16,7 +16,7 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Label": "My MotionJPEG",
+				"label": "My MotionJPEG",
 				"Type": "Motion-JPEG-by-Periodical-Frames",
 				"Parameters": {
 					"StartTimeInSeconds": 1.5,

@@ -562,7 +562,7 @@ void API::addFacebookConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -691,7 +691,7 @@ void API::modifyFacebookConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1003,7 +1003,7 @@ void API::addTwitchConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1132,7 +1132,7 @@ void API::modifyTwitchConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1444,7 +1444,7 @@ void API::addTiktokConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1573,7 +1573,7 @@ void API::modifyTiktokConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -5705,7 +5705,7 @@ void API::addFTPConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -5883,7 +5883,7 @@ void API::modifyFTPConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
             
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -6214,7 +6214,7 @@ void API::addEMailConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -6367,7 +6367,7 @@ void API::modifyEMailConf(
         {
             Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"

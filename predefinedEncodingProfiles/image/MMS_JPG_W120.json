@@ -1,5 +1,5 @@
 {
-	"Label": "MMS_JPG_W120",
+	"label": "MMS_JPG_W120",
 	"FileFormat": "JPG",
 	"Image": {
 		"Width": 120,

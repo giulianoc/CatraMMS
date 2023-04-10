@@ -1,9 +1,9 @@
 {
-  "Label": "ingestContent ${title}",
+  "label": "ingestContent ${title}",
   "Type": "Workflow",
   "Task":
   {
-    "Label": "Add Content ${title}",
+    "label": "Add Content ${title}",
     "Type": "Add-Content",
     "Parameters": {
       "Title": "${title}",
@@ -15,13 +15,13 @@
     "OnSuccess": {
       "Task":
       {
-        "Label": "${title}",
+        "label": "${title}",
         "Type": "GroupOfTasks",
         "Parameters": {
           "ExecutionType": "parallel",
           "Tasks": [
             {
-              "Label": "Generate Picture ${title}",
+              "label": "Generate Picture ${title}",
               "Type": "Workflow-As-Library",
               "Parameters": {
                 "Title": "${title}",
@@ -38,7 +38,7 @@
               }
             },
             {
-              "Label": "Encode ${title}",
+              "label": "Encode ${title}",
               "Type": "Encode",
               "Parameters": {
                 "ContentType": "video",

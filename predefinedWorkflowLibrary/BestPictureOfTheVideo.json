@@ -73,10 +73,10 @@
       "Value": [ ]
     }
   },
-  "Label": "Best Picture of the Video",
+  "label": "Best Picture of the Video",
   "Type": "Workflow",
   "Task": {
-    "Label": "${Title}",
+    "label": "${Title}",
     "Type": "GroupOfTasks",
     "Parameters": {
       "ExecutionType": "parallel",
@@ -86,19 +86,19 @@
         {"label": "Frame: ${Title}"}
       ],
       "Tasks": [{
-        "Label": "Frame Containing Face: ${Title}",
+        "label": "Frame Containing Face: ${Title}",
         "Type": "Face-Recognition",
         "OnError": {"Task": {
-          "Label": "Frame: ${Title}",
+          "label": "Frame: ${Title}",
           "Type": "Frame",
           "OnSuccess": {"Task": {
-			"Label": "Encoding profiles (Frame): ${Title}",
+			"label": "Encoding profiles (Frame): ${Title}",
 			"Parameters": {
 				"ExecutionType": "parallel",
 				"ProcessingStartingFrom": "${ProcessingStartingFrom}",
 				"Tasks": [
 					{
-						"Label": "Encode image MMS_JPG_W240 (Frame): ${Title}",
+						"label": "Encode image MMS_JPG_W240 (Frame): ${Title}",
 						"Parameters": {
 							"ContentType": "image",
 							"EncodingPriority": "High",
@@ -108,7 +108,7 @@
 						"Type": "Encode"
 					},
 					{
-						"Label": "Encode image MMS_PNG_W240 (Frame): ${Title}",
+						"label": "Encode image MMS_PNG_W240 (Frame): ${Title}",
 						"Parameters": {
 							"ContentType": "image",
 							"EncodingPriority": "High",
@@ -136,13 +136,13 @@
           }
         }},
         "OnSuccess": {"Task": {
-          "Label": "Encoding profiles (FrameContainingFace): ${Title}",
+          "label": "Encoding profiles (FrameContainingFace): ${Title}",
           "Parameters": {
 			"ExecutionType": "parallel",
 			"ProcessingStartingFrom": "${ProcessingStartingFrom}",
 			"Tasks": [
 				{
-					"Label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${Title}",
+					"label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${Title}",
 					"Parameters": {
 						"ContentType": "image",
 						"EncodingPriority": "High",
@@ -152,7 +152,7 @@
 					"Type": "Encode"
 				},
 				{
-					"Label": "Encode image MMS_PNG_W240 (FrameContainingFace): ${Title}",
+					"label": "Encode image MMS_PNG_W240 (FrameContainingFace): ${Title}",
 					"Parameters": {
 						"ContentType": "image",
 						"EncodingPriority": "High",

@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My HTTP Callback",
+	"label"="My HTTP Callback",
 
 	"Type": "HTTP-Callback",
 

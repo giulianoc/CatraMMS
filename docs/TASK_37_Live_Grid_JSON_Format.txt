@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Live Grid",
+	"label"="My Live Grid",
 
 	// mandatory
 	"Type": "Live-Grid",

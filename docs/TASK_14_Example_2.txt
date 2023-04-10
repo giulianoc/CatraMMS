@@ -1,11 +1,11 @@
 {
 	"Type": "Workflow",
-	"Label": "My workflow",
+	"label": "My workflow",
 	"Variables": {
 		"Title": { "Value": "My Title of the content", "Type": "string", "Description": "..." }
 	},
 	"Task": {
-		"Label": "This is my video",
+		"label": "This is my video",
 		"Type": "Add-Content",
 		"Parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",

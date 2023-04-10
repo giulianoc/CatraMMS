@@ -1,8 +1,8 @@
 {
-	"Label": "__FILENAME__",
+	"label": "__FILENAME__",
 	"Type": "Workflow",
 	"Task": {
-		"Label": "__FILENAME__",
+		"label": "__FILENAME__",
 		"Type": "Add-Content",
 		"Parameters": {
 			"AllowUniqueNameOverride": false,
@@ -14,13 +14,13 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Label": "GroupOfTasks __TITLE__",
+				"label": "GroupOfTasks __TITLE__",
 				"Type": "GroupOfTasks",
 				"Parameters": {
 					"ExecutionType": "parallel",
 					"Tasks": [
 						{
-							"Label": "encode __TITLE__",
+							"label": "encode __TITLE__",
 							"Type": "Encode",
 							"Parameters": {
 								"ContentType": "video",
@@ -30,7 +30,7 @@
 							}
 						},
 						{
-							"Label": "Best Picture: __TITLE__",
+							"label": "Best Picture: __TITLE__",
 							"Type": "Workflow-As-Library",
 							"Parameters": {
 								"AllowUniqueNameOverride": false,

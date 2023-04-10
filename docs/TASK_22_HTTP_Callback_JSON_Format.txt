@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My HTTP Callback",
+	"label"="My HTTP Callback",
 
 	// mandatory
 	"Type": "HTTP-Callback",

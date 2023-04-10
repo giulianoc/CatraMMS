@@ -1,14 +1,14 @@
 {
-  "Label": "Cut from Recording",
+  "label": "Cut from Recording",
   "Task": {
-    "Label": "Cut from Recording",
+    "label": "Cut from Recording",
     "OnSuccess": {"Task": {
-      "Label": "<no label>",
+      "label": "<no label>",
       "Parameters": {
         "ExecutionType": "parallel",
         "Tasks": [
           {
-            "Label": "Picture of Cut",
+            "label": "Picture of Cut",
             "Parameters": {
               "AllowUniqueNameOverride": false,
               "ImageRetention": "${MediaItemRetention}",
@@ -25,7 +25,7 @@
             "Type": "Workflow-As-Library"
           },
           {
-            "Label": "Cut encoding",
+            "label": "Cut encoding",
             "Parameters": {
               "ContentType": "video",
               "EncodingPriority": "Low",
@@ -34,7 +34,7 @@
             "Type": "Encode"
           },
           {
-            "Label": "Generate MP4 profile",
+            "label": "Generate MP4 profile",
             "Parameters": {"OutputFileFormat": "mp4"},
             "Type": "Change-File-Format"
           }

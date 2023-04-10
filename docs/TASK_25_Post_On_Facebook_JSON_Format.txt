@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Facebook POST",
+	"label"="My Facebook POST",
 
 	// mandatory
 	"Type": "Post-On-Facebook",

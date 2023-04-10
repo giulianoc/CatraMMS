@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My YouTube POST",
+	"label"="My YouTube POST",
 
 	// mandatory
 	"Type": "Post-On-YouTube",

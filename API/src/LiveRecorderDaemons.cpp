@@ -1822,10 +1822,10 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 	{
 		/*
 		{
-        	"Label": "<workflow label>",
+        	"label": "<workflow label>",
         	"Type": "Workflow",
         	"Task": {
-                "Label": "<task label 1>",
+                "label": "<task label 1>",
                 "Type": "Add-Content"
                 "Parameters": {
                         "FileFormat": "ts",
@@ -1842,7 +1842,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 
 		Json::Value addContentRoot;
 
-		string field = "Label";
+		string field = "label";
 		addContentRoot[field] = to_string(utcChunkStartTime);
 
 		field = "Type";
@@ -1916,7 +1916,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 
 		Json::Value workflowRoot;
 
-		field = "Label";
+		field = "label";
 		workflowRoot[field] = addContentTitle;
 
 		field = "Type";
@@ -3078,10 +3078,10 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 	try
 	{
 		// {
-        // 	"Label": "<workflow label>",
+        // 	"label": "<workflow label>",
         // 	"Type": "Workflow",
         //	"Task": {
-        //        "Label": "<task label 1>",
+        //        "label": "<task label 1>",
         //        "Type": "Add-Content"
         //        "Parameters": {
         //                "FileFormat": "m3u8",
@@ -3154,7 +3154,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		string addContentLabel = liveRecorderIngestionJobLabel;
 			// + " V-VOD (up to " + sUtcEndTimeForContentTitle + ")";
 
-		field = "Label";
+		field = "label";
 		addContentRoot[field] = addContentLabel;
 
 		field = "Type";
@@ -3253,7 +3253,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 
 		Json::Value workflowRoot;
 
-		field = "Label";
+		field = "label";
 		workflowRoot[field] = addContentLabel + " (virtual VOD)";
 
 		field = "Type";

@@ -1,8 +1,8 @@
 {
 	"Type": "Workflow",
-	"Label": "1",
+	"label": "1",
 	"Task": {
-		"Label": "my label",
+		"label": "my label",
 		"Type": "Email-Notification",
 		"Parameters": {
 			"References": [

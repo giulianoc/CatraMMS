@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	Label="Overlay X",
+	label="Overlay X",
 
 	// mandatory
 	"Type": "Overlay-Image-On-Video",

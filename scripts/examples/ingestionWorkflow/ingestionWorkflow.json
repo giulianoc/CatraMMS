@@ -1,7 +1,7 @@
 {
-	"Label": "<workflow label>",
+	"label": "<workflow label>",
 	"Task": {
-		"Label": "Task label 1",
+		"label": "Task label 1",
 		"Parameters": {
 			"WorkflowAsLibraryLabel": "test userData variable",
 			"WorkflowAsLibraryType": "User",

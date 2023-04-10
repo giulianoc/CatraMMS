@@ -1,12 +1,12 @@
 {
     "Type": "Workflow",
-    "Label": "1",
+    "label": "1",
     "Variables": {
         "TitleOfVideo": "My Title of the video content",
         "TitleOfCut": "My Title of the cut content"
     },
     "Task": {
-        "Label": "...",
+        "label": "...",
         "Type": "Add-Content",
         "Parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",

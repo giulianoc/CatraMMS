@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My Intro And Outro Overlay",
+	"label"="My Intro And Outro Overlay",
 
 	// mandatory
 	"Type": "Intro-Outro-Overlay",

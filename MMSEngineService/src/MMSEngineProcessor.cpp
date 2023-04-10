@@ -14762,7 +14762,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			Json::Value concatDemuxerRoot;
 			Json::Value concatDemuxerParametersRoot;
 			{
-				string field = "Label";
+				string field = "label";
 				concatDemuxerRoot[field] = "Concat from " + to_string(utcFirstChunkStartTime) + " (" + firstChunkStartTime
 					+ ") to " + to_string(utcLastChunkEndTime) + " (" + lastChunkEndTime + ")";
 
@@ -14822,7 +14822,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 			Json::Value cutRoot;
 			{
-				string field = "Label";
+				string field = "label";
 				cutRoot[field] = string("Live Cut from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
@@ -14980,7 +14980,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 			Json::Value workflowRoot;
 			{
-				string field = "Label";
+				string field = "label";
 				workflowRoot[field] = string("Cut from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
@@ -15692,7 +15692,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			Json::Value concatDemuxerRoot;
 			Json::Value concatDemuxerParametersRoot;
 			{
-				string field = "Label";
+				string field = "label";
 				concatDemuxerRoot[field] = "Concat from " + to_string(utcFirstChunkStartTimeInMilliSecs) + " (" + firstChunkStartTime
 					+ ") to " + to_string(utcLastChunkEndTimeInMilliSecs) + " (" + lastChunkEndTime + ")";
 
@@ -15752,7 +15752,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 			Json::Value cutRoot;
 			{
-				string field = "Label";
+				string field = "label";
 				cutRoot[field] = string("Live Cut from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
@@ -15912,7 +15912,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 			Json::Value workflowRoot;
 			{
-				string field = "Label";
+				string field = "label";
 				workflowRoot[field] = ingestionJobLabel + ". Cut from " + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
@@ -16896,7 +16896,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				Json::Value liveProxyParametersRoot;
 				{
-					string field = "Label";
+					string field = "label";
 					proxyLabel = "Proxy " + streamConfigurationLabel
 						+ " to YouTube (" + youTubeConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
@@ -16989,7 +16989,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				Json::Value vodProxyParametersRoot;
 				{
-					string field = "Label";
+					string field = "label";
 					proxyLabel = "VOD-Proxy MediaItem to YouTube (" + youTubeConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
@@ -17083,7 +17083,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			Json::Value workflowRoot;
 			{
-				string field = "Label";
+				string field = "label";
 				workflowRoot[field] = ingestionJobLabel + ". " + proxyLabel;
 
 				field = "Type";
@@ -17542,7 +17542,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				Json::Value liveProxyParametersRoot;
 				{
-					string field = "Label";
+					string field = "label";
 					proxyLabel = "Proxy " + configurationLabel
 						+ " to Facebook (" + facebookConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
@@ -17660,7 +17660,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				Json::Value vodProxyParametersRoot;
 				{
-					string field = "Label";
+					string field = "label";
 					proxyLabel = "Proxy MediaItem to Facebook (" + facebookConfigurationLabel + ")";
 					proxyRoot[field] = proxyLabel;
 
@@ -17760,7 +17760,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 			Json::Value workflowRoot;
 			{
-				string field = "Label";
+				string field = "label";
 				workflowRoot[field] = ingestionJobLabel + ". " + proxyLabel;
 
 				field = "Type";

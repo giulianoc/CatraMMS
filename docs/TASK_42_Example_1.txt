@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My YouTube Live Broadcast",
+	"label"="My YouTube Live Broadcast",
 
 	"Type": "YouTube-Live-Broadcast",
 

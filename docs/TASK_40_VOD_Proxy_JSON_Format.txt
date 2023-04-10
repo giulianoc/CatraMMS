@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My VOD Proxy",
+	"label"="My VOD Proxy",
 
 	// mandatory
 	"Type": "VOD-Proxy",

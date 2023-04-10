@@ -1,5 +1,5 @@
 {
-	"Label" : "MMS_HLS_AAC_160Kb",
+	"label" : "MMS_HLS_AAC_160Kb",
 	"FileFormat" : "hls",
 	"HLS" : 
 	{

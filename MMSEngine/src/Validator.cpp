@@ -361,7 +361,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     }
 
     string label;
-    field = "Label";
+    field = "label";
 	label = JSONUtils::asString(taskRoot, field, "");
 
     string type = JSONUtils::asString(taskRoot, "Type", "");
@@ -2656,7 +2656,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
                 field = "ingestionJobKey";
                 if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                 {
-                    field = "Label";
+                    field = "label";
                     if (!JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
                         string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -7040,7 +7040,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
     Json::Value encodingProfilesSetRoot)
 {
     vector<string> mandatoryFields = {
-        "Label",
+        "label",
         "Profiles"
     };
     for (string mandatoryField: mandatoryFields)
@@ -7092,7 +7092,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 {
     {
         vector<string> mandatoryFields = {
-            "Label",
+            "label",
             "FileFormat",
             "Video",
             "Audio"
@@ -7114,7 +7114,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     }
     
     {
-        string field = "Label";
+        string field = "label";
         string label = JSONUtils::asString(encodingProfileRoot, field, "");
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
@@ -7264,7 +7264,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
 {
     {
         vector<string> mandatoryFields = {
-            "Label",
+            "label",
             "FileFormat",
             "Audio"
         };
@@ -7285,7 +7285,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     }
     
     {
-        string field = "Label";
+        string field = "label";
         string label = JSONUtils::asString(encodingProfileRoot, field, "");
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
@@ -7368,7 +7368,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
 {
     {
         vector<string> mandatoryFields = {
-            "Label",
+            "label",
             "FileFormat",
             "Image"
         };
@@ -7389,7 +7389,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
     }    
 
     {
-        string field = "Label";
+        string field = "label";
         string label = JSONUtils::asString(encodingProfileRoot, field, "");
         string mmsPredefinedProfilePrefix ("MMS_");
         if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   

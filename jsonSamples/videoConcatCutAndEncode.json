@@ -1,6 +1,6 @@
 {
 	"Type": "Workflow",
-	"Label": "My workflow",
+	"label": "My workflow",
 	"Variables": {
 		"TitleOfVideo_1": "My Title of the video_1 content",
 		"TitleOfVideo_2": "My Title of the video_2 content",
@@ -11,7 +11,7 @@
 		"ExecutionType": "parallel",
 		"Tasks": [
 			{
-				"Label": "${TitleOfVideo_1}",
+				"label": "${TitleOfVideo_1}",
 				"Type": "Add-Content",
 				"Parameters": {
 					"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
@@ -22,7 +22,7 @@
 				}
 			},
 			{
-				"Label": "${TitleOfVideo_2}",
+				"label": "${TitleOfVideo_2}",
 				"Type": "Add-Content",
 				"Parameters": {
             				"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
@@ -35,7 +35,7 @@
 		],
 		"OnSuccess": {
 			"Task": {
-				"Label": "My concat",
+				"label": "My concat",
 				"Type": "Concat-Demuxer",
 				"Parameters": {
 					"UserData": { "MyData": "this is my frame data" },
@@ -43,7 +43,7 @@
 				},
 				"OnSuccess": {
 					"Task": {
-						"Label": "My cut",
+						"label": "My cut",
 						"Type": "Cut",
 						"Parameters": {
 							"StartTimeInSeconds": 1200.0,
@@ -53,7 +53,7 @@
 						},
 						"OnSuccess": {
 							"Task": {
-								"Label": "my encode",
+								"label": "my encode",
 								"Type": "Encode",
 								"Parameters": {
 									"EncodingPriority": "Low",
@@ -67,7 +67,7 @@
 		},
 		"OnComplete": {
 			"Task": {
-				"Label": "My email",
+				"label": "My email",
 				"Type": "Email-Notification",
 				"Parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",

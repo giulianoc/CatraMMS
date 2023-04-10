@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	"Label"="My FTP Delivery",
+	"label"="My FTP Delivery",
 
 	// mandatory
 	"Type": "FTP-Delivery",

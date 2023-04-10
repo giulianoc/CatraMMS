@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	Label="Picture In Picture Label",
+	label="Picture In Picture Label",
 
 	// mandatory
 	"Type": "Picture-In-Picture",

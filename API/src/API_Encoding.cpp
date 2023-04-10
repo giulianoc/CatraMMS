@@ -764,7 +764,7 @@ void API::addUpdateEncodingProfilesSet(
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
         
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -907,7 +907,7 @@ void API::addEncodingProfile(
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             validator.validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
 
-            string field = "Label";
+            string field = "label";
             if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"

@@ -1,11 +1,11 @@
 {
 	"Type": "Workflow",
-	"Label": "My Workflow",
+	"label": "My Workflow",
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
 	"Task": {
-		"Label": "My Task",
+		"label": "My Task",
 		"Type": "Add-Content",
 		"Parameters": {
 			"FileFormat": "mpg",

@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My Local Copy",
+	"label"="My Local Copy",
 
 	"Type": "Extract-Track",
 

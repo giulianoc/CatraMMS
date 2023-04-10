@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My Countdown",
+	"label"="My Countdown",
 
 	"Type": "Countdown",
 

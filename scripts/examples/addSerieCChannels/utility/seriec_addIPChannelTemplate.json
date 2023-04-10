@@ -1,6 +1,6 @@
 
 {
-	"Label": "__title__",
+	"label": "__title__",
 	"Name": "__title__",
 	"SourceType": "IP_PUSH",
 	"PushProtocol": "rtmp",

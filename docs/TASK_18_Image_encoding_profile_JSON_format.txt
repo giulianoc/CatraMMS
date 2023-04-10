@@ -1,6 +1,6 @@
 {
 	// mandatory
-	"Label": "Sport",
+	"label": "Sport",
 
 	// mandatory: JPG, GIF, PNG
 	"FileFormat": "JPG",

@@ -1,8 +1,8 @@
 {
 	"Type": "Workflow",
-	"Label": "My Workflow...",
+	"label": "My Workflow...",
 	"Task": {
-		"Label": "my label ...",
+		"label": "my label ...",
 		"Type": "Remove-Content",
 		"Parameters": {
 			"References": [

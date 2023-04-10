@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My YouTube POST",
+	"label"="My YouTube POST",
 
 	"Type": "Post-On-YouTube",
 

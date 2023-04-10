@@ -1,11 +1,11 @@
 {
     "Type": "Workflow",
-    "Label": "1",
+    "label": "1",
     "Variables": {
         "TitleOfVideo": "My Title of the video content"
     },
     "Task": {
-        "Label": "My video",
+        "label": "My video",
         "Type": "Add-Content",
         "Parameters": {
             "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/05/15/2577986.mp4",
@@ -16,7 +16,7 @@
         },
         "OnSuccess": {
             "Task": {
-                "Label": "my label",
+                "label": "my label",
                 "Type": "Encode",
                 "Parameters": {
                     "EncodingPriority": "Low",

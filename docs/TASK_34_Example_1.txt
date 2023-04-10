@@ -1,5 +1,5 @@
 "Task": {
-	"Label"="My Live Proxy",
+	"label"="My Live Proxy",
 
 	"Type": "Live-Proxy",
 

@@ -92,7 +92,7 @@ void API::ingestion(
             string rootType = JSONUtils::asString(requestBodyRoot, field, "");
 
             string rootLabel;
-            field = "Label";
+            field = "label";
 			rootLabel = JSONUtils::asString(requestBodyRoot, field, "");
 
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
@@ -325,7 +325,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 		Workflow instantiated (example):
 			"Task": {
-				"Label": "Use of a WorkflowAsLibrary",
+				"label": "Use of a WorkflowAsLibrary",
 
 				"Parameters": {
 					"WorkflowAsLibraryLabel": "Best Picture of the Video",
@@ -336,7 +336,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 					"Ingester": "Admin",
 					"InitialFramesNumberToBeSkipped": 1500,
 					"InstantInSeconds": 60,
-					"Label": "Image label",
+					"label": "Image label",
 					"Title": "My Title"
 				},
 				"Type": "Workflow-As-Library"
@@ -939,7 +939,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     string type = JSONUtils::asString(taskRoot, field, "");
 
     string taskLabel;
-    field = "Label";
+    field = "label";
 	taskLabel = JSONUtils::asString(taskRoot, field, "");
 
 	_logger->info(__FILEREF__ + "Processing SingleTask..."
@@ -1116,7 +1116,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 							+ " - referenceIndex: " + to_string(referenceIndex)
 						;
 							
-						field = "Label";
+						field = "label";
 						newTaskRoot[field] = localLabel;
 
 						field = "Type";
@@ -1150,7 +1150,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					string localLabel = taskLabel + " - EncodingProfileKey: " + to_string(encodingProfileKey)
 					;
 						
-					field = "Label";
+					field = "label";
 					newTaskRoot[field] = localLabel;
 
 					field = "Type";
@@ -1175,7 +1175,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					string localLabel = taskLabel + " - referenceIndex: " + to_string(referenceIndex)
 					;
 						
-					field = "Label";
+					field = "label";
 					newTaskRoot[field] = localLabel;
 
 					field = "Type";
@@ -1275,7 +1275,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				Json::Value newTaskRoot;
 				string localLabel = taskLabel + " - referenceIndex: " + to_string(referenceIndex);
 					
-				field = "Label";
+				field = "label";
 				newTaskRoot[field] = localLabel;
 
 				field = "Type";
@@ -1837,7 +1837,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	string type = "GroupOfTasks";
 
 	string groupOfTaskLabel;
-	string field = "Label";
+	string field = "label";
 	groupOfTaskLabel = JSONUtils::asString(groupOfTasksRoot, field, "");
 
 	_logger->info(__FILEREF__ + "Processing GroupOfTasks..."
@@ -2354,7 +2354,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         string taskType = JSONUtils::asString(taskRoot, field, "");
 
-        field = "Label";
+        field = "label";
         string taskLabel = JSONUtils::asString(taskRoot, field, "");
 
 		vector<int64_t> localIngestionJobKeys;
@@ -2441,7 +2441,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         }    
         string taskType = JSONUtils::asString(taskRoot, field, "");
 
-		field = "Label";
+		field = "label";
         string taskLabel = JSONUtils::asString(taskRoot, field, "");
 
 		vector<int64_t> localIngestionJobKeys;

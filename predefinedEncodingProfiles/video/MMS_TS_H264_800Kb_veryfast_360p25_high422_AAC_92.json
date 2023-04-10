@@ -1,5 +1,5 @@
 {
-	"Label" : "MMS_TS_H264_800Kb_veryfast_360p25_high422_AAC_92",
+	"label" : "MMS_TS_H264_800Kb_veryfast_360p25_high422_AAC_92",
 	"FileFormat" : "ts",
 	"Video" : 
 	{
