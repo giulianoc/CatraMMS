@@ -28,7 +28,7 @@
                 "Ingester": "Admin",
                 "InitialFramesNumberToBeSkipped": 1500,
                 "InstantInSeconds": 60,
-                "ProcessingStartingFrom": "2021-08-11T13:56:23Z",
+                "processingStartingFrom": "2021-08-11T13:56:23Z",
                 "Title": "My Title",
                 "UniqueName": "",
                 "WorkflowAsLibraryLabel": "Best Picture of the Video",

@@ -1701,7 +1701,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 	string processingStartingFrom;
 	{
-		field = "ProcessingStartingFrom";
+		field = "processingStartingFrom";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 
@@ -2144,7 +2144,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
 	string processingStartingFrom;
 	{
-		field = "ProcessingStartingFrom";
+		field = "processingStartingFrom";
 		processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 
 		if (processingStartingFrom == "")

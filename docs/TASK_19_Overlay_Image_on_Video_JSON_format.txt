@@ -60,7 +60,7 @@
 		//		The date format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		//	If it is not present, by default it will be initialized with the ingesion time
-		"ProcessingStartingFrom": "2019-01-21T12:30:00Z",
+		"processingStartingFrom": "2019-01-21T12:30:00Z",
 
 		// optional: It is used in case this Task has to wait a Task of another Workflow
 		"WaitFor": [

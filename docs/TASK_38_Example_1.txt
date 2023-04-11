@@ -1,4 +1,4 @@
-"Task": {
+"pask": {
 	"label"="My Countdown",
 
 	"type": "Countdown",
