@@ -80,7 +80,7 @@
     "type": "GroupOfTasks",
     "Parameters": {
       "ExecutionType": "parallel",
-	  "processingStartingFrom": "${ProcessingStartingFrom}",
+	  "processingStartingFrom": "${processingStartingFrom}",
       "ReferencesOutput": [
         {"label": "Frame Containing Face: ${Title}"},
         {"label": "Frame: ${Title}"}
@@ -95,7 +95,7 @@
 			"label": "Encoding profiles (Frame): ${Title}",
 			"Parameters": {
 				"ExecutionType": "parallel",
-				"processingStartingFrom": "${ProcessingStartingFrom}",
+				"processingStartingFrom": "${processingStartingFrom}",
 				"Tasks": [
 					{
 						"label": "Encode image MMS_JPG_W240 (Frame): ${Title}",
@@ -103,7 +103,7 @@
 							"ContentType": "image",
 							"EncodingPriority": "High",
 							"EncodingProfileLabel": "MMS_JPG_W240",
-							"processingStartingFrom": "${ProcessingStartingFrom}"
+							"processingStartingFrom": "${processingStartingFrom}"
 						},
 						"type": "Encode"
 					},
@@ -113,7 +113,7 @@
 							"ContentType": "image",
 							"EncodingPriority": "High",
 							"EncodingProfileLabel": "MMS_PNG_W240",
-							"processingStartingFrom": "${ProcessingStartingFrom}"
+							"processingStartingFrom": "${processingStartingFrom}"
 						},
 						"type": "Encode"
 					}
@@ -127,7 +127,7 @@
             "Height": 480,
             "Ingester": "${Ingester}",
             "InstantInSeconds": "${InstantInSeconds}",
-			"processingStartingFrom": "${ProcessingStartingFrom}",
+			"processingStartingFrom": "${processingStartingFrom}",
             "Retention": "${ImageRetention}",
             "Tags": "${ImageTags}",
             "Title": "${Title}",
@@ -139,7 +139,7 @@
           "label": "Encoding profiles (FrameContainingFace): ${Title}",
           "Parameters": {
 			"ExecutionType": "parallel",
-			"processingStartingFrom": "${ProcessingStartingFrom}",
+			"processingStartingFrom": "${processingStartingFrom}",
 			"Tasks": [
 				{
 					"label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${Title}",
@@ -147,7 +147,7 @@
 						"ContentType": "image",
 						"EncodingPriority": "High",
 						"EncodingProfileLabel": "MMS_JPG_W240",
-						"processingStartingFrom": "${ProcessingStartingFrom}"
+						"processingStartingFrom": "${processingStartingFrom}"
 					},
 					"type": "Encode"
 				},
@@ -157,7 +157,7 @@
 						"ContentType": "image",
 						"EncodingPriority": "High",
 						"EncodingProfileLabel": "MMS_PNG_W240",
-						"processingStartingFrom": "${ProcessingStartingFrom}"
+						"processingStartingFrom": "${processingStartingFrom}"
 					},
 					"type": "Encode"
 				}
@@ -174,7 +174,7 @@
           "InitialFramesNumberToBeSkipped": "${InitialFramesNumberToBeSkipped}",
           "OneFramePerSecond": true,
           "Output": "FrameContainingFace",
-		  "processingStartingFrom": "${ProcessingStartingFrom}",
+		  "processingStartingFrom": "${processingStartingFrom}",
 		  "References": "${References}",
           "Retention": "${ImageRetention}",
           "Tags": "${ImageTags}",
