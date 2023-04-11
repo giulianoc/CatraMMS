@@ -12286,7 +12286,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 
 			// EncodersPool override the one included in ChannelConf if present
-            field = "EncodersPool";
+            field = "encodersPool";
 			encodersPoolLabel = JSONUtils::asString(parametersRoot, field, encodersPoolLabel);
 
             field = "schedule";
@@ -12941,14 +12941,14 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 
 			// EncodersPool override the one included in ChannelConf if present
-            string field = "EncodersPool";
+            string field = "encodersPool";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				taskEncodersPoolLabel = parametersRoot.get(field, "").asString();
 
 			field = "defaultBroadcast";
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
-            field = "TimePeriod";
+            field = "timePeriod";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
@@ -13002,23 +13002,23 @@ void MMSEngineProcessor::manageLiveProxy(
 				}
 			}
 
-			field = "MaxWidth";
+			field = "maxWidth";
 			maxWidth = JSONUtils::asInt(parametersRoot, field, -1);
 
-			field = "UserAgent";
+			field = "userAgent";
 			userAgent = JSONUtils::asString(parametersRoot, field, "");
 
-			field = "OtherInputOptions";
+			field = "otherInputOptions";
 			otherInputOptions = JSONUtils::asString(parametersRoot, field, "");
 
-			// field = "MaxAttemptsNumberInCaseOfErrors";
+			// field = "maxAttemptsNumberInCaseOfErrors";
 			// if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			// 	maxAttemptsNumberInCaseOfErrors = 3;
 			// else
 			// 	maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
 			// 		parametersRoot, field, 0);
 
-			field = "WaitingSecondsBetweenAttemptsInCaseOfErrors";
+			field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 			waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(
 				parametersRoot, field, 5);
 
@@ -13238,7 +13238,7 @@ void MMSEngineProcessor::manageVODProxy(
 		int64_t utcProxyPeriodEnd = -1;
 		bool defaultBroadcast = false;
         {
-            string field = "TimePeriod";
+            string field = "timePeriod";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
@@ -13840,11 +13840,11 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		Json::Value drawTextDetailsRoot = Json::nullValue;
 
 
-		string field = "OutputType";
+		string field = "outputType";
 		// outputType = JSONUtils::asString(outputRoot, field, "HLS");
 		outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
-		field = "OtherOutputOptions";
+		field = "otherOutputOptions";
 		otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
 
 		field = "videoTrackIndexToBeUsed";
@@ -14157,7 +14157,7 @@ void MMSEngineProcessor::manageLiveGrid(
 				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 			}
 
-            field = "OutputType";
+            field = "outputType";
 			string outputType = JSONUtils::asString(parametersRoot, field, "HLS_Channel");
 
 			if (outputType == "HLS_Channel") // || outputType == "DASH")
@@ -16940,7 +16940,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					{
 						bool timePeriod = true;
-						field = "TimePeriod";
+						field = "timePeriod";
 						liveProxyParametersRoot[field] = timePeriod;
 
 						field = "schedule";
@@ -16971,7 +16971,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 						Json::Value outputRoot;
 
-						field = "OutputType";
+						field = "outputType";
 						outputRoot[field] = "RTMP_Channel";
 
 						field = "rtmpChannelConfigurationLabel";
@@ -17032,7 +17032,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					{
 						bool timePeriod = true;
-						field = "TimePeriod";
+						field = "timePeriod";
 						vodProxyParametersRoot[field] = timePeriod;
 
 						field = "schedule";
@@ -17066,7 +17066,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 						Json::Value outputRoot;
 
-						field = "OutputType";
+						field = "outputType";
 						outputRoot[field] = "RTMP_Channel";
 
 						field = "rtmpChannelConfigurationLabel";
@@ -17586,7 +17586,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 					{
 						bool timePeriod = true;
-						field = "TimePeriod";
+						field = "timePeriod";
 						liveProxyParametersRoot[field] = timePeriod;
 
 						if (facebookLiveType == "LiveNow")
@@ -17642,7 +17642,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 						Json::Value outputRoot;
 
-						field = "OutputType";
+						field = "outputType";
 						outputRoot[field] = "RTMP_Channel";
 
 						field = "rtmpChannelConfigurationLabel";
@@ -17706,7 +17706,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 					{
 						bool timePeriod = true;
-						field = "TimePeriod";
+						field = "timePeriod";
 						vodProxyParametersRoot[field] = timePeriod;
 
 						if (facebookLiveType == "LiveNow")
@@ -17743,7 +17743,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 						Json::Value outputRoot;
 
-						field = "OutputType";
+						field = "outputType";
 						outputRoot[field] = "RTMP_Channel";
 
 						field = "rtmpChannelConfigurationLabel";

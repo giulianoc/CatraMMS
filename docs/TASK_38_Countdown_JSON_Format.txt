@@ -40,7 +40,7 @@
 		//	the media inherited by the parent Task and the media specified by the References tag
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// This json array lists all the Outputs the Live-Proxy task has to generate.
 		//	At least one Output has to be present
@@ -49,7 +49,7 @@
 				// optional, possible values: HLS, DASH, RTMP_Channel, CDN_AWS, CDN_CDN77.
 				// HLS and DASH works also in case of an external transcoder
 				// Default: HLS
-				"OutputType": "HLS",
+				"outputType": "HLS",
 
 				// DeliveryCode is used only in case of HLS and DASH
 				//	It identifies this specific delivery. In case for example
@@ -104,7 +104,7 @@
 				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
 				//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
 				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
-				"OtherOutputOptions": "-map 0:1",
+				"otherOutputOptions": "-map 0:1",
 
 				// optional
 				"filters": {

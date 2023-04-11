@@ -75,7 +75,7 @@ void LiveRecorder::encodeContent(
 		//		nfs would not be enough fast and could create random file system error
         _liveRecording->_chunksTranscoderStagingContentsPath =
 			JSONUtils::asString(encodingParametersRoot, "chunksTranscoderStagingContentsPath", "");
-		string userAgent = JSONUtils::asString(ingestedParametersRoot, "UserAgent", "");
+		string userAgent = JSONUtils::asString(ingestedParametersRoot, "userAgent", "");
 
 
 		// this is the global shared path where the chunks would be moved for the ingestion

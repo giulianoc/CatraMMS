@@ -31,13 +31,13 @@
 		//	the media inherited by the parent Task and the media specified by the References tag
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// optional, it specifies if the Proxy will have a specified running period
 		//	Default is false
-		"TimePeriod": false,
+		"timePeriod": false,
 
-		// mandatory in case the 'TimePeriod' field is true: It specifies the proxy period, his format is:
+		// mandatory in case the 'timePeriod' field is true: It specifies the proxy period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"schedule": {
 			"start": "2019-01-21T12:30:00Z",
@@ -47,7 +47,7 @@
 		// optional: It is possible to use this field to specify any other input options.
 		// Examples:
 		//	-itsoffset -2.0
-		"OtherInputOptions": "",
+		"otherInputOptions": "",
 
 		// This json array lists all the Outputs the Live-Proxy task has to generate.
 		//	At least one Output has to be present
@@ -56,7 +56,7 @@
 				// optional, possible values: HLS_Channel, RTMP_Channel, CDN_AWS, CDN_CDN77.
 				// HLS_Channel works also in case of an external transcoder
 				// Default: HLS_Channel
-				"OutputType": "HLS_Channel",
+				"outputType": "HLS_Channel",
 
 				// optional, used only in case of HLS_Channel
 				// the configuration label of an HLS Channel defined in MMS.
@@ -98,7 +98,7 @@
 				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
 				//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
 				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
-				"OtherOutputOptions": "-map 0:1",
+				"otherOutputOptions": "-map 0:1",
 
 				// optional
 				"filters": {

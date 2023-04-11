@@ -16,7 +16,7 @@
 				"label": "encode urban_male_lounge",
 				"Parameters": {
 					"ContentType": "video",
-					"EncodersPool": "irl-3",
+					"encodersPool": "irl-3",
 					"EncodingPriority": "Low",
 					"EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
 				},

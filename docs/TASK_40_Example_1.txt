@@ -4,12 +4,12 @@
     "label": "Task label 2",
     "Parameters": {
       "Outputs": [{
-        "OutputType": "RTMP_Channel"
+        "outputType": "RTMP_Channel"
       }],
       "References": [
         {"physicalPathKey": 1630295}
       ],
-      "TimePeriod": false
+      "timePeriod": false
     },
     "type": "VOD-Proxy"
   },

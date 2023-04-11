@@ -4412,11 +4412,11 @@ void API::changeLiveProxyPlaylist(
             }    
 			Json::Value proxyPeriodRoot = metadataContentRoot[field];
 
-			field = "TimePeriod";
+			field = "timePeriod";
 			bool timePeriod = JSONUtils::asBool(metadataContentRoot, field, false);
 			if (!timePeriod)
 			{
-                string errorMessage = __FILEREF__ + "The LiveProxy IngestionJob has to have TimePeriod"
+                string errorMessage = __FILEREF__ + "The LiveProxy IngestionJob has to have timePeriod"
 					+ ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
 					+ ", timePeriod: " + to_string(timePeriod);
                 _logger->error(errorMessage);

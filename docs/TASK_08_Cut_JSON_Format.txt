@@ -65,7 +65,7 @@
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
 		// It is used only in case of KeyFrameSeeking false because a reencoding is needed
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// optional. Possible values: Low, Medium, High
 		// If not present or if it is specifying a priority bigger than

@@ -20,13 +20,13 @@
 		// a specific encoders pool has to be used
 		// In case this field is initialized here, it overrides the one specified by the channel
 		// configuration label
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// optional, it specifies if the Proxy will have a specified running period
 		//	Default is false
-		"TimePeriod": false,
+		"timePeriod": false,
 
-		// mandatory in case the 'TimePeriod' field is true: It specifies the proxy period, his format is:
+		// mandatory in case the 'timePeriod' field is true: It specifies the proxy period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"schedule": {
 			"start": "2019-01-21T12:30:00Z",
@@ -34,30 +34,30 @@
 		},
 
 		// optional: user agent used only in case actAsServer is false
-		"UserAgent": "",
+		"userAgent": "",
 
 		// optional: If it is present, in case the live streaming provides several tracks,
 		//	this parameter is used to select the track to be proxied having
-		//	the biggest width smaller or equal than MaxWidth
+		//	the biggest width smaller or equal than maxWidth
 		//	The audio track selected is the one related with the selected video track
-		"MaxWidth": -1,
+		"maxWidth": -1,
 
 		// optional: It is possible to use this field to specify any other input options.
 		// Examples:
 		//	-itsoffset -2.0
-		"OtherInputOptions": "",
+		"otherInputOptions": "",
 
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many times LiveProxy has to try the URL.
 		//		-1 means it always has to retry 
 		//		>0, i.e. 2, it will try 2 times and then exit
 		//		Default: -1
-		"MaxAttemptsNumberInCaseOfErrors": -1,
+		"maxAttemptsNumberInCaseOfErrors": -1,
 
 		// optional. In case the URL fails, the LiveProxy task tries it again. This parameter indicates
 		//		how many seconds LiveProxy has to wait before to try again.
 		//		Default: 600
-		"WaitingSecondsBetweenAttemptsInCaseOfErrors": 600,
+		"waitingSecondsBetweenAttemptsInCaseOfErrors": 600,
 
 		// This json array lists all the Outputs the Live-Proxy task has to generate.
 		//	At least one Output has to be present
@@ -66,7 +66,7 @@
 				// optional, possible values: HLS_Channel, RTMP_Channel, CDN_AWS, CDN_CDN77.
 				// HLS_Channel works also in case of an external transcoder
 				// Default: HLS_Channel
-				"OutputType": "HLS_Channel",
+				"outputType": "HLS_Channel",
 
 				// optional, used only in case of HLS_Channel
 				// the configuration label of an HLS Channel defined in MMS.
@@ -108,7 +108,7 @@
 				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
 				//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
 				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
-				"OtherOutputOptions": "-map 0:1",
+				"otherOutputOptions": "-map 0:1",
 
 				// optional
 				"filters": {

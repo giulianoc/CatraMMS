@@ -54,7 +54,7 @@
 
 		// optional. To be set with the EncodersPool label only in case a specific
 		// encoders pool has to be used
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

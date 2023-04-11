@@ -21,9 +21,9 @@
         "Outputs": [{
           "DeliveryCode": 765234,
           "EncodingProfileKey": 20,
-          "OutputType": "HLS"
+          "outputType": "HLS"
         }],
-        "TimePeriod": false
+        "timePeriod": false
       }
     }}
   },

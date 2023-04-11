@@ -2186,7 +2186,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 	string ffmpegURI,
 	int maxConsecutiveEncodingStatusFailures)
 {
-	string encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "EncodersPool", "");
+	string encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
 
 	string ffmpegEncoderURL;
 	// string ffmpegURI = _ffmpegEncodeURI;
@@ -7749,7 +7749,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 		if (proxyType == "vodProxy" || proxyType == "countdownProxy")
 		{
 			// both vodProxy and countdownProxy work with VOD
-			field = "EncodersPool";
+			field = "encodersPool";
 			encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, field, "");
 		}
 		else
@@ -7777,7 +7777,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
         waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(
 			_encodingItem->_encodingParametersRoot, field, 600);
 
-        field = "MaxAttemptsNumberInCaseOfErrors";
+        field = "maxAttemptsNumberInCaseOfErrors";
         maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
 			_encodingItem->_ingestedParametersRoot, field, -1);
 

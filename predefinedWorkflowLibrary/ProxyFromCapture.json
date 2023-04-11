@@ -16,10 +16,10 @@
       "ChannelType": "CaptureLive",
       "Outputs": [{
         "EncodingProfileKey": 1,
-        "OtherOutputOptions": "-pix_fmt yuv420p",
-        "OutputType": "HLS"
+        "otherOutputOptions": "-pix_fmt yuv420p",
+        "outputType": "HLS"
       }],
-      "TimePeriod": false
+      "timePeriod": false
     },
     "type": "Live-Proxy"
   },

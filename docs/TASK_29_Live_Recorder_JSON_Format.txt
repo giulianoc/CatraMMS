@@ -28,7 +28,7 @@
 		"recordingCode": 12345,
 
 		// optional: user agent used only in case actAsServer is false
-		"UserAgent": "",
+		"userAgent": "",
 
 		// optional: It is possible to use this field to specify any other input options
 		"otherInputOptions": "",
@@ -66,7 +66,7 @@
 		// a specific encoders pool has to be used.
 		// In case this field is initialized here, it overrides the one specified by the channel
 		// configuration label
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// optional. the LiveRecorderVOD is the Media Item updated continuously containing
 		//	Live Recording. 
@@ -155,7 +155,7 @@
 				// optional, possible values: HLS_Channel, RTMP_Channel, CDN_AWS, CDN_CDN77.
 				// HLS_Channel works also in case of an external transcoder
 				// Default: HLS_Channel
-				"OutputType": "HLS_Channel",
+				"outputType": "HLS_Channel",
 
 				// optional, used only in case of HLS_Channel
 				// the configuration label of an HLS Channel defined in MMS.
@@ -197,7 +197,7 @@
 				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
 				//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
 				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
-				"OtherOutputOptions": "-map 0:1",
+				"otherOutputOptions": "-map 0:1",
 
 				// optional
 				"filters": {

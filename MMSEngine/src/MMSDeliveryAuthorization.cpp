@@ -390,7 +390,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				int64_t localDeliveryCode = -1;
 				string playURL;
 
-				field = "OutputType";
+				field = "outputType";
 				outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
 				/*
@@ -712,7 +712,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					int64_t localDeliveryCode = -1;
 					string playURL;
 
-					field = "OutputType";
+					field = "outputType";
 					outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
 					if (outputType == "RTMP_Channel"

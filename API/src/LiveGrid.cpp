@@ -54,14 +54,14 @@ void LiveGrid::encodeContent(
 
 		Json::Value inputChannelsRoot = encodingParametersRoot["inputChannels"];
 
-		string userAgent = JSONUtils::asString(ingestedParametersRoot, "UserAgent", "");
+		string userAgent = JSONUtils::asString(ingestedParametersRoot, "userAgent", "");
 		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		int gridColumns = JSONUtils::asInt(ingestedParametersRoot, "Columns", 0);
 		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "GridWidth", 0);
 		int gridHeight = JSONUtils::asInt(ingestedParametersRoot, "GridHeight", 0);
 
-		_liveProxyData->_liveGridOutputType = JSONUtils::asString(ingestedParametersRoot, "OutputType",
+		_liveProxyData->_liveGridOutputType = JSONUtils::asString(ingestedParametersRoot, "outputType",
 			"HLS_Channel");
 
 		// it is present only in case of outputType == "SRT"

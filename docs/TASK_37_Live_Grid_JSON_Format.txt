@@ -36,7 +36,7 @@
 
 		// optional. To be set with the EncodersPool label only in case a specific 
 		// encoders pool has to be used
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// optional. Default: 10
 		"SegmentDurationInSeconds": 10,
@@ -45,17 +45,17 @@
 		"PlaylistEntriesNumber": 6,
 
 		// optional: user agent to be used when the URL is called
-		"UserAgent": "",
+		"userAgent": "",
 
 		// optional. In case one of the URL fails, the LiveGrid task tries it again.
 		//		This parameter indicates how many times LiveGrid has to try.
 		//		Default: 2
-		"MaxAttemptsNumberInCaseOfErrors": 2,
+		"maxAttemptsNumberInCaseOfErrors": 2,
 
 		// optional. In case one of the URL fails, the LiveGrid task tries it again.
 		//		This parameter indicates how many seconds LiveGrid has to wait before to try again.
 		//		Default: 600
-		"WaitingSecondsBetweenAttemptsInCaseOfErrors": 600,
+		"waitingSecondsBetweenAttemptsInCaseOfErrors": 600,
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

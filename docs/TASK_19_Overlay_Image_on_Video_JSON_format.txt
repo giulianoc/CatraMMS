@@ -48,7 +48,7 @@
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used
-		"EncodersPool": "",
+		"encodersPool": "",
 
 		// optional: in case this parameter is not present a 'default' encoding will be used
 		//	It has to be specified using EncodingProfileKey or EncodingProfileLabel.

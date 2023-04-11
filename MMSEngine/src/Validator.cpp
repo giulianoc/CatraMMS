@@ -4079,7 +4079,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	}
 
 	bool timePeriod = false;
-	field = "TimePeriod";
+	field = "timePeriod";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 
@@ -4677,7 +4677,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 
 
 	bool timePeriod = false;
-	field = "TimePeriod";
+	field = "timePeriod";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 
@@ -5706,7 +5706,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "OutputType";
+    field = "outputType";
 	string liveGridOutputType;
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
@@ -7433,7 +7433,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 	Json::Value outputRoot)
 {
 
-	string field = "OutputType";
+	string field = "outputType";
 	string liveProxyOutputType;
 	if (JSONUtils::isMetadataPresent(outputRoot, field))
 	{
