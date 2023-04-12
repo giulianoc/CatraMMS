@@ -5825,11 +5825,12 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							string segmenterType = "hlsSegmenter";
 							// string segmenterType = "streamSegmenter";
 							if (segmenterType == "streamSegmenter")
-								segmentFilePathName += "_%s.ts";	// viene letto il timestamp dal nome del file
+								segmentFilePathName += "_%%04d_%s.ts";	// viene letto il timestamp dal nome del file
 							else
-								segmentFilePathName += "_%s.ts"; // "_%04d.ts";	// non viene letto il timestamp dal nome del file
+								segmentFilePathName += "_%%04d_%s.ts"; // "_%04d.ts";	// non viene letto il timestamp dal nome del file
 
-							otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_segment_filename " + segmentFilePathName + " -f hls";
+							otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_flags second_level_segment_index -hls_segment_filename "
+								+ segmentFilePathName + " -f hls";
 
 							outputRoot[field] = otherOutputOptions;
 						}

@@ -8064,9 +8064,9 @@ void FFMpeg::liveRecorder(
     
 		string recordedFileNameTemplate = recordedFileNamePrefix;
 		if (segmenterType == "streamSegmenter")
-			recordedFileNameTemplate += "_%Y-%m-%d_%H-%M-%S_%s."; // viene letto il timestamp dal nome del file
+			recordedFileNameTemplate += "_%Y-%m-%d_%H-%M-%S_%%04d_%s."; // viene letto il timestamp dal nome del file
 		else // if (segmenterType == "hlsSegmenter")
-			recordedFileNameTemplate += "_%Y-%m-%d_%H-%M-%S_%s."; // "_%Y-%m-%d_%H-%M-%S_%04d.";	// non viene letto il timestamp dal nome del file
+			recordedFileNameTemplate += "_%Y-%m-%d_%H-%M-%S_%%04d_%s."; // "_%Y-%m-%d_%H-%M-%S_%04d.";	// non viene letto il timestamp dal nome del file
 		recordedFileNameTemplate += outputFileFormat;
 
 		time_t streamingDuration = utcRecordingPeriodEnd - utcNow;
@@ -8306,6 +8306,8 @@ void FFMpeg::liveRecorder(
 			ffmpegArgumentList.push_back("1");
 			ffmpegArgumentList.push_back("-strftime");
 			ffmpegArgumentList.push_back("1");
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("second_level_segment_index");
 			ffmpegArgumentList.push_back(segmentListPath + "/" + recordedFileNameTemplate);
 		}
 		else // if (segmenterType == "hlsSegmenter")
@@ -8334,6 +8336,8 @@ void FFMpeg::liveRecorder(
 
 			ffmpegArgumentList.push_back("-strftime");
 			ffmpegArgumentList.push_back("1");
+			ffmpegArgumentList.push_back("-hls_flags");
+			ffmpegArgumentList.push_back("second_level_segment_index");
 			ffmpegArgumentList.push_back("-hls_segment_filename");
 			ffmpegArgumentList.push_back(segmentListPath + "/" + recordedFileNameTemplate);
 
