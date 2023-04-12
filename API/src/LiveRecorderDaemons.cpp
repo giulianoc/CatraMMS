@@ -2584,6 +2584,8 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			ofManifestFile << firstPartOfManifest;
 
 			segmentsNumber = 0;
+			double localLastSegmentDuration = -1.0;
+			int64_t localLastSegmentUtcStartTimeInMillisecs = -1;
 			do
 			{
 				// #EXTM3U
@@ -2594,6 +2596,13 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				// #EXT-X-PROGRAM-DATE-TIME:2021-02-26T15:41:15.477+0100
 				// liveRecorder_760504_1653579715.ts
 				// ...
+
+				_logger->info(__FILEREF__ + "manifestLine"
+					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
+					+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+					+ ", manifestLine: " + manifestLine
+					+ ", segmentsNumber: " + to_string(segmentsNumber)
+				);
 
 				string extInfPrefix ("#EXTINF:");
 				string programDatePrefix = "#EXT-X-PROGRAM-DATE-TIME:";
@@ -2613,12 +2622,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 						throw runtime_error(errorMessage);
 					}
 
-					lastSegmentDuration = stod(manifestLine.substr(extInfPrefix.size(),
+					localLastSegmentDuration = stod(manifestLine.substr(extInfPrefix.size(),
 						endOfSegmentDuration - extInfPrefix.size()));
 				}
 				else if (manifestLine.size() >= programDatePrefix.size()
 					&& 0 == manifestLine.compare(0, programDatePrefix.size(), programDatePrefix))
-					lastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(programDatePrefix.size()));
+					localLastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(programDatePrefix.size()));
 				else if (manifestLine != "" && manifestLine[0] != '#')
 				{
 					string sourceTSPathFileName = sourceSegmentsDirectoryPathName + "/" +
@@ -2635,14 +2644,19 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 							+ ", copiedTSPathFileName: " + copiedTSPathFileName
 						);
 						fs::copy(sourceTSPathFileName, copiedTSPathFileName);
+
+						lastSegmentDuration = localLastSegmentDuration;
+						lastSegmentUtcStartTimeInMillisecs = localLastSegmentUtcStartTimeInMillisecs;
 					}
 					catch(runtime_error e)
 					{
 						string errorMessage =
 							string("copyFile failed, previous segments of the manifest will be omitted")
 							+ ", sourceTSPathFileName: " + sourceTSPathFileName
+							+ ", copiedTSPathFileName: " + copiedTSPathFileName
 							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
+							+ ", segmentsNumber: " + to_string(segmentsNumber)
 							+ ", e.what: " + e.what()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
