@@ -5825,12 +5825,25 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							string segmenterType = "hlsSegmenter";
 							// string segmenterType = "streamSegmenter";
 							if (segmenterType == "streamSegmenter")
-								segmentFilePathName += "_%%04d_%s.ts";	// viene letto il timestamp dal nome del file
+							{
+								// viene letto il timestamp dal nome del file
+								segmentFilePathName += "_%s.ts";
+								otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_segment_filename "
+									+ segmentFilePathName + " -f hls";
+							}
 							else
-								segmentFilePathName += "_%%04d_%s.ts"; // "_%04d.ts";	// non viene letto il timestamp dal nome del file
+							{
+								// NON viene letto il timestamp dal nome del file
+								// 2023-04-12: usando -strftime 1 con _%s_ ho visto che il nome del file viene ripetuto
+								//	uguale nel senso che %s viene sostituito con lo stesso numero di secondi per due file
+								//	differenti. Avere lo stesso nome file crea problemi quando si crea il virtual VOD
+								//	copiano lo stesso file due volte, la seconda copia ritorna un errore
+								//	Per questo motivo viene usato un semplice contatore _%04d
+								segmentFilePathName += "_%04d.ts";
+								otherOutputOptions = "-hls_flags program_date_time -hls_segment_filename "
+									+ segmentFilePathName + " -f hls";
+							}
 
-							otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_flags second_level_segment_index -hls_segment_filename "
-								+ segmentFilePathName + " -f hls";
 
 							outputRoot[field] = otherOutputOptions;
 						}
