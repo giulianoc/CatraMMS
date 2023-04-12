@@ -5827,7 +5827,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							if (segmenterType == "streamSegmenter")
 								segmentFilePathName += "_%s.ts";	// viene letto il timestamp dal nome del file
 							else
-								segmentFilePathName += "_%04d.ts";	// non viene letto il timestamp dal nome del file
+								segmentFilePathName += "_%s.ts"; // "_%04d.ts";	// non viene letto il timestamp dal nome del file
 
 							otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_segment_filename " + segmentFilePathName + " -f hls";
 

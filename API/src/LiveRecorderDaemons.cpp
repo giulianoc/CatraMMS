@@ -2584,8 +2584,6 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			ofManifestFile << firstPartOfManifest;
 
 			segmentsNumber = 0;
-			double localLastSegmentDuration = -1.0;
-			int64_t localLastSegmentUtcStartTimeInMillisecs = -1;
 			do
 			{
 				// #EXTM3U
@@ -2622,12 +2620,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 						throw runtime_error(errorMessage);
 					}
 
-					localLastSegmentDuration = stod(manifestLine.substr(extInfPrefix.size(),
+					lastSegmentDuration = stod(manifestLine.substr(extInfPrefix.size(),
 						endOfSegmentDuration - extInfPrefix.size()));
 				}
 				else if (manifestLine.size() >= programDatePrefix.size()
 					&& 0 == manifestLine.compare(0, programDatePrefix.size(), programDatePrefix))
-					localLastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(programDatePrefix.size()));
+					lastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(programDatePrefix.size()));
 				else if (manifestLine != "" && manifestLine[0] != '#')
 				{
 					string sourceTSPathFileName = sourceSegmentsDirectoryPathName + "/" +
@@ -2644,9 +2642,6 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 							+ ", copiedTSPathFileName: " + copiedTSPathFileName
 						);
 						fs::copy(sourceTSPathFileName, copiedTSPathFileName);
-
-						lastSegmentDuration = localLastSegmentDuration;
-						lastSegmentUtcStartTimeInMillisecs = localLastSegmentUtcStartTimeInMillisecs;
 					}
 					catch(runtime_error e)
 					{
