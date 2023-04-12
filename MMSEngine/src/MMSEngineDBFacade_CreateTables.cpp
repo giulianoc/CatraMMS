@@ -1314,8 +1314,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "errorMessage               MEDIUMTEXT NULL,"
 					"scheduleStart_virtual		DATETIME GENERATED ALWAYS AS (STR_TO_DATE(JSON_EXTRACT(metaDataContent, '$.schedule.start'), '\"%Y-%m-%dT%H:%i:%sZ\"')) NULL,"
 					// added because the channels view was slow
-					"configurationLabel_virtual	VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.ConfigurationLabel'))) NULL,"
-					"outputChannelLabel_virtual	VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.OutputChannelLabel'))) NULL,"
+					"configurationLabel_virtual	VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(metaDataContent, '$.configurationLabel'))) NULL,"
 					"recordingCode_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(metaDataContent, '$.recordingCode')) NULL,"
 					"broadcastIngestionJobKey_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(metaDataContent, '$.internalMMS.broadcaster.broadcastIngestionJobKey')) NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
@@ -1436,25 +1435,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_IngestionJob_idx6 on MMS_IngestionJob (processingStartingFrom)";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }
-
-        try
-        {
-            lastSQLCommand = 
-                "create index MMS_IngestionJob_idx7 on MMS_IngestionJob (outputChannelLabel_virtual)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

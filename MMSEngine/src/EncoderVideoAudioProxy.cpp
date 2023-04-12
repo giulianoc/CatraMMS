@@ -5820,7 +5820,14 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								// + "_" + to_string(_encodingItem->_encodingJobKey)
 							;
 							string segmentFilePathName = manifestDirectoryPath + "/"
-								+ recordedFileNamePrefix + "_%s.ts";
+								+ recordedFileNamePrefix;
+
+							string segmenterType = "hlsSegmenter";
+							// string segmenterType = "streamSegmenter";
+							if (segmenterType == "streamSegmenter")
+								segmentFilePathName += "_%s.ts";	// viene letto il timestamp dal nome del file
+							else
+								segmentFilePathName += "_%04d.ts";	// non viene letto il timestamp dal nome del file
 
 							otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_segment_filename " + segmentFilePathName + " -f hls";
 

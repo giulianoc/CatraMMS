@@ -8062,8 +8062,12 @@ void FFMpeg::liveRecorder(
 		}
 
     
-		string recordedFileNameTemplate = recordedFileNamePrefix
-			+ "_%Y-%m-%d_%H-%M-%S_%s." + outputFileFormat;
+		string recordedFileNameTemplate = recordedFileNamePrefix;
+		if (segmenterType == "streamSegmenter")
+			recordedFileNameTemplate += "_%Y-%m-%d_%H-%M-%S_%s."; // viene letto il timestamp dal nome del file
+		else // if (segmenterType == "hlsSegmenter")
+			recordedFileNameTemplate += "_%Y-%m-%d_%H-%M-%S_%04d.";	// non viene letto il timestamp dal nome del file
+		recordedFileNameTemplate += outputFileFormat;
 
 		time_t streamingDuration = utcRecordingPeriodEnd - utcNow;
 
