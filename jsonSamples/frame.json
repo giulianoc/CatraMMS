@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Frame",
-		"Parameters": {
+		"parameters": {
 			"ReferenceMediaItemKey": 11,
 			"InstantInSeconds": 2.5,
 			"UserData": { "MyData": "this is my data" },

@@ -7,13 +7,13 @@
 	},
 	"Task": {
 		"type": "GroupOfTasks",
-		"Parameters": {
+		"parameters": {
 			"ExecutionType": "parallel",
 			"Tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
-					"Parameters": {
+					"parameters": {
            				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
 						"ContentType": "video",
@@ -24,7 +24,7 @@
 				{
 					"label": "${TitleOfVideo_2}",
 					"type": "Add-Content",
-					"Parameters": {
+					"parameters": {
            				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
 						"ContentType": "video",

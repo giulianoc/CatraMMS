@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "YouTube-Live-Broadcast",
 
-	"Parameters": {
+	"parameters": {
 
 		// mandatory, one of the MMS YouTube Configuration label 
 		"YouTubeConfigurationLabel": "My YouTube Conf",

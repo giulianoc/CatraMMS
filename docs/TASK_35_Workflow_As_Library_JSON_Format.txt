@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Workflow-As-Library",
 
-	"Parameters": {
+	"parameters": {
 
 		// mandatory. Options: MMS or User
 		"WorkflowLibraryType": "User",

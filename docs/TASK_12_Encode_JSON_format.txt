@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Encode",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. One or more References to identify the videos to be encoded

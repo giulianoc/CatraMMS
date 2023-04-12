@@ -78,7 +78,7 @@
   "Task": {
     "label": "${Title}",
     "type": "GroupOfTasks",
-    "Parameters": {
+    "parameters": {
       "ExecutionType": "parallel",
 	  "processingStartingFrom": "${processingStartingFrom}",
       "ReferencesOutput": [
@@ -93,13 +93,13 @@
           "type": "Frame",
           "OnSuccess": {"Task": {
 			"label": "Encoding profiles (Frame): ${Title}",
-			"Parameters": {
+			"parameters": {
 				"ExecutionType": "parallel",
 				"processingStartingFrom": "${processingStartingFrom}",
 				"Tasks": [
 					{
 						"label": "Encode image MMS_JPG_W240 (Frame): ${Title}",
-						"Parameters": {
+						"parameters": {
 							"ContentType": "image",
 							"EncodingPriority": "High",
 							"EncodingProfileLabel": "MMS_JPG_W240",
@@ -109,7 +109,7 @@
 					},
 					{
 						"label": "Encode image MMS_PNG_W240 (Frame): ${Title}",
-						"Parameters": {
+						"parameters": {
 							"ContentType": "image",
 							"EncodingPriority": "High",
 							"EncodingProfileLabel": "MMS_PNG_W240",
@@ -121,7 +121,7 @@
 			  },
 			"type": "GroupOfTasks"
 			}},
-          "Parameters": {
+          "parameters": {
             "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
             "UniqueName": "${UniqueName}",
             "Height": 480,
@@ -137,13 +137,13 @@
         }},
         "OnSuccess": {"Task": {
           "label": "Encoding profiles (FrameContainingFace): ${Title}",
-          "Parameters": {
+          "parameters": {
 			"ExecutionType": "parallel",
 			"processingStartingFrom": "${processingStartingFrom}",
 			"Tasks": [
 				{
 					"label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${Title}",
-					"Parameters": {
+					"parameters": {
 						"ContentType": "image",
 						"EncodingPriority": "High",
 						"EncodingProfileLabel": "MMS_JPG_W240",
@@ -153,7 +153,7 @@
 				},
 				{
 					"label": "Encode image MMS_PNG_W240 (FrameContainingFace): ${Title}",
-					"Parameters": {
+					"parameters": {
 						"ContentType": "image",
 						"EncodingPriority": "High",
 						"EncodingProfileLabel": "MMS_PNG_W240",
@@ -165,7 +165,7 @@
           },
           "type": "GroupOfTasks"
 		}},
-        "Parameters": {
+        "parameters": {
           "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
           "UniqueName": "${UniqueName}",
           "CascadeName": "haarcascade_frontalface_alt_tree",

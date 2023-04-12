@@ -8,14 +8,14 @@
 	},
 	"Task": {
 		"type": "GroupOfTasks",
-		"Parameters": {
+		"parameters": {
 			"ExecutionType": "parallel",
 
 			"Tasks": [
 				{
 					"label": "...",
 					"type": "Add-Content",
-					"Parameters": {
+					"parameters": {
 						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
 						"UserData": { "MyData": "this is my video data" },
@@ -25,7 +25,7 @@
 				{
 					"label": "...",
 					"type": "Add-Content",
-					"Parameters": {
+					"parameters": {
 						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
 						"userData": { "MyData": "this is my video data" },
@@ -37,7 +37,7 @@
 		"OnSuccess": {
 			"Task": {
 				"type": "Concat-Demuxer",
-				"Parameters": {
+				"parameters": {
 					"userData": { "MyData": "this is my frame data" },
 					"Title": "${TitleOfConcatVideo}"
 				}

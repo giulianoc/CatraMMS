@@ -9,13 +9,13 @@
 	},
 	"Task": {
 		"type": "GroupOfTasks",
-		"Parameters": {
+		"parameters": {
 			"ExecutionType": "parallel",
 			"Tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
-					"Parameters": {
+					"parameters": {
 		            	"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
 						"UserData": { "MyData": "this is my video data" },
@@ -26,7 +26,7 @@
 			{
 				"label": "${TitleOfVideo_2}",
 				"type": "Add-Content",
-					"Parameters": {
+					"parameters": {
             			"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
 						"UserData": { "MyData": "this is my video data" },
@@ -39,7 +39,7 @@
 		"OnSuccess": {
 			"Task": {
 				"type": "Concat-Demuxer",
-				"Parameters": {
+				"parameters": {
 					"UserData": { "MyData": "this is my frame data" },
 					"Title": "${TitleOfConcatVideo}",
                         "Retention": "1s"
@@ -47,7 +47,7 @@
 				"OnSuccess": {
 					"Task": {
 						"type": "Cut",
-						"Parameters": {
+						"parameters": {
 							"StartTimeInSeconds": 5.0,
 							"EndTimeInSeconds": 3600.0,
 							"UserData": { "MyData": "this is my frame data" },
@@ -57,7 +57,7 @@
 							"Task": {
 								"label": "my label",
 								"type": "Encode",
-								"Parameters": {
+								"parameters": {
 									"EncodingPriority": "Low",
 									"EncodingProfilesSetLabel": "Sport"
 								}
@@ -70,7 +70,7 @@
 		"OnComplete": {
 			"Task": {
 				"type": "Email-Notification",
-				"Parameters": {
+				"parameters": {
 					"EmailAddress": "aaa@bbb.it",
 					"Subject": "Task finished",
 					"Message": "Task __INGESTIONJOBKEY__ has finished"

@@ -2,7 +2,7 @@
   "label": "Proxy From Capture",
   "Task": {
     "label": "Proxy From Capture",
-    "Parameters": {
+    "parameters": {
       "ActAsServerListenTimeout": -1,
       "CaptureLive": {
         "AudioDeviceNumber": 1,

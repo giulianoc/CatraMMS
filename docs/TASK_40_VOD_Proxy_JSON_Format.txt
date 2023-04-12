@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "VOD-Proxy",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. One or more References might be present (video or audio).

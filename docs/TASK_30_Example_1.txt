@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Change-File-Format",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 12 }
 			],

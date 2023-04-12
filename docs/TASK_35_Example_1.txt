@@ -1,7 +1,7 @@
 "Task": {
 	"label": "Use of a WorkflowAsLibrary",
 
-	"Parameters": {
+	"parameters": {
 		"WorkflowAsLibraryLabel": "Best Picture of the Video",
 		"WorkflowAsLibraryType": "MMS",
 

@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Post-On-YouTube",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. One or more References to identify the media file (mediaItemKeys) or

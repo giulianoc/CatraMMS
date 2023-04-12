@@ -327,7 +327,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 			"Task": {
 				"label": "Use of a WorkflowAsLibrary",
 
-				"Parameters": {
+				"parameters": {
 					"WorkflowAsLibraryLabel": "Best Picture of the Video",
 					"WorkflowAsLibraryType": "MMS",
 
@@ -885,7 +885,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 			}
 		}
 
-        field = "Parameters";
+        field = "parameters";
         string arrayField = "References";
         parametersRoot[arrayField] = referencesRoot;
         if (!parametersSectionPresent)
@@ -948,7 +948,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		+ ", taskLabel: " + taskLabel
 	);
     
-    field = "Parameters";
+    field = "parameters";
     Json::Value parametersRoot;
     bool parametersSectionPresent = false;
     if (JSONUtils::isMetadataPresent(taskRoot, field))
@@ -1135,7 +1135,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 							newParametersRoot[field] = newReferencesRoot;
 						}
 
-						field = "Parameters";
+						field = "parameters";
 						newTaskRoot[field] = newParametersRoot;
 
 						newTasksRoot.append(newTaskRoot);
@@ -1161,7 +1161,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					field = "EncodingProfileKey";
 					newParametersRoot[field] = encodingProfileKey;
 
-					field = "Parameters";
+					field = "parameters";
 					newTaskRoot[field] = newParametersRoot;
 
 					newTasksRoot.append(newTaskRoot);
@@ -1191,7 +1191,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 						newParametersRoot[field] = newReferencesRoot;
 					}
 
-					field = "Parameters";
+					field = "parameters";
 					newTaskRoot[field] = newParametersRoot;
 
 					newTasksRoot.append(newTaskRoot);
@@ -1211,7 +1211,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "type";
 			newTasksGroupRoot[field] = "GroupOfTasks";
 
-			field = "Parameters";
+			field = "parameters";
 			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
         
 			field = "OnSuccess";
@@ -1291,7 +1291,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					newParametersRoot[field] = newReferencesRoot;
 				}
 
-				field = "Parameters";
+				field = "parameters";
 				newTaskRoot[field] = newParametersRoot;
 
 				field = "OnSuccess";
@@ -1322,7 +1322,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "type";
 			newTasksGroupRoot[field] = "GroupOfTasks";
 
-			field = "Parameters";
+			field = "parameters";
 			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
         
 			return ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, 
@@ -1612,7 +1612,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "type";
 			newGroupOfTasksRoot[field] = "GroupOfTasks";
 
-			field = "Parameters";
+			field = "parameters";
 			newGroupOfTasksRoot[field] = newGroupOfTasksParametersRoot;
         
 			field = "OnSuccess";
@@ -1846,7 +1846,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	);
 
 	// initialize parametersRoot
-    field = "Parameters";
+    field = "parameters";
     if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2133,7 +2133,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 			field = "ReferencesOutput";
 			parametersRoot[field] = referencesOutputRoot;
 			/*
-			field = "Parameters";
+			field = "parameters";
 			if (!parametersSectionPresent)
 			{
 				groupOfTaskRoot[field] = parametersRoot;

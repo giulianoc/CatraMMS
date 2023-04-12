@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Picture-In-Picture",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 11 },
 				{ "mediaItemKey": 12 }

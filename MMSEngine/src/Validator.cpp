@@ -106,7 +106,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
 void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
 	Json::Value groupOfTasksRoot, bool validateDependenciesToo)
 {
-    string field = "Parameters";
+    string field = "parameters";
     if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
     {
         string sGroupOfTasksRoot = JSONUtils::toString(groupOfTasksRoot);
@@ -369,7 +369,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::AddContent;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -389,7 +389,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::RemoveContent;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -410,7 +410,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::Encode;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -431,7 +431,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::Frame;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -452,7 +452,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::PeriodicalFrames;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -473,7 +473,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -494,7 +494,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::IFrames;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -515,7 +515,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -536,7 +536,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::Slideshow;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -557,7 +557,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::ConcatDemuxer;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -578,7 +578,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::Cut;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -599,7 +599,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::OverlayImageOnVideo;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -620,7 +620,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::OverlayTextOnVideo;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -641,7 +641,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::EmailNotification;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -662,7 +662,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::CheckStreaming;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -682,7 +682,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::MediaCrossReference;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -703,7 +703,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::FTPDelivery;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -724,7 +724,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::HTTPCallback;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -745,7 +745,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::LocalCopy;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -766,7 +766,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::ExtractTracks;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -787,7 +787,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::PostOnFacebook;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -808,7 +808,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::PostOnYouTube;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -829,7 +829,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::FaceRecognition;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -850,7 +850,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::FaceIdentification;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -871,7 +871,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::LiveRecorder;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -892,7 +892,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::ChangeFileFormat;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -913,7 +913,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::VideoSpeed;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -934,7 +934,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::VideoSpeed;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -955,7 +955,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::IntroOutroOverlay;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -976,7 +976,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::LiveProxy;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -997,7 +997,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -1018,7 +1018,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::FacebookLiveBroadcast;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -1039,7 +1039,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::VODProxy;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -1060,7 +1060,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::Countdown;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -1081,7 +1081,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::LiveGrid;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -1102,7 +1102,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::LiveCut;
         
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -1123,7 +1123,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
     {
         ingestionType = MMSEngineDBFacade::IngestionType::WorkflowAsLibrary;
 
-        field = "Parameters";
+        field = "parameters";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
         {
             string sTaskRoot = JSONUtils::toString(taskRoot);
@@ -6997,7 +6997,7 @@ void Validator::validateCrossReference(
 	if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::CutOfVideo
 		|| crossReferenceType == MMSEngineDBFacade::CrossReferenceType::CutOfAudio)
 	{
-		field = "Parameters";
+		field = "parameters";
 		if (!JSONUtils::isMetadataPresent(crossReferenceRoot, field))
 		{
 			string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);

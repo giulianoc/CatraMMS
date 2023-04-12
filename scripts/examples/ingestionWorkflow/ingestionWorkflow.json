@@ -2,7 +2,7 @@
 	"label": "<workflow label>",
 	"Task": {
 		"label": "Task label 1",
-		"Parameters": {
+		"parameters": {
 			"WorkflowAsLibraryLabel": "test userData variable",
 			"WorkflowAsLibraryType": "User",
 			"cutEnd": "2021-08-24T20:38:04.049Z",

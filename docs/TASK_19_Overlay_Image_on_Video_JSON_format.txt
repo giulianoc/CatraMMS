@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Overlay-Image-On-Video",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. Two References needed to identify the Image and the Video.

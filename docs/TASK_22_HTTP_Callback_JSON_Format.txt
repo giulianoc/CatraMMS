@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "HTTP-Callback",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. One or more Reference needed to identify the videos (mediaItemKeys) or

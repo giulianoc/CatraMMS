@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "...",
 		"type": "Add-Content",
-		"Parameters": {
+		"parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
 			"UserData": { "MyData": "this is my data" },

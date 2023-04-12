@@ -8,7 +8,7 @@
 	"Task": {
 		"label": "...",
 		"type": "Add-Content",
-		"Parameters": {
+		"parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
 			"UserData": { "MyData": "this is my video data" },
@@ -17,7 +17,7 @@
 		"OnSuccess": {
 			"Task": {
 				"type": "Cut",
-				"Parameters": {
+				"parameters": {
 					"StartTimeInSeconds": 1.0,
 					"EndTimeInSeconds": 5.0,
 					"UserData": { "MyData": "this is my frame data" },

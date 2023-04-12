@@ -7,7 +7,7 @@
     "Task": {
         "label": "My video",
         "type": "Add-Content",
-        "Parameters": {
+        "parameters": {
             "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/05/15/2577986.mp4",
             "FileFormat": "mp4",
             "UserData": { "MyData": "this is my video data" },
@@ -18,7 +18,7 @@
             "Task": {
                 "label": "my label",
                 "type": "Encode",
-                "Parameters": {
+                "parameters": {
                     "EncodingPriority": "Low",
                     "EncodingProfilesSetLabel": "PredefinedProfiles"
                 }
@@ -27,7 +27,7 @@
 		"OnComplete": {
 			"Task": {
 				"type": "Email-Notification",
-				"Parameters": {
+				"parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",
 					"Subject": "Task finished",
 					"Message": "Task __INGESTIONJOBKEY__ has finished"

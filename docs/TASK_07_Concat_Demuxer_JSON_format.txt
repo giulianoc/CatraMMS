@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Concat-Demuxer",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. At least one Reference have to be present

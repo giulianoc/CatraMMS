@@ -2,7 +2,7 @@
   "label"="My Check Streaming",
   "Task": {
     "label": "Task label 2",
-    "Parameters": {
+    "parameters": {
       "configurationLabel": "Channel A"
     },
     "type": "Check-Streaming"

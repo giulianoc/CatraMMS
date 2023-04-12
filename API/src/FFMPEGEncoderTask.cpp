@@ -770,7 +770,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			}
 		}
 
-		field = "Parameters";
+		field = "parameters";
 		addContentRoot[field] = addContentParametersRoot;
 
 

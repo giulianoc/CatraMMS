@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "GroupOfTasks",
 
-	"Parameters": {
+	"parameters": {
 		"ExecutionType": "parallel",
 
 		"Tasks": [

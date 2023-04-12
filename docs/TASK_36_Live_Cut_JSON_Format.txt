@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Live-Cut",
 
-	"Parameters": {
+	"parameters": {
 
 		"recordingCode": 1234,
 

@@ -4,7 +4,7 @@
 	"Task": {
 		"label": "my label ...",
 		"type": "Remove-Content",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 11 }
 			]

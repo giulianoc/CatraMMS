@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Overlay-Image-On-Video",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 11 },
 				{ "mediaItemKey": 12 }

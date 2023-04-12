@@ -8,13 +8,13 @@
 	},
 	"Task": {
 		"type": "GroupOfTasks",
-		"Parameters": {
+		"parameters": {
 			"ExecutionType": "parallel",
 			"Tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
-					"Parameters": {
+					"parameters": {
            				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
 						"ContentType": "video",
@@ -25,7 +25,7 @@
 				{
 					"label": "${TitleOfImage_1}",
 					"type": "Add-Content",
-					"Parameters": {
+					"parameters": {
            				"SourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
 						"FileFormat": "jpg",
 						"ContentType": "image",
@@ -36,7 +36,7 @@
 						"Task": {
 							"label": "my image encode",
 							"type": "Encode",
-							"Parameters": {
+							"parameters": {
 								"EncodingPriority": "Low",
 								"EncodingProfileLabel": "Profile Logo"
 							}
@@ -49,7 +49,7 @@
 			"Task": {
 				"label": "my overlay",
 				"type": "Overlay-Image-On-Video",
-				"Parameters": {
+				"parameters": {
 					"ImagePosition_X_InPixel": "video_width-image_width-10",
 					"ImagePosition_Y_InPixel": "video_height-image_height-10",
 					"EncodingPriority": "High",

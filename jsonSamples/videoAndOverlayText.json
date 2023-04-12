@@ -8,7 +8,7 @@
     "Task": {
         "label": "My video",
         "type": "Add-Content",
-        "Parameters": {
+        "parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
             "FileFormat": "mp4",
             "UserData": { "MyData": "this is my video data" },
@@ -18,7 +18,7 @@
             "Task": {
                 "label": "my label",
                 "type": "Overlay-Text-On-Video",
-                "Parameters": {
+                "parameters": {
                     "Text": "This video is for adult",                                  
                     "TextPosition_X_InPixel": "(video_width-text_width)/2",
                     "TextPosition_Y_InPixel": "(video_height-text_height)/2",

@@ -3,14 +3,14 @@
 
 	"type": "HTTP-Callback",
 
-	"Parameters": {
+	"parameters": {
 		"Protocol": "http",
 
 		"HostName": "ip.jsontest.com",
 
 		"URI": "/",
 
-		"Parameters": "",
+		"parameters": "",
 
 		"Method": "GET"
 	}

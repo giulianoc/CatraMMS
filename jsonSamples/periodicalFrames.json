@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Periodical-Frames",
-		"Parameters": {
+		"parameters": {
 			"ReferenceMediaItemKey": 11,
 			"StartTimeInSeconds": 2.5,
 			"PeriodInSeconds": 2,

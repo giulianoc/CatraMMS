@@ -7,7 +7,7 @@
     "Task": {
         "label": "My video (push)",
         "type": "Add-Content",
-        "Parameters": {
+        "parameters": {
             "FileFormat": "mp4",
             "UserData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}",
@@ -17,7 +17,7 @@
             "Task": {
                 "label": "my label",
                 "type": "Encode",
-                "Parameters": {
+                "parameters": {
                     "EncodingPriority": "Low",
                     "EncodingProfilesSetLabel": "Sport"
                 }

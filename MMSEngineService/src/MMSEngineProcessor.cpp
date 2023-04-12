@@ -14816,7 +14816,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				field = "References";
 				concatDemuxerParametersRoot[field] = mediaItemKeyReferencesRoot;
 
-				field = "Parameters";
+				field = "parameters";
 				concatDemuxerRoot[field] = concatDemuxerParametersRoot;
 			}
 
@@ -14948,7 +14948,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					cutParametersRoot[field] = userDataRoot;
 				}
 
-				field = "Parameters";
+				field = "parameters";
 				cutRoot[field] = cutParametersRoot;
 
 				if (liveCutOnSuccess != Json::nullValue)
@@ -15746,7 +15746,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				field = "References";
 				concatDemuxerParametersRoot[field] = mediaItemKeyReferencesRoot;
 
-				field = "Parameters";
+				field = "parameters";
 				concatDemuxerRoot[field] = concatDemuxerParametersRoot;
 			}
 
@@ -15880,7 +15880,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					cutParametersRoot[field] = userDataRoot;
 				}
 
-				field = "Parameters";
+				field = "parameters";
 				cutRoot[field] = cutParametersRoot;
 
 				if (liveCutOnSuccess != Json::nullValue)
@@ -16982,7 +16982,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					field = "Outputs";
 					liveProxyParametersRoot[field] = outputsRoot;
 				}
-				string field = "Parameters";
+				string field = "parameters";
 				proxyRoot[field] = liveProxyParametersRoot;
 			}
 			else // if (sourceType == "MediaItem")
@@ -17077,7 +17077,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					field = "Outputs";
 					vodProxyParametersRoot[field] = outputsRoot;
 				}
-				string field = "Parameters";
+				string field = "parameters";
 				proxyRoot[field] = vodProxyParametersRoot;
 			}
 
@@ -17653,7 +17653,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 					field = "Outputs";
 					liveProxyParametersRoot[field] = outputsRoot;
 				}
-				string field = "Parameters";
+				string field = "parameters";
 				proxyRoot[field] = liveProxyParametersRoot;
 			}
 			else // if (sourceType == "MediaItem")
@@ -17754,7 +17754,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 					field = "Outputs";
 					vodProxyParametersRoot[field] = outputsRoot;
 				}
-				string field = "Parameters";
+				string field = "parameters";
 				proxyRoot[field] = vodProxyParametersRoot;
 			}
 
@@ -22571,7 +22571,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				throw runtime_error(errorMessage);
 			}
 
-			field = "Parameters";
+			field = "parameters";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Cross Reference Parameters are not present"
@@ -22615,7 +22615,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				throw runtime_error(errorMessage);
 			}
 
-			field = "Parameters";
+			field = "parameters";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Cross Reference Parameters are not present"
@@ -22774,7 +22774,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			field = "EndTimeInSeconds";
 			crossReferenceParametersRoot[field] = endTimeInSeconds;
 
-			field = "Parameters";
+			field = "parameters";
 			crossReferenceRoot[field] = crossReferenceParametersRoot;
 		}
 
@@ -22803,7 +22803,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			field = "EndTimeInSeconds";
 			crossReferenceParametersRoot[field] = endTimeInSeconds;
 
-			field = "Parameters";
+			field = "parameters";
 			crossReferenceRoot[field] = crossReferenceParametersRoot;
 		}
 

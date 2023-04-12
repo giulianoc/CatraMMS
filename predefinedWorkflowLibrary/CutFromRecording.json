@@ -4,12 +4,12 @@
     "label": "Cut from Recording",
     "OnSuccess": {"Task": {
       "label": "<no label>",
-      "Parameters": {
+      "parameters": {
         "ExecutionType": "parallel",
         "Tasks": [
           {
             "label": "Picture of Cut",
-            "Parameters": {
+            "parameters": {
               "AllowUniqueNameOverride": false,
               "ImageRetention": "${MediaItemRetention}",
               "ImageTags": "[ \"FACE\" ]",
@@ -26,7 +26,7 @@
           },
           {
             "label": "Cut encoding",
-            "Parameters": {
+            "parameters": {
               "ContentType": "video",
               "EncodingPriority": "Low",
               "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
@@ -35,14 +35,14 @@
           },
           {
             "label": "Generate MP4 profile",
-            "Parameters": {"OutputFileFormat": "mp4"},
+            "parameters": {"OutputFileFormat": "mp4"},
             "type": "Change-File-Format"
           }
         ]
       },
       "type": "GroupOfTasks"
     }},
-    "Parameters": {
+    "parameters": {
       "AllowUniqueNameOverride": false,
       "CutPeriod": {
         "End": "${LiveCutEnd}",

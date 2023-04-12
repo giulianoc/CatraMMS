@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Intro-Outro-Overlay",
 
-	"Parameters": {
+	"parameters": {
 
 		// mandatory
 		"References": [

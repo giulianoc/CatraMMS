@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Frame",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 

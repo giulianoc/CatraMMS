@@ -12,7 +12,7 @@
 	// - CurrentUtcChunkStartTime_HHMISS, string, Local Time having the HH:MI:SS format
 	// - DeliveryCode, integer, delivery code of the Live Recorder
 	// - IngestionJobLabel, string, ingestion job label of the Live Recorder
-	"Parameters": {
+	"parameters": {
 
 		// mandatory: it identifies the channel
 		"configurationLabel": "",

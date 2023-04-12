@@ -3,7 +3,7 @@
 
 	"type": "Extract-Track",
 
-	"Parameters": {
+	"parameters": {
 		"References": [
 			{ "mediaItemKey": 11 }
 		],

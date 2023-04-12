@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Frame",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 11 }
 			],

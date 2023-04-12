@@ -2,7 +2,7 @@
   "label"="My VOD Proxy",
   "Task": {
     "label": "Task label 2",
-    "Parameters": {
+    "parameters": {
       "Outputs": [{
         "outputType": "RTMP_Channel"
       }],

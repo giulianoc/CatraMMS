@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Motion-JPEG-by-I-Frames",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 11 }
 			],

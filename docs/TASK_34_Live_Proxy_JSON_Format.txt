@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Live-Proxy",
 
-	"Parameters": {
+	"parameters": {
 
 		// mandatory, it identifies the channel
 		"configurationLabel": "",

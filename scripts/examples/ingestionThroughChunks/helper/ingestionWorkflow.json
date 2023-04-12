@@ -5,7 +5,7 @@
   {
     "label": "Add Content ${title}",
     "type": "Add-Content",
-    "Parameters": {
+    "parameters": {
       "Title": "${title}",
       "AllowUniqueNameOverride": false,
       "FileFormat": "${fileFormat}",
@@ -17,13 +17,13 @@
       {
         "label": "${title}",
         "type": "GroupOfTasks",
-        "Parameters": {
+        "parameters": {
           "ExecutionType": "parallel",
           "Tasks": [
             {
               "label": "Generate Picture ${title}",
               "type": "Workflow-As-Library",
-              "Parameters": {
+              "parameters": {
                 "Title": "${title}",
                 "WorkflowAsLibraryType": "MMS",
                 "WorkflowAsLibraryLabel": "Best Picture of the Video",
@@ -40,7 +40,7 @@
             {
               "label": "Encode ${title}",
               "type": "Encode",
-              "Parameters": {
+              "parameters": {
                 "ContentType": "video",
                 "EncodingPriority": "Low",
                 "EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"

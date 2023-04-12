@@ -3,7 +3,7 @@
 
 	"type": "Post-On-Facebook",
 
-	"Parameters": {
+	"parameters": {
 		"References": [
 			{ "mediaItemKey": 11 }
 		],

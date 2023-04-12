@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Cut",
 
-	"Parameters": {
+	"parameters": {
 
 		// mandatory
 		"References": [

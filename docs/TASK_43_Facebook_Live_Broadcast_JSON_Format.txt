@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Facebook-Live-Broadcast",
 
-	"Parameters": {
+	"parameters": {
 
 		// mandatory, one of the MMS Facebook Configuration label 
 		"facebookConfigurationLabel": "My Facebook Conf",

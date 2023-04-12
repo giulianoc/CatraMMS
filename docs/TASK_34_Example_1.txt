@@ -3,7 +3,7 @@
 
 	"type": "Live-Proxy",
 
-	"Parameters": {
+	"parameters": {
 		"configurationLabel": "my live proxy"
 	}
 }

@@ -6,12 +6,12 @@
       "label": "VOD creation",
       "OnSuccess": {"Task": {
         "label": "<no label>",
-        "Parameters": {
+        "parameters": {
           "ExecutionType": "parallel",
           "Tasks": [
             {
               "label": "VOD encoding",
-              "Parameters": {
+              "parameters": {
                 "ContentType": "video",
                 "EncodingPriority": "Low",
                 "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
@@ -20,7 +20,7 @@
             },
             {
               "label": "Creation picture for the VOD",
-              "Parameters": {
+              "parameters": {
                 "AllowUniqueNameOverride": false,
                 "ImageRetention": "1d",
                 "ImageTags": "[ \"FACE\" ]",
@@ -40,27 +40,27 @@
         },
         "type": "GroupOfTasks"
       }},
-      "Parameters": {
+      "parameters": {
         "AllowUniqueNameOverride": false,
         "Ingester": "Giuliano Catrambone",
         "Retention": "1h"
       },
       "type": "Concat-Demuxer"
     }},
-    "Parameters": {
+    "parameters": {
       "ExecutionType": "parallel",
       "Tasks": [{
         "label": "Recorder",
         "OnSuccess": {"Task": {
           "label": "Chunk encoding",
-          "Parameters": {
+          "parameters": {
             "ContentType": "video",
             "EncodingPriority": "Low",
             "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
           },
           "type": "Encode"
         }},
-        "Parameters": {
+        "parameters": {
           "ActAsServerListenTimeout": -1,
           "AllowUniqueNameOverride": false,
           "CaptureLive": {},

@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Add-Content",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory in case of a pull (http/https/ftp/ftps/move/copy/externalStorage)
 		//	externalStorage means that the relative path is referring a content that is into
 		//		an external storage. The external storage is mounted inside /var/catramms/storage/MMSRepository
@@ -70,7 +70,7 @@
 			"MediaItemKey": 222,
 
 			// mandatory only for CutOfVideo and CutOfAudio
-			"Parameters": {
+			"parameters": {
 				"StartTimeInSeconds": 12.123345,
 				"EndTimeInSeconds": 12.123345
 			}

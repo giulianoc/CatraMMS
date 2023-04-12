@@ -1827,7 +1827,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
         	"Task": {
                 "label": "<task label 1>",
                 "type": "Add-Content"
-                "Parameters": {
+                "parameters": {
                         "FileFormat": "ts",
                         "Ingester": "Giuliano",
                         "SourceURL": "move:///abc...."
@@ -1910,7 +1910,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			addContentParametersRoot[field] = uniqueName;
 		}
 
-		field = "Parameters";
+		field = "parameters";
 		addContentRoot[field] = addContentParametersRoot;
 
 
@@ -3083,7 +3083,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
         //	"Task": {
         //        "label": "<task label 1>",
         //        "type": "Add-Content"
-        //        "Parameters": {
+        //        "parameters": {
         //                "FileFormat": "m3u8",
         //                "Ingester": "Giuliano",
         //                "SourceURL": "move:///abc...."
@@ -3247,7 +3247,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 			}
 		}
 
-		field = "Parameters";
+		field = "parameters";
 		addContentRoot[field] = addContentParametersRoot;
 
 

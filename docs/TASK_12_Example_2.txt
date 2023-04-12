@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "My video",
 		"type": "Add-Content",
-		"Parameters": {
+		"parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
 			"UserData": { "MyData": "this is my video data" },
@@ -17,7 +17,7 @@
 			"Task": {
 				"label": "my label",
 				"type": "Encode",
-				"Parameters": {
+				"parameters": {
 					"EncodingPriority": "Low",
 					"EncodingProfilesSetKey": 1
 				}
@@ -26,7 +26,7 @@
 		"OnComplete": {
 			"Task": {
 				"type": "Email-Notification",
-				"Parameters": {
+				"parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",
 					"Subject": "Task finished",
 					"Message": "Task __INGESTIONJOBKEY__ has finished"

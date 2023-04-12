@@ -3,7 +3,7 @@
   "Task": {
     "label": "Proxy of a Picture (Slideshow)",
     "type": "Slideshow",
-    "Parameters": {
+    "parameters": {
       "AllowUniqueNameOverride": false,
       "DurationOfEachSlideInSeconds": 15,
       "EncodingPriority": "Low",
@@ -17,7 +17,7 @@
     "OnSuccess": {"Task": {
       "label": "Proxy of a Picture (VOD-Proxy)",
       "type": "VOD-Proxy",
-      "Parameters": {
+      "parameters": {
         "Outputs": [{
           "DeliveryCode": 765234,
           "EncodingProfileKey": 20,

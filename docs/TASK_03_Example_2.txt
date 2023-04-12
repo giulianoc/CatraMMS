@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "My Ingestion n. 123",
 		"type": "Add-Content",
-		"Parameters": {
+		"parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
 			"UserData": { "MyData": "this is my video data" },
@@ -17,7 +17,7 @@
 			"Task": {
 				"label": "My Periodical-Frames",
 				"type": "Periodical-Frames",
-				"Parameters": {
+				"parameters": {
 					"StartTimeInSeconds": 2.5,
 					"PeriodInSeconds": 2,
 					"MaxFramesNumber": 5,

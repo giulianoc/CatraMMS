@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Countdown",
 
-	"Parameters": {
+	"parameters": {
 
 		// mandatory
 		"References": [

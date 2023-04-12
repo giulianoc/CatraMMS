@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Check-Streaming",
 
-	"Parameters": {
+	"parameters": {
 		// The Streaming to be checked could be specified using the Channel Configuration Label
 		// or specifying directly the Streaming Url to be checked
 		// mandatory

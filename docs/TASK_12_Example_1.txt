@@ -4,7 +4,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Encode",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 11 }
 			],

@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Picture-In-Picture",
 
-	"Parameters": {
+	"parameters": {
 		// Optional. This tag is used in the scenario where one Video is inherit from the parent Task
 		//	and the other Video is already inside MMS. In this case the References tag referes one Video
 		//	and the other is inherit from the parent Task.

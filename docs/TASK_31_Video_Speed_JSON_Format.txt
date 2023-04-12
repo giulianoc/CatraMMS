@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Video-Speed",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. Just one Reference has to be present

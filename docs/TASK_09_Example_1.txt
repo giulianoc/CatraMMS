@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Slideshow",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 100 },
 				{ "mediaItemKey": 101 },

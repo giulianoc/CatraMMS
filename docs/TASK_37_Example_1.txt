@@ -3,7 +3,7 @@
 
 	"type": "Live-Grid",
 
-	"Parameters": {
+	"parameters": {
 		"configurationLabel": [
 			"conf label 1",
 			"conf label 1"

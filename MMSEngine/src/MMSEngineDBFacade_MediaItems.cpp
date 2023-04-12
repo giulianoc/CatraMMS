@@ -5583,7 +5583,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
 
                 Json::Value crossReferenceParametersRoot;
-				field = "Parameters";
+				field = "parameters";
 				if (JSONUtils::isMetadataPresent(crossReferenceRoot, field))
 				{
 					crossReferenceParametersRoot = crossReferenceRoot[field];

@@ -4,7 +4,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Email-Notification",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "ingestionJobKey": 11 }
 			],

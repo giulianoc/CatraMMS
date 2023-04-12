@@ -3,7 +3,7 @@
 
 	"type": "Live-Recorder",
 
-	"Parameters": {
+	"parameters": {
 		"LiveURL": "https://abc-iview-mediapackagestreams-1.akamaized.net/out/v1/50345bf35f664739912f0b255c172ae9/index_1.m3u8",
 
 		"RecordingPeriod": {

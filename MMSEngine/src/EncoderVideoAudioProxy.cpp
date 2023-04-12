@@ -9372,7 +9372,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 			field = "EndTimeInSeconds";
 			crossReferenceParametersRoot[field] = endTimeInSeconds;
 
-			field = "Parameters";
+			field = "parameters";
 			crossReferenceRoot[field] = crossReferenceParametersRoot;
 		}
 

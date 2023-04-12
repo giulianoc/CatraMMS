@@ -12,7 +12,7 @@
             {
                 "label": "...",
                 "type": "Add-Content",
-                "Parameters": {
+                "parameters": {
                     "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
                     "FileFormat": "mp4",
                     "ContentType": "video",
@@ -23,7 +23,7 @@
             {
                 "label": "...",
                 "type": "Add-Content",
-                "Parameters": {
+                "parameters": {
                     "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
                     "FileFormat": "mp4",
                     "ContentType": "video",
@@ -35,7 +35,7 @@
         "OnSuccess": {
             "Task": {
                 "type": "Concat-Demuxer",
-                "Parameters": {
+                "parameters": {
                     "UserData": { "MyData": "this is my frame data" },
                     "Title": "${TitleOfConcatVideo}"
                 }

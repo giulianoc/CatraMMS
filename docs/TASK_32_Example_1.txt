@@ -7,7 +7,7 @@
 	"Task": {
 		"label": "my label",
 		"type": "Media-Cross-Reference",
-		"Parameters": {
+		"parameters": {
 			"References": [
 				{ "mediaItemKey": 11 },
 				{ "mediaItemKey": 12 }

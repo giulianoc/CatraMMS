@@ -4,7 +4,7 @@
 	"Task": {
 		"label": "__title__",
 		"type": "Add-Content",
-		"Parameters": {
+		"parameters": {
 			"Title": "__title__",
 			"SourceURL": "__url__",
 			"FileFormat": "__fileformat__",
@@ -16,13 +16,13 @@
 			"Task": {
 				"label": "Encodes __title__",
 				"type": "GroupOfTasks",
-				"Parameters": {
+				"parameters": {
 					"ExecutionType": "parallel",
 					"Tasks": [
 						{
 							"label": "Encode __title__ W240",
 							"type": "Encode",
-							"Parameters": {
+							"parameters": {
 								"ContentType": "image",
 								"EncodingPriority": "Low",
 								"EncodingProfileLabel": "MMS_JPG_W240"
@@ -31,7 +31,7 @@
 						{
 							"label": "Encode __title__ H700",
 							"type": "Encode",
-							"Parameters": {
+							"parameters": {
 								"ContentType": "image",
 								"EncodingPriority": "Low",
 								"EncodingProfileLabel": "MMS_JPG_H700"

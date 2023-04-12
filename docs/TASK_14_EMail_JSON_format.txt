@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Email-Notification",
 
-	"Parameters": {
+	"parameters": {
 		// optional
 		"References": [
 			// optional.

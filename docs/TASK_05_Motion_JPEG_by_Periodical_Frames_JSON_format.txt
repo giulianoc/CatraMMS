@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Motion-JPEG-by-Periodical-Frames",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. Just one Reference needed to identify the video by which

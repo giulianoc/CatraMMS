@@ -4,7 +4,7 @@
 	"Task": {
 		"label": "__FILENAME__",
 		"type": "Add-Content",
-		"Parameters": {
+		"parameters": {
 			"AllowUniqueNameOverride": false,
 			"FileFormat": "__FILEFORMAT__",
 			"PushBinaryFileName": "__FILENAME__",
@@ -16,13 +16,13 @@
 			"Task": {
 				"label": "GroupOfTasks __TITLE__",
 				"type": "GroupOfTasks",
-				"Parameters": {
+				"parameters": {
 					"ExecutionType": "parallel",
 					"Tasks": [
 						{
 							"label": "encode __TITLE__",
 							"type": "Encode",
-							"Parameters": {
+							"parameters": {
 								"ContentType": "video",
 								"encodersPool": "irl-3",
 								"EncodingPriority": "Low",
@@ -32,7 +32,7 @@
 						{
 							"label": "Best Picture: __TITLE__",
 							"type": "Workflow-As-Library",
-							"Parameters": {
+							"parameters": {
 								"AllowUniqueNameOverride": false,
 								"ImageRetention": "10y",
 								"ImageTags": ["FACE"],

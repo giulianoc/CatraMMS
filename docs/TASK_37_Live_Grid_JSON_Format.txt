@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Live-Grid",
 
-	"Parameters": {
+	"parameters": {
 
 		// mandatory. Channels to be added into the Live-Grid video
 		"InputConfigurationLabels": [

@@ -3,6 +3,6 @@
 
 	"type": "Countdown",
 
-	"Parameters": {
+	"parameters": {
 	}
 }

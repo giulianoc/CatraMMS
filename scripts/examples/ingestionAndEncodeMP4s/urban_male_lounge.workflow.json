@@ -2,7 +2,7 @@
 	"label": "urban_male_lounge.mp4",
 	"Task": {
 		"label": "urban_male_lounge.mp4",
-		"Parameters": {
+		"parameters": {
 			"AllowUniqueNameOverride": false,
 			"FileFormat": "mp4",
 			"PushBinaryFileName": "urban_male_lounge.mp4",
@@ -14,7 +14,7 @@
 		"OnSuccess": {
 			"Task": {
 				"label": "encode urban_male_lounge",
-				"Parameters": {
+				"parameters": {
 					"ContentType": "video",
 					"encodersPool": "irl-3",
 					"EncodingPriority": "Low",

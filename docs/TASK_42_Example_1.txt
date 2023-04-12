@@ -3,7 +3,7 @@
 
 	"type": "YouTube-Live-Broadcast",
 
-	"Parameters": {
+	"parameters": {
 		"configurationLabel": "my live proxy"
 	}
 }

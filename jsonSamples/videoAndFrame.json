@@ -8,7 +8,7 @@
     "Task": {
         "label": "Task n. X",
         "type": "Content-Ingestion",
-        "Parameters": {
+        "parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
             "FileFormat": "mp4",
             "UserData": { "MyData": "this is my video data" },
@@ -17,7 +17,7 @@
         "OnSuccess": {
             "Task": {
                 "type": "Frame",
-                "Parameters": {
+                "parameters": {
                     "InstantInSeconds": 2.5,
                     "UserData": { "MyData": "this is my frame data" },
                     "Title": "${TitleOfFrame}"

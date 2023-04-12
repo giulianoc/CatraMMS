@@ -5,7 +5,7 @@
 	// mandatory
 	"type": "Extract-Tracks",
 
-	"Parameters": {
+	"parameters": {
 		// mandatory
 		"References": [
 			// mandatory. One Reference needed to identify the media file (mediaItemKeys) or
