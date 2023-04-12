@@ -8,6 +8,6 @@
 			{ "mediaItemKey": 11 }
 		],
 
-		"ConfigurationLabel": "my ftp server"
+		"configurationLabel": "my ftp server"
 	}
 }

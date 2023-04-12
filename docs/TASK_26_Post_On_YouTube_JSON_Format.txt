@@ -40,7 +40,7 @@
 		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// mandatory, one of the MMS YouTube Configuration label 
-		"ConfigurationLabel": "My YouTube Conf",
+		"configurationLabel": "My YouTube Conf",
 
 		// Optional, Title of the video, if not present the MMS title of the video is used
 		"Title": "YYYY",

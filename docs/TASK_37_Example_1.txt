@@ -4,7 +4,7 @@
 	"type": "Live-Grid",
 
 	"Parameters": {
-		"ConfigurationLabel": [
+		"configurationLabel": [
 			"conf label 1",
 			"conf label 1"
 		],

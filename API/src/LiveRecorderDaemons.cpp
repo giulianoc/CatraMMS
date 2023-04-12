@@ -735,7 +735,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 					// 2021-02-03: in this case, we will use the 'ConfigurationLabel' that
 					// it is much better that a code. Who will see the title of the chunks will recognize
 					// easily the recording
-					addContentTitle = ingestedParametersRoot.get("ConfigurationLabel", "").asString();
+					addContentTitle = ingestedParametersRoot.get("configurationLabel", "").asString();
 				}
 				*/
 				// string ingestionJobLabel = encodingParametersRoot.get("ingestionJobLabel", "").asString();

@@ -8915,7 +8915,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 
         string configurationLabel;
         {
-            string field = "ConfigurationLabel";
+            string field = "configurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -10588,7 +10588,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
         int youTubeCategoryId = -1;
         string youTubePrivacyStatus;
         {
-            string field = "ConfigurationLabel";
+            string field = "configurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12250,7 +12250,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		Json::Value framesToBeDetectedRoot = Json::nullValue;
         {
 			{
-				field = "ConfigurationLabel";
+				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12908,7 +12908,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		string taskEncodersPoolLabel;
 		{
 			{
-				string field = "ConfigurationLabel";
+				string field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14249,7 +14249,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 			if (streamSourceType == "IP_PULL")
 			{
-				field = "ConfigurationLabel";
+				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14264,7 +14264,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			}
 			else if (streamSourceType == "Satellite")
 			{
-				field = "ConfigurationLabel";
+				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14774,13 +14774,13 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				if (streamSourceType == "IP_PULL")
 				{
 					Json::Value removed;
-					field = "ConfigurationLabel";
+					field = "configurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
 				else if (streamSourceType == "Satellite")
 				{
 					Json::Value removed;
-					field = "ConfigurationLabel";
+					field = "configurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
 				else // if (streamSourceType == "IP_PUSH")
@@ -15142,7 +15142,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 			if (streamSourceType == "IP_PULL")
 			{
-				field = "ConfigurationLabel";
+				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -15157,7 +15157,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			}
 			else if (streamSourceType == "Satellite")
 			{
-				field = "ConfigurationLabel";
+				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -15704,13 +15704,13 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				if (streamSourceType == "IP_PULL")
 				{
 					Json::Value removed;
-					field = "ConfigurationLabel";
+					field = "configurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
 				else if (streamSourceType == "Satellite")
 				{
 					Json::Value removed;
-					field = "ConfigurationLabel";
+					field = "configurationLabel";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
 				else // if (streamSourceType == "IP_PUSH")
@@ -16150,7 +16150,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			if (sourceType == "Live")
 			{
-				field = "ConfigurationLabel";
+				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -21915,7 +21915,7 @@ void MMSEngineProcessor::emailNotificationThread(
 			}
 		}
 
-        string field = "ConfigurationLabel";
+        string field = "configurationLabel";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"

@@ -185,7 +185,7 @@ void LiveRecorder::encodeContent(
 			_liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
 
 		_liveRecording->_channelLabel = JSONUtils::asString(_liveRecording->_ingestedParametersRoot,
-			"ConfigurationLabel", "");
+			"configurationLabel", "");
 
 		_liveRecording->_lastRecordedAssetFileName			= "";
 		_liveRecording->_lastRecordedAssetDurationInSeconds	= 0.0;

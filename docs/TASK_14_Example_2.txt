@@ -18,7 +18,7 @@
 			"Task": {
 				"type": "Email-Notification",
 				"Parameters": {
-					"ConfigurationLabel": "My email"
+					"configurationLabel": "My email"
 				}
 			}
 		}

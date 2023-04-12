@@ -7,6 +7,6 @@
 		"References": [
 			{ "mediaItemKey": 11 }
 		],
-		"ConfigurationLabel": "My YouTube Account"
+		"configurationLabel": "My YouTube Account"
 	}
 }

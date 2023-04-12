@@ -4,6 +4,6 @@
 	"type": "Live-Proxy",
 
 	"Parameters": {
-		"ConfigurationLabel": "my live proxy"
+		"configurationLabel": "my live proxy"
 	}
 }

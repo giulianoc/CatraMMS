@@ -8,7 +8,7 @@
 			"References": [
 				{ "ingestionJobKey": 11 }
 			],
-			"ConfigurationLabel": "My email"
+			"configurationLabel": "My email"
 		}
 	}
 }

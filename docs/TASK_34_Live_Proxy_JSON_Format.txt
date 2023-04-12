@@ -8,7 +8,7 @@
 	"Parameters": {
 
 		// mandatory, it identifies the channel
-		"ConfigurationLabel": "",
+		"configurationLabel": "",
 
 		// In case if is a only audio channel, for example a radio, it is possible to add
 		// a video track to be retrieved from a MediaItemKey (video item). This video could be generated

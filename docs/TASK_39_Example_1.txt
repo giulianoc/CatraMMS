@@ -4,6 +4,6 @@
 	"type": "Intro-Outro-Overlay",
 
 	"Parameters": {
-		"ConfigurationLabel": "my "
+		"configurationLabel": "my "
 	}
 }

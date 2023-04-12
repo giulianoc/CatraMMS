@@ -65,7 +65,7 @@
           "AllowUniqueNameOverride": false,
           "CaptureLive": {},
           "ChannelType": "IP_MMSAsClient",
-          "ConfigurationLabel": "R101",
+          "configurationLabel": "R101",
           "DeliveryCode": 12345,
           "EncodingPriority": "Low",
           "Ingester": "Giuliano Catrambone",

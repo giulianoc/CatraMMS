@@ -647,7 +647,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			try
 			{
-				field = "ConfigurationLabel";
+				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				{
 					string errorMessage =
@@ -975,7 +975,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			try
 			{
-				field = "ConfigurationLabel";
+				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				{
 					string errorMessage =

@@ -2594,7 +2594,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "ConfigurationLabel"
+        "configurationLabel"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2899,7 +2899,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "ConfigurationLabel"
+        "configurationLabel"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -3481,7 +3481,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 		dependencies)
 {
     vector<string> mandatoryFields = {
-        "ConfigurationLabel"
+        "configurationLabel"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -3899,7 +3899,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 
 	{
 		vector<string> mandatoryFields = {
-			"ConfigurationLabel",
+			"configurationLabel",
 			"recordingCode",
 			"schedule",
 			"SegmentDuration"
@@ -4063,7 +4063,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		dependencies)
 {
         
-	string field = "ConfigurationLabel";
+	string field = "configurationLabel";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -4238,7 +4238,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 
 	if (sourceType == "Live")
 	{
-		field = "ConfigurationLabel";
+		field = "configurationLabel";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);

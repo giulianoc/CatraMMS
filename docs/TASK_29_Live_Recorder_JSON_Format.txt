@@ -15,7 +15,7 @@
 	"Parameters": {
 
 		// mandatory: it identifies the channel
-		"ConfigurationLabel": "",
+		"configurationLabel": "",
 
 		// mandatory
 		//	It identifies this specific recording. In case for example

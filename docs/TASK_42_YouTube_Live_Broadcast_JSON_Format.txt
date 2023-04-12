@@ -38,7 +38,7 @@
 		"SourceType": "MediaItem",
 
 		// mandatory in case SourceType is Live, it identifies the channel
-		"ConfigurationLabel": "",
+		"configurationLabel": "",
 
 		// mandatory in case SourceType is MediaItem
 		"References": [

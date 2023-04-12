@@ -7,7 +7,7 @@
 		"References": [
 			{ "mediaItemKey": 11 }
 		],
-		"ConfigurationLabel": "My Facebook Conf",
+		"configurationLabel": "My Facebook Conf",
 		"NodeId": "YYYY"
 	}
 }

@@ -40,7 +40,7 @@
 		// - CheckStreaming_streamingName
 		// - CheckStreaming_streamingUrl
 
-		"ConfigurationLabel": "My email"
+		"configurationLabel": "My email"
 
 		// optional
 		// A vector of strings that will be replaced by MMS if present into the
