@@ -12339,9 +12339,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 				monitorSegmentDurationInSeconds = JSONUtils::asInt(monitorHLSRoot, field, 10);
 
 
-				string keyField = "EncodingProfileKey";
-				string labelField = "EncodingProfileLabel";
-				string contentTypeField = "ContentType";
+				string keyField = "encodingProfileKey";
+				string labelField = "encodingProfileLabel";
+				string contentTypeField = "contentType";
 				if (JSONUtils::isMetadataPresent(monitorHLSRoot, keyField))
 					monitorEncodingProfileKey = JSONUtils::asInt64(monitorHLSRoot, keyField, 0);
 				else if (JSONUtils::isMetadataPresent(monitorHLSRoot, labelField))
@@ -12389,9 +12389,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 				field = "SegmentDurationInSeconds";
 				virtualVODSegmentDurationInSeconds = JSONUtils::asInt(virtualVODRoot, field, 10);
 
-				string keyField = "EncodingProfileKey";
-				string labelField = "EncodingProfileLabel";
-				string contentTypeField = "ContentType";
+				string keyField = "encodingProfileKey";
+				string labelField = "encodingProfileLabel";
+				string contentTypeField = "contentType";
 				if (JSONUtils::isMetadataPresent(virtualVODRoot, keyField))
 					virtualVODEncodingProfileKey = JSONUtils::asInt64(virtualVODRoot, keyField, 0);
 				else if (JSONUtils::isMetadataPresent(virtualVODRoot, labelField))
@@ -13907,9 +13907,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 			udpUrl = JSONUtils::asString(outputRoot, field, "");
 		}
 
-		string keyField = "EncodingProfileKey";
-		string labelField = "EncodingProfileLabel";
-		string contentTypeField = "ContentType";
+		string keyField = "encodingProfileKey";
+		string labelField = "encodingProfileLabel";
+		string contentTypeField = "contentType";
 		if (JSONUtils::isMetadataPresent(outputRoot, keyField))
 		{
 			encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
@@ -14131,8 +14131,8 @@ void MMSEngineProcessor::manageLiveGrid(
 				inputChannelsRoot.append(inputChannelRoot);
 			}
 
-			string keyField = "EncodingProfileKey";
-			string labelField = "EncodingProfileLabel";
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
 			{
 				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
@@ -20091,8 +20091,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			int64_t encodingProfileKey;
 			Json::Value encodingProfileDetailsRoot;
 			{
-				string keyField = "EncodingProfileKey";
-				string labelField = "EncodingProfileLabel";
+				string keyField = "encodingProfileKey";
+				string labelField = "encodingProfileLabel";
 				if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
 				{
 					encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
@@ -20314,8 +20314,8 @@ void MMSEngineProcessor::manageEncodeTask(
 			// We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
 			//  having just EncodingProfileKey        
 
-			string keyField = "EncodingProfileKey";
-			string labelField = "EncodingProfileLabel";
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
 			{
 				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);

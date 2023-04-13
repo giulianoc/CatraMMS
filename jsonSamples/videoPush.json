@@ -9,7 +9,7 @@
 		"type": "Add-Content",
 		"parameters": {
 			"FileFormat": "mpg",
-			"ContentType": "video",
+			"contentType": "video",
 			"UserData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}

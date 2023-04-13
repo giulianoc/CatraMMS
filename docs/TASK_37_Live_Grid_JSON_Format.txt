@@ -24,8 +24,8 @@
 
 		// mandatory. It will represent the encoding profile to be used
 		// EncodingProfileKey or EncodingProfileLabel has to be present
-		"EncodingProfileKey": 1,
-		"EncodingProfileLabel": "MMS_HLS_H264_veryfast_360p25_high422_AAC_92",
+		"encodingProfileKey": 1,
+		"encodingProfileLabel": "MMS_HLS_H264_veryfast_360p25_high422_AAC_92",
 
 		// mandatory
 		//	It identifies this specific delivery.

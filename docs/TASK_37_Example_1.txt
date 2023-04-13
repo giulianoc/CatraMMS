@@ -15,6 +15,6 @@
 
 		"GridHeigth": 578,
 
-		"EncodingProfileLabel": "fast encoding profile"
+		"encodingProfileLabel": "fast encoding profile"
 	}
 }

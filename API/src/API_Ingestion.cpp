@@ -1124,7 +1124,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 						Json::Value newParametersRoot = parametersRoot;
 
-						field = "EncodingProfileKey";
+						field = "encodingProfileKey";
 						newParametersRoot[field] = encodingProfileKey;
 
 						{
@@ -1158,7 +1158,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 					Json::Value newParametersRoot = parametersRoot;
 
-					field = "EncodingProfileKey";
+					field = "encodingProfileKey";
 					newParametersRoot[field] = encodingProfileKey;
 
 					field = "parameters";

@@ -41,9 +41,9 @@
               "label": "Encode ${title}",
               "type": "Encode",
               "parameters": {
-                "ContentType": "video",
+                "contentType": "video",
                 "EncodingPriority": "Low",
-                "EncodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
+                "encodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
               }
             }
           ]

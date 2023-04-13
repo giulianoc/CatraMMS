@@ -155,9 +155,9 @@
 				//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
 				//		In case the EncodingProfileLabel is not unique in the system, ContentType has to be present too
 				//		Possible values for the ContentType are: video, audio
-				"EncodingProfileKey": 1,
-				"EncodingProfileLabel": "Profile sport",
-				"ContentType": "video"
+				"encodingProfileKey": 1,
+				"encodingProfileLabel": "Profile sport",
+				"contentType": "video"
 
 				// optional: add draw text to the output
 				"drawTextDetails": {

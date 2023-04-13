@@ -20,7 +20,7 @@
       "parameters": {
         "outputs": [{
           "DeliveryCode": 765234,
-          "EncodingProfileKey": 20,
+          "encodingProfileKey": 20,
           "outputType": "HLS"
         }],
         "timePeriod": false

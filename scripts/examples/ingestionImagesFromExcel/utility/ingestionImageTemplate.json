@@ -23,18 +23,18 @@
 							"label": "Encode __title__ W240",
 							"type": "Encode",
 							"parameters": {
-								"ContentType": "image",
+								"contentType": "image",
 								"EncodingPriority": "Low",
-								"EncodingProfileLabel": "MMS_JPG_W240"
+								"encodingProfileLabel": "MMS_JPG_W240"
 							}
 						},
 						{
 							"label": "Encode __title__ H700",
 							"type": "Encode",
 							"parameters": {
-								"ContentType": "image",
+								"contentType": "image",
 								"EncodingPriority": "Low",
-								"EncodingProfileLabel": "MMS_JPG_H700"
+								"encodingProfileLabel": "MMS_JPG_H700"
 							}
 						}
 					]

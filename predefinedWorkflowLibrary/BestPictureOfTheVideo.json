@@ -100,9 +100,9 @@
 					{
 						"label": "Encode image MMS_JPG_W240 (Frame): ${Title}",
 						"parameters": {
-							"ContentType": "image",
+							"contentType": "image",
 							"EncodingPriority": "High",
-							"EncodingProfileLabel": "MMS_JPG_W240",
+							"encodingProfileLabel": "MMS_JPG_W240",
 							"processingStartingFrom": "${processingStartingFrom}"
 						},
 						"type": "Encode"
@@ -110,9 +110,9 @@
 					{
 						"label": "Encode image MMS_PNG_W240 (Frame): ${Title}",
 						"parameters": {
-							"ContentType": "image",
+							"contentType": "image",
 							"EncodingPriority": "High",
-							"EncodingProfileLabel": "MMS_PNG_W240",
+							"encodingProfileLabel": "MMS_PNG_W240",
 							"processingStartingFrom": "${processingStartingFrom}"
 						},
 						"type": "Encode"
@@ -144,9 +144,9 @@
 				{
 					"label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${Title}",
 					"parameters": {
-						"ContentType": "image",
+						"contentType": "image",
 						"EncodingPriority": "High",
-						"EncodingProfileLabel": "MMS_JPG_W240",
+						"encodingProfileLabel": "MMS_JPG_W240",
 						"processingStartingFrom": "${processingStartingFrom}"
 					},
 					"type": "Encode"
@@ -154,9 +154,9 @@
 				{
 					"label": "Encode image MMS_PNG_W240 (FrameContainingFace): ${Title}",
 					"parameters": {
-						"ContentType": "image",
+						"contentType": "image",
 						"EncodingPriority": "High",
-						"EncodingProfileLabel": "MMS_PNG_W240",
+						"encodingProfileLabel": "MMS_PNG_W240",
 						"processingStartingFrom": "${processingStartingFrom}"
 					},
 					"type": "Encode"

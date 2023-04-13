@@ -12,9 +12,9 @@
             {
               "label": "VOD encoding",
               "parameters": {
-                "ContentType": "video",
+                "contentType": "video",
                 "EncodingPriority": "Low",
-                "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
+                "encodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
               },
               "type": "Encode"
             },
@@ -54,9 +54,9 @@
         "OnSuccess": {"task": {
           "label": "Chunk encoding",
           "parameters": {
-            "ContentType": "video",
+            "contentType": "video",
             "EncodingPriority": "Low",
-            "EncodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
+            "encodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
           },
           "type": "Encode"
         }},

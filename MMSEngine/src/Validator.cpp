@@ -1546,8 +1546,8 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
         
     string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
     string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
-    string encodingProfileKeyField = "EncodingProfileKey";
-    string encodingProfileLabelField = "EncodingProfileLabel";
+    string encodingProfileKeyField = "encodingProfileKey";
+    string encodingProfileLabelField = "encodingProfileLabel";
     if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
             && !JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
             && !JSONUtils::isMetadataPresent(parametersRoot, encodingProfileLabelField)
@@ -4787,8 +4787,8 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 		// check that, in case of an Image, the encoding profile is mandatory
 		if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
 		{
-			string keyField = "EncodingProfileKey";
-			string labelField = "EncodingProfileLabel";
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
 			if (!JSONUtils::isMetadataPresent(outputRoot, keyField)
 				&& !JSONUtils::isMetadataPresent(outputRoot, labelField))
 			{
@@ -5652,8 +5652,8 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
         }
     }
 
-    string encodingProfileKeyField = "EncodingProfileKey";
-    string encodingProfileLabelField = "EncodingProfileLabel";
+    string encodingProfileKeyField = "encodingProfileKey";
+    string encodingProfileLabelField = "encodingProfileLabel";
     if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfileLabelField)
 		&& !JSONUtils::isMetadataPresent(parametersRoot, encodingProfileKeyField))
     {
@@ -6292,7 +6292,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                 {
                     int64_t encodingProfileKey = -1;
 
-                    field = "EncodingProfileKey";
+                    field = "encodingProfileKey";
                     if (JSONUtils::isMetadataPresent(referenceRoot, field))
                     {
                         int64_t encodingProfileKey = JSONUtils::asInt64(referenceRoot, field, 0);
@@ -6305,7 +6305,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
                     }  
                     else
                     {
-                        field = "EncodingProfileLabel";
+                        field = "encodingProfileLabel";
                         if (JSONUtils::isMetadataPresent(referenceRoot, field))
                         {
                             string encodingProfileLabel = JSONUtils::asString(referenceRoot, field, "0");

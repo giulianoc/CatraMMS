@@ -9,7 +9,7 @@
         "Description": "aaa",       // optional
 
         "FileFormat": "jpg", // mandatory
-        "ContentType": "image",     // mandatory: "video" or "audio" or "image"
+        "contentType": "image",     // mandatory: "video" or "audio" or "image"
         "LogicalType": "Advertising",     // optional
         "MD5FileCheckSum": null,	// "6f60b0d5ed8925d032da926c78c8c67d",  // optional
         "FileSizeInBytes": null,	// 1379043332,   // optional

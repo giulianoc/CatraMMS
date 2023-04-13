@@ -16,7 +16,7 @@
 					"parameters": {
            				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
-						"ContentType": "video",
+						"contentType": "video",
 						"UserData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_1}"
 					}
@@ -27,7 +27,7 @@
 					"parameters": {
            				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"FileFormat": "mp4",
-						"ContentType": "video",
+						"contentType": "video",
 						"UserData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_2}"
 					}

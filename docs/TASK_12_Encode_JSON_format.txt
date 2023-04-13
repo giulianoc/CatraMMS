@@ -41,8 +41,8 @@
 		//      EncodingProfileLabel or EncodingProfileKey will represent just one profile
 		"EncodingProfilesSetLabel": "Sport",
 		"EncodingProfilesSetKey": 1,
-		"EncodingProfileKey": 1,
-		"EncodingProfileLabel": "Profile Logo",
+		"encodingProfileKey": 1,
+		"encodingProfileLabel": "Profile Logo",
 
 		// Optional: in case the source contents has more than one video track, this parameter
 		//	specifies the video track index to be used for the encoding (first track has index 0)

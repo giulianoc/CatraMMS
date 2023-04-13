@@ -17,7 +17,7 @@
 					"parameters": {
 						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
-						"ContentType": "video",
+						"contentType": "video",
 						"UserData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_1}"
 					}
@@ -28,7 +28,7 @@
 					"parameters": {
 						"SourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
 						"FileFormat": "jpg",
-						"ContentType": "image",
+						"contentType": "image",
 						"UserData": { "MyData": "this is my image data" },
 						"Title": "${TitleOfImage_1}"
 					},
@@ -38,7 +38,7 @@
 							"type": "Encode",
 							"parameters": {
 								"EncodingPriority": "Low",
-								"EncodingProfileLabel": "Profile Logo"
+								"encodingProfileLabel": "Profile Logo"
 							}
 						}
 					}
@@ -54,7 +54,7 @@
 					"ImagePosition_Y_InPixel": "video_height-image_height-10",                                
 					"EncodingPriority": "High",                                                               
 					"References": [                                                                           
-						{ "label": "my image encode", "EncodingProfileLabel": "Profile Logo" },      
+						{ "label": "my image encode", "encodingProfileLabel": "Profile Logo" },      
 						{ "label": "${TitleOfVideo_1}" }                                             
 					],                                                                                        
 					"UserData": { "MyData": "this is my overlay data" },                                      
