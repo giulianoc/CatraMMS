@@ -2645,10 +2645,6 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 					}
 					catch(runtime_error e)
 					{
-						ifstream medatataFile(tmpManifestPathFileName);                                                         
-						stringstream buffer;                                                                             
-						buffer << medatataFile.rdbuf();                                                                       
-
 						string errorMessage =
 							string("copyFile failed, previous segments of the manifest will be omitted")
 							+ ", sourceTSPathFileName: " + sourceTSPathFileName
@@ -2656,7 +2652,6 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 							+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
 							+ ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey)
 							+ ", segmentsNumber: " + to_string(segmentsNumber)
-							+ ", manifestFile: " + buffer.str()
 							+ ", e.what: " + e.what()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
