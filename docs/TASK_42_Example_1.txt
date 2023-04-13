@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	"label"="My YouTube Live Broadcast",
 
 	"type": "YouTube-Live-Broadcast",

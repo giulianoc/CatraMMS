@@ -5,7 +5,7 @@
 		"TitleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
 		"TitleOfCut": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"label": "...",
 		"type": "Add-Content",
 		"parameters": {
@@ -15,7 +15,7 @@
 			"Title": "${TitleOfVideo}"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"type": "Cut",
 				"parameters": {
 					"StartTimeInSeconds": 1.0,

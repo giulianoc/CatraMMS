@@ -75,7 +75,7 @@
   },
   "label": "Best Picture of the Video",
   "type": "Workflow",
-  "Task": {
+  "task": {
     "label": "${Title}",
     "type": "GroupOfTasks",
     "parameters": {
@@ -85,18 +85,18 @@
         {"label": "Frame Containing Face: ${Title}"},
         {"label": "Frame: ${Title}"}
       ],
-      "Tasks": [{
+      "tasks": [{
         "label": "Frame Containing Face: ${Title}",
         "type": "Face-Recognition",
-        "OnError": {"Task": {
+        "OnError": {"task": {
           "label": "Frame: ${Title}",
           "type": "Frame",
-          "OnSuccess": {"Task": {
+          "OnSuccess": {"task": {
 			"label": "Encoding profiles (Frame): ${Title}",
 			"parameters": {
 				"ExecutionType": "parallel",
 				"processingStartingFrom": "${processingStartingFrom}",
-				"Tasks": [
+				"tasks": [
 					{
 						"label": "Encode image MMS_JPG_W240 (Frame): ${Title}",
 						"parameters": {
@@ -135,12 +135,12 @@
             "Width": 640
           }
         }},
-        "OnSuccess": {"Task": {
+        "OnSuccess": {"task": {
           "label": "Encoding profiles (FrameContainingFace): ${Title}",
           "parameters": {
 			"ExecutionType": "parallel",
 			"processingStartingFrom": "${processingStartingFrom}",
-			"Tasks": [
+			"tasks": [
 				{
 					"label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${Title}",
 					"parameters": {

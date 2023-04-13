@@ -5,11 +5,11 @@
 		"TitleOfVideo_1": "My Title of the video_1 content",
 		"TitleOfVideo_2": "My Title of the video_2 content"
 	},
-	"Task": {
+	"task": {
 		"type": "GroupOfTasks",
 		"parameters": {
 			"ExecutionType": "parallel",
-			"Tasks": [
+			"tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",

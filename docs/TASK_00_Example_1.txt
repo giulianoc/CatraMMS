@@ -5,12 +5,12 @@
 		"TitleOfVideo_1": { "Value": "My Title of the video_1 content", "type": "string", "Description": "..." },
 		"TitleOfVideo_2": { "Value": "My Title of the video_2 content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"type": "GroupOfTasks",
 		"parameters": {
 			"ExecutionType": "parallel",
 
-			"Tasks": [
+			"tasks": [
 				{
 					"label": "...",
 					"type": "Add-Content",

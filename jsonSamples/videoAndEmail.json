@@ -4,7 +4,7 @@
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
-	"Task": {
+	"task": {
 		"label": "This is my video",
 		"type": "Add-Content",
 		"parameters": {
@@ -15,13 +15,13 @@
 			"Title": "${Title}"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "Email task",
 				"type": "Email-Notification",
 				"parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",
-					"Subject": "Task finished",
-					"Message": "Task __INGESTIONJOBKEY__ has finished"
+					"Subject": "task finished",
+					"Message": "task __INGESTIONJOBKEY__ has finished"
 				}
 			}
 		}

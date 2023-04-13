@@ -1,6 +1,6 @@
 {
   "label": "Proxy of a Picture",
-  "Task": {
+  "task": {
     "label": "Proxy of a Picture (Slideshow)",
     "type": "Slideshow",
     "parameters": {
@@ -14,7 +14,7 @@
       "Title": "Proxy of a Picture (Slideshow)",
       "VideoSyncMethod": "cfr"
     },
-    "OnSuccess": {"Task": {
+    "OnSuccess": {"task": {
       "label": "Proxy of a Picture (VOD-Proxy)",
       "type": "VOD-Proxy",
       "parameters": {

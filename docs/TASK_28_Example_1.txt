@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	"label"="My Face Identification",
 
 	"type": "Face-Identification",

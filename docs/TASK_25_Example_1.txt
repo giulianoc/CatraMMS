@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	"label"="My Facebook POST",
 
 	"type": "Post-On-Facebook",

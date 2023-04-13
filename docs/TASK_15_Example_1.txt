@@ -1,7 +1,7 @@
 {
 	"type": "Workflow",
 	"label": "My Workflow...",
-	"Task": {
+	"task": {
 		"label": "my label ...",
 		"type": "Remove-Content",
 		"parameters": {

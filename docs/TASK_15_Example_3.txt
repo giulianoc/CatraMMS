@@ -4,7 +4,7 @@
 	"Variables": {
 		"TitleOfVideo": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"label": "My video",
 		"type": "Add-Content",
 		"parameters": {
@@ -15,7 +15,7 @@
 			"FileSizeInBytes": 278341022
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "my label",
 				"type": "Encode",
 				"parameters": {
@@ -23,7 +23,7 @@
 					"EncodingProfilesSetLabel": "Sport"
 				},
 				"OnSuccess": {
-					"Task": {
+					"task": {
 						"type": "Remove-Content",
 						"parameters": {
 						}

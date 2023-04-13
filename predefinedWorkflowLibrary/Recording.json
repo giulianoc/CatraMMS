@@ -1,14 +1,14 @@
 {
   "label": "Recording",
-  "Task": {
+  "task": {
     "label": "<no label>",
-    "OnSuccess": {"Task": {
+    "OnSuccess": {"task": {
       "label": "VOD creation",
-      "OnSuccess": {"Task": {
+      "OnSuccess": {"task": {
         "label": "<no label>",
         "parameters": {
           "ExecutionType": "parallel",
-          "Tasks": [
+          "tasks": [
             {
               "label": "VOD encoding",
               "parameters": {
@@ -49,9 +49,9 @@
     }},
     "parameters": {
       "ExecutionType": "parallel",
-      "Tasks": [{
+      "tasks": [{
         "label": "Recorder",
-        "OnSuccess": {"Task": {
+        "OnSuccess": {"task": {
           "label": "Chunk encoding",
           "parameters": {
             "ContentType": "video",

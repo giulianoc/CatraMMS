@@ -5,7 +5,7 @@
         "TitleOfVideo": "My Title of the video content",
         "TitleOfFrame": "My Title of the frame content"
     },
-    "Task": {
+    "task": {
         "label": "My Ingestion n. 123",
         "type": "Content-Ingestion",
         "parameters": {
@@ -15,7 +15,7 @@
             "Title": "${TitleOfVideo}"
         },
         "OnSuccess": {
-            "Task": {
+            "task": {
                 "label": "My Periodical-Frames",
                 "type": "Periodical-Frames",
                 "parameters": {

@@ -1824,7 +1824,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 		{
         	"label": "<workflow label>",
         	"type": "Workflow",
-        	"Task": {
+        	"task": {
                 "label": "<task label 1>",
                 "type": "Add-Content"
                 "parameters": {
@@ -2019,7 +2019,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			workflowRoot[field] = variablesWorkflowRoot;
 		}
 
-		field = "Task";
+		field = "task";
 		workflowRoot[field] = addContentRoot;
 
    		{
@@ -3089,7 +3089,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		// {
         // 	"label": "<workflow label>",
         // 	"type": "Workflow",
-        //	"Task": {
+        //	"task": {
         //        "label": "<task label 1>",
         //        "type": "Add-Content"
         //        "parameters": {
@@ -3268,7 +3268,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		field = "type";
 		workflowRoot[field] = "Workflow";
 
-		field = "Task";
+		field = "task";
 		workflowRoot[field] = addContentRoot;
 
    		{

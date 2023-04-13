@@ -4,7 +4,7 @@
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
-	"Task": {
+	"task": {
 		"label": "This is my video",
 		"type": "Add-Content",
 		"parameters": {

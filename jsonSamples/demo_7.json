@@ -6,11 +6,11 @@
 		"TitleOfImage_1": "My Title of the logo content",
 		"TitleOfOverlayVideo_1": "My Title of the overlay content"
 	},
-	"Task": {
+	"task": {
 		"type": "GroupOfTasks",
 		"parameters": {
 			"ExecutionType": "parallel",
-			"Tasks": [
+			"tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
@@ -33,7 +33,7 @@
 						"Title": "${TitleOfImage_1}"
 					},
 					"OnSuccess": {
-						"Task": {
+						"task": {
 							"label": "my image encode",
 							"type": "Encode",
 							"parameters": {

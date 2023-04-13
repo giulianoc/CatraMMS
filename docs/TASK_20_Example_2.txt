@@ -5,7 +5,7 @@
 		"TitleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
 		"TitleOfOverlayVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"label": "My video",
 		"type": "Add-Content",
 		"parameters": {
@@ -15,7 +15,7 @@
 			"Title": "${TitleOfVideo}"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "my label",
 				"type": "Overlay-Text-On-Video",
 				"parameters": {

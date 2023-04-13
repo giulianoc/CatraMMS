@@ -1,7 +1,7 @@
 {
   "label": "ingestContent ${title}",
   "type": "Workflow",
-  "Task":
+  "task":
   {
     "label": "Add Content ${title}",
     "type": "Add-Content",
@@ -13,13 +13,13 @@
       "Retention": "${retention}"
     },
     "OnSuccess": {
-      "Task":
+      "task":
       {
         "label": "${title}",
         "type": "GroupOfTasks",
         "parameters": {
           "ExecutionType": "parallel",
-          "Tasks": [
+          "tasks": [
             {
               "label": "Generate Picture ${title}",
               "type": "Workflow-As-Library",

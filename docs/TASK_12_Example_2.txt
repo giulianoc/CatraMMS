@@ -4,7 +4,7 @@
 	"Variables": {
 		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"label": "My video",
 		"type": "Add-Content",
 		"parameters": {
@@ -14,7 +14,7 @@
 			"Title": "${TitleOfVideo}"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "my label",
 				"type": "Encode",
 				"parameters": {
@@ -24,12 +24,12 @@
 			}
 		},
 		"OnComplete": {
-			"Task": {
+			"task": {
 				"type": "Email-Notification",
 				"parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",
-					"Subject": "Task finished",
-					"Message": "Task __INGESTIONJOBKEY__ has finished"
+					"Subject": "task finished",
+					"Message": "task __INGESTIONJOBKEY__ has finished"
 				}
 			}
 		}

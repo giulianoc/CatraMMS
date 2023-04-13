@@ -4,7 +4,7 @@
 	"Variables": {
 		"TitleOfVideo": "My Title of the video content"
 	},
-	"Task": {
+	"task": {
 		"label": "My label ...",
 		"type": "Add-Content",
 		"parameters": {
@@ -14,7 +14,7 @@
 			"Title": "${TitleOfVideo}"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"type": "Remove-Content",
 				"parameters": {
 				}

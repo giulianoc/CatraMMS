@@ -7,11 +7,11 @@
 		"TitleOfConcatVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." },
 		"TitleOfCutVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"type": "GroupOfTasks",
 		"parameters": {
 			"ExecutionType": "parallel",
-			"Tasks": [
+			"tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
@@ -37,7 +37,7 @@
 			]
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "My concat",
 				"type": "Concat-Demuxer",
 				"parameters": {
@@ -45,7 +45,7 @@
 					"Title": "${TitleOfConcatVideo}"
 				},
 				"OnSuccess": {
-					"Task": {
+					"task": {
 						"label": "My cut",
 						"type": "Cut",
 						"parameters": {
@@ -55,7 +55,7 @@
 							"Title": "${TitleOfCutVideo}"
 						},
 						"OnSuccess": {
-							"Task": {
+							"task": {
 								"label": "my encode",
 								"type": "Encode",
 								"parameters": {
@@ -69,12 +69,12 @@
 			}
 		},
 		"OnComplete": {
-			"Task": {
+			"task": {
 				"type": "Email-Notification",
 				"parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",
-					"Subject": "Task finished",
-					"Message": "Task __INGESTIONJOBKEY__ has finished"
+					"Subject": "task finished",
+					"Message": "task __INGESTIONJOBKEY__ has finished"
 				}
 			}
 		}

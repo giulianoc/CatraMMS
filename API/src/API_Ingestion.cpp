@@ -100,7 +100,7 @@ void API::ingestion(
 			field = "ingestionRootKey";
 			requestBodyRoot[field] = ingestionRootKey;
 
-            field = "Task";
+            field = "task";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -324,7 +324,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 		}
 
 		Workflow instantiated (example):
-			"Task": {
+			"task": {
 				"label": "Use of a WorkflowAsLibrary",
 
 				"parameters": {
@@ -1203,7 +1203,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "ExecutionType";
 			newParametersTasksGroupRoot[field] = "parallel";
 
-			field = "Tasks";
+			field = "tasks";
 			newParametersTasksGroupRoot[field] = newTasksRoot;
 
 			Json::Value newTasksGroupRoot;
@@ -1314,7 +1314,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "ExecutionType";
 			newParametersTasksGroupRoot[field] = "parallel";
 
-			field = "Tasks";
+			field = "tasks";
 			newParametersTasksGroupRoot[field] = newTasksRoot;
 
 			Json::Value newTasksGroupRoot;
@@ -1577,7 +1577,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 		Json::Value workflowLibraryTaskRoot;
 		{
-			string workflowRootTaskField = "Task";
+			string workflowRootTaskField = "task";
 			if (!JSONUtils::isMetadataPresent(workflowLibraryRoot, workflowRootTaskField))
 			{
 				string errorMessage = __FILEREF__ + "Wrong Workflow-As-Library format. Root Task was not found"
@@ -1605,7 +1605,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				Json::Value newTasksRoot(Json::arrayValue);
 				newTasksRoot.append(workflowLibraryTaskRoot);
 
-				field = "Tasks";
+				field = "tasks";
 				newGroupOfTasksParametersRoot[field] = newTasksRoot;
 			}
         
@@ -1882,7 +1882,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         throw runtime_error(errorMessage);
     }
 
-    field = "Tasks";
+    field = "tasks";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2332,7 +2332,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     {
         Json::Value& onSuccessRoot = taskOrGroupOfTasksRoot[field];
  
-        field = "Task";
+        field = "task";
         if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2419,7 +2419,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     {
         Json::Value& onErrorRoot = taskOrGroupOfTasksRoot[field];
         
-        field = "Task";
+        field = "task";
         if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2507,7 +2507,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     {
         Json::Value& onCompleteRoot = taskOrGroupOfTasksRoot[field];
         
-        field = "Task";
+        field = "task";
         if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"

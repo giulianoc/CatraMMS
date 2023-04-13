@@ -61,7 +61,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
         throw runtime_error(errorMessage);
     }
     
-    field = "Task";
+    field = "task";
     if (!JSONUtils::isMetadataPresent(root, field))
     {
         string sRoot = JSONUtils::toString(root);
@@ -122,7 +122,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     
 	validateGroupOfTasksMetadata(workspaceKey, parametersRoot);
 
-    field = "Tasks";
+    field = "tasks";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -214,7 +214,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     {
         Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
         
-        field = "Task";
+        field = "task";
         if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
         {
             string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
@@ -257,7 +257,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     {
         Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
         
-        field = "Task";
+        field = "task";
         if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
         {
             string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
@@ -300,7 +300,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     {
         Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
         
-        field = "Task";
+        field = "task";
         if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
         {
             string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);

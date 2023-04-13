@@ -8,7 +8,7 @@
     },
     "GroupOfTasks": {
 		"ExecutionType": "parallel",
-        "Tasks": [
+        "tasks": [
             {
                 "label": "...",
                 "type": "Add-Content",
@@ -33,7 +33,7 @@
             }
         ],
         "OnSuccess": {
-            "Task": {
+            "task": {
                 "type": "Concat-Demuxer",
                 "parameters": {
                     "UserData": { "MyData": "this is my frame data" },

@@ -5,7 +5,7 @@
         "TitleOfVideo": "My Title of the video content",
         "TitleOfCut": "My Title of the cut content"
     },
-    "Task": {
+    "task": {
         "label": "...",
         "type": "Add-Content",
         "parameters": {
@@ -15,7 +15,7 @@
             "Title": "${TitleOfVideo}"
         },
         "OnSuccess": {
-            "Task": {
+            "task": {
                 "type": "Cut",
                 "parameters": {
                     "StartTimeInSeconds": 1.0,

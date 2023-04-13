@@ -782,7 +782,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 		field = "type";
 		workflowRoot[field] = "Workflow";
 
-		field = "Task";
+		field = "task";
 		workflowRoot[field] = addContentRoot;
 
    		{

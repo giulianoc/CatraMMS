@@ -1,12 +1,12 @@
 {
   "label": "Cut from Recording",
-  "Task": {
+  "task": {
     "label": "Cut from Recording",
-    "OnSuccess": {"Task": {
+    "OnSuccess": {"task": {
       "label": "<no label>",
       "parameters": {
         "ExecutionType": "parallel",
-        "Tasks": [
+        "tasks": [
           {
             "label": "Picture of Cut",
             "parameters": {

@@ -14971,7 +14971,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			Json::Value concatOnSuccessRoot;
 			{
 				Json::Value cutTaskRoot;
-				string field = "Task";
+				string field = "task";
 				cutTaskRoot[field] = cutRoot;
 
 				field = "OnSuccess";
@@ -14988,7 +14988,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				field = "type";
 				workflowRoot[field] = "Workflow";
 
-				field = "Task";
+				field = "task";
 				workflowRoot[field] = concatDemuxerRoot;
 			}
 
@@ -15903,7 +15903,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			Json::Value concatOnSuccessRoot;
 			{
 				Json::Value cutTaskRoot;
-				string field = "Task";
+				string field = "task";
 				cutTaskRoot[field] = cutRoot;
 
 				field = "OnSuccess";
@@ -15920,7 +15920,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				field = "type";
 				workflowRoot[field] = "Workflow";
 
-				field = "Task";
+				field = "task";
 				workflowRoot[field] = concatDemuxerRoot;
 			}
 
@@ -17089,7 +17089,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				field = "type";
 				workflowRoot[field] = "Workflow";
 
-				field = "Task";
+				field = "task";
 				workflowRoot[field] = proxyRoot;
 			}
 
@@ -17766,7 +17766,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				field = "type";
 				workflowRoot[field] = "Workflow";
 
-				field = "Task";
+				field = "task";
 				workflowRoot[field] = proxyRoot;
 			}
 

@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	"label"="My Local Copy",
 
 	"type": "Local-Copy",

@@ -7,11 +7,11 @@
 		"TitleOfConcatVideo": "My Title of the concat video content",
 		"TitleOfCutVideo": "My Title of the concat video content"
 	},
-	"Task": {
+	"task": {
 		"type": "GroupOfTasks",
 		"parameters": {
 			"ExecutionType": "parallel",
-			"Tasks": [
+			"tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
@@ -39,7 +39,7 @@
 			]
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"type": "Concat-Demuxer",
 				"parameters": {
 					"UserData": { "MyData": "this is my frame data" },

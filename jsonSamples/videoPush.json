@@ -4,7 +4,7 @@
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
-	"Task": {
+	"task": {
 		"label": "My Task",
 		"type": "Add-Content",
 		"parameters": {

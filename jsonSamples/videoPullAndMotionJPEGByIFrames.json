@@ -5,7 +5,7 @@
 		"TitleOfVideo": "My Title of the video content",
 		"TitleOfFrame": "My Title of the frame content"
 	},
-	"Task": {
+	"task": {
 		"label": "...",
 		"type": "Add-Content",
 		"parameters": {
@@ -16,7 +16,7 @@
 			"Title": "${TitleOfVideo}"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"type": "Motion-JPEG-by-I-Frames",
 				"parameters": {
 					"StartTimeInSeconds": 0.0,

@@ -6,11 +6,11 @@
 		"TitleOfVideo_2": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
 		"TitleOfOverlayVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"type": "GroupOfTasks",
 		"parameters": {
 			"ExecutionType": "parallel",
-			"Tasks": [
+			"tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
@@ -33,7 +33,7 @@
 						"Title": "${TitleOfImage_1}"
 					},
 					"OnSuccess": {
-						"Task": {
+						"task": {
 							"label": "my image encode",
 							"type": "Encode",
 							"parameters": {
@@ -46,7 +46,7 @@
 			]
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "my overlay", 
 				"type": "Overlay-Image-On-Video",                                                             
 				"parameters": {                                                                               

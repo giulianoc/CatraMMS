@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	"label"="My Live Proxy",
 
 	"type": "Live-Proxy",

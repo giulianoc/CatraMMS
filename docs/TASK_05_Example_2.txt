@@ -5,7 +5,7 @@
 		"TitleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
 		"TitleOfFrame": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"label": "My ingestion",
 		"type": "Add-Content",
 		"parameters": {
@@ -15,7 +15,7 @@
 			"Title": "${TitleOfVideo}"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "My MotionJPEG",
 				"type": "Motion-JPEG-by-Periodical-Frames",
 				"parameters": {

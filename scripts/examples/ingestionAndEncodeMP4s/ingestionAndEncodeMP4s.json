@@ -1,7 +1,7 @@
 {
 	"label": "__FILENAME__",
 	"type": "Workflow",
-	"Task": {
+	"task": {
 		"label": "__FILENAME__",
 		"type": "Add-Content",
 		"parameters": {
@@ -13,12 +13,12 @@
 			"Title": "__TITLE__"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "GroupOfTasks __TITLE__",
 				"type": "GroupOfTasks",
 				"parameters": {
 					"ExecutionType": "parallel",
-					"Tasks": [
+					"tasks": [
 						{
 							"label": "encode __TITLE__",
 							"type": "Encode",

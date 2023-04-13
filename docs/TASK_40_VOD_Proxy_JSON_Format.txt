@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	// optional
 	"label"="My VOD Proxy",
 

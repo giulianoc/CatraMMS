@@ -1,6 +1,6 @@
 {
         "label": "Encode __REFERENCEPHYSICALPATHKEY__",
-        "Task": {
+        "task": {
                 "label": "Encode",
                 "parameters": {
                         "EncodingPriority": "Low",

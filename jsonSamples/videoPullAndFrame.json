@@ -5,7 +5,7 @@
 		"TitleOfVideo": "My Title of the content",
 		"TitleOfFrame": "My Title of the content"
 	},
-	"Task": {
+	"task": {
 		"label": "...",
 		"type": "Add-Content",
 		"parameters": {
@@ -16,7 +16,7 @@
 			"Title": "${TitleOfVideo}"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"type": "Frame",
 				"parameters": {
 					"InstantInSeconds": 2.5,

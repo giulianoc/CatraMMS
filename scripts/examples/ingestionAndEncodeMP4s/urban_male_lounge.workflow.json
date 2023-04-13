@@ -1,6 +1,6 @@
 {
 	"label": "urban_male_lounge.mp4",
-	"Task": {
+	"task": {
 		"label": "urban_male_lounge.mp4",
 		"parameters": {
 			"AllowUniqueNameOverride": false,
@@ -12,7 +12,7 @@
 		},
 		"type": "Add-Content",
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "encode urban_male_lounge",
 				"parameters": {
 					"ContentType": "video",

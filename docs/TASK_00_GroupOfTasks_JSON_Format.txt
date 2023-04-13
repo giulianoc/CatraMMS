@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	// optional
 	label="...",
 
@@ -8,7 +8,7 @@
 	"parameters": {
 		"ExecutionType": "parallel",
 
-		"Tasks": [
+		"tasks": [
 			<Task 1>,
 			<Task 2>,
 			<Task 3>,

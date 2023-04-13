@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	"label"="My FTP Delivery",
 
 	"type": "FTP-Delivery",

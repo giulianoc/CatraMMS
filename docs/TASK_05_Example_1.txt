@@ -4,7 +4,7 @@
 	"Variables": {
 		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
-	"Task": {
+	"task": {
 		"label": "my label",
 		"type": "Motion-JPEG-by-Periodical-Frames",
 		"parameters": {

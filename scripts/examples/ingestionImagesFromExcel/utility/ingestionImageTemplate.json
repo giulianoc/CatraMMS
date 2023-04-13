@@ -1,7 +1,7 @@
 {
 	"label": "__title__",
 	"type": "Workflow",
-	"Task": {
+	"task": {
 		"label": "__title__",
 		"type": "Add-Content",
 		"parameters": {
@@ -13,12 +13,12 @@
 			"Ingester": "Giuliano Catrambone"
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"label": "Encodes __title__",
 				"type": "GroupOfTasks",
 				"parameters": {
 					"ExecutionType": "parallel",
-					"Tasks": [
+					"tasks": [
 						{
 							"label": "Encode __title__ W240",
 							"type": "Encode",

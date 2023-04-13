@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	"label"="My YouTube POST",
 
 	"type": "Post-On-YouTube",

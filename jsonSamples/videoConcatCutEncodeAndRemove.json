@@ -7,11 +7,11 @@
         "TitleOfConcatVideo": "My Title of the concat video content",
         "TitleOfCutVideo": "My Title of the concat video content"
     },  
-    "Task": {
+    "task": {
         "type": "GroupOfTasks",
         "parameters": { 
 			"ExecutionType": "parallel",
-			"Tasks": [
+			"tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
@@ -37,11 +37,11 @@
 			]
 		},
 		"OnSuccess": {
-			"Task": {
+			"task": {
 				"type": "GroupOfTasks",
 				"parameters": {
 					"ExecutionType": "sequential",
-					"Tasks": [
+					"tasks": [
 						{
 							"label": "My concat",
 							"type": "Concat-Demuxer",
@@ -50,11 +50,11 @@
 								"Title": "${TitleOfConcatVideo}"
 							},
 							"OnSuccess": {
-								"Task": {
+								"task": {
 									"type": "GroupOfTasks",
 									"parameters": {
 										"ExecutionType": "sequential",
-										"Tasks": [
+										"tasks": [
 											{
 												"label": "My cut",
 												"type": "Cut",
@@ -65,7 +65,7 @@
 													"Title": "${TitleOfCutVideo}"
 												},
 												"OnSuccess": {
-													"Task": {
+													"task": {
 														"label": "my encode",
 														"type": "Encode",
 														"parameters": {
@@ -97,13 +97,13 @@
             }
         },
         "OnComplete": {
-            "Task": {
+            "task": {
                 "label": "Email task",
                 "type": "Email-Notification",
                 "parameters": {
                     "EmailAddress": "giulianoc@catrasoftware.it",
-                    "Subject": "Task finished",
-                    "Message": "Task __INGESTIONJOBKEY__ has finished"
+                    "Subject": "task finished",
+                    "Message": "task __INGESTIONJOBKEY__ has finished"
                 }
             }
         }

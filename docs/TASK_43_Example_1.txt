@@ -1,4 +1,4 @@
-"Task": {
+"task": {
 	"label"="My Facebook Live Broadcast",
 
 	"type": "Facebook-Live-Broadcast",
