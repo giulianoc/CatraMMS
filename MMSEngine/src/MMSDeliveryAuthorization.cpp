@@ -365,7 +365,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			|| ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder
 		)
 		{
-			string field = "Outputs";
+			string field = "outputs";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
 				string errorMessage =
@@ -376,7 +376,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value outputsRoot = ingestionJobRoot[field];
+			Json::Value outputsRoot;
+			if (JSONUtils::isMetadataPresent(ingestionJobRoot, "outputs", false))
+				outputsRoot = ingestionJobRoot["outputs"];
+			else // if (JSONUtils::isMetadataPresent(ingestionJobRoot, "Outputs", false))
+				outputsRoot = ingestionJobRoot["Outputs"];
 
 			// Option 1: OutputType HLS with deliveryCode
 			// Option 2: OutputType RTMP_Channel/CDN_AWS/CDN_CDN77 with playURL
@@ -696,7 +700,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			// outputType, localDeliveryCode, playURL
 			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
 
-			string field = "Outputs";
+			string field = "outputs";
 			if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
 				Json::Value outputsRoot = ingestionJobRoot[field];

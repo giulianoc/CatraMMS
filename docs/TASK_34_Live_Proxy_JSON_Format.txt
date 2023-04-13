@@ -61,7 +61,7 @@
 
 		// This json array lists all the Outputs the Live-Proxy task has to generate.
 		//	At least one Output has to be present
-		"Outputs" = [
+		"outputs" = [
 			{
 				// optional, possible values: HLS_Channel, RTMP_Channel, CDN_AWS, CDN_CDN77.
 				// HLS_Channel works also in case of an external transcoder

@@ -4027,10 +4027,15 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	field = "Outputs";
+	field = "outputs";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::Value outputsRoot = parametersRoot[field];
+		Json::Value outputsRoot;
+		if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+			outputsRoot = parametersRoot["outputs"];
+		else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+			outputsRoot = parametersRoot["Outputs"];
+
 
 		for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
@@ -4139,7 +4144,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	field = "Outputs";
+	field = "outputs";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -4153,7 +4158,11 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
-	Json::Value outputsRoot = parametersRoot[field];
+	Json::Value outputsRoot;
+	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+		outputsRoot = parametersRoot["outputs"];
+	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+		outputsRoot = parametersRoot["Outputs"];
 
 	if (outputsRoot.size() == 0)
 	{
@@ -4737,7 +4746,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	field = "Outputs";
+	field = "outputs";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -4751,7 +4760,11 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
-	Json::Value outputsRoot = parametersRoot[field];
+	Json::Value outputsRoot;
+	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+		outputsRoot = parametersRoot["outputs"];
+	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+		outputsRoot = parametersRoot["Outputs"];
 
 	if (outputsRoot.size() == 0)
 	{
@@ -4930,7 +4943,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-	field = "Outputs";
+	field = "outputs";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -4944,7 +4957,11 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
-	Json::Value outputsRoot = parametersRoot[field];
+	Json::Value outputsRoot;
+	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+		outputsRoot = parametersRoot["outputs"];
+	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+		outputsRoot = parametersRoot["Outputs"];
 
 	if (outputsRoot.size() == 0)
 	{

@@ -14,7 +14,7 @@
         "Width": 1280
       },
       "ChannelType": "CaptureLive",
-      "Outputs": [{
+      "outputs": [{
         "EncodingProfileKey": 1,
         "otherOutputOptions": "-pix_fmt yuv420p",
         "outputType": "HLS"

@@ -3,7 +3,7 @@
   "task": {
     "label": "task label 2",
     "parameters": {
-      "Outputs": [{
+      "outputs": [{
         "outputType": "RTMP_Channel"
       }],
       "References": [

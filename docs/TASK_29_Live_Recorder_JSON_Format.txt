@@ -150,7 +150,7 @@
 		],
 
 		// Optional. This json array lists all the Outputs the Live-Recorder task has to generate.
-		"Outputs" = [
+		"outputs" = [
 			{
 				// optional, possible values: HLS_Channel, RTMP_Channel, CDN_AWS, CDN_CDN77.
 				// HLS_Channel works also in case of an external transcoder

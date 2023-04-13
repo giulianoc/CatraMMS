@@ -12433,9 +12433,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 			recordingCode = JSONUtils::asInt64(parametersRoot, field, 0);
 
-			field = "Outputs";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			field = "outputs";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
 				outputsRoot = parametersRoot[field];
+			else if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+				outputsRoot = parametersRoot["Outputs"];
 
 			if (JSONUtils::isMetadataPresent(parametersRoot, "framesToBeDetected"))
 			{
@@ -13022,7 +13024,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(
 				parametersRoot, field, 5);
 
-			field = "Outputs";
+			field = "outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13032,7 +13034,10 @@ void MMSEngineProcessor::manageLiveProxy(
 
 				throw runtime_error(errorMessage);
 			}
-			outputsRoot = parametersRoot[field];
+			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+				outputsRoot = parametersRoot[field];
+			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+				outputsRoot = parametersRoot["Outputs"];
         }
 
 		string useVideoTrackFromPhysicalPathName;
@@ -13292,7 +13297,7 @@ void MMSEngineProcessor::manageVODProxy(
 			field = "defaultBroadcast";
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
-			field = "Outputs";
+			field = "outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13302,7 +13307,10 @@ void MMSEngineProcessor::manageVODProxy(
 
 				throw runtime_error(errorMessage);
 			}
-			outputsRoot = parametersRoot[field];
+			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+				outputsRoot = parametersRoot[field];
+			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+				outputsRoot = parametersRoot["Outputs"];
         }
 
 		MMSEngineDBFacade::ContentType vodContentType;
@@ -13691,7 +13699,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 
 		Json::Value outputsRoot;
 		{
-			string field = "Outputs";
+			string field = "outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -13701,7 +13709,10 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 
 				throw runtime_error(errorMessage);
 			}
-			outputsRoot = parametersRoot[field];
+			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+				outputsRoot = parametersRoot[field];
+			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+				outputsRoot = parametersRoot["Outputs"];
         }
 
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
@@ -16979,7 +16990,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 						outputsRoot.append(outputRoot);
 					}
-					field = "Outputs";
+					field = "outputs";
 					liveProxyParametersRoot[field] = outputsRoot;
 				}
 				string field = "parameters";
@@ -17074,7 +17085,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 						outputsRoot.append(outputRoot);
 					}
-					field = "Outputs";
+					field = "outputs";
 					vodProxyParametersRoot[field] = outputsRoot;
 				}
 				string field = "parameters";
@@ -17650,7 +17661,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 						outputsRoot.append(outputRoot);
 					}
-					field = "Outputs";
+					field = "outputs";
 					liveProxyParametersRoot[field] = outputsRoot;
 				}
 				string field = "parameters";
@@ -17751,7 +17762,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 						outputsRoot.append(outputRoot);
 					}
-					field = "Outputs";
+					field = "outputs";
 					vodProxyParametersRoot[field] = outputsRoot;
 				}
 				string field = "parameters";

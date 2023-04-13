@@ -70,7 +70,7 @@
           "EncodingPriority": "Low",
           "Ingester": "Giuliano Catrambone",
           "OutputFileFormat": "ts",
-          "Outputs": [],
+          "outputs": [],
           "RecordingPeriod": {
             "AutoRenew": false,
             "End": "2021-08-11T13:34:57Z",

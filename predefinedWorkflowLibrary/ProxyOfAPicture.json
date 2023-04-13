@@ -18,7 +18,7 @@
       "label": "Proxy of a Picture (VOD-Proxy)",
       "type": "VOD-Proxy",
       "parameters": {
-        "Outputs": [{
+        "outputs": [{
           "DeliveryCode": 765234,
           "EncodingProfileKey": 20,
           "outputType": "HLS"
