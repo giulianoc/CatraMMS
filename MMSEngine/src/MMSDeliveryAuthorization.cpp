@@ -408,7 +408,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					|| outputType == "CDN_CDN77"
 				)
 				{
-					field = "PlayUrl";
+					field = "playUrl";
 					playURL = JSONUtils::asString(outputRoot, field, "");
 					if (playURL == "")
 						continue;
@@ -723,7 +723,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						|| outputType == "CDN_AWS"
 						|| outputType == "CDN_CDN77")
 					{
-						field = "PlayUrl";
+						field = "playUrl";
 						playURL = JSONUtils::asString(outputRoot, field, "");
 						if (playURL == "")
 							continue;

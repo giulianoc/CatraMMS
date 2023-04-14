@@ -3588,8 +3588,8 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
         {
             lastSQLCommand = 
 				string("update MMS_IngestionJob set ")
-				+ "metaDataContent = JSON_SET(metaDataContent, '$.Outputs[" + to_string(outputIndex)
-				+ "].PlayUrl', ?) "
+				+ "metaDataContent = JSON_SET(metaDataContent, '$.outputs[" + to_string(outputIndex)
+				+ "].playUrl', ?) "
 				"where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (

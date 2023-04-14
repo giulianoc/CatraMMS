@@ -5477,6 +5477,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								// + ", encodingParameters: " + encodingParameters 
 							);
 
+							// update sia IngestionJob che EncodingJob
 							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL (
 								_encodingItem->_ingestionJobKey,
 								_encodingItem->_encodingJobKey,
