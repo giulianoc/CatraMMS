@@ -3787,10 +3787,10 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 			// Per questo motivo abbiamo IF nel SQL
             lastSQLCommand = 
 				string("update MMS_IngestionJob set ")
-				+ "metaDataContent = IF(JSON_EXTRACT(metaDataContent, '$.Outputs[" + to_string(outputIndex) + "]') is null, "
-					+ "JSON_ARRAY_APPEND(metaDataContent, '$.Outputs', "
+				+ "metaDataContent = IF(JSON_EXTRACT(metaDataContent, '$.outputs[" + to_string(outputIndex) + "]') is null, "
+					+ "JSON_ARRAY_APPEND(metaDataContent, '$.outputs', "
 						+ "CAST('{\"outputType\": \"HLS_Channel\", \"deliveryCode\": " + to_string(deliveryCode) + "}' AS JSON)), "
-					+ "JSON_SET(metaDataContent, '$.Outputs[" + to_string(outputIndex) + "].deliveryCode', ?) "
+					+ "JSON_SET(metaDataContent, '$.outputs[" + to_string(outputIndex) + "].deliveryCode', ?) "
 					+ ") "
 				"where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
