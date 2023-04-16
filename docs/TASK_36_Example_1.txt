@@ -14,7 +14,7 @@
 				"End": "2019-01-21T14:00:00Z"
 			},
 
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

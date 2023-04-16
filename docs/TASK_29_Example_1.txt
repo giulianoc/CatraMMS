@@ -11,6 +11,6 @@
 			"End": "2019-01-21T14:00:00Z"
 		},
 
-		"SegmentDuration": 60
+		"segmentDuration": 60
 	}
 }

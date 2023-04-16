@@ -13,7 +13,7 @@
 			],
 			"StartTimeInSeconds": 0.0,
 			"MaxFramesNumber": 5,
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

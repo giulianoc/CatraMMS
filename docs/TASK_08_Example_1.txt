@@ -13,7 +13,7 @@
 			],
 			"StartTimeInSeconds": 1.0,
 			"EndTimeInSeconds": 5.0,
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

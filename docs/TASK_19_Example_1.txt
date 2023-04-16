@@ -14,7 +14,7 @@
 			],
 			"ImagePosition_X_InPixel": "10",                                  
 			"ImagePosition_Y_InPixel": "10",                                
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

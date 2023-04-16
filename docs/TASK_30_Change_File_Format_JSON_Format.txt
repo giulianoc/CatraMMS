@@ -8,7 +8,7 @@
 	"parameters": {
 
 		// mandatory, extension of the file
-		"OutputFileFormat": "mp4",
+		"outputFileFormat": "mp4",
 
 		// mandatory
 		"References": [
@@ -44,9 +44,9 @@
 		"processingStartingFrom": "2019-01-21T12:30:00Z",
 
 		// optional: It is used in case this Task has to wait a Task of another Workflow
-		"WaitFor": [
+		"waitFor": [
 			{
-				"GlobalIngestionLabel": "XXXX"
+				"globalIngestionLabel": "XXXX"
 			}
 		]
 	}

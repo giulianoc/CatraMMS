@@ -14,7 +14,7 @@
 			"StartTimeInSeconds": 1.5,
 			"PeriodInSeconds": 2,
 			"MaxFramesNumber": 5,
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

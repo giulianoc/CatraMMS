@@ -13,7 +13,7 @@
 				{ "mediaItemKey": 12 }
 			],
 			"type": "imageOfVideo",
-			"UserData": { "MyData": "this is my data" }
+			"userData": { "MyData": "this is my data" }
 		}
 	}
 }

@@ -183,8 +183,8 @@ void GenerateFrames::encodeContent(
 
 					Json::Value userDataRoot;
 					{
-						if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
-							userDataRoot = ingestedParametersRoot["UserData"];
+						if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
+							userDataRoot = ingestedParametersRoot["userData"];
 
 						Json::Value mmsDataRoot;
 						mmsDataRoot["dataType"] = "generatedFrame";

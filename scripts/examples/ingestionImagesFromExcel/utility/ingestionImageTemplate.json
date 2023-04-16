@@ -9,8 +9,8 @@
 			"SourceURL": "__url__",
 			"FileFormat": "__fileformat__",
 			"UniqueName": "__title__",
-			"Retention": "__retention__",
-			"Ingester": "Giuliano Catrambone"
+			"retention": "__retention__",
+			"ingester": "Giuliano Catrambone"
 		},
 		"OnSuccess": {
 			"task": {
@@ -24,7 +24,7 @@
 							"type": "Encode",
 							"parameters": {
 								"contentType": "image",
-								"EncodingPriority": "Low",
+								"encodingPriority": "Low",
 								"encodingProfileLabel": "MMS_JPG_W240"
 							}
 						},
@@ -33,7 +33,7 @@
 							"type": "Encode",
 							"parameters": {
 								"contentType": "image",
-								"EncodingPriority": "Low",
+								"encodingPriority": "Low",
 								"encodingProfileLabel": "MMS_JPG_H700"
 							}
 						}

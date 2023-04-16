@@ -85,11 +85,11 @@ void API::updateMediaItem(
 				newTitle = JSONUtils::asString(metadataRoot, "Title", "");
 			}
 
-			field = "UserData";
+			field = "userData";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
 				userDataModified = true;
-				newUserData = JSONUtils::asString(metadataRoot, "UserData", "");
+				newUserData = JSONUtils::asString(metadataRoot, "userData", "");
 			}
 
 			field = "RetentionInMinutes";
@@ -99,7 +99,7 @@ void API::updateMediaItem(
 				newRetentionInMinutes = JSONUtils::asInt64(metadataRoot, "RetentionInMinutes", 0);
 			}
 
-			field = "Tags";
+			field = "tags";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
 				tagsModified = true;

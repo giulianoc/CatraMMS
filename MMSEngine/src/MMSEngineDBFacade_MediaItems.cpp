@@ -5317,7 +5317,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string contentProviderName;
             
-			contentProviderName = JSONUtils::asString(parametersRoot, "ContentProviderName", _defaultContentProviderName);
+			contentProviderName = JSONUtils::asString(parametersRoot, "contentProviderName", _defaultContentProviderName);
 
             lastSQLCommand = 
                 "select contentProviderKey from MMS_ContentProvider where workspaceKey = ? and name = ?";
@@ -5366,10 +5366,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             string field = "Title";
             title = JSONUtils::asString(parametersRoot, field, "");
             
-            field = "Ingester";
+            field = "ingester";
 			ingester = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "UserData";
+            field = "userData";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
@@ -5391,10 +5391,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
             }
 
-            field = "DeliveryFileName";
+            field = "deliveryFileName";
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "Retention";
+            field = "retention";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string retention = JSONUtils::asString(parametersRoot, field, "1d");
@@ -5404,7 +5404,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             string startPublishing = "NOW";
             string endPublishing = "FOREVER";
             {
-                field = "Publishing";
+                field = "publishing";
                 if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 {
                     Json::Value publishingRoot = parametersRoot[field];
@@ -5518,7 +5518,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 		// tags
         {
-			string field = "Tags";
+			string field = "tags";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				Json::Value tagsRoot = parametersRoot[field];
@@ -5607,7 +5607,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 		int64_t physicalItemRetentionInMinutes = -1;
 		{
-            string field = "PhysicalItemRetention";
+            string field = "physicalItemRetention";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string retention = JSONUtils::asString(parametersRoot, field, "1d");
@@ -5624,7 +5624,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			// we have to insert into MMS_IngestionJobOutput
 			// of the ingestion job
 			{
-                string field = "UserData";
+                string field = "userData";
                 if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 {
                     Json::Value userDataRoot = parametersRoot[field];

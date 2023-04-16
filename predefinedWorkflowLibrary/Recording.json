@@ -13,7 +13,7 @@
               "label": "VOD encoding",
               "parameters": {
                 "contentType": "video",
-                "EncodingPriority": "Low",
+                "encodingPriority": "Low",
                 "encodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
               },
               "type": "Encode"
@@ -25,7 +25,7 @@
                 "ImageRetention": "1d",
                 "ImageTags": "[ \"FACE\" ]",
                 "ImageUserData": "",
-                "Ingester": "Admin",
+                "ingester": "Admin",
                 "InitialFramesNumberToBeSkipped": 1500,
                 "InstantInSeconds": 60,
                 "processingStartingFrom": "2021-08-11T13:56:23Z",
@@ -42,8 +42,8 @@
       }},
       "parameters": {
         "AllowUniqueNameOverride": false,
-        "Ingester": "Giuliano Catrambone",
-        "Retention": "1h"
+        "ingester": "Giuliano Catrambone",
+        "retention": "1h"
       },
       "type": "Concat-Demuxer"
     }},
@@ -55,7 +55,7 @@
           "label": "Chunk encoding",
           "parameters": {
             "contentType": "video",
-            "EncodingPriority": "Low",
+            "encodingPriority": "Low",
             "encodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
           },
           "type": "Encode"
@@ -67,17 +67,17 @@
           "ChannelType": "IP_MMSAsClient",
           "configurationLabel": "R101",
           "DeliveryCode": 12345,
-          "EncodingPriority": "Low",
-          "Ingester": "Giuliano Catrambone",
-          "OutputFileFormat": "ts",
+          "encodingPriority": "Low",
+          "ingester": "Giuliano Catrambone",
+          "outputFileFormat": "ts",
           "outputs": [],
           "RecordingPeriod": {
             "AutoRenew": false,
             "End": "2021-08-11T13:34:57Z",
             "Start": "2021-08-11T13:24:57Z"
           },
-          "Retention": "1h",
-          "SegmentDuration": 60
+          "retention": "1h",
+          "segmentDuration": 60
         },
         "type": "Live-Recorder"
       }]

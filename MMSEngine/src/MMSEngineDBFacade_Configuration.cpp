@@ -7017,7 +7017,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
             lastSQLCommand = 
 				string ("select ac.confKey, ac.label, ac.channelId, ac.rtmpURL, ac.playURL, ")
 				+ "ac.type, ac.outputIndex, ac.reservedByIngestionJobKey, "
-				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
+				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.configurationLabel')) as configurationLabel "
 				+ "from MMS_Conf_AWSChannel ac left join MMS_IngestionJob ij "
 				+ "on ac.reservedByIngestionJobKey = ij.ingestionJobKey "
                 + sqlWhere
@@ -8219,7 +8219,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
             lastSQLCommand = 
 				string ("select cc.confKey, cc.label, cc.rtmpURL, cc.resourceURL, cc.filePath, ")
 				+ "cc.secureToken, cc.type, cc.outputIndex, cc.reservedByIngestionJobKey, "
-				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
+				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.configurationLabel')) as configurationLabel "
 				+ "from MMS_Conf_CDN77Channel cc left join MMS_IngestionJob ij "
 				+ "on cc.reservedByIngestionJobKey = ij.ingestionJobKey "
                 + sqlWhere
@@ -9606,7 +9606,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
             lastSQLCommand = 
 				string ("select rc.confKey, rc.label, rc.rtmpURL, rc.streamName, rc.userName, rc.password, ")
 				+ "rc.playURL, rc.type, rc.outputIndex, rc.reservedByIngestionJobKey, "
-				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
+				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.configurationLabel')) as configurationLabel "
 				+ "from MMS_Conf_RTMPChannel rc left join MMS_IngestionJob ij "
 				+ "on rc.reservedByIngestionJobKey = ij.ingestionJobKey "
                 + sqlWhere
@@ -11004,7 +11004,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
             lastSQLCommand = 
 				string ("select hc.confKey, hc.label, hc.deliveryCode, hc.segmentDuration, hc.playlistEntriesNumber, ")
 				+ "hc.type, hc.outputIndex, hc.reservedByIngestionJobKey, "
-				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.ConfigurationLabel')) as configurationLabel "
+				+ "JSON_UNQUOTE(JSON_EXTRACT(ij.metaDataContent, '$.configurationLabel')) as configurationLabel "
 				+ "from MMS_Conf_HLSChannel hc left join MMS_IngestionJob ij "
 				+ "on hc.reservedByIngestionJobKey = ij.ingestionJobKey "
                 + sqlWhere

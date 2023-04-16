@@ -39,10 +39,10 @@
 		"encodersPool": "",
 
 		// optional. Default: 10
-		"SegmentDurationInSeconds": 10,
+		"segmentDurationInSeconds": 10,
 
 		// optional. Default: 6
-		"PlaylistEntriesNumber": 6,
+		"playlistEntriesNumber": 6,
 
 		// optional: user agent to be used when the URL is called
 		"userAgent": "",

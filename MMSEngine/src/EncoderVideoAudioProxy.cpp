@@ -1626,7 +1626,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 
 	int64_t physicalItemRetentionInMinutes = -1;
 	{
-		string field = "PhysicalItemRetention";
+		string field = "physicalItemRetention";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
 		{
 			string retention = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, field, "1d");
@@ -2495,7 +2495,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 		encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
 			field, -1);
 
-		field = "PhysicalItemRetention";
+		field = "physicalItemRetention";
 		if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
 		{
 			string retention = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, field, "1d");
@@ -3607,7 +3607,7 @@ void EncoderVideoAudioProxy::processCutFrameAccurate()
 		{
 			Json::Value destUserDataRoot;
 
-			field = "UserData";
+			field = "userData";
 			if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
 				destUserDataRoot = _encodingItem->_ingestedParametersRoot[field];
 
@@ -3630,7 +3630,7 @@ void EncoderVideoAudioProxy::processCutFrameAccurate()
 			field = "mmsData";
 			destUserDataRoot[field] = destMmsDataRoot;
 
-			field = "UserData";
+			field = "userData";
 			_encodingItem->_ingestedParametersRoot[field] = destUserDataRoot;
 		}
 

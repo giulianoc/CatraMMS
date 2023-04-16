@@ -3,7 +3,7 @@
         "task": {
                 "label": "Encode",
                 "parameters": {
-                        "EncodingPriority": "Low",
+                        "encodingPriority": "Low",
                         "encodingProfileLabel": "MMS_H264_veryfast_360p25_aac_92",
                         "References": [{"physicalPathKey": __REFERENCEPHYSICALPATHKEY__}]
                 },

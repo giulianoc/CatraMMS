@@ -69,11 +69,11 @@ void LiveGrid::encodeContent(
 
 		// it is present only in case of outputType == "HLS"
 		int segmentDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot,
-			"SegmentDurationInSeconds", 10);
+			"segmentDurationInSeconds", 10);
 
 		// it is present only in case of outputType == "HLS"
 		int playlistEntriesNumber = JSONUtils::asInt(ingestedParametersRoot,
-			"PlaylistEntriesNumber", 6);
+			"playlistEntriesNumber", 6);
 
 		string manifestDirectoryPath = JSONUtils::asString(encodingParametersRoot, "manifestDirectoryPath", "");
 		string manifestFileName = JSONUtils::asString(encodingParametersRoot, "manifestFileName", "");

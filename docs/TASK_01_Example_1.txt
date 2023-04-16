@@ -9,9 +9,9 @@
 		"type": "Add-Content",
 		"parameters": {
 			"FileFormat": "ts",
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}",
-			"Retention": "1h"
+			"retention": "1h"
 		}
 	}
 }

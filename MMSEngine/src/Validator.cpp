@@ -1523,7 +1523,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
 {
-	string field = "EncodingPriority";
+	string field = "encodingPriority";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string encodingPriority = JSONUtils::asString(parametersRoot, field, "");
@@ -3204,7 +3204,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 {
     vector<string> mandatoryFields = {
         "Tracks",
-        "OutputFileFormat"
+        "outputFileFormat"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -3267,7 +3267,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
         }
     }
 
-    field = "OutputFileFormat";
+    field = "outputFileFormat";
     string outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
     if (!isVideoAudioFileFormat(outputFileFormat))
     {
@@ -3902,7 +3902,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 			"configurationLabel",
 			"recordingCode",
 			"schedule",
-			"SegmentDuration"
+			"segmentDuration"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -3922,7 +3922,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		}
 	}
 
-    string field = "SegmentDuration";
+    string field = "segmentDuration";
 	int segmentDuration = JSONUtils::asInt(parametersRoot, field, 1);
 	if (segmentDuration % 2 != 0 || segmentDuration < 10)
 	{
@@ -5064,7 +5064,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 		dependencies)
 {
     vector<string> mandatoryFields = {
-        "OutputFileFormat"
+        "outputFileFormat"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -5086,7 +5086,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 	bool isVideoOrAudio = false;
 	bool isImage = false;
 
-    string field = "OutputFileFormat";
+    string field = "outputFileFormat";
     string outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
     if (isVideoAudioFileFormat(outputFileFormat))
 		isVideoOrAudio = true;

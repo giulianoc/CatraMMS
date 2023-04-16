@@ -11,7 +11,7 @@
 		"parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
-			"UserData": { "MyData": "this is my video data" },
+			"userData": { "MyData": "this is my video data" },
 			"Title": "${TitleOfVideo}"
 		},
 		"OnSuccess": {
@@ -20,7 +20,7 @@
 				"parameters": {
 					"StartTimeInSeconds": 1.0,
 					"EndTimeInSeconds": 5.0,
-					"UserData": { "MyData": "this is my frame data" },
+					"userData": { "MyData": "this is my frame data" },
 					"Title": "${TitleOfCut}"
 				}
 			}

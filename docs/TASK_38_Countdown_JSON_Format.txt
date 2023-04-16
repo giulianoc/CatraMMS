@@ -64,10 +64,10 @@
 				"DeliveryCode": 12345,
 
 				// optional, used only in case of HLS, Default: 10
-				"SegmentDurationInSeconds": 10,
+				"segmentDurationInSeconds": 10,
 
 				// optional, used only in case of HLS, Default: 6
-				"PlaylistEntriesNumber": 6,
+				"playlistEntriesNumber": 6,
 
 				// optional, used only in case of CDN_AWS
 				// the configuration label of an AWS Channel defined in MMS.

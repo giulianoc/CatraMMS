@@ -1412,7 +1412,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			{
 				Json::Value hlsRoot = encodingProfileDetailsRoot[field]; 
 
-				field = "SegmentDuration";
+				field = "segmentDuration";
 				segmentDurationInSeconds = JSONUtils::asInt(hlsRoot, field, 10);
 			}
 
@@ -1438,7 +1438,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			{
 				Json::Value dashRoot = encodingProfileDetailsRoot[field]; 
 
-				field = "SegmentDuration";
+				field = "segmentDuration";
 				segmentDurationInSeconds = JSONUtils::asInt(dashRoot, field, 10);
 			}
 

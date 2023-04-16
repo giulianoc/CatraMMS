@@ -6,11 +6,11 @@
     "parameters": {
       "AllowUniqueNameOverride": false,
       "DurationOfEachSlideInSeconds": 15,
-      "EncodingPriority": "Low",
-      "Ingester": "Giuliano",
+      "encodingPriority": "Low",
+      "ingester": "Giuliano",
       "References": [
       ],
-      "Retention": "10y",
+      "retention": "10y",
       "Title": "Proxy of a Picture (Slideshow)",
       "VideoSyncMethod": "cfr"
     },

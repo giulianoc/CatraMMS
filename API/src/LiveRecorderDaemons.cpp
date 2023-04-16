@@ -103,10 +103,10 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 							int segmentDurationInSeconds;
 							string outputFileFormat;
 							{
-								string field = "SegmentDuration";
+								string field = "segmentDuration";
 								segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
 
-								field = "OutputFileFormat";
+								field = "outputFileFormat";
 								outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
 							}
 
@@ -683,8 +683,8 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 			// UserData
 			Json::Value userDataRoot;
 			{
-				if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
-					userDataRoot = ingestedParametersRoot["UserData"];
+				if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
+					userDataRoot = ingestedParametersRoot["userData"];
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot["dataType"] = "liveRecordingChunk";
@@ -1165,8 +1165,8 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 							// UserData
 							Json::Value userDataRoot;
 							{
-								if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
-									userDataRoot = ingestedParametersRoot["UserData"];
+								if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
+									userDataRoot = ingestedParametersRoot["userData"];
 
 								Json::Value mmsDataRoot;
 								mmsDataRoot["dataType"] = "liveRecordingChunk";
@@ -1829,7 +1829,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
                 "type": "Add-Content"
                 "parameters": {
                         "FileFormat": "ts",
-                        "Ingester": "Giuliano",
+                        "ingester": "Giuliano",
                         "SourceURL": "move:///abc...."
                 },
         	}
@@ -1892,13 +1892,13 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			addContentParametersRoot[field] = sourceURL;
 		}
 
-		field = "Ingester";
+		field = "ingester";
 		addContentParametersRoot[field] = "Live Recorder Task";
 
 		field = "Title";
 		addContentParametersRoot[field] = addContentTitle;
 
-		field = "UserData";
+		field = "userData";
 		addContentParametersRoot[field] = userDataRoot;
 
 		// if (!highAvailability)
@@ -3094,7 +3094,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
         //        "type": "Add-Content"
         //        "parameters": {
         //                "FileFormat": "m3u8",
-        //                "Ingester": "Giuliano",
+        //                "ingester": "Giuliano",
         //                "SourceURL": "move:///abc...."
         //        },
         //	}
@@ -3182,7 +3182,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 			addContentParametersRoot[field] = sourceURL;
 		}
 
-		field = "Ingester";
+		field = "ingester";
 		addContentParametersRoot[field] = "Live Recorder Task";
 
 		field = "Title";
@@ -3194,10 +3194,10 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		field = "AllowUniqueNameOverride";
 		addContentParametersRoot[field] = true;
 
-		field = "Retention";
+		field = "retention";
 		addContentParametersRoot[field] = liveRecorderVirtualVODRetention;
 
-		field = "UserData";
+		field = "userData";
 		addContentParametersRoot[field] = userDataRoot;
 
 		if (liveRecorderVirtualVODImageMediaItemKey != -1)

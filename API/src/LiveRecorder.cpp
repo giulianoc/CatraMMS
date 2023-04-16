@@ -162,7 +162,7 @@ void LiveRecorder::encodeContent(
 			field = "autoRenew";
 			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
 
-			field = "SegmentDuration";
+			field = "segmentDuration";
 			if (!JSONUtils::isMetadataPresent(_liveRecording->_ingestedParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -175,7 +175,7 @@ void LiveRecorder::encodeContent(
 			}
 			segmentDurationInSeconds = JSONUtils::asInt(_liveRecording->_ingestedParametersRoot, field, -1);
 
-			field = "OutputFileFormat";
+			field = "outputFileFormat";
 			outputFileFormat = JSONUtils::asString(_liveRecording->_ingestedParametersRoot, field, "ts");
 		}
 

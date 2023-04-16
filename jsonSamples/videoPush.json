@@ -10,7 +10,7 @@
 		"parameters": {
 			"FileFormat": "mpg",
 			"contentType": "video",
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

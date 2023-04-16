@@ -3,7 +3,7 @@
 	"FileFormat" : "hls",
 	"HLS" : 
 	{
-		"SegmentDuration" : 10
+		"segmentDuration" : 10
 	},
 	"Video" : 
 	{

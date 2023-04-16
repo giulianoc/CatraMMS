@@ -18,7 +18,7 @@
             ],
             "DurationOfEachSlideInSeconds": 5,
             "OutputFrameRate": 30,
-            "UserData": { "MyData": "this is my data" },
+            "userData": { "MyData": "this is my data" },
             "Title": "${Title}"
         }
     }

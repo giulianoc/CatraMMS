@@ -226,8 +226,8 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 	Json::Value userDataRoot;
 	{
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "UserData"))
-			userDataRoot = ingestedParametersRoot["UserData"];
+		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
+			userDataRoot = ingestedParametersRoot["userData"];
 
 		Json::Value mmsDataRoot;
 		mmsDataRoot["dataType"] = "externalTranscoder";
@@ -707,7 +707,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			field = "FileFormat";
 			addContentParametersRoot[field] = fileFormat;
 
-			field = "Ingester";
+			field = "ingester";
 			addContentParametersRoot[field] = ingester;
 
 			field = "variantOfMediaItemKey";
@@ -718,7 +718,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 
 			if (userDataRoot != Json::nullValue)
 			{
-				field = "UserData";
+				field = "userData";
 				addContentParametersRoot[field] = userDataRoot;
 			}
 		}
@@ -741,7 +741,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			field = "FileFormat";
 			addContentParametersRoot[field] = fileFormat;
 
-			field = "Ingester";
+			field = "ingester";
 			addContentParametersRoot[field] = ingester;
 
 			if (sourceURL != "")
@@ -759,7 +759,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 
 			if (userDataRoot != Json::nullValue)
 			{
-				field = "UserData";
+				field = "userData";
 				addContentParametersRoot[field] = userDataRoot;
 			}
 

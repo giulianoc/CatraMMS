@@ -14,7 +14,7 @@
               "ImageRetention": "${MediaItemRetention}",
               "ImageTags": "[ \"FACE\" ]",
               "ImageUserData": "",
-              "Ingester": "Admin",
+              "ingester": "Admin",
               "InitialFramesNumberToBeSkipped": 1500,
               "InstantInSeconds": 60,
               "Title": "${MediaItemTitle}",
@@ -28,14 +28,14 @@
             "label": "Cut encoding",
             "parameters": {
               "contentType": "video",
-              "EncodingPriority": "Low",
+              "encodingPriority": "Low",
               "encodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
             },
             "type": "Encode"
           },
           {
             "label": "Generate MP4 profile",
-            "parameters": {"OutputFileFormat": "mp4"},
+            "parameters": {"outputFileFormat": "mp4"},
             "type": "Change-File-Format"
           }
         ]
@@ -50,9 +50,9 @@
       },
       "DeliveryCode": "${RecordingCode}",
       "ErrorIfAChunkIsMissing": false,
-      "Ingester": "Giuliano Catrambone",
+      "ingester": "Giuliano Catrambone",
       "MaxWaitingForLastChunkInSeconds": 90,
-      "Retention": "${MediaItemRetention}",
+      "retention": "${MediaItemRetention}",
       "Title": "${MediaItemTitle}"
     },
     "type": "Live-Cut"

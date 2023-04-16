@@ -19,7 +19,7 @@
 						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
 						"contentType": "video",
-						"UserData": { "MyData": "this is my video data" },
+						"userData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_1}"
 					}
 				},
@@ -30,7 +30,7 @@
 						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
 						"contentType": "video",
-						"UserData": { "MyData": "this is my video data" },
+						"userData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_2}"
 					}
 				}
@@ -41,7 +41,7 @@
 				"label": "My concat",
 				"type": "Concat-Demuxer",
 				"parameters": {
-					"UserData": { "MyData": "this is my frame data" },
+					"userData": { "MyData": "this is my frame data" },
 					"Title": "${TitleOfConcatVideo}"
 				},
 				"OnSuccess": {
@@ -51,7 +51,7 @@
 						"parameters": {
 							"StartTimeInSeconds": 1200.0,
 							"EndTimeInSeconds": 3000.0,
-							"UserData": { "MyData": "this is my frame data" },
+							"userData": { "MyData": "this is my frame data" },
 							"Title": "${TitleOfCutVideo}"
 						},
 						"OnSuccess": {
@@ -59,7 +59,7 @@
 								"label": "my encode",
 								"type": "Encode",
 								"parameters": {
-									"EncodingPriority": "Low",
+									"encodingPriority": "Low",
 									"EncodingProfilesSetLabel": "Sport"
 								}
 							}

@@ -9,8 +9,8 @@
       "Title": "${title}",
       "AllowUniqueNameOverride": false,
       "FileFormat": "${fileFormat}",
-      "Ingester": "${ingester}",
-      "Retention": "${retention}"
+      "ingester": "${ingester}",
+      "retention": "${retention}"
     },
     "OnSuccess": {
       "task":
@@ -31,7 +31,7 @@
                 "ImageRetention": "${retention}",
                 "ImageTags": ["FACE"],
                 "ImageUserData": {},
-                "Ingester": "${ingester}",
+                "ingester": "${ingester}",
                 "InitialFramesNumberToBeSkipped": 1500,
                 "InstantInSeconds": 60,
                 "UniqueName": ""
@@ -42,7 +42,7 @@
               "type": "Encode",
               "parameters": {
                 "contentType": "video",
-                "EncodingPriority": "Low",
+                "encodingPriority": "Low",
                 "encodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
               }
             }

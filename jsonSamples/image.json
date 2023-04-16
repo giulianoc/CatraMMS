@@ -4,8 +4,8 @@
     "ContentIngestion": {
         "Title": "RiscaldamentoDiMaradona.jpg",            // mandatory
         "SubTitle": "aaaa",            // optional
-        "Ingester": "aaaa",         // optional
-        "Tags": "aaa",          // optional
+        "ingester": "aaaa",         // optional
+        "tags": "aaa",          // optional
         "Description": "aaa",       // optional
 
         "FileFormat": "jpg", // mandatory
@@ -16,7 +16,7 @@
 
         "EncodingProfilesSet": "customerDefault",  // mandatory: "systemDefault" or "customerDefault" or <custom name>
 
-        "ContentProviderName": "default",    // optional
+        "contentProviderName": "default",    // optional
 
         "Territories": {
             "default": {

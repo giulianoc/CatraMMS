@@ -7,7 +7,7 @@
 
 		"ImageRetention": "1d",
 		"ImageTags": "FACE",
-		"Ingester": "Admin",
+		"ingester": "Admin",
 		"InitialFramesNumberToBeSkipped": 1500,
 		"InstantInSeconds": 60,
 		"label": "Image label",

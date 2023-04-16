@@ -8,8 +8,8 @@
 			"AllowUniqueNameOverride": false,
 			"FileFormat": "__FILEFORMAT__",
 			"PushBinaryFileName": "__FILENAME__",
-			"Ingester": "Giuliano",
-			"Retention": "10y",
+			"ingester": "Giuliano",
+			"retention": "10y",
 			"Title": "__TITLE__"
 		},
 		"OnSuccess": {
@@ -25,7 +25,7 @@
 							"parameters": {
 								"contentType": "video",
 								"encodersPool": "irl-3",
-								"EncodingPriority": "Low",
+								"encodingPriority": "Low",
 								"encodingProfileLabel": "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160"
 							}
 						},
@@ -37,7 +37,7 @@
 								"ImageRetention": "10y",
 								"ImageTags": ["FACE"],
 								"ImageUserData": {},
-								"Ingester": "Giuliano",
+								"ingester": "Giuliano",
 								"InitialFramesNumberToBeSkipped": 1500,
 								"InstantInSeconds": 60,
 								"Title": "__TITLE__",

@@ -744,11 +744,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			bool monitorHLS = false;
 			bool liveRecorderVirtualVOD = false;
 			
-			field = "MonitorHLS";
+			field = "monitorHLS";
 			if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				monitorHLS = true;
 
-			field = "LiveRecorderVirtualVOD";
+			field = "liveRecorderVirtualVOD";
 			if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				liveRecorderVirtualVOD = true;
 

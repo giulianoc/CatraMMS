@@ -13,7 +13,7 @@
 			],
 			"SpeedType": "SlowDown",
 			"SpeedSize": 3,
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

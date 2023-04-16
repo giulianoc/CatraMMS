@@ -85,9 +85,9 @@
 		"processingStartingFrom": "2019-01-21T12:30:00Z",
 
 		// optional: It is used in case this Task has to wait a Task of another Workflow
-		"WaitFor": [
+		"waitFor": [
 			{
-				"GlobalIngestionLabel": "XXXX"
+				"globalIngestionLabel": "XXXX"
 			}
 		]
 	}

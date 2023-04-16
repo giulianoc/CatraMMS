@@ -8008,7 +8008,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			int64_t physicalItemRetentionInMinutes = -1;
 			{
-				string field = "PhysicalItemRetention";
+				string field = "physicalItemRetention";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string retention = JSONUtils::asString(parametersRoot, field, "1d");
@@ -8022,7 +8022,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			// we have to insert into MMS_IngestionJobOutput
 			// of the ingestion job
 			{
-                string field = "UserData";
+                string field = "userData";
                 if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 {
                     Json::Value userDataRoot = parametersRoot[field];
@@ -9439,7 +9439,7 @@ void MMSEngineProcessor::extractTracksContentThread(
                 }
             }
 
-            string field = "OutputFileFormat";
+            string field = "outputFileFormat";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -10606,7 +10606,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
             field = "Description";
 			youTubeDescription = JSONUtils::asString(parametersRoot, field, "");
             
-            field = "Tags";
+            field = "tags";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 youTubeTags = parametersRoot[field];
             
@@ -10866,7 +10866,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
         string outputFileFormat;
         {
-            string field = "OutputFileFormat";
+            string field = "outputFileFormat";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -11265,7 +11265,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					{
 						int64_t physicalItemRetentionInMinutes = -1;
 						{
-							string field = "PhysicalItemRetention";
+							string field = "physicalItemRetention";
 							if (JSONUtils::isMetadataPresent(parametersRoot, field))
 							{
 								string retention = JSONUtils::asString(parametersRoot, field, "1d");
@@ -11873,7 +11873,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
         }
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
-		string field = "EncodingPriority";
+		string field = "encodingPriority";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
@@ -12052,7 +12052,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
         }
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
-		string field = "EncodingPriority";
+		string field = "encodingPriority";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
@@ -12198,7 +12198,7 @@ void MMSEngineProcessor::manageLiveRecorder(
     try
     {
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
-		string field = "EncodingPriority";
+		string field = "encodingPriority";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
 				workspace->_maxEncodingPriority);
@@ -12319,10 +12319,10 @@ void MMSEngineProcessor::manageLiveRecorder(
             field = "autoRenew";
 			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
 
-            field = "OutputFileFormat";
+            field = "outputFileFormat";
 			outputFileFormat = JSONUtils::asString(parametersRoot, field, "ts");
 
-			field = "MonitorHLS";
+			field = "monitorHLS";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				Json::Value monitorHLSRoot = parametersRoot[field];
@@ -12332,10 +12332,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 				field = "hlsChannelConfigurationLabel";
 				monitorHlsChannelConfigurationLabel = JSONUtils::asString(monitorHLSRoot, field, "");
 
-				field = "PlaylistEntriesNumber";
+				field = "playlistEntriesNumber";
 				monitorPlaylistEntriesNumber = JSONUtils::asInt(monitorHLSRoot, field, 6);
 
-				field = "SegmentDurationInSeconds";
+				field = "segmentDurationInSeconds";
 				monitorSegmentDurationInSeconds = JSONUtils::asInt(monitorHLSRoot, field, 10);
 
 
@@ -12372,7 +12372,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				monitorHLS = false;
 			}
 
-			field = "LiveRecorderVirtualVOD";
+			field = "liveRecorderVirtualVOD";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				Json::Value virtualVODRoot = parametersRoot[field];
@@ -12382,11 +12382,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 				field = "hlsChannelConfigurationLabel";
 				virtualVODHlsChannelConfigurationLabel = JSONUtils::asString(virtualVODRoot, field, "");
 
-				field = "LiveRecorderVirtualVODMaxDuration";
+				field = "maxDuration";
 				liveRecorderVirtualVODMaxDurationInMinutes = JSONUtils::asInt(
 					virtualVODRoot, field, 30);
 
-				field = "SegmentDurationInSeconds";
+				field = "segmentDurationInSeconds";
 				virtualVODSegmentDurationInSeconds = JSONUtils::asInt(virtualVODRoot, field, 10);
 
 				string keyField = "encodingProfileKey";
@@ -12878,7 +12878,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		/*
 		 * commented because it will be High by default
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
-		string field = "EncodingPriority";
+		string field = "encodingPriority";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
@@ -14058,7 +14058,7 @@ void MMSEngineProcessor::manageLiveGrid(
 		/*
 		 * commented because it will be High by default
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
-		string field = "EncodingPriority";
+		string field = "encodingPriority";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			encodingPriority = 
@@ -14821,7 +14821,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					}
 				}
 
-				field = "Retention";
+				field = "retention";
 				concatDemuxerParametersRoot[field] = "0";
 
 				field = "References";
@@ -14848,7 +14848,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					cutParametersRoot.removeMember(field, &removed);
 				}
 
-				field = "Retention";
+				field = "retention";
 				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
@@ -14880,7 +14880,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				{
 					Json::Value userDataRoot;
 
-					field = "UserData";
+					field = "userData";
 					if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 					{
 						// to_string(static_cast<int>(liveCutParametersRoot[field].type())) == 7 means objectValue 
@@ -14955,7 +14955,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					field = "mmsData";
 					userDataRoot["mmsData"] = mmsDataRoot;
 
-					field = "UserData";
+					field = "userData";
 					cutParametersRoot[field] = userDataRoot;
 				}
 
@@ -15751,7 +15751,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					}
 				}
 
-				field = "Retention";
+				field = "retention";
 				concatDemuxerParametersRoot[field] = "0";
 
 				field = "References";
@@ -15778,7 +15778,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					cutParametersRoot.removeMember(field, &removed);
 				}
 
-				field = "Retention";
+				field = "retention";
 				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
@@ -15810,7 +15810,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				{
 					Json::Value userDataRoot;
 
-					field = "UserData";
+					field = "userData";
 					if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 					{
 						// to_string(static_cast<int>(liveCutParametersRoot[field].type())) == 7 means objectValue 
@@ -15887,7 +15887,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					field = "mmsData";
 					userDataRoot["mmsData"] = mmsDataRoot;
 
-					field = "UserData";
+					field = "userData";
 					cutParametersRoot[field] = userDataRoot;
 				}
 
@@ -18375,7 +18375,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
         }
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
-        string field = "EncodingPriority";
+        string field = "encodingPriority";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
@@ -18768,7 +18768,7 @@ void MMSEngineProcessor::manageSlideShowTask(
         }
         
         MMSEngineDBFacade::EncodingPriority encodingPriority;
-        string field = "EncodingPriority";
+        string field = "encodingPriority";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
@@ -19217,7 +19217,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				}
 				*/
 
-				string field = "UserData";
+				string field = "userData";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
 
@@ -19260,7 +19260,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				*/
 
 				// next statements will provoke an std::exception in case parametersRoot -> UserData
-				// is a string (i.e.: "UserData" : "{\"matchId\": 363615, \"groupName\": \"CI\",
+				// is a string (i.e.: "userData" : "{\"matchId\": 363615, \"groupName\": \"CI\",
 				//		\"homeTeamName\": \"Pescara Calcio\", \"awayTeamName\": \"Olbia Calcio 1905\",
 				//		\"start\": 1629398700000 }")
 				//	and NOT a json
@@ -19268,7 +19268,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				field = "mmsData";
 				destUserDataRoot[field] = destMmsDataRoot;
 
-				field = "UserData";
+				field = "userData";
 				parametersRoot[field] = destUserDataRoot;
 			}
 		}
@@ -19872,7 +19872,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 		if (cutType == "KeyFrameSeeking" || cutType == "FrameAccurateWithoutEncoding")
 		{
 			string outputFileFormat;
-			field = "OutputFileFormat";
+			field = "outputFileFormat";
 			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
 			_logger->info(__FILEREF__ + "1 generateAndIngestCutMediaThread new start/end"
@@ -19973,7 +19973,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				Json::Value destUserDataRoot;
 
-				field = "UserData";
+				field = "userData";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
 
@@ -19996,7 +19996,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				field = "mmsData";
 				destUserDataRoot[field] = destMmsDataRoot;
 
-				field = "UserData";
+				field = "userData";
 				parametersRoot[field] = destUserDataRoot;
 			}
 
@@ -20080,7 +20080,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 		else
 		{
 			MMSEngineDBFacade::EncodingPriority encodingPriority;
-			string field = "EncodingPriority";
+			string field = "encodingPriority";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				encodingPriority =
 					static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -20294,7 +20294,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
 		{
-			string field = "EncodingPriority";
+			string field = "encodingPriority";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
@@ -20728,7 +20728,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
         }
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
-        string field = "EncodingPriority";
+        string field = "encodingPriority";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
 				workspace->_maxEncodingPriority);
@@ -20884,7 +20884,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
         }
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
-        string field = "EncodingPriority";
+        string field = "encodingPriority";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
@@ -21125,7 +21125,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
         }
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
-        string field = "EncodingPriority";
+        string field = "encodingPriority";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 
@@ -21330,7 +21330,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         }
 
         MMSEngineDBFacade::EncodingPriority encodingPriority;
-        string field = "EncodingPriority";
+        string field = "encodingPriority";
         if (!JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             encodingPriority = 

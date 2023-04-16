@@ -6123,7 +6123,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.ConfigurationLabel', ?)";
+				setSQL += "metaDataContent = JSON_SET(metaDataContent, '$.configurationLabel', ?)";
 			}
 
 			if (recordingPeriodStartModified)

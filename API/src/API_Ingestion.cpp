@@ -333,7 +333,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 					"ImageRetention": "1d",
 					"ImageTags": "FACE",
-					"Ingester": "Admin",
+					"ingester": "Admin",
 					"InitialFramesNumberToBeSkipped": 1500,
 					"InstantInSeconds": 60,
 					"label": "Image label",
@@ -1668,7 +1668,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     
 	vector<int64_t> waitForGlobalIngestionJobKeys;
 	{
-		field = "WaitFor";
+		field = "waitFor";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			Json::Value waitForRoot = parametersRoot[field];
@@ -1677,7 +1677,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			{
 				Json::Value waitForLabelRoot = waitForRoot[waitForIndex];
 
-				field = "GlobalIngestionLabel";
+				field = "globalIngestionLabel";
 				if (JSONUtils::isMetadataPresent(waitForLabelRoot, field))
 				{
 					string waitForGlobalIngestionLabel = JSONUtils::asString(waitForLabelRoot, field, "");

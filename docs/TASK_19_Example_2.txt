@@ -18,7 +18,7 @@
 						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
 						"contentType": "video",
-						"UserData": { "MyData": "this is my video data" },
+						"userData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_1}"
 					}
 				},
@@ -29,7 +29,7 @@
 						"SourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
 						"FileFormat": "jpg",
 						"contentType": "image",
-						"UserData": { "MyData": "this is my image data" },
+						"userData": { "MyData": "this is my image data" },
 						"Title": "${TitleOfImage_1}"
 					},
 					"OnSuccess": {
@@ -37,7 +37,7 @@
 							"label": "my image encode",
 							"type": "Encode",
 							"parameters": {
-								"EncodingPriority": "Low",
+								"encodingPriority": "Low",
 								"encodingProfileLabel": "Profile Logo"
 							}
 						}
@@ -52,12 +52,12 @@
 				"parameters": {                                                                               
 					"ImagePosition_X_InPixel": "video_width-image_width-10",                                  
 					"ImagePosition_Y_InPixel": "video_height-image_height-10",                                
-					"EncodingPriority": "High",                                                               
+					"encodingPriority": "High",                                                               
 					"References": [                                                                           
 						{ "label": "my image encode", "encodingProfileLabel": "Profile Logo" },      
 						{ "label": "${TitleOfVideo_1}" }                                             
 					],                                                                                        
-					"UserData": { "MyData": "this is my overlay data" },                                      
+					"userData": { "MyData": "this is my overlay data" },                                      
 					"Title": "${TitleOfOverlayVideo_1}"                                                       
 				}                                                                                             
 			}                                                                                                 

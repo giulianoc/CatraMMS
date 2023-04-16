@@ -12,7 +12,7 @@
 				{ "mediaItemKey": 11 },
 				{ "mediaItemKey": 12 }
 			],
-			"UserData": { "MyData": "this is my data" },
+			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

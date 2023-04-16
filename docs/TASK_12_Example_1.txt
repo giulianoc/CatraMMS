@@ -8,7 +8,7 @@
 			"References": [
 				{ "mediaItemKey": 11 }
 			],
-			"EncodingPriority": "Low",
+			"encodingPriority": "Low",
 			"EncodingProfilesSetLabel": "Sport"
 		}
 	}

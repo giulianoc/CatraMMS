@@ -61,9 +61,9 @@
 		"processingStartingFrom": "2019-01-21T12:30:00Z",
 
 		// optional: It is used in case this Task has to wait a Task of another Workflow
-		"WaitFor": [
+		"waitFor": [
 			{
-				"GlobalIngestionLabel": "XXXX"
+				"globalIngestionLabel": "XXXX"
 			}
 		],
 
@@ -71,21 +71,21 @@
 		// The platform stores them and returns this data to the Customer 
 		// every time is requested.
 		// The UserData are involved in searches as well
-		"UserData": { },
+		"userData": { },
 
 		// optional: it specifies the retention of the content (MediaItem retention). Once the retention expires,
 		//		content including all his profiles (PhysicalItem) will be removed.
 		//     Format: number + s (seconds) or m (minutes) or h (hours) or d (days) or M (month) or Y (year)
 		//     Examples: 10s, 45m, 4h, 7d, 3M, 1y
 		// By default it is 60m
-		"Retention": "60m",
+		"retention": "60m",
 
 		// optional: It is possible to specify a specific retention just for the profile (PhysicalItem).
 		//		In this case, if the retention of the profile (PhysicalItem) expires before the retention of the
 		//		content (MediaItem), only the profiles will be removed.
 		//		It has not have sense specifies a PhysicalItem retention greater than the MediaItem retention.
 		//		If it is not specified, only the MediaItem retention is used.
-		"PhysicalItemRetention": "30m".
+		"physicalItemRetention": "30m".
 
 		// optional
 		"Title": "My title",
@@ -93,19 +93,19 @@
 		// optional. Possible values: Low, Medium, High
 		// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
 		//   the MaxEncodingPriority of the Workspace will be used.
-		"EncodingPriority": "Low",
+		"encodingPriority": "Low",
 
 		// optional
-		"Ingester": "my ingester",
+		"ingester": "my ingester",
 
 		// optional
-		"Tags": [ "tag 1", "tag 2" ],
+		"tags": [ "tag 1", "tag 2" ],
 
 		// optional
-		"ContentProviderName": "default",
+		"contentProviderName": "default",
 
 		// optional: it specifies the filename without extension used by MMS when the content is delivered
-		"DeliveryFileName": "myFileName",
+		"deliveryFileName": "myFileName",
 
 		// Optional: UniqueName can be used by the Client to set a Key to the content.
 		// Since it represents a unique key, the Client cannot add two contents using the same UniqueName within a Workspace,
@@ -123,9 +123,9 @@
 		//       - NOW
 		//       - FOREVER
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
-		"Publishing": {
-			"StartPublishing": "NOW",
-			"EndPublishing": "FOREVER"
+		"publishing": {
+			"startPublishing": "NOW",
+			"endPublishing": "FOREVER"
 		}
 	}
 }
