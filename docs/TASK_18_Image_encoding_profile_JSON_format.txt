@@ -3,7 +3,7 @@
 	"label": "Sport",
 
 	// mandatory: JPG, GIF, PNG
-	"FileFormat": "JPG",
+	"fileFormat": "JPG",
 
 	// mandatory
 	"Image": {

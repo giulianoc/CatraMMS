@@ -1,6 +1,6 @@
 {
 	"label": "Profile_1",
-	"FileFormat": "JPG",
+	"fileFormat": "JPG",
 	"Image": {
 		"Width": 200,
 		"Height": 300,

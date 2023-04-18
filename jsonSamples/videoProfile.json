@@ -3,7 +3,7 @@
 	"Profiles": [
 		{
 			"label": "Profile_1",
-			"FileFormat": "mp4",
+			"fileFormat": "mp4",
 			"Video": {
 				"Codec": "libx264",
 				"Profile": "high",
@@ -19,7 +19,7 @@
 		},
 		{
 			"label": "Profile_2",
-			"FileFormat": "mp4",
+			"fileFormat": "mp4",
 			"Video": {
 				"Codec": "libx264",
 				"Profile": "high",

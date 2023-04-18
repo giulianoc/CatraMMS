@@ -1,6 +1,6 @@
 {
 	"label" : "MMS_MP4_AV1_2000Kb_AverageBitrate_360p0_AAC_92",
-	"FileFormat" : "mp4",
+	"fileFormat" : "mp4",
 	"Video" : 
 	{
 		"Codec" : "libaom-av1",

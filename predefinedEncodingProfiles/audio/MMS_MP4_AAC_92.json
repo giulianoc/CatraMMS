@@ -1,6 +1,6 @@
 {
 	"label" : "MMS_MP4_AAC_92",
-	"FileFormat" : "mp4",
+	"fileFormat" : "mp4",
 	"Audio" : 
 	{
 		"Codec" : "aac",

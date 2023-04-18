@@ -1,6 +1,6 @@
 {
 	"label" : "MMS_MP4_AV1_0Kb_ConstantQuality_360p_AAC_92",
-	"FileFormat" : "mp4",
+	"fileFormat" : "mp4",
 	"Video" : 
 	{
 		"Codec" : "libaom-av1",

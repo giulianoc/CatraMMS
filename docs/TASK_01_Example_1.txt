@@ -8,7 +8,7 @@
 		"label": "My Task",
 		"type": "Add-Content",
 		"parameters": {
-			"FileFormat": "ts",
+			"fileFormat": "ts",
 			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}",
 			"retention": "1h"

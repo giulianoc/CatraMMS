@@ -1,6 +1,6 @@
 {
 	"label": "MMS_JPG_H700",
-	"FileFormat": "JPG",
+	"fileFormat": "JPG",
 	"Image": {
 		"Width": 0,
 		"Height": 700,

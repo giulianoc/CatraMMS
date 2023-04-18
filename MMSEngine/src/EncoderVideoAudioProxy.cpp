@@ -2525,7 +2525,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 		throw e;
 	}
 
-	string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "FileFormat", "");
+	string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
 	string fileFormatLowerCase;
 	fileFormatLowerCase.resize(fileFormat.size());
 	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
@@ -9333,7 +9333,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
         Json::Value parametersRoot
 )
 {
-    string field = "FileFormat";
+    string field = "fileFormat";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string fileFormatSpecifiedByUser = JSONUtils::asString(parametersRoot, field, "");
@@ -9429,7 +9429,7 @@ void EncoderVideoAudioProxy::readingImageProfile(
 
     // FileFormat
     {
-        field = "FileFormat";
+        field = "fileFormat";
         if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"

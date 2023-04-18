@@ -920,7 +920,7 @@ void API::addEncodingProfile(
 
             MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 			{
-				field = "FileFormat";
+				field = "fileFormat";
 				string fileFormat = JSONUtils::asString(encodingProfileRoot, field, "");
 
 				deliveryTechnology = MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);

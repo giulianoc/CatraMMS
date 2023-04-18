@@ -1,6 +1,6 @@
 {
 	"label": "MMS_PNG_W60",
-	"FileFormat": "PNG",
+	"fileFormat": "PNG",
 	"Image": {
 		"Width": 60,
 		"Height": 0,

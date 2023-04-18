@@ -15,8 +15,8 @@
 					"label": "...",
 					"type": "Add-Content",
 					"parameters": {
-						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
-						"FileFormat": "mp4",
+						"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+						"fileFormat": "mp4",
 						"userData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_1}"
 					}
@@ -25,8 +25,8 @@
 					"label": "...",
 					"type": "Add-Content",
 					"parameters": {
-						"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
-						"FileFormat": "mp4",
+						"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+						"fileFormat": "mp4",
 						"userData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_2}"
 					}

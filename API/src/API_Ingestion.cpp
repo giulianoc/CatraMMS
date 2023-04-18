@@ -2668,7 +2668,7 @@ void API::uploadedBinary(
 
 			Json::Value parametersRoot = JSONUtils::toJson(ingestionJobKey, -1, parameters);
 
-			string field = "FileFormat";
+			string field = "fileFormat";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string fileFormat = JSONUtils::asString(parametersRoot, field, "");

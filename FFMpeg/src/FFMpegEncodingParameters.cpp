@@ -1380,7 +1380,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
     string fileFormat;
 	string fileFormatLowerCase;
     {
-		field = "FileFormat";
+		field = "fileFormat";
 		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"

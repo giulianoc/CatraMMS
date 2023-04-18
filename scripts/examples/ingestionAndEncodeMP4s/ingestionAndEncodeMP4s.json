@@ -6,7 +6,7 @@
 		"type": "Add-Content",
 		"parameters": {
 			"AllowUniqueNameOverride": false,
-			"FileFormat": "__FILEFORMAT__",
+			"fileFormat": "__FILEFORMAT__",
 			"PushBinaryFileName": "__FILENAME__",
 			"ingester": "Giuliano",
 			"retention": "10y",

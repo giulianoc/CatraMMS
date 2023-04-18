@@ -1359,8 +1359,8 @@ void Validator::validateAddContentMetadata(
     string label, Json::Value parametersRoot)
 {
     vector<string> mandatoryFields = {
-        // "SourceURL",     it is optional in case of push
-        "FileFormat"
+        // "sourceURL",     it is optional in case of push
+        "fileFormat"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -1378,7 +1378,7 @@ void Validator::validateAddContentMetadata(
             throw runtime_error(errorMessage);
         }
     }
-    string field = "FileFormat";
+    string field = "fileFormat";
     string fileFormat = JSONUtils::asString(parametersRoot, field, "");
 
     if (!isVideoAudioFileFormat(fileFormat)
@@ -1395,7 +1395,7 @@ void Validator::validateAddContentMetadata(
 
 	// in case of externalContent, it cannot be inside mms storage
 	{
-        field = "SourceURL";
+        field = "sourceURL";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
 			string sourceURL = JSONUtils::asString(parametersRoot, field, "");
@@ -7110,7 +7110,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     {
         vector<string> mandatoryFields = {
             "label",
-            "FileFormat",
+            "fileFormat",
             "Video",
             "Audio"
         };
@@ -7282,7 +7282,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     {
         vector<string> mandatoryFields = {
             "label",
-            "FileFormat",
+            "fileFormat",
             "Audio"
         };
         for (string mandatoryField: mandatoryFields)
@@ -7386,7 +7386,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
     {
         vector<string> mandatoryFields = {
             "label",
-            "FileFormat",
+            "fileFormat",
             "Image"
         };
         for (string mandatoryField: mandatoryFields)

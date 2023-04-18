@@ -12,7 +12,7 @@
 		//		as ExternalStorage_<workspace key>, in the RSI customer, inside /var/catramms/storage/MMSRepository
 		//		we have ExternalStorage_8 -> /mnt/soa/.
 		//		The external storage, from the MMS point of view, it is just a 'read only' storage.
-		"SourceURL": "http://myhost/example.mp4",
+		"sourceURL": "http://myhost/example.mp4",
 
 		// mandatory: extension of the file
 		//		In case it is an HLS segmented content we have 2 options
@@ -27,7 +27,7 @@
 		//			2. the segmented content is downloaded by the streaming referred by a URL
 		//				in this case the file format has to be "m3u8-streaming" and the sourceURL will refer
 		//				the streamingURL
-		"FileFormat": "mp4",
+		"fileFormat": "mp4",
 
 		// Optional, default is false. Used only in case of streaming, today we have only
 		//	the m3u8-streaming file format using it. This is in case the source streaming input

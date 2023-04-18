@@ -1,6 +1,6 @@
 {
 	"label" : "MMS_HLS_H264_2500Kb_medium_720p25_high422_AAC_160",
-	"FileFormat" : "hls",
+	"fileFormat" : "hls",
 	"HLS" : 
 	{
 		"segmentDuration" : 10

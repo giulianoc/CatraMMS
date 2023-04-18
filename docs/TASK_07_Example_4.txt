@@ -16,8 +16,8 @@
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
 					"parameters": { 
-						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
-						"FileFormat": "mp4",
+						"sourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
+						"fileFormat": "mp4",
 						"contentType": "video",
 						"userData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_1}" 
@@ -27,8 +27,8 @@
 					"label": "${TitleOfVideo_2}",
 					"type": "Add-Content",
 					"parameters": { 
-                            "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
-						"FileFormat": "mp4",
+                            "sourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
+						"fileFormat": "mp4",
 						"contentType": "video",
 						"userData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_2}" 

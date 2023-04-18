@@ -1828,9 +1828,9 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
                 "label": "<task label 1>",
                 "type": "Add-Content"
                 "parameters": {
-                        "FileFormat": "ts",
+                        "fileFormat": "ts",
                         "ingester": "Giuliano",
-                        "SourceURL": "move:///abc...."
+                        "sourceURL": "move:///abc...."
                 },
         	}
 		}
@@ -1882,13 +1882,13 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			addContentParametersRoot.removeMember(field, &removed);
 		}
 
-		field = "FileFormat";
+		field = "fileFormat";
 		addContentParametersRoot[field] = fileFormat;
 
 		if (!externalEncoder)
 		{
 			string sourceURL = string("move") + "://" + chunksNFSStagingContentsPath + currentRecordedAssetFileName;
-			field = "SourceURL";
+			field = "sourceURL";
 			addContentParametersRoot[field] = sourceURL;
 		}
 
@@ -3093,9 +3093,9 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
         //        "label": "<task label 1>",
         //        "type": "Add-Content"
         //        "parameters": {
-        //                "FileFormat": "m3u8",
+        //                "fileFormat": "m3u8",
         //                "ingester": "Giuliano",
-        //                "SourceURL": "move:///abc...."
+        //                "sourceURL": "move:///abc...."
         //        },
         //	}
 		// }
@@ -3171,14 +3171,14 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 
 		Json::Value addContentParametersRoot;
 
-		field = "FileFormat";
+		field = "fileFormat";
 		addContentParametersRoot[field] = "m3u8-tar.gz";
 
 		if (!externalEncoder)
 		{
 			// 2021-05-30: changed from copy to move with the idea to have better performance
 			string sourceURL = string("move") + "://" + tarGzStagingLiveRecorderVirtualVODPathName;
-			field = "SourceURL";
+			field = "sourceURL";
 			addContentParametersRoot[field] = sourceURL;
 		}
 

@@ -166,7 +166,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	string fileFormat;
 	if (encodingProfileDetailsRoot != Json::nullValue)
 	{
-		field = "FileFormat";
+		field = "fileFormat";
 		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -704,7 +704,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 		{
 			// it is a Variant
 
-			field = "FileFormat";
+			field = "fileFormat";
 			addContentParametersRoot[field] = fileFormat;
 
 			field = "ingester";
@@ -738,7 +738,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 				}
 			}
 
-			field = "FileFormat";
+			field = "fileFormat";
 			addContentParametersRoot[field] = fileFormat;
 
 			field = "ingester";
@@ -747,7 +747,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			if (sourceURL != "")
 			{
 				// string sourceURL = string("move") + "://" + imagesDirectory + "/" + generatedFrameFileName;
-				field = "SourceURL";
+				field = "sourceURL";
 				addContentParametersRoot[field] = sourceURL;
 			}
 

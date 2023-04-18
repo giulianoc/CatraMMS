@@ -8,7 +8,7 @@
     "parameters": {
       "Title": "${title}",
       "AllowUniqueNameOverride": false,
-      "FileFormat": "${fileFormat}",
+      "fileFormat": "${fileFormat}",
       "ingester": "${ingester}",
       "retention": "${retention}"
     },

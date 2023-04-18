@@ -8,7 +8,7 @@
         "label": "My video (push)",
         "type": "Add-Content",
         "parameters": {
-            "FileFormat": "mp4",
+            "fileFormat": "mp4",
             "userData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}",
 	    "FileSizeInBytes": 278341022

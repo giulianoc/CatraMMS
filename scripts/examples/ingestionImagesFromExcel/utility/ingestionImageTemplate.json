@@ -6,8 +6,8 @@
 		"type": "Add-Content",
 		"parameters": {
 			"Title": "__title__",
-			"SourceURL": "__url__",
-			"FileFormat": "__fileformat__",
+			"sourceURL": "__url__",
+			"fileFormat": "__fileformat__",
 			"UniqueName": "__title__",
 			"retention": "__retention__",
 			"ingester": "Giuliano Catrambone"

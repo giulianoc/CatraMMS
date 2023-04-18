@@ -9,8 +9,8 @@
         "label": "My Ingestion",
         "type": "Content-Ingestion",
         "parameters": {
-            "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
-            "FileFormat": "mp4",
+            "sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+            "fileFormat": "mp4",
             "userData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}"
         },

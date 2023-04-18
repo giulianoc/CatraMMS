@@ -6035,7 +6035,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				.append(localAssetIngestionEvent.getIngestionSourceFileName())
 			;
 
-			string field = "FileFormat";
+			string field = "fileFormat";
 			string fileFormat = JSONUtils::asString(parametersRoot, field, "");
 			if (fileFormat == "m3u8-streaming")
 			{
@@ -20131,7 +20131,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 			string encodedFileName;
 			{
-				string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "FileFormat", "");
+				string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
 				string fileFormatLowerCase;
 				fileFormatLowerCase.resize(fileFormat.size());
 				transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
@@ -20463,7 +20463,7 @@ void MMSEngineProcessor::manageEncodeTask(
 					string encodedFileName;
 					string fileFormat;
 					{
-						fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "FileFormat", "");
+						fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
 
 						encodedFileName =
 							to_string(ingestionJobKey)
@@ -22724,7 +22724,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
         Json::Value parametersRoot
 )
 {
-    string field = "FileFormat";
+    string field = "fileFormat";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string fileFormatSpecifiedByUser = JSONUtils::asString(parametersRoot, field, "");
@@ -23544,11 +23544,11 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
 
 	externalReadOnlyStorage = false;
     {
-        field = "SourceURL";
+        field = "sourceURL";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
             mediaSourceURL = JSONUtils::asString(parametersRoot, field, "");
 
-        field = "FileFormat";
+        field = "fileFormat";
         mediaFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
         string httpPrefix ("http://");

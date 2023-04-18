@@ -8,7 +8,7 @@
 		"label": "My Task",
 		"type": "Add-Content",
 		"parameters": {
-			"FileFormat": "mpg",
+			"fileFormat": "mpg",
 			"contentType": "video",
 			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"

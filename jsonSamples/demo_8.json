@@ -15,8 +15,8 @@
 					"label": "${TitleOfVideo_1}",
 					"type": "Add-Content",
 					"parameters": {
-           				"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
-						"FileFormat": "mp4",
+           				"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+						"fileFormat": "mp4",
 						"contentType": "video",
 						"userData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_1}"
@@ -26,8 +26,8 @@
 					"label": "${TitleOfImage_1}",
 					"type": "Add-Content",
 					"parameters": {
-           				"SourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
-						"FileFormat": "jpg",
+           				"sourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
+						"fileFormat": "jpg",
 						"contentType": "image",
 						"userData": { "MyData": "this is my image data" },
 						"Title": "${TitleOfImage_1}"

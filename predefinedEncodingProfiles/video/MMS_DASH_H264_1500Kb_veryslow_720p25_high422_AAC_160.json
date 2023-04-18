@@ -1,6 +1,6 @@
 {
 	"label" : "MMS_DASH_H264_1500Kb_veryslow_720p25_high422_AAC_160",
-	"FileFormat" : "dash",
+	"fileFormat" : "dash",
 	"DASH" : 
 	{
 		"segmentDuration" : 10

@@ -1,6 +1,6 @@
 {
 	"label": "MMS_JPG_W576",
-	"FileFormat": "JPG",
+	"fileFormat": "JPG",
 	"Image": {
 		"Width": 576,
 		"Height": 0,

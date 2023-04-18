@@ -1,6 +1,6 @@
 {
 	"label" : "MMS_MTS_H264_2500Kb_medium_1080p25_high422_AAC_160",
-	"FileFormat" : "mts",
+	"fileFormat" : "mts",
 	"Video" :
 	{
 		"Codec" : "libx264",

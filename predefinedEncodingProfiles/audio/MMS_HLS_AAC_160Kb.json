@@ -1,6 +1,6 @@
 {
 	"label" : "MMS_HLS_AAC_160Kb",
-	"FileFormat" : "hls",
+	"fileFormat" : "hls",
 	"HLS" : 
 	{
 		"segmentDuration" : 10
