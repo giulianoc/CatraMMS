@@ -10,7 +10,7 @@
     "task": {
         "type": "GroupOfTasks",
         "parameters": { 
-			"ExecutionType": "parallel",
+			"executionType": "parallel",
 			"tasks": [
 				{
 					"label": "${TitleOfVideo_1}",
@@ -40,7 +40,7 @@
 			"task": {
 				"type": "GroupOfTasks",
 				"parameters": {
-					"ExecutionType": "sequential",
+					"executionType": "sequential",
 					"tasks": [
 						{
 							"label": "My concat",
@@ -53,7 +53,7 @@
 								"task": {
 									"type": "GroupOfTasks",
 									"parameters": {
-										"ExecutionType": "sequential",
+										"executionType": "sequential",
 										"tasks": [
 											{
 												"label": "My cut",

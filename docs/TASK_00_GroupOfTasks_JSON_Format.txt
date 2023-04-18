@@ -6,7 +6,7 @@
 	"type": "GroupOfTasks",
 
 	"parameters": {
-		"ExecutionType": "parallel",
+		"executionType": "parallel",
 
 		"tasks": [
 			<Task 1>,
@@ -21,7 +21,7 @@
 		//	and specify which output this GroupOfTasks has to forward to his events Tasks
 		// Remark: GroupOfTasks waits until all the ReferencesOutput will not finish. Only at this moment,
 		//		the workflow will continue with the execution of OnSuccess, OnError, OnComplete of the GroupOfTasks
-		"ReferencesOutput": [
+		"referencesOutput": [
 			// optional. References to identify the videos the GroupOfTasks has to forward to the Tasks
 			// connected to the OnSuccess, OnError and OnComplete events
 			// As reference can be used "label", "mediaItemKey", "uniqueName"

@@ -17,7 +17,7 @@
 				"label": "GroupOfTasks __TITLE__",
 				"type": "GroupOfTasks",
 				"parameters": {
-					"ExecutionType": "parallel",
+					"executionType": "parallel",
 					"tasks": [
 						{
 							"label": "encode __TITLE__",

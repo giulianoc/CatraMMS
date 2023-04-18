@@ -9,7 +9,7 @@
 	"task": {
 		"type": "GroupOfTasks",
 		"parameters": {
-			"ExecutionType": "parallel",
+			"executionType": "parallel",
 
 			"tasks": [
 				{

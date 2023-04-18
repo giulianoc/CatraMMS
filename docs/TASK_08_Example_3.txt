@@ -10,7 +10,7 @@
 	"task": {
 		"type": "GroupOfTasks",
 		"parameters": {
-			"ExecutionType": "parallel",
+			"executionType": "parallel",
 			"tasks": [
 				{
 					"label": "${TitleOfVideo_1}",

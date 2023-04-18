@@ -5,7 +5,7 @@
     "OnSuccess": {"task": {
       "label": "<no label>",
       "parameters": {
-        "ExecutionType": "parallel",
+        "executionType": "parallel",
         "tasks": [
           {
             "label": "Picture of Cut",

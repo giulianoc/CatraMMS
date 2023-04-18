@@ -7,7 +7,7 @@
       "OnSuccess": {"task": {
         "label": "<no label>",
         "parameters": {
-          "ExecutionType": "parallel",
+          "executionType": "parallel",
           "tasks": [
             {
               "label": "VOD encoding",
@@ -48,7 +48,7 @@
       "type": "Concat-Demuxer"
     }},
     "parameters": {
-      "ExecutionType": "parallel",
+      "executionType": "parallel",
       "tasks": [{
         "label": "Recorder",
         "OnSuccess": {"task": {

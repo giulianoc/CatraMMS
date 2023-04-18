@@ -79,9 +79,9 @@
     "label": "${Title}",
     "type": "GroupOfTasks",
     "parameters": {
-      "ExecutionType": "parallel",
+      "executionType": "parallel",
 	  "processingStartingFrom": "${processingStartingFrom}",
-      "ReferencesOutput": [
+      "referencesOutput": [
         {"label": "Frame Containing Face: ${Title}"},
         {"label": "Frame: ${Title}"}
       ],
@@ -94,7 +94,7 @@
           "OnSuccess": {"task": {
 			"label": "Encoding profiles (Frame): ${Title}",
 			"parameters": {
-				"ExecutionType": "parallel",
+				"executionType": "parallel",
 				"processingStartingFrom": "${processingStartingFrom}",
 				"tasks": [
 					{
@@ -138,7 +138,7 @@
         "OnSuccess": {"task": {
           "label": "Encoding profiles (FrameContainingFace): ${Title}",
           "parameters": {
-			"ExecutionType": "parallel",
+			"executionType": "parallel",
 			"processingStartingFrom": "${processingStartingFrom}",
 			"tasks": [
 				{

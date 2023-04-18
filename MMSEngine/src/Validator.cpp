@@ -181,7 +181,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
 	Json::Value parametersRoot)
 {
-    string field = "ExecutionType";
+    string field = "executionType";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -6355,7 +6355,7 @@ void Validator::fillReferencesOutput(
 	vector<pair<int64_t, int64_t>>& referencesOutput)
 {
 
-    string field = "ReferencesOutput";
+    string field = "referencesOutput";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);

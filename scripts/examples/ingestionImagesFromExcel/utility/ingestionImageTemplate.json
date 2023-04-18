@@ -17,7 +17,7 @@
 				"label": "Encodes __title__",
 				"type": "GroupOfTasks",
 				"parameters": {
-					"ExecutionType": "parallel",
+					"executionType": "parallel",
 					"tasks": [
 						{
 							"label": "Encode __title__ W240",

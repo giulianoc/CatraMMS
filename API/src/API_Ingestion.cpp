@@ -1200,7 +1200,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         
 			Json::Value newParametersTasksGroupRoot;
 
-			field = "ExecutionType";
+			field = "executionType";
 			newParametersTasksGroupRoot[field] = "parallel";
 
 			field = "tasks";
@@ -1311,7 +1311,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         
 			Json::Value newParametersTasksGroupRoot;
 
-			field = "ExecutionType";
+			field = "executionType";
 			newParametersTasksGroupRoot[field] = "parallel";
 
 			field = "tasks";
@@ -1598,7 +1598,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		{
 			Json::Value newGroupOfTasksParametersRoot;
 
-			field = "ExecutionType";
+			field = "executionType";
 			newGroupOfTasksParametersRoot[field] = "parallel";
 
 			{
@@ -1859,7 +1859,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
     bool parallelTasks;
     
-    field = "ExecutionType";
+    field = "executionType";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2025,7 +2025,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		// initialize referencesRoot
 		Json::Value referencesOutputRoot(Json::arrayValue);
 
-		field = "ReferencesOutput";
+		field = "referencesOutput";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			referencesOutputRoot = parametersRoot[field];
@@ -2086,7 +2086,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 
 					referencesOutputRoot[referenceIndex] = referenceOutputRoot;
                 
-					field = "ReferencesOutput";
+					field = "referencesOutput";
 					parametersRoot[field] = referencesOutputRoot;
 
 					newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput.push_back(
@@ -2130,7 +2130,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 				+ ", referencesOutputRoot.size: " + to_string(referencesOutputRoot.size())
 			);
 
-			field = "ReferencesOutput";
+			field = "referencesOutput";
 			parametersRoot[field] = referencesOutputRoot;
 			/*
 			field = "parameters";

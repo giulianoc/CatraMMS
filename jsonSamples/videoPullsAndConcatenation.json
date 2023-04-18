@@ -7,7 +7,7 @@
         "TitleOfConcatVideo": "My Title of the concat video content"
     },
     "GroupOfTasks": {
-		"ExecutionType": "parallel",
+		"executionType": "parallel",
         "tasks": [
             {
                 "label": "...",
