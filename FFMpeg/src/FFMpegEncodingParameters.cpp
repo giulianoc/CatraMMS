@@ -1484,7 +1484,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
     if (isVideo)
     {
-        field = "Video";
+        field = "video";
         if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1499,7 +1499,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
         // codec
         string codec;
         {
-            field = "Codec";
+            field = "codec";
             if (!JSONUtils::isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1522,7 +1522,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
         // profile
         {
-            field = "Profile";
+            field = "profile";
             if (JSONUtils::isMetadataPresent(videoRoot, field))
             {
                 string profile = JSONUtils::asString(videoRoot, field, "");
@@ -1561,7 +1561,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
         // OtherOutputParameters
         {
-            field = "OtherOutputParameters";
+            field = "otherOutputParameters";
             if (JSONUtils::isMetadataPresent(videoRoot, field))
             {
                 string otherOutputParameters = JSONUtils::asString(videoRoot, field, "");
@@ -1574,7 +1574,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
         // twoPasses
         {
-            field = "TwoPasses";
+            field = "twoPasses";
             if (!JSONUtils::isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1588,7 +1588,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
         // frameRate
         {
-            field = "FrameRate";
+            field = "frameRate";
             if (JSONUtils::isMetadataPresent(videoRoot, field))
             {
                 int frameRate = JSONUtils::asInt(videoRoot, field, 0);
@@ -1616,7 +1616,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             }
         }
 
-		field = "BitRates";
+		field = "bitRates";
 		if (!JSONUtils::isMetadataPresent(videoRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1638,7 +1638,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 				int videoWidth;
 				int videoHeight;
 				{
-					field = "Width";
+					field = "width";
 					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1651,7 +1651,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 					if (videoWidth == -1 && codec == "libx264")
 						videoWidth   = -2;     // h264 requires always a even width/height
 
-					field = "Height";
+					field = "height";
 					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1695,7 +1695,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 				string ffmpegVideoBitRate;
 				int kBitRate;
 				{
-					field = "KBitRate";
+					field = "kBitRate";
 					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1743,7 +1743,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
     
     // if (contentType == "video" || contentType == "audio")
     {
-        field = "Audio";
+        field = "audio";
         if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1757,7 +1757,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
         // codec
         {
-            field = "Codec";
+            field = "codec";
             if (!JSONUtils::isMetadataPresent(audioRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1778,7 +1778,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
         // kBitRate
 		/*
         {
-            field = "KBitRate";
+            field = "kBitRate";
             if (JSONUtils::isMetadataPresent(audioRoot, field))
             {
                 int bitRate = JSONUtils::asInt(audioRoot, field, 0);
@@ -1792,7 +1792,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
         
         // OtherOutputParameters
         {
-            field = "OtherOutputParameters";
+            field = "otherOutputParameters";
             if (JSONUtils::isMetadataPresent(audioRoot, field))
             {
                 string otherOutputParameters = JSONUtils::asString(audioRoot, field, "");
@@ -1805,7 +1805,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
         // channelsNumber
         {
-            field = "ChannelsNumber";
+            field = "channelsNumber";
             if (JSONUtils::isMetadataPresent(audioRoot, field))
             {
                 int channelsNumber = JSONUtils::asInt(audioRoot, field, 0);
@@ -1829,7 +1829,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             }
         }
 
-		field = "BitRates";
+		field = "bitRates";
 		if (!JSONUtils::isMetadataPresent(audioRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1848,7 +1848,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
 				string ffmpegAudioBitRate;
 				{
-					field = "KBitRate";
+					field = "kBitRate";
 					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"

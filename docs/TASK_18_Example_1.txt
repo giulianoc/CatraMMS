@@ -2,8 +2,8 @@
 	"label": "Profile_1",
 	"fileFormat": "JPG",
 	"Image": {
-		"Width": 200,
-		"Height": 300,
+		"width": 200,
+		"height": 300,
 		"AspectRatio": true,
 		"InterlaceType": "NoInterlace"
 	}

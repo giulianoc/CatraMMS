@@ -1,16 +1,16 @@
 {
 	"label": "Profile_1",
 	"fileFormat": "mp4",
-	"Video": {
-		"Codec": "libx264",
-		"Profile": "high",
-		"Width": 720,
-		"Height": 480,
-		"KBitRate": 256,
-		"TwoPasses": true
+	"video": {
+		"codec": "libx264",
+		"profile": "high",
+		"width": 720,
+		"height": 480,
+		"kBitRate": 256,
+		"twoPasses": true
 	},
-	"Audio": {
-		"Codec": "aac",
-		"KBitRate": 64
+	"audio": {
+		"codec": "aac",
+		"kBitRate": 64
 	}
 }

@@ -9,10 +9,10 @@
 	"Image": {
 
 		// mandatory
-		"Width": 200,
+		"width": 200,
 
 		// mandatory
-		"Height": 300,
+		"height": 300,
 
 		// mandatory
 		// if aspectRatio is true the proportion are not mantained

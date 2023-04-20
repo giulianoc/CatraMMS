@@ -46,11 +46,11 @@
 
 		// optional
 		// default is the width of the video
-		"Width": 320,
+		"width": 320,
 
 		// optional
 		// default is the height of the video
-		"Height": 640,
+		"height": 640,
 
 		// optional. To be set with the EncodersPool label only in case a specific
 		// encoders pool has to be used

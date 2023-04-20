@@ -1,28 +1,28 @@
 {
 	"label" : "MMS_MP4_H264_2000Kb_medium_720p50_high422_AAC_92",
 	"fileFormat" : "mp4",
-	"Video" : 
+	"video" : 
 	{
-		"Codec" : "libx264",
-		"Profile" : "high422",
-		"FrameRate": 50,
-		"TwoPasses" : false,
-		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22",
-		"BitRates": [
+		"codec" : "libx264",
+		"profile" : "high422",
+		"frameRate": 50,
+		"twoPasses" : false,
+		"otherOutputParameters": "-preset medium -level 4.0 -crf 22",
+		"bitRates": [
 			{
-				"Width" : 1280,
-				"Height" : 720,
-				"KBitRate" : 2000
+				"width" : 1280,
+				"height" : 720,
+				"kBitRate" : 2000
 			}
 		]
 	},
-	"Audio" : 
+	"audio" : 
 	{
-		"Codec" : "aac",
-		"ChannelsNumber": 2,
-		"BitRates": [
+		"codec" : "aac",
+		"channelsNumber": 2,
+		"bitRates": [
 			{
-				"KBitRate" : 92
+				"kBitRate" : 92
 			}
 		]
 	}

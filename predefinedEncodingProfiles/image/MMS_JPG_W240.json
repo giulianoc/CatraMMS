@@ -2,8 +2,8 @@
 	"label": "MMS_JPG_W240",
 	"fileFormat": "JPG",
 	"Image": {
-		"Width": 240,
-		"Height": 0,
+		"width": 240,
+		"height": 0,
 		"Comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated",
 		"AspectRatio": false,
 		"InterlaceType": "NoInterlace"

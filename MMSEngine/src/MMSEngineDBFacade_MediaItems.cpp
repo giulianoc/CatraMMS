@@ -5544,7 +5544,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 		// cross references
 		{
-			string field = "CrossReference";
+			string field = "crossReference";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
                 Json::Value crossReferenceRoot = parametersRoot[field];
@@ -5598,10 +5598,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		string externalDeliveryTechnology;
 		string externalDeliveryURL;
 		{
-            string field = "ExternalDeliveryTechnology";
+            string field = "externalDeliveryTechnology";
 			externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "ExternalDeliveryURL";
+            field = "externalDeliveryURL";
 			externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
 		}
 

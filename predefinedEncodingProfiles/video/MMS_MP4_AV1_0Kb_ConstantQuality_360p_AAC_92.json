@@ -1,28 +1,28 @@
 {
 	"label" : "MMS_MP4_AV1_0Kb_ConstantQuality_360p_AAC_92",
 	"fileFormat" : "mp4",
-	"Video" : 
+	"video" : 
 	{
-		"Codec" : "libaom-av1",
-		"Profile" : "",
-		"FrameRate": 0,
-		"TwoPasses" : false,
-		"OtherOutputParameters": "-crf 30 -strict experimental -movflags +faststart",
-		"BitRates": [
+		"codec" : "libaom-av1",
+		"profile" : "",
+		"frameRate": 0,
+		"twoPasses" : false,
+		"otherOutputParameters": "-crf 30 -strict experimental -movflags +faststart",
+		"bitRates": [
 			{
-				"Width" : 640,
-				"Height" : 360,
-				"KBitRate" : 0
+				"width" : 640,
+				"height" : 360,
+				"kBitRate" : 0
 			}
 		]
 	},
-	"Audio" : 
+	"audio" : 
 	{
-		"Codec" : "aac",
-		"ChannelsNumber": 2,
-		"BitRates": [
+		"codec" : "aac",
+		"channelsNumber": 2,
+		"bitRates": [
 			{
-				"KBitRate" : 92
+				"kBitRate" : 92
 			}
 		]
 	}

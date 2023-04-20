@@ -6,12 +6,12 @@
       "ActAsServerListenTimeout": -1,
       "CaptureLive": {
         "AudioDeviceNumber": 1,
-        "ChannelsNumber": 2,
-        "FrameRate": 30,
-        "Height": 720,
+        "channelsNumber": 2,
+        "frameRate": 30,
+        "height": 720,
         "VideoDeviceNumber": 2,
         "VideoInputFormat": "mjpeg",
-        "Width": 1280
+        "width": 1280
       },
       "ChannelType": "CaptureLive",
       "outputs": [{

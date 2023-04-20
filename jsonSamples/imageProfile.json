@@ -1,8 +1,8 @@
 {
 	"label": "Profile Logo",
 	"Format": "JPG",
-	"Width": 40,
-	"Height": 50,
+	"width": 40,
+	"height": 50,
 	"AspectRatio": false,
 	"InterlaceType": "NoInterlace"
 }

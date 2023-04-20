@@ -9369,7 +9369,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 		field = "MediaItemKey";
         crossReferenceRoot[field] = faceOfVideoMediaItemKey;
 
-		field = "CrossReference";
+		field = "crossReference";
         parametersRoot[field] = crossReferenceRoot;
 	}
 	else if (cutOfVideoMediaItemKey != -1)
@@ -9398,7 +9398,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 			crossReferenceRoot[field] = crossReferenceParametersRoot;
 		}
 
-		field = "CrossReference";
+		field = "crossReference";
 		parametersRoot[field] = crossReferenceRoot;
 	}
 
@@ -9461,7 +9461,7 @@ void EncoderVideoAudioProxy::readingImageProfile(
     
     // Width
     {
-        field = "Width";
+        field = "width";
         if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -9476,7 +9476,7 @@ void EncoderVideoAudioProxy::readingImageProfile(
 
     // Height
     {
-        field = "Height";
+        field = "height";
         if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"

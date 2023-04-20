@@ -6,19 +6,19 @@
 	"fileFormat": "mp4",
 
 	// mandatory
-	"Audio": {
+	"audio": {
 
 		// mandatory: aac, libfdk_aac, libvo_aacenc, libvorbis
-		"Codec": "aac",
+		"codec": "aac",
 
 		// optional (kbps)
-		"KBitRate": 64,
+		"kBitRate": 64,
 
 		// optional
-		"OtherOutputParameters": "",
+		"otherOutputParameters": "",
 
 		// optional: 1: mono, 2: stereo
-		"ChannelsNumber": 2,
+		"channelsNumber": 2,
 
 		// optional (Hz)
 		"SampleRate": 44100

@@ -1421,7 +1421,7 @@ void Validator::validateAddContentMetadata(
 		}
 	}
 
-    field = "CrossReference";
+    field = "crossReference";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		Json::Value crossReferenceRoot = parametersRoot[field];
@@ -7111,8 +7111,8 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         vector<string> mandatoryFields = {
             "label",
             "fileFormat",
-            "Video",
-            "Audio"
+            "video",
+            "audio"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -7146,13 +7146,13 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     
 	Json::Value encodingProfileVideoRoot;
     {
-        string field = "Video";
+        string field = "video";
         encodingProfileVideoRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "Codec",
-            "TwoPasses",
-            "BitRates"
+            "codec",
+            "twoPasses",
+            "bitRates"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -7171,7 +7171,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     }
 
     {
-        string field = "BitRates";
+        string field = "bitRates";
 		Json::Value videoBitRatesRoot = encodingProfileVideoRoot[field];
 
 		if (videoBitRatesRoot.size() == 0)
@@ -7186,9 +7186,9 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 		}
 
         vector<string> mandatoryFields = {
-            "Width",
-            "Height",
-            "KBitRate"
+            "width",
+            "height",
+            "kBitRate"
         };
 		for(int bitRateIndex = 0; bitRateIndex < videoBitRatesRoot.size(); bitRateIndex++)
 		{
@@ -7213,12 +7213,12 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 
 	Json::Value encodingProfileAudioRoot;
     {
-        string field = "Audio";
+        string field = "audio";
         encodingProfileAudioRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "Codec",
-            "BitRates"
+            "codec",
+            "bitRates"
         };
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -7237,7 +7237,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     }
 
     {
-        string field = "BitRates";
+        string field = "bitRates";
 		Json::Value audioBitRatesRoot = encodingProfileAudioRoot[field];
 
 		if (audioBitRatesRoot.size() == 0)
@@ -7252,7 +7252,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 		}
 
         vector<string> mandatoryFields = {
-            "KBitRate"
+            "kBitRate"
         };
 		for(int bitRateIndex = 0; bitRateIndex < audioBitRatesRoot.size(); bitRateIndex++)
 		{
@@ -7283,7 +7283,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         vector<string> mandatoryFields = {
             "label",
             "fileFormat",
-            "Audio"
+            "audio"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -7317,12 +7317,12 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     
 	Json::Value encodingProfileAudioRoot;
     {
-        string field = "Audio";
+        string field = "audio";
         encodingProfileAudioRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "Codec",
-            "BitRates"
+            "codec",
+            "bitRates"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -7341,7 +7341,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     }
 
     {
-        string field = "BitRates";
+        string field = "bitRates";
 		Json::Value audioBitRatesRoot = encodingProfileAudioRoot[field];
 
 		if (audioBitRatesRoot.size() == 0)
@@ -7356,7 +7356,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
 		}
 
         vector<string> mandatoryFields = {
-            "KBitRate"
+            "kBitRate"
         };
 		for(int bitRateIndex = 0; bitRateIndex < audioBitRatesRoot.size(); bitRateIndex++)
 		{
@@ -7424,8 +7424,8 @@ void Validator::validateEncodingProfileRootImageMetadata(
         Json::Value encodingProfileImageRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "Width",
-            "Height",
+            "width",
+            "height",
             "AspectRatio",
             "InterlaceType"
         };

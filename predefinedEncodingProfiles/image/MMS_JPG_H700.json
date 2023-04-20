@@ -2,8 +2,8 @@
 	"label": "MMS_JPG_H700",
 	"fileFormat": "JPG",
 	"Image": {
-		"Width": 0,
-		"Height": 700,
+		"width": 0,
+		"height": 700,
 		"Comment": "Aspect false means the aspect is preserved, height is fixed and width will be calculated",
 		"AspectRatio": false,
 		"InterlaceType": "NoInterlace"

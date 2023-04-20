@@ -1,28 +1,28 @@
 {
 	"label" : "MMS_MTS_H264_2500Kb_medium_1080p25_high422_AAC_160",
 	"fileFormat" : "mts",
-	"Video" :
+	"video" :
 	{
-		"Codec" : "libx264",
-		"Profile" : "high422",
-		"FrameRate": 25,
-		"TwoPasses" : false,
-		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22",
-		"BitRates": [
+		"codec" : "libx264",
+		"profile" : "high422",
+		"frameRate": 25,
+		"twoPasses" : false,
+		"otherOutputParameters": "-preset medium -level 4.0 -crf 22",
+		"bitRates": [
 			{
-				"Width" : 1920,
-				"Height" : 1080,
-				"KBitRate" : 2500
+				"width" : 1920,
+				"height" : 1080,
+				"kBitRate" : 2500
 			}
 		]
 	},
-	"Audio" : 
+	"audio" : 
 	{
-		"Codec" : "aac",
-		"ChannelsNumber": 2,
-		"BitRates": [
+		"codec" : "aac",
+		"channelsNumber": 2,
+		"bitRates": [
 			{
-				"KBitRate" : 160
+				"kBitRate" : 160
 			}
 		]
 	}

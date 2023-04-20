@@ -1,28 +1,28 @@
 {
 	"label" : "MMS_MP4_H264_4000Kb_veryfast_720p25_high422_AAC_192",
 	"fileFormat" : "mp4",
-	"Video" : 
+	"video" : 
 	{
-		"Codec" : "libx264",
-		"Profile" : "high422",
-		"FrameRate": 25,
-		"TwoPasses" : false,
-		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22",
-		"BitRates": [
+		"codec" : "libx264",
+		"profile" : "high422",
+		"frameRate": 25,
+		"twoPasses" : false,
+		"otherOutputParameters": "-preset veryfast -level 4.0 -crf 22",
+		"bitRates": [
 			{
-				"Width" : 1280,
-				"Height" : 720,
-				"KBitRate" : 4000
+				"width" : 1280,
+				"height" : 720,
+				"kBitRate" : 4000
 			}
 		]
 	},
-	"Audio" : 
+	"audio" : 
 	{
-		"Codec" : "aac",
-		"ChannelsNumber": 2,
-		"BitRates": [
+		"codec" : "aac",
+		"channelsNumber": 2,
+		"bitRates": [
 			{
-				"KBitRate" : 192
+				"kBitRate" : 192
 			}
 		]
 	}

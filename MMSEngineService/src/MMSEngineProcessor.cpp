@@ -1643,7 +1643,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											bool regenerateTimestamps = false;
 											if (mediaFileFormat == "m3u8-streaming")
 												regenerateTimestamps = JSONUtils::asBool(
-													parametersRoot, "RegenerateTimestamps", false);
+													parametersRoot, "regenerateTimestamps", false);
 
 											thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
 												_processorsThreadsNumber, mediaSourceURL, regenerateTimestamps, m3u8TarGzOrM3u8Streaming,
@@ -7999,10 +7999,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			string externalDeliveryTechnology;
 			string externalDeliveryURL;
 			{
-				string field = "ExternalDeliveryTechnology";
+				string field = "externalDeliveryTechnology";
 				externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
 
-				field = "ExternalDeliveryURL";
+				field = "externalDeliveryURL";
 				externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
 			}
 
@@ -18620,13 +18620,13 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 
         int width = -1;
 		{
-			field = "Width";
+			field = "width";
 			width = JSONUtils::asInt64(parametersRoot, field, -1);
 		}
 
         int height = -1;
 		{
-			field = "Height";
+			field = "height";
 			height = JSONUtils::asInt(parametersRoot, field, -1);
 		}
 
@@ -22760,7 +22760,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 		field = "MediaItemKey";
 		crossReferenceRoot[field] = imageOfVideoMediaItemKey;
 
-		field = "CrossReference";
+		field = "crossReference";
 		parametersRoot[field] = crossReferenceRoot;
 	}
 	else if (cutOfVideoMediaItemKey != -1)
@@ -22789,7 +22789,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			crossReferenceRoot[field] = crossReferenceParametersRoot;
 		}
 
-		field = "CrossReference";
+		field = "crossReference";
 		parametersRoot[field] = crossReferenceRoot;
 	}
 	else if (cutOfAudioMediaItemKey != -1)
@@ -22818,7 +22818,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			crossReferenceRoot[field] = crossReferenceParametersRoot;
 		}
 
-		field = "CrossReference";
+		field = "crossReference";
 		parametersRoot[field] = crossReferenceRoot;
 	}
 

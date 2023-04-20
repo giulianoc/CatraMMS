@@ -1,8 +1,8 @@
 {
 	"label": "Profile_1",
 	"fileFormat": "mp4",
-	"Audio": {
-		"Codec": "aac",
-		"KBitRate": 64
+	"audio": {
+		"codec": "aac",
+		"kBitRate": 64
 	}
 }

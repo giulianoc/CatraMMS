@@ -1,28 +1,28 @@
 {
 	"label" : "MMS_AVI_RAWVIDEO_2500Kb_1080p25_PCL_S32LE_160",
 	"fileFormat" : "avi",
-	"Video" : 
+	"video" : 
 	{
-		"Codec" : "rawvideo",
-		"Profile" : "",
-		"FrameRate": 25,
-		"TwoPasses" : false,
-		"OtherOutputParameters": "-pix_fmt yuv422p",
-		"BitRates": [
+		"codec" : "rawvideo",
+		"profile" : "",
+		"frameRate": 25,
+		"twoPasses" : false,
+		"otherOutputParameters": "-pix_fmt yuv422p",
+		"bitRates": [
 			{
-				"Width" : 1920,
-				"Height" : 1080,
-				"KBitRate" : 2500
+				"width" : 1920,
+				"height" : 1080,
+				"kBitRate" : 2500
 			}
 		]
 	},
-	"Audio" : 
+	"audio" : 
 	{
-		"Codec" : "pcm_s32le",
-		"ChannelsNumber": 2,
-		"BitRates": [
+		"codec" : "pcm_s32le",
+		"channelsNumber": 2,
+		"bitRates": [
 			{
-				"KBitRate" : 160
+				"kBitRate" : 160
 			}
 		]
 	}

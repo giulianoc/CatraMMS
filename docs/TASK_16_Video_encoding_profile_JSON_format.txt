@@ -6,28 +6,28 @@
 	"fileFormat": "mp4",
 
 	// mandatory
-	"Video": {
+	"video": {
 
 		// mandatory: libx264, libvpx, ...
-		"Codec": "libx264",
+		"codec": "libx264",
 
 		// optional: if libx264: high, baseline, main --- if libvpx: best, good
-		"Profile": "",
+		"profile": "",
 
 		// mandatory: it could be even -1 or -2
-		"Width": 200,
+		"width": 200,
  
 		// mandatory: it could be even -1 or -2
-		"Height": 500,
+		"height": 500,
 
 		// mandatory only if fileformat is different from segment
-		"TwoPasses": true,
+		"twoPasses": true,
 
 		// optional (kbps)
-		"KBitRate": 500,
+		"kBitRate": 500,
 
 		// optional
-		"OtherOutputParameters": "",
+		"otherOutputParameters": "",
 
 		// optional (kbps)
 		"KMaxRate": 1984,
@@ -36,26 +36,26 @@
 		"KBufSize": 3968,
 
 		// optional
-		"FrameRate": 30,
+		"frameRate": 30,
 
 		// optional
 		"KeyFrameIntervalInSeconds": 2
 	}
 
 	// mandatory
-	"Audio": {
+	"audio": {
 
 		// mandatory: aac, libfdk_aac, libvo_aacenc, libvorbis
-		"Codec": "aac",
+		"codec": "aac",
 
 		// optional (kbps)
-		"KBitRate": 64,
+		"kBitRate": 64,
 
 		// optional
-		"OtherOutputParameters": "",
+		"otherOutputParameters": "",
 
 		// optional: 1: mono, 2: stereo
-		"ChannelsNumber": 2,
+		"channelsNumber": 2,
 
 		// optional (Hz)
 		"SampleRate": 44100

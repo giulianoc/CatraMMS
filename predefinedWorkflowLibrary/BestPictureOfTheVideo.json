@@ -124,7 +124,7 @@
           "parameters": {
             "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
             "UniqueName": "${UniqueName}",
-            "Height": 480,
+            "height": 480,
             "ingester": "${ingester}",
             "InstantInSeconds": "${InstantInSeconds}",
 			"processingStartingFrom": "${processingStartingFrom}",
@@ -132,7 +132,7 @@
             "tags": "${ImageTags}",
             "Title": "${Title}",
 			"userData": "${ImageUserData}",
-            "Width": 640
+            "width": 640
           }
         }},
         "OnSuccess": {"task": {

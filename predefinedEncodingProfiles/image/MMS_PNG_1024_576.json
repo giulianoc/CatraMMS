@@ -2,8 +2,8 @@
 	"label": "MMS_PNG_1024_576",
 	"fileFormat": "PNG",
 	"Image": {
-		"Width": 1024,
-		"Height": 576,
+		"width": 1024,
+		"height": 576,
 		"Comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated",
 		"AspectRatio": true,
 		"InterlaceType": "NoInterlace"
