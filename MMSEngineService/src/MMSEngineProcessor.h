@@ -546,6 +546,8 @@ private:
 		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 		tuple<int64_t,MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> keyAndDependencyType);
 
+	string getEncodedFileExtensionByEncodingProfile(Json::Value encodingProfileDetailsRoot);
+
 } ;
 
 #endif

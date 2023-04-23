@@ -8,7 +8,7 @@
 		"label": "my label",
 		"type": "Overlay-Image-On-Video",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "mediaItemKey": 11 },
 				{ "mediaItemKey": 12 }
 			],

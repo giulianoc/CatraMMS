@@ -8,7 +8,7 @@
       "DurationOfEachSlideInSeconds": 15,
       "encodingPriority": "Low",
       "ingester": "Giuliano",
-      "References": [
+      "references": [
       ],
       "retention": "10y",
       "Title": "Proxy of a Picture (Slideshow)",

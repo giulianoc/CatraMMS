@@ -8,7 +8,7 @@
 	"parameters": {
 
 		// mandatory
-		"References": [
+		"references": [
 			// mandatory. Just one Reference needed to identify the video to be used to build the live content
 			// Generally, for this task, the video is generated with the Slideshow Task using cfr as video sync method.
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.

@@ -53,7 +53,7 @@
 					"ImagePosition_X_InPixel": "video_width-image_width-10",
 					"ImagePosition_Y_InPixel": "video_height-image_height-10",
 					"encodingPriority": "High",
-					"References": [
+					"references": [
 						{ "label": "my image encode", "encodingProfileLabel": "Profile Logo" },
 						{ "label": "${TitleOfVideo_1}" }
 					],

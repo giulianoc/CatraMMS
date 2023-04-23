@@ -419,6 +419,9 @@ void IntroOutroOverlay::encodeContent(
 			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot,
 				"encodingProfileKey", -1);
 
+			// string encodingProfileFileFormat =
+			// 	JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+
 			uploadLocalMediaToMMS(
 				_ingestionJobKey,
 				_encodingJobKey,
@@ -429,6 +432,14 @@ void IntroOutroOverlay::encodeContent(
 				encodedStagingAssetPathName,
 				workflowLabel,
 				"External Transcoder",	// ingester
+				// 2023-04-21: Il file generato da introOutroOverlay ha un payload generato dall'encodingProfileKey,
+				//	pero', nello stesso tempo, ha un fileFormat dato dal mainSource (vedi come viene costruito
+				//	l'encodedFileName in MMSEngineService.cpp).
+				//	Per cui possiamo indicare encodingProfileKey quando il file encodato viene aggiunto in MMS
+				//	solo se mainSourceFileExtension coincide con il fileFormat dell'encodingProfileKey
+				//	fileFormat è ad esempio "mp4", mainSourceFileExtension è per esempio ".ts"
+				// 2023-04-22: Penso che l'encodingProfileKey debba essere considerato indipendentemente
+				//	se il fileFormat sia uguale o diverso
 				encodingProfileKey
 			);
 		}

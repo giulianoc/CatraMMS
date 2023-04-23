@@ -65,7 +65,7 @@
       "type": "datetime",
       "Value": ""
     },
-    "References": {
+    "references": {
       "Position": 10,
 	  "IsNull": false,
       "Description": "string representing a json array of ONE References. i.e.: [{\"mediaItemKey\", 123456}]",
@@ -175,7 +175,7 @@
           "OneFramePerSecond": true,
           "Output": "FrameContainingFace",
 		  "processingStartingFrom": "${processingStartingFrom}",
-		  "References": "${References}",
+		  "references": "${references}",
           "retention": "${ImageRetention}",
           "tags": "${ImageTags}",
           "Title": "${Title}",

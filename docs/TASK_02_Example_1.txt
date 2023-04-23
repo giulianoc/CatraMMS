@@ -8,7 +8,7 @@
 		"label": "my label",
 		"type": "Frame",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "mediaItemKey": 11 }
 			],
 			"InstantInSeconds": 2.5,

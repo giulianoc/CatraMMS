@@ -4,8 +4,8 @@
 	"type": "FTP-Delivery",
 
 	"parameters": {
-		"References": [
-			{ "ReferenceMediaItemKey": 11 }
+		"seferences": [
+			{ "mediaItemKey": 11 }
 		],
 
 		"Server": "ftp.catrambonelucia.altervista.org",

@@ -8,7 +8,7 @@
 		"label": "Task n. Y",
 		"type": "Periodical-Frames",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "mediaItemKey": 11 }
 			],
 			"StartTimeInSeconds": 2.5,

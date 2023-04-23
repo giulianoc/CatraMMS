@@ -7,7 +7,7 @@
 
 	"parameters": {
 		// mandatory
-		"References": [
+		"references": [
 			// mandatory. One or more References to identify the media file (mediaItemKeys) or
 			// the profile (physicalPathKey) to be POSTed on YouTube.
 			// In case this task is placed inside an onSuccess event, 

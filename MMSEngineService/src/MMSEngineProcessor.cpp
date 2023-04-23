@@ -14824,7 +14824,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				field = "retention";
 				concatDemuxerParametersRoot[field] = "0";
 
-				field = "References";
+				field = "references";
 				concatDemuxerParametersRoot[field] = mediaItemKeyReferencesRoot;
 
 				field = "parameters";
@@ -14844,7 +14844,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				Json::Value cutParametersRoot = concatDemuxerParametersRoot;
 				{
 					Json::Value removed;
-					field = "References";
+					field = "references";
 					cutParametersRoot.removeMember(field, &removed);
 				}
 
@@ -15754,7 +15754,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				field = "retention";
 				concatDemuxerParametersRoot[field] = "0";
 
-				field = "References";
+				field = "references";
 				concatDemuxerParametersRoot[field] = mediaItemKeyReferencesRoot;
 
 				field = "parameters";
@@ -15774,7 +15774,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				Json::Value cutParametersRoot = concatDemuxerParametersRoot;
 				{
 					Json::Value removed;
-					field = "References";
+					field = "references";
 					cutParametersRoot.removeMember(field, &removed);
 				}
 
@@ -16175,7 +16175,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 			else // if (sourceType == "MediaItem")
 			{
-				field = "References";
+				field = "references";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -17050,7 +17050,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						vodProxyParametersRoot[field] = scheduleRoot;
 					}
 
-					field = "References";
+					field = "references";
 					vodProxyParametersRoot[field] = referencesRoot;
 
 					Json::Value outputsRoot(Json::arrayValue);
@@ -17358,7 +17358,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			}
 			else // if (sourceType == "MediaItem")
 			{
-				field = "References";
+				field = "references";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -17712,7 +17712,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 							vodProxyParametersRoot.removeMember(field, &removed);
 					}
 
-					field = "References";
+					field = "references";
 					vodProxyParametersRoot[field] = referencesRoot;
 
 					{
@@ -18881,6 +18881,10 @@ void MMSEngineProcessor::manageSlideShowTask(
 			}
         }
 
+		// 2023-04-23: qui dovremmo utilizzare il metodo getEncodedFileExtensionByEncodingProfile
+		//	che ritorna l'estensione in base all'encodingProfile.
+		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe verificare che funziona
+		//	anche per estensioni diverse da .mp4
 		string targetFileFormat = ".mp4";
 		string encodedFileName = to_string(ingestionJobKey)
 			+ "_slideShow"
@@ -20131,16 +20135,18 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 			string encodedFileName;
 			{
+				/*
 				string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
 				string fileFormatLowerCase;
 				fileFormatLowerCase.resize(fileFormat.size());
 				transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
 					[](unsigned char c){return tolower(c); } );
+				*/
 
 				encodedFileName = to_string(ingestionJobKey)
 					+ "_"
 					+ to_string(encodingProfileKey)
-					+ "." + fileFormatLowerCase
+					+ getEncodedFileExtensionByEncodingProfile(encodingProfileDetailsRoot);	// "." + fileFormatLowerCase
 				;
 			}
 
@@ -20468,8 +20474,10 @@ void MMSEngineProcessor::manageEncodeTask(
 						encodedFileName =
 							to_string(ingestionJobKey)
 							+ "_"
-							+ to_string(encodingProfileKey);
+							+ to_string(encodingProfileKey)
+							+ getEncodedFileExtensionByEncodingProfile(encodingProfileDetailsRoot);
 
+						/*
 						if (fileFormat == "hls" || fileFormat == "dash")
 						{
 							;
@@ -20479,6 +20487,7 @@ void MMSEngineProcessor::manageEncodeTask(
 							encodedFileName.append(".");
 							encodedFileName.append(fileFormat);
 						}
+						*/
 					}
     
 					{
@@ -20798,6 +20807,10 @@ void MMSEngineProcessor::manageVideoSpeedTask(
         // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
 		// 		keyAndDependencyType: dependencies)
 
+		// 2023-04-23: qui dovremmo utilizzare il metodo getEncodedFileExtensionByEncodingProfile
+		//	che ritorna l'estensione in base all'encodingProfile.
+		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe verificare che funziona
+		//	anche per estensioni diverse da sourceFileExtension
 		string encodedFileName = to_string(ingestionJobKey)
 			+ "_videoSpeed"                                                                   
 			+  sourceFileExtension;     
@@ -21038,6 +21051,10 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			}
 		}
 
+		// 2023-04-23: qui dovremmo utilizzare il metodo getEncodedFileExtensionByEncodingProfile
+		//	che ritorna l'estensione in base all'encodingProfile.
+		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe verificare che funziona
+		//	anche per estensioni diverse da mainSourceFileExtension
 		string encodedFileName = to_string(ingestionJobKey)
 			+ "_pictureInPicture"                                                                   
 			+  mainSourceFileExtension;     
@@ -21237,8 +21254,8 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		}
 
 		string encodedFileName = to_string(ingestionJobKey)
-			+ "_introOutroOverlay"                                                                   
-			+  mainSourceFileExtension;     
+			+ "_introOutroOverlay"
+			+  getEncodedFileExtensionByEncodingProfile(encodingProfileDetailsRoot);	// mainSourceFileExtension;
 
 		string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
 		fs::path encodedNFSStagingAssetPathName;
@@ -21471,6 +21488,10 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			}
 		}
 
+		// 2023-04-23: qui dovremmo utilizzare il metodo getEncodedFileExtensionByEncodingProfile
+		//	che ritorna l'estensione in base all'encodingProfile.
+		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe verificare che funziona
+		//	anche per estensioni diverse da sourceVideoFileExtension
 		string encodedFileName = to_string(ingestionJobKey)
 			+ "_overlayedimage"
 			+  sourceVideoFileExtension;
@@ -21618,6 +21639,10 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			}
 		}
 
+		// 2023-04-23: qui dovremmo utilizzare il metodo getEncodedFileExtensionByEncodingProfile
+		//	che ritorna l'estensione in base all'encodingProfile.
+		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe verificare che funziona
+		//	anche per estensioni diverse da sourceFileExtension
 		string encodedFileName = to_string(ingestionJobKey)
 			+ "_overlayedText"                                                                   
 			+  sourceFileExtension;     
@@ -21821,7 +21846,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		string checkStreaming_streamingName;
 		string checkStreaming_streamingUrl;
 		{
-			string field = "References";
+			string field = "references";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				Json::Value referencesRoot = parametersRoot[field];
@@ -22757,7 +22782,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 		crossReferenceRoot[field] =
 			MMSEngineDBFacade::toString(crossReferenceType);
 
-		field = "MediaItemKey";
+		field = "mediaItemKey";
 		crossReferenceRoot[field] = imageOfVideoMediaItemKey;
 
 		field = "crossReference";
@@ -22774,7 +22799,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 		crossReferenceRoot[field] =
 			MMSEngineDBFacade::toString(crossReferenceType);
 
-		field = "MediaItemKey";
+		field = "mediaItemKey";
 		crossReferenceRoot[field] = cutOfVideoMediaItemKey;
 
         Json::Value crossReferenceParametersRoot;
@@ -22803,7 +22828,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 		crossReferenceRoot[field] =
 			MMSEngineDBFacade::toString(crossReferenceType);
 
-		field = "MediaItemKey";
+		field = "mediaItemKey";
 		crossReferenceRoot[field] = cutOfAudioMediaItemKey;
 
         Json::Value crossReferenceParametersRoot;
@@ -26495,5 +26520,29 @@ tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string,
 		assetPathName, relativePath, fileName, fileExtension,
 		durationInMilliSecs, physicalDeliveryURL, transcoderStagingAssetPathName,
 		stopIfReferenceProcessingError);
+}
+
+string MMSEngineProcessor::getEncodedFileExtensionByEncodingProfile(
+	Json::Value encodingProfileDetailsRoot)
+{
+	string extension;
+
+	string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+	string fileFormatLowerCase;
+	fileFormatLowerCase.resize(fileFormat.size());
+	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(),
+		[](unsigned char c){return tolower(c); } );
+
+	if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
+	{
+		// it will be a directory, no extension
+		;
+	}
+	else
+	{
+		extension = "." + fileFormatLowerCase;
+	}
+
+	return extension;
 }
 

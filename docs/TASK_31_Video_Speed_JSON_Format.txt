@@ -7,7 +7,7 @@
 
 	"parameters": {
 		// mandatory
-		"References": [
+		"references": [
 			// mandatory. Just one Reference has to be present
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference items using the key

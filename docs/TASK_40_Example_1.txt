@@ -6,7 +6,7 @@
       "outputs": [{
         "outputType": "RTMP_Channel"
       }],
-      "References": [
+      "references": [
         {"physicalPathKey": 1630295}
       ],
       "timePeriod": false

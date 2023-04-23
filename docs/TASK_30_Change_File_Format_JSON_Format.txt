@@ -11,7 +11,7 @@
 		"outputFileFormat": "mp4",
 
 		// mandatory
-		"References": [
+		"references": [
 			// mandatory. At least one References have to be present
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference items using the key

@@ -5,7 +5,7 @@
 		"label": "my label ...",
 		"type": "Remove-Content",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "mediaItemKey": 11 }
 			]
 		}

@@ -3219,7 +3219,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 				field = "type";
 				crossReferenceRoot[field] = "VideoOfImage";
 
-				field = "MediaItemKey";
+				field = "mediaItemKey";
 				crossReferenceRoot[field] = liveRecorderVirtualVODImageMediaItemKey;
 
 				field = "crossReference";

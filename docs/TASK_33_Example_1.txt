@@ -8,7 +8,7 @@
 		"label": "my label",
 		"type": "Picture-In-Picture",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "mediaItemKey": 11 },
 				{ "mediaItemKey": 12 }
 			],

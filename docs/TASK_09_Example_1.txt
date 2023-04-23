@@ -8,7 +8,7 @@
 		"label": "my label",
 		"type": "Slideshow",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "mediaItemKey": 100 },
 				{ "mediaItemKey": 101 },
 				{ "mediaItemKey": 103 },

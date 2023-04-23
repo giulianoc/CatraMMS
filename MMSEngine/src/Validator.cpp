@@ -1472,7 +1472,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
 {
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -1567,7 +1567,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    field = "References";
+    field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		// 2021-08-26: removed the check because we are adding the option to manage
@@ -1627,7 +1627,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
      
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -1731,7 +1731,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -1813,7 +1813,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
         
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -1893,7 +1893,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
 {    
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -1994,7 +1994,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
             
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -2163,7 +2163,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    field = "References";
+    field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -2253,7 +2253,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
     
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
@@ -2513,7 +2513,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    field = "References";
+    field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -2615,7 +2615,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
     
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	string field = "References";
+	string field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -2824,7 +2824,7 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	string field = "References";
+	string field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -2920,7 +2920,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	string field = "References";
+	string field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -3052,7 +3052,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
         
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	field = "References";
+	field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -3146,7 +3146,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	field = "References";
+	field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -3283,7 +3283,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	field = "References";
+	field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -3399,7 +3399,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	string field = "References";
+	string field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -3522,7 +3522,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	field = "References";
+	field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -3659,7 +3659,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	field = "References";
+	field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -3805,7 +3805,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	field = "References";
+	field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -4266,7 +4266,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 	{
 		// References is optional because in case of dependency managed automatically
 		// by MMS (i.e.: onSuccess)
-		field = "References";
+		field = "references";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -4496,7 +4496,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 	{
 		// References is optional because in case of dependency managed automatically
 		// by MMS (i.e.: onSuccess)
-		field = "References";
+		field = "references";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -4648,7 +4648,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
@@ -4833,7 +4833,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -5106,7 +5106,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	field = "References";
+	field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -5265,7 +5265,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
-	field = "References";
+	field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -5360,7 +5360,7 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -5459,7 +5459,7 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
@@ -5934,7 +5934,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 	bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
 	bool encodingProfileFieldsToBeManaged)
 {
-    string field = "References";
+    string field = "references";
     Json::Value referencesRoot = parametersRoot[field];
 
     for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
@@ -6948,7 +6948,7 @@ void Validator::validateCrossReference(
 	{
 		vector<string> crossReferenceMandatoryFields = {
 			"type",
-			"MediaItemKey"
+			"mediaItemKey"
 		};
 		for (string mandatoryField: crossReferenceMandatoryFields)
 		{

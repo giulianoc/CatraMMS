@@ -4,7 +4,7 @@
 	"type": "Local-Copy",
 
 	"parameters": {
-		"References": [
+		"references": [
 			{ "mediaItemKey": 11 }
 		],
 

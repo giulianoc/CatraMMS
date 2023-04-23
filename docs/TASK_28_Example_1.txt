@@ -4,7 +4,7 @@
 	"type": "Face-Identification",
 
 	"parameters": {
-		"References": [
+		"references": [
 			{ "mediaItemKey": 11 }
 		],
 

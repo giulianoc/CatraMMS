@@ -21,13 +21,13 @@ namespace fs = std::filesystem;
 FFMpegEncodingParameters::FFMpegEncodingParameters(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	string encodedStagingAssetPathName,
 	Json::Value encodingProfileDetailsRoot,
 	bool isVideo,   // if false it means is audio
-	Json::Value videoTracksRoot,
-	Json::Value audioTracksRoot,
 	int videoTrackIndexToBeUsed,
 	int audioTrackIndexToBeUsed,
+	string encodedStagingAssetPathName,
+	Json::Value videoTracksRoot,	// used only in case of _audioGroup
+	Json::Value audioTracksRoot,	// used only in case of _audioGroup
 
 	bool& twoPasses,	// out
 
@@ -128,40 +128,64 @@ void FFMpegEncodingParameters::applyEncoding(
 	// 1: YES two passes, second step
 	int stepNumber,
 
+	// In alcuni casi i parametro del file di output non deve essere aggiunto, ad esempio
+	// per il LiveRecorder o LiveProxy o nei casi in cui il file di output viene deciso
+	// dal chiamante senza seguire il fileFormat dell'encoding profile
+	// Nel caso outputFileToBeAdded sia false, stepNumber has to be -1 (NO two passes)
+	bool outputFileToBeAdded,
+
+	// La risoluzione di un video viene gestita tramite un filtro video.
+	// Il problema è che non possiamo avere due filtri video (-vf) in un comando.
+	// Cosi', se un filtro video è stato già aggiunto al comando, non è possibile aggiungere qui
+	// un ulteriore filtro video per configurare la risoluzione di un video.
+	// Per cui, se abbiamo già un filtro video nel comando, la risoluzione deve essere inizializzata nel filtro
+	// e quindi applyEncoding non la aggiunge
+	bool videoResolutionToBeAdded,
+
 	// out (in append)
 	vector<string>& ffmpegArgumentList
 )
 {
 	try
 	{
-		if (_httpStreamingFileFormat != "")	// hls or dash output
+		if (_httpStreamingFileFormat != "")
 		{
-			string manifestFileName = getManifestFileName();
+			// hls or dash output
 
+			string manifestFileName;
 			string segmentTemplateDirectory;
 			string segmentTemplatePathFileName;
-			if (_httpStreamingFileFormat == "hls")
-			{
-				segmentTemplateDirectory =
-					_encodedStagingAssetPathName + "/" + _multiTrackTemplatePart;
+			string stagingTemplateManifestAssetPathName;
 
-				segmentTemplatePathFileName =
-					segmentTemplateDirectory 
+			if (outputFileToBeAdded)
+			{	
+				manifestFileName = getManifestFileName();
+				if (_httpStreamingFileFormat == "hls")
+				{
+					segmentTemplateDirectory =
+						_encodedStagingAssetPathName + "/" + _multiTrackTemplatePart;
+
+					segmentTemplatePathFileName =
+						segmentTemplateDirectory 
+						+ "/"
+						+ to_string(_ingestionJobKey)
+						+ "_"
+						+ to_string(_encodingJobKey)
+						+ "_%04d.ts"
+					;
+				}
+
+				stagingTemplateManifestAssetPathName =
+					segmentTemplateDirectory
 					+ "/"
-					+ to_string(_ingestionJobKey)
-					+ "_"
-					+ to_string(_encodingJobKey)
-					+ "_%04d.ts"
-				;
+					+ manifestFileName;
 			}
 
-			string stagingTemplateManifestAssetPathName =
-				segmentTemplateDirectory
-				+ "/"
-				+ manifestFileName;
-
-			if (stepNumber == 0 || stepNumber == 1)	// YES two passes
+			if (stepNumber == 0 || stepNumber == 1)
 			{
+				// YES two passes
+
+				// check su if (outputFileToBeAdded) è inutile, con 2 passi outputFileToBeAdded deve essere true
 
 				// used also in removeTwoPassesTemporaryFiles
 				string prefixPasslogFileName = 
@@ -214,8 +238,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-							ffmpegArgumentList);
+						if (videoResolutionToBeAdded)
+							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+								ffmpegArgumentList);
 
 						// It should be useless to add the audio parameters in phase 1 but,
 						// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
@@ -313,8 +338,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-							ffmpegArgumentList);
+						if (videoResolutionToBeAdded)
+							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+								ffmpegArgumentList);
 
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
 						if (_audioBitRatesInfo.size() > videoIndex)
@@ -379,6 +405,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
 						ffmpegVideoBufSizeParameter) = videoBitRateInfo;
 
+					if (outputFileToBeAdded)
 					{
 						string segmentDirectory =
 							regex_replace(segmentTemplateDirectory,
@@ -415,8 +442,9 @@ void FFMpegEncodingParameters::applyEncoding(
 					FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-					FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-						ffmpegArgumentList);
+					if (videoResolutionToBeAdded)
+						FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+							ffmpegArgumentList);
 					ffmpegArgumentList.push_back("-threads");
 					ffmpegArgumentList.push_back("0");
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
@@ -430,23 +458,26 @@ void FFMpegEncodingParameters::applyEncoding(
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
-					FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
-
-					if (_httpStreamingFileFormat == "hls")
+					if (outputFileToBeAdded)
 					{
-						string segmentPathFileName =
-							regex_replace(segmentTemplatePathFileName,
-								regex(_multiTrackTemplateVariable), to_string(videoHeight));
-						ffmpegArgumentList.push_back("-hls_segment_filename");
-						ffmpegArgumentList.push_back(segmentPathFileName);
-					}
+						FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-					{
-						string stagingManifestAssetPathName =
-							regex_replace(stagingTemplateManifestAssetPathName,
-								regex(_multiTrackTemplateVariable), to_string(videoHeight));
-						FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
-						ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+						if (_httpStreamingFileFormat == "hls")
+						{
+							string segmentPathFileName =
+								regex_replace(segmentTemplatePathFileName,
+									regex(_multiTrackTemplateVariable), to_string(videoHeight));
+							ffmpegArgumentList.push_back("-hls_segment_filename");
+							ffmpegArgumentList.push_back(segmentPathFileName);
+						}
+
+						{
+							string stagingManifestAssetPathName =
+								regex_replace(stagingTemplateManifestAssetPathName,
+									regex(_multiTrackTemplateVariable), to_string(videoHeight));
+							FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
+							ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+						}
 					}
 				}
 			}
@@ -461,6 +492,8 @@ void FFMpegEncodingParameters::applyEncoding(
 
 			if (stepNumber == 0 || stepNumber == 1)	// YES two passes
 			{
+				// check su if (outputFileToBeAdded) è inutile, con 2 passi outputFileToBeAdded deve essere true
+
 				// used also in removeTwoPassesTemporaryFiles
 				string prefixPasslogFileName = 
 					to_string(_ingestionJobKey)
@@ -512,8 +545,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-							ffmpegArgumentList);
+						if (videoResolutionToBeAdded)
+							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+								ffmpegArgumentList);
 						ffmpegArgumentList.push_back("-threads");
 						ffmpegArgumentList.push_back("0");
 						ffmpegArgumentList.push_back("-pass");
@@ -590,8 +624,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-							ffmpegArgumentList);
+						if (videoResolutionToBeAdded)
+							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+								ffmpegArgumentList);
 						ffmpegArgumentList.push_back("-threads");
 						ffmpegArgumentList.push_back("0");
 						ffmpegArgumentList.push_back("-pass");
@@ -629,7 +664,9 @@ void FFMpegEncodingParameters::applyEncoding(
             }
             else	// NO two passes
             {
-				string stagingTemplateEncodedAssetPathName = getMultiTrackEncodedStagingTemplateAssetPathName();
+				string stagingTemplateEncodedAssetPathName;
+				if (outputFileToBeAdded)
+					stagingTemplateEncodedAssetPathName = getMultiTrackEncodedStagingTemplateAssetPathName();
 
 				if (_isVideo)
 				{
@@ -672,8 +709,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-							ffmpegArgumentList);
+						if (videoResolutionToBeAdded)
+							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+								ffmpegArgumentList);
 						ffmpegArgumentList.push_back("-threads");
 						ffmpegArgumentList.push_back("0");
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
@@ -687,16 +725,19 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
-						FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
-						if (_videoBitRatesInfo.size() > 1)
+						if (outputFileToBeAdded)
 						{
-							string newStagingEncodedAssetPathName =
-								regex_replace(stagingTemplateEncodedAssetPathName,
-									regex(_multiTrackTemplateVariable), to_string(videoHeight));
-							ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+							FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
+							if (_videoBitRatesInfo.size() > 1)
+							{
+								string newStagingEncodedAssetPathName =
+									regex_replace(stagingTemplateEncodedAssetPathName,
+										regex(_multiTrackTemplateVariable), to_string(videoHeight));
+								ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+							}
+							else
+								ffmpegArgumentList.push_back(_encodedStagingAssetPathName);
 						}
-						else
-							ffmpegArgumentList.push_back(_encodedStagingAssetPathName);
 					}
 				}
 				else
@@ -720,18 +761,21 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
 
-						FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
-						/*
-						if (videoBitRatesInfo.size() > 1)
+						if (outputFileToBeAdded)
 						{
-							string newStagingEncodedAssetPathName =
-								regex_replace(stagingTemplateEncodedAssetPathName,
-									regex(_multiTrackTemplateVariable), to_string(videoHeight));
-							ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+							FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
+							/*
+							if (videoBitRatesInfo.size() > 1)
+							{
+								string newStagingEncodedAssetPathName =
+									regex_replace(stagingTemplateEncodedAssetPathName,
+										regex(_multiTrackTemplateVariable), to_string(videoHeight));
+								ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+							}
+							else
+							*/
+								ffmpegArgumentList.push_back(_encodedStagingAssetPathName);
 						}
-						else
-						*/
-							ffmpegArgumentList.push_back(_encodedStagingAssetPathName);
 					}
 				}
             }
@@ -928,49 +972,53 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
 				//  So, this is the reason, I'm adding phase 2 as well
 				// + "-an "    // disable audio
-				for (int index = 0; index < _audioTracksRoot.size(); index++)
+				if (_audioTracksRoot != Json::nullValue)
 				{
-					Json::Value audioTrack = _audioTracksRoot[index];
-
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
-
-					FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
-					FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-					FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
-					FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
-					FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-
-					FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
-
-					string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
-
+					for (int index = 0; index < _audioTracksRoot.size(); index++)
 					{
-						string segmentPathFileName =
-							_encodedStagingAssetPathName 
-							+ "/"
-							+ audioTrackDirectoryName
-							+ "/"
-							+ to_string(_ingestionJobKey)
-							+ "_"
-							+ to_string(_encodingJobKey)
-							+ "_%04d.ts"
-						;
-						ffmpegArgumentList.push_back("-hls_segment_filename");
-						ffmpegArgumentList.push_back(segmentPathFileName);
-					}
+						Json::Value audioTrack = _audioTracksRoot[index];
 
-					FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
-					{
-						string stagingManifestAssetPathName =
-							_encodedStagingAssetPathName
-							+ "/" + audioTrackDirectoryName
-							+ "/" + manifestFileName;
-						ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
+
+						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+						FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+						string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
+
+						{
+							string segmentPathFileName =
+								_encodedStagingAssetPathName 
+								+ "/"
+								+ audioTrackDirectoryName
+								+ "/"
+								+ to_string(_ingestionJobKey)
+								+ "_"
+								+ to_string(_encodingJobKey)
+								+ "_%04d.ts"
+							;
+							ffmpegArgumentList.push_back("-hls_segment_filename");
+							ffmpegArgumentList.push_back(segmentPathFileName);
+						}
+
+						FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
+						{
+							string stagingManifestAssetPathName =
+								_encodedStagingAssetPathName
+								+ "/" + audioTrackDirectoryName
+								+ "/" + manifestFileName;
+							ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+						}
 					}
 				}
 
+				if (_videoTracksRoot != Json::nullValue)
 				{
 					Json::Value videoTrack = _videoTracksRoot[0];
 
@@ -1013,6 +1061,121 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
 				//  So, this is the reason, I'm adding phase 2 as well
 				// + "-an "    // disable audio
+				if (_audioTracksRoot != Json::nullValue)
+				{
+					for (int index = 0; index < _audioTracksRoot.size(); index++)
+					{
+						Json::Value audioTrack = _audioTracksRoot[index];
+
+						ffmpegArgumentList.push_back("-map");
+						ffmpegArgumentList.push_back(
+							string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
+
+						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
+						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+						FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+						string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
+
+						{
+							string segmentPathFileName =
+								_encodedStagingAssetPathName 
+								+ "/"
+								+ audioTrackDirectoryName
+								+ "/"
+								+ to_string(_ingestionJobKey)
+								+ "_"
+								+ to_string(_encodingJobKey)
+								+ "_%04d.ts"
+							;
+							ffmpegArgumentList.push_back("-hls_segment_filename");
+							ffmpegArgumentList.push_back(segmentPathFileName);
+						}
+
+						FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
+						{
+							string stagingManifestAssetPathName =
+								_encodedStagingAssetPathName
+								+ "/" + audioTrackDirectoryName
+								+ "/" + manifestFileName;
+							ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+						}
+					}
+				}
+
+				if (_videoTracksRoot != Json::nullValue)
+				{
+					Json::Value videoTrack = _videoTracksRoot[0];
+
+					ffmpegArgumentList.push_back("-map");
+					ffmpegArgumentList.push_back(
+						string("0:") + to_string(videoTrack.get("trackIndex", -1).asInt()));
+				}
+				FFMpegEncodingParameters::addToArguments(_ffmpegVideoCodecParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(_ffmpegVideoProfileParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(_ffmpegVideoOtherParameters, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+					ffmpegArgumentList);
+				ffmpegArgumentList.push_back("-threads");
+				ffmpegArgumentList.push_back("0");
+				ffmpegArgumentList.push_back("-pass");
+				ffmpegArgumentList.push_back("2");
+				ffmpegArgumentList.push_back("-passlogfile");
+				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
+
+				FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
+
+				string videoTrackDirectoryName;
+				if (_videoTracksRoot != Json::nullValue)
+				{
+					Json::Value videoTrack = _videoTracksRoot[0];
+
+					videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+				}
+
+				{
+					string segmentPathFileName =
+						_encodedStagingAssetPathName 
+						+ "/"
+						+ videoTrackDirectoryName
+						+ "/"
+						+ to_string(_ingestionJobKey)
+						+ "_"
+						+ to_string(_encodingJobKey)
+						+ "_%04d.ts"
+					;
+					ffmpegArgumentList.push_back("-hls_segment_filename");
+					ffmpegArgumentList.push_back(segmentPathFileName);
+				}
+
+				FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
+				{
+					string stagingManifestAssetPathName =
+						_encodedStagingAssetPathName
+						+ "/" + videoTrackDirectoryName
+						+ "/" + manifestFileName;
+					ffmpegArgumentList.push_back(stagingManifestAssetPathName);
+				}
+			}
+		}
+		else
+		{
+			// It should be useless to add the audio parameters in phase 1 but,
+			// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
+			//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
+			//  So, this is the reason, I'm adding phase 2 as well
+			// + "-an "    // disable audio
+			if (_audioTracksRoot != Json::nullValue)
+			{
 				for (int index = 0; index < _audioTracksRoot.size(); index++)
 				{
 					Json::Value audioTrack = _audioTracksRoot[index];
@@ -1055,115 +1218,9 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 						ffmpegArgumentList.push_back(stagingManifestAssetPathName);
 					}
 				}
-
-				{
-					Json::Value videoTrack = _videoTracksRoot[0];
-
-					ffmpegArgumentList.push_back("-map");
-					ffmpegArgumentList.push_back(
-						string("0:") + to_string(videoTrack.get("trackIndex", -1).asInt()));
-				}
-				FFMpegEncodingParameters::addToArguments(_ffmpegVideoCodecParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(_ffmpegVideoProfileParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(_ffmpegVideoOtherParameters, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-					ffmpegArgumentList);
-				ffmpegArgumentList.push_back("-threads");
-				ffmpegArgumentList.push_back("0");
-				ffmpegArgumentList.push_back("-pass");
-				ffmpegArgumentList.push_back("2");
-				ffmpegArgumentList.push_back("-passlogfile");
-				ffmpegArgumentList.push_back(ffmpegPassLogPathFileName);
-
-				FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
-
-				string videoTrackDirectoryName;
-				{
-					Json::Value videoTrack = _videoTracksRoot[0];
-
-					videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
-				}
-
-				{
-					string segmentPathFileName =
-						_encodedStagingAssetPathName 
-						+ "/"
-						+ videoTrackDirectoryName
-						+ "/"
-						+ to_string(_ingestionJobKey)
-						+ "_"
-						+ to_string(_encodingJobKey)
-						+ "_%04d.ts"
-					;
-					ffmpegArgumentList.push_back("-hls_segment_filename");
-					ffmpegArgumentList.push_back(segmentPathFileName);
-				}
-
-				FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
-				{
-					string stagingManifestAssetPathName =
-						_encodedStagingAssetPathName
-						+ "/" + videoTrackDirectoryName
-						+ "/" + manifestFileName;
-					ffmpegArgumentList.push_back(stagingManifestAssetPathName);
-				}
-			}
-		}
-		else
-		{
-			// It should be useless to add the audio parameters in phase 1 but,
-			// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
-			//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
-			//  So, this is the reason, I'm adding phase 2 as well
-			// + "-an "    // disable audio
-			for (int index = 0; index < _audioTracksRoot.size(); index++)
-			{
-				Json::Value audioTrack = _audioTracksRoot[index];
-
-				ffmpegArgumentList.push_back("-map");
-				ffmpegArgumentList.push_back(
-					string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
-
-				FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
-				FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-
-				FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
-
-				string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
-
-				{
-					string segmentPathFileName =
-						_encodedStagingAssetPathName 
-						+ "/"
-						+ audioTrackDirectoryName
-						+ "/"
-						+ to_string(_ingestionJobKey)
-						+ "_"
-						+ to_string(_encodingJobKey)
-						+ "_%04d.ts"
-					;
-					ffmpegArgumentList.push_back("-hls_segment_filename");
-					ffmpegArgumentList.push_back(segmentPathFileName);
-				}
-
-				FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
-				{
-					string stagingManifestAssetPathName =
-						_encodedStagingAssetPathName
-						+ "/" + audioTrackDirectoryName
-						+ "/" + manifestFileName;
-					ffmpegArgumentList.push_back(stagingManifestAssetPathName);
-				}
 			}
 
+			if (_videoTracksRoot != Json::nullValue)
 			{
 				Json::Value videoTrack = _videoTracksRoot[0];
 
@@ -1186,7 +1243,8 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 
 			FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
-			string videoTrackDirectoryName;
+			string videoTrackDirectoryName;	
+			if (_videoTracksRoot != Json::nullValue)
 			{
 				Json::Value videoTrack = _videoTracksRoot[0];
 
@@ -1253,25 +1311,29 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 
 		mainManifest = string("#EXTM3U") + "\n";
 
-		for (int index = 0; index < _audioTracksRoot.size(); index++)
+		if (_audioTracksRoot != Json::nullValue)
 		{
-			Json::Value audioTrack = _audioTracksRoot[index];
+			for (int index = 0; index < _audioTracksRoot.size(); index++)
+			{
+				Json::Value audioTrack = _audioTracksRoot[index];
 
-			string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
+				string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
 
-			string audioLanguage = JSONUtils::asString(audioTrack, "language", "");
+				string audioLanguage = JSONUtils::asString(audioTrack, "language", "");
 
-			string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
-				+ audioLanguage + "\",NAME=\"" + audioLanguage + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
-				+ audioTrackDirectoryName + "/" + manifestFileName + "\"";
+				string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
+					+ audioLanguage + "\",NAME=\"" + audioLanguage + "\",AUTOSELECT=YES, DEFAULT=YES,URI=\""
+					+ audioTrackDirectoryName + "/" + manifestFileName + "\"";
 				
-			mainManifest += (audioManifestLine + "\n");
+				mainManifest += (audioManifestLine + "\n");
+			}
 		}
 
 		string videoManifestLine = "#EXT-X-STREAM-INF:PROGRAM-ID=1,AUDIO=\"audio\"";
 		mainManifest += (videoManifestLine + "\n");
 
 		string videoTrackDirectoryName;
+		if (_videoTracksRoot != Json::nullValue)
 		{
 			Json::Value videoTrack = _videoTracksRoot[0];
 

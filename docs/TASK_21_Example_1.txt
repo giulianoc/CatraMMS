@@ -4,7 +4,7 @@
 	"type": "FTP-Delivery",
 
 	"parameters": {
-		"References": [
+		"references": [
 			{ "mediaItemKey": 11 }
 		],
 

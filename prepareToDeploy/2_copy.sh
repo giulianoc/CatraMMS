@@ -64,18 +64,18 @@ if [ "$deploy" == "y" ]; then
 	date
 
 	echo "cibortv-transcoder-4"
-	scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem /opt/catrasoftware/deploy/$tarFileName mms@79.10.202.50:/opt/catramms
+	scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem /opt/catrasoftware/deploy/$tarFileName mms@151.48.81.100:/opt/catramms
 	date
 
 	echo "hetzner-transcoder-5"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@46.4.98.135:/opt/catramms
 	date
 
-	echo "aws-mms-transcoder-mil-1"
+	echo "aws-cibortv-transcoder-mil-1"
 	scp -i ~/ssh-keys/aws-cibortv1-key-milan.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-15-161-78-89.eu-south-1.compute.amazonaws.com:/opt/catramms
 	date
 
-	echo "aws-mms-transcoder-mil-2"
+	echo "aws-cibortv-transcoder-mil-2"
 	scp -i ~/ssh-keys/aws-cibortv1-key-milan.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-35-152-80-3.eu-south-1.compute.amazonaws.com:/opt/catramms
 	date
 

@@ -4,7 +4,7 @@
 	"type": "Face-Recognition",
 
 	"parameters": {
-		"References": [
+		"references": [
 			{ "mediaItemKey": 11 }
 		],
 		"CascadeName": "haarcascade_frontalface_alt",

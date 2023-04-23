@@ -67,7 +67,7 @@
 			"type": "ImageOfVideo",
 
 			// mandatory
-			"MediaItemKey": 222,
+			"mediaItemKey": 222,
 
 			// mandatory only for CutOfVideo and CutOfAudio
 			"parameters": {

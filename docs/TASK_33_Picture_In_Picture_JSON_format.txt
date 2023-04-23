@@ -15,7 +15,7 @@
 		"DependenciesToBeAddedToReferencesAt": "End",
 
 		// mandatory
-		"References": [
+		"references": [
 			// mandatory. Two References needed to identify the two Videos.
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the keys

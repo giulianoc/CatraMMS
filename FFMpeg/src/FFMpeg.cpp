@@ -171,13 +171,13 @@ void FFMpeg::encodeContent(
 		FFMpegEncodingParameters ffmpegEncodingParameters (
 			ingestionJobKey,
 			encodingJobKey,
-			encodedStagingAssetPathName,
 			encodingProfileDetailsRoot,
 			isVideo,   // if false it means is audio
-			videoTracksRoot,
-			audioTracksRoot,
 			videoTrackIndexToBeUsed,
 			audioTrackIndexToBeUsed,
+			encodedStagingAssetPathName,
+			videoTracksRoot,
+			audioTracksRoot,
 
 			_twoPasses,	// out
 
@@ -720,6 +720,8 @@ void FFMpeg::encodeContent(
 
 				ffmpegEncodingParameters.applyEncoding(
 					0,	// 0: YES two passes, first step
+					true,	// outputFileToBeAdded
+					true,	// videoResolutionToBeAdded
 					ffmpegArgumentList	// out
 				);
 
@@ -827,6 +829,8 @@ void FFMpeg::encodeContent(
 
 				ffmpegEncodingParameters.applyEncoding(
 					1,	// 1: YES two passes, second step
+					true,	// outputFileToBeAdded
+					true,	// videoResolutionToBeAdded
 					ffmpegArgumentList	// out
 				);
 
@@ -943,6 +947,8 @@ void FFMpeg::encodeContent(
 
 				ffmpegEncodingParameters.applyEncoding(
 					-1,	// -1: NO two passes
+					true,	// outputFileToBeAdded
+					true,	// videoResolutionToBeAdded
 					ffmpegArgumentList	// out
 				);
 
@@ -1105,6 +1111,8 @@ void FFMpeg::encodeContent(
 
 				ffmpegEncodingParameters.applyEncoding(
 					0,	// 1: YES two passes, first step
+					true,	// outputFileToBeAdded
+					true,	// videoResolutionToBeAdded
 					ffmpegArgumentList	// out
 				);
 
@@ -1212,6 +1220,8 @@ void FFMpeg::encodeContent(
 
 				ffmpegEncodingParameters.applyEncoding(
 					1,	// 1: YES two passes, second step
+					true,	// outputFileToBeAdded
+					true,	// videoResolutionToBeAdded
 					ffmpegArgumentList	// out
 				);
 
@@ -1358,6 +1368,8 @@ void FFMpeg::encodeContent(
 
 				ffmpegEncodingParameters.applyEncoding(
 					-1,	// -1: NO two passes
+					true,	// outputFileToBeAdded
+					true,	// videoResolutionToBeAdded
 					ffmpegArgumentList	// out
 				);
 
@@ -1732,7 +1744,7 @@ void FFMpeg::overlayImageOnVideo(
 				{
 					// siamo sicuri che non sia possibile?
 					/*
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+					string errorMessage = __FILEREF__ + "in case of overlayImageOnVideo it is not possible to have a two passes encoding"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
@@ -1743,7 +1755,7 @@ void FFMpeg::overlayImageOnVideo(
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+					string errorMessage = __FILEREF__ + "in case of overlayImageOnVideo it is not possible to have a two passes encoding. Change it to false"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
@@ -2184,7 +2196,7 @@ void FFMpeg::overlayTextOnVideo(
 				{
 					// siamo sicuri che non sia possibile?
 					/*
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+					string errorMessage = __FILEREF__ + "in case of overlayTextOnVideo it is not possible to have a two passes encoding"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
@@ -2195,7 +2207,7 @@ void FFMpeg::overlayTextOnVideo(
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+					string errorMessage = __FILEREF__ + "in case of overlayTextOnVideo it is not possible to have a two passes encoding. Change it to false"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
@@ -2660,7 +2672,7 @@ void FFMpeg::videoSpeed(
 				{
 					// siamo sicuri che non sia possibile?
 					/*
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+					string errorMessage = __FILEREF__ + "in case of videoSpeed it is not possible to have a two passes encoding"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
@@ -2671,7 +2683,7 @@ void FFMpeg::videoSpeed(
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+					string errorMessage = __FILEREF__ + "in case of videoSpeed it is not possible to have a two passes encoding. Change it to false"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
@@ -3275,7 +3287,7 @@ void FFMpeg::pictureInPicture(
 				{
 					// siamo sicuri che non sia possibile?
 					/*
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
+					string errorMessage = __FILEREF__ + "in case of pictureInPicture it is not possible to have a two passes encoding"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
@@ -3286,7 +3298,7 @@ void FFMpeg::pictureInPicture(
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+					string errorMessage = __FILEREF__ + "in case of pictureInPicture it is not possible to have a two passes encoding. Change it to false"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
@@ -3742,6 +3754,23 @@ void FFMpeg::introOutroOverlay(
 			throw runtime_error(errorMessage);
 		}
 
+		FFMpegEncodingParameters ffmpegEncodingParameters (
+			ingestionJobKey,
+			encodingJobKey,
+			encodingProfileDetailsRoot,
+			true,	// isVideo,
+			-1,		// videoTrackIndexToBeUsed,
+			-1,		// audioTrackIndexToBeUsed,
+			stagingEncodedAssetPathName,
+			Json::nullValue,	// videoTracksRoot,
+			Json::nullValue,	// audioTracksRoot,
+
+			_twoPasses, // out
+
+			_ffmpegTempDir,
+			_logger);
+
+		/*
 		vector<string> ffmpegEncodingProfileArgumentList;
 		{
 			try
@@ -3806,31 +3835,9 @@ void FFMpeg::introOutroOverlay(
 
 				ffmpegAudioBitRateParameter = audioBitRatesInfo[0];
 
-				/*
-				if (httpStreamingFileFormat != "")
-				{
-					string errorMessage = __FILEREF__ + "in case of recorder it is not possible to have an httpStreaming encoding"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				else */
 				if (twoPasses)
 				{
 					// siamo sicuri che non sia possibile?
-					/*
-					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", twoPasses: " + to_string(twoPasses)
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-					*/
 					twoPasses = false;
 
 					string errorMessage = __FILEREF__ + "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
@@ -3880,6 +3887,7 @@ void FFMpeg::introOutroOverlay(
 				throw e;
 			}
 		}
+		*/
 
 		{
 			char	sUtcTimestamp [64];
@@ -3925,59 +3933,68 @@ ffmpeg \
 		-pix_fmt yuv420p \
 		output.mp4 -y
 */
+		string ffmpegFilterComplex = "-filter_complex ";
 		{
-			string ffmpegFilterComplex = "-filter_complex ";
+			long introStartOverlayInSeconds =
+				(introVideoDurationInMilliSeconds - (introOverlayDurationInSeconds * 1000)) / 1000;
+			long introVideoDurationInSeconds = introVideoDurationInMilliSeconds / 1000;
+			long outroStartOverlayInSeconds = introStartOverlayInSeconds +
+				(mainVideoDurationInMilliSeconds / 1000) - outroOverlayDurationInSeconds;
+
+			if (introStartOverlayInSeconds < 0 || outroStartOverlayInSeconds < 0)
 			{
-				long introStartOverlayInSeconds =
-					(introVideoDurationInMilliSeconds - (introOverlayDurationInSeconds * 1000)) / 1000;
-				long introVideoDurationInSeconds = introVideoDurationInMilliSeconds / 1000;
-				long outroStartOverlayInSeconds = introStartOverlayInSeconds +
-					(mainVideoDurationInMilliSeconds / 1000) - outroOverlayDurationInSeconds;
+				string errorMessage = __FILEREF__ + "introOutroOverlay: wrong durations"
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", introStartOverlayInSeconds: " + to_string(introStartOverlayInSeconds)
+					+ ", outroStartOverlayInSeconds: " + to_string(outroStartOverlayInSeconds)
+				;
+				_logger->error(errorMessage);
 
-				if (introStartOverlayInSeconds < 0 || outroStartOverlayInSeconds < 0)
-				{
-					string errorMessage = __FILEREF__ + "introOutroOverlay: wrong durations"
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", introStartOverlayInSeconds: " + to_string(introStartOverlayInSeconds)
-						+ ", outroStartOverlayInSeconds: " + to_string(outroStartOverlayInSeconds)
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				if (muteIntroOverlay)
-					ffmpegFilterComplex += "[0:a]volume=enable='between(t," +
-						to_string(introStartOverlayInSeconds) + "," +
-						to_string(introVideoDurationInSeconds) + ")':volume=0[intro_overlay_muted];";
-				ffmpegFilterComplex += "[1:v]tpad=start_duration=" + to_string(introStartOverlayInSeconds) +
-					":start_mode=add:color=white[main_video_moved];";
-				ffmpegFilterComplex += "[1:a]adelay=delays=" + to_string(introStartOverlayInSeconds) +
-					"s:all=1[main_audio_moved];";
-				ffmpegFilterComplex += "[2:v]setpts=PTS+" + to_string(outroStartOverlayInSeconds) +
-					"/TB[outro_video_moved];";
-				ffmpegFilterComplex += "[2:a]";
-				if (muteOutroOverlay)
-					ffmpegFilterComplex += "volume=enable='between(t,0," +
-						to_string(outroOverlayDurationInSeconds) + ")':volume=0,";
-				ffmpegFilterComplex += "adelay=delays=" + to_string(outroStartOverlayInSeconds) +
-					"s:all=1[outro_audio_overlayMuted_and_moved];";
-				ffmpegFilterComplex +=
-					"[main_video_moved][0:v]overlay=eof_action=pass[overlay_intro_main];";
-				ffmpegFilterComplex += "[overlay_intro_main][outro_video_moved]overlay=enable='gte(t," +
-					to_string(outroStartOverlayInSeconds) + ")'[final_video];";
-				ffmpegFilterComplex += "[main_audio_moved]";
-				if (muteIntroOverlay)
-					ffmpegFilterComplex += "[intro_overlay_muted]";
-				else
-					ffmpegFilterComplex += "[0:a]";
-				ffmpegFilterComplex += "[outro_audio_overlayMuted_and_moved]amix=inputs=3[final_audio]";
+				throw runtime_error(errorMessage);
 			}
 
-			vector<string> ffmpegArgumentList;
-			ostringstream ffmpegArgumentListStream;
-            {
+			if (muteIntroOverlay)
+				ffmpegFilterComplex += "[0:a]volume=enable='between(t," +
+					to_string(introStartOverlayInSeconds) + "," +
+					to_string(introVideoDurationInSeconds) + ")':volume=0[intro_overlay_muted];";
+			ffmpegFilterComplex += "[1:v]tpad=start_duration=" + to_string(introStartOverlayInSeconds) +
+				":start_mode=add:color=white[main_video_moved];";
+			ffmpegFilterComplex += "[1:a]adelay=delays=" + to_string(introStartOverlayInSeconds) +
+				"s:all=1[main_audio_moved];";
+			ffmpegFilterComplex += "[2:v]setpts=PTS+" + to_string(outroStartOverlayInSeconds) +
+				"/TB[outro_video_moved];";
+			ffmpegFilterComplex += "[2:a]";
+			if (muteOutroOverlay)
+				ffmpegFilterComplex += "volume=enable='between(t,0," +
+					to_string(outroOverlayDurationInSeconds) + ")':volume=0,";
+			ffmpegFilterComplex += "adelay=delays=" + to_string(outroStartOverlayInSeconds) +
+				"s:all=1[outro_audio_overlayMuted_and_moved];";
+			ffmpegFilterComplex +=
+				"[main_video_moved][0:v]overlay=eof_action=pass[overlay_intro_main];";
+			ffmpegFilterComplex += "[overlay_intro_main][outro_video_moved]overlay=enable='gte(t," +
+				to_string(outroStartOverlayInSeconds) + ")'[final_video];";
+			ffmpegFilterComplex += "[main_audio_moved]";
+			if (muteIntroOverlay)
+				ffmpegFilterComplex += "[intro_overlay_muted]";
+			else
+				ffmpegFilterComplex += "[0:a]";
+			ffmpegFilterComplex += "[outro_audio_overlayMuted_and_moved]amix=inputs=3[final_audio]";
+		}
+
+		vector<string> ffmpegArgumentList;
+		ostringstream ffmpegArgumentListStream;
+
+		if (ffmpegEncodingParameters._httpStreamingFileFormat != "")
+		{
+		}
+		else
+		{
+			if (_twoPasses)
+			{
+			}
+			else
+			{
 				ffmpegArgumentList.push_back("ffmpeg");
 				// global options
 				ffmpegArgumentList.push_back("-y");
@@ -3998,29 +4015,30 @@ ffmpeg \
 				ffmpegArgumentList.push_back("-map");
 				ffmpegArgumentList.push_back("[final_audio]");
 
-				// encoding parameters
-				for (string parameter: ffmpegEncodingProfileArgumentList)
-					FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
-
 				ffmpegArgumentList.push_back("-pix_fmt");
 				// yuv420p: the only option for broad compatibility
 				ffmpegArgumentList.push_back("yuv420p");
 
-				ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
+				ffmpegEncodingParameters.applyEncoding(
+					-1, // -1: NO two passes
+					true,   // outputFileToBeAdded
+					false,	// videoResolutionToBeAdded
+					ffmpegArgumentList  // out
+				);
 
-                try
-                {
-                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+				try
+				{
+					chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
 							ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-                    _logger->info(__FILEREF__ + "introOutroOverlay: Executing ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+					_logger->info(__FILEREF__ + "introOutroOverlay: Executing ffmpeg command"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                    );
+					);
 
 					bool redirectionStdOutput = true;
 					bool redirectionStdError = true;
@@ -4032,40 +4050,40 @@ ffmpeg \
 						pChildPid, &iReturnedStatus);
 					*pChildPid = 0;
 					if (iReturnedStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "introOutroOverlay: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", iReturnedStatus: " + to_string(iReturnedStatus)
+					{
+						string errorMessage = __FILEREF__ + "introOutroOverlay: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        ;
-                        _logger->error(errorMessage);
+						;
+						_logger->error(errorMessage);
 
 						// to hide the ffmpeg staff
-                        errorMessage = __FILEREF__ + "introOutroOverlay command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        ;
-                        throw runtime_error(errorMessage);
-                    }
+						errorMessage = __FILEREF__ + "introOutroOverlay command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+						throw runtime_error(errorMessage);
+					}
 
-                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-                    _logger->info(__FILEREF__ + "introOutroOverlay: Executed ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+					_logger->info(__FILEREF__ + "introOutroOverlay: Executed ffmpeg command"
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
+						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
 							to_string(chrono::duration_cast<chrono::seconds>(
 							endFfmpegCommand - startFfmpegCommand).count()) + "@"
-                    );
-                }
-                catch(runtime_error e)
-                {
+					);
+				}
+				catch(runtime_error e)
+				{
 					*pChildPid = 0;
 
-                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+					string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                           _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
@@ -4085,49 +4103,49 @@ ffmpeg \
 							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
 							+ ", e.what(): " + e.what()
 						;
-                    _logger->error(errorMessage);
+					_logger->error(errorMessage);
 
-                    _logger->info(__FILEREF__ + "Remove"
-                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                    fs::remove_all(_outputFfmpegPathFileName);
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9)	// 9 means: SIGKILL
 						throw FFMpegEncodingKilledByUser();
 					else
 						throw e;
-                }
+				}
 
-                _logger->info(__FILEREF__ + "Remove"
-                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
-                fs::remove_all(_outputFfmpegPathFileName);
-            }
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				fs::remove_all(_outputFfmpegPathFileName);
+			}
 
-            _logger->info(__FILEREF__ + "introOutroOverlay file generated"
+			_logger->info(__FILEREF__ + "introOutroOverlay file generated"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            );
+			);
 
-            unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
+			unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
-            if (ulFileSize == 0)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, pictureInPicture encoded file size is 0"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                ;
-                _logger->error(errorMessage);
+			if (ulFileSize == 0)
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, pictureInPicture encoded file size is 0"
+                       + ", encodingJobKey: " + to_string(encodingJobKey)
+                       + ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				;
+				_logger->error(errorMessage);
 
 				// to hide the ffmpeg staff
-                errorMessage = __FILEREF__ + "command failed, pictureInPicture encoded file size is 0"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                ;
-                throw runtime_error(errorMessage);
-            }
-        }        
-    }
+				errorMessage = __FILEREF__ + "command failed, pictureInPicture encoded file size is 0"
+                       + ", encodingJobKey: " + to_string(encodingJobKey)
+                       + ", ingestionJobKey: " + to_string(ingestionJobKey)
+				;
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
     catch(FFMpegEncodingKilledByUser e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg introOutroOverlay failed"

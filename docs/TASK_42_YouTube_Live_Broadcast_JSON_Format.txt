@@ -41,7 +41,7 @@
 		"configurationLabel": "",
 
 		// mandatory in case SourceType is MediaItem
-		"References": [
+		"references": [
 			// mandatory. One or more References to identify the media to be broadcast.
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key

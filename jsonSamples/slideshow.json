@@ -8,13 +8,13 @@
         "label": "my label",
         "type": "Slideshow",
         "parameters": {
-            "References": [
-                { "ReferenceMediaItemKey": 321 },
-                { "ReferenceMediaItemKey": 322 },
-                { "ReferenceMediaItemKey": 327 },
-                { "ReferenceMediaItemKey": 329 },
-                { "ReferenceMediaItemKey": 330 },
-                { "ReferenceMediaItemKey": 332 }
+            "references": [
+                { "mediaItemKey": 321 },
+                { "mediaItemKey": 322 },
+                { "mediaItemKey": 327 },
+                { "mediaItemKey": 329 },
+                { "mediaItemKey": 330 },
+                { "mediaItemKey": 332 }
             ],
             "DurationOfEachSlideInSeconds": 5,
             "OutputFrameRate": 30,

@@ -8,7 +8,7 @@
 		"label": "my label",
 		"type": "Motion-JPEG-by-Periodical-Frames",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "mediaItemKey": 11 }
 			],
 			"StartTimeInSeconds": 1.5,

@@ -5,7 +5,7 @@
 		"label": "my label",
 		"type": "Email-Notification",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "ingestionJobKey": 11 }
 			],
 			"configurationLabel": "My email"

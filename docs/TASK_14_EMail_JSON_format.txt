@@ -7,7 +7,7 @@
 
 	"parameters": {
 		// optional
-		"References": [
+		"references": [
 			// optional.
 			// The System will automatically add the ingestionJobKey item
 			//		using the key of the ingestion job by which this EMail depend on.

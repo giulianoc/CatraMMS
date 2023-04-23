@@ -72,13 +72,13 @@ public:
     FFMpegEncodingParameters(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
-		string encodedStagingAssetPathName,
 		Json::Value encodingProfileDetailsRoot,
 		bool isVideo,   // if false it means is audio
-		Json::Value videoTracksRoot,
-		Json::Value audioTracksRoot,
 		int videoTrackIndexToBeUsed,
 		int audioTrackIndexToBeUsed,
+		string encodedStagingAssetPathName,
+		Json::Value videoTracksRoot,
+		Json::Value audioTracksRoot,
 
 		bool& twoPasses,	// out
 
@@ -92,6 +92,13 @@ public:
 		// 0: YES two passes, first step
 		// 1: YES two passes, second step
 		int stepNumber,
+
+		// in alcuni casi i parametro del file di output non deve essere aggiunto, ad esempio                     
+		// per il LiveRecorder o LiveProxy o nei casi in cui il file di output viene deciso                       
+		// dal chiamante senza seguire il fileFormat dell'encoding profile                                        
+		bool outputFileToBeAdded,                                                                                 
+
+		bool videoResolutionToBeAdded,
 
 		// out (in append)
 		vector<string>& ffmpegArgumentList

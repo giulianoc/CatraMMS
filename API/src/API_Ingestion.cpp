@@ -636,7 +636,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
     Json::Value referencesRoot(Json::arrayValue);
     if (parametersSectionPresent)
     {
-        field = "References";
+        field = "references";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
             referencesRoot = parametersRoot[field];
@@ -749,7 +749,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
                 
                 referencesRoot[referenceIndex] = referenceRoot;
                 
-                field = "References";
+                field = "references";
                 parametersRoot[field] = referencesRoot;
             
                 referencesChanged = true;
@@ -886,7 +886,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 		}
 
         field = "parameters";
-        string arrayField = "References";
+        string arrayField = "references";
         parametersRoot[arrayField] = referencesRoot;
         if (!parametersSectionPresent)
         {
@@ -993,7 +993,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 		string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
 		string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
-		string referencesField = "References";
+		string referencesField = "references";
 
 		if (parametersSectionPresent && 
 			(
@@ -1131,7 +1131,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 							Json::Value newReferencesRoot(Json::arrayValue);
 							newReferencesRoot.append(multiReferencesRoot[referenceIndex]);
 
-							field = "References";
+							field = "references";
 							newParametersRoot[field] = newReferencesRoot;
 						}
 
@@ -1187,7 +1187,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 						Json::Value newReferencesRoot(Json::arrayValue);
 						newReferencesRoot.append(multiReferencesRoot[referenceIndex]);
 
-						field = "References";
+						field = "references";
 						newParametersRoot[field] = newReferencesRoot;
 					}
 
@@ -1251,7 +1251,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		// In case we will have more than one References,
 		//  we will create a group of tasks and add there the Face-Recognition task
 
-		string referencesField = "References";
+		string referencesField = "references";
 
 		if (parametersSectionPresent
 			&& (JSONUtils::isMetadataPresent(parametersRoot, referencesField)
@@ -1287,7 +1287,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 					Json::Value newReferencesRoot(Json::arrayValue);
 					newReferencesRoot.append(multiReferencesRoot[referenceIndex]);
 
-					field = "References";
+					field = "references";
 					newParametersRoot[field] = newReferencesRoot;
 				}
 

@@ -4,7 +4,7 @@
 	"type": "Post-On-Facebook",
 
 	"parameters": {
-		"References": [
+		"references": [
 			{ "mediaItemKey": 11 }
 		],
 		"configurationLabel": "My Facebook Conf",

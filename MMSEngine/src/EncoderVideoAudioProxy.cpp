@@ -9366,7 +9366,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
         crossReferenceRoot[field] =
 			MMSEngineDBFacade::toString(crossReferenceType);
 
-		field = "MediaItemKey";
+		field = "mediaItemKey";
         crossReferenceRoot[field] = faceOfVideoMediaItemKey;
 
 		field = "crossReference";
@@ -9383,7 +9383,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 		crossReferenceRoot[field] =
 			MMSEngineDBFacade::toString(crossReferenceType);
 
-		field = "MediaItemKey";
+		field = "mediaItemKey";
 		crossReferenceRoot[field] = cutOfVideoMediaItemKey;
 
 		Json::Value crossReferenceParametersRoot;

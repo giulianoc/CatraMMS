@@ -8,7 +8,7 @@
 		"label": "my label",
 		"type": "Change-File-Format",
 		"parameters": {
-			"References": [
+			"references": [
 				{ "mediaItemKey": 12 }
 			],
 			OutputFileFormat="mp4"

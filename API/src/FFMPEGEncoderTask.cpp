@@ -1010,7 +1010,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 				localModulation = "qpsk";
 			else
 			{
-				string errorMessage = __FILEREF__ + "unknown modulation"
+				string errorMessage = __FILEREF__ + "createOrUpdateTVDvbLastConfigurationFile. Unknown modulation"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", tvModulation: " + tvModulation
@@ -1023,7 +1023,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 
 		if (!fs::exists(_tvChannelConfigurationDirectory))
 		{
-			_logger->info(__FILEREF__ + "Create directory"
+			_logger->info(__FILEREF__ + "createOrUpdateTVDvbLastConfigurationFile. Create directory"
 				+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(encodingJobKey)
 				+ ", _tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
@@ -1075,7 +1075,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
             ifConfigurationFile.close();
 			if (!changedFileFound)	// .txt found
 			{
-				_logger->info(__FILEREF__ + "Remove dvblast configuration file to create the new one"
+				_logger->info(__FILEREF__ + "createOrUpdateTVDvbLastConfigurationFile. Remove dvblast configuration file to create the new one"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".txt"
@@ -1093,16 +1093,17 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 			+ to_string(tvVideoPid) + "," + to_string(tvAudioItalianPid)
 		;
 
-		_logger->info(__FILEREF__ + "Creation dvblast configuration file"
+		_logger->info(__FILEREF__ + "createOrUpdateTVDvbLastConfigurationFile. Creation dvblast configuration file"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"
+			+ ", newConfiguration: " + newConfiguration
 		);
 
 		ofstream ofConfigurationFile(dvblastConfigurationPathName + ".changed", ofstream::trunc);
 		if (!ofConfigurationFile)
 		{
-			string errorMessage = __FILEREF__ + "Creation dvblast configuration file failed"
+			string errorMessage = __FILEREF__ + "createOrUpdateTVDvbLastConfigurationFile. Creation dvblast configuration file failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", dvblastConfigurationPathName: " + dvblastConfigurationPathName + ".changed"

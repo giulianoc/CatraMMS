@@ -5562,7 +5562,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 					targetMediaItemKey = mediaItemKey;
 
-					field = "MediaItemKey";
+					field = "mediaItemKey";
 					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
 				}
 				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
@@ -5571,14 +5571,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 					targetMediaItemKey = mediaItemKey;
 
-					field = "MediaItemKey";
+					field = "mediaItemKey";
 					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
 				}
 				else
 				{
 					sourceMediaItemKey = mediaItemKey;
 
-					field = "MediaItemKey";
+					field = "mediaItemKey";
 					targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
 				}
 

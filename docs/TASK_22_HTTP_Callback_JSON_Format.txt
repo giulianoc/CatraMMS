@@ -7,7 +7,7 @@
 
 	"parameters": {
 		// mandatory
-		"References": [
+		"references": [
 			// mandatory. One or more Reference needed to identify the videos (mediaItemKeys) or
 			// the profiles (physicalPathKey) to be notified through the HTTP Callback.
 			// In case this task is placed inside an onSuccess event, 
