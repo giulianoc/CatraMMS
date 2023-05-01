@@ -34,6 +34,7 @@
 #include "GenerateFrames.h"
 #include "SlideShow.h"
 #include "VideoSpeed.h"
+#include "AddSilentAudio.h"
 #include "PictureInPicture.h"
 #include "IntroOutroOverlay.h"
 #include "CutFrameAccurate.h"
@@ -517,6 +518,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
+	/*
     else if (method == "encodeContent")
     {
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
@@ -1543,7 +1545,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
-    else if (method == "videoSpeed")
+	*/
+    else if (method == "videoSpeed"
+		|| method == "encodeContent"
+		|| method == "cutFrameAccurate"
+		|| method == "overlayImageOnVideo"
+		|| method == "overlayTextOnVideo"
+		|| method == "generateFrames"
+		|| method == "slideShow"
+		|| method == "addSilentAudio"
+		|| method == "pictureInPicture"
+		|| method == "introOutroOverlay"
+	)
     {
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
         if (ingestionJobKeyIt == queryParameters.end())
@@ -1653,14 +1666,90 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 
-				_logger->info(__FILEREF__ + "Creating videoSpeed thread"
+				_logger->info(__FILEREF__ + "Creating " + method + " thread"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 				);
-				thread videoSpeedThread(&FFMPEGEncoder::videoSpeedThread,
-					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				videoSpeedThread.detach();
+				if (method == "videoSpeed")
+				{
+					thread videoSpeedThread(&FFMPEGEncoder::videoSpeedThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					videoSpeedThread.detach();
+				}
+				else if (method == "encodeContent")
+				{
+					thread encodeContentThread(&FFMPEGEncoder::encodeContentThread, this,
+						selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					encodeContentThread.detach();
+				}
+				else if (method == "cutFrameAccurate")
+				{
+					thread cutFrameAccurateThread(&FFMPEGEncoder::cutFrameAccurateThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					cutFrameAccurateThread.detach();
+				}
+				else if (method == "overlayImageOnVideo")
+				{
+					thread overlayImageOnVideoThread(&FFMPEGEncoder::overlayImageOnVideoThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					overlayImageOnVideoThread.detach();
+				}
+				else if (method == "overlayTextOnVideo")
+				{
+					thread overlayTextOnVideoThread(&FFMPEGEncoder::overlayTextOnVideoThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					overlayTextOnVideoThread.detach();
+				}
+				else if (method == "addSilentAudio")
+				{
+					thread addSilentAudioThread(&FFMPEGEncoder::addSilentAudioThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					addSilentAudioThread.detach();
+				}
+				else if (method == "slideShow")
+				{
+					thread slideShowThread(&FFMPEGEncoder::slideShowThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					slideShowThread.detach();
+				}
+				else if (method == "generateFrames")
+				{
+					thread generateFramesThread(&FFMPEGEncoder::generateFramesThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					generateFramesThread.detach();
+				}
+				else if (method == "pictureInPicture")
+				{
+					thread pictureInPictureThread(&FFMPEGEncoder::pictureInPictureThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					pictureInPictureThread.detach();
+				}
+				else if (method == "introOutroOverlay")
+				{
+					thread introOutroOverlayThread(&FFMPEGEncoder::introOutroOverlayThread,
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+					introOutroOverlayThread.detach();
+				}
+				else
+				{
+					selectedEncoding->_available = true;
+					selectedEncoding->_childPid = 0;	// not running
+
+					string errorMessage = string("wrong method")
+						+ ", method: " + method
+					;
+
+					_logger->error(__FILEREF__ + errorMessage
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					);
+
+					sendError(request, 500, errorMessage);
+
+					// throw runtime_error(noEncodingAvailableMessage);
+					return;
+				}
 
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
@@ -1669,9 +1758,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
 
-				_logger->error(__FILEREF__ + "videoSpeedThread failed"
+				_logger->error(__FILEREF__ + method + " failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", requestBody: " + requestBody
 					+ ", e.what(): " + e.what()
 				);
@@ -1686,7 +1775,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 
         try
-        {            
+        {
 			Json::Value responseBodyRoot;
 			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
@@ -1714,6 +1803,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
+	/*
     else if (method == "pictureInPicture")
     {
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
@@ -2056,6 +2146,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
+	*/
     else if (method == "liveRecorder")
     {
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
@@ -3614,6 +3705,43 @@ void FFMPEGEncoder::videoSpeedThread(
 		VideoSpeed videoSpeed(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		videoSpeed.encodeContent(requestBody);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+		_logger->error(__FILEREF__ + e.what());
+    }
+    catch(runtime_error e)
+    {
+		_logger->error(__FILEREF__ + e.what());
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+		_logger->error(__FILEREF__ + e.what());
+
+        // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
+        // throw runtime_error(errorMessage);
+    }
+}
+
+void FFMPEGEncoder::addSilentAudioThread(
+        // FCGX_Request& request,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+        int64_t ingestionJobKey,
+        int64_t encodingJobKey,
+        string requestBody)
+{
+    try
+    {
+		AddSilentAudio addSilentAudio(encoding, ingestionJobKey, encodingJobKey,                                    
+			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		addSilentAudio.encodeContent(requestBody);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{

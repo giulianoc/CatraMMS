@@ -17,13 +17,6 @@
 #include "AWSSigner.h"
 #include <regex>
 #include <fstream>
-/*
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-*/
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/System.h"
 #include "catralibraries/StringUtils.h"
@@ -187,6 +180,10 @@ void EncoderVideoAudioProxy::init(
     _ffmpegVideoSpeedURI = JSONUtils::asString(_configuration["ffmpeg"], "videoSpeedURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->videoSpeedURI: " + _ffmpegVideoSpeedURI
+    );
+    _ffmpegAddSilentAudioURI = JSONUtils::asString(_configuration["ffmpeg"], "addSilentAudioURI", "");
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->addSilentAudioURI: " + _ffmpegAddSilentAudioURI
     );
     _ffmpegPictureInPictureURI = JSONUtils::asString(_configuration["ffmpeg"], "pictureInPictureURI", "");
     _logger->info(__FILEREF__ + "Configuration item"
@@ -360,7 +357,11 @@ void EncoderVideoAudioProxy::operator()()
         {
 			int maxConsecutiveEncodingStatusFailures = 1;
 			encodeContentVideoAudio(_ffmpegVideoSpeedURI, maxConsecutiveEncodingStatusFailures);
-			// killedByUser = videoSpeed();
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::AddSilentAudio)
+        {
+			int maxConsecutiveEncodingStatusFailures = 1;
+			encodeContentVideoAudio(_ffmpegAddSilentAudioURI, maxConsecutiveEncodingStatusFailures);
         }
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture)
 		{
@@ -1078,6 +1079,15 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed)
         {
             processVideoSpeed(killedByUser);     
+            
+			if (_currentUsedFFMpegExternalEncoder)
+				isIngestionJobCompleted = true;
+			else
+				isIngestionJobCompleted = false;	// file has still to be ingested
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::AddSilentAudio)
+        {
+            processAddSilentAudio(killedByUser);
             
 			if (_currentUsedFFMpegExternalEncoder)
 				isIngestionJobCompleted = true;
@@ -3266,6 +3276,145 @@ void EncoderVideoAudioProxy::processVideoSpeed(bool killedByUser)
             + ", sourceFileName: " + sourceFileName
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "processVideoSpeed failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", e.what(): " + e.what()
+        );
+                
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "processVideoSpeed failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+        );
+                
+        throw e;
+    }
+}
+
+void EncoderVideoAudioProxy::processAddSilentAudio(bool killedByUser)
+{
+	if (_currentUsedFFMpegExternalEncoder)
+	{
+        _logger->info(__FILEREF__ + "The encoder selected is external, processVideoSpeed has nothing to do"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+        );
+
+		return;
+	}
+
+	string stagingEncodedAssetPathName;
+	try
+    {
+		Json::Value sourcesRoot = _encodingItem->_encodingParametersRoot["sources"];                                          
+
+		for(int sourceIndex = 0; sourceIndex < sourcesRoot.size(); sourceIndex++)
+		{
+			Json::Value sourceRoot = sourcesRoot[sourceIndex];
+
+			stagingEncodedAssetPathName = JSONUtils::asString(sourceRoot,
+				"encodedNFSStagingAssetPathName", "");
+			if (stagingEncodedAssetPathName == "")
+			{
+				string errorMessage = __FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
+			if (extensionIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No extention find in the asset file name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string fileFormat = stagingEncodedAssetPathName.substr(extensionIndex + 1);
+
+			size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
+			if (fileNameIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
+
+			if (!fs::exists(stagingEncodedAssetPathName))
+			{
+				string errorMessage = __FILEREF__ + "stagingEncodedAssetPathName is not found"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+				_logger->error(errorMessage);
+
+				continue;
+			}
+
+			int64_t faceOfVideoMediaItemKey = -1;
+			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
+				fileFormat, faceOfVideoMediaItemKey,
+				-1, -1, -1, // cutOfVideoMediaItemKey
+				_encodingItem->_ingestedParametersRoot);
+    
+			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+			localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+			localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+			localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+			localAssetIngestionEvent->setExternalReadOnlyStorage(false);
+			localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+			localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
+			localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
+			localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+			localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+			localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+
+			localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+			shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+			_multiEventsSet->addEvent(event);
+
+			_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", sourceFileName: " + sourceFileName
+				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+		}
     }
     catch(runtime_error e)
     {

@@ -45,6 +45,8 @@ private:
 	int						_videoTrackIndexToBeUsed;
 	int						_audioTrackIndexToBeUsed;
 
+	bool					_initialized;
+
 	string					_ffmpegHttpStreamingParameter;
 
 	string					_ffmpegFileFormatParameter;

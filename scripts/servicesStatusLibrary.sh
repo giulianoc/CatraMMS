@@ -452,7 +452,7 @@ mms_encoder_service_running()
 		else
 			failuresNumber=0
 		fi
-		maxFailuresNumber=1000
+		maxFailuresNumber=5
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
 		notify "$(hostname)" "alarm_mms_encoder_service_running" "alarm_mms_encoder_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL, failuresNumber: $failuresNumber/$maxFailuresNumber"
 

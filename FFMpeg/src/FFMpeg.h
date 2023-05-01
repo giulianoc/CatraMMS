@@ -192,6 +192,17 @@ public:
         int64_t ingestionJobKey,
 		pid_t* pChildPid);
 
+	void silentAudio(
+		string videoAssetPathName,
+		int64_t videoDurationInMilliSeconds,
+		string addType,	// entireTrack, begin, end
+		int seconds,
+		Json::Value encodingProfileDetailsRoot,
+		string stagingEncodedAssetPathName,
+		int64_t encodingJobKey,
+		int64_t ingestionJobKey,
+		pid_t* pChildPid);
+
     int getEncodingProgress();
 
 	bool nonMonotonousDTSInOutputLog();
@@ -410,7 +421,8 @@ private:
 		LiveProxy						= 17,
 		LiveGrid						= 18,
 		ChangeFileFormat				= 19,
-		StreamingToFile					= 20
+		StreamingToFile					= 20,
+		SilentAudio						= 21
 	};
 	static const char* toString(const APIName& apiName)
 	{
@@ -458,6 +470,8 @@ private:
 				return "ChangeFileFormat";
 			case APIName::StreamingToFile:
 				return "StreamingToFile";
+			case APIName::SilentAudio:
+				return "SilentAudio";
 			default:
 				throw runtime_error(string("Wrong APIName"));
 		}
@@ -510,6 +524,8 @@ private:
 			return APIName::ChangeFileFormat;
 		else if (lowerCase == "streamingtofile")
 			return APIName::StreamingToFile;
+		else if (lowerCase == "silentaudio")
+			return APIName::SilentAudio;
 		else
 			throw runtime_error(string("Wrong APIName")
 				+ ", current apiName: " + apiName

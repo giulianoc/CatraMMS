@@ -2813,6 +2813,107 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::AddSilentAudio)
+                        {
+                            try
+                            {
+                                manageAddSilentAudioTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageAddSilentAudioTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageAddSilentAudioTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage
+                                        );
+								}
+								catch(runtime_error& re)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + re.what()
+									);
+								}
+								catch(exception ex)
+								{
+									_logger->info(__FILEREF__ + "Update IngestionJob failed"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", IngestionStatus: " + "End_IngestionFailure"
+										+ ", errorMessage: " + ex.what()
+									);
+								}
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame
 							|| ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
 							|| ingestionType == MMSEngineDBFacade::IngestionType::IFrames
@@ -20866,6 +20967,169 @@ void MMSEngineProcessor::manageVideoSpeedTask(
     {
         _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageAddSilentAudioTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
+			dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "Wrong media number to be encoded"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        string field = "encodingPriority";
+        if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+            encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
+				workspace->_maxEncodingPriority);
+        else
+            encodingPriority = MMSEngineDBFacade::toEncodingPriority(
+					JSONUtils::asString(parametersRoot, field, ""));
+
+		int64_t encodingProfileKey = -1;
+		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		{
+			// This task shall contain EncodingProfileKey or EncodingProfileLabel.
+			// We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
+			//  having just EncodingProfileKey        
+
+			string keyField = "encodingProfileKey";
+			string labelField = "encodingProfileLabel";
+			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			{
+				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+			}
+			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			{
+				MMSEngineDBFacade::ContentType referenceContentType;
+
+				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
+
+				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
+					workspace->_workspaceKey, referenceContentType, encodingProfileLabel,
+					false);
+			}
+
+			if (encodingProfileKey != -1)
+			{
+				string jsonEncodingProfile;
+
+				tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology,
+					string> encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
+						workspace->_workspaceKey, encodingProfileKey);
+				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
+
+				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+			}
+		}
+
+        Json::Value sourcesRoot(Json::arrayValue);
+		int dependencyIndex = 0;
+		for(tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool> dependency: dependencies)
+		{
+			MMSEngineDBFacade::ContentType referenceContentType;
+			int64_t sourceMediaItemKey;
+			int64_t sourcePhysicalPathKey;
+			string sourceAssetPathName;
+			string sourceRelativePath;
+			string sourceFileName;
+			string sourceFileExtension;
+			int64_t sourceDurationInMilliSeconds;
+			string sourcePhysicalDeliveryURL;
+			string sourceTranscoderStagingAssetPathName;
+			bool stopIfReferenceProcessingError;
+			tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string,
+				string, string, int64_t, string, string, bool> dependencyInfo =
+				processDependencyInfo(workspace, ingestionJobKey, dependency);
+			tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType,
+				sourceAssetPathName, sourceRelativePath, sourceFileName, sourceFileExtension,
+				sourceDurationInMilliSeconds, sourcePhysicalDeliveryURL,
+				sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError) = dependencyInfo;
+
+			string encodedFileName = to_string(ingestionJobKey) + "_" + to_string(dependencyIndex++)
+				+ "_addSilentAudio"
+				+  (encodingProfileDetailsRoot == Json::nullValue ? sourceFileExtension :
+					getEncodedFileExtensionByEncodingProfile(encodingProfileDetailsRoot));
+
+			string encodedTranscoderStagingAssetPathName;	// used in case of external encoder
+			fs::path encodedNFSStagingAssetPathName;
+			{
+				bool removeLinuxPathIfExist = false;
+				bool neededForTranscoder = true;
+
+				encodedTranscoderStagingAssetPathName = _mmsStorage->getStagingAssetPathName(
+					neededForTranscoder,
+					workspace->_directoryName,	// workspaceDirectoryName
+					to_string(ingestionJobKey),					// directoryNamePrefix
+					"/",										// relativePath,
+					// as specified by doc (TASK_01_Add_Content_JSON_Format.txt),
+					// in case of hls and external encoder (binary is ingested through PUSH),
+					// the directory inside the tar.gz has to be 'content'
+					encodedFileName,	// content
+					-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+					-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+					removeLinuxPathIfExist);
+
+				encodedNFSStagingAssetPathName =
+					_mmsStorage->getWorkspaceIngestionRepository(workspace) / encodedFileName;
+			}
+	
+			Json::Value sourceRoot;
+			sourceRoot["stopIfReferenceProcessingError"] = stopIfReferenceProcessingError;
+			sourceRoot["sourceMediaItemKey"] = sourceMediaItemKey;
+			sourceRoot["sourcePhysicalPathKey"] = sourcePhysicalPathKey;
+			sourceRoot["sourceAssetPathName"] = sourceAssetPathName;
+			sourceRoot["sourceDurationInMilliSeconds"] = sourceDurationInMilliSeconds;
+			sourceRoot["sourceFileExtension"] = sourceFileExtension;
+			sourceRoot["sourcePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
+			sourceRoot["sourceTranscoderStagingAssetPathName"] = sourceTranscoderStagingAssetPathName;
+			sourceRoot["encodedTranscoderStagingAssetPathName"] = encodedTranscoderStagingAssetPathName;
+			sourceRoot["encodedNFSStagingAssetPathName"] = encodedNFSStagingAssetPathName.string();
+
+			sourcesRoot.append(sourceRoot);
+		}
+
+		_mmsEngineDBFacade->addEncoding_AddSilentAudio (workspace, ingestionJobKey,
+			sourcesRoot, encodingProfileKey, encodingProfileDetailsRoot,
+			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
+			encodingPriority);
+    }
+    catch(runtime_error e)
+    {
+		_logger->error(__FILEREF__ + "manageAddSilentAudioTask failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", e.what(): " + e.what()
+		);
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageAddSilentAudioTask failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         

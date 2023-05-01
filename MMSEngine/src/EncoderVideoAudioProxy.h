@@ -154,6 +154,7 @@ private:
     // string								_ffmpegAwaitingTheBeginningURI;
     string                              _ffmpegLiveGridURI;
     string                              _ffmpegVideoSpeedURI;
+    string                              _ffmpegAddSilentAudioURI;
     string                              _ffmpegPictureInPictureURI;
     string								_ffmpegIntroOutroOverlayURI;
     string								_ffmpegCutFrameAccurateURI;
@@ -229,6 +230,8 @@ private:
     void processLiveGrid(bool killedByUser);
 
     void processVideoSpeed(bool killedByUser);    
+
+    void processAddSilentAudio(bool killedByUser);    
 
     void processPictureInPicture(bool killedByUser);    
 

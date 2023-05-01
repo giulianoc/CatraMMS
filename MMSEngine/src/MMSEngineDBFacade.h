@@ -388,7 +388,8 @@ public:
 		Countdown			= 13,
 		IntroOutroOverlay	= 14,
 		CutFrameAccurate	= 15,
-		VODProxy			= 16
+		VODProxy			= 16,
+		AddSilentAudio		= 17
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -428,6 +429,8 @@ public:
                 return "CutFrameAccurate";
             case EncodingType::VODProxy:
                 return "VODProxy";
+            case EncodingType::AddSilentAudio:
+                return "AddSilentAudio";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -473,6 +476,8 @@ public:
             return EncodingType::CutFrameAccurate;
         else if (lowerCase == "vodproxy")
             return EncodingType::VODProxy;
+        else if (lowerCase == "addsilentaudio")
+            return EncodingType::AddSilentAudio;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -711,6 +716,7 @@ public:
         VODProxy				= 31,
         YouTubeLiveBroadcast	= 32,
         FacebookLiveBroadcast	= 33,
+        AddSilentAudio			= 34,
 
         EmailNotification       = 60,
         MediaCrossReference		= 61,
@@ -793,6 +799,8 @@ public:
 				return "YouTube-Live-Broadcast";
 			case IngestionType::FacebookLiveBroadcast:
 				return "Facebook-Live-Broadcast";
+			case IngestionType::AddSilentAudio:
+				return "Add-Silent-Audio";
 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -888,6 +896,8 @@ public:
             return IngestionType::YouTubeLiveBroadcast;
         else if (lowerCase == "facebook-live-broadcast")
             return IngestionType::FacebookLiveBroadcast;
+        else if (lowerCase == "add-silent-audio")
+            return IngestionType::AddSilentAudio;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -1854,6 +1864,13 @@ public:
 		string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,                                  
 		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 		string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
+		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
+		EncodingPriority encodingPriority);
+
+	void addEncoding_AddSilentAudio (
+		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+		Json::Value sourcesRoot,
+		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 		string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 		EncodingPriority encodingPriority);
 

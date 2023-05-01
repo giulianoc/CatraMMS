@@ -54,6 +54,7 @@ SET (SOURCES_FFMPEGENCODER
 	GenerateFrames.cpp
 	SlideShow.cpp
 	VideoSpeed.cpp
+	AddSilentAudio.cpp
 	PictureInPicture.cpp
 	IntroOutroOverlay.cpp
 	CutFrameAccurate.cpp

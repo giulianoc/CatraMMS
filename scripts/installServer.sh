@@ -735,7 +735,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.5330
+	catraMMSVersion=1.0.5535
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -833,12 +833,13 @@ firewall-rules()
 		ufw allow 30000:31000/tcp
 	elif [ "$moduleType" == "externalEncoder" ]; then
 		#external encoder (aws api 1, 2, aws engine 1, 2
-		ufw allow from 63.35.35.24 to any port 8088
-		ufw allow from 52.50.243.155 to any port 8088
-		ufw allow from 34.248.199.119 to any port 8088
-		ufw allow from 52.49.243.7 to any port 8088
-		ufw allow from 63.34.105.227 to any port 8088
-		ufw allow from 52.208.73.64 to any port 8088
+		ufw allow from 63.35.35.24 to any port 8088		# api 1
+		ufw allow from 52.50.243.155 to any port 8088	# api 2
+		ufw allow from 52.48.75.149 to any port 8088	# api 3
+		ufw allow from 34.248.199.119 to any port 8088	# aws engine 1
+		ufw allow from 52.49.243.7 to any port 8088		# aws engine 2
+		ufw allow from 63.34.105.227 to any port 8088	# aws engine 3
+		ufw allow from 52.208.73.64 to any port 8088	# aws engine 4
 
 		#this allows multicast (terrestrial/satellite solution)
 		#ufw allow out proto udp to 224.0.0.0/3

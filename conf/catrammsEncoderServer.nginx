@@ -44,6 +44,9 @@
 			rewrite ^/catramms/(v[0-9]+)/encoder/videoSpeed/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=videoSpeed&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/addSilentAudio/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=addSilentAudio&ingestionJobKey=$2&encodingJobKey=$3 last;
+		}
+		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/pictureInPicture/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=pictureInPicture&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {

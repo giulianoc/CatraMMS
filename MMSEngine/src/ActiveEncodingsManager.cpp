@@ -484,68 +484,56 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 {
 	chrono::system_clock::time_point startEvent = chrono::system_clock::now();
 
-	if (encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::EncodeImage
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::EncodeVideoAudio
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::OverlayImageOnVideo
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::OverlayTextOnVideo
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::GenerateFrames
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::SlideShow
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::FaceRecognition
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::FaceIdentification
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::LiveRecorder
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::VideoSpeed
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::PictureInPicture
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::IntroOutroOverlay
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::CutFrameAccurate
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::LiveProxy
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::VODProxy
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::Countdown
-		|| encodingJob->_encodingItem->_encodingType ==
-			MMSEngineDBFacade::EncodingType::LiveGrid
-	)
-    {
-        encodingJob->_encoderVideoAudioProxy.setEncodingData(
-            &(encodingJob->_status),
-            encodingJob->_encodingItem
-        );
+	switch (encodingJob->_encodingItem->_encodingType)
+	{
+		case MMSEngineDBFacade::EncodingType::EncodeImage:
+		case MMSEngineDBFacade::EncodingType::EncodeVideoAudio:
+		case MMSEngineDBFacade::EncodingType::OverlayImageOnVideo:
+		case MMSEngineDBFacade::EncodingType::OverlayTextOnVideo:
+		case MMSEngineDBFacade::EncodingType::GenerateFrames:
+		case MMSEngineDBFacade::EncodingType::SlideShow:
+		case MMSEngineDBFacade::EncodingType::FaceRecognition:
+		case MMSEngineDBFacade::EncodingType::FaceIdentification:
+		case MMSEngineDBFacade::EncodingType::LiveRecorder:
+		case MMSEngineDBFacade::EncodingType::VideoSpeed:
+		case MMSEngineDBFacade::EncodingType::PictureInPicture:
+		case MMSEngineDBFacade::EncodingType::IntroOutroOverlay:
+		case MMSEngineDBFacade::EncodingType::CutFrameAccurate:
+		case MMSEngineDBFacade::EncodingType::LiveProxy:
+		case MMSEngineDBFacade::EncodingType::VODProxy:
+		case MMSEngineDBFacade::EncodingType::Countdown:
+		case MMSEngineDBFacade::EncodingType::LiveGrid:
+		case MMSEngineDBFacade::EncodingType::AddSilentAudio:
+		{
+			encodingJob->_encoderVideoAudioProxy.setEncodingData(
+				&(encodingJob->_status),
+				encodingJob->_encodingItem
+			);
         
-        _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
-            + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-            + ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-        );
-        thread encoderVideoAudioProxyThread(ref(encodingJob->_encoderVideoAudioProxy));
-        encoderVideoAudioProxyThread.detach();
+			_logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
+				+ ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+				+ ", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+			);
+			thread encoderVideoAudioProxyThread(ref(encodingJob->_encoderVideoAudioProxy));
+			encoderVideoAudioProxyThread.detach();
         
-        // the lock guarantees us that the _ejsStatus is not updated
-        // before the below _ejsStatus setting
-        encodingJob->_encodingJobStart		= chrono::system_clock::now();
-        encodingJob->_status			= EncoderVideoAudioProxy::EncodingJobStatus::GoingToRun;
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "Encoding not managed for the EncodingType"
+			// the lock guarantees us that the _ejsStatus is not updated
+			// before the below _ejsStatus setting
+			encodingJob->_encodingJobStart		= chrono::system_clock::now();
+			encodingJob->_status			= EncoderVideoAudioProxy::EncodingJobStatus::GoingToRun;
+
+			break;
+		}
+		default:
+		{
+			string errorMessage = __FILEREF__ + "Encoding not managed for the EncodingType"
                 + ", encodingJob->_encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                ;
-        _logger->error(errorMessage);
+			;
+			_logger->error(errorMessage);
         
-        throw runtime_error(errorMessage);
-    }
+			throw runtime_error(errorMessage);
+		}
+	}
 
 	chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 	long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();

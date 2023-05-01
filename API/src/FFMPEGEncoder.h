@@ -201,6 +201,13 @@ private:
         int64_t encodingJobKey,
         string requestBody);
 
+	void addSilentAudioThread(
+        // FCGX_Request& request,
+        shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
+		int64_t ingestionJobKey,
+        int64_t encodingJobKey,
+        string requestBody);
+
 	void pictureInPictureThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,

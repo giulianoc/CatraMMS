@@ -1,0 +1,12 @@
+{
+  "label"="My AddSilendAudio",
+  "task": {
+    "label": "task label 2",
+    "parameters": {
+      "configurationLabel": "Channel A"
+    },
+    "type": "Add-Silend-Audio"
+  },
+  "type": "Workflow"
+}
+

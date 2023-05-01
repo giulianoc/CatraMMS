@@ -50,6 +50,11 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 	_videoTrackIndexToBeUsed		= videoTrackIndexToBeUsed;
 	_audioTrackIndexToBeUsed		= audioTrackIndexToBeUsed;
 
+	_initialized = false;
+	twoPasses = false;
+	if (encodingProfileDetailsRoot == Json::nullValue)
+		return;
+
     try
     {
 		_httpStreamingFileFormat = "";
@@ -94,6 +99,8 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 			_ffmpegAudioSampleRateParameter,
 			_audioBitRatesInfo
 		);
+
+		_initialized = true;
     }
     catch(runtime_error e)
     {
@@ -148,6 +155,15 @@ void FFMpegEncodingParameters::applyEncoding(
 {
 	try
 	{
+		if (!_initialized)
+		{
+			string errorMessage = string("FFMpegEncodingParameters is not initialized")
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+			;
+			throw runtime_error(errorMessage);
+		}
+
 		if (_httpStreamingFileFormat != "")
 		{
 			// hls or dash output
@@ -807,6 +823,15 @@ void FFMpegEncodingParameters::createManifestFile()
 {
 	try
 	{
+		if (!_initialized)
+		{
+			string errorMessage = string("FFMpegEncodingParameters is not initialized")
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+			;
+			throw runtime_error(errorMessage);
+		}
+
 		string manifestFileName = getManifestFileName();
 
 		// create the master playlist
@@ -906,6 +931,15 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 {
 	try
 	{
+		if (!_initialized)
+		{
+			string errorMessage = string("FFMpegEncodingParameters is not initialized")
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+			;
+			throw runtime_error(errorMessage);
+		}
+
 		/*
 		 * The command will be like this:
 
@@ -1302,6 +1336,15 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 {
 	try
 	{
+		if (!_initialized)
+		{
+			string errorMessage = string("FFMpegEncodingParameters is not initialized")
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+			;
+			throw runtime_error(errorMessage);
+		}
+
 		string manifestFileName = getManifestFileName();
 
 		string mainManifestPathName = _encodedStagingAssetPathName + "/"
@@ -1370,6 +1413,15 @@ string FFMpegEncodingParameters::getManifestFileName()
 {
 	try
 	{
+		if (!_initialized)
+		{
+			string errorMessage = string("FFMpegEncodingParameters is not initialized")
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+			;
+			throw runtime_error(errorMessage);
+		}
+
 		string manifestFileName = to_string(_ingestionJobKey) +
 			"_" + to_string(_encodingJobKey);
 		if (_httpStreamingFileFormat == "hls")

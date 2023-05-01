@@ -176,6 +176,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						// ", 'Live-Proxy', 'VODProxy'"	already asked before
 						// ", 'Countdown'"
 						", 'Live-Grid'"
+						", 'Add-Silent-Audio'"
 					;
 					lastSQLCommand += "and ij.ingestionType in (" + tasksNotInvolvingMMSEngineThreadsList + ") ";
 				}
@@ -5286,153 +5287,154 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 			}
 		}
 
-        if (ingestionType == IngestionType::Encode 
-                || ingestionType == IngestionType::OverlayImageOnVideo
-                || ingestionType == IngestionType::OverlayTextOnVideo
-                || ingestionType == IngestionType::PeriodicalFrames
-                || ingestionType == IngestionType::IFrames
-                || ingestionType == IngestionType::MotionJPEGByPeriodicalFrames
-                || ingestionType == IngestionType::MotionJPEGByIFrames
-                || ingestionType == IngestionType::Slideshow
-                || ingestionType == IngestionType::FaceRecognition
-                || ingestionType == IngestionType::FaceIdentification
-                || ingestionType == IngestionType::LiveRecorder
-                || ingestionType == IngestionType::VideoSpeed
-                || ingestionType == IngestionType::PictureInPicture
-                || ingestionType == IngestionType::IntroOutroOverlay
-                || ingestionType == IngestionType::LiveProxy
-                || ingestionType == IngestionType::VODProxy
-                || ingestionType == IngestionType::LiveGrid
-                || ingestionType == IngestionType::Countdown
-				// IngestionType::Cut has the EncodingJob only in case of FrameAccurate
-                || ingestionType == IngestionType::Cut
-		)
-        {
-			// in case of LiveRecorder and HighAvailability true, we will have 2 encodingJobs, one for the main and one for the backup,
-			//	we will take the main one. In case HighAvailability is false, we still have the main field set to true
-			// 2021-05-12: HighAvailability true is not used anymore
-			/*
-			if (ingestionType == IngestionType::LiveRecorder)
-				lastSQLCommand = 
-					"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
-					"DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
-					"DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-					"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob where ingestionJobKey = ? "
-					"and JSON_EXTRACT(parameters, '$.main') = true "
-					;
-			else
-			*/
-				lastSQLCommand = 
-					"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
-					"DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
-					"DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-					"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob "
-					"where ingestionJobKey = ? "
+		switch(ingestionType)
+		{
+			case IngestionType::Encode:
+			case IngestionType::OverlayImageOnVideo:
+			case IngestionType::OverlayTextOnVideo:
+			case IngestionType::PeriodicalFrames:
+			case IngestionType::IFrames:
+			case IngestionType::MotionJPEGByPeriodicalFrames:
+			case IngestionType::MotionJPEGByIFrames:
+			case IngestionType::Slideshow:
+			case IngestionType::FaceRecognition:
+			case IngestionType::FaceIdentification:
+			case IngestionType::LiveRecorder:
+			case IngestionType::VideoSpeed:
+			case IngestionType::PictureInPicture:
+			case IngestionType::IntroOutroOverlay:
+			case IngestionType::LiveProxy:
+			case IngestionType::VODProxy:
+			case IngestionType::LiveGrid:
+			case IngestionType::Countdown:
+			case IngestionType::Cut:
+			case IngestionType::AddSilentAudio:
+
+				// in case of LiveRecorder and HighAvailability true, we will have 2 encodingJobs, one for the main and one for the backup,
+				//	we will take the main one. In case HighAvailability is false, we still have the main field set to true
+				// 2021-05-12: HighAvailability true is not used anymore
+				/*
+				if (ingestionType == IngestionType::LiveRecorder)
+					lastSQLCommand = 
+						"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
+						"DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
+						"DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
+						"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob where ingestionJobKey = ? "
+						"and JSON_EXTRACT(parameters, '$.main') = true "
+						;
+				else
+				*/
+					lastSQLCommand = 
+						"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
+						"DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
+						"DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
+						"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob "
+						"where ingestionJobKey = ? "
 					;
 
-            shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (
-				conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatementEncodingJob->setInt64(queryParameterIndex++, ingestionJobKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-            shared_ptr<sql::ResultSet> resultSetEncodingJob (
-				preparedStatementEncodingJob->executeQuery());
-            if (resultSetEncodingJob->next())
-            {
-                Json::Value encodingJobRoot;
+				shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (
+					conn->_sqlConnection->prepareStatement(lastSQLCommand));
+				int queryParameterIndex = 1;
+				preparedStatementEncodingJob->setInt64(queryParameterIndex++, ingestionJobKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				shared_ptr<sql::ResultSet> resultSetEncodingJob (
+					preparedStatementEncodingJob->executeQuery());
+				if (resultSetEncodingJob->next())
+				{
+					Json::Value encodingJobRoot;
 
-                int64_t encodingJobKey = resultSetEncodingJob->getInt64("encodingJobKey");
+					int64_t encodingJobKey = resultSetEncodingJob->getInt64("encodingJobKey");
                 
-				field = "ownedByCurrentWorkspace";
-				encodingJobRoot[field] = true;
+					field = "ownedByCurrentWorkspace";
+					encodingJobRoot[field] = true;
 
-                field = "encodingJobKey";
-                encodingJobRoot[field] = encodingJobKey;
+					field = "encodingJobKey";
+					encodingJobRoot[field] = encodingJobKey;
 
-                field = "ingestionJobKey";
-                encodingJobRoot[field] = ingestionJobKey;
+					field = "ingestionJobKey";
+					encodingJobRoot[field] = ingestionJobKey;
 
-                field = "type";
-                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("type"));
+					field = "type";
+					encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("type"));
 
-                {
-                    string parameters = resultSetEncodingJob->getString("parameters");
+					{
+						string parameters = resultSetEncodingJob->getString("parameters");
 
-                    Json::Value parametersRoot;
-                    if (parameters != "")
-						parametersRoot = JSONUtils::toJson(-1, encodingJobKey, parameters);
+						Json::Value parametersRoot;
+						if (parameters != "")
+							parametersRoot = JSONUtils::toJson(-1, encodingJobKey, parameters);
 
-                    field = "parameters";
-                    encodingJobRoot[field] = parametersRoot;
-                }
+						field = "parameters";
+						encodingJobRoot[field] = parametersRoot;
+					}
 
-                field = "status";
-                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));
-                EncodingStatus encodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSetEncodingJob->getString("status"));
+					field = "status";
+					encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));
+					EncodingStatus encodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSetEncodingJob->getString("status"));
 
-                field = "encodingPriority";
-                encodingJobRoot[field] = toString(static_cast<EncodingPriority>(resultSetEncodingJob->getInt("encodingPriority")));
+					field = "encodingPriority";
+					encodingJobRoot[field] = toString(static_cast<EncodingPriority>(resultSetEncodingJob->getInt("encodingPriority")));
 
-                field = "encodingPriorityCode";
-                encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingPriority");
+					field = "encodingPriorityCode";
+					encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingPriority");
 
-                field = "maxEncodingPriorityCode";
-                encodingJobRoot[field] = workspace->_maxEncodingPriority;
+					field = "maxEncodingPriorityCode";
+					encodingJobRoot[field] = workspace->_maxEncodingPriority;
 
-                field = "progress";
-                if (resultSetEncodingJob->isNull("encodingProgress"))
-                    encodingJobRoot[field] = Json::nullValue;
-                else
-                    encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingProgress");
+					field = "progress";
+					if (resultSetEncodingJob->isNull("encodingProgress"))
+						encodingJobRoot[field] = Json::nullValue;
+					else
+						encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingProgress");
 
-                field = "start";
-                if (encodingStatus == EncodingStatus::ToBeProcessed)
-                    encodingJobRoot[field] = Json::nullValue;
-                else
-                {
-                    if (resultSetEncodingJob->isNull("encodingJobStart"))
-                        encodingJobRoot[field] = Json::nullValue;
-                    else
-                        encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobStart"));
-                }
+					field = "start";
+					if (encodingStatus == EncodingStatus::ToBeProcessed)
+						encodingJobRoot[field] = Json::nullValue;
+					else
+					{
+						if (resultSetEncodingJob->isNull("encodingJobStart"))
+							encodingJobRoot[field] = Json::nullValue;
+						else
+							encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobStart"));
+					}
 
-                field = "end";
-                if (resultSetEncodingJob->isNull("encodingJobEnd"))
-                    encodingJobRoot[field] = Json::nullValue;
-                else
-                    encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
+					field = "end";
+					if (resultSetEncodingJob->isNull("encodingJobEnd"))
+						encodingJobRoot[field] = Json::nullValue;
+					else
+						encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
 
-                field = "processorMMS";
-                if (resultSetEncodingJob->isNull("processorMMS"))
-                    encodingJobRoot[field] = Json::nullValue;
-                else
-                    encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("processorMMS"));
+					field = "processorMMS";
+					if (resultSetEncodingJob->isNull("processorMMS"))
+						encodingJobRoot[field] = Json::nullValue;
+					else
+						encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("processorMMS"));
 
-                field = "encoderKey";
-				if (resultSetEncodingJob->isNull("encoderKey"))
-					encodingJobRoot[field] = -1;
-				else
-					encodingJobRoot[field] = resultSetEncodingJob->getInt64("encoderKey");
+					field = "encoderKey";
+					if (resultSetEncodingJob->isNull("encoderKey"))
+						encodingJobRoot[field] = -1;
+					else
+						encodingJobRoot[field] = resultSetEncodingJob->getInt64("encoderKey");
 
-                field = "encodingPid";
-				if (resultSetEncodingJob->isNull("encodingPid"))
-					encodingJobRoot[field] = -1;
-				else
-					encodingJobRoot[field] = resultSetEncodingJob->getInt64("encodingPid");
+					field = "encodingPid";
+					if (resultSetEncodingJob->isNull("encodingPid"))
+						encodingJobRoot[field] = -1;
+					else
+						encodingJobRoot[field] = resultSetEncodingJob->getInt64("encodingPid");
 
-                field = "failuresNumber";
-                encodingJobRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
+					field = "failuresNumber";
+					encodingJobRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
 
-                field = "encodingJob";
-                ingestionJobRoot[field] = encodingJobRoot;
-            }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", resultSetEncodingJob->rowsCount: " + to_string(resultSetEncodingJob->rowsCount())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
-			);
+					field = "encodingJob";
+					ingestionJobRoot[field] = encodingJobRoot;
+				}
+				_logger->info(__FILEREF__ + "@SQL statistics@"
+					+ ", lastSQLCommand: " + lastSQLCommand
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", resultSetEncodingJob->rowsCount: " + to_string(resultSetEncodingJob->rowsCount())
+					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+						chrono::system_clock::now() - startSql).count()) + "@"
+				);
         }
     }
     catch(sql::SQLException se)

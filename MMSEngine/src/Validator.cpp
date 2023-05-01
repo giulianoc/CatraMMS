@@ -385,6 +385,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
         Json::Value parametersRoot = taskRoot[field]; 
         validateAddContentMetadata(label, parametersRoot);
     }
+    else if (type == "Add-Silent-Audio")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::AddSilentAudio;
+        
+        field = "parameters";
+        if (!JSONUtils::isMetadataPresent(taskRoot, field))
+        {
+            string sTaskRoot = JSONUtils::toString(taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateAddSilentAudioMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
+			dependencies);
+    }
     else if (type == "Remove-Content")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::RemoveContent;
@@ -1171,6 +1192,11 @@ vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
     {
         validateAddContentMetadata(label, parametersRoot);
     }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::AddSilentAudio)
+    {
+        validateAddSilentAudioMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);
+    }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::RemoveContent)
     {
         validateRemoveContentMetadata(workspaceKey, label, parametersRoot,
@@ -1462,6 +1488,92 @@ void Validator::validateAddContentMetadata(
         
     }
     */            
+}
+
+void Validator::validateAddSilentAudioMetadata(int64_t workspaceKey, string label,
+    Json::Value parametersRoot, 
+	bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
+		dependencies)
+{    
+
+	string field = "addType";
+	string addType = JSONUtils::asString(parametersRoot, field, "entireTrack");
+	if (!isAddSilentTypeValid(addType))
+	{
+		string errorMessage = string("Unknown addType")
+			+ ", addType: " + addType
+			+ ", label: " + label
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	if (addType == "begin" || addType == "end")
+	{
+		string mandatoryField = "seconds";
+		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		{
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
+
+			string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", Field: " + mandatoryField
+				+ ", sParametersRoot: " + sParametersRoot
+				+ ", label: " + label
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    field = "references";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+    {
+		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
+				Il primo non aveva media items as output
+				Il secondo aveva un solo media item as output
+				Per cui doveva essere validato ma, il controllo sotto (referencesRoot.size() != 1),
+				non validava questo Task.
+				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
+				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() < 1)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
+                    + ", Field: " + field
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+		*/
+
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, label, parametersRoot, dependencies,
+			priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+			encodingProfileFieldsToBeManaged);
+    }
+
+    field = "processingStartingFrom";
+    if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	{
+		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(DateTime::sDateSecondsToUtc would generate  'sscanf failed')
+		if (processingStartingFrom != "")
+			DateTime::sDateSecondsToUtc(processingStartingFrom);
+	}
 }
 
 void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label,
@@ -6600,7 +6712,8 @@ bool Validator::isVideoAudioFileFormat(string fileFormat)
         "3g2",
         "mxf",
         "ts",
-        "mts"
+        "mts",
+		"wav"
     };
 
     string lowerCaseFileFormat;
@@ -6652,6 +6765,23 @@ bool Validator::isCutTypeValid(string cutType)
     for (string validCutType: validCutTypes)
     {
         if (cutType == validCutType) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isAddSilentTypeValid(string addType)
+{
+    vector<string> validAddTypes = {
+        "entireTrack",
+        "begin",
+        "end"
+    };
+
+    for (string validAddType: validAddTypes)
+    {
+        if (addType == validAddType) 
             return true;
     }
     

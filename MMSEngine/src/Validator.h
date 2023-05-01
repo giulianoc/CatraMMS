@@ -42,6 +42,8 @@ public:
 
     bool isCutTypeValid(string cutType);
 
+	bool isAddSilentTypeValid(string addType);
+
 	bool isFacebookNodeTypeValid(string nodeType);
 
 	bool isFacebookLiveTypeValid(string nodeType);
@@ -93,6 +95,10 @@ public:
 
     void validateAddContentMetadata(string label, Json::Value parametersRoot);
 
+    void validateAddSilentAudioMetadata(int64_t workspaceKey, string label,
+        Json::Value parametersRoot, bool validateDependenciesToo,
+		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
+    
     void validateRemoveContentMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>& dependencies);
     
