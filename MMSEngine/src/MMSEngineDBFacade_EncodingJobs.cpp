@@ -9292,7 +9292,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
             statement->execute(lastSQLCommand);
         }
         
-        EncodingType encodingType = EncodingType::VideoSpeed;
+        EncodingType encodingType = EncodingType::AddSilentAudio;
         
 		string parameters;
 		{
