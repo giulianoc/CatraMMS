@@ -109,25 +109,62 @@ void AddSilentAudio::encodeContent(
 				encodedStagingAssetPathName = JSONUtils::asString(sourceRoot, "encodedNFSStagingAssetPathName", "");
 			}
 
-			_encoding->_ffmpeg->silentAudio(
-				sourceAssetPathName,
-				sourceDurationInMilliSeconds,
+			try
+			{
+				_encoding->_ffmpeg->silentAudio(
+					sourceAssetPathName,
+					sourceDurationInMilliSeconds,
 
-				addType,
-				silentDurationInSeconds,
+					addType,
+					silentDurationInSeconds,
 
-				encodingProfileDetailsRoot,
+					encodingProfileDetailsRoot,
 
-				encodedStagingAssetPathName,
-				_encodingJobKey,
-				_ingestionJobKey,
-				&(_encoding->_childPid));
+					encodedStagingAssetPathName,
+					_encodingJobKey,
+					_ingestionJobKey,
+					&(_encoding->_childPid));
 
-			_logger->info(__FILEREF__ + "Encode content finished"
-				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-				+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-			);
+				_logger->info(__FILEREF__ + "Encode content finished"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+				);
+			}
+			catch(FFMpegEncodingKilledByUser e)
+			{
+				throw e;
+			}
+			catch(runtime_error e)
+			{
+				if (stopIfReferenceProcessingError || sourceIndex + 1 == sourcesRoot.size())
+					throw e;
+				else
+				{
+					_logger->info(__FILEREF__ + "ffmpeg failed but we will continue with the next one"
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+						+ ", stopIfReferenceProcessingError: " + to_string(stopIfReferenceProcessingError)
+					);
+
+					continue;
+				}
+			}
+			catch(exception e)
+			{
+				if (stopIfReferenceProcessingError || sourceIndex + 1 == sourcesRoot.size())
+					throw e;
+				else
+				{
+					_logger->info(__FILEREF__ + "ffmpeg failed but we will continue with the next one"
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+						+ ", stopIfReferenceProcessingError: " + to_string(stopIfReferenceProcessingError)
+					);
+
+					continue;
+				}
+			}
 
 			if (externalEncoder)
 			{

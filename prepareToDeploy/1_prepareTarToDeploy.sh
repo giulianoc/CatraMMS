@@ -27,7 +27,7 @@ NC='\033[0m' # No Color
 versionpathname=$(dirname $0)
 versionpathname=$versionpathname"/../version.txt"
 #echo "versionpathname: $versionpathname"
-incrementVersion=5
+incrementVersion=2
 version=$(cat $versionpathname)
 arrVersion=(${version//./ })
 first=${arrVersion[0]}
