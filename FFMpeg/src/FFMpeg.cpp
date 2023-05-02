@@ -4382,7 +4382,7 @@ void FFMpeg::silentAudio(
 						ffmpegArgumentList.push_back("-c:v");
 						ffmpegArgumentList.push_back("copy");
 						ffmpegArgumentList.push_back("-c:a");
-						// ffmpegArgumentList.push_back("aac");	// leave default
+						ffmpegArgumentList.push_back("aac");	// default
 
 						ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 					}
@@ -4419,7 +4419,7 @@ void FFMpeg::silentAudio(
 						ffmpegArgumentList.push_back("-c:v");
 						ffmpegArgumentList.push_back("copy");
 						ffmpegArgumentList.push_back("-c:a");
-						// ffmpegArgumentList.push_back("aac");	// leave default
+						ffmpegArgumentList.push_back("aac");	// default
 
 						ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 					}
@@ -4456,7 +4456,7 @@ void FFMpeg::silentAudio(
 						ffmpegArgumentList.push_back("-c:v");
 						ffmpegArgumentList.push_back("copy");
 						ffmpegArgumentList.push_back("-c:a");
-						// ffmpegArgumentList.push_back("aac");	// leave default
+						ffmpegArgumentList.push_back("aac");	// default
 
 						ffmpegArgumentList.push_back(stagingEncodedAssetPathName);
 					}
