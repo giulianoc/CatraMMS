@@ -2046,6 +2046,7 @@ void FFMpegEncodingParameters::encodingAudioCodecValidation(string codec,
             && codec != "libfdk_aac" 
             && codec != "libvo_aacenc" 
             && codec != "libvorbis"
+            && codec != "pcm_s16le"
             && codec != "pcm_s32le"
     )
     {
