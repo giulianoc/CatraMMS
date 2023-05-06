@@ -1,13 +1,13 @@
 {
-	"label" : "MMS_MP4_AAC_160",
+	"label" : "MMS_MP4_PCMS16LE_1500",
 	"fileFormat" : "mp4",
 	"audio" : 
 	{
-		"codec" : "aac",
+		"codec" : "pcm_s16le",
 		"channelsNumber": 2,
 		"bitRates": [
 			{
-				"kBitRate" : 160
+				"kBitRate" : 1500
 			}
 		]
 	}

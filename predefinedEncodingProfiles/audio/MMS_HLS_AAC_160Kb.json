@@ -8,11 +8,10 @@
 	"audio" : 
 	{
 		"codec" : "aac",
-		"kBitRate" : 92,
 		"channelsNumber": 2,
 		"bitRates": [
 			{
-				"kBitRate" : 92
+				"kBitRate" : 160
 			}
 		]
 	}

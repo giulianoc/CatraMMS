@@ -610,7 +610,7 @@ install-mms-packages()
 		#api should have GUI as well
 
 		echo ""
-		tomcatVersion=9.0.71
+		tomcatVersion=9.0.74
 		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat: "
 		read VERSION
 		if [ "$VERSION" == "" ]; then
@@ -735,7 +735,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.5535
+	catraMMSVersion=1.0.5552
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

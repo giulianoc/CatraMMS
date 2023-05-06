@@ -64,7 +64,7 @@ if [ "$deploy" == "y" ]; then
 	date
 
 	echo "cibortv-transcoder-4"
-	scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem /opt/catrasoftware/deploy/$tarFileName mms@151.48.81.100:/opt/catramms
+	scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem /opt/catrasoftware/deploy/$tarFileName mms@151.64.89.63:/opt/catramms
 	date
 
 	echo "hetzner-transcoder-5"
@@ -89,6 +89,10 @@ if [ "$deploy" == "y" ]; then
 
 	echo "aws-mms-api-gui-3"
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-48-75-149.eu-west-1.compute.amazonaws.com:/opt/catramms
+	date
+
+	echo "aws-mms-api-gui-4"
+	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-176-34-143-242.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
 	echo "aws-mms-engine-db-1"
@@ -123,6 +127,13 @@ if [ "$deploy" == "y" ]; then
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-52-215-51-62.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
 
+	echo "aruba-mms-transcoder-2"
+	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001941.arubabiz.net:/opt/catramms
+	date
+
+	echo "aruba-mms-transcoder-3"
+	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru002148.arubabiz.net:/opt/catramms
+	date
 fi
 
 echo ""
@@ -132,11 +143,6 @@ if [ "$deploy" == "y" ]; then
 	echo "aruba-mms-transcoder-1"
 	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001940.arubabiz.net:/opt/catramms
 	date
-
-	echo "aruba-mms-transcoder-2"
-	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru001941.arubabiz.net:/opt/catramms
-	date
-
 fi
 
 #make it downloadable from public
