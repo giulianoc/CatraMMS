@@ -70,7 +70,7 @@ void AddSilentAudio::encodeContent(
 					}
 				}
 
-				encodedStagingAssetPathName = JSONUtils::asString(sourceRoot, "sourceTranscoderStagingAssetPathName", "");
+				encodedStagingAssetPathName = JSONUtils::asString(sourceRoot, "encodedTranscoderStagingAssetPathName", "");
 
 				{
 					size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
