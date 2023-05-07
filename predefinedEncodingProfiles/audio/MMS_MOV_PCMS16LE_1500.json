@@ -1,6 +1,6 @@
 {
-	"label" : "MMS_MP4_PCMS16LE_1500",
-	"fileFormat" : "mp4",
+	"label" : "MMS_MOV_PCMS16LE_1500",
+	"fileFormat" : "mov",
 	"audio" : 
 	{
 		"codec" : "pcm_s16le",
