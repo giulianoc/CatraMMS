@@ -686,24 +686,84 @@ void FFMpegEncodingParameters::applyEncoding(
 
 				if (_isVideo)
 				{
-					for (int videoIndex = 0; videoIndex < _videoBitRatesInfo.size();
-						videoIndex++)
+					if (_videoBitRatesInfo.size() != 0)
 					{
-						tuple<string, int, int, int, string, string, string> videoBitRateInfo
-							= _videoBitRatesInfo [videoIndex];
+						for (int videoIndex = 0; videoIndex < _videoBitRatesInfo.size();
+							videoIndex++)
+						{
+							tuple<string, int, int, int, string, string, string> videoBitRateInfo
+								= _videoBitRatesInfo [videoIndex];
 
-						string ffmpegVideoResolutionParameter = "";
-						int videoBitRateInKbps = -1;
-						int videoHeight = -1;
-						string ffmpegVideoBitRateParameter = "";
-						string ffmpegVideoMaxRateParameter = "";
-						string ffmpegVideoBufSizeParameter = "";
-						string ffmpegAudioBitRateParameter = "";
+							string ffmpegVideoResolutionParameter = "";
+							int videoBitRateInKbps = -1;
+							int videoHeight = -1;
+							string ffmpegVideoBitRateParameter = "";
+							string ffmpegVideoMaxRateParameter = "";
+							string ffmpegVideoBufSizeParameter = "";
+							string ffmpegAudioBitRateParameter = "";
 
-						tie(ffmpegVideoResolutionParameter, videoBitRateInKbps,
-							ignore, videoHeight,
-							ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
-							ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+							tie(ffmpegVideoResolutionParameter, videoBitRateInKbps,
+								ignore, videoHeight,
+								ffmpegVideoBitRateParameter, ffmpegVideoMaxRateParameter,
+								ffmpegVideoBufSizeParameter) = videoBitRateInfo;
+
+							if (_videoTrackIndexToBeUsed >= 0)
+							{
+								ffmpegArgumentList.push_back("-map");
+								ffmpegArgumentList.push_back(
+									string("0:v:") + to_string(_videoTrackIndexToBeUsed));
+							}
+							if (_audioTrackIndexToBeUsed >= 0)
+							{
+								ffmpegArgumentList.push_back("-map");
+								ffmpegArgumentList.push_back(
+									string("0:a:") + to_string(_audioTrackIndexToBeUsed));
+							}
+							FFMpegEncodingParameters::addToArguments(_ffmpegVideoCodecParameter, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(_ffmpegVideoProfileParameter, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(_ffmpegVideoOtherParameters, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+							if (videoResolutionToBeAdded)
+								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+									ffmpegArgumentList);
+							ffmpegArgumentList.push_back("-threads");
+							ffmpegArgumentList.push_back("0");
+							FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
+							if (_audioBitRatesInfo.size() > videoIndex)
+								ffmpegAudioBitRateParameter = _audioBitRatesInfo[videoIndex];
+							else 
+								ffmpegAudioBitRateParameter = _audioBitRatesInfo[
+									_audioBitRatesInfo.size() - 1];
+							FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
+							FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+
+							if (outputFileToBeAdded)
+							{
+								FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
+								if (_videoBitRatesInfo.size() > 1)
+								{
+									string newStagingEncodedAssetPathName =
+										regex_replace(stagingTemplateEncodedAssetPathName,
+											regex(_multiTrackTemplateVariable), to_string(videoHeight));
+									ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+								}
+								else
+									ffmpegArgumentList.push_back(_encodedStagingAssetPathName);
+							}
+						}
+					}
+					else
+					{
+						// 2023-05-07: è un video senza videoBitRates. E' lo scenario in cui gli è stato dato
+						//	un profile di encoding solo audio.
+						//	In questo scenario _ffmpegVideoCodecParameter è stato inizializzato con "c:v copy "
+						//	in settingFfmpegParameters
 
 						if (_videoTrackIndexToBeUsed >= 0)
 						{
@@ -718,16 +778,16 @@ void FFMpegEncodingParameters::applyEncoding(
 								string("0:a:") + to_string(_audioTrackIndexToBeUsed));
 						}
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoCodecParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(_ffmpegVideoProfileParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(_ffmpegVideoOtherParameters, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
-						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
-						if (videoResolutionToBeAdded)
-							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-								ffmpegArgumentList);
+						// FFMpegEncodingParameters::addToArguments(_ffmpegVideoProfileParameter, ffmpegArgumentList);
+						// FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegArgumentList);
+						// FFMpegEncodingParameters::addToArguments(_ffmpegVideoOtherParameters, ffmpegArgumentList);
+						// FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
+						// FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
+						// FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
+						// FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
+						// if (videoResolutionToBeAdded)
+						// 	FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+						// 		ffmpegArgumentList);
 						ffmpegArgumentList.push_back("-threads");
 						ffmpegArgumentList.push_back("0");
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
@@ -743,15 +803,15 @@ void FFMpegEncodingParameters::applyEncoding(
 
 						if (outputFileToBeAdded)
 						{
-							FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
-							if (_videoBitRatesInfo.size() > 1)
-							{
-								string newStagingEncodedAssetPathName =
-									regex_replace(stagingTemplateEncodedAssetPathName,
-										regex(_multiTrackTemplateVariable), to_string(videoHeight));
-								ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
-							}
-							else
+							// FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
+							// if (_videoBitRatesInfo.size() > 1)
+							// {
+							// 	string newStagingEncodedAssetPathName =
+							// 		regex_replace(stagingTemplateEncodedAssetPathName,
+							// 			regex(_multiTrackTemplateVariable), to_string(videoHeight));
+							// 	ffmpegArgumentList.push_back(newStagingEncodedAssetPathName);
+							// }
+							// else
 								ffmpegArgumentList.push_back(_encodedStagingAssetPathName);
 						}
 					}
@@ -1852,6 +1912,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			// 2023-05-07: Si tratta di un video e l'encoding profile non ha il field "video".
 			//	Per cui sarà un Encoding Profile solo audio. In questo caso "copy" le traccie video sorgenti
 
+			twoPasses = false;
 			ffmpegVideoCodecParameter   =
 				"-codec:v copy "
 			;
