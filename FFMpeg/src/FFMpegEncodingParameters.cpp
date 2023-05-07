@@ -765,6 +765,8 @@ void FFMpegEncodingParameters::applyEncoding(
 						//	In questo scenario _ffmpegVideoCodecParameter è stato inizializzato con "c:v copy "
 						//	in settingFfmpegParameters
 
+						string ffmpegAudioBitRateParameter = "";
+
 						if (_videoTrackIndexToBeUsed >= 0)
 						{
 							ffmpegArgumentList.push_back("-map");
@@ -791,9 +793,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						ffmpegArgumentList.push_back("-threads");
 						ffmpegArgumentList.push_back("0");
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
-						if (_audioBitRatesInfo.size() > videoIndex)
-							ffmpegAudioBitRateParameter = _audioBitRatesInfo[videoIndex];
-						else 
+						// if (_audioBitRatesInfo.size() > videoIndex)
+						// 	ffmpegAudioBitRateParameter = _audioBitRatesInfo[videoIndex];
+						// else 
 							ffmpegAudioBitRateParameter = _audioBitRatesInfo[
 								_audioBitRatesInfo.size() - 1];
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
