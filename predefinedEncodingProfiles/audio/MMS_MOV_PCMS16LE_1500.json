@@ -5,6 +5,7 @@
 	{
 		"codec" : "pcm_s16le",
 		"channelsNumber": 2,
+		"sampleRate": 48000,
 		"bitRates": [
 			{
 				"kBitRate" : 1500

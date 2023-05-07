@@ -58,6 +58,6 @@
 		"channelsNumber": 2,
 
 		// optional (Hz)
-		"SampleRate": 44100
+		"sampleRate": 44100
 	}
 }

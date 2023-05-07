@@ -1998,7 +1998,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
         // sample rate
         {
-            field = "SampleRate";
+            field = "sampleRate";
             if (JSONUtils::isMetadataPresent(audioRoot, field))
             {
                 int sampleRate = JSONUtils::asInt(audioRoot, field, 0);
