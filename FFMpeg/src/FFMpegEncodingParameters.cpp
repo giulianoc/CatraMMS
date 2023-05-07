@@ -1598,262 +1598,265 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
     if (isVideo)
     {
-        field = "video";
-        if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                    + ", Field: " + field;
-            logger->error(errorMessage);
+		field = "video";
+		if (JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
+		{
+			Json::Value videoRoot = encodingProfileDetailsRoot[field]; 
 
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value videoRoot = encodingProfileDetailsRoot[field]; 
-
-        // codec
-        string codec;
-        {
-            field = "codec";
-            if (!JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-            codec = JSONUtils::asString(videoRoot, field, "");
-
-			// 2020-03-27: commented just to avoid to add the check every time a new codec is added
-			//		In case the codec is wrong, ffmpeg will generate the error later
-            // FFMpeg::encodingVideoCodecValidation(codec, logger);
-
-            ffmpegVideoCodecParameter   =
-                    "-codec:v " + codec + " "
-            ;
-        }
-
-        // profile
-        {
-            field = "profile";
-            if (JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                string profile = JSONUtils::asString(videoRoot, field, "");
-
-                if (codec == "libx264" || codec == "libvpx")
+			// codec
+			string codec;
+			{
+				field = "codec";
+				if (!JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					FFMpegEncodingParameters::encodingVideoProfileValidation(codec, profile, logger);
-					if (codec == "libx264")
-					{
-						ffmpegVideoProfileParameter =
-                            "-profile:v " + profile + " "
-						;
-					}
-					else if (codec == "libvpx")
-					{
-						ffmpegVideoProfileParameter =
-                            "-quality " + profile + " "
-						;
-					}
+					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+                        + ", Field: " + field;
+					logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
 				}
-                else if (profile != "")
-                {
-					ffmpegVideoProfileParameter =
-						"-profile:v " + profile + " "
-					;
-					/*
-                    string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
-                            + ", codec: " + codec;
-                    logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);
-					*/
-                }
-            }
-        }
+				codec = JSONUtils::asString(videoRoot, field, "");
 
-        // OtherOutputParameters
-        {
-            field = "otherOutputParameters";
-            if (JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                string otherOutputParameters = JSONUtils::asString(videoRoot, field, "");
+				// 2020-03-27: commented just to avoid to add the check every time a new codec is added
+				//		In case the codec is wrong, ffmpeg will generate the error later
+				// FFMpeg::encodingVideoCodecValidation(codec, logger);
 
-                ffmpegVideoOtherParameters =
-                        otherOutputParameters + " "
-                ;
-            }
-        }
+				ffmpegVideoCodecParameter   =
+                    "-codec:v " + codec + " "
+				;
+			}
 
-        // twoPasses
-        {
-            field = "twoPasses";
-            if (!JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-			twoPasses = JSONUtils::JSONUtils::asBool(videoRoot, field, false);
-        }
-
-        // frameRate
-        {
-            field = "frameRate";
-            if (JSONUtils::isMetadataPresent(videoRoot, field))
-            {
-                int frameRate = JSONUtils::asInt(videoRoot, field, 0);
-
-				if (frameRate != 0)
+			// profile
+			{
+				field = "profile";
+				if (JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					ffmpegVideoFrameRateParameter =
-                        "-r " + to_string(frameRate) + " "
-					;
+					string profile = JSONUtils::asString(videoRoot, field, "");
 
-					// keyFrameIntervalInSeconds
+					if (codec == "libx264" || codec == "libvpx")
 					{
-						field = "KeyFrameIntervalInSeconds";
-						if (JSONUtils::isMetadataPresent(videoRoot, field))
+						FFMpegEncodingParameters::encodingVideoProfileValidation(codec, profile, logger);
+						if (codec == "libx264")
 						{
-							int keyFrameIntervalInSeconds = JSONUtils::asInt(videoRoot, field, 0);
-
-							// -g specifies the number of frames in a GOP
-							ffmpegVideoKeyFramesRateParameter =
-                                "-g " + to_string(frameRate * keyFrameIntervalInSeconds) + " "
+							ffmpegVideoProfileParameter =
+								"-profile:v " + profile + " "
+							;
+						}
+						else if (codec == "libvpx")
+						{
+							ffmpegVideoProfileParameter =
+								"-quality " + profile + " "
 							;
 						}
 					}
+					else if (profile != "")
+					{
+						ffmpegVideoProfileParameter =
+							"-profile:v " + profile + " "
+						;
+						/*
+						string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
+                            + ", codec: " + codec;
+						logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+						*/
+					}
 				}
-            }
-        }
+			}
 
-		field = "bitRates";
-		if (!JSONUtils::isMetadataPresent(videoRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-				+ ", Field: " + field;
-			logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		Json::Value bitRatesRoot = videoRoot[field];
-
-		videoBitRatesInfo.clear();
-		{
-			for (int bitRateIndex = 0; bitRateIndex < bitRatesRoot.size(); bitRateIndex++)
+			// OtherOutputParameters
 			{
-				Json::Value bitRateInfo = bitRatesRoot[bitRateIndex];
-
-				// resolution
-				string ffmpegVideoResolution;
-				int videoWidth;
-				int videoHeight;
+				field = "otherOutputParameters";
+				if (JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					field = "width";
-					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
-					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-							+ ", Field: " + field;
-						logger->error(errorMessage);
+					string otherOutputParameters = JSONUtils::asString(videoRoot, field, "");
 
-						throw runtime_error(errorMessage);
-					}
-					videoWidth = JSONUtils::asInt(bitRateInfo, field, 0);
-					if (videoWidth == -1 && codec == "libx264")
-						videoWidth   = -2;     // h264 requires always a even width/height
-
-					field = "height";
-					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
-					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-							+ ", Field: " + field;
-						logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					videoHeight = JSONUtils::asInt(bitRateInfo, field, 0);
-					if (videoHeight == -1 && codec == "libx264")
-						videoHeight   = -2;     // h264 requires always a even width/height
-
-					string forceOriginalAspectRatio;
-					field = "ForceOriginalAspectRatio";
-					forceOriginalAspectRatio = JSONUtils::asString(bitRateInfo, field, "");
-
-					bool pad = false;
-					if (forceOriginalAspectRatio != "")
-					{
-						field = "Pad";
-						pad = JSONUtils::asBool(bitRateInfo, field, false);
-					}
-
-					// -vf "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2"
-
-					// ffmpegVideoResolution = "-vf scale=w=" + to_string(videoWidth)
-					ffmpegVideoResolution = "scale=w=" + to_string(videoWidth)
-						+ ":h=" + to_string(videoHeight);
-					if (forceOriginalAspectRatio != "")
-					{
-						ffmpegVideoResolution += (":force_original_aspect_ratio=" + forceOriginalAspectRatio);
-						if (pad)
-							ffmpegVideoResolution += (",pad=" + to_string(videoWidth)
-								+ ":" + to_string(videoHeight)
-								+ ":(ow-iw)/2:(oh-ih)/2");
-					}
-
-					// ffmpegVideoResolution += " ";
+					ffmpegVideoOtherParameters =
+                        otherOutputParameters + " "
+					;
 				}
+			}
 
-				string ffmpegVideoBitRate;
-				int kBitRate;
+			// twoPasses
+			{
+				field = "twoPasses";
+				if (!JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					field = "kBitRate";
-					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
-					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-							+ ", Field: " + field;
-						logger->error(errorMessage);
+					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+                        + ", Field: " + field;
+					logger->error(errorMessage);
 
-						throw runtime_error(errorMessage);
-					}
-
-					kBitRate = JSONUtils::asInt(bitRateInfo, field, 0);
-
-					ffmpegVideoBitRate = "-b:v " + to_string(kBitRate) + "k ";
+					throw runtime_error(errorMessage);
 				}
+				twoPasses = JSONUtils::JSONUtils::asBool(videoRoot, field, false);
+			}
 
-				// maxRate
-				string ffmpegVideoMaxRate;
+			// frameRate
+			{
+				field = "frameRate";
+				if (JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					field = "KMaxRate";
-					if (JSONUtils::isMetadataPresent(bitRateInfo, field))
-					{
-						int maxRate = JSONUtils::asInt(bitRateInfo, field, 0);
+					int frameRate = JSONUtils::asInt(videoRoot, field, 0);
 
-						ffmpegVideoMaxRate = "-maxrate " + to_string(maxRate) + "k ";
+					if (frameRate != 0)
+					{
+						ffmpegVideoFrameRateParameter =
+							"-r " + to_string(frameRate) + " "
+						;
+
+						// keyFrameIntervalInSeconds
+						{
+							field = "KeyFrameIntervalInSeconds";
+							if (JSONUtils::isMetadataPresent(videoRoot, field))
+							{
+								int keyFrameIntervalInSeconds = JSONUtils::asInt(videoRoot, field, 0);
+
+								// -g specifies the number of frames in a GOP
+								ffmpegVideoKeyFramesRateParameter =
+									"-g " + to_string(frameRate * keyFrameIntervalInSeconds) + " "
+								;
+							}
+						}
 					}
 				}
+			}
 
-				// bufSize
-				string ffmpegVideoBufSize;
+			field = "bitRates";
+			if (!JSONUtils::isMetadataPresent(videoRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+					+ ", Field: " + field;
+				logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			Json::Value bitRatesRoot = videoRoot[field];
+
+			videoBitRatesInfo.clear();
+			{
+				for (int bitRateIndex = 0; bitRateIndex < bitRatesRoot.size(); bitRateIndex++)
 				{
-					field = "KBufferSize";
-					if (JSONUtils::isMetadataPresent(bitRateInfo, field))
+					Json::Value bitRateInfo = bitRatesRoot[bitRateIndex];
+
+					// resolution
+					string ffmpegVideoResolution;
+					int videoWidth;
+					int videoHeight;
 					{
-						int bufferSize = JSONUtils::asInt(bitRateInfo, field, 0);
+						field = "width";
+						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
+						{
+							string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+								+ ", Field: " + field;
+							logger->error(errorMessage);
 
-						ffmpegVideoBufSize = "-bufsize " + to_string(bufferSize) + "k ";
+							throw runtime_error(errorMessage);
+						}
+						videoWidth = JSONUtils::asInt(bitRateInfo, field, 0);
+						if (videoWidth == -1 && codec == "libx264")
+							videoWidth   = -2;     // h264 requires always a even width/height
+
+						field = "height";
+						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
+						{
+							string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+								+ ", Field: " + field;
+							logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						videoHeight = JSONUtils::asInt(bitRateInfo, field, 0);
+						if (videoHeight == -1 && codec == "libx264")
+							videoHeight   = -2;     // h264 requires always a even width/height
+
+						string forceOriginalAspectRatio;
+						field = "ForceOriginalAspectRatio";
+						forceOriginalAspectRatio = JSONUtils::asString(bitRateInfo, field, "");
+
+						bool pad = false;
+						if (forceOriginalAspectRatio != "")
+						{
+							field = "Pad";
+							pad = JSONUtils::asBool(bitRateInfo, field, false);
+						}
+
+						// -vf "scale=320:240:force_original_aspect_ratio=decrease,pad=320:240:(ow-iw)/2:(oh-ih)/2"
+
+						// ffmpegVideoResolution = "-vf scale=w=" + to_string(videoWidth)
+						ffmpegVideoResolution = "scale=w=" + to_string(videoWidth)
+							+ ":h=" + to_string(videoHeight);
+						if (forceOriginalAspectRatio != "")
+						{
+							ffmpegVideoResolution += (":force_original_aspect_ratio=" + forceOriginalAspectRatio);
+							if (pad)
+								ffmpegVideoResolution += (",pad=" + to_string(videoWidth)
+									+ ":" + to_string(videoHeight)
+									+ ":(ow-iw)/2:(oh-ih)/2");
+						}
+
+						// ffmpegVideoResolution += " ";
 					}
-				}
 
-				videoBitRatesInfo.push_back(make_tuple(ffmpegVideoResolution, kBitRate,
-					videoWidth, videoHeight, ffmpegVideoBitRate,
-					ffmpegVideoMaxRate, ffmpegVideoBufSize));
+					string ffmpegVideoBitRate;
+					int kBitRate;
+					{
+						field = "kBitRate";
+						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
+						{
+							string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+								+ ", Field: " + field;
+							logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						kBitRate = JSONUtils::asInt(bitRateInfo, field, 0);
+
+						ffmpegVideoBitRate = "-b:v " + to_string(kBitRate) + "k ";
+					}
+
+					// maxRate
+					string ffmpegVideoMaxRate;
+					{
+						field = "KMaxRate";
+						if (JSONUtils::isMetadataPresent(bitRateInfo, field))
+						{
+							int maxRate = JSONUtils::asInt(bitRateInfo, field, 0);
+
+							ffmpegVideoMaxRate = "-maxrate " + to_string(maxRate) + "k ";
+						}
+					}
+
+					// bufSize
+					string ffmpegVideoBufSize;
+					{
+						field = "KBufferSize";
+						if (JSONUtils::isMetadataPresent(bitRateInfo, field))
+						{
+							int bufferSize = JSONUtils::asInt(bitRateInfo, field, 0);
+
+							ffmpegVideoBufSize = "-bufsize " + to_string(bufferSize) + "k ";
+						}
+					}
+
+					videoBitRatesInfo.push_back(make_tuple(ffmpegVideoResolution, kBitRate,
+						videoWidth, videoHeight, ffmpegVideoBitRate,
+						ffmpegVideoMaxRate, ffmpegVideoBufSize));
+				}
 			}
 		}
-    }
+		else
+		{
+			// 2023-05-07: Si tratta di un video e l'encoding profile non ha il field "video".
+			//	Per cui sarà un Encoding Profile solo audio. In questo caso "copy" le traccie video sorgenti
+
+			ffmpegVideoCodecParameter   =
+				"-codec:v copy "
+			;
+		}
+	}
     
     // if (contentType == "video" || contentType == "audio")
     {

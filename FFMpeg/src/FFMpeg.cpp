@@ -4282,9 +4282,7 @@ void FFMpeg::silentAudio(
 			ingestionJobKey,
 			encodingJobKey,
 			encodingProfileDetailsRoot,
-			// 2023-05-06: viene aggiunta una traccia audio (silent) per cui mi aspetto un encodingProfile audio
-			//	anche se il source media è un video
-			false,	// isVideo,
+			true,	// isVideo,
 			-1,		// videoTrackIndexToBeUsed,
 			-1,		// audioTrackIndexToBeUsed,
 			stagingEncodedAssetPathName,
