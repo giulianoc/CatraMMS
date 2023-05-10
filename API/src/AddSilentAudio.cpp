@@ -180,7 +180,7 @@ void AddSilentAudio::encodeContent(
 
 				string workflowLabel =
 					JSONUtils::asString(ingestedParametersRoot, "Title", "")
-					+ " (add videoSpeed from external transcoder)"
+					+ " (add " + api + " from external transcoder)"
 				;
 
 				int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot,

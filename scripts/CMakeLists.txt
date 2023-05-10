@@ -49,6 +49,7 @@ SET (SCRIPTs
 	servicesStatusAgent.sh
 	servicesStatusLibrary.sh
 	loopServicesStatus.sh
+	startRecorder.sh
 )
 
 install (FILES ${SCRIPTs} DESTINATION scripts PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ GROUP_EXECUTE WORLD_READ)
