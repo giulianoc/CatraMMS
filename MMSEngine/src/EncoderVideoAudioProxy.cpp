@@ -6386,8 +6386,11 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 				_logger->info(__FILEREF__ + "LiveRecorder. Selection of the transcoder"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", streamSourceType: " + streamSourceType
+					+ ", pushEncoderKey: " + to_string(pushEncoderKey)
+					+ ", pushServerName: " + pushServerName
 					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
 					+ ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
 				);

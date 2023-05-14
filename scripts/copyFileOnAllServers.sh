@@ -11,19 +11,19 @@ fi
 sourceFilePathName=$1
 destDirectoryPathName=$2
 
-#aws-api-1 aws-api-2 aws-api-3 aws-engine-1 aws-engine-2 aws-engine-3 aws-engine-4 aws-transcoder-1 aws-transcoder-2 aws-transcoder-3 aws-transcoder-4
-for server in ec2-63-35-35-24.eu-west-1.compute.amazonaws.com ec2-52-50-243-155.eu-west-1.compute.amazonaws.com ec2-52-48-75-149.eu-west-1.compute.amazonaws.com ec2-34-248-199-119.eu-west-1.compute.amazonaws.com ec2-52-49-243-7.eu-west-1.compute.amazonaws.com ec2-63-34-105-227.eu-west-1.compute.amazonaws.com ec2-52-208-73-64.eu-west-1.compute.amazonaws.com ec2-18-202-38-18.eu-west-1.compute.amazonaws.com ec2-99-81-166-232.eu-west-1.compute.amazonaws.com ec2-52-18-23-12.eu-west-1.compute.amazonaws.com ec2-52-215-51-62.eu-west-1.compute.amazonaws.com
+#aws-api-1 aws-api-2 aws-api-3 aws-api-4 aws-engine-1 aws-engine-2 aws-engine-3 aws-engine-4 aws-transcoder-1 aws-transcoder-2 aws-transcoder-3 aws-transcoder-4
+for server in ec2-63-35-35-24.eu-west-1.compute.amazonaws.com ec2-52-50-243-155.eu-west-1.compute.amazonaws.com ec2-52-48-75-149.eu-west-1.compute.amazonaws.com ec2-176-34-143-242.eu-west-1.compute.amazonaws.com ec2-34-248-199-119.eu-west-1.compute.amazonaws.com ec2-52-49-243-7.eu-west-1.compute.amazonaws.com ec2-63-34-105-227.eu-west-1.compute.amazonaws.com ec2-52-208-73-64.eu-west-1.compute.amazonaws.com ec2-18-202-38-18.eu-west-1.compute.amazonaws.com ec2-99-81-166-232.eu-west-1.compute.amazonaws.com ec2-52-18-23-12.eu-west-1.compute.amazonaws.com ec2-52-215-51-62.eu-west-1.compute.amazonaws.com
 do
 	echo "scp -i ~/ssh-keys/aws-mms-key-ireland.pem $sourceFilePathName mms@$server:$destDirectoryPathName"
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem $sourceFilePathName mms@$server:$destDirectoryPathName
 done
 
 #cibortv-transcoder-4
-echo "scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@79.10.202.50:$destDirectoryPathName"
-scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@79.10.202.50:$destDirectoryPathName
+echo "scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@151.66.211.27:$destDirectoryPathName"
+scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@151.66.211.27:$destDirectoryPathName
 
-#aruba-1 aruba-2
-for server in ru001940.arubabiz.net ru001941.arubabiz.net
+#aruba-1 aruba-2 aruba-3
+for server in ru001940.arubabiz.net ru001941.arubabiz.net ru002148.arubabiz.net
 do
 	echo "scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem $sourceFilePathName mms@$server:$destDirectoryPathName"
 	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem $sourceFilePathName mms@$server:$destDirectoryPathName

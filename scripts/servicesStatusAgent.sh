@@ -55,6 +55,9 @@ do
 			sql_slave_off
 
 			echo "" >> $debugFilename
+			sql_check
+
+			echo "" >> $debugFilename
 			mms_engine_service_running
 			;;
 		"api")

@@ -22,6 +22,9 @@ getAlarmDescription()
 		"alarm_sql_slave_off")
 			echo "SQL SLAVE is not working"
 			;;
+		"alarm_sql_check")
+			echo "SQL is not working"
+			;;
 		"alarm_disks_usage")
 			echo "File system full"
 			;;
@@ -121,6 +124,8 @@ notify()
 
 sql_slave_off()
 {
+	#Questo controllo si applica solamente nel caso si tratta di uno slave
+
 	#replication_connection_status.service_state (Slave_IO_Running) ON indica che è stato eseguito il comando SQL: start slave.
 	#Nello scenario in cui abbiamo un problema, replication_connection_status.service_state rimane ON mentre
 	#replication_applier_status_by_coordinator.service_state (Slave_SQL_Running) è OFF
@@ -144,9 +149,36 @@ sql_slave_off()
 			return 1
 		fi
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, it is not a slave" >> $debugFilename
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, it is not a slave. isMysqlSlave: $isMysqlSlave" >> $debugFilename
 
 		return 0
+	fi
+}
+
+sql_check()
+{
+	count=$(echo "select count(*) from MMS_Code" | mysql -N -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -h localhost ${MYSQL_DBNAME})
+
+	#check if it is a number
+	regularExpression='^[0-9]+$'
+	if [[ $count =~ $regularExpression ]] ; then
+
+		# it is a number
+
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check, sql does not work. sql is working fine" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_sql_check"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check, sql does not work. sql count return: $count" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 15))		#15 minuti
+		notify "$(hostname)" "alarm_sql_check" "alarm_sql_check" $alarmNotificationPeriod "sql count return: $count"
+		return 1
 	fi
 }
 
