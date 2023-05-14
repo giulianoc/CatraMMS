@@ -6259,8 +6259,8 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		field = "pushEncoderKey";
 		pushEncoderKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
 
-        field = "pushServerName";
-        pushServerName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
+		field = "pushServerName";
+		pushServerName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
 
         field = "streamSourceType";
         streamSourceType = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
@@ -6362,8 +6362,13 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				if (streamSourceType == "IP_PUSH" && pushEncoderKey != -1)
 				{
 					_currentUsedFFMpegEncoderKey = pushEncoderKey;
+					// 2023-05-14: pushServerName è importante che sia usato nella url rtmp
+					//	dove il transcoder ascolta per il flusso di streaming
+					//	ma non deve essere usato per decidere l'url con cui l'engine deve comunicare
+					//	con il transcoder. Questa url dipende solamente dal fatto che il transcoder
+					//	sia interno o esterno
 					pair<string, bool> encoderDetails =
-						_mmsEngineDBFacade->getEncoderURL(pushEncoderKey, pushServerName);
+						_mmsEngineDBFacade->getEncoderURL(pushEncoderKey, "");	// pushServerName);
 					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
 				}
 				else

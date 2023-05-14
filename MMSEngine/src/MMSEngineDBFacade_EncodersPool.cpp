@@ -3515,6 +3515,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 
         _logger->info(__FILEREF__ + "getEncoderURL"
 			+ ", encoderKey: " + to_string(encoderKey)
+			+ ", serverName: " + serverName
         );
 
         conn = connectionPool->borrow();	
