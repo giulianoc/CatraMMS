@@ -277,7 +277,8 @@ private:
 
 	void validateCrossReference(string label, Json::Value crossReferenceRoot, bool mediaItemKeyMandatory);
 
-	void validateOutputRootMetadata(int64_t workspaceKey, string label, Json::Value outputRoot);
+	void validateOutputRootMetadata(int64_t workspaceKey, string label, Json::Value outputRoot,
+		bool encodingMandatory);
 };
 
 #endif /* VALIDATOR_H */

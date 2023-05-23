@@ -1852,9 +1852,7 @@ public:
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
 		Json::Value inputChannelsRoot,
-		int64_t encodingProfileKey,
-		Json::Value encodingProfileDetailsRoot,
-		string manifestDirectoryPath, string manifestFileName);
+		Json::Value outputsRoot);
 
 	void addEncoding_VideoSpeed (
 		shared_ptr<Workspace> workspace,

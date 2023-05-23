@@ -33,7 +33,7 @@ class FFMPEGEncoderBase {
 			string					_method;	// liveProxy, liveGrid or awaitingTheBeginning
 			bool					_killedBecauseOfNotWorking;	// by monitorThread
 
-			string					_liveGridOutputType;	// only for LiveGrid
+			// string					_liveGridOutputType;	// only for LiveGrid
 			Json::Value				_outputsRoot;
 
 			int64_t					_ingestionJobKey;
@@ -56,7 +56,7 @@ class FFMPEGEncoderBase {
 				liveProxyAndGrid->_ffmpeg = _ffmpeg;
 				liveProxyAndGrid->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
 				liveProxyAndGrid->_errorMessage = _errorMessage;
-				liveProxyAndGrid->_liveGridOutputType = _liveGridOutputType;
+				// liveProxyAndGrid->_liveGridOutputType = _liveGridOutputType;
 
 				liveProxyAndGrid->_ingestionJobKey = _ingestionJobKey;
 

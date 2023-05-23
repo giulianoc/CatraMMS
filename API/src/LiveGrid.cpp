@@ -23,9 +23,9 @@ LiveGrid::LiveGrid(
 LiveGrid::~LiveGrid()
 {
 	_liveProxyData->_method = "";
-	_liveProxyData->_killedBecauseOfNotWorking = false;
 	_liveProxyData->_ingestionJobKey = 0;
-	_liveProxyData->_liveGridOutputType = "";
+	_liveProxyData->_killedBecauseOfNotWorking = false;
+	// _liveProxyData->_liveGridOutputType = "";
 	// _liveProxyData->_channelLabel = "";
 
 }
@@ -43,7 +43,6 @@ void LiveGrid::encodeContent(
     try
     {
 		_liveProxyData->_killedBecauseOfNotWorking = false;
-
         Json::Value metadataRoot = JSONUtils::toJson(
 			-1, _encodingJobKey, requestBody);
 
@@ -52,87 +51,82 @@ void LiveGrid::encodeContent(
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
         Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
+
 		Json::Value inputChannelsRoot = encodingParametersRoot["inputChannels"];
 
 		string userAgent = JSONUtils::asString(ingestedParametersRoot, "userAgent", "");
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
-		int gridColumns = JSONUtils::asInt(ingestedParametersRoot, "Columns", 0);
-		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "GridWidth", 0);
-		int gridHeight = JSONUtils::asInt(ingestedParametersRoot, "GridHeight", 0);
+		int gridColumns = JSONUtils::asInt(ingestedParametersRoot, "columns", 0);
+		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "gridWidth", 0);
+		int gridHeight = JSONUtils::asInt(ingestedParametersRoot, "gridHeight", 0);
 
-		_liveProxyData->_liveGridOutputType = JSONUtils::asString(ingestedParametersRoot, "outputType",
-			"HLS_Channel");
+		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
-		// it is present only in case of outputType == "SRT"
-		string srtURL = JSONUtils::asString(ingestedParametersRoot, "SRT_URL", "");
-
-		// it is present only in case of outputType == "HLS"
-		int segmentDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot,
-			"segmentDurationInSeconds", 10);
-
-		// it is present only in case of outputType == "HLS"
-		int playlistEntriesNumber = JSONUtils::asInt(ingestedParametersRoot,
-			"playlistEntriesNumber", 6);
-
-		string manifestDirectoryPath = JSONUtils::asString(encodingParametersRoot, "manifestDirectoryPath", "");
-		string manifestFileName = JSONUtils::asString(encodingParametersRoot, "manifestFileName", "");
-
-		// if (_liveProxyData->_outputType == "HLS") // || _liveProxyData->_outputType == "DASH")
+		_liveProxyData->_outputsRoot = encodingParametersRoot["outputsRoot"];
 		{
-			if (_liveProxyData->_liveGridOutputType == "HLS_Channel"
-				&& fs::exists(manifestDirectoryPath))
+			for(int outputIndex = 0; outputIndex < _liveProxyData->_outputsRoot.size(); outputIndex++)
 			{
-				try
-				{
-					_logger->info(__FILEREF__ + "removeDirectory"
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-					);
-					fs::remove_all(manifestDirectoryPath);
-				}
-				catch(runtime_error e)
-				{
-					string errorMessage = __FILEREF__ + "remove directory failed"
-						+ ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
+				Json::Value outputRoot = _liveProxyData->_outputsRoot[outputIndex];
 
-					// throw e;
-				}
-				catch(exception e)
-				{
-					string errorMessage = __FILEREF__ + "remove directory failed"
-						+ ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", manifestDirectoryPath: " + manifestDirectoryPath
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
+				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-					// throw e;
+				// if (outputType == "HLS" || outputType == "DASH")
+				if (outputType == "HLS_Channel")
+				{
+					string manifestDirectoryPath
+						= JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+
+					if (fs::exists(manifestDirectoryPath))
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							);
+							fs::remove_all(manifestDirectoryPath);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
 				}
 			}
+		}
 
+		{
 			_liveProxyData->_proxyStart = chrono::system_clock::now();
 
 			_liveProxyData->_ffmpeg->liveGrid(
 				_liveProxyData->_ingestionJobKey,
 				_encodingJobKey,
-				encodingProfileDetailsRoot,
+				externalEncoder,
 				userAgent,
 				inputChannelsRoot,
 				gridColumns,
 				gridWidth,
 				gridHeight,
-				_liveProxyData->_liveGridOutputType,
-				segmentDurationInSeconds,
-				playlistEntriesNumber,
-				manifestDirectoryPath,
-				manifestFileName,
-				srtURL,
+				_liveProxyData->_outputsRoot,
 				&(_liveProxyData->_childPid));
 		}
 
@@ -169,7 +163,7 @@ void LiveGrid::encodeContent(
 			// it was killed just because it was not working and not because of user
 			// In this case the process has to be restarted soon
 			_completedWithError			= true;
-			_liveProxyData->_killedBecauseOfNotWorking = false;
+			// _liveProxyData->_killedBecauseOfNotWorking = false;
 		}
 		else
 		{

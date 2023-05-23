@@ -8,31 +8,191 @@
 	"parameters": {
 
 		// mandatory. Channels to be added into the Live-Grid video
-		"InputConfigurationLabels": [
+		"inputConfigurationLabels": [
 			"TV 1",
 			"TV 2"
 		],
 
 		// mandatory: number of the columns of the grid
-		"Columns": 2,
+		"columns": 2,
 
 		// mandatory: grid width
-		"GridWidth": 1024,
+		"gridWidth": 1024,
 
 		// mandatory: grid heigth
-		"GridHeight": 578,
+		"gridHeight": 578,
 
-		// mandatory. It will represent the encoding profile to be used
-		// EncodingProfileKey or EncodingProfileLabel has to be present
-		"encodingProfileKey": 1,
-		"encodingProfileLabel": "MMS_HLS_H264_veryfast_360p25_high422_AAC_92",
+		// This json array lists all the Outputs the Live-Grid task has to generate.
+		//	At least one Output has to be present
+		"outputs" = [
+			{
+				// optional, possible values: HLS_Channel, RTMP_Channel, CDN_AWS, CDN_CDN77.
+				// HLS_Channel works also in case of an external transcoder
+				// Default: HLS_Channel
+				"outputType": "HLS_Channel",
 
-		// mandatory
-		//	It identifies this specific delivery.
-		//	Internally the delivery code is used to
-		//		- build the delivery URL (so it is used to build
-		//			the path where the HLS segments are saved)
-		"DeliveryCode": 12345,
+				// optional, used only in case of HLS_Channel
+				// the configuration label of an HLS Channel defined in MMS.
+				// If not present, a SHARED free HLS channel is used
+				"hlsChannelConfigurationLabel": "",
+
+				// optional, used only in case of CDN_AWS
+				// the configuration label of an AWS Channel defined in MMS.
+				// If not present, a SHARED free AWS channel is used
+				"awsChannelConfigurationLabel": "",
+
+				// optional, used only in case of CDN_AWS
+				// it specifies if a signed URL has to be used
+				// Default: false
+				"awsSignedURL": false,
+
+				// optional, used only in case of CDN_AWS and awsSignedURL is true
+				// it specifies the expiration of the signed URL
+				// Default: 1440 (1 day)
+				"awsExpirationInMinutes": 1440,
+
+				// optional, used only in case of CDN_CDN77
+				// the configuration label of an CDN77 Channel defined in MMS.
+				// If not present, a SHARED free CDN77 channel is used
+				"cdn77ChannelConfigurationLabel": "",
+
+				// optional, used only in case of a signed CDN_CDN77 
+				// it specifies the expiration of the signed URL
+				// Default: 1440 (1 day)
+				"cdn77ExpirationInMinutes": 1440,
+
+				// optional, used only in case of RTMP_Channel
+				// the configuration label of an RTMP Channel defined in MMS.
+				// If not present, a SHARED free RTMP channel is used
+				"rtmpChannelConfigurationLabel": "",
+
+				// optional: It is possible to use this field to specify any other output options.
+				// Examples:
+				//	-map 0:1: specify to take the stream 1 from the first input (0) to be used in the output
+				//	-map 0:a:2: specify to take the stream audio 2 from the first input (0) to be used in the output
+				//	-map 0:v: specify to take all video from the first input (0) to be used in the output
+				"otherOutputOptions": "-map 0:1",
+
+				// optional
+				"filters": {
+					"video": [
+						{
+							"type": "fade",
+							"duration": 4
+						},
+						{
+							"type": "blackdetect",
+							"black_min_duration": 2.0,
+							"pixel_black_th": 0.0
+						},
+						{
+							"type": "blackframe",
+							"amount": 98,
+							"threshold": 32
+						},
+						{
+							"type": "freezedetect",
+							"noiseInDb": -60,
+							"duration": 2
+						}
+					],
+					"audio": [
+						{
+							"type": "silencedetect",
+							"noise": 0.0001
+						},
+						{
+							"type": "volume",
+							//	- 0.5: If we want our volume to be half of the input volume
+							//	- 1.5: 150% of current volume
+							//	- 10dB: increase the volume by 10dB
+							//	- -5dB: reduce the volume by 5dB
+							"factor": 5.0
+						}
+					],
+					"complex": [
+						{
+							"type": "blackframe",
+							"amount": 98,
+							"threshold": 32
+						},
+						{
+							"type": "blend",
+							"mode": "difference",
+							"shortest": 1
+						}
+					]
+				}
+
+				// mandatory. It will represent the encoding profile to be used
+				//   The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.
+				"encodingProfileKey": 1,
+				"encodingProfileLabel": "Profile sport",
+
+				// optional: add draw text to the output
+				"drawTextDetails": {
+					// mandatory if the "drawTextDetails" object is present.
+					//	The text string to be drawn
+					"text": "...",
+
+					// optional: the below parameters specify the X and Y in pixel
+					//	  where the text
+					//    has to be overlayed on the video. Default values for both are "0"
+					//    It is possible to specify also a formula
+					//	  using the following variables:
+					//        video_width: width in pixel of the video
+					//        video_height: height in pixel of the video
+					//        text_width: width in pixel of the text
+					//			(a text may have more than one line)
+					//        text_height: height in pixel of the text
+					//			(a text may have more than one line)
+					//        line_width: width in pixel of the line
+					//        line_height: height in pixel of the line
+					//        timestampInSeconds: it can be used to change the position of the text based on
+					//              timestamp of the frame
+					// Examples:
+					//    To show the text at the pixel: 100:50:
+					//          "TextPosition_X_InPixel"="100"
+					//          "TextPosition_Y_InPixel"="50"
+					//    To show the text at the center of the video frame:
+					//          "TextPosition_X_InPixel"="(video_width-text_width)/2"
+					//          "TextPosition_Y_InPixel"="(video_height-text_height)/2"
+					//    To show a text line sliding from right to left in the last row of the video frame. The "Text" is assumed to contain a single line with no newlines:
+					//          "TextPosition_X_InPixel"="-50*timestampInSeconds"
+					//          "TextPosition_Y_InPixel"="video_height-line_height"
+					"textPosition_X_InPixel": "(video_width-text_width)/2",                                  
+					"textPosition_Y_InPixel": "(video_height-text_height)/2",                                
+
+					// optional. Possible values: ...to be added
+					"fontType": "",
+
+					// optional. The font size to be used for drawing text
+					"fontSize": 24,
+
+					// optional. The color to be used for drawing fonts
+					"fontColor": "yellow",
+
+					// optional
+					"textPercentageOpacity": 20,
+
+					// optional, default is 0
+					"shadowX": 0,
+					"shadowY": 0,
+
+					// optional. Used to draw a box around text
+					"boxEnable": true,
+
+					// optional. The color to be used for drawing box around text
+					"boxColor": "red",
+
+					// optional
+					"boxPercentageOpacity": 20,
+
+					// optional
+					"boxBorderW": 0
+				}
+			}
+		],
 
 		// optional. To be set with the EncodersPool label only in case a specific 
 		// encoders pool has to be used

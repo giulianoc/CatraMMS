@@ -8621,9 +8621,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	Json::Value inputChannelsRoot,
-	int64_t encodingProfileKey,
-	Json::Value encodingProfileDetailsRoot,
-	string manifestDirectoryPath, string manifestFileName
+	Json::Value outputsRoot
 )
 {
 
@@ -8638,9 +8636,6 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
     {
         _logger->info(__FILEREF__ + "addEncoding_LiveGridJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", encodingProfileKey: " + to_string(encodingProfileKey)
-            + ", manifestDirectoryPath: " + manifestDirectoryPath
-            + ", manifestFileName: " + manifestFileName
         );
 
         conn = connectionPool->borrow();	
@@ -8670,17 +8665,8 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 				field = "inputChannels";
 				parametersRoot[field] = inputChannelsRoot;
 
-				field = "encodingProfileKey";
-				parametersRoot[field] = encodingProfileKey;
-
-				field = "encodingProfileDetails";
-				parametersRoot[field] = encodingProfileDetailsRoot;
-
-				field = "manifestDirectoryPath";
-				parametersRoot[field] = manifestDirectoryPath;
-
-				field = "manifestFileName";
-				parametersRoot[field] = manifestFileName;
+				field = "outputsRoot";
+				parametersRoot[field] = outputsRoot;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}

@@ -14173,12 +14173,9 @@ void MMSEngineProcessor::manageLiveGrid(
 		*/
 
 		Json::Value inputChannelsRoot(Json::arrayValue);
-		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot;
-		string manifestDirectoryPath;
-		string manifestFileName;
+		Json::Value outputsRoot;
         {
-            string field = "InputConfigurationLabels";
+            string field = "inputConfigurationLabels";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14232,69 +14229,27 @@ void MMSEngineProcessor::manageLiveGrid(
 				inputChannelsRoot.append(inputChannelRoot);
 			}
 
-			string keyField = "encodingProfileKey";
-			string labelField = "encodingProfileLabel";
-			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			field = "outputs";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
-			}
-			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
-			{
-				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
-
-				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-					workspace->_workspaceKey, MMSEngineDBFacade::ContentType::Video, encodingProfileLabel);
-			}
-			else
-			{
-				string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + keyField
-                    + ", Field: " + labelField
-                    ;
+					+ ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-
-			{
-				string jsonEncodingProfile;
-
-				tuple<string, MMSEngineDBFacade::ContentType,
-					MMSEngineDBFacade::DeliveryTechnology, string>
-					encodingProfileDetails = _mmsEngineDBFacade->getEncodingProfileDetailsByKey(
-					workspace->_workspaceKey, encodingProfileKey);
-				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
-
-				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
-			}
-
-            field = "outputType";
-			string outputType = JSONUtils::asString(parametersRoot, field, "HLS_Channel");
-
-			if (outputType == "HLS_Channel") // || outputType == "DASH")
-			{
-				field = "DeliveryCode";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				int64_t deliveryCode = JSONUtils::asInt64(parametersRoot, field, 0);
-
-				manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
-					to_string(deliveryCode), workspace);
-				manifestFileName = to_string(deliveryCode) + ".m3u8";
-			}
+			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+				outputsRoot = parametersRoot[field];
         }
 
+		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
+			workspace, ingestionJobKey, false);
+
 		_mmsEngineDBFacade->addEncoding_LiveGridJob(workspace, ingestionJobKey,
-			inputChannelsRoot, encodingProfileKey, encodingProfileDetailsRoot,
-			manifestDirectoryPath, manifestFileName);
+			inputChannelsRoot,
+			localOutputsRoot		// used by FFMPEGEncoder
+		);
 	}
     catch(runtime_error e)
     {

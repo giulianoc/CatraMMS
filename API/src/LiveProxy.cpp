@@ -62,10 +62,14 @@ void LiveProxy::encodeContent(
 			-1, _encodingJobKey, requestBody);
 
 		_liveProxyData->_ingestionJobKey = _ingestionJobKey;	// JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+
+		_liveProxyData->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+
+
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
-		_liveProxyData->_outputsRoot = metadataRoot["encodingParametersRoot"]["outputsRoot"];
-		// _liveProxyData->_liveProxyOutputRoots.clear();
+		_liveProxyData->_outputsRoot = encodingParametersRoot["outputsRoot"];
 		{
 			for(int outputIndex = 0; outputIndex < _liveProxyData->_outputsRoot.size(); outputIndex++)
 			{
@@ -117,7 +121,6 @@ void LiveProxy::encodeContent(
 			}
 		}
 
-		_liveProxyData->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 		// non serve
 		// _liveProxyData->_channelLabel = "";
@@ -125,7 +128,7 @@ void LiveProxy::encodeContent(
 		// _liveProxyData->_streamSourceType = metadataRoot["encodingParametersRoot"].
 		// 	get("streamSourceType", "IP_PULL").asString();
 
-		_liveProxyData->_inputsRoot = metadataRoot["encodingParametersRoot"]["inputsRoot"];
+		_liveProxyData->_inputsRoot = encodingParametersRoot["inputsRoot"];
 
 		for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
 		{

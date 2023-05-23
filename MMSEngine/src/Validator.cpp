@@ -4153,7 +4153,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		{
 			Json::Value outputRoot = outputsRoot[outputIndex];
 
-			validateOutputRootMetadata(workspaceKey, label, outputRoot);
+			validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 		}
 	}
 
@@ -4294,7 +4294,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	{
 		Json::Value outputRoot = outputsRoot[outputIndex];
 
-		validateOutputRootMetadata(workspaceKey, label, outputRoot);
+		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 	}
 
     field = "processingStartingFrom";
@@ -4917,7 +4917,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 			}
 		}
 
-		validateOutputRootMetadata(workspaceKey, label, outputRoot);
+		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 	}
 
     field = "processingStartingFrom";
@@ -5093,7 +5093,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 	{
 		Json::Value outputRoot = outputsRoot[outputIndex];
 
-		validateOutputRootMetadata(workspaceKey, label, outputRoot);
+		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 	}
 
     field = "processingStartingFrom";
@@ -5742,10 +5742,10 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 {
         
 	vector<string> mandatoryFields = {
-		"InputConfigurationLabels",
-		"Columns",
-		"GridWidth",
-		"GridHeight"
+		"inputConfigurationLabels",
+		"columns",
+		"gridWidth",
+		"gridHeight"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -5764,22 +5764,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
         }
     }
 
-    string encodingProfileKeyField = "encodingProfileKey";
-    string encodingProfileLabelField = "encodingProfileLabel";
-    if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfileLabelField)
-		&& !JSONUtils::isMetadataPresent(parametersRoot, encodingProfileKeyField))
-    {
-        string errorMessage = __FILEREF__ + "Neither of the following fields are present"
-			+ ", Field: " + encodingProfileLabelField
-			+ ", Field: " + encodingProfileKeyField
-			+ ", label: " + label
-			;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    string field = "InputConfigurationLabels";
+    string field = "inputConfigurationLabels";
     Json::Value inputConfigurationLabelsRoot = parametersRoot[field];
 	if (inputConfigurationLabelsRoot.size() < 2)
 	{
@@ -5793,7 +5778,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "Columns";
+    field = "columns";
 	int columns = JSONUtils::asInt(parametersRoot, field, 0);
 	if (columns < 1)
 	{
@@ -5807,7 +5792,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "GridWidth";
+    field = "gridWidth";
 	int gridWidth = JSONUtils::asInt(parametersRoot, field, 0);
 	if (gridWidth < 1)
 	{
@@ -5821,7 +5806,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "GridHeight";
+    field = "gridHeight";
 	int gridHeight = JSONUtils::asInt(parametersRoot, field, 0);
 	if (gridHeight < 1)
 	{
@@ -5835,68 +5820,43 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "outputType";
-	string liveGridOutputType;
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	field = "outputs";
+	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		liveGridOutputType = JSONUtils::asString(parametersRoot, field, "");
-		if (!isLiveGridOutputTypeValid(liveGridOutputType))
-		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be SRT or HLS)"
-                + ", Field: " + field
-                + ", liveGridOutputType: " + liveGridOutputType
-                + ", label: " + label
-                ;
-			_logger->error(__FILEREF__ + errorMessage);
-        
-			throw runtime_error(errorMessage);
-		}
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	Json::Value outputsRoot;
+	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+		outputsRoot = parametersRoot["outputs"];
+
+	if (outputsRoot.size() == 0)
+	{
+		string sParametersRoot = JSONUtils::toString(parametersRoot);
+
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
 	}
 
-	if (liveGridOutputType == "SRT")
+	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		vector<string> mandatoryFields = {
-			"SRT_URL"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-			{
-				string sParametersRoot = JSONUtils::toString(parametersRoot);
-            
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-				_logger->error(errorMessage);
+		Json::Value outputRoot = outputsRoot[outputIndex];
 
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-	else if (liveGridOutputType == "HLS_Channel")
-	{
-		// TO DO
-		vector<string> mandatoryFields = {
-			"DeliveryCode"
-		};
-		for (string mandatoryField: mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
-			{
-				string sParametersRoot = JSONUtils::toString(parametersRoot);
-            
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField
-                    + ", sParametersRoot: " + sParametersRoot
-                    + ", label: " + label
-                    ;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
+		validateOutputRootMetadata(workspaceKey, label, outputRoot, true);
 	}
 
     field = "processingStartingFrom";
@@ -7577,7 +7537,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
 }
 
 void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
-	Json::Value outputRoot)
+	Json::Value outputRoot, bool encodingMandatory)
 {
 
 	string field = "outputType";
@@ -7729,6 +7689,20 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 
 				throw runtime_error(errorMessage);
 			}
+		}
+	}
+
+	if (encodingMandatory)
+	{
+		if (!JSONUtils::isMetadataPresent(outputRoot, "encodingProfileKey")
+			&& !JSONUtils::isMetadataPresent(outputRoot, "encodingProfileLabel"))
+		{
+			string errorMessage = string("encodingProfile is missing")
+				+ ", label: " + label
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 	}
 }

@@ -7,6 +7,7 @@
 
 	"parameters": {
 
+		// mandatory: it specifies the recording where to apply the cut
 		"recordingCode": 1234,
 
 		// mandatory: It specifies the period to be cut, his format is:

@@ -10799,12 +10799,16 @@ void FFMpeg::liveProxy2(
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", outputsRoot.size: " + to_string(outputsRoot.size())
 			);
+			vector<string> videoMaps;
+			vector<string> audioMaps;
 			liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,
 				otherOutputOptionsBecauseOfMaxWidth,
 				inputDrawTextDetailsRoot,
 				// inputVideoTracks, inputAudioTracks,
 				streamingDurationInSeconds,
-				outputsRoot, ffmpegOutputArgumentList);
+				outputsRoot,
+				videoMaps, audioMaps,
+				ffmpegOutputArgumentList);
 
 			{
 				ostringstream ffmpegOutputArgumentListStream;
@@ -12623,6 +12627,18 @@ void FFMpeg::liveProxyOutput(
 	// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
 	long streamingDurationInSeconds,
 	Json::Value outputsRoot,
+
+	// vengono usati i due vector seguenti nel caso abbiamo una lista di maps (video and audio)
+	// a cui applicare i parametri di encoding
+	// Esempio nel caso del liveGrid abbiamo qualcosa tipo:
+	// -map "[0r+1r]" -codec:v libx264 -b:v 800k -preset veryfast -hls_time 10 -hls_list_size 4....
+	// -map 0:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 ...
+	// -map 1:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 ...
+	// -map 2:a -acodec aac -b:a 92k -ac 2 -hls_time 10 -hls_list_size 4 ...
+	// ...
+	vector<string> videoMaps,
+	vector<string> audioMaps,
+
 	vector<string>& ffmpegOutputArgumentList)
 {
 
@@ -12869,67 +12885,62 @@ void FFMpeg::liveProxyOutput(
 		else
 			FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
 
-		string ffmpegVideoFilter;
+		// nel caso i due vettori siano vuoti, aggiungiamo un elemento ciascuno in modo da aggiungere
+		// i parametri di encoding senza specificare alcun map (scenario di default)
+		if (videoMaps.size() == 0)
+			videoMaps.push_back("");
+		if (audioMaps.size() == 0)
+			audioMaps.push_back("");
 
+		tuple<string, string, string> allFilters = addFilters(
+			filtersRoot, ffmpegVideoResolutionParameter,
+			ffmpegDrawTextFilter, streamingDurationInSeconds);
+		string videoFilters;
+		string audioFilters;
+		string complexFilters;
+		tie(videoFilters, audioFilters, complexFilters) = allFilters;
+
+		bool threadsParameterToBeAdded = false;
+
+		// video (parametri di encoding)
 		if (encodingProfileDetailsRoot != Json::nullValue)
 		{
-			FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegOutputArgumentList);
-			// ffmpegVideoResolutionParameter is -vf scale=w=1280:h=720
-			// Since we cannot have more than one -vf (otherwise ffmpeg will use
-			// only the last one), in case we have ffmpegDrawTextFilter,
-			// we will append it here
+			threadsParameterToBeAdded = true;
 
-			FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegOutputArgumentList);
-			FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegOutputArgumentList);
-
-			ffmpegOutputArgumentList.push_back("-threads");
-			ffmpegOutputArgumentList.push_back("0");
-
-			tuple<string, string, string> allFilters = addFilters(
-				filtersRoot, ffmpegVideoResolutionParameter,
-				ffmpegDrawTextFilter, streamingDurationInSeconds);
-
-			string videoFilters;
-			string audioFilters;
-			string complexFilters;
-			tie(videoFilters, audioFilters, complexFilters) = allFilters;
-
-
-			if (videoFilters != "")
+			for(string videoMap: videoMaps)
 			{
-				ffmpegOutputArgumentList.push_back("-filter:v");
-				ffmpegOutputArgumentList.push_back(videoFilters);
-			}
-			if (audioFilters != "")
-			{
-				ffmpegOutputArgumentList.push_back("-filter:a");
-				ffmpegOutputArgumentList.push_back(audioFilters);
+				if (videoMap != "")
+				{
+					ffmpegOutputArgumentList.push_back("-map");
+					ffmpegOutputArgumentList.push_back(videoMap);
+				}
+
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoOtherParameters, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoFrameRateParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegVideoKeyFramesRateParameter, ffmpegOutputArgumentList);
+				// ffmpegVideoResolutionParameter is -vf scale=w=1280:h=720
+				// Since we cannot have more than one -vf (otherwise ffmpeg will use
+				// only the last one), in case we have ffmpegDrawTextFilter,
+				// we will append it here
+
+				if (videoFilters != "")
+				{
+					ffmpegOutputArgumentList.push_back("-filter:v");
+					ffmpegOutputArgumentList.push_back(videoFilters);
+				}
 			}
 		}
 		else
 		{
-			tuple<string, string, string> allFilters = addFilters(
-				filtersRoot, ffmpegVideoResolutionParameter,
-				ffmpegDrawTextFilter, streamingDurationInSeconds);
-
-			string videoFilters;
-			string audioFilters;
-			string complexFilters;
-			tie(videoFilters, audioFilters, complexFilters) = allFilters;
-
-
 			if (videoFilters != "")
 			{
+				threadsParameterToBeAdded = true;
+
 				ffmpegOutputArgumentList.push_back("-filter:v");
 				ffmpegOutputArgumentList.push_back(videoFilters);
 			}
@@ -12939,9 +12950,40 @@ void FFMpeg::liveProxyOutput(
 				ffmpegOutputArgumentList.push_back("-c:v");
 				ffmpegOutputArgumentList.push_back("copy");
 			}
+		}
 
+		// audio (parametri di encoding)
+		if (encodingProfileDetailsRoot != Json::nullValue)
+		{
+			threadsParameterToBeAdded = true;
+
+			for(string audioMap: audioMaps)
+			{
+				if (audioMap != "")
+				{
+					ffmpegOutputArgumentList.push_back("-map");
+					ffmpegOutputArgumentList.push_back(audioMap);
+				}
+
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegOutputArgumentList);
+				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegOutputArgumentList);
+
+				if (audioFilters != "")
+				{
+					ffmpegOutputArgumentList.push_back("-filter:a");
+					ffmpegOutputArgumentList.push_back(audioFilters);
+				}
+			}
+		}
+		else
+		{
 			if (audioFilters != "")
 			{
+				threadsParameterToBeAdded = true;
+
 				ffmpegOutputArgumentList.push_back("-filter:a");
 				ffmpegOutputArgumentList.push_back(audioFilters);
 			}
@@ -12953,237 +12995,233 @@ void FFMpeg::liveProxyOutput(
 			}
 		}
 
-		// output file
-		if (
-			outputType == "CDN_AWS"
-			|| outputType == "CDN_CDN77"
-			|| outputType == "RTMP_Channel"
-		)
+		if (threadsParameterToBeAdded)
 		{
-			string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
-			if (rtmpUrl == "")
+			ffmpegOutputArgumentList.push_back("-threads");
+			ffmpegOutputArgumentList.push_back("0");
+		}
+
+			// output file
+			if (
+				outputType == "CDN_AWS"
+				|| outputType == "CDN_CDN77"
+				|| outputType == "RTMP_Channel"
+			)
 			{
-				string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", rtmpUrl: " + rtmpUrl
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			// 2023-01-14
-			// the aac_adtstoasc filter is needed only in case of an AAC input, otherwise
-			// it will generate an error
-			// Questo filtro è sempre stato aggiunto. Ora abbiamo il caso di un codec audio mp2 che
-			// genera un errore.
-			// Per essere conservativo ed evitare problemi, il controllo sotto viene fatto in 'logica negata'.
-			// cioè invece di abilitare il filtro per i codec aac, lo disabilitiamo per il codec mp2
-			// 2023-01-15
-			// Il problema 'sopra' che, a seguito del codec mp2 veniva generato un errore,
-			// è stato risolto aggiungendo un encoding in uscita.
-			// Per questo motivo sotto viene commentato
-
-			// 2023-04-06: La logica negata è sbagliata, perchè il filtro aac_adtstoasc funziona solamente
-			//	con aac. Infatti ora ho trovato un caso di mp3 che non funziona con aac_adtstoasc
-			{
-				/*
-				bool aacFilterToBeAdded = true;
-				for(tuple<int, int64_t, string, long, int, long, string> inputAudioTrack: inputAudioTracks)
+				string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
+				if (rtmpUrl == "")
 				{
-					// trackIndex, audioDurationInMilliSeconds, audioCodecName,
-					// audioSampleRate, audioChannels, audioBitRate, language));
-					string audioCodecName;
+					string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", rtmpUrl: " + rtmpUrl
+					;
+					_logger->error(errorMessage);
 
-					tie(ignore, ignore, audioCodecName, ignore, ignore, ignore, ignore) = inputAudioTrack;
+					throw runtime_error(errorMessage);
+				}
 
-					string audioCodecNameLowerCase;
-					audioCodecNameLowerCase.resize(audioCodecName.size());
-					transform(audioCodecName.begin(), audioCodecName.end(), audioCodecNameLowerCase.begin(),
+				// 2023-01-14
+				// the aac_adtstoasc filter is needed only in case of an AAC input, otherwise
+				// it will generate an error
+				// Questo filtro è sempre stato aggiunto. Ora abbiamo il caso di un codec audio mp2 che
+				// genera un errore.
+				// Per essere conservativo ed evitare problemi, il controllo sotto viene fatto in 'logica negata'.
+				// cioè invece di abilitare il filtro per i codec aac, lo disabilitiamo per il codec mp2
+				// 2023-01-15
+				// Il problema 'sopra' che, a seguito del codec mp2 veniva generato un errore,
+				// è stato risolto aggiungendo un encoding in uscita.
+				// Per questo motivo sotto viene commentato
+
+				// 2023-04-06: La logica negata è sbagliata, perchè il filtro aac_adtstoasc funziona solamente
+				//	con aac. Infatti ora ho trovato un caso di mp3 che non funziona con aac_adtstoasc
+				{
+					/*
+					bool aacFilterToBeAdded = true;
+					for(tuple<int, int64_t, string, long, int, long, string> inputAudioTrack: inputAudioTracks)
+					{
+						// trackIndex, audioDurationInMilliSeconds, audioCodecName,
+						// audioSampleRate, audioChannels, audioBitRate, language));
+						string audioCodecName;
+
+						tie(ignore, ignore, audioCodecName, ignore, ignore, ignore, ignore) = inputAudioTrack;
+
+						string audioCodecNameLowerCase;
+						audioCodecNameLowerCase.resize(audioCodecName.size());
+						transform(audioCodecName.begin(), audioCodecName.end(), audioCodecNameLowerCase.begin(),
 							[](unsigned char c){return tolower(c); } );
 
-					if (audioCodecNameLowerCase.find("mp2") != string::npos
-					)
-						aacFilterToBeAdded = false;
+						if (audioCodecNameLowerCase.find("mp2") != string::npos
+						)
+							aacFilterToBeAdded = false;
 
-					_logger->info(__FILEREF__ + "aac check"
-						+ ", audioCodecName: " + audioCodecName
-						+ ", aacFilterToBeAdded: " + to_string(aacFilterToBeAdded)
-					);
+						_logger->info(__FILEREF__ + "aac check"
+							+ ", audioCodecName: " + audioCodecName
+							+ ", aacFilterToBeAdded: " + to_string(aacFilterToBeAdded)
+						);
+					}
+
+					if (aacFilterToBeAdded)
+					*/
+					{
+						ffmpegOutputArgumentList.push_back("-bsf:a");
+						ffmpegOutputArgumentList.push_back("aac_adtstoasc");
+					}
 				}
 
-				if (aacFilterToBeAdded)
-				*/
+				// 2020-08-13: commented bacause -c:v copy is already present
+				// ffmpegArgumentList.push_back("-vcodec");
+				// ffmpegArgumentList.push_back("copy");
+
+				// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
+				ffmpegOutputArgumentList.push_back("-f");
+				ffmpegOutputArgumentList.push_back("flv");
+				ffmpegOutputArgumentList.push_back(rtmpUrl);
+			}
+			else if (outputType == "HLS_Channel")
+			{
+				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+				string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
+				int segmentDurationInSeconds = JSONUtils::asInt(outputRoot,
+					"segmentDurationInSeconds", 10);
+				int playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
+
+				string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
+
+				_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", manifestDirectoryPath: " + manifestDirectoryPath
+				);
+
+				// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
+				// I saw just once that the directory was not created and the liveencoder remains in the loop
+				// where:
+				//	1. the encoder returns an error because of the missing directory
+				//	2. EncoderVideoAudioProxy calls again the encoder
+				// So, for this reason, the below check is done
+				if (!fs::exists(manifestDirectoryPath))
 				{
-					ffmpegOutputArgumentList.push_back("-bsf:a");
-					ffmpegOutputArgumentList.push_back("aac_adtstoasc");
+					_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+					);
+
+					_logger->info(__FILEREF__ + "Create directory"
+						+ ", manifestDirectoryPath: " + manifestDirectoryPath
+					);
+					fs::create_directories(manifestDirectoryPath);                              
+					fs::permissions(manifestDirectoryPath,                                      
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
+						| fs::perms::group_read | fs::perms::group_exec                          
+						| fs::perms::others_read | fs::perms::others_exec,                                                                         
+						fs::perm_options::replace);
 				}
+
+				if (externalEncoder)
+					addToIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
+
+				// if (outputType == "HLS")
+				{
+					ffmpegOutputArgumentList.push_back("-hls_flags");
+					ffmpegOutputArgumentList.push_back("append_list");
+					ffmpegOutputArgumentList.push_back("-hls_time");
+					ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
+					ffmpegOutputArgumentList.push_back("-hls_list_size");
+					ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
+
+					// Segment files removed from the playlist are deleted after a period of time
+					// equal to the duration of the segment plus the duration of the playlist
+					ffmpegOutputArgumentList.push_back("-hls_flags");
+					ffmpegOutputArgumentList.push_back("delete_segments");
+
+					// Set the number of unreferenced segments to keep on disk
+					// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
+					// to download segments which were recently referenced in the playlist.
+					// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
+					ffmpegOutputArgumentList.push_back("-hls_delete_threshold");
+					ffmpegOutputArgumentList.push_back(to_string(1));
+
+
+					// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
+					// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
+					// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
+					// 2020-07-19: commented, if it is needed just test it
+					// ffmpegArgumentList.push_back("-hls_start_number_source");
+					// ffmpegArgumentList.push_back("datetime");
+
+					// 2020-07-19: commented, if it is needed just test it
+					// ffmpegArgumentList.push_back("-start_number");
+					// ffmpegArgumentList.push_back(to_string(10));
+				}
+				/*
+				else if (outputType == "DASH")
+				{
+					ffmpegOutputArgumentList.push_back("-seg_duration");
+					ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
+					ffmpegOutputArgumentList.push_back("-window_size");
+					ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
+
+					// it is important to specify -init_seg_name because those files
+					// will not be removed in EncoderVideoAudioProxy.cpp
+					ffmpegOutputArgumentList.push_back("-init_seg_name");
+					ffmpegOutputArgumentList.push_back("init-stream$RepresentationID$.$ext$");
+
+					// the only difference with the ffmpeg default is that default is $Number%05d$
+					// We had to change it to $Number%01d$ because otherwise the generated file containing
+					// 00001 00002 ... but the videojs player generates file name like 1 2 ...
+					// and the streaming was not working
+					ffmpegOutputArgumentList.push_back("-media_seg_name");
+					ffmpegOutputArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
+				}
+				*/
+				ffmpegOutputArgumentList.push_back(manifestFilePathName);
 			}
-
-			// 2020-08-13: commented bacause -c:v copy is already present
-			// ffmpegArgumentList.push_back("-vcodec");
-			// ffmpegArgumentList.push_back("copy");
-
-			// right now it is fixed flv, it means cdnURL will be like "rtmp://...."
-			ffmpegOutputArgumentList.push_back("-f");
-			ffmpegOutputArgumentList.push_back("flv");
-			ffmpegOutputArgumentList.push_back(rtmpUrl);
-		}
-		else if (outputType == "HLS_Channel")
-		{
-			string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-			string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
-			int segmentDurationInSeconds = JSONUtils::asInt(outputRoot,
-				"segmentDurationInSeconds", 10);
-			int playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
-
-			string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
-
-			_logger->info(__FILEREF__ + "Checking manifestDirectoryPath directory"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", manifestDirectoryPath: " + manifestDirectoryPath
-			);
-
-			// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
-			// I saw just once that the directory was not created and the liveencoder remains in the loop
-			// where:
-			//	1. the encoder returns an error because of the missing directory
-			//	2. EncoderVideoAudioProxy calls again the encoder
-			// So, for this reason, the below check is done
-			if (!fs::exists(manifestDirectoryPath))
+			else if (outputType == "UDP_Stream")
 			{
-				_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
+				string udpUrl = JSONUtils::asString(outputRoot, "udpUrl", "");
+
+				if (udpUrl == "")
+				{
+					string errorMessage = __FILEREF__ + "udpUrl cannot be empty"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", udpUrl: " + udpUrl
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				ffmpegOutputArgumentList.push_back("-f");
+				ffmpegOutputArgumentList.push_back("mpegts");
+				ffmpegOutputArgumentList.push_back(udpUrl);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "liveProxy. Wrong output type"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", manifestDirectoryPath: " + manifestDirectoryPath
-				);
-
-				_logger->info(__FILEREF__ + "Create directory"
-					+ ", manifestDirectoryPath: " + manifestDirectoryPath
-				);
-				fs::create_directories(manifestDirectoryPath);                              
-				fs::permissions(manifestDirectoryPath,                                      
-					fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
-					| fs::perms::group_read | fs::perms::group_exec                          
-					| fs::perms::others_read | fs::perms::others_exec,                                                                         
-					fs::perm_options::replace);
-
-			}
-
-			if (externalEncoder)
-				addToIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
-
-			// if (outputType == "HLS")
-			{
-				ffmpegOutputArgumentList.push_back("-hls_flags");
-				ffmpegOutputArgumentList.push_back("append_list");
-				ffmpegOutputArgumentList.push_back("-hls_time");
-				ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
-				ffmpegOutputArgumentList.push_back("-hls_list_size");
-				ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
-
-				// Segment files removed from the playlist are deleted after a period of time
-				// equal to the duration of the segment plus the duration of the playlist
-				ffmpegOutputArgumentList.push_back("-hls_flags");
-				ffmpegOutputArgumentList.push_back("delete_segments");
-
-				// Set the number of unreferenced segments to keep on disk
-				// before 'hls_flags delete_segments' deletes them. Increase this to allow continue clients
-				// to download segments which were recently referenced in the playlist.
-				// Default value is 1, meaning segments older than hls_list_size+1 will be deleted.
-				ffmpegOutputArgumentList.push_back("-hls_delete_threshold");
-				ffmpegOutputArgumentList.push_back(to_string(1));
-
-
-				// Start the playlist sequence number (#EXT-X-MEDIA-SEQUENCE) based on the current
-				// date/time as YYYYmmddHHMMSS. e.g. 20161231235759
-				// 2020-07-11: For the Live-Grid task, without -hls_start_number_source we have video-audio out of sync
-				// 2020-07-19: commented, if it is needed just test it
-				// ffmpegArgumentList.push_back("-hls_start_number_source");
-				// ffmpegArgumentList.push_back("datetime");
-
-				// 2020-07-19: commented, if it is needed just test it
-				// ffmpegArgumentList.push_back("-start_number");
-				// ffmpegArgumentList.push_back(to_string(10));
-			}
-			/*
-			else if (outputType == "DASH")
-			{
-				ffmpegOutputArgumentList.push_back("-seg_duration");
-				ffmpegOutputArgumentList.push_back(to_string(segmentDurationInSeconds));
-				ffmpegOutputArgumentList.push_back("-window_size");
-				ffmpegOutputArgumentList.push_back(to_string(playlistEntriesNumber));
-
-				// it is important to specify -init_seg_name because those files
-				// will not be removed in EncoderVideoAudioProxy.cpp
-				ffmpegOutputArgumentList.push_back("-init_seg_name");
-				ffmpegOutputArgumentList.push_back("init-stream$RepresentationID$.$ext$");
-
-				// the only difference with the ffmpeg default is that default is $Number%05d$
-				// We had to change it to $Number%01d$ because otherwise the generated file containing
-				// 00001 00002 ... but the videojs player generates file name like 1 2 ...
-				// and the streaming was not working
-				ffmpegOutputArgumentList.push_back("-media_seg_name");
-				ffmpegOutputArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
-			}
-			*/
-			ffmpegOutputArgumentList.push_back(manifestFilePathName);
-		}
-		else if (outputType == "UDP_Stream")
-		{
-			string udpUrl = JSONUtils::asString(outputRoot, "udpUrl", "");
-
-			if (udpUrl == "")
-			{
-				string errorMessage = __FILEREF__ + "udpUrl cannot be empty"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", udpUrl: " + udpUrl
-				;
+					+ ", outputType: " + outputType;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-
-			ffmpegOutputArgumentList.push_back("-f");
-			ffmpegOutputArgumentList.push_back("mpegts");
-			ffmpegOutputArgumentList.push_back(udpUrl);
-		}
-		else
-		{
-			string errorMessage = __FILEREF__ + "liveProxy. Wrong output type"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", outputType: " + outputType;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 	}
 }
 
 void FFMpeg::liveGrid(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	Json::Value encodingProfileDetailsRoot,
+	bool externalEncoder,
 	string userAgent,
 	Json::Value inputChannelsRoot,	// name,url
 	int gridColumns,
 	int gridWidth,	// i.e.: 1024
 	int gridHeight, // i.e.: 578
 
-	string outputType,	// HLS or SRT (DASH not implemented yet)
-
-	// next are parameters for the hls output
-	int segmentDurationInSeconds,
-	int playlistEntriesNumber,
-	string manifestDirectoryPath,
-	string manifestFileName,
-
-	// next are parameters for the srt output
-	string srtURL,
+	Json::Value outputsRoot,
 
 	pid_t* pChildPid)
 {
@@ -13207,7 +13245,6 @@ void FFMpeg::liveGrid(
 		*/
 	);
 
-	string outputTypeLowerCase;
     try
     {
 		_logger->info(__FILEREF__ + "Received " + toString(_currentApiName)
@@ -13215,45 +13252,71 @@ void FFMpeg::liveGrid(
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 		);
 
-		outputTypeLowerCase.resize(outputType.size());
-		transform(outputType.begin(), outputType.end(), outputTypeLowerCase.begin(),
-				[](unsigned char c){return tolower(c); } );
-
-		if (outputTypeLowerCase != "hls" && outputTypeLowerCase != "srt")
+		// gestiamo solamente un outputsRoot
+		if (outputsRoot.size() != 1)
 		{
-			string errorMessage = __FILEREF__
-				+ "liveProxy. Wrong output type (it has to be HLS or DASH)"
+			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", outputType: " + outputType;
+				+ ", outputsRoot.size: " + to_string(outputsRoot.size())
+			;
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
-		// I saw just once that the directory was not created and the liveencoder remains in the loop
-		// where:
-		//	1. the encoder returns an error because of the missing directory
-		//	2. EncoderVideoAudioProxy calls again the encoder
-		// So, for this reason, the below check is done
-		if (outputTypeLowerCase == "hls" && !fs::exists(manifestDirectoryPath))
+		vector<string> ffmpegOutputArgumentList;
+		try
 		{
-			_logger->warn(__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created"
+			_logger->info(__FILEREF__ + toString(_currentApiName)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", outputsRoot.size: " + to_string(outputsRoot.size())
+			);
+			vector<string> videoMaps;
+			vector<string> audioMaps;
+			liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,
+				"", // otherOutputOptionsBecauseOfMaxWidth,
+				Json::nullValue, // inputDrawTextDetailsRoot,
+				// inputVideoTracks, inputAudioTracks,
+				-1, // streamingDurationInSeconds,
+				outputsRoot,
+				videoMaps, audioMaps,
+				ffmpegOutputArgumentList);
+
+			{
+				ostringstream ffmpegOutputArgumentListStream;
+				if (!ffmpegOutputArgumentList.empty())
+					copy(ffmpegOutputArgumentList.begin(), ffmpegOutputArgumentList.end(),
+						ostream_iterator<string>(ffmpegOutputArgumentListStream, " "));
+				_logger->info(__FILEREF__ + toString(_currentApiName) + ": ffmpegOutputArgumentList"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", manifestDirectoryPath: " + manifestDirectoryPath
-					);
+					+ ", ffmpegOutputArgumentList: " + ffmpegOutputArgumentListStream.str()
+				);
+			}
+		}
+		catch(runtime_error e)
+		{
+			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", exception: " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			_logger->info(__FILEREF__ + "Create directory"
-                + ", manifestDirectoryPath: " + manifestDirectoryPath
-            );
-			fs::create_directories(manifestDirectoryPath);                              
-			fs::permissions(manifestDirectoryPath,                                      
-				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec                            
-				| fs::perms::group_read | fs::perms::group_exec                          
-				| fs::perms::others_read | fs::perms::others_exec,                                                                         
-				fs::perm_options::replace);
+			throw runtime_error(errorMessage);
+		}
+		catch(exception e)
+		{
+			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", exception: " + e.what()
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
 		{
@@ -13511,6 +13574,10 @@ void FFMpeg::liveGrid(
 			ffmpegArgumentList.push_back(ffmpegFilterComplex);
 		}
 
+		for (string parameter: ffmpegOutputArgumentList)
+			ffmpegArgumentList.push_back(parameter);
+
+/*
 		int videoBitRateInKbps = -1;
 		{
 			string httpStreamingFileFormat;    
@@ -13651,9 +13718,7 @@ void FFMpeg::liveGrid(
 				}
 				else if (outputTypeLowerCase == "dash")
 				{
-					/*
-					 * non so come si deve gestire nel caso di multi audio con DASH
-					*/
+					// non so come si deve gestire nel caso di multi audio con DASH
 				}
 
 				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
@@ -13728,9 +13793,7 @@ void FFMpeg::liveGrid(
 					}
 					else if (outputTypeLowerCase == "dash")
 					{
-						/*
-						 * non so come si deve gestire nel caso di multi audio con DASH
-						 */
+						 // non so come si deve gestire nel caso di multi audio con DASH
 					}
 				}
 
@@ -13742,11 +13805,16 @@ void FFMpeg::liveGrid(
 				}
 			}
         }
+*/
+
+		Json::Value outputRoot = outputsRoot[0];
+
+		string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 		// We will create:
 		//  - one m3u8 for each track (video and audio)
 		//  - one main m3u8 having a group for AUDIO
-		if (outputTypeLowerCase == "hls")
+		if (outputType == "HLS_Channel")
 		{
 			/*
 			Manifest will be like:
@@ -13761,6 +13829,8 @@ void FFMpeg::liveGrid(
 
 			*/
 
+			string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+			string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
 			{
 				for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
 				{
@@ -13824,6 +13894,8 @@ void FFMpeg::liveGrid(
 				}
 
 				string videoManifestLine = "#EXT-X-STREAM-INF:PROGRAM-ID=1";
+// TO DO: recuperare videoBitRateInKbps da liveProxyOutput
+int videoBitRateInKbps = -1;
 				if (videoBitRateInKbps != -1)
 					videoManifestLine += (",BANDWIDTH=" + to_string(videoBitRateInKbps * 1000));
 				videoManifestLine += ",AUDIO=\"audio\"";
@@ -13888,6 +13960,82 @@ void FFMpeg::liveGrid(
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
 			+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 		);
+
+		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+		{
+			Json::Value outputRoot = outputsRoot[outputIndex];
+
+			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+
+			// if (outputType == "HLS" || outputType == "DASH")
+			if (outputType == "HLS_Channel")
+			{
+				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+
+				if (externalEncoder)
+					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
+
+				if (manifestDirectoryPath != "")
+				{
+					if (fs::exists(manifestDirectoryPath))
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							);
+							fs::remove_all(manifestDirectoryPath);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
+				}
+			}
+
+			if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
+			{
+				string textTemporaryFileName;
+				{
+					textTemporaryFileName =
+						_ffmpegTempDir + "/"
+						+ to_string(ingestionJobKey)
+						+ "_"
+						+ to_string(encodingJobKey)
+						+ "_"
+						+ to_string(outputIndex)
+						+ ".overlayText";
+				}
+
+				if (fs::exists(textTemporaryFileName))
+				{
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", textTemporaryFileName: " + textTemporaryFileName);
+					fs::remove_all(textTemporaryFileName);
+				}
+			}
+		}
     }
     catch(runtime_error e)
     {
@@ -13962,35 +14110,79 @@ void FFMpeg::liveGrid(
         fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);
 		*/
 
-		if (outputTypeLowerCase == "hls" && manifestDirectoryPath != "")
-    	{
-			try
-			{
-				_logger->info(__FILEREF__ + "Remove directory"
-					+ ", manifestDirectoryPath: " + manifestDirectoryPath);
-				fs::remove_all(manifestDirectoryPath);
-			}
-			catch(runtime_error e)
-			{
-				string errorMessage = __FILEREF__ + "remove directory failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", e.what(): " + e.what()
-				;
-				_logger->error(errorMessage);
+		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+		{
+			Json::Value outputRoot = outputsRoot[outputIndex];
 
-				// throw e;
-			}
-			catch(exception e)
-			{
-				string errorMessage = __FILEREF__ + "remove directory failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
-					+ ", e.what(): " + e.what()
-				;
-				_logger->error(errorMessage);
+			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-				// throw e;
+			// if (outputType == "HLS" || outputType == "DASH")
+			if (outputType == "HLS_Channel")
+			{
+				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+
+				if (externalEncoder)
+					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
+
+				if (manifestDirectoryPath != "")
+				{
+					if (fs::exists(manifestDirectoryPath))
+					{
+						try
+						{
+							_logger->info(__FILEREF__ + "removeDirectory"
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							);
+							fs::remove_all(manifestDirectoryPath);
+						}
+						catch(runtime_error e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+						catch(exception e)
+						{
+							string errorMessage = __FILEREF__ + "remove directory failed"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", e.what(): " + e.what()
+							;
+							_logger->error(errorMessage);
+
+							// throw e;
+						}
+					}
+				}
+			}
+
+			if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
+			{
+				string textTemporaryFileName;
+				{
+					textTemporaryFileName =
+						_ffmpegTempDir + "/"
+						+ to_string(ingestionJobKey)
+						+ "_"
+						+ to_string(encodingJobKey)
+						+ "_"
+						+ to_string(outputIndex)
+						+ ".overlayText";
+				}
+
+				if (fs::exists(textTemporaryFileName))
+				{
+					_logger->info(__FILEREF__ + "Remove"
+						+ ", textTemporaryFileName: " + textTemporaryFileName);
+					fs::remove_all(textTemporaryFileName);
+				}
 			}
 		}
 
@@ -14003,6 +14195,8 @@ void FFMpeg::liveGrid(
 		else
 			throw e;
     }
+
+	renameOutputFfmpegPathFileName(ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName);
 
 	/*
     _logger->info(__FILEREF__ + "Remove"

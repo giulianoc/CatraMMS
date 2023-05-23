@@ -9,11 +9,11 @@
 			"conf label 1"
 		],
 
-		"Columns": 2,
+		"columns": 2,
 
-		"GridWidth": 1024,
+		"gridWidth": 1024,
 
-		"GridHeigth": 578,
+		"gridHeigth": 578,
 
 		"encodingProfileLabel": "fast encoding profile"
 	}

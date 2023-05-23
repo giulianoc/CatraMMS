@@ -356,23 +356,14 @@ public:
 	void liveGrid(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
-		Json::Value encodingProfileDetailsRoot,
+		bool externalEncoder,
 		string userAgent,
 		Json::Value inputChannelsRoot,	// name,url
 		int gridColumns,
-		int gridWidth,  // i.e.: 1024
+		int gridWidth,	// i.e.: 1024
 		int gridHeight, // i.e.: 578
 
-		string outputType,
-
-		// next are parameters for the hls output
-		int segmentDurationInSeconds,
-		int playlistEntriesNumber,
-		string manifestDirectoryPath,
-		string manifestFileName,
-
-		// next are parameters for the hls output
-		string srtURL,
+		Json::Value outputsRoot,
 
 		pid_t* pChildPid);
 
@@ -601,6 +592,8 @@ private:
 		// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
 		long streamingDurationInSeconds,
 		Json::Value outputsRoot,
+		vector<string> videoMaps,
+		vector<string> audioMaps,
 		vector<string>& ffmpegOutputArgumentList);
 
     string getLastPartOfFile(
