@@ -231,7 +231,7 @@ private:
 
     void userHttpCallback(
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
-        int httpPort, string httpURI, string httpURLParameters,
+        int httpPort, string httpURI, string httpURLParameters, bool formData,
         string httpMethod, long callbackTimeoutInSeconds,
         Json::Value userHeadersRoot, 
         string& data, string userName, string password, int maxRetries);

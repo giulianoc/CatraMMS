@@ -34,7 +34,7 @@
 		//	In both the above cases, this tag has to be set
 		//  Options: "Beginning", "End", an integer specifying the position where
 		//		the dependencies have to be placed. 0 is same as Beginning
-		"DependenciesToBeAddedToReferencesAt": "End",
+		"dependenciesToBeAddedToReferencesAt": "End",
 
 		// mandatory: the below parameters specify the X and Y in pixel where the image
 		//    has to be overlayed on the video.

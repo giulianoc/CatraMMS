@@ -29,7 +29,7 @@
 		//	In this scenario this tag has to be set
 		//  Options: "Beginning", "End", an integer specifying the position where
 		//		the dependencies have to be placed. 0 is same as Beginning
-		"DependenciesToBeAddedToReferencesAt": "End",
+		"dependenciesToBeAddedToReferencesAt": "End",
 
 		// optional: set the frame rate. Options:
 		// passthrough (0): Each frame is passed with its timestamp from the demuxer to the muxer.

@@ -650,9 +650,9 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 	// Sometimes, we want to use both, the references coming from the tag and the inherid references.
 	// For example a video is ingested and we want to overlay a logo that is already present into MMS.
 	// In this case we add the Reference for the Image and we inherit the video from the Add-Content Task.
-	// In these case we use the "DependenciesToBeAddedToReferencesAt" parameter.
+	// In these case we use the "dependenciesToBeAddedToReferencesAt" parameter.
 
-	// 2021-04-25: "DependenciesToBeAddedToReferencesAt" could be:
+	// 2021-04-25: "dependenciesToBeAddedToReferencesAt" could be:
 	//	- AtTheBeginning
 	//	- AtTheEnd
 	//	- an integer specifying the position where to place the dependencies.
@@ -663,7 +663,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 		string atTheEnd = "End";
 
 		string dependenciesToBeAddedToReferencesAt;
-		field = "DependenciesToBeAddedToReferencesAt";
+		field = "dependenciesToBeAddedToReferencesAt";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			dependenciesToBeAddedToReferencesAt = JSONUtils::asString(parametersRoot, field, "");
@@ -685,7 +685,7 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 					}
 					catch (exception e)
 					{
-						string errorMessage = string("DependenciesToBeAddedToReferencesAt is not well format")
+						string errorMessage = string("dependenciesToBeAddedToReferencesAt is not well format")
 							+ ", dependenciesToBeAddedToReferencesAt: " + dependenciesToBeAddedToReferencesAt
 						;
 						_logger->error(__FILEREF__ + errorMessage);

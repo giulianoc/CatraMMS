@@ -28,7 +28,7 @@
 		//	In this scenario this tag has to be set
 		//  Options: "Beginning", "End", an integer specifying the position where
 		//		the dependencies have to be placed. 0 is same as Beginning
-		"DependenciesToBeAddedToReferencesAt": "End",
+		"dependenciesToBeAddedToReferencesAt": "End",
 
 		// optional
 		// Possible values: begin, end, entireTrack

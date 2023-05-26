@@ -37,7 +37,35 @@
 		//	In this scenario this tag has to be set
 		//  Options: "Beginning", "End", an integer specifying the position where
 		//		the dependencies have to be placed. 0 is same as Beginning
-		"DependenciesToBeAddedToReferencesAt": "End",
+		"dependenciesToBeAddedToReferencesAt": "End",
+
+		// We have two options:
+		//
+		// - option 1 (addMediaData is true): HTTP callback shall send the media data received as input
+		//		MMS will execute one HTTP request for each media received as input
+		//
+		//		In case of HTTP POST or PUT having the 'httpBody' field initialized,
+		//			each HTTP request contains the 'httpBody' field where it was replaced, if exist,
+		//			the following placeholders:
+		//			- ${mediaItemKey} is replaced with the mediaItemKey of the current media
+		//			- ${physicalPathKey} is replaced with the physicalPathKey of the current media
+		//		otherwise, in case of POST or PUT (no 'httpBody' field initialized)
+		//			the following json will be used as 'body':
+		//			{
+		//				"workspaceKey": <workspaceKey>,
+		//				"mediaItemKey": <mediaItemKey>,
+		//				"title": <title>,
+		//				"userData": <userData>,
+		//				"physicalPathKey": <physicalPathKey",
+		//				"fileName", <fileName>,
+		//				"durationInSeconds": <durationInSeconds>,
+		//			}
+		//		in all the other cases just one HTTP request is executed without any body
+		//
+		// - option 2 (addMediaData is false): one HTTP callback shall be executed without considering the received input
+		//
+		// Optional. Default is true
+		"addMediaData": true,
 
 		// optional. Username used for the HTTP basic authentication
 		"userName": "xxx",
@@ -59,6 +87,13 @@
 
 		// optional
 		"parameters": "?name1=value&name2=value",
+
+		// optional, this parameter specifies if the data have to be sent using the 'HTTP form' way
+		//	In this case the parameters included in the 'parameters' field will not be sent
+		//	in the URL query but as form data in the body.
+		//	This 'formData' parameter is used only in case of POST or PUT.
+		// Default is false
+		"formData": false,
 
 		// optional. Default is POST. It could be GET, POST, PUT
 		"method": "POST",
