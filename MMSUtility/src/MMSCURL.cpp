@@ -876,7 +876,7 @@ string MMSCURL::httpGet(
 )
 {
 	string sResponse;
-	int retryNumber = 0;
+	int retryNumber = -1;
 
 	while (retryNumber < maxRetryNumber)
 	{
@@ -1155,7 +1155,7 @@ string MMSCURL::httpDelete(
 )
 {
 	string sResponse;
-	int retryNumber = 0;
+	int retryNumber = -1;
 
 	while (retryNumber < maxRetryNumber)
 	{
@@ -1439,7 +1439,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 {
 	string sHeaderResponse;
 	string sBodyResponse;
-	int retryNumber = 0;
+	int retryNumber = -1;
 
 	while (retryNumber < maxRetryNumber)
 	{
@@ -1703,7 +1703,7 @@ string MMSCURL::httpPostPutFile(
 )
 {
 	string sResponse;
-	int retryNumber = 0;
+	int retryNumber = -1;
 
 	while (retryNumber < maxRetryNumber)
 	{
@@ -1992,7 +1992,7 @@ string MMSCURL::httpPostPutFormData(
 )
 {
 	string sResponse;
-	int retryNumber = 0;
+	int retryNumber = -1;
 
 	while (retryNumber < maxRetryNumber)
 	{
@@ -2240,7 +2240,7 @@ string MMSCURL::httpPostPutFileByFormData(
 {
 
 	string sResponse;
-	int retryNumber = 0;
+	int retryNumber = -1;
 
 	while (retryNumber < maxRetryNumber)
 	{
@@ -2556,7 +2556,7 @@ void MMSCURL::downloadFile(
 	int secondsToWaitBeforeToRetry
 )
 {
-	int retryNumber = 0;
+	int retryNumber = -1;
 
 	// Ci sarebbe la possibilità di fare un resume in caso di errore, guarda l'implementazione
 	// in MMSEngineProcessor.cpp. Quella implementazione si dovrebbe anche spostare in questa lib

@@ -9937,9 +9937,7 @@ void MMSEngineProcessor::httpCallbackThread(
             }
 
             field = "maxRetries";
-			maxRetries = JSONUtils::asInt(parametersRoot, field, 2);
-			if (maxRetries == 0)
-				maxRetries = 2;
+			maxRetries = JSONUtils::asInt(parametersRoot, field, 1);
         }
 
 		if (addMediaData && (httpMethod == "POST" || httpMethod == "PUT"))

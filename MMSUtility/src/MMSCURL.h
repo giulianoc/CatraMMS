@@ -90,7 +90,7 @@ public:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		vector<string> otherHeaders,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -102,7 +102,7 @@ public:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		vector<string> otherHeaders,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -114,7 +114,7 @@ public:
 		string basicAuthenticationUser,
 		string basicAuthenticationPassword,
 		vector<string> otherHeaders,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -128,7 +128,7 @@ public:
 		string body,
 		string contentType,	// i.e.: application/json
 		vector<string> otherHeaders,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -142,7 +142,7 @@ public:
 		string body,
 		string contentType,	// i.e.: application/json
 		vector<string> otherHeaders,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -156,7 +156,7 @@ public:
 		string body,
 		string contentType,	// i.e.: application/json
 		vector<string> otherHeaders,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -170,7 +170,7 @@ public:
 		string body,
 		string contentType,	// i.e.: application/json
 		vector<string> otherHeaders,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -183,7 +183,7 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
@@ -198,7 +198,7 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
@@ -213,7 +213,7 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
@@ -228,7 +228,7 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
@@ -243,7 +243,7 @@ public:
 		string basicAuthenticationPassword,
 		string pathFileName,
 		int64_t fileSizeInBytes,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -253,7 +253,7 @@ public:
 		string url,
 		vector<pair<string, string>> formData,
 		long timeoutInSeconds,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -263,7 +263,7 @@ public:
 		string url,
 		vector<pair<string, string>> formData,
 		long timeoutInSeconds,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -273,7 +273,7 @@ public:
 		string url,
 		vector<pair<string, string>> formData,
 		long timeoutInSeconds,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -283,7 +283,7 @@ public:
 		string url,
 		vector<pair<string, string>> formData,
 		long timeoutInSeconds,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
@@ -296,7 +296,7 @@ public:
 		string pathFileName,
 		int64_t fileSizeInBytes,
 		string mediaContentType,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
@@ -311,7 +311,7 @@ public:
 		string pathFileName,
 		int64_t fileSizeInBytes,
 		string mediaContentType,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
@@ -326,7 +326,7 @@ public:
 		string pathFileName,
 		int64_t fileSizeInBytes,
 		string mediaContentType,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
@@ -341,7 +341,7 @@ public:
 		string pathFileName,
 		int64_t fileSizeInBytes,
 		string mediaContentType,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15,
 		int64_t contentRangeStart = -1,
 		int64_t contentRangeEnd_Excluded = -1
@@ -353,7 +353,7 @@ public:
 		string url,
 		string destBinaryPathName,
 		curlpp::types::ProgressFunctionFunctor functor,
-		int maxRetryNumber = 1,
+		int maxRetryNumber = 0,
 		int secondsToWaitBeforeToRetry = 15
 	);
 
