@@ -88,9 +88,15 @@
 		// optional
 		"parameters": "?name1=value&name2=value",
 
-		// optional, this parameter specifies if the data have to be sent using the 'HTTP form' way
-		//	In this case the parameters included in the 'parameters' field will not be sent
-		//	in the URL query but as form data in the body.
+		// optional, this parameter specifies if the data have to be sent using the 'HTTP form' format
+		//	In this case the name/value fields of the 'HTTP form' will be retrieved by the 'httpBody' field.
+		//	Infact, it is expected that the 'httpBody' field is a json array of json object each one
+		//	shall have the 'name' and 'value' fields. I.e.:
+		//	[
+		//		{"name": "<name of the first param>", "value": <value of the first param>" },
+		//		{"name": "<name of the second param>", "value": <value of the second param>" },
+		//		...
+		//  ]
 		//	This 'formData' parameter is used only in case of POST or PUT.
 		// Default is false
 		"formData": false,

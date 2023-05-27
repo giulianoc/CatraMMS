@@ -10284,11 +10284,9 @@ void MMSEngineProcessor::httpCallbackThread(
 		{
 			try
 			{
-				string data;
-
 				userHttpCallback(ingestionJobKey, httpProtocol, httpHostName, 
 					httpPort, httpURI, httpURLParameters, formData, httpMethod,
-					callbackTimeoutInSeconds, httpHeadersRoot, data,
+					callbackTimeoutInSeconds, httpHeadersRoot, httpBody,
 					userName, password, maxRetries);
 			}
 			catch(runtime_error e)
@@ -26079,7 +26077,7 @@ void MMSEngineProcessor::userHttpCallback(
 	int httpPort, string httpURI, string httpURLParameters, bool formData,
 	string httpMethod, long callbackTimeoutInSeconds,
 	Json::Value userHeadersRoot, 
-	string& data, string userName, string password, int maxRetries
+	string& httpBody, string userName, string password, int maxRetries
 )
 {
 
@@ -26122,18 +26120,15 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					// httpURLParameters is like ?name1=value&name2=value
-					// in case of the parameter candy=M&M, the query shall be
-					//		shoes=2&hat=1&candy=M%26M
-
-					stringstream ss(httpURLParameters.substr(1));
-					string token;
-					char delim = '&';
-					while (getline(ss, token, delim))
+					Json::Value formDataParameters = JSONUtils::toJson(ingestionJobKey, -1, httpBody);
+					for(int paramIndex = 0; paramIndex < formDataParameters.size(); paramIndex++)
 					{
-						size_t separatorIndex = token.find("=");
-						if (separatorIndex != string::npos)
-							formData.push_back(make_pair(token.substr(0, separatorIndex), token.substr(separatorIndex + 1)));
+						Json::Value formDataParameter = formDataParameters[paramIndex];
+						string name = JSONUtils::asString(formDataParameter, "name", "");
+						string value = JSONUtils::asString(formDataParameter, "value", "");
+
+						if (name != "")
+							formData.push_back(make_pair(name, value));
 					}
 				}
 
@@ -26149,7 +26144,7 @@ void MMSEngineProcessor::userHttpCallback(
 			else
 			{
 				string contentType;
-				if (data != "")
+				if (httpBody != "")
 					contentType = "application/json";
 
 				MMSCURL::httpPutString(
@@ -26159,7 +26154,7 @@ void MMSEngineProcessor::userHttpCallback(
 					callbackTimeoutInSeconds,
 					userName,
 					password,
-					data,
+					httpBody,
 					contentType,
 					otherHeaders,
 					maxRetries
@@ -26172,18 +26167,15 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					// httpURLParameters is like ?name1=value&name2=value
-					// in case of the parameter candy=M&M, the query shall be
-					//		shoes=2&hat=1&candy=M%26M
-
-					stringstream ss(httpURLParameters.substr(1));
-					string token;
-					char delim = '&';
-					while (getline(ss, token, delim))
+					Json::Value formDataParameters = JSONUtils::toJson(ingestionJobKey, -1, httpBody);
+					for(int paramIndex = 0; paramIndex < formDataParameters.size(); paramIndex++)
 					{
-						size_t separatorIndex = token.find("=");
-						if (separatorIndex != string::npos)
-							formData.push_back(make_pair(token.substr(0, separatorIndex), token.substr(separatorIndex + 1)));
+						Json::Value formDataParameter = formDataParameters[paramIndex];
+						string name = JSONUtils::asString(formDataParameter, "name", "");
+						string value = JSONUtils::asString(formDataParameter, "value", "");
+
+						if (name != "")
+							formData.push_back(make_pair(name, value));
 					}
 				}
 
@@ -26199,7 +26191,7 @@ void MMSEngineProcessor::userHttpCallback(
 			else
 			{
 				string contentType;
-				if (data != "")
+				if (httpBody != "")
 					contentType = "application/json";
 
 				MMSCURL::httpPostString(
@@ -26209,7 +26201,7 @@ void MMSEngineProcessor::userHttpCallback(
 					callbackTimeoutInSeconds,
 					userName,
 					password,
-					data,
+					httpBody,
 					contentType,
 					otherHeaders,
 					maxRetries
