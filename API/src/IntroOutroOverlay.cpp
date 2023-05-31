@@ -391,6 +391,7 @@ void IntroOutroOverlay::encodeContent(
 			string main_Center_PathName = stagingPath + "main_Center.mp4";
 			startTimeInSeconds = 60.0;
 			endTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
+			int64_t mainCenterDurationInMilliSeconds = mainSourceDurationInMilliSeconds - 60000 - 60000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
 				_ingestionJobKey,
 				mainSourceAssetPathName,
@@ -404,7 +405,7 @@ void IntroOutroOverlay::encodeContent(
 			string main_Intro_PathName = stagingPath + "main_Intro.mp4";
 			_encoding->_ffmpeg->introOverlay(
 				introSourceAssetPathName, introSourceDurationInMilliSeconds,
-				mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
+				main_Begin_PathName, 60000,
 
 				introOverlayDurationInSeconds,
 				muteIntroOverlay,
@@ -419,7 +420,7 @@ void IntroOutroOverlay::encodeContent(
 
 			string main_Outro_PathName = stagingPath + "main_Outro.mp4";
 			_encoding->_ffmpeg->outroOverlay(
-				mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
+				main_End_PathName, 60000,
 				outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
 
 				outroOverlayDurationInSeconds,
@@ -433,16 +434,34 @@ void IntroOutroOverlay::encodeContent(
 				_ingestionJobKey,
 				&(_encoding->_childPid));
 
+			string main_Center_Encoded_PathName = stagingPath + "main_Center_Encoded.mp4";
+			_encoding->_ffmpeg->encodeContent(
+				main_Center_PathName, mainCenterDurationInMilliSeconds,
+				main_Center_Encoded_PathName,
+				encodingProfileDetailsRoot,
+				true,
+				Json::nullValue, Json::nullValue,
+				-1, -1,
+				-1, _encodingJobKey, _ingestionJobKey,
+				&(_encoding->_childPid));
+
 
 			vector<string> sourcePhysicalPaths;
 			sourcePhysicalPaths.push_back(main_Intro_PathName);
-			sourcePhysicalPaths.push_back(main_Center_PathName);
+			sourcePhysicalPaths.push_back(main_Center_Encoded_PathName);
 			sourcePhysicalPaths.push_back(main_Outro_PathName);
 			_encoding->_ffmpeg->concat(
 				_ingestionJobKey,
 				true,
 				sourcePhysicalPaths,
 				encodedStagingAssetPathName);
+
+			fs::remove_all(main_Begin_PathName);
+			fs::remove_all(main_End_PathName);
+			fs::remove_all(main_Center_PathName);
+			fs::remove_all(main_Intro_PathName);
+			fs::remove_all(main_Outro_PathName);
+			fs::remove_all(main_Center_Encoded_PathName);
 		}
 		else
 		{

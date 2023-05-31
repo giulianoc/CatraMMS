@@ -234,10 +234,10 @@ void FFMpeg::encodeContent(
 			&& ffmpegEncodingParameters._httpStreamingFileFormat == "hls"
 
 			// more than 1 audio track
-			&& audioTracksRoot.size() > 1
+			&& audioTracksRoot != Json::nullValue && audioTracksRoot.size() > 1
 
 			// one video track
-			&& videoTracksRoot.size() == 1
+			&& videoTracksRoot != Json::nullValue && videoTracksRoot.size() == 1
 		)
 		{
 			/*
@@ -4767,8 +4767,8 @@ ffmpeg -y
     -filter_complex
         [1:a]volume=enable='between(t,0,2)':volume=0,adelay=delays=906s:all=1[outro_audio_overlayMuted_and_moved];
         [1:v]tpad=start_duration=906:start_mode=add:color=white[outro_video_moved];
-        [0:a][outro_audio_overlayMuted_and_moved]amix=inputs=2[final_audio]
-        [0:v][outro_video_moved]overlay=enable='gte(t,906)'[final_video];
+        [0:a][outro_audio_overlayMuted_and_moved]amix=inputs=2[final_audio];
+        [0:v][outro_video_moved]overlay=enable='gte(t,906)'[final_video]
         -map [final_video] -map [final_audio]
         -pix_fmt yuv420p -codec:v libx264 -profile:v main -b:v 2500k -preset medium -level 4.0 -crf 22 -r 25 -threads 0 -acodec aac -b:a 160k -ac 2 /var/catramms/storage/IngestionRepository/users/14/4251053_introOutroOverlay.mts
 */
@@ -4801,7 +4801,7 @@ ffmpeg -y
 
 			ffmpegFilterComplex += "[0:a][outro_audio_overlayMuted_and_moved]amix=inputs=2[final_audio];";
 			ffmpegFilterComplex += "[0:v][outro_video_moved]overlay=enable='gte(t," + to_string(outroStartOverlayInSeconds) +
-				")'[final_video];";
+				")'[final_video]";
 		}
 
 		vector<string> ffmpegArgumentList;
@@ -7903,7 +7903,13 @@ void FFMpeg::cutWithoutEncoding(
 		if (framesNumber != -1)
 			ffmpegExecuteCommand += (string("-vframes ") + to_string(framesNumber) + " ");
 		else
-			ffmpegExecuteCommand += (string("-to ") + to_string(endTimeInSeconds) + " ");
+		{
+			// if you specify -ss before -i, -to will have the same effect as -t, i.e. it will act as a duration.
+			if (cutType == "KeyFrameSeeking")	// input seeking
+				ffmpegExecuteCommand += (string("-to ") + to_string(endTimeInSeconds - startTimeInSeconds) + " ");
+			else
+				ffmpegExecuteCommand += (string("-to ") + to_string(endTimeInSeconds) + " ");
+		}
 
 		ffmpegExecuteCommand +=	(string("-async 1 ")
 				// commented because aresample filtering requires encoding and here we are just streamcopy
