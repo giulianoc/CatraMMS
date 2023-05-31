@@ -192,6 +192,40 @@ public:
         int64_t ingestionJobKey,
 		pid_t* pChildPid);
 
+	void introOverlay(
+        string introVideoAssetPathName,
+        int64_t introVideoDurationInMilliSeconds,
+        string mainVideoAssetPathName,
+        int64_t mainVideoDurationInMilliSeconds,
+
+		int64_t introOverlayDurationInSeconds,
+
+		bool muteIntroOverlay,
+
+		Json::Value encodingProfileDetailsRoot,
+
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+		pid_t* pChildPid);
+
+	void outroOverlay(
+        string mainVideoAssetPathName,
+        int64_t mainVideoDurationInMilliSeconds,
+        string outroVideoAssetPathName,
+        int64_t outroVideoDurationInMilliSeconds,
+
+		int64_t outroOverlayDurationInSeconds,
+
+		bool muteOutroOverlay,
+
+		Json::Value encodingProfileDetailsRoot,
+
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey,
+		pid_t* pChildPid);
+
 	void silentAudio(
 		string videoAssetPathName,
 		int64_t videoDurationInMilliSeconds,
@@ -413,7 +447,9 @@ private:
 		LiveGrid						= 18,
 		ChangeFileFormat				= 19,
 		StreamingToFile					= 20,
-		SilentAudio						= 21
+		SilentAudio						= 21,
+		IntroOverlay					= 22,
+		OutroOverlay					= 23
 	};
 	static const char* toString(const APIName& apiName)
 	{
@@ -463,6 +499,10 @@ private:
 				return "StreamingToFile";
 			case APIName::SilentAudio:
 				return "SilentAudio";
+			case APIName::IntroOverlay:
+				return "IntroOverlay";
+			case APIName::OutroOverlay:
+				return "OutroOverlay";
 			default:
 				throw runtime_error(string("Wrong APIName"));
 		}
@@ -517,6 +557,10 @@ private:
 			return APIName::StreamingToFile;
 		else if (lowerCase == "silentaudio")
 			return APIName::SilentAudio;
+		else if (lowerCase == "introoverlay")
+			return APIName::IntroOverlay;
+		else if (lowerCase == "outrooverlay")
+			return APIName::OutroOverlay;
 		else
 			throw runtime_error(string("Wrong APIName")
 				+ ", current apiName: " + apiName

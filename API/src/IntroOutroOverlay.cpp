@@ -357,21 +357,111 @@ void IntroOutroOverlay::encodeContent(
 		bool muteIntroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteIntroOverlay", true);                 
 		bool muteOutroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteOutroOverlay", true);                 
 
-		_encoding->_ffmpeg->introOutroOverlay(
-			introSourceAssetPathName, introSourceDurationInMilliSeconds,
-			mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
-			outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
+		bool splitMain = true;
+		if (splitMain)
+		{
+			string stagingPath = "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/";
 
-			introOverlayDurationInSeconds, outroOverlayDurationInSeconds,
-			muteIntroOverlay, muteOutroOverlay,
+			string main_Begin_PathName = stagingPath + "main_Bagin.mp4";
+			double startTimeInSeconds = 0.0;
+			double endTimeInSeconds = 60.0;
+			_encoding->_ffmpeg->cutWithoutEncoding(
+				_ingestionJobKey,
+				mainSourceAssetPathName,
+				"KeyFrameSeeking",
+				true,
+				startTimeInSeconds,
+				endTimeInSeconds,
+				-1,
+				main_Begin_PathName);
 
-			encodingProfileDetailsRoot,
+			string main_End_PathName = stagingPath + "main_End.mp4";
+			startTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
+			endTimeInSeconds = mainSourceDurationInMilliSeconds / 1000;
+			_encoding->_ffmpeg->cutWithoutEncoding(
+				_ingestionJobKey,
+				mainSourceAssetPathName,
+				"KeyFrameSeeking",
+				true,
+				startTimeInSeconds,
+				endTimeInSeconds,
+				-1,
+				main_End_PathName);
 
-			encodedStagingAssetPathName,
+			string main_Center_PathName = stagingPath + "main_Center.mp4";
+			startTimeInSeconds = 60.0;
+			endTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
+			_encoding->_ffmpeg->cutWithoutEncoding(
+				_ingestionJobKey,
+				mainSourceAssetPathName,
+				"KeyFrameSeeking",
+				true,
+				startTimeInSeconds,
+				endTimeInSeconds,
+				-1,
+				main_Center_PathName);
 
-			_encodingJobKey,
-			_ingestionJobKey,
-			&(_encoding->_childPid));
+			string main_Intro_PathName = stagingPath + "main_Intro.mp4";
+			_encoding->_ffmpeg->introOverlay(
+				introSourceAssetPathName, introSourceDurationInMilliSeconds,
+				mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
+
+				introOverlayDurationInSeconds,
+				muteIntroOverlay,
+
+				encodingProfileDetailsRoot,
+
+				main_Intro_PathName,
+
+				_encodingJobKey,
+				_ingestionJobKey,
+				&(_encoding->_childPid));
+
+			string main_Outro_PathName = stagingPath + "main_Outro.mp4";
+			_encoding->_ffmpeg->outroOverlay(
+				mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
+				outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
+
+				outroOverlayDurationInSeconds,
+				muteOutroOverlay,
+
+				encodingProfileDetailsRoot,
+
+				main_Outro_PathName,
+
+				_encodingJobKey,
+				_ingestionJobKey,
+				&(_encoding->_childPid));
+
+
+			vector<string> sourcePhysicalPaths;
+			sourcePhysicalPaths.push_back(main_Intro_PathName);
+			sourcePhysicalPaths.push_back(main_Center_PathName);
+			sourcePhysicalPaths.push_back(main_Outro_PathName);
+			_encoding->_ffmpeg->concat(
+				_ingestionJobKey,
+				true,
+				sourcePhysicalPaths,
+				encodedStagingAssetPathName);
+		}
+		else
+		{
+			_encoding->_ffmpeg->introOutroOverlay(
+				introSourceAssetPathName, introSourceDurationInMilliSeconds,
+				mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
+				outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
+
+				introOverlayDurationInSeconds, outroOverlayDurationInSeconds,
+				muteIntroOverlay, muteOutroOverlay,
+
+				encodingProfileDetailsRoot,
+
+				encodedStagingAssetPathName,
+
+				_encodingJobKey,
+				_ingestionJobKey,
+				&(_encoding->_childPid));
+		}
 
         _logger->info(__FILEREF__ + "introOutroOverlay encoding content finished"
             + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
