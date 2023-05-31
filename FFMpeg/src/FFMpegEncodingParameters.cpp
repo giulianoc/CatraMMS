@@ -1770,15 +1770,42 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
 						// keyFrameIntervalInSeconds
 						{
+							/*
+								Un tipico codec video utilizza la compressione temporale, ovvero la maggior parte
+								dei fotogrammi memorizza solo la differenza rispetto ai fotogrammi precedenti
+								(e in alcuni casi futuri). Quindi, per decodificare questi fotogrammi, è necessario
+								fare riferimento ai fotogrammi precedenti, al fine di generare un'immagine completa.
+								In breve, i fotogrammi chiave sono fotogrammi che non si basano su altri fotogrammi
+								per la decodifica e su cui si basano altri fotogrammi per essere decodificati.
+
+								Se un video deve essere tagliato o segmentato, senza transcodifica (ricompressione),
+								la segmentazione può avvenire solo in corrispondenza dei fotogrammi chiave, in modo
+								che il primo fotogramma di un segmento sia un fotogramma chiave. Se così non fosse,
+								i fotogrammi di un segmento fino al fotogramma chiave successivo non potrebbero
+								essere riprodotti.
+
+								Un codificatore come x264 in genere genera fotogrammi chiave solo se rileva che si è verificato
+								un cambio di scena*. Ciò non favorisce la segmentazione, poiché i fotogrammi chiave
+								possono essere generati a intervalli irregolari. Per garantire la creazione di segmenti
+								di lunghezze identiche e prevedibili, è possibile utilizzare l'opzione force_key_frames
+								per garantire il posizionamento desiderato dei fotogrammi chiave.
+							*/
+
 							field = "keyFrameIntervalInSeconds";
 							if (JSONUtils::isMetadataPresent(videoRoot, field))
 							{
-								int keyFrameIntervalInSeconds = JSONUtils::asInt(videoRoot, field, 0);
+								int keyFrameIntervalInSeconds = JSONUtils::asInt(videoRoot, field, 5);
+
+								field = "forceKeyFrames";
+								bool forceKeyFrames = JSONUtils::asInt(videoRoot, field, false);
 
 								// -g specifies the number of frames in a GOP
-								ffmpegVideoKeyFramesRateParameter =
-									"-g " + to_string(frameRate * keyFrameIntervalInSeconds) + " "
-								;
+								if (forceKeyFrames)
+									ffmpegVideoKeyFramesRateParameter =
+										"-force_key_frames expr:gte(t,n_forced*" + to_string(keyFrameIntervalInSeconds) + ") ";
+								else
+									ffmpegVideoKeyFramesRateParameter =
+										"-g " + to_string(frameRate * keyFrameIntervalInSeconds) + " ";
 							}
 						}
 					}

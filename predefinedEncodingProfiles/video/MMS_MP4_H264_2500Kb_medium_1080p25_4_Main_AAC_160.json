@@ -9,6 +9,7 @@
 		"twoPasses" : false,
 		"otherOutputParameters": "-preset medium -level 4.0 -crf 22",
 		"keyFrameIntervalInSeconds": 4,
+		"forceKeyFrames": true,
 		"bitRates": [
 			{
 				"width" : 1920,
