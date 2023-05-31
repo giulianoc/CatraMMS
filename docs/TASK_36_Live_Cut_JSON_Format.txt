@@ -20,8 +20,8 @@
 		// optional: in case the live chunks/segments identified by DeliveryCode have more
 		//		than one profile, this field permits to select a specific profile
 		//		to be used for the generation of the Cut file.
-		//		In case both EncodingProfileKeyToBeUsed and EncodingProfileLabelToBeUsed
-		//		are present, EncodingProfileKeyToBeUsed is used.
+		//		In case both ChunkEncodingProfileKey and ChunkEncodingProfileLabel
+		//		are present, ChunkEncodingProfileKey is used.
 		"ChunkEncodingProfileKey": -1,
 		"ChunkEncodingProfileLabel": "",
 

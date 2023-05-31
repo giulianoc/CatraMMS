@@ -1770,7 +1770,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
 						// keyFrameIntervalInSeconds
 						{
-							field = "KeyFrameIntervalInSeconds";
+							field = "keyFrameIntervalInSeconds";
 							if (JSONUtils::isMetadataPresent(videoRoot, field))
 							{
 								int keyFrameIntervalInSeconds = JSONUtils::asInt(videoRoot, field, 0);

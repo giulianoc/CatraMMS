@@ -1,14 +1,14 @@
 {
-	"label" : "MMS_MP4_H264_2500Kb_medium_1080p25_4_Main_AAC_160",
-	"fileFormat" : "mp4",
-	"video" : 
+	"label" : "MMS_MTS_H264_2500Kb_medium_1080p25_1_Main_AAC_160",
+	"fileFormat" : "mts",
+	"video" :
 	{
 		"codec" : "libx264",
 		"profile" : "main",
 		"frameRate": 25,
 		"twoPasses" : false,
 		"otherOutputParameters": "-preset medium -level 4.0 -crf 22",
-		"keyFrameIntervalInSeconds": 4,
+		"keyFrameIntervalInSeconds": 1,
 		"bitRates": [
 			{
 				"width" : 1920,

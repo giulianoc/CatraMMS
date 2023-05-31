@@ -39,7 +39,7 @@
 		"frameRate": 30,
 
 		// optional
-		"KeyFrameIntervalInSeconds": 2
+		"keyFrameIntervalInSeconds": 2
 	}
 
 	// mandatory
