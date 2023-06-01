@@ -357,16 +357,33 @@ void IntroOutroOverlay::encodeContent(
 		bool muteIntroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteIntroOverlay", true);                 
 		bool muteOutroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteOutroOverlay", true);                 
 
+		// 2023-06-01: ho notato che il comando ffmpeg "accumula" lip-sync ed il problema è
+		//	evidente con video di durata >= 10min. Dipende anche tanto dalla codifica del sorgente,
+		//	un sorgente "non compresso" ritarda il problema del lip-sync
+		// Per questo motivo, se la durata del sorgente è abbastanza lunga (vedi controllo sotto), dividiamo il sorgente in tre parti:
+		//	la prima e l'ultima di 60 secondi e quella centrale rimanente
+		// In questo modo applichiamo intro alla prima parte, l'outro all'ultima parte,
+		// la parte centrale la codifichiamo utilizzando lo stesso profilo e poi concateniamo
+		// le tre parti risultanti
 		bool splitMain = false;
-		if (splitMain)
+		if (mainSourceDurationInMilliSeconds >= (introOverlayDurationInSeconds + 30 + outroOverlayDurationInSeconds + 30) * 1000)
 		{
-			string stagingPath = "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/";
+			string stagingBasePath;
 
-			string main_Begin_PathName = stagingPath + "main_Bagin.avi";
-			if (fs::exists(main_Begin_PathName))
-				fs::remove_all(main_Begin_PathName);
+			size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+			if (endOfDirectoryIndex == string::npos)
+			{
+			}
+
+			stagingBasePath = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex) + "/introOutroSplit_"
+				+ to_string(_ingestionJobKey) + "_" + to_string(_encodingJobKey) + "_";
+
+			string mainBeginPathName = stagingBasePath + "mainBegin" + mainSourceFileExtension;
+			if (fs::exists(mainBeginPathName))
+				fs::remove_all(mainBeginPathName);
 			double startTimeInSeconds = 0.0;
-			double endTimeInSeconds = 60.0;
+			double endTimeInSeconds = introOverlayDurationInSeconds + 30;
+			int64_t mainBeginDurationInMilliSeconds = (introOverlayDurationInSeconds + 30) * 1000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
 				_ingestionJobKey,
 				mainSourceAssetPathName,
@@ -375,13 +392,18 @@ void IntroOutroOverlay::encodeContent(
 				startTimeInSeconds,
 				endTimeInSeconds,
 				-1,
-				main_Begin_PathName);
+				mainBeginPathName);
 
-			string main_End_PathName = stagingPath + "main_End.avi";
-			if (fs::exists(main_End_PathName))
-				fs::remove_all(main_End_PathName);
-			startTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
+			string mainEndPathName = stagingBasePath + "mainEnd" + mainSourceFileExtension;
+			if (fs::exists(mainEndPathName))
+				fs::remove_all(mainEndPathName);
+			startTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + 30);
 			endTimeInSeconds = mainSourceDurationInMilliSeconds / 1000;
+			int64_t mainEndDurationInMilliSeconds =
+				(
+					(mainSourceDurationInMilliSeconds / 1000)
+					- ((mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + 30))
+				) * 1000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
 				_ingestionJobKey,
 				mainSourceAssetPathName,
@@ -390,14 +412,18 @@ void IntroOutroOverlay::encodeContent(
 				startTimeInSeconds,
 				endTimeInSeconds,
 				-1,
-				main_End_PathName);
+				mainEndPathName);
 
-			string main_Center_PathName = stagingPath + "main_Center.avi";
-			if (fs::exists(main_Center_PathName))
-				fs::remove_all(main_Center_PathName);
-			startTimeInSeconds = 60.0;
-			endTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
-			int64_t mainCenterDurationInMilliSeconds = mainSourceDurationInMilliSeconds - 60000 - 60000;
+			string mainCenterPathName = stagingBasePath + "mainCenter" + mainSourceFileExtension;
+			if (fs::exists(mainCenterPathName))
+				fs::remove_all(mainCenterPathName);
+			startTimeInSeconds = introOverlayDurationInSeconds + 30;
+			endTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + 30);
+			int64_t mainCenterDurationInMilliSeconds =
+				(
+					((mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + 30))
+					- (introOverlayDurationInSeconds + 30)
+				) * 1000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
 				_ingestionJobKey,
 				mainSourceAssetPathName,
@@ -406,31 +432,33 @@ void IntroOutroOverlay::encodeContent(
 				startTimeInSeconds,
 				endTimeInSeconds,
 				-1,
-				main_Center_PathName);
+				mainCenterPathName);
 
-			string main_Intro_PathName = stagingPath + "main_Intro.mp4";
-			if (fs::exists(main_Intro_PathName))
-				fs::remove_all(main_Intro_PathName);
+			string destFileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+
+			string mainIntroPathName = stagingBasePath + "mainIntro." + destFileFormat;
+			if (fs::exists(mainIntroPathName))
+				fs::remove_all(mainIntroPathName);
 			_encoding->_ffmpeg->introOverlay(
 				introSourceAssetPathName, introSourceDurationInMilliSeconds,
-				main_Begin_PathName, 60000,
+				mainBeginPathName, mainBeginDurationInMilliSeconds,
 
 				introOverlayDurationInSeconds,
 				muteIntroOverlay,
 
 				encodingProfileDetailsRoot,
 
-				main_Intro_PathName,
+				mainIntroPathName,
 
 				_encodingJobKey,
 				_ingestionJobKey,
 				&(_encoding->_childPid));
 
-			string main_Outro_PathName = stagingPath + "main_Outro.mp4";
-			if (fs::exists(main_Outro_PathName))
-				fs::remove_all(main_Outro_PathName);
+			string mainOutroPathName = stagingBasePath + "mainOutro." + destFileFormat;
+			if (fs::exists(mainOutroPathName))
+				fs::remove_all(mainOutroPathName);
 			_encoding->_ffmpeg->outroOverlay(
-				main_End_PathName, 60000,
+				mainEndPathName, mainEndDurationInMilliSeconds,
 				outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
 
 				outroOverlayDurationInSeconds,
@@ -438,18 +466,18 @@ void IntroOutroOverlay::encodeContent(
 
 				encodingProfileDetailsRoot,
 
-				main_Outro_PathName,
+				mainOutroPathName,
 
 				_encodingJobKey,
 				_ingestionJobKey,
 				&(_encoding->_childPid));
 
-			string main_Center_Encoded_PathName = stagingPath + "main_Center_Encoded.mp4";
-			if (fs::exists(main_Center_Encoded_PathName))
-				fs::remove_all(main_Center_Encoded_PathName);
+			string mainCenterEncodedPathName = stagingBasePath + "mainCenterEncoded." + destFileFormat;
+			if (fs::exists(mainCenterEncodedPathName))
+				fs::remove_all(mainCenterEncodedPathName);
 			_encoding->_ffmpeg->encodeContent(
-				main_Center_PathName, mainCenterDurationInMilliSeconds,
-				main_Center_Encoded_PathName,
+				mainCenterPathName, mainCenterDurationInMilliSeconds,
+				mainCenterEncodedPathName,
 				encodingProfileDetailsRoot,
 				true,
 				Json::nullValue, Json::nullValue,
@@ -459,21 +487,21 @@ void IntroOutroOverlay::encodeContent(
 
 
 			vector<string> sourcePhysicalPaths;
-			sourcePhysicalPaths.push_back(main_Intro_PathName);
-			sourcePhysicalPaths.push_back(main_Center_Encoded_PathName);
-			sourcePhysicalPaths.push_back(main_Outro_PathName);
+			sourcePhysicalPaths.push_back(mainIntroPathName);
+			sourcePhysicalPaths.push_back(mainCenterEncodedPathName);
+			sourcePhysicalPaths.push_back(mainOutroPathName);
 			_encoding->_ffmpeg->concat(
 				_ingestionJobKey,
 				true,
 				sourcePhysicalPaths,
 				encodedStagingAssetPathName);
 
-			// fs::remove_all(main_Begin_PathName);
-			// fs::remove_all(main_End_PathName);
-			// fs::remove_all(main_Center_PathName);
-			// fs::remove_all(main_Intro_PathName);
-			// fs::remove_all(main_Outro_PathName);
-			// fs::remove_all(main_Center_Encoded_PathName);
+			fs::remove_all(mainBeginPathName);
+			fs::remove_all(mainEndPathName);
+			fs::remove_all(mainCenterPathName);
+			fs::remove_all(mainIntroPathName);
+			fs::remove_all(mainOutroPathName);
+			fs::remove_all(mainCenterEncodedPathName);
 		}
 		else
 		{
