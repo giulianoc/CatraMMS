@@ -1,5 +1,5 @@
 {
-	"label" : "MMS_AVI_RAWVIDEO_2500Kb_1080p25_PCL_S32LE_160",
+	"label" : "MMS_AVI_RAWVIDEO_2500Kb_1080p25_PCM_S32LE_160",
 	"fileFormat" : "avi",
 	"video" : 
 	{

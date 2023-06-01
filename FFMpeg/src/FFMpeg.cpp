@@ -117,8 +117,8 @@ void FFMpeg::encodeContent(
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", isVideo: " + to_string(isVideo)
 			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-			+ ", videoTracksRoot.size: " + (videoTracksRoot != Json::nullValue ? to_string(videoTracksRoot.size()) : 0)
-			+ ", audioTracksRoot.size: " + (audioTracksRoot != Json::nullValue ? to_string(audioTracksRoot.size()) : 0)
+			// + ", videoTracksRoot.size: " + (videoTracksRoot == Json::nullValue ? "0" : to_string(videoTracksRoot.size()))
+			// + ", audioTracksRoot.size: " + (audioTracksRoot == Json::nullValue ? "0" : to_string(audioTracksRoot.size()))
 			+ ", videoTrackIndexToBeUsed: " + to_string(videoTrackIndexToBeUsed)
 			+ ", audioTrackIndexToBeUsed: " + to_string(audioTrackIndexToBeUsed)
 		);
