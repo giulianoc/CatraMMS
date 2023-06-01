@@ -7805,6 +7805,35 @@ void FFMpeg::cutWithoutEncoding(
 		throw runtime_error(errorMessage);
 	}
 
+	// if dest directory does not exist, just create it
+	{
+		size_t endOfDirectoryIndex = cutMediaPathName.find_last_of("/");
+		if (endOfDirectoryIndex == string::npos)
+		{
+			string errorMessage = __FILEREF__ + "cutMediaPathName is not well formed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", cutMediaPathName: " + cutMediaPathName;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string cutMediaDirectory = cutMediaPathName.substr(0, endOfDirectoryIndex);
+		if (!fs::exists(cutMediaDirectory))
+		{
+			_logger->info(__FILEREF__ + "Creating directory"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", cutMediaDirectory: " + cutMediaDirectory
+			);
+			fs::create_directories(cutMediaDirectory);
+			fs::permissions(cutMediaDirectory,
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+				| fs::perms::group_read | fs::perms::group_exec
+				| fs::perms::others_read | fs::perms::others_exec,
+				fs::perm_options::replace);
+		}
+	}
+
 	{
 		char	sUtcTimestamp [64];
 		tm		tmUtcTimestamp;
