@@ -14,9 +14,20 @@ tenDaysInMinutes=14400
 twentyDaysInMinutes=28800
 sixMonthsInMinutes=259299
 
+debugFilename=/tmp/crontab.log
+if [ ! -f "$debugFilename" ]; then
+    echo "" > $debugFilename
+else
+    filesize=$(stat -c %s $debugFilename)
+    if [ $filesize -gt 10000000 ]
+    then
+        echo "" > $debugFilename
+    fi
+fi
+
 if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 ]
 then
-	echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [<db user> <db password>]" >> /tmp/crontab.log
+	echo "$(date): usage $0 <commandIndex> [<timeoutInMinutes>] [<db user> <db password>]" >> $debugFilename
 
     exit
 fi
@@ -57,7 +68,7 @@ else
 			timeoutInMinutes=$fiveDaysInMinutes
 		fi
 
-		commandToBeExecuted="find -L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find -L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 2 ]
 	then
@@ -68,9 +79,9 @@ else
 
 		#serve per eliminare i file temporanei generati a causa di p:fileUpload non terminati.
 		#Quelli che terminano vengono automaticamente eliminati.
-		find /opt/catramms/tomcat/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f -delete
+		find /opt/catramms/tomcat/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f -delete -print >> $debugFilename
 
-		commandToBeExecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 3 ]
 	then
@@ -80,7 +91,7 @@ else
 		fi
 
 		# retention IngestionRepository for directories is nr. 8
-		commandToBeExecuted="find /var/catramms/storage/IngestionRepository/ -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/IngestionRepository/ -mmin +$timeoutInMinutes -type f -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 4 ]
 	then
@@ -89,7 +100,10 @@ else
 			timeoutInMinutes=$twelveHoursInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/ -mmin +$timeoutInMinutes -type f -delete"
+		#2023-06-01: mantenere un numero di ore alto. Infatti, per video molto grandi,
+		#	una volta terminati, serve molto tempo solo per fare la getMediaInfo e la move ed in questo periodo rimarrebbero qui
+		#	senza cambiamenti e quindi, con 1h o 2h come timeout sarebbero eliminati prima di terminare la getMediaInfo/move causando un errore
+		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/ -mmin +$timeoutInMinutes -type f -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 5 ]
 	then
@@ -98,9 +112,9 @@ else
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
 
-		find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/ -mmin +$sixMonthsInMinutes -type f -delete
+		find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/ -mmin +$sixMonthsInMinutes -type f -delete -print >> $debugFilename
 
-		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 6 ]
 	then
@@ -111,17 +125,20 @@ else
 			timeoutInMinutes=$oneDayInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete -print"
 		timeoutValue="1h"
-	elif [ $commandIndex -eq 7 ]
-	then
-		if [ "$timeoutInMinutes" == "" ]
-		then
-			timeoutInMinutes=$oneHourInMinutes
-		fi
+	#2023-06-01: eliminata perchè già presente con commandIndex 4. Inoltre oneHour è troppo poco, per video molto grandi,
+	#	una volta terminati, serve molto tempo solo per fare la getMediaInfo e la move ed in questo periodo rimarrebbero qui
+	#	senza cambiamenti e quindi sarebbero eliminati prima di terminare la getMediaInfo/move causando un errore
+	#elif [ $commandIndex -eq 7 ]
+	#then
+	#	if [ "$timeoutInMinutes" == "" ]
+	#	then
+	#		timeoutInMinutes=$oneHourInMinutes
+	#	fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete"
-		timeoutValue="1h"
+	#	commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete -print"
+	#	timeoutValue="1h"
 	elif [ $commandIndex -eq 8 ]
 	then
 		if [ "$timeoutInMinutes" == "" ]
@@ -130,7 +147,7 @@ else
 		fi
 
 		# retention IngestionRepository for files is nr. 3
-		commandToBeExecuted="find /var/catramms/storage/IngestionRepository/users/*/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		commandToBeExecuted="find /var/catramms/storage/IngestionRepository/users/*/* -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 9 ]
 	then
@@ -139,7 +156,7 @@ else
 			timeoutInMinutes=$sixHourInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMS_????/*/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMS_????/*/* -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 10 ]
 	then
@@ -148,8 +165,9 @@ else
 			timeoutInMinutes=$oneHourInMinutes
 		fi
 
+		#elimina le directory in staging vuote
 		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
-		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/* -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 11 ]
 	then
@@ -161,7 +179,7 @@ else
 		fi
 
 		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
-		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/* -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 12 ]
 	then
@@ -182,7 +200,7 @@ else
 			timeoutInMinutes=$tenDaysInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/logs/nginx/ -mmin +$timeoutInMinutes -type d -exec rm -rv {} +"
+		commandToBeExecuted="find /var/catramms/logs/nginx/ -mmin +$timeoutInMinutes -type d -print -exec rm -rv {} +"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 13 ]
 	then
@@ -191,7 +209,7 @@ else
 			timeoutInMinutes=$oneDayInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/* -mmin +$timeoutInMinutes -type f -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/* -mmin +$timeoutInMinutes -type f -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 14 ]
 	then
@@ -200,7 +218,7 @@ else
 			timeoutInMinutes=$oneDayInMinutes
 		fi
 
-		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/* -empty -mmin +$timeoutInMinutes -type d -delete"
+		commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/* -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 15 ]
 	then
@@ -232,23 +250,23 @@ else
 
 			#the retention command is called here because in case of multiple DB
 			#the command would be called only for the last one
-			commandToBeExecuted="find $dumpDirectory -mmin +$timeoutInMinutes -type f -delete"
+			commandToBeExecuted="find $dumpDirectory -mmin +$timeoutInMinutes -type f -delete -print"
 			timeout $timeoutValue $commandToBeExecuted
 		done
 
 	else
-		echo "$(date): wrong commandIndex: $commandIndex" >> /tmp/crontab.log
+		echo "$(date): wrong commandIndex: $commandIndex" >> $debugFilename
 
 		exit
 	fi
 
-	timeout $timeoutValue $commandToBeExecuted
+	timeout $timeoutValue $commandToBeExecuted >> $debugFilename
 	if [ $? -eq 124 ]
 	then
-		echo "$(date): $commandToBeExecuted TIMED OUT" >> /tmp/crontab.log
+		echo "$(date): $commandToBeExecuted TIMED OUT" >> $debugFilename
 	elif [ $? -eq 126 ]
 	then
-		echo "$(date): $commandToBeExecuted FAILED (Argument list too long)" >> /tmp/crontab.log
+		echo "$(date): $commandToBeExecuted FAILED (Argument list too long)" >> $debugFilename
 	fi
 fi
 

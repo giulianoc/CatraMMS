@@ -397,9 +397,24 @@ void IntroOutroOverlay::encodeContent(
 				throw runtime_error(errorMessage);
 			}
 
-			stagingBasePath = encodedTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex)
-				+ "/introOutroSplit_"
-				+ to_string(_ingestionJobKey) + "_" + to_string(_encodingJobKey) + "_";
+			stagingBasePath = encodedTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);
+			if (!fs::exists(stagingBasePath))
+			{
+				_logger->info(__FILEREF__ + "Creating directory"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", stagingBasePath: " + stagingBasePath
+				);
+				fs::create_directories(stagingBasePath);
+				fs::permissions(stagingBasePath,
+					fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+					| fs::perms::group_read | fs::perms::group_exec
+					| fs::perms::others_read | fs::perms::others_exec,
+					fs::perm_options::replace);
+			}
+
+			stagingBasePath += ("/introOutroSplit_"
+				+ to_string(_ingestionJobKey) + "_" + to_string(_encodingJobKey) + "_");
 
 			string mainBeginPathName = stagingBasePath + "mainBegin" + mainSourceFileExtension;
 			if (fs::exists(mainBeginPathName))
