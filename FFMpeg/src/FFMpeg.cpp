@@ -135,6 +135,35 @@ void FFMpeg::encodeContent(
 			throw runtime_error(errorMessage);
 		}
 
+		// if dest directory does not exist, just create it
+		{
+			size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+			if (endOfDirectoryIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "encodedStagingAssetPathName is not well formed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string directory = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
+			if (!fs::exists(directory))
+			{
+				_logger->info(__FILEREF__ + "Creating directory"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", directory: " + directory
+				);
+				fs::create_directories(directory);
+				fs::permissions(directory,
+					fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+					| fs::perms::group_read | fs::perms::group_exec
+					| fs::perms::others_read | fs::perms::others_exec,
+					fs::perm_options::replace);
+			}
+		}
+
 		/*
         string httpStreamingFileFormat;    
 		string ffmpegHttpStreamingParameter = "";

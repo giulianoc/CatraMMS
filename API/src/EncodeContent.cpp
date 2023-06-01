@@ -1,6 +1,7 @@
 
 #include "EncodeContent.h"
 
+#include "MMSStorage.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 
@@ -71,6 +72,8 @@ void EncodeContent::encodeContent(
 		}
 		string sourceFileExtension = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
+		bool useOfLocalStorageForProcessingOutput = true;
+
 		if (externalEncoder)
 		{
 			field = "sourceTranscoderStagingAssetPathName";
@@ -133,27 +136,6 @@ void EncodeContent::encodeContent(
 			}
 			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
-			{
-				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
-				if (endOfDirectoryIndex != string::npos)
-				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
-
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
-					);
-					fs::create_directories(directoryPathName);
-					fs::permissions(directoryPathName,
-						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
-						| fs::perms::group_read | fs::perms::group_exec
-						| fs::perms::others_read | fs::perms::others_exec,
-						fs::perm_options::replace);
-				}
-			}
-
 			sourceAssetPathName = downloadMediaFromMMS(
 				_ingestionJobKey,
 				_encodingJobKey,
@@ -177,7 +159,10 @@ void EncodeContent::encodeContent(
 			}
 			sourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
-			field = "encodedNFSStagingAssetPathName";
+			if (useOfLocalStorageForProcessingOutput)
+				field = "encodedTranscoderStagingAssetPathName";
+			else
+				field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -277,6 +262,33 @@ void EncodeContent::encodeContent(
 				encodingProfileKey,
 				sourceMediaItemKey
 			);
+		}
+		else
+		{
+			if (useOfLocalStorageForProcessingOutput)
+			{
+				field = "encodedNFSStagingAssetPathName";
+				if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+				{
+					string errorMessage = __FILEREF__ + "Field is not present or it is null"
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+						+ ", Field: " + field;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				string encodedNFSStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+
+				// move encodedStagingAssetPathName (encodedTranscoderStagingAssetPathName) in encodedNFSStagingAssetPathName
+				_logger->info(__FILEREF__ + "moving file"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+					+ ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
+				);
+				MMSStorage::move(_ingestionJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName, _logger);
+			}
 		}
     }
 	catch(FFMpegEncodingKilledByUser e)
