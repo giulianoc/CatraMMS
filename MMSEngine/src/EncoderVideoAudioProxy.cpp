@@ -9339,9 +9339,9 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 
 		_logger->info(__FILEREF__ + "getEncodingStatus"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", ingestionJobKey" + to_string(_encodingItem->_ingestionJobKey)
-			+ ", encodingJobKey" + to_string(_encodingItem->_encodingJobKey)
-			+ ", response: " + JSONUtils::toString(encodeStatusResponse)
+			+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+			+ ", response: " + regex_replace(JSONUtils::toString(encodeStatusResponse), regex("\n"), " ")
 		);
 
 		/*
