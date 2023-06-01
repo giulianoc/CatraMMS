@@ -357,7 +357,7 @@ void IntroOutroOverlay::encodeContent(
 		bool muteIntroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteIntroOverlay", true);                 
 		bool muteOutroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteOutroOverlay", true);                 
 
-		bool splitMain = true;
+		bool splitMain = false;
 		if (splitMain)
 		{
 			string stagingPath = "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/";
