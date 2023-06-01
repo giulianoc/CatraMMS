@@ -468,12 +468,12 @@ void IntroOutroOverlay::encodeContent(
 				sourcePhysicalPaths,
 				encodedStagingAssetPathName);
 
-			fs::remove_all(main_Begin_PathName);
-			fs::remove_all(main_End_PathName);
-			fs::remove_all(main_Center_PathName);
-			fs::remove_all(main_Intro_PathName);
-			fs::remove_all(main_Outro_PathName);
-			fs::remove_all(main_Center_Encoded_PathName);
+			// fs::remove_all(main_Begin_PathName);
+			// fs::remove_all(main_End_PathName);
+			// fs::remove_all(main_Center_PathName);
+			// fs::remove_all(main_Intro_PathName);
+			// fs::remove_all(main_Outro_PathName);
+			// fs::remove_all(main_Center_Encoded_PathName);
 		}
 		else
 		{
