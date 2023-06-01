@@ -10050,7 +10050,7 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
-					+ ", encodingErrorMessage: " + encodingErrorMessage
+					+ ", encodingErrorMessage: " + regex_replace(encodingErrorMessage, regex("\n"), " ")
 				;
 				_logger->error(errorMessage);
 
