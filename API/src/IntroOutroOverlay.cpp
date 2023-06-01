@@ -362,7 +362,7 @@ void IntroOutroOverlay::encodeContent(
 		{
 			string stagingPath = "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/";
 
-			string main_Begin_PathName = stagingPath + "main_Bagin.mp4";
+			string main_Begin_PathName = stagingPath + "main_Bagin.avi";
 			double startTimeInSeconds = 0.0;
 			double endTimeInSeconds = 60.0;
 			_encoding->_ffmpeg->cutWithoutEncoding(
@@ -375,7 +375,7 @@ void IntroOutroOverlay::encodeContent(
 				-1,
 				main_Begin_PathName);
 
-			string main_End_PathName = stagingPath + "main_End.mp4";
+			string main_End_PathName = stagingPath + "main_End.avi";
 			startTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
 			endTimeInSeconds = mainSourceDurationInMilliSeconds / 1000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
@@ -388,7 +388,7 @@ void IntroOutroOverlay::encodeContent(
 				-1,
 				main_End_PathName);
 
-			string main_Center_PathName = stagingPath + "main_Center.mp4";
+			string main_Center_PathName = stagingPath + "main_Center.avi";
 			startTimeInSeconds = 60.0;
 			endTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
 			int64_t mainCenterDurationInMilliSeconds = mainSourceDurationInMilliSeconds - 60000 - 60000;

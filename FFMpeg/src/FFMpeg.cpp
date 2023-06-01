@@ -117,8 +117,8 @@ void FFMpeg::encodeContent(
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", isVideo: " + to_string(isVideo)
 			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-			+ ", videoTracksRoot.size: " + to_string(videoTracksRoot.size())
-			+ ", audioTracksRoot.size: " + to_string(audioTracksRoot.size())
+			+ ", videoTracksRoot.size: " + (videoTracksRoot != Json::nullValue ? to_string(videoTracksRoot.size()) : 0)
+			+ ", audioTracksRoot.size: " + (audioTracksRoot != Json::nullValue ? to_string(audioTracksRoot.size()) : 0)
 			+ ", videoTrackIndexToBeUsed: " + to_string(videoTrackIndexToBeUsed)
 			+ ", audioTrackIndexToBeUsed: " + to_string(audioTrackIndexToBeUsed)
 		);
@@ -7956,8 +7956,9 @@ void FFMpeg::cutWithoutEncoding(
         if (executeCommandStatus != 0)
         {
             string errorMessage = __FILEREF__ + "cut: ffmpeg command failed"
-                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+				+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
             _logger->error(errorMessage);
 
@@ -7980,10 +7981,11 @@ void FFMpeg::cutWithoutEncoding(
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-        ;
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+			+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+			+ ", e.what(): " + e.what()
+		;
         _logger->error(errorMessage);
 
         _logger->info(__FILEREF__ + "Remove"
