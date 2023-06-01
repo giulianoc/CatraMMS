@@ -9337,6 +9337,13 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 			otherHeaders
 		);
 
+		_logger->info(__FILEREF__ + "getEncodingStatus"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", ingestionJobKey" + to_string(_encodingItem->_ingestionJobKey)
+			+ ", encodingJobKey" + to_string(_encodingItem->_encodingJobKey)
+			+ ", response: " + JSONUtils::toString(encodeStatusResponse)
+		);
+
 		/*
         list<string> header;
 
