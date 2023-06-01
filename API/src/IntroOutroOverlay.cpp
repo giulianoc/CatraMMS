@@ -365,17 +365,40 @@ void IntroOutroOverlay::encodeContent(
 		// In questo modo applichiamo intro alla prima parte, l'outro all'ultima parte,
 		// la parte centrale la codifichiamo utilizzando lo stesso profilo e poi concateniamo
 		// le tre parti risultanti
-		bool splitMain = false;
 		if (mainSourceDurationInMilliSeconds >= (introOverlayDurationInSeconds + 30 + outroOverlayDurationInSeconds + 30) * 1000)
 		{
 			string stagingBasePath;
 
-			size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+			// ci serve un path dello staging locale al transcoder.
+			// Utilizziamo solo il path di encodedTranscoderStagingAssetPathName che 
+			// sarebbe il path locale dell'asset path name in caso di transcoder remoto
+			string field = "encodedTranscoderStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string encodedTranscoderStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field);
+
+			size_t endOfDirectoryIndex = encodedTranscoderStagingAssetPathName.find_last_of("/");
 			if (endOfDirectoryIndex == string::npos)
 			{
+				string errorMessage = __FILEREF__ + "encodedTranscoderStagingAssetPathName is not well formed"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", encodedTranscoderStagingAssetPathName: " + encodedTranscoderStagingAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
 			}
 
-			stagingBasePath = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex) + "/introOutroSplit_"
+			stagingBasePath = encodedTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex)
+				+ "/introOutroSplit_"
 				+ to_string(_ingestionJobKey) + "_" + to_string(_encodingJobKey) + "_";
 
 			string mainBeginPathName = stagingBasePath + "mainBegin" + mainSourceFileExtension;
