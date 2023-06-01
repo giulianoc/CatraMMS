@@ -363,6 +363,8 @@ void IntroOutroOverlay::encodeContent(
 			string stagingPath = "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/";
 
 			string main_Begin_PathName = stagingPath + "main_Bagin.avi";
+			if (fs::exists(main_Begin_PathName))
+				fs::remove_all(main_Begin_PathName);
 			double startTimeInSeconds = 0.0;
 			double endTimeInSeconds = 60.0;
 			_encoding->_ffmpeg->cutWithoutEncoding(
@@ -376,6 +378,8 @@ void IntroOutroOverlay::encodeContent(
 				main_Begin_PathName);
 
 			string main_End_PathName = stagingPath + "main_End.avi";
+			if (fs::exists(main_End_PathName))
+				fs::remove_all(main_End_PathName);
 			startTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
 			endTimeInSeconds = mainSourceDurationInMilliSeconds / 1000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
@@ -389,6 +393,8 @@ void IntroOutroOverlay::encodeContent(
 				main_End_PathName);
 
 			string main_Center_PathName = stagingPath + "main_Center.avi";
+			if (fs::exists(main_Center_PathName))
+				fs::remove_all(main_Center_PathName);
 			startTimeInSeconds = 60.0;
 			endTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - 60.0;
 			int64_t mainCenterDurationInMilliSeconds = mainSourceDurationInMilliSeconds - 60000 - 60000;
@@ -403,6 +409,8 @@ void IntroOutroOverlay::encodeContent(
 				main_Center_PathName);
 
 			string main_Intro_PathName = stagingPath + "main_Intro.mp4";
+			if (fs::exists(main_Intro_PathName))
+				fs::remove_all(main_Intro_PathName);
 			_encoding->_ffmpeg->introOverlay(
 				introSourceAssetPathName, introSourceDurationInMilliSeconds,
 				main_Begin_PathName, 60000,
@@ -419,6 +427,8 @@ void IntroOutroOverlay::encodeContent(
 				&(_encoding->_childPid));
 
 			string main_Outro_PathName = stagingPath + "main_Outro.mp4";
+			if (fs::exists(main_Outro_PathName))
+				fs::remove_all(main_Outro_PathName);
 			_encoding->_ffmpeg->outroOverlay(
 				main_End_PathName, 60000,
 				outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
@@ -435,6 +445,8 @@ void IntroOutroOverlay::encodeContent(
 				&(_encoding->_childPid));
 
 			string main_Center_Encoded_PathName = stagingPath + "main_Center_Encoded.mp4";
+			if (fs::exists(main_Center_Encoded_PathName))
+				fs::remove_all(main_Center_Encoded_PathName);
 			_encoding->_ffmpeg->encodeContent(
 				main_Center_PathName, mainCenterDurationInMilliSeconds,
 				main_Center_Encoded_PathName,
