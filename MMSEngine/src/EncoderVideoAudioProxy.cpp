@@ -2441,6 +2441,13 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 
 void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 {
+	_logger->info(__FILEREF__ + "processEncodedContentVideoAudio"
+		+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+		+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		+ ", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+	);
+
 	if (_currentUsedFFMpegExternalEncoder)
 	{
         _logger->info(__FILEREF__ + "The encoder selected is external, processEncodedContentVideoAudio has nothing to do"
@@ -2562,7 +2569,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
     {
 		int timeoutInSeconds = 20;
 
-        _logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
+        _logger->info(__FILEREF__ + "Calling getMediaInfo"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)

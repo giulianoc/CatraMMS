@@ -1722,6 +1722,19 @@ int64_t MMSStorage::move(
 				throw e;
 			}
 		}
+		else if (e.code().value() == 17)	// filesystem error: cannot copy: File exists
+		{
+			logger->info(__FILEREF__ + "No move to be done, file already exists"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", source: " + source.string()
+				+ ", dest: " + dest.string()
+				+ ", e.what: " + e.what()
+				+ ", code value: " + to_string(e.code().value())
+				+ ", code message: " + e.code().message()
+				+ ", code category: " + e.code().category().name()
+			);
+			endPoint = chrono::system_clock::now();
+		}
 		else
 		{
 			logger->error(__FILEREF__ + "Move failed"
