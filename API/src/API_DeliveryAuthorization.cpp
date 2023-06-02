@@ -94,7 +94,7 @@ void API::createDeliveryAuthorization(
         }
 
 		if (physicalPathKey == -1
-			&& ((mediaItemKey == -1 && uniqueName == "") || (encodingProfileKey == -1 && encodingProfileLabel == ""))
+			&& ((mediaItemKey == -1 && uniqueName == "")) // || (encodingProfileKey == -1 && encodingProfileLabel == "")) commentato perchè profile -1 indica 'source profile'
 			&& ingestionJobKey == -1)
 		{
             string errorMessage = string("The 'physicalPathKey' or the (mediaItemKey-uniqueName)/(encodingProfileKey-encodingProfileLabel) or ingestionJobKey parameters have to be present");
