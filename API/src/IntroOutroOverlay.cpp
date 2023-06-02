@@ -365,7 +365,10 @@ void IntroOutroOverlay::encodeContent(
 		// In questo modo applichiamo intro alla prima parte, l'outro all'ultima parte,
 		// la parte centrale la codifichiamo utilizzando lo stesso profilo e poi concateniamo
 		// le tre parti risultanti
-		if (mainSourceDurationInMilliSeconds >= (introOverlayDurationInSeconds + 30 + outroOverlayDurationInSeconds + 30) * 1000)
+		int introOutroDurationInSeconds = 60;
+		if (mainSourceDurationInMilliSeconds >=
+			(introOverlayDurationInSeconds + introOutroDurationInSeconds
+			+ outroOverlayDurationInSeconds + introOutroDurationInSeconds) * 1000)
 		{
 			string stagingBasePath;
 
@@ -420,8 +423,8 @@ void IntroOutroOverlay::encodeContent(
 			if (fs::exists(mainBeginPathName))
 				fs::remove_all(mainBeginPathName);
 			double startTimeInSeconds = 0.0;
-			double endTimeInSeconds = introOverlayDurationInSeconds + 30;
-			int64_t mainBeginDurationInMilliSeconds = (introOverlayDurationInSeconds + 30) * 1000;
+			double endTimeInSeconds = introOverlayDurationInSeconds + introOutroDurationInSeconds;
+			int64_t mainBeginDurationInMilliSeconds = (introOverlayDurationInSeconds + introOutroDurationInSeconds) * 1000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
 				_ingestionJobKey,
 				mainSourceAssetPathName,
@@ -435,12 +438,12 @@ void IntroOutroOverlay::encodeContent(
 			string mainEndPathName = stagingBasePath + "mainEnd" + mainSourceFileExtension;
 			if (fs::exists(mainEndPathName))
 				fs::remove_all(mainEndPathName);
-			startTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + 30);
+			startTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + introOutroDurationInSeconds);
 			endTimeInSeconds = mainSourceDurationInMilliSeconds / 1000;
 			int64_t mainEndDurationInMilliSeconds =
 				(
 					(mainSourceDurationInMilliSeconds / 1000)
-					- ((mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + 30))
+					- ((mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + introOutroDurationInSeconds))
 				) * 1000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
 				_ingestionJobKey,
@@ -455,12 +458,12 @@ void IntroOutroOverlay::encodeContent(
 			string mainCenterPathName = stagingBasePath + "mainCenter" + mainSourceFileExtension;
 			if (fs::exists(mainCenterPathName))
 				fs::remove_all(mainCenterPathName);
-			startTimeInSeconds = introOverlayDurationInSeconds + 30;
-			endTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + 30);
+			startTimeInSeconds = introOverlayDurationInSeconds + introOutroDurationInSeconds;
+			endTimeInSeconds = (mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + introOutroDurationInSeconds);
 			int64_t mainCenterDurationInMilliSeconds =
 				(
-					((mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + 30))
-					- (introOverlayDurationInSeconds + 30)
+					((mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + introOutroDurationInSeconds))
+					- (introOverlayDurationInSeconds + introOutroDurationInSeconds)
 				) * 1000;
 			_encoding->_ffmpeg->cutWithoutEncoding(
 				_ingestionJobKey,
