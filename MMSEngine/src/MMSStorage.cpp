@@ -985,7 +985,9 @@ fs::path MMSStorage::getStagingAssetPathName(
 			assetPathName = MMSStorage::getStagingRootRepository(_storage);
         assetPathName	/= (workspaceDirectoryName + "_" + directoryNamePrefix + "_" + pDateTime + relativePath);
 
-        if (!fs::exists(assetPathName)) 
+		// 2023-06-02: questo metodo viene chiamato dall'engine (non dal transcoder),
+		//	nel caso di directory 'locale' per il transcoder, non bisogna creare qui la directory
+        if (!neededForTranscoder && !fs::exists(assetPathName)) 
         {
             _logger->info(__FILEREF__ + "Create directory"
                 + ", assetPathName: " + assetPathName.string()
@@ -1002,7 +1004,9 @@ fs::path MMSStorage::getStagingAssetPathName(
     {
         assetPathName /= localFileName;
 
-        if (removeLinuxPathIfExist && fs::exists(assetPathName)) 
+		// 2023-06-02: questo metodo viene chiamato dall'engine (non dal transcoder),
+		//	nel caso di directory 'locale' per il transcoder, non bisogna rimuovere nulla
+        if (!neededForTranscoder && removeLinuxPathIfExist && fs::exists(assetPathName)) 
         {
             try 
             {
