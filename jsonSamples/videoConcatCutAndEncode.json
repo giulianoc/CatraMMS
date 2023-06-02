@@ -46,7 +46,7 @@
 						"label": "My cut",
 						"type": "Cut",
 						"parameters": {
-							"StartTimeInSeconds": 1200.0,
+							"startTimeInSeconds": 1200.0,
 							"EndTimeInSeconds": 3000.0,
 							"userData": { "MyData": "this is my frame data" },
 							"Title": "${TitleOfCutVideo}"

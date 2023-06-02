@@ -9559,7 +9559,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 
 		Json::Value crossReferenceParametersRoot;
 		{
-			field = "StartTimeInSeconds";
+			field = "startTimeInSeconds";
 			crossReferenceParametersRoot[field] = startTimeInSeconds;
 
 			field = "EndTimeInSeconds";

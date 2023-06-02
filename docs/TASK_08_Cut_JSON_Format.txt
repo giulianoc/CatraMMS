@@ -29,13 +29,19 @@
 			{ "mediaItemKey": 11 }
 		],
 
-		// mandatory 
-		"StartTimeInSeconds": 0.5,
+		// mandatory one between startTimeInSeconds and sStartTimeInSeconds
+		//	startTimeInSeconds, since it is a number, will be rounded once it is assigned to a double number
+		//	sStartTimeInSeconds will not have any float/double rounding 
+		"startTimeInSeconds": 0.5,
+		"sStartTimeInSeconds": "0.5",
 
-		// optional: EndTimeInSeconds or MaxFramesNumber have to be present
-		//		In case EndTimeInSeconds is negative, it means EndTimeInSeconds is changed doing
-		//			EndTimeInSeconds = media duration - (-EndTimeInSeconds)
+		// optional: endTimeInSeconds/sEndTimeInSeconds or MaxFramesNumber have to be present
+		//		In case endTimeInSeconds is negative, it means endTimeInSeconds is changed doing
+		//			endTimeInSeconds = media duration - (-endTimeInSeconds)
+		//	endTimeInSeconds, since it is a number, will be rounded once it is assigned to a double number
+		//	sEndTimeInSeconds will not have any float/double rounding 
 		"EndTimeInSeconds": 3.5,
+		"sEndTimeInSeconds": "3.5",
 
 		// optional. Only in case EndTimeInSeconds overcome the duration of the input media:
 		//		if FixEndTimeIfOvercomeDuration is set to true

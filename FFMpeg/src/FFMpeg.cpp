@@ -7789,14 +7789,16 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 
 // audio and video 
 void FFMpeg::cutWithoutEncoding(
-        int64_t ingestionJobKey,
-        string sourcePhysicalPath,
-		string cutType,	// KeyFrameSeeking (input seeking) or FrameAccurateWithoutEncoding
-		bool isVideo,
-        double startTimeInSeconds,
-        double endTimeInSeconds,
-        int framesNumber,
-        string cutMediaPathName)
+	int64_t ingestionJobKey,
+	string sourcePhysicalPath,
+	string cutType,	// KeyFrameSeeking (input seeking) or FrameAccurateWithoutEncoding
+	bool isVideo,
+	string sStartTimeInSeconds,	// aggiunto per evitare gli arrotondamenti del double, ha priorità rispetto al double
+	double startTimeInSeconds,
+	string sEndTimeInSeconds,	// aggiunto per evitare gli arrotondamenti del double, ha priorità rispetto al double
+	double endTimeInSeconds,
+	int framesNumber,
+	string cutMediaPathName)
 {
 
 	_currentApiName = APIName::CutWithoutEncoding;
@@ -7817,7 +7819,9 @@ void FFMpeg::cutWithoutEncoding(
 		+ ", cutType: " + cutType
 		+ ", isVideo: " + to_string(isVideo)
 		+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+		+ ", sStartTimeInSeconds: " + sStartTimeInSeconds
 		+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+		+ ", sEndTimeInSeconds: " + sEndTimeInSeconds
 		+ ", framesNumber: " + to_string(framesNumber)
 		+ ", cutMediaPathName: " + cutMediaPathName
 		);
@@ -7947,27 +7951,46 @@ void FFMpeg::cutWithoutEncoding(
 			(https://stackoverflow.com/questions/63548027/cut-a-video-in-between-key-frames-without-re-encoding-the-full-video-using-ffpme)
 		*/
 
+		if (sStartTimeInSeconds == "")
+			sStartTimeInSeconds = to_string(startTimeInSeconds);
+		if (sEndTimeInSeconds == "")
+		{
+			// if you specify -ss before -i, -to will have the same effect as -t, i.e. it will act as a duration.
+			if (cutType == "KeyFrameSeeking")	// input seeking
+				sEndTimeInSeconds = to_string(endTimeInSeconds - startTimeInSeconds);
+			else
+				sEndTimeInSeconds = to_string(endTimeInSeconds);
+		}
 
 		ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";
-		if (cutType == "KeyFrameSeeking")	// input seeking
-            ffmpegExecuteCommand += (string("-ss ") + to_string(startTimeInSeconds) + " "
-				+ "-i " + sourcePhysicalPath + " ")
-			;
-		else // if (cutType == "FrameAccurateWithoutEncoding") output seeking
-			ffmpegExecuteCommand += (string("-i ") + sourcePhysicalPath + " "
-				+ "-ss " + to_string(startTimeInSeconds) + " ")
-			;
+
+		// if (startKeyFramesSeeking != "")
+		// {
+		// }
+		// else
+		{
+			if (cutType == "KeyFrameSeeking")	// input seeking
+			{
+				// input seeking: beginning of the generated video will be to the nearest keyframe
+				// found before your specified timestamp
+
+				ffmpegExecuteCommand += (string("-ss ") + sStartTimeInSeconds + " "
+					+ "-i " + sourcePhysicalPath + " ")
+				;
+			}
+			else // if (cutType == "FrameAccurateWithoutEncoding") output seeking
+			{
+				// FrameAccurateWithoutEncoding: it means it is used any frame even if it is not a key frame
+				ffmpegExecuteCommand += (string("-i ") + sourcePhysicalPath + " "
+					+ "-ss " + sStartTimeInSeconds + " ")
+				;
+			}
+		}
 
 		if (framesNumber != -1)
 			ffmpegExecuteCommand += (string("-vframes ") + to_string(framesNumber) + " ");
 		else
-		{
-			// if you specify -ss before -i, -to will have the same effect as -t, i.e. it will act as a duration.
-			if (cutType == "KeyFrameSeeking")	// input seeking
-				ffmpegExecuteCommand += (string("-to ") + to_string(endTimeInSeconds - startTimeInSeconds) + " ");
-			else
-				ffmpegExecuteCommand += (string("-to ") + to_string(endTimeInSeconds) + " ");
-		}
+			ffmpegExecuteCommand += (string("-to ") + sEndTimeInSeconds + " ");
 
 		ffmpegExecuteCommand +=	(string("-async 1 ")
 				// commented because aresample filtering requires encoding and here we are just streamcopy
@@ -7982,11 +8005,16 @@ void FFMpeg::cutWithoutEncoding(
 	{
 		// audio
 
+		if (sStartTimeInSeconds == "")
+			sStartTimeInSeconds = to_string(startTimeInSeconds);
+		if (sEndTimeInSeconds == "")
+			sEndTimeInSeconds = to_string(endTimeInSeconds);
+
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
-			+ "-ss " + to_string(startTimeInSeconds) + " "
+			+ "-ss " + sStartTimeInSeconds + " "
 			+ "-i " + sourcePhysicalPath + " "
-			+ "-to " + to_string(endTimeInSeconds) + " "
+			+ "-to " + sEndTimeInSeconds + " "
 			+ "-async 1 "
 			// commented because aresample filtering requires encoding and here we are just streamcopy
 			// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "

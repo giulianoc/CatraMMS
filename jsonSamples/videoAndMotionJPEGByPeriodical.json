@@ -19,7 +19,7 @@
                 "label": "My MotionJPEG",
                 "type": "Motion-JPEG-by-Periodical-Frames",
                 "parameters": {
-                    "StartTimeInSeconds": 1.5,
+                    "startTimeInSeconds": 1.5,
                     "PeriodInSeconds": 2,
                     "MaxFramesNumber": 5,
                     "userData": { "MyData": "this is my frame data" },

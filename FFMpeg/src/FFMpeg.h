@@ -313,7 +313,9 @@ public:
         string sourcePhysicalPath,
 		string cutType,
 		bool isVideo,
+		string sStartTimeInSeconds,
         double startTimeInSeconds,
+        string sEndTimeInSeconds,
         double endTimeInSeconds,
         int framesNumber,
         string cutMediaPathName);

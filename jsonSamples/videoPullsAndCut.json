@@ -18,7 +18,7 @@
             "task": {
                 "type": "Cut",
                 "parameters": {
-                    "StartTimeInSeconds": 1.0,
+                    "startTimeInSeconds": 1.0,
                     "EndTimeInSeconds": 5.0,
                     "userData": { "MyData": "this is my frame data" },
                     "Title": "${TitleOfCut}"

@@ -18,7 +18,7 @@
             "task": {
                 "type": "Periodical-Frames",
                 "parameters": {
-                    "StartTimeInSeconds": 2.5,
+                    "startTimeInSeconds": 2.5,
                     "PeriodInSeconds": 2,
                     "MaxFramesNumber": 5,
                     "userData": { "MyData": "this is my frame data" },

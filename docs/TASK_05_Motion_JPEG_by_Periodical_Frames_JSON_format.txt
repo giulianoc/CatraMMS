@@ -30,15 +30,15 @@
 		"PeriodInSeconds": 2,
 
 		// optional. default is 0 
-		"StartTimeInSeconds": 1.5,
+		"startTimeInSeconds": 1.5,
 
 		// optional. if not present, frames will be generated up to the end of the video 
 		"MaxFramesNumber": 4,
 
-		// optional. Only in case StartTimeInSeconds overcome the duration
+		// optional. Only in case startTimeInSeconds overcome the duration
 		//	of the input media:
 		//		if FixStartTimeIfOvercomeDuration is set to true
-		//			the StartTimeInSeconds is changed to the duration of the media.
+		//			the startTimeInSeconds is changed to the duration of the media.
 		//		if FixStartTimeIfOvercomeDuration is set to false
 		//			this task will fail because
 		//	Default is true

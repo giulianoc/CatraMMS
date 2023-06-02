@@ -2226,13 +2226,16 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 {
     // see sample in directory samples
         
-    string field = "StartTimeInSeconds";
-    if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+    string sStartTimeInSecondsField = "sStartTimeInSeconds";
+    string startTimeInSecondsField = "startTimeInSeconds";
+    if (!JSONUtils::isMetadataPresent(parametersRoot, sStartTimeInSecondsField)
+		&& !JSONUtils::isMetadataPresent(parametersRoot, startTimeInSecondsField))
     {
         string sParametersRoot = JSONUtils::toString(parametersRoot);
                         
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field
+        string errorMessage = __FILEREF__ + "Both fields is not present or it is null"
+                + ", Field: " + sStartTimeInSecondsField
+                + ", Field: " + startTimeInSecondsField
                 + ", sParametersRoot: " + sParametersRoot
                 + ", label: " + label
                 ;
@@ -2241,12 +2244,15 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
         throw runtime_error(errorMessage);
     }
 
-    string endTimeInSecondsField = "EndTimeInSeconds";
+    string endTimeInSecondsField = "endTimeInSeconds";
+    string sEndTimeInSecondsField = "sEndTimeInSeconds";
     string framesNumberField = "FramesNumber";
-    if (!JSONUtils::isMetadataPresent(parametersRoot, endTimeInSecondsField)
+    if (!JSONUtils::isMetadataPresent(parametersRoot, sEndTimeInSecondsField)
+		&& !JSONUtils::isMetadataPresent(parametersRoot, endTimeInSecondsField)
             && !JSONUtils::isMetadataPresent(parametersRoot, framesNumberField))
     {
-        string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+        string errorMessage = __FILEREF__ + "All fields are not present or it is null"
+                + ", Field: " + sEndTimeInSecondsField
                 + ", Field: " + endTimeInSecondsField
                 + ", Field: " + framesNumberField
                 + ", label: " + label
@@ -2256,7 +2262,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
         throw runtime_error(errorMessage);
     }
 
-    field = "CutType";
+    string field = "CutType";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		string cutType = JSONUtils::asString(parametersRoot, field, "");
@@ -7120,7 +7126,7 @@ void Validator::validateCrossReference(
 		Json::Value crossReferenceParameters = crossReferenceRoot[field];
 
 		vector<string> crossReferenceCutMandatoryFields = {
-			"StartTimeInSeconds",
+			"startTimeInSeconds",
 			"EndTimeInSeconds"
 		};
 		for (string mandatoryField: crossReferenceCutMandatoryFields)

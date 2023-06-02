@@ -174,7 +174,7 @@ void CutFrameAccurate::encodeContent(
 			sourceAssetPathName,
 			_encodingJobKey,
 			encodingProfileDetailsRoot,
-			JSONUtils::asDouble(ingestedParametersRoot, "StartTimeInSeconds", 0.0),
+			JSONUtils::asDouble(ingestedParametersRoot, "startTimeInSeconds", 0.0),
 			JSONUtils::asDouble(encodingParametersRoot, "endTimeInSeconds", 0.0),
 			JSONUtils::asInt(ingestedParametersRoot, "FramesNumber", -1),
 			encodedStagingAssetPathName,

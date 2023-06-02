@@ -19,7 +19,7 @@
                 "label": "My Motion JPEG by I-Frames",
                 "type": "Motion-JPEG-by-I-Frames",
                 "parameters": {
-                    "StartTimeInSeconds": 0.0,
+                    "startTimeInSeconds": 0.0,
                     "MaxFramesNumber": 5,
                     "userData": { "MyData": "this is my frame data" },
                     "Title": "${TitleOfFrame}"

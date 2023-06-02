@@ -430,7 +430,9 @@ void IntroOutroOverlay::encodeContent(
 				mainSourceAssetPathName,
 				"KeyFrameSeeking",
 				true,
+				"",
 				startTimeInSeconds,
+				"",
 				endTimeInSeconds,
 				-1,
 				mainBeginPathName);
@@ -450,7 +452,9 @@ void IntroOutroOverlay::encodeContent(
 				mainSourceAssetPathName,
 				"KeyFrameSeeking",
 				true,
+				"",
 				startTimeInSeconds,
+				"",
 				endTimeInSeconds,
 				-1,
 				mainEndPathName);
@@ -470,7 +474,9 @@ void IntroOutroOverlay::encodeContent(
 				mainSourceAssetPathName,
 				"KeyFrameSeeking",
 				true,
+				"",
 				startTimeInSeconds,
+				"",
 				endTimeInSeconds,
 				-1,
 				mainCenterPathName);
@@ -537,12 +543,22 @@ void IntroOutroOverlay::encodeContent(
 				sourcePhysicalPaths,
 				encodedStagingAssetPathName);
 
-			fs::remove_all(mainBeginPathName);
-			fs::remove_all(mainEndPathName);
-			fs::remove_all(mainCenterPathName);
-			fs::remove_all(mainIntroPathName);
-			fs::remove_all(mainOutroPathName);
-			fs::remove_all(mainCenterEncodedPathName);
+			_logger->info(__FILEREF__ + "removing temporary files"
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+				+ ", mainBeginPathName: " + mainBeginPathName
+				+ ", mainEndPathName: " + mainEndPathName
+				+ ", mainCenterPathName: " + mainCenterPathName
+				+ ", mainIntroPathName: " + mainIntroPathName
+				+ ", mainOutroPathName: " + mainOutroPathName
+				+ ", mainCenterEncodedPathName: " + mainCenterEncodedPathName
+			);
+			// fs::remove_all(mainBeginPathName);
+			// fs::remove_all(mainEndPathName);
+			// fs::remove_all(mainCenterPathName);
+			// fs::remove_all(mainIntroPathName);
+			// fs::remove_all(mainOutroPathName);
+			// fs::remove_all(mainCenterEncodedPathName);
 		}
 		else
 		{

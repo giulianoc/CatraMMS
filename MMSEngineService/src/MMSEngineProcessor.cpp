@@ -14946,7 +14946,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- (utcFirstChunkStartTime * 1000);
 				double startTimeInSeconds = startTimeInMilliSeconds / 1000;
-				field = "StartTimeInSeconds";
+				field = "startTimeInSeconds";
 				cutParametersRoot[field] = startTimeInSeconds;
 
 				double endTimeInMilliSeconds = utcCutPeriodEndTimeInMilliSeconds - (utcFirstChunkStartTime * 1000);
@@ -15876,7 +15876,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- utcFirstChunkStartTimeInMilliSecs;
 				double startTimeInSeconds = startTimeInMilliSeconds / 1000;
-				field = "StartTimeInSeconds";
+				field = "startTimeInSeconds";
 				cutParametersRoot[field] = startTimeInSeconds;
 
 				double endTimeInMilliSeconds = utcCutPeriodEndTimeInMilliSeconds - utcFirstChunkStartTimeInMilliSecs;
@@ -18652,7 +18652,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
 			{
-				field = "StartTimeInSeconds";
+				field = "startTimeInSeconds";
 				startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
 			}
 		}
@@ -19516,7 +19516,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				ffmpeg.cutWithoutEncoding(ingestionJobKey, concatenatedMediaPathName, 
 					cutType,
 					concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-					startTimeInSeconds, endTimeInSeconds, framesNumber,
+					"", startTimeInSeconds, "", endTimeInSeconds, framesNumber,
 					cutMediaPathName);
 
 				_logger->info(__FILEREF__ + "cut done"
@@ -19755,24 +19755,38 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 		// check start time / end time
 		int framesNumber = -1;
+		string sStartTimeInSeconds;
 		double startTimeInSeconds;
 		double endTimeInSeconds = 0.0;
+		string sEndTimeInSeconds;
 		{
-			string field = "StartTimeInSeconds";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			string sStartTimeInSecondsField = "sStartTimeInSeconds";
+			string startTimeInSecondsField = "startTimeInSeconds";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, sStartTimeInSecondsField)
+				&& !JSONUtils::isMetadataPresent(parametersRoot, startTimeInSecondsField))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+				string errorMessage = __FILEREF__ + "Both is not present or it is null"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", Field: " + field;
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", Field: " + sStartTimeInSecondsField
+					+ ", Field: " + startTimeInSecondsField
+				;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
-			field = "EndTimeInSeconds";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isMetadataPresent(parametersRoot, sStartTimeInSecondsField))
+				sStartTimeInSeconds = JSONUtils::asString(parametersRoot, sStartTimeInSecondsField, "");
+
+			if (JSONUtils::isMetadataPresent(parametersRoot, startTimeInSecondsField))
+				startTimeInSeconds = JSONUtils::asDouble(parametersRoot, startTimeInSecondsField, 0.0);
+
+
+			string sEndTimeInSecondsField = "sEndTimeInSeconds";
+			string endTimeInSecondsField = "endTimeInSeconds";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, sEndTimeInSecondsField)
+				&& !JSONUtils::isMetadataPresent(parametersRoot, endTimeInSecondsField))
 			{
 				if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 				{
@@ -19782,14 +19796,22 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					string errorMessage = __FILEREF__ + "Field is not present or it is null, endTimeInSeconds in case of Audio is mandatory because we cannot use the other option (FramesNumber)"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", Field: " + field;
+						+ ", Field: " + sEndTimeInSecondsField
+						+ ", Field: " + endTimeInSecondsField
+					;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
-			endTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
+			if (JSONUtils::isMetadataPresent(parametersRoot, sEndTimeInSecondsField))
+				sEndTimeInSeconds = JSONUtils::asString(parametersRoot, sEndTimeInSecondsField, "");
+
+			if (JSONUtils::isMetadataPresent(parametersRoot, endTimeInSecondsField))
+				endTimeInSeconds = JSONUtils::asDouble(parametersRoot, endTimeInSecondsField, 0.0);
+
+			string field;
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 			{
 				field = "FramesNumber";
@@ -19818,7 +19840,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 			if (framesNumber == -1)
 			{
-				if (endTimeInSeconds < 0)
+				// il controllo endTimeInSeconds < 0 è valido solamente se non abbiamo sEndTimeInSeconds
+				if (sEndTimeInSeconds == "" && endTimeInSeconds < 0)
 				{
 					// if negative, it has to be subtract by the durationInMilliSeconds
 					double newEndTimeInSeconds  = (sourceDurationInMilliSecs
@@ -19838,7 +19861,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				}
 			}
 
-			if (startTimeInSeconds > endTimeInSeconds)
+			// il controllo startTimeInSeconds > endTimeInSeconds è valido solamente se non abbiamo sEndTimeInSeconds
+			if (sStartTimeInSeconds == "" && sEndTimeInSeconds == ""
+				&& startTimeInSeconds > endTimeInSeconds)
 			{
 				string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is bigger than endTimeInSeconds"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19856,7 +19881,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				if (framesNumber == -1)
 				{
-					if (sourceDurationInMilliSecs < endTimeInSeconds * 1000)
+					// il controllo sourceDurationInMilliSecs < endTimeInSeconds è valido solamente se non abbiamo sEndTimeInSeconds
+					if (sEndTimeInSeconds == "" && sourceDurationInMilliSecs < endTimeInSeconds * 1000)
 					{
 						if (fixEndTimeIfOvercomeDuration)
 						{
@@ -19960,7 +19986,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			+ ", sourceAssetPathName: " + sourceAssetPathName
 			+ ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
 			+ ", framesNumber: " + to_string(framesNumber)
+			+ ", sStartTimeInSeconds: " + sStartTimeInSeconds
 			+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+			+ ", sEndTimeInSeconds: " + sEndTimeInSeconds
 			+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
 			+ ", newUtcStartTimeInMilliSecs: " + to_string(newUtcStartTimeInMilliSecs)
 			+ ", newUtcEndTimeInMilliSecs: " + to_string(newUtcEndTimeInMilliSecs)
@@ -20115,7 +20143,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			ffmpeg.cutWithoutEncoding(ingestionJobKey, sourceAssetPathName, 
 				cutType,
 				referenceContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-				startTimeInSeconds, endTimeInSeconds, framesNumber,
+				sStartTimeInSeconds, startTimeInSeconds,
+				sEndTimeInSeconds, endTimeInSeconds, framesNumber,
 				cutMediaPathName);
 
 			_logger->info(__FILEREF__ + "cut done"
@@ -23059,7 +23088,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
         Json::Value crossReferenceParametersRoot;
 		{
-			field = "StartTimeInSeconds";
+			field = "startTimeInSeconds";
 			crossReferenceParametersRoot[field] = startTimeInSeconds;
 
 			field = "EndTimeInSeconds";
@@ -23088,7 +23117,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
         Json::Value crossReferenceParametersRoot;
 		{
-			field = "StartTimeInSeconds";
+			field = "startTimeInSeconds";
 			crossReferenceParametersRoot[field] = startTimeInSeconds;
 
 			field = "EndTimeInSeconds";

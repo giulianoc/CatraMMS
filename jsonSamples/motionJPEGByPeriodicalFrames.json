@@ -9,7 +9,7 @@
 		"type": "Motion-JPEG-by-Periodical-Frames",
 		"parameters": {
 			"ReferenceMediaItemKey": 11,
-			"StartTimeInSeconds": 1.5,
+			"startTimeInSeconds": 1.5,
 			"PeriodInSeconds": 2,
 			"MaxFramesNumber": 5,
 			"userData": { "MyData": "this is my data" },

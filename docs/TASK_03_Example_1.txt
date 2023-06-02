@@ -11,7 +11,7 @@
 			"references": [
 				{ "mediaItemKey": 11 }
 			],
-			"StartTimeInSeconds": 2.5,
+			"startTimeInSeconds": 2.5,
 			"PeriodInSeconds": 2,
 			"MaxFramesNumber": 5,
 			"userData": { "MyData": "this is my data" },
