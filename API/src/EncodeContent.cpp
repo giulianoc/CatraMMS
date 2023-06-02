@@ -287,7 +287,14 @@ void EncodeContent::encodeContent(
 					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
 					+ ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
 				);
-				MMSStorage::move(_ingestionJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName, _logger);
+				int64_t moveElapsedInSeconds = MMSStorage::move(_ingestionJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName, _logger);
+				_logger->info(__FILEREF__ + "moved file"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+					+ ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
+					+ ", moveElapsedInSeconds: " + to_string(moveElapsedInSeconds)
+				);
 			}
 		}
     }
