@@ -6366,8 +6366,9 @@ string FFMpeg::getNearestKeyFrameTime(
 
 	_logger->info(__FILEREF__ + "getNearestKeyFrameTime"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-		+ ", readIntervals: " + readIntervals
 		+ ", mediaSource: " + mediaSource
+		+ ", readIntervals: " + readIntervals
+		+ ", keyFrameTime: " + to_string(keyFrameTime)
 	);
 
 	if (mediaSource == "")
@@ -6663,6 +6664,17 @@ string FFMpeg::getNearestKeyFrameTime(
 				}
             }
         }
+
+		if (nearestDistance == -1.0)
+		{
+			string errorMessage = __FILEREF__ + "getNearestKeyFrameTime failed to look for a key frame"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSource: " + mediaSource
+				+ ", readIntervals: " + readIntervals
+				+ ", keyFrameTime: " + to_string(keyFrameTime)
+			;
+			_logger->error(errorMessage);
+		}
 
         _logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
