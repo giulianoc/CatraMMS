@@ -248,6 +248,13 @@ public:
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
 
+	string getNearestKeyFrameTime(
+		int64_t ingestionJobKey,
+		string mediaSource,
+		string readIntervals,	// intervallo dove cercare il key frame piu vicino
+		double keyFrameTime
+	);
+
 	int probeChannel(
 		int64_t ingestionJobKey,
 		string url);
@@ -309,16 +316,16 @@ public:
 		pid_t* pChildPid);
 
 	void cutWithoutEncoding(
-        int64_t ingestionJobKey,
-        string sourcePhysicalPath,
-		string cutType,
+		int64_t ingestionJobKey,
+		string sourcePhysicalPath,
 		bool isVideo,
-		string sStartTimeInSeconds,
-        double startTimeInSeconds,
-        string sEndTimeInSeconds,
-        double endTimeInSeconds,
-        int framesNumber,
-        string cutMediaPathName);
+		string cutType,	// KeyFrameSeeking (input seeking), FrameAccurateWithoutEncoding, KeyFrameSeekingInterval
+		string startKeyFramesSeekingInterval,
+		string endKeyFramesSeekingInterval,
+		string startTime,
+		string endTime,
+		int framesNumber,
+		string cutMediaPathName);
 
 	void cutFrameAccurateWithEncoding(
 		int64_t ingestionJobKey,
@@ -328,8 +335,8 @@ public:
 		// because FFmpeg will re-encode the video and start with an I-frame.
 		int64_t encodingJobKey,
 		Json::Value encodingProfileDetailsRoot,
-		double startTimeInSeconds,
-		double endTimeInSeconds,
+		string startTime,
+		string endTime,
 		int framesNumber,
 		string stagingEncodedAssetPathName,
 		pid_t* pChildPid);
@@ -426,6 +433,11 @@ public:
 		int64_t ingestionJobKey,
 		string youTubeURL);
 
+	static bool isNumber(int64_t ingestionJobKey, string number,
+		shared_ptr<spdlog::logger> logger);
+	static double timeToSeconds(int64_t ingestionJobKey, string time,
+		shared_ptr<spdlog::logger> logger);
+
 private:
 	enum class APIName {
 		EncodeContent					= 0,
@@ -451,7 +463,8 @@ private:
 		StreamingToFile					= 20,
 		SilentAudio						= 21,
 		IntroOverlay					= 22,
-		OutroOverlay					= 23
+		OutroOverlay					= 23,
+		NearestKeyFrameTime				= 24
 	};
 	static const char* toString(const APIName& apiName)
 	{
@@ -505,6 +518,8 @@ private:
 				return "IntroOverlay";
 			case APIName::OutroOverlay:
 				return "OutroOverlay";
+			case APIName::NearestKeyFrameTime:
+				return "NearestKeyFrameTime";
 			default:
 				throw runtime_error(string("Wrong APIName"));
 		}
@@ -563,6 +578,8 @@ private:
 			return APIName::IntroOverlay;
 		else if (lowerCase == "outrooverlay")
 			return APIName::OutroOverlay;
+		else if (lowerCase == "nearestkeyframetime")
+			return APIName::NearestKeyFrameTime;
 		else
 			throw runtime_error(string("Wrong APIName")
 				+ ", current apiName: " + apiName

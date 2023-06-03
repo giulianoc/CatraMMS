@@ -2226,16 +2226,13 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 {
     // see sample in directory samples
         
-    string sStartTimeInSecondsField = "sStartTimeInSeconds";
-    string startTimeInSecondsField = "startTimeInSeconds";
-    if (!JSONUtils::isMetadataPresent(parametersRoot, sStartTimeInSecondsField)
-		&& !JSONUtils::isMetadataPresent(parametersRoot, startTimeInSecondsField))
+    string field = "startTime";
+    if (!JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string sParametersRoot = JSONUtils::toString(parametersRoot);
                         
-        string errorMessage = __FILEREF__ + "Both fields is not present or it is null"
-                + ", Field: " + sStartTimeInSecondsField
-                + ", Field: " + startTimeInSecondsField
+        string errorMessage = __FILEREF__ + "field is not present or it is null"
+                + ", Field: " + field
                 + ", sParametersRoot: " + sParametersRoot
                 + ", label: " + label
                 ;
@@ -2244,16 +2241,13 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
         throw runtime_error(errorMessage);
     }
 
-    string endTimeInSecondsField = "endTimeInSeconds";
-    string sEndTimeInSecondsField = "sEndTimeInSeconds";
-    string framesNumberField = "FramesNumber";
-    if (!JSONUtils::isMetadataPresent(parametersRoot, sEndTimeInSecondsField)
-		&& !JSONUtils::isMetadataPresent(parametersRoot, endTimeInSecondsField)
+    string endTimeField = "endTime";
+    string framesNumberField = "framesNumber";
+    if (!JSONUtils::isMetadataPresent(parametersRoot, endTimeField)
             && !JSONUtils::isMetadataPresent(parametersRoot, framesNumberField))
     {
-        string errorMessage = __FILEREF__ + "All fields are not present or it is null"
-                + ", Field: " + sEndTimeInSecondsField
-                + ", Field: " + endTimeInSecondsField
+        string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+                + ", Field: " + endTimeField
                 + ", Field: " + framesNumberField
                 + ", label: " + label
                 ;
@@ -2262,7 +2256,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
         throw runtime_error(errorMessage);
     }
 
-    string field = "CutType";
+    field = "cutType";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
 		string cutType = JSONUtils::asString(parametersRoot, field, "");
@@ -2277,8 +2271,41 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 
             throw runtime_error(errorMessage);
         }
-    }
 
+		if (cutType == "KeyFrameSeekingInterval")
+		{
+			field = "startKeyFrameSeekingInterval";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string sParametersRoot = JSONUtils::toString(parametersRoot);
+                        
+				string errorMessage = __FILEREF__ + "field is not present or it is null"
+						+ ", Field: " + field
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			field = "endKeyFrameSeekingInterval";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string sParametersRoot = JSONUtils::toString(parametersRoot);
+                        
+				string errorMessage = __FILEREF__ + "field is not present or it is null"
+						+ ", Field: " + field
+						+ ", sParametersRoot: " + sParametersRoot
+						+ ", label: " + label
+						;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+    }
+	
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     field = "references";
@@ -6725,7 +6752,8 @@ bool Validator::isCutTypeValid(string cutType)
     vector<string> validCutTypes = {
         "KeyFrameSeeking",
         "FrameAccurateWithEncoding",
-        "FrameAccurateWithoutEncoding"
+        "FrameAccurateWithoutEncoding",
+        "KeyFrameSeekingInterval"
     };
 
     for (string validCutType: validCutTypes)
@@ -7127,7 +7155,7 @@ void Validator::validateCrossReference(
 
 		vector<string> crossReferenceCutMandatoryFields = {
 			"startTimeInSeconds",
-			"EndTimeInSeconds"
+			"endTimeInSeconds"
 		};
 		for (string mandatoryField: crossReferenceCutMandatoryFields)
 		{

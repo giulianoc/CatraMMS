@@ -14926,7 +14926,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			Json::Value cutRoot;
 			{
 				string field = "label";
-				cutRoot[field] = string("Live Cut from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				cutRoot[field] = string("Cut (Live) from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
 
@@ -14946,19 +14946,19 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- (utcFirstChunkStartTime * 1000);
 				double startTimeInSeconds = startTimeInMilliSeconds / 1000;
-				field = "startTimeInSeconds";
+				field = "startTime";
 				cutParametersRoot[field] = startTimeInSeconds;
 
 				double endTimeInMilliSeconds = utcCutPeriodEndTimeInMilliSeconds - (utcFirstChunkStartTime * 1000);
 				double endTimeInSeconds = endTimeInMilliSeconds / 1000;
-				field = "EndTimeInSeconds";
+				field = "endTime";
 				cutParametersRoot[field] = endTimeInSeconds;
 
 				// 2020-07-19: keyFrameSeeking by default it is true.
 				//	Result is that the cut is a bit over (in my test it was about one second more).
 				//	Using keyFrameSeeking false the Cut is accurate.
 				string cutType = "FrameAccurateWithoutEncoding";
-				field = "CutType";
+				field = "cutType";
 				cutParametersRoot[field] = cutType;
 
 				bool fixEndTimeIfOvercomeDuration;
@@ -14966,7 +14966,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 					fixEndTimeIfOvercomeDuration = true;
 				else
 					fixEndTimeIfOvercomeDuration = false;
-				field = "FixEndTimeIfOvercomeDuration";
+				field = "fixEndTimeIfOvercomeDuration";
 				cutParametersRoot[field] = fixEndTimeIfOvercomeDuration;
 
 				{
@@ -15856,7 +15856,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			Json::Value cutRoot;
 			{
 				string field = "label";
-				cutRoot[field] = string("Live Cut from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				cutRoot[field] = string("Cut (Live) from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
 
@@ -15876,19 +15876,19 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- utcFirstChunkStartTimeInMilliSecs;
 				double startTimeInSeconds = startTimeInMilliSeconds / 1000;
-				field = "startTimeInSeconds";
+				field = "startTime";
 				cutParametersRoot[field] = startTimeInSeconds;
 
 				double endTimeInMilliSeconds = utcCutPeriodEndTimeInMilliSeconds - utcFirstChunkStartTimeInMilliSecs;
 				double endTimeInSeconds = endTimeInMilliSeconds / 1000;
-				field = "EndTimeInSeconds";
+				field = "endTime";
 				cutParametersRoot[field] = endTimeInSeconds;
 
 				// 2020-07-19: keyFrameSeeking by default it is true.
 				//	Result is that the cut is a bit over (in my test it was about one second more).
-				//	Using keyFrameSeeking false the Cut is accurate.
+				//	Using keyFrameSeeking false the Cut is accurate because it could be a bframe too.
 				string cutType = "FrameAccurateWithoutEncoding";
-				field = "CutType";
+				field = "cutType";
 				cutParametersRoot[field] = cutType;
 
 				bool fixEndTimeIfOvercomeDuration;
@@ -15896,7 +15896,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					fixEndTimeIfOvercomeDuration = true;
 				else
 					fixEndTimeIfOvercomeDuration = false;
-				field = "FixEndTimeIfOvercomeDuration";
+				field = "fixEndTimeIfOvercomeDuration";
 				cutParametersRoot[field] = fixEndTimeIfOvercomeDuration;
 
 				{
@@ -19514,9 +19514,11 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				);
 
 				ffmpeg.cutWithoutEncoding(ingestionJobKey, concatenatedMediaPathName, 
-					cutType,
 					concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-					"", startTimeInSeconds, "", endTimeInSeconds, framesNumber,
+					cutType,
+					"", // startKeyFramesSeekingInterval,
+					"", // endKeyFramesSeekingInterval,
+					to_string(startTimeInSeconds), to_string(endTimeInSeconds), framesNumber,
 					cutMediaPathName);
 
 				_logger->info(__FILEREF__ + "cut done"
@@ -19755,66 +19757,46 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 		// check start time / end time
 		int framesNumber = -1;
-		string sStartTimeInSeconds;
-		double startTimeInSeconds;
-		double endTimeInSeconds = 0.0;
-		string sEndTimeInSeconds;
+		string startTime;
+		string endTime = "0.0";
 		{
-			string sStartTimeInSecondsField = "sStartTimeInSeconds";
-			string startTimeInSecondsField = "startTimeInSeconds";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, sStartTimeInSecondsField)
-				&& !JSONUtils::isMetadataPresent(parametersRoot, startTimeInSecondsField))
+			string field = "startTime";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Both is not present or it is null"
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", Field: " + sStartTimeInSecondsField
-					+ ", Field: " + startTimeInSecondsField
+					+ ", Field: " + field
 				;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
+			startTime = JSONUtils::asString(parametersRoot, field, "");
 
-			if (JSONUtils::isMetadataPresent(parametersRoot, sStartTimeInSecondsField))
-				sStartTimeInSeconds = JSONUtils::asString(parametersRoot, sStartTimeInSecondsField, "");
-
-			if (JSONUtils::isMetadataPresent(parametersRoot, startTimeInSecondsField))
-				startTimeInSeconds = JSONUtils::asDouble(parametersRoot, startTimeInSecondsField, 0.0);
-
-
-			string sEndTimeInSecondsField = "sEndTimeInSeconds";
-			string endTimeInSecondsField = "endTimeInSeconds";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, sEndTimeInSecondsField)
-				&& !JSONUtils::isMetadataPresent(parametersRoot, endTimeInSecondsField))
+			field = "endTime";
+			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 				{
-					// endTimeInSeconds in case of Audio is mandatory
+					// endTime in case of Audio is mandatory
 					// because we cannot use the other option (FramesNumber)
 
 					string errorMessage = __FILEREF__ + "Field is not present or it is null, endTimeInSeconds in case of Audio is mandatory because we cannot use the other option (FramesNumber)"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", Field: " + sEndTimeInSecondsField
-						+ ", Field: " + endTimeInSecondsField
+						+ ", Field: " + field
 					;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
+			endTime = JSONUtils::asString(parametersRoot, field, "");
 
-			if (JSONUtils::isMetadataPresent(parametersRoot, sEndTimeInSecondsField))
-				sEndTimeInSeconds = JSONUtils::asString(parametersRoot, sEndTimeInSecondsField, "");
-
-			if (JSONUtils::isMetadataPresent(parametersRoot, endTimeInSecondsField))
-				endTimeInSeconds = JSONUtils::asDouble(parametersRoot, endTimeInSecondsField, 0.0);
-
-			string field;
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 			{
-				field = "FramesNumber";
+				field = "framesNumber";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
 			}
@@ -19826,44 +19808,33 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			field = "FixEndTimeIfOvercomeDuration";
 			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
 
-			/*
-			if (endTimeInSeconds == -1 && framesNumber == -1)
-			{
-				string errorMessage = __FILEREF__ + "Both 'EndTimeInSeconds' and 'FramesNumber' fields are not present or it is null"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    ;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			*/
+			double startTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime, _logger);
+			double endTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime, _logger);
 
 			if (framesNumber == -1)
 			{
-				// il controllo endTimeInSeconds < 0 è valido solamente se non abbiamo sEndTimeInSeconds
-				if (sEndTimeInSeconds == "" && endTimeInSeconds < 0)
+				// il prossimo controllo possiamo farlo solo nel caso la stringa non sia nel formato HH:MM:SS
+				if (endTimeInSeconds < 0)
 				{
 					// if negative, it has to be subtract by the durationInMilliSeconds
 					double newEndTimeInSeconds  = (sourceDurationInMilliSecs
 						- (endTimeInSeconds * -1000)) / 1000;
 
-					_logger->error(__FILEREF__ + "endTimeInSeconds was changed"
+					endTime = to_string(newEndTimeInSeconds);
+
+					_logger->error(__FILEREF__ + "endTime was changed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+						+ ", startTime: " + startTime
+						+ ", endTime: " + endTime
 						+ ", newEndTimeInSeconds: " + to_string(newEndTimeInSeconds)
 						+ ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
 					);
-
-					endTimeInSeconds = newEndTimeInSeconds;
 				}
 			}
 
-			// il controllo startTimeInSeconds > endTimeInSeconds è valido solamente se non abbiamo sEndTimeInSeconds
-			if (sStartTimeInSeconds == "" && sEndTimeInSeconds == ""
-				&& startTimeInSeconds > endTimeInSeconds)
+			if (startTimeInSeconds > endTimeInSeconds)
 			{
 				string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is bigger than endTimeInSeconds"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19881,21 +19852,19 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			{
 				if (framesNumber == -1)
 				{
-					// il controllo sourceDurationInMilliSecs < endTimeInSeconds è valido solamente se non abbiamo sEndTimeInSeconds
-					if (sEndTimeInSeconds == "" && sourceDurationInMilliSecs < endTimeInSeconds * 1000)
+					if (sourceDurationInMilliSecs < endTimeInSeconds * 1000)
 					{
 						if (fixEndTimeIfOvercomeDuration)
 						{
-							double previousEndTimeInSeconds = endTimeInSeconds;
-							endTimeInSeconds = sourceDurationInMilliSecs / 1000;
+							endTime = to_string(sourceDurationInMilliSecs / 1000);
 
 							_logger->info(__FILEREF__ + "endTimeInSeconds was changed to durationInMilliSeconds"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", fixEndTimeIfOvercomeDuration: " + to_string(fixEndTimeIfOvercomeDuration)
 								+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-								+ ", previousEndTimeInSeconds: " + to_string(previousEndTimeInSeconds)
-								+ ", new endTimeInSeconds: " + to_string(endTimeInSeconds)
+								+ ", previousEndTimeInSeconds: " + to_string(endTimeInSeconds)
+								+ ", new endTimeInSeconds: " + endTime
 								+ ", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
 							);
 						}
@@ -19965,17 +19934,17 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
 						{
 							newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
-							newUtcStartTimeInMilliSecs += ((int64_t) (startTimeInSeconds * 1000));
-							newUtcEndTimeInMilliSecs = utcStartTimeInMilliSecs + ((int64_t) (endTimeInSeconds * 1000));
+							newUtcStartTimeInMilliSecs += ((int64_t) (FFMpeg::timeToSeconds(ingestionJobKey, startTime, _logger) * 1000));
+							newUtcEndTimeInMilliSecs = utcStartTimeInMilliSecs
+								+ ((int64_t) (FFMpeg::timeToSeconds(ingestionJobKey, endTime, _logger) * 1000));
 						}
 					}
 				}
 			}
 		}
 
-		string cutType = "KeyFrameSeeking";
-        string field = "CutType";
-		cutType = JSONUtils::asString(parametersRoot, field, "KeyFrameSeeking");
+        string field = "cutType";
+		string cutType = JSONUtils::asString(parametersRoot, field, "KeyFrameSeeking");
 
 		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread new start/end"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19986,14 +19955,15 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			+ ", sourceAssetPathName: " + sourceAssetPathName
 			+ ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
 			+ ", framesNumber: " + to_string(framesNumber)
-			+ ", sStartTimeInSeconds: " + sStartTimeInSeconds
-			+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-			+ ", sEndTimeInSeconds: " + sEndTimeInSeconds
-			+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+			+ ", startTime: " + startTime
+			+ ", endTime: " + endTime
 			+ ", newUtcStartTimeInMilliSecs: " + to_string(newUtcStartTimeInMilliSecs)
 			+ ", newUtcEndTimeInMilliSecs: " + to_string(newUtcEndTimeInMilliSecs)
 		);
-		if (cutType == "KeyFrameSeeking" || cutType == "FrameAccurateWithoutEncoding")
+		if (cutType == "KeyFrameSeeking"
+			|| cutType == "FrameAccurateWithoutEncoding"
+			|| cutType == "KeyFrameSeekingInterval"
+		)
 		{
 			string outputFileFormat;
 			field = "outputFileFormat";
@@ -20141,10 +20111,11 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         
 			FFMpeg ffmpeg (_configuration, _logger);
 			ffmpeg.cutWithoutEncoding(ingestionJobKey, sourceAssetPathName, 
-				cutType,
 				referenceContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-				sStartTimeInSeconds, startTimeInSeconds,
-				sEndTimeInSeconds, endTimeInSeconds, framesNumber,
+				cutType,
+				"", // startKeyFramesSeekingInterval,
+				"", // endKeyFramesSeekingInterval,
+				startTime, endTime, framesNumber,
 				cutMediaPathName);
 
 			_logger->info(__FILEREF__ + "cut done"
@@ -20166,7 +20137,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				fileFormat,
 				title,
 				imageOfVideoMediaItemKey,
-				cutOfVideoMediaItemKey, cutOfAudioMediaItemKey, startTimeInSeconds, endTimeInSeconds,
+				cutOfVideoMediaItemKey, cutOfAudioMediaItemKey,
+				FFMpeg::timeToSeconds(ingestionJobKey, startTime, _logger),
+				FFMpeg::timeToSeconds(ingestionJobKey, endTime, _logger),
 				parametersRoot
 			);
 
@@ -20298,7 +20271,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				sourceMediaItemKey, sourcePhysicalPathKey,
 				sourceAssetPathName, sourceDurationInMilliSecs, sourceFileExtension,
 				sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
-				endTimeInSeconds,
+				endTime,
 				encodingProfileKey, encodingProfileDetailsRoot,
 				encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(),
 				_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
@@ -23091,7 +23064,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			field = "startTimeInSeconds";
 			crossReferenceParametersRoot[field] = startTimeInSeconds;
 
-			field = "EndTimeInSeconds";
+			field = "endTimeInSeconds";
 			crossReferenceParametersRoot[field] = endTimeInSeconds;
 
 			field = "parameters";
@@ -23120,7 +23093,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			field = "startTimeInSeconds";
 			crossReferenceParametersRoot[field] = startTimeInSeconds;
 
-			field = "EndTimeInSeconds";
+			field = "endTimeInSeconds";
 			crossReferenceParametersRoot[field] = endTimeInSeconds;
 
 			field = "parameters";

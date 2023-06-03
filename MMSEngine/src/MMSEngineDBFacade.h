@@ -1918,7 +1918,7 @@ public:
 		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
 		string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourceFileExtension,
 		string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,
-		double endTimeInSeconds,
+		string endTime,
 
 		int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 

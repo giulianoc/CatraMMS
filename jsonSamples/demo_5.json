@@ -48,7 +48,7 @@
 						"type": "Cut",
 						"parameters": {
 							"startTimeInSeconds": 1200.0,
-							"EndTimeInSeconds": 3000.0,
+							"endTimeInSeconds": 3000.0,
 							"userData": { "MyData": "this is my frame data" },
 							"Title": "${TitleOfCutVideo}"
 						}

@@ -12,7 +12,7 @@
 				{ "mediaItemKey": 11 }
 			],
 			"startTimeInSeconds": 1.0,
-			"EndTimeInSeconds": 5.0,
+			"endTimeInSeconds": 5.0,
 			"userData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}

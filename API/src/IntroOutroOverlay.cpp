@@ -425,17 +425,25 @@ void IntroOutroOverlay::encodeContent(
 			double startTimeInSeconds = 0.0;
 			double endTimeInSeconds = introOverlayDurationInSeconds + introOutroDurationInSeconds;
 			int64_t mainBeginDurationInMilliSeconds = (introOverlayDurationInSeconds + introOutroDurationInSeconds) * 1000;
-			_encoding->_ffmpeg->cutWithoutEncoding(
-				_ingestionJobKey,
-				mainSourceAssetPathName,
-				"KeyFrameSeeking",
-				true,
-				"",
-				startTimeInSeconds,
-				"",
-				endTimeInSeconds,
-				-1,
-				mainBeginPathName);
+			{
+				// 537%+8, cerco nell'intervallo a partire da (startTimeInSeconds - 4) fino a +8 secondi
+				// Sto assumendo che nel file sorgente, ci sia un KeyFrame al max ogni 4 second1
+				long beginOfInterval = startTimeInSeconds - 4;
+				string startKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
+				beginOfInterval = endTimeInSeconds - 4;
+				string endKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
+				_encoding->_ffmpeg->cutWithoutEncoding(
+					_ingestionJobKey,
+					mainSourceAssetPathName,
+					true,	// isVideo
+					"KeyFrameSeekingInterval",
+					startKeyFramesSeekingInterval,
+					endKeyFramesSeekingInterval,
+					to_string(startTimeInSeconds),
+					to_string(endTimeInSeconds),
+					-1,	// framesNumber
+					mainBeginPathName);
+			}
 
 			string mainEndPathName = stagingBasePath + "mainEnd" + mainSourceFileExtension;
 			if (fs::exists(mainEndPathName))
@@ -447,17 +455,25 @@ void IntroOutroOverlay::encodeContent(
 					(mainSourceDurationInMilliSeconds / 1000)
 					- ((mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + introOutroDurationInSeconds))
 				) * 1000;
-			_encoding->_ffmpeg->cutWithoutEncoding(
-				_ingestionJobKey,
-				mainSourceAssetPathName,
-				"KeyFrameSeeking",
-				true,
-				"",
-				startTimeInSeconds,
-				"",
-				endTimeInSeconds,
-				-1,
-				mainEndPathName);
+			{
+				// 537%+8, cerco nell'intervallo a partire da (startTimeInSeconds - 4) fino a +8 secondi
+				// Sto assumendo che nel file sorgente, ci sia un KeyFrame al max ogni 4 second1
+				long beginOfInterval = startTimeInSeconds - 4;
+				string startKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
+				beginOfInterval = endTimeInSeconds - 4;
+				string endKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
+				_encoding->_ffmpeg->cutWithoutEncoding(
+					_ingestionJobKey,
+					mainSourceAssetPathName,
+					true,	// isVideo
+					"KeyFrameSeekingInterval",
+					startKeyFramesSeekingInterval,
+					endKeyFramesSeekingInterval,
+					to_string(startTimeInSeconds),
+					to_string(endTimeInSeconds),
+					-1,		// framesNumber
+					mainEndPathName);
+			}
 
 			string mainCenterPathName = stagingBasePath + "mainCenter" + mainSourceFileExtension;
 			if (fs::exists(mainCenterPathName))
@@ -469,17 +485,25 @@ void IntroOutroOverlay::encodeContent(
 					((mainSourceDurationInMilliSeconds / 1000) - (outroOverlayDurationInSeconds + introOutroDurationInSeconds))
 					- (introOverlayDurationInSeconds + introOutroDurationInSeconds)
 				) * 1000;
-			_encoding->_ffmpeg->cutWithoutEncoding(
-				_ingestionJobKey,
-				mainSourceAssetPathName,
-				"KeyFrameSeeking",
-				true,
-				"",
-				startTimeInSeconds,
-				"",
-				endTimeInSeconds,
-				-1,
-				mainCenterPathName);
+			{
+				// 537%+8, cerco nell'intervallo a partire da (startTimeInSeconds - 4) fino a +8 secondi
+				// Sto assumendo che nel file sorgente, ci sia un KeyFrame al max ogni 4 second1
+				long beginOfInterval = startTimeInSeconds - 4;
+				string startKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
+				beginOfInterval = endTimeInSeconds - 4;
+				string endKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
+				_encoding->_ffmpeg->cutWithoutEncoding(
+					_ingestionJobKey,
+					mainSourceAssetPathName,
+					true,	// isVideo
+					"KeyFrameSeekingInterval",
+					startKeyFramesSeekingInterval,
+					endKeyFramesSeekingInterval,
+					to_string(startTimeInSeconds),
+					to_string(endTimeInSeconds),
+					-1,		// framesNumber
+					mainCenterPathName);
+			}
 
 			string destFileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
 

@@ -18,10 +18,8 @@ void CutFrameAccurate::encodeContent(
 
     try
     {
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, _encodingJobKey, requestBody);
+        Json::Value metadataRoot = JSONUtils::toJson(-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
@@ -174,9 +172,9 @@ void CutFrameAccurate::encodeContent(
 			sourceAssetPathName,
 			_encodingJobKey,
 			encodingProfileDetailsRoot,
-			JSONUtils::asDouble(ingestedParametersRoot, "startTimeInSeconds", 0.0),
-			JSONUtils::asDouble(encodingParametersRoot, "endTimeInSeconds", 0.0),
-			JSONUtils::asInt(ingestedParametersRoot, "FramesNumber", -1),
+			JSONUtils::asString(ingestedParametersRoot, "startTime", ""),
+			JSONUtils::asString(encodingParametersRoot, "endTime", ""),
+			JSONUtils::asInt(ingestedParametersRoot, "framesNumber", -1),
 			encodedStagingAssetPathName,
 
 			&(_encoding->_childPid));

@@ -10297,7 +10297,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
 	string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourceFileExtension,
 	string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,
-	double endTimeInSeconds,
+	string endTime,
 
 	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
 
@@ -10358,8 +10358,8 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 			field = "sourceTranscoderStagingAssetPathName";
 			parametersRoot[field] = sourceTranscoderStagingAssetPathName;
 
-			field = "endTimeInSeconds";
-			parametersRoot[field] = endTimeInSeconds;
+			field = "endTime";
+			parametersRoot[field] = endTime;
 
 			field = "encodingProfileKey";
 			parametersRoot[field] = encodingProfileKey;

@@ -39,7 +39,7 @@
 		// mandatory only for CutOfVideo and CutOfAudio
 		"parameters": {
 			"startTimeInSeconds": 12.123345,
-			"EndTimeInSeconds": 12.123345
+			"endTimeInSeconds": 12.123345
 		},
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task

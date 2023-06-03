@@ -6344,6 +6344,366 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 	return make_pair(durationInMilliSeconds, bitRate);
 }
 
+string FFMpeg::getNearestKeyFrameTime(
+	int64_t ingestionJobKey,
+	string mediaSource,
+	string readIntervals,	// intervallo dove cercare il key frame piu vicino
+		// INTERVAL  ::= [START|+START_OFFSET][%[END|+END_OFFSET]]
+		// INTERVALS ::= INTERVAL[,INTERVALS]
+		// esempi:
+		//	Seek to time 10, read packets until 20 seconds after the found seek point, then seek to position 01:30 (1 minute and thirty seconds) and read packets until position 01:45.
+		//			10%+20,01:30%01:45
+		// Read only 42 packets after seeking to position 01:23:
+		//			01:23%+#42
+		// Read only the first 20 seconds from the start:
+		//			%+20
+		// Read from the start until position 02:30:
+		//			%02:30
+	double keyFrameTime
+)
+{
+	_currentApiName = APIName::NearestKeyFrameTime;
+
+	_logger->info(__FILEREF__ + "getNearestKeyFrameTime"
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", readIntervals: " + readIntervals
+		+ ", mediaSource: " + mediaSource
+	);
+
+	if (mediaSource == "")
+	{
+		string errorMessage = string("Media Source is wrong")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", mediaSource: " + mediaSource
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	// milli secs to wait in case of nfs delay
+	{
+		bool exists = false;                                                                              
+		{                                                                                                     
+			chrono::system_clock::time_point end = chrono::system_clock::now()
+				+ chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait);
+			do
+			{
+				if (fs::exists(mediaSource))
+				{
+					exists = true;
+					break;
+				}
+
+				this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
+			}
+			while(chrono::system_clock::now() < end);
+		}
+		if (!exists)
+		{
+			string errorMessage = string("Source asset path name not existing")
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSource: " + mediaSource
+			;
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
+    string      detailsPathFileName =
+            _ffmpegTempDir + "/" + to_string(ingestionJobKey) + ".json";
+    
+    /*
+     * ffprobe:
+        "-v quiet": Don't output anything else but the desired raw data value
+        "-print_format": Use a certain format to print out the data
+        "compact=": Use a compact output format
+        "print_section=0": Do not print the section name
+        ":nokey=1": do not print the key of the key:value pair
+        ":escape=csv": escape the value
+        "-show_entries format=duration": Get entries of a field named duration inside a section named format
+		-sexagesimal: 
+    */
+    string ffprobeExecuteCommand = 
+		_ffmpegPath + "/ffprobe "
+		+ "-v quiet -select_streams v:0 -show_entries packet=pts_time,flags "
+		+ "-print_format json -read_intervals \"" + readIntervals + "\" \""
+		+ mediaSource + "\" "
+		+ "> " + detailsPathFileName 
+		+ " 2>&1"
+	;
+
+    #ifdef __APPLE__
+        ffprobeExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+    #endif
+
+	chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+    try
+    {
+        _logger->info(__FILEREF__ + "getNearestKeyFrameTime: Executing ffprobe command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+        );
+
+		// The check/retries below was done to manage the scenario where the file was created
+		// by another MMSEngine and it is not found just because of nfs delay.
+		// Really, looking the log, we saw the file is just missing and it is not an nfs delay
+		int attemptIndex = 0;
+		bool executeDone = false;
+		while (!executeDone)
+		{
+			int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
+			if (executeCommandStatus != 0)
+			{
+				string errorMessage = __FILEREF__
+					+ "getNearestKeyFrameTime: ffmpeg: ffprobe command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+					+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+				;
+				_logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+				errorMessage = __FILEREF__
+					+ "getNearestKeyFrameTime command failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				;
+				throw runtime_error(errorMessage);
+			}
+			else
+			{
+				executeDone = true;
+			}
+        }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "getNearestKeyFrameTime: Executed ffmpeg command"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffprobeExecuteCommand: @" + ffprobeExecuteCommand + "@"
+            + ", @FFMPEG statistics@ - duration (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(
+				endFfmpegCommand - startFfmpegCommand).count()) + "@"
+        );
+    }
+    catch(runtime_error e)
+    {
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                detailsPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "getNearestKeyFrameTime: Executed ffmpeg command failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+            + ", @FFMPEG statistics@ - duration (secs): @"
+				+ to_string(chrono::duration_cast<chrono::seconds>(
+				endFfmpegCommand - startFfmpegCommand).count()) + "@"
+			+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+			+ ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", detailsPathFileName: " + detailsPathFileName);
+        fs::remove_all(detailsPathFileName);
+
+        throw e;
+    }
+
+	string sNearestKeyFrameTime;
+
+    try
+    {
+        // json output will be like:
+        /*
+{
+    "packets": [
+        {
+            "pts_time": "536.981333",
+            "flags": "__",
+            "side_data_list": [
+                {
+
+                }
+            ]
+        },
+        {
+            "pts_time": "537.061333",
+            "flags": "K_",
+            "side_data_list": [
+                {
+
+                }
+            ]
+        },
+        {
+            "pts_time": "537.261333",
+            "flags": "__",
+            "side_data_list": [
+                {
+
+                }
+            ]
+        },
+		............
+        {
+            "pts_time": "538.901333",
+            "flags": "__",
+            "side_data_list": [
+                {
+
+                }
+            ]
+        }
+    ]
+}
+         */
+
+		double nearestDistance = -1.0;
+
+        ifstream detailsFile(detailsPathFileName);
+        stringstream buffer;
+        buffer << detailsFile.rdbuf();
+
+        _logger->info(__FILEREF__ + "Details found"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mediaSource: " + mediaSource
+            + ", details: " + buffer.str()
+        );
+
+        string mediaDetails = buffer.str();
+        // LF and CR create problems to the json parser...
+        while (mediaDetails.size() > 0 && (mediaDetails.back() == 10 || mediaDetails.back() == 13))
+            mediaDetails.pop_back();
+
+        Json::Value detailsRoot = JSONUtils::toJson(ingestionJobKey, -1, mediaDetails);
+
+        string field = "packets";
+        if (!JSONUtils::isMetadataPresent(detailsRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSource: " + mediaSource
+				+ ", Field: " + field
+				+ ", mediaInfo: " + JSONUtils::toString(detailsRoot)
+			;
+            _logger->error(errorMessage);
+
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "Field is not present or it is null"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", mediaSource: " + mediaSource
+				+ ", Field: " + field
+				+ ", mediaInfo: " + JSONUtils::toString(detailsRoot)
+			;
+            throw runtime_error(errorMessage);
+        }
+        Json::Value packetsRoot = detailsRoot[field];
+        for(int packetIndex = 0; packetIndex < packetsRoot.size(); packetIndex++) 
+        {
+            Json::Value packetRoot = packetsRoot[packetIndex];
+            
+			field = "pts_time";
+            if (!JSONUtils::isMetadataPresent(packetRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", mediaSource: " + mediaSource
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", mediaSource: " + mediaSource
+                    + ", Field: " + field;
+                throw runtime_error(errorMessage);
+            }
+            string pts_time = JSONUtils::asString(packetRoot, field, "");
+
+			field = "flags";
+            if (!JSONUtils::isMetadataPresent(packetRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", mediaSource: " + mediaSource
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+				// to hide the ffmpeg staff
+                errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", mediaSource: " + mediaSource
+                    + ", Field: " + field;
+                throw runtime_error(errorMessage);
+            }
+            string flags = JSONUtils::asString(packetRoot, field, "");
+            
+            if (flags.find("K") != string::npos)
+            {
+				double currentKeyFrameTime = stod(pts_time);
+				double currentDistance = abs(currentKeyFrameTime - keyFrameTime);
+
+				if (nearestDistance == -1.0)
+				{
+					nearestDistance = currentDistance;
+					sNearestKeyFrameTime = pts_time;
+				}
+				else if (currentDistance < nearestDistance)
+				{
+					nearestDistance = currentDistance;
+					sNearestKeyFrameTime = pts_time;
+				}
+				else if (currentDistance >= nearestDistance)
+				{
+					// i packet sono in ordine crescente, se ci stiamo allontanando dal keyFrameTime è inutile continuare
+					break;
+				}
+            }
+        }
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", detailsPathFileName: " + detailsPathFileName);
+        fs::remove_all(detailsPathFileName);
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", detailsPathFileName: " + detailsPathFileName);
+        fs::remove_all(detailsPathFileName);
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", detailsPathFileName: " + detailsPathFileName);
+        fs::remove_all(detailsPathFileName);
+
+        throw e;
+    }
+
+
+	return sNearestKeyFrameTime;
+}
+
 int FFMpeg::probeChannel(
 	int64_t ingestionJobKey,
 	string url
@@ -7791,12 +8151,12 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 void FFMpeg::cutWithoutEncoding(
 	int64_t ingestionJobKey,
 	string sourcePhysicalPath,
-	string cutType,	// KeyFrameSeeking (input seeking) or FrameAccurateWithoutEncoding
 	bool isVideo,
-	string sStartTimeInSeconds,	// aggiunto per evitare gli arrotondamenti del double, ha priorità rispetto al double
-	double startTimeInSeconds,
-	string sEndTimeInSeconds,	// aggiunto per evitare gli arrotondamenti del double, ha priorità rispetto al double
-	double endTimeInSeconds,
+	string cutType,	// KeyFrameSeeking (input seeking), FrameAccurateWithoutEncoding, KeyFrameSeekingInterval
+	string startKeyFrameSeekingInterval,
+	string endKeyFrameSeekingInterval,
+	string startTime, // [-][HH:]MM:SS[.m...] or [-]S+[.m...]
+	string endTime, // [-][HH:]MM:SS[.m...] or [-]S+[.m...]
 	int framesNumber,
 	string cutMediaPathName)
 {
@@ -7816,12 +8176,12 @@ void FFMpeg::cutWithoutEncoding(
 	_logger->info(__FILEREF__ + "Received cutWithoutEncoding"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", sourcePhysicalPath: " + sourcePhysicalPath
-		+ ", cutType: " + cutType
 		+ ", isVideo: " + to_string(isVideo)
-		+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-		+ ", sStartTimeInSeconds: " + sStartTimeInSeconds
-		+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-		+ ", sEndTimeInSeconds: " + sEndTimeInSeconds
+		+ ", cutType: " + cutType
+		+ ", startKeyFrameSeekingInterval: " + startKeyFrameSeekingInterval
+		+ ", endKeyFrameSeekingInterval: " + endKeyFrameSeekingInterval
+		+ ", startTime: " + startTime
+		+ ", endTime: " + endTime
 		+ ", framesNumber: " + to_string(framesNumber)
 		+ ", cutMediaPathName: " + cutMediaPathName
 		);
@@ -7951,71 +8311,91 @@ void FFMpeg::cutWithoutEncoding(
 			(https://stackoverflow.com/questions/63548027/cut-a-video-in-between-key-frames-without-re-encoding-the-full-video-using-ffpme)
 		*/
 
-		if (sStartTimeInSeconds == "")
-			sStartTimeInSeconds = to_string(startTimeInSeconds);
-		if (sEndTimeInSeconds == "")
+		string startTimeToBeUsed;
 		{
-			// if you specify -ss before -i, -to will have the same effect as -t, i.e. it will act as a duration.
-			if (cutType == "KeyFrameSeeking")	// input seeking
-				sEndTimeInSeconds = to_string(endTimeInSeconds - startTimeInSeconds);
+			if (cutType == "KeyFrameSeekingInterval")
+			{
+				startTimeToBeUsed = getNearestKeyFrameTime(
+					ingestionJobKey, sourcePhysicalPath,
+					startKeyFrameSeekingInterval,
+					timeToSeconds(ingestionJobKey, startTime, _logger));
+				if (startTimeToBeUsed == "")
+					startTimeToBeUsed = startTime;
+			}
 			else
-				sEndTimeInSeconds = to_string(endTimeInSeconds);
+				startTimeToBeUsed = startTime;
+		}
+
+		string endTimeToBeUsed;
+		{
+			if (cutType == "KeyFrameSeekingInterval")
+			{
+				endTimeToBeUsed = getNearestKeyFrameTime(
+					ingestionJobKey, sourcePhysicalPath,
+					endKeyFrameSeekingInterval,
+					timeToSeconds(ingestionJobKey, endTime, _logger));
+				if (endTimeToBeUsed == "")
+					endTimeToBeUsed = endTime;
+			}
+			else if (cutType == "KeyFrameSeeking")	// input seeking
+			{
+				// if you specify -ss before -i, -to will have the same effect as -t, i.e. it will act as a duration.
+				endTimeToBeUsed = to_string(
+					timeToSeconds(ingestionJobKey, endTime, _logger) -
+					timeToSeconds(ingestionJobKey, startTime, _logger));
+			}
+			else
+			{
+				endTimeToBeUsed = endTime;
+			}
 		}
 
 		ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";
 
-		// if (startKeyFramesSeeking != "")
-		// {
-		// }
-		// else
 		{
 			if (cutType == "KeyFrameSeeking")	// input seeking
 			{
 				// input seeking: beginning of the generated video will be to the nearest keyframe
 				// found before your specified timestamp
 
-				ffmpegExecuteCommand += (string("-ss ") + sStartTimeInSeconds + " "
+				ffmpegExecuteCommand += (string("-ss ") + startTimeToBeUsed + " "
 					+ "-i " + sourcePhysicalPath + " ")
 				;
 			}
-			else // if (cutType == "FrameAccurateWithoutEncoding") output seeking
+			else // if (cutType == "FrameAccurateWithoutEncoding") output seeking or "KeyFrameSeekingInterval"
 			{
 				// FrameAccurateWithoutEncoding: it means it is used any frame even if it is not a key frame
 				ffmpegExecuteCommand += (string("-i ") + sourcePhysicalPath + " "
-					+ "-ss " + sStartTimeInSeconds + " ")
+					+ "-ss " + startTimeToBeUsed + " ")
 				;
 			}
 		}
 
-		if (framesNumber != -1)
+		if (cutType != "KeyFrameSeekingInterval" && framesNumber != -1)
 			ffmpegExecuteCommand += (string("-vframes ") + to_string(framesNumber) + " ");
 		else
-			ffmpegExecuteCommand += (string("-to ") + sEndTimeInSeconds + " ");
+			ffmpegExecuteCommand += (string("-to ") + endTimeToBeUsed + " ");
 
-		ffmpegExecuteCommand +=	(string("-async 1 ")
-				// commented because aresample filtering requires encoding and here we are just streamcopy
+		ffmpegExecuteCommand +=	(
+			// string("-async 1 ")
+			// commented because aresample filtering requires encoding and here we are just streamcopy
 			// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
 			// -map 0:v and -map 0:a is to get all video-audio tracks
-			+ "-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
+			"-map 0:v -c:v copy -map 0:a -c:a copy " + cutMediaPathName + " "
 			+ "> " + _outputFfmpegPathFileName + " "
-			+ "2>&1")
-		;
+			+ "2>&1"
+		);
 	}
 	else
 	{
 		// audio
 
-		if (sStartTimeInSeconds == "")
-			sStartTimeInSeconds = to_string(startTimeInSeconds);
-		if (sEndTimeInSeconds == "")
-			sEndTimeInSeconds = to_string(endTimeInSeconds);
-
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
-			+ "-ss " + sStartTimeInSeconds + " "
+			+ "-ss " + startTime + " "
 			+ "-i " + sourcePhysicalPath + " "
-			+ "-to " + sEndTimeInSeconds + " "
-			+ "-async 1 "
+			+ "-to " + endTime + " "
+			// + "-async 1 "
 			// commented because aresample filtering requires encoding and here we are just streamcopy
 			// + "-af \"aresample=async=1:min_hard_comp=0.100000:first_pts=0\" "
 			// -map 0:v and -map 0:a is to get all video-audio tracks
@@ -8097,8 +8477,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	// see https://stackoverflow.com/questions/63548027/cut-a-video-in-between-key-frames-without-re-encoding-the-full-video-using-ffpme
 	int64_t encodingJobKey,
 	Json::Value encodingProfileDetailsRoot,
-	double startTimeInSeconds,
-	double endTimeInSeconds,
+	string startTime,
+	string endTime,
 	int framesNumber,
 	string stagingEncodedAssetPathName,
 	pid_t* pChildPid)
@@ -8109,7 +8489,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	setStatus(
 		ingestionJobKey,
 		encodingJobKey,
-		framesNumber == -1 ? ((endTimeInSeconds - startTimeInSeconds) * 1000) : -1,
+		framesNumber == -1 ? ((timeToSeconds(ingestionJobKey, endTime, _logger) - timeToSeconds(ingestionJobKey, startTime, _logger)) * 1000) : -1,
 		sourceVideoAssetPathName,
 		stagingEncodedAssetPathName
 	);
@@ -8118,8 +8498,8 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", sourceVideoAssetPathName: " + sourceVideoAssetPathName
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
-		+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-		+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+		+ ", startTime: " + startTime
+		+ ", endTime: " + endTime
 		+ ", framesNumber: " + to_string(framesNumber)
 		+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 		);
@@ -8336,7 +8716,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			ffmpegArgumentList.push_back("-i");
 			ffmpegArgumentList.push_back(sourceVideoAssetPathName);
 			ffmpegArgumentList.push_back("-ss");
-			ffmpegArgumentList.push_back(to_string(startTimeInSeconds));
+			ffmpegArgumentList.push_back(startTime);
 			if (framesNumber != -1)
 			{
 				ffmpegArgumentList.push_back("-vframes");
@@ -8345,7 +8725,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			else
 			{
 				ffmpegArgumentList.push_back("-to");
-				ffmpegArgumentList.push_back(to_string(endTimeInSeconds));
+				ffmpegArgumentList.push_back(endTime);
 			}
 			// ffmpegArgumentList.push_back("-async");
 			// ffmpegArgumentList.push_back(to_string(1));
@@ -17354,6 +17734,115 @@ void FFMpeg::renameOutputFfmpegPathFileName(
 			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName
 			+ ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
 		);
+	}
+}
+
+bool FFMpeg::isNumber(int64_t ingestionJobKey, string number,
+	shared_ptr<spdlog::logger> logger)
+{
+	try
+	{
+		for (int i = 0; i < number.length(); i++)
+		{
+			if (!isdigit(number[i]) && number[i] != '.' && number[i] != '-')
+				return false;
+		}
+
+		return true;
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("isNumber failed")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", number: " + number
+			+ ", exception: " + e.what()
+		;
+		logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+double FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time,
+	shared_ptr<spdlog::logger> logger)
+{
+	try
+	{
+		string localTime = StringUtils::trimTabToo(time);
+		if (localTime == "")
+			return 0.0;
+
+		if (isNumber(ingestionJobKey, localTime, logger))
+			return stod(localTime);
+
+		// format: [-][HH:]MM:SS[.m...]
+
+		bool isNegative = false;
+		bool hourPresent = false;
+		int hours = 0;
+		int minutes = 0;
+		int seconds = 0;
+		int decimals = 0;    // microseconds???
+
+
+		if (localTime[0] == '-')
+			isNegative = true;
+
+		bool hoursPresent = std::count_if(localTime.begin(), localTime.end(), []( char c ){return c == ':';}) == 2;
+		bool decimalPresent = localTime.find(".") != string::npos;
+
+
+		stringstream ss(isNegative ? localTime.substr(1) : localTime);
+
+		char delim = ':';
+
+		if (hoursPresent)
+		{
+			string sHours;
+			getline(ss, sHours, delim); 
+			hours = stoi(sHours);
+		}
+
+		string sMinutes;
+		getline(ss, sMinutes, delim); 
+		minutes = stoi(sMinutes);
+
+		delim = '.';
+		string sSeconds;
+		getline(ss, sSeconds, delim); 
+		seconds = stoi(sSeconds);
+
+		if (decimalPresent)
+		{
+			string sDecimals;
+			getline(ss, sDecimals, delim); 
+			decimals = stoi(sDecimals);
+		}
+
+		double dSeconds;
+		if (decimals != 0)
+		{
+			sSeconds = to_string((hours * 3600) + (minutes * 60) + seconds) + "." + to_string(decimals);
+			dSeconds = stod(sSeconds);
+		}
+		else
+			dSeconds = (hours * 3600) + (minutes * 60) + seconds;
+
+		if (isNegative)
+			dSeconds *= -1;
+
+		return dSeconds;
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("timeToSeconds failed")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", time: " + time
+			+ ", exception: " + e.what()
+		;
+		logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
 	}
 }
 

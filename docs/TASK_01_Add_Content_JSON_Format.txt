@@ -72,7 +72,7 @@
 			// mandatory only for CutOfVideo and CutOfAudio
 			"parameters": {
 				"startTimeInSeconds": 12.123345,
-				"EndTimeInSeconds": 12.123345
+				"endTimeInSeconds": 12.123345
 			}
 		},
 
