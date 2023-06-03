@@ -15876,6 +15876,8 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- utcFirstChunkStartTimeInMilliSecs;
 				double startTimeInSeconds = startTimeInMilliSeconds / 1000;
+				if (startTimeInSeconds < 0)
+					startTimeInSeconds = 0.0;
 				field = "startTime";
 				cutParametersRoot[field] = startTimeInSeconds;
 
@@ -19834,7 +19836,21 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				}
 			}
 
-			if (startTimeInSeconds > endTimeInSeconds)
+			if (startTimeInSeconds < 0.0)
+			{
+				string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is negative"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+						+ ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			else if (startTimeInSeconds > endTimeInSeconds)
 			{
 				string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is bigger than endTimeInSeconds"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
