@@ -19838,19 +19838,22 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 			if (startTimeInSeconds < 0.0)
 			{
-				string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is negative"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-						+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-						+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-						+ ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
-				;
-				_logger->error(errorMessage);
+				startTime = "0.0";
 
-				throw runtime_error(errorMessage);
+				_logger->info(__FILEREF__ + "startTime was changed to 0.0 because it is negative"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", fixEndTimeIfOvercomeDuration: " + to_string(fixEndTimeIfOvercomeDuration)
+					+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+					+ ", previousStartTimeInSeconds: " + to_string(startTimeInSeconds)
+					+ ", new startTime: " + startTime
+					+ ", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
+				);
+
+				startTimeInSeconds = 0.0;
 			}
-			else if (startTimeInSeconds > endTimeInSeconds)
+
+			if (startTimeInSeconds > endTimeInSeconds)
 			{
 				string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds is bigger than endTimeInSeconds"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
