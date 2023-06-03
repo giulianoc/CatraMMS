@@ -428,9 +428,9 @@ void IntroOutroOverlay::encodeContent(
 			{
 				// 537%+8, cerco nell'intervallo a partire da (startTimeInSeconds - 4) fino a +8 secondi
 				// Sto assumendo che nel file sorgente, ci sia un KeyFrame al max ogni 4 second1
-				long beginOfInterval = startTimeInSeconds - 4;
+				long beginOfInterval = startTimeInSeconds - 4 < 0 ? 0 : startTimeInSeconds - 4;
 				string startKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
-				beginOfInterval = endTimeInSeconds - 4;
+				beginOfInterval = endTimeInSeconds - 4 < 0 ? 0 : endTimeInSeconds - 4;
 				string endKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
 				_encoding->_ffmpeg->cutWithoutEncoding(
 					_ingestionJobKey,
@@ -458,9 +458,9 @@ void IntroOutroOverlay::encodeContent(
 			{
 				// 537%+8, cerco nell'intervallo a partire da (startTimeInSeconds - 4) fino a +8 secondi
 				// Sto assumendo che nel file sorgente, ci sia un KeyFrame al max ogni 4 second1
-				long beginOfInterval = startTimeInSeconds - 4;
+				long beginOfInterval = startTimeInSeconds - 4 < 0 ? 0 : startTimeInSeconds - 4;
 				string startKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
-				beginOfInterval = endTimeInSeconds - 4;
+				beginOfInterval = endTimeInSeconds - 4 < 0 ? 0 : endTimeInSeconds - 4;
 				string endKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
 				_encoding->_ffmpeg->cutWithoutEncoding(
 					_ingestionJobKey,
@@ -488,9 +488,9 @@ void IntroOutroOverlay::encodeContent(
 			{
 				// 537%+8, cerco nell'intervallo a partire da (startTimeInSeconds - 4) fino a +8 secondi
 				// Sto assumendo che nel file sorgente, ci sia un KeyFrame al max ogni 4 second1
-				long beginOfInterval = startTimeInSeconds - 4;
+				long beginOfInterval = startTimeInSeconds - 4 < 0 ? 0 : startTimeInSeconds - 4;
 				string startKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
-				beginOfInterval = endTimeInSeconds - 4;
+				beginOfInterval = endTimeInSeconds - 4 < 0 ? 0 : endTimeInSeconds - 4;
 				string endKeyFramesSeekingInterval = to_string(beginOfInterval) + "%+8";
 				_encoding->_ffmpeg->cutWithoutEncoding(
 					_ingestionJobKey,
