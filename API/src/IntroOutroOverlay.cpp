@@ -370,6 +370,226 @@ void IntroOutroOverlay::encodeContent(
 			(introOverlayDurationInSeconds + introOutroDurationInSeconds
 			+ outroOverlayDurationInSeconds + introOutroDurationInSeconds) * 1000)
 		{
+			// implementazione che utilizza lo split del video
+			string stagingBasePath;
+
+			// ci serve un path dello staging locale al transcoder.
+			// Utilizziamo solo il path di encodedTranscoderStagingAssetPathName che 
+			// sarebbe il path locale dell'asset path name in caso di transcoder remoto
+			// In questa directory creiamo una sottodirectory perchè avremo tanti files
+			string field = "encodedTranscoderStagingAssetPathName";
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string encodedTranscoderStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field);
+
+			size_t endOfDirectoryIndex = encodedTranscoderStagingAssetPathName.find_last_of("/");
+			if (endOfDirectoryIndex == string::npos)
+			{
+				string errorMessage = __FILEREF__ + "encodedTranscoderStagingAssetPathName is not well formed"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", encodedTranscoderStagingAssetPathName: " + encodedTranscoderStagingAssetPathName;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			stagingBasePath = encodedTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);
+			stagingBasePath += ("/introOutroSplit_" + to_string(_ingestionJobKey) + "_" + to_string(_encodingJobKey));
+
+			long chunksDurationInSeconds = introOutroDurationInSeconds;
+			string chunkBaseFileName = "sourceChunk_";
+			_encoding->_ffmpeg->splitVideoInChunks(
+				_ingestionJobKey,
+				mainSourceAssetPathName,
+				chunksDurationInSeconds,
+				stagingBasePath,
+				chunkBaseFileName);
+
+			string destFileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+
+			vector<string> concatSourcePhysicalPaths;
+
+			bool filesAreFinished = false;
+			int currentFileIndex = 0;
+			while(!filesAreFinished)
+			{
+				char currentCounter [64];
+				sprintf (currentCounter, "%04d", currentFileIndex);
+				string currentFile = stagingBasePath + "/" + chunkBaseFileName
+					+ "_" + currentCounter + mainSourceFileExtension;
+
+				char nextCounter [64];
+				sprintf (nextCounter, "%04d", currentFileIndex + 1);
+				string nextFile = stagingBasePath + "/" + chunkBaseFileName
+					+ "_" + nextCounter + mainSourceFileExtension;
+
+				// il file sorgente è piu lungo di 2 volte il periodo (introOutroDurationInSeconds)
+				// Per cui sappiamo sicuramente che abbiamo almeno due chunks
+				if (currentFileIndex == 0)
+				{
+					// primo file
+					if (fs::exists(currentFile))
+					{
+						int64_t currentFileDurationInMilliSeconds;
+						{
+							vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+							vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+							pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								_ingestionJobKey,
+								true,	// isMMSAssetPathName
+								-1,		// timeoutInSeconds,		// used only in case of URL
+								currentFile,
+								videoTracks,
+								audioTracks);
+							tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+						}
+						string introPathName = stagingBasePath + "/" + "destChunk_"
+							+ "_" + currentCounter + "." + destFileFormat;
+						concatSourcePhysicalPaths.push_back(introPathName);
+						_encoding->_ffmpeg->introOverlay(
+							introSourceAssetPathName, introSourceDurationInMilliSeconds,
+							currentFile, currentFileDurationInMilliSeconds,
+
+							introOverlayDurationInSeconds,
+							muteIntroOverlay,
+
+							encodingProfileDetailsRoot,
+
+							introPathName,
+
+							_encodingJobKey,
+							_ingestionJobKey,
+							&(_encoding->_childPid));
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "chunk file is not present"
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+							+ ", currentFile: " + currentFile;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				else if (!fs::exists(nextFile))
+				{
+					// ultimo file
+					if (fs::exists(currentFile))
+					{
+						int64_t currentFileDurationInMilliSeconds;
+						{
+							vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+							vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+							pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								_ingestionJobKey,
+								true,	// isMMSAssetPathName
+								-1,		// timeoutInSeconds,		// used only in case of URL
+								currentFile,
+								videoTracks,
+								audioTracks);
+							tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+						}
+						string outroPathName = stagingBasePath + "/" + "destChunk_"
+							+ "_" + currentCounter + "." + destFileFormat;
+						concatSourcePhysicalPaths.push_back(outroPathName);
+						_encoding->_ffmpeg->outroOverlay(
+							currentFile, currentFileDurationInMilliSeconds,
+							outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
+
+							outroOverlayDurationInSeconds,
+							muteOutroOverlay,
+
+							encodingProfileDetailsRoot,
+
+							outroPathName,
+
+							_encodingJobKey,
+							_ingestionJobKey,
+							&(_encoding->_childPid));
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "chunk file is not present"
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+							+ ", currentFile: " + currentFile;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					filesAreFinished = true;
+				}
+				else
+				{
+					// file intermedio
+					if (fs::exists(currentFile))
+					{
+						int64_t currentFileDurationInMilliSeconds;
+						{
+							vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+							vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+							pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								_ingestionJobKey,
+								true,	// isMMSAssetPathName
+								-1,		// timeoutInSeconds,		// used only in case of URL
+								currentFile,
+								videoTracks,
+								audioTracks);
+							tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+						}
+						string encodedPathName = stagingBasePath + "/" + "destChunk_"
+							+ "_" + currentCounter + "." + destFileFormat;
+						concatSourcePhysicalPaths.push_back(encodedPathName);
+						_encoding->_ffmpeg->encodeContent(
+							currentFile, currentFileDurationInMilliSeconds,
+							encodedPathName,
+							encodingProfileDetailsRoot,
+							true,
+							Json::nullValue, Json::nullValue,
+							-1, -1,
+							-1, _encodingJobKey, _ingestionJobKey,
+							&(_encoding->_childPid));
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "chunk file is not present"
+							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+							+ ", currentFile: " + currentFile;
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+
+				currentFileIndex++;
+			}
+
+			_encoding->_ffmpeg->concat(
+				_ingestionJobKey,
+				true,
+				concatSourcePhysicalPaths,
+				encodedStagingAssetPathName);
+
+			_logger->info(__FILEREF__ + "removing temporary directory"
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+				+ ", stagingBasePath: " + stagingBasePath
+			);
+			fs::remove_all(stagingBasePath);
+
+			/* implementazione che divide il video in tre parti tramite cutWithoutEncoding su keyframes
 			string stagingBasePath;
 
 			// ci serve un path dello staging locale al transcoder.
@@ -577,12 +797,13 @@ void IntroOutroOverlay::encodeContent(
 				+ ", mainOutroPathName: " + mainOutroPathName
 				+ ", mainCenterEncodedPathName: " + mainCenterEncodedPathName
 			);
-			// fs::remove_all(mainBeginPathName);
-			// fs::remove_all(mainEndPathName);
-			// fs::remove_all(mainCenterPathName);
-			// fs::remove_all(mainIntroPathName);
-			// fs::remove_all(mainOutroPathName);
-			// fs::remove_all(mainCenterEncodedPathName);
+			fs::remove_all(mainBeginPathName);
+			fs::remove_all(mainEndPathName);
+			fs::remove_all(mainCenterPathName);
+			fs::remove_all(mainIntroPathName);
+			fs::remove_all(mainOutroPathName);
+			fs::remove_all(mainCenterEncodedPathName);
+			*/
 		}
 		else
 		{

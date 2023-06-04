@@ -8159,6 +8159,172 @@ void FFMpeg::concat(int64_t ingestionJobKey,
     fs::remove_all(_outputFfmpegPathFileName);    
 }
 
+void FFMpeg::splitVideoInChunks(
+	int64_t ingestionJobKey,
+	string sourcePhysicalPath,
+	long chunksDurationInSeconds,
+	string chunksDirectory,
+	string chunkBaseFileName
+	)
+{
+	_currentApiName = APIName::SplitVideoInChunks;
+
+	setStatus(
+		ingestionJobKey
+		/*
+		encodingJobKey
+		videoDurationInMilliSeconds,
+		mmsAssetPathName
+		stagingEncodedAssetPathName
+		*/
+	);
+
+	_logger->info(__FILEREF__ + "Received " + toString(_currentApiName)
+		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+		+ ", sourcePhysicalPath: " + sourcePhysicalPath
+		+ ", chunksDurationInSeconds: " + to_string(chunksDurationInSeconds)
+		+ ", chunksDirectory: " + chunksDirectory
+		+ ", chunkBaseFileName: " + chunkBaseFileName
+		);
+
+	if (!fs::exists(sourcePhysicalPath))
+	{
+		string errorMessage = string("Source asset path name not existing")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			// + ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+		;
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	// if dest directory does not exist, just create it
+	{
+		if (!fs::exists(chunksDirectory))
+		{
+			_logger->info(__FILEREF__ + "Creating directory"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", chunksDirectory: " + chunksDirectory
+			);
+			fs::create_directories(chunksDirectory);
+			fs::permissions(chunksDirectory,
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+				| fs::perms::group_read | fs::perms::group_exec
+				| fs::perms::others_read | fs::perms::others_exec,
+				fs::perm_options::replace);
+		}
+	}
+
+	{
+		char	sUtcTimestamp [64];
+		tm		tmUtcTimestamp;
+		time_t	utcTimestamp = chrono::system_clock::to_time_t(
+			chrono::system_clock::now());
+
+		localtime_r (&utcTimestamp, &tmUtcTimestamp);
+		sprintf (sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d",
+			tmUtcTimestamp.tm_year + 1900,
+			tmUtcTimestamp.tm_mon + 1,
+			tmUtcTimestamp.tm_mday,
+			tmUtcTimestamp.tm_hour,
+			tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec);
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ "_"
+			+ sUtcTimestamp
+			+ ".splitVideoInChunks.log";
+	}
+
+	string outputPathFileName;
+	{
+		size_t beginOfFileFormatIndex = sourcePhysicalPath.find_last_of(".");
+		if (beginOfFileFormatIndex == string::npos)
+		{
+			string errorMessage = __FILEREF__ + "sourcePhysicalPath is not well formed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		outputPathFileName = chunksDirectory;
+		if (chunksDirectory.back() != '/')
+			outputPathFileName += "/";
+		outputPathFileName += (chunkBaseFileName + "_%04d" + sourcePhysicalPath.substr(beginOfFileFormatIndex));
+	}
+
+	// This operation is very quick
+    string ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg "
+		+ "-i " + sourcePhysicalPath + " "
+		+ "-c copy -map 0 -segment_time " + secondsToTime(ingestionJobKey, chunksDurationInSeconds, _logger) + " "
+		+ "-f segment -reset_timestamps 1 "
+		+ outputPathFileName + " "
+		+ "> " + _outputFfmpegPathFileName + " "
+		+ "2>&1"
+	;
+
+    try
+    {
+        _logger->info(__FILEREF__ + "splitVideoInChunks: Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "splitVideoInChunks: ffmpeg command failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", executeCommandStatus: " + to_string(executeCommandStatus)
+				+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+            _logger->error(errorMessage);
+
+			// to hide the ffmpeg staff
+            errorMessage = __FILEREF__ + "splitVideoInChunks: command failed"
+            ;
+            throw runtime_error(errorMessage);
+        }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "splitVideoInChunks: Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+        );
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+			+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+			+ ", e.what(): " + e.what()
+		;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        fs::remove_all(_outputFfmpegPathFileName);
+
+        throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    fs::remove_all(_outputFfmpegPathFileName);    
+}
+
 // audio and video 
 void FFMpeg::cutWithoutEncoding(
 	int64_t ingestionJobKey,
@@ -17850,6 +18016,52 @@ double FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time,
 		string errorMessage = string("timeToSeconds failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", time: " + time
+			+ ", exception: " + e.what()
+		;
+		logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+string FFMpeg::secondsToTime(int64_t ingestionJobKey, double dSeconds,
+	shared_ptr<spdlog::logger> logger)
+{
+	try
+	{
+		double dLocalSeconds = dSeconds;
+
+		int hours = dLocalSeconds / 3600;
+		dLocalSeconds -= (hours * 3600);
+
+		int minutes = dLocalSeconds / 60;
+		dLocalSeconds -= (minutes * 60);
+
+		int seconds = dLocalSeconds;
+		dLocalSeconds -= seconds;
+
+		string time;
+		{
+			char buffer[64];
+			sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds);
+			time = buffer;
+			// dLocalSeconds dovrebbe essere 0.12345
+			if (dLocalSeconds > 0.0)
+			{
+				string decimals = to_string(dLocalSeconds);
+				size_t decimalPoint = decimals.find(".");
+				if (decimalPoint != string::npos)
+					time += decimals.substr(decimalPoint);
+			}
+		}
+
+		return time;
+	}
+	catch(exception e)
+	{
+		string errorMessage = string("secondsToTime failed")
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", dSeconds: " + to_string(dSeconds)
 			+ ", exception: " + e.what()
 		;
 		logger->error(__FILEREF__ + errorMessage);

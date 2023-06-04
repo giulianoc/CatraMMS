@@ -303,6 +303,13 @@ public:
         vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName);
 
+	void splitVideoInChunks(
+		int64_t ingestionJobKey,
+		string sourcePhysicalPath,
+		long chunksDurationInSeconds,
+		string chunksDirectory,
+		string chunkBaseFileName);
+
 	void slideShow(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
@@ -437,6 +444,8 @@ public:
 		shared_ptr<spdlog::logger> logger);
 	static double timeToSeconds(int64_t ingestionJobKey, string time,
 		shared_ptr<spdlog::logger> logger);
+	static string secondsToTime(int64_t ingestionJobKey, double dSeconds,
+		shared_ptr<spdlog::logger> logger);
 
 private:
 	enum class APIName {
@@ -464,7 +473,8 @@ private:
 		SilentAudio						= 21,
 		IntroOverlay					= 22,
 		OutroOverlay					= 23,
-		NearestKeyFrameTime				= 24
+		NearestKeyFrameTime				= 24,
+		SplitVideoInChunks				= 25
 	};
 	static const char* toString(const APIName& apiName)
 	{
@@ -520,6 +530,8 @@ private:
 				return "OutroOverlay";
 			case APIName::NearestKeyFrameTime:
 				return "NearestKeyFrameTime";
+			case APIName::SplitVideoInChunks:
+				return "SplitVideoInChunks";
 			default:
 				throw runtime_error(string("Wrong APIName"));
 		}
@@ -580,6 +592,8 @@ private:
 			return APIName::OutroOverlay;
 		else if (lowerCase == "nearestkeyframetime")
 			return APIName::NearestKeyFrameTime;
+		else if (lowerCase == "splitvideoinchunks")
+			return APIName::SplitVideoInChunks;
 		else
 			throw runtime_error(string("Wrong APIName")
 				+ ", current apiName: " + apiName
