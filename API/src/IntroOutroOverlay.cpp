@@ -370,6 +370,51 @@ void IntroOutroOverlay::encodeContent(
 			(introOverlayDurationInSeconds + introOutroDurationInSeconds
 			+ outroOverlayDurationInSeconds + introOutroDurationInSeconds) * 1000)
 		{
+			/*
+				E' necessario che l'ultimo chunk sia sufficientemente lungo per
+				poter fare l'outroOverlay.
+				Infatti ho visto che, nel caso di un video di 600 secondi, avendo un periodo del chunk
+				di 60 secondi, l'ultimo chunk è capitato di pochi secondi e l'outro overlay è fallito.
+
+				Per evitare questo problema, dobbiamo assicurarci per il periodo sia tale che
+					"durata main video" modulo "periodo" sia vicino alla meta del periodo
+				Non siamo certi al 100% (perchè dipende da come vengono fatti i chunks) ma dovrebbe funzionare.
+
+				Per fare questo verifichiamo qualche periodo e prendiamo quello che piu si avvicina
+				alla meta del periodo.
+			*/
+			// il prossimo algoritmo cerca di massimizzare il modulo (indica che siamo vicini alla meta del periodo)
+			int selectedChunkPeriodInSeconds;
+			int selectedModule = -1;
+			{
+				int candidateChunkPeriodInSeconds = introOutroDurationInSeconds;
+				for(int index = 0; index < 5; index++)
+				{
+					int mod = mainSourceDurationInMilliSeconds % (candidateChunkPeriodInSeconds * 1000);
+					if (selectedModule = -1)
+					{
+						selectedModule = mod;
+						selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
+					}
+					else
+					{
+						if (abs(mod - (candidateChunkPeriodInSeconds / 2)) > selectedModule)
+						{
+							selectedModule = mod;
+							selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
+						}
+					}
+
+					candidateChunkPeriodInSeconds++;
+				}
+			}
+			_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds"
+				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+				+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
+				+ ", selectedModule: " + to_string(selectedModule)
+			);
+
 			// implementazione che utilizza lo split del video
 			string stagingBasePath;
 
@@ -405,12 +450,11 @@ void IntroOutroOverlay::encodeContent(
 			stagingBasePath = encodedTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);
 			stagingBasePath += ("/introOutroSplit_" + to_string(_ingestionJobKey) + "_" + to_string(_encodingJobKey));
 
-			long chunksDurationInSeconds = introOutroDurationInSeconds;
-			string chunkBaseFileName = "sourceChunk_";
+			string chunkBaseFileName = "sourceChunk";
 			_encoding->_ffmpeg->splitVideoInChunks(
 				_ingestionJobKey,
 				mainSourceAssetPathName,
-				chunksDurationInSeconds,
+				selectedChunkPeriodInSeconds,
 				stagingBasePath,
 				chunkBaseFileName);
 
