@@ -388,7 +388,7 @@ void IntroOutroOverlay::encodeContent(
 			long selectedModule = -1;
 			{
 				int candidateChunkPeriodInSeconds = introOutroDurationInSeconds;
-				for(int index = 0; index < 5; index++)
+				for(int index = 0; index < 10; index++)
 				{
 					long mod = mainSourceDurationInMilliSeconds % (candidateChunkPeriodInSeconds * 1000);
 					if (selectedModule = -1)
@@ -450,188 +450,212 @@ void IntroOutroOverlay::encodeContent(
 			stagingBasePath = encodedTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);
 			stagingBasePath += ("/introOutroSplit_" + to_string(_ingestionJobKey) + "_" + to_string(_encodingJobKey));
 
-			string chunkBaseFileName = "sourceChunk";
-			_encoding->_ffmpeg->splitVideoInChunks(
-				_ingestionJobKey,
-				mainSourceAssetPathName,
-				selectedChunkPeriodInSeconds,
-				stagingBasePath,
-				chunkBaseFileName);
-
-			string destFileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
-
-			vector<string> concatSourcePhysicalPaths;
-
-			bool filesAreFinished = false;
-			int currentFileIndex = 0;
-			while(!filesAreFinished)
+			// aggiunto try/catch qui perchè in caso di eccezione bisogna eliminare la dir stagingBasePath
+			try
 			{
-				char currentCounter [64];
-				sprintf (currentCounter, "%04d", currentFileIndex);
-				string currentFile = stagingBasePath + "/" + chunkBaseFileName
-					+ "_" + currentCounter + mainSourceFileExtension;
+				string chunkBaseFileName = "sourceChunk";
+				_encoding->_ffmpeg->splitVideoInChunks(
+					_ingestionJobKey,
+					mainSourceAssetPathName,
+					selectedChunkPeriodInSeconds,
+					stagingBasePath,
+					chunkBaseFileName);
 
-				char nextCounter [64];
-				sprintf (nextCounter, "%04d", currentFileIndex + 1);
-				string nextFile = stagingBasePath + "/" + chunkBaseFileName
-					+ "_" + nextCounter + mainSourceFileExtension;
+				string destFileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
 
-				// il file sorgente è piu lungo di 2 volte il periodo (introOutroDurationInSeconds)
-				// Per cui sappiamo sicuramente che abbiamo almeno due chunks
-				if (currentFileIndex == 0)
+				vector<string> concatSourcePhysicalPaths;
+
+				bool filesAreFinished = false;
+				int currentFileIndex = 0;
+				while(!filesAreFinished)
 				{
-					// primo file
-					if (fs::exists(currentFile))
+					char currentCounter [64];
+					sprintf (currentCounter, "%04d", currentFileIndex);
+					string currentFile = stagingBasePath + "/" + chunkBaseFileName
+						+ "_" + currentCounter + mainSourceFileExtension;
+
+					char nextCounter [64];
+					sprintf (nextCounter, "%04d", currentFileIndex + 1);
+					string nextFile = stagingBasePath + "/" + chunkBaseFileName
+						+ "_" + nextCounter + mainSourceFileExtension;
+
+					// il file sorgente è piu lungo di 2 volte il periodo (introOutroDurationInSeconds)
+					// Per cui sappiamo sicuramente che abbiamo almeno due chunks
+					if (currentFileIndex == 0)
 					{
-						int64_t currentFileDurationInMilliSeconds;
+						// primo file
+						if (fs::exists(currentFile))
 						{
-							vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
-							vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-							pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+							int64_t currentFileDurationInMilliSeconds;
+							{
+								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+								pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+									_ingestionJobKey,
+									true,	// isMMSAssetPathName
+									-1,		// timeoutInSeconds,		// used only in case of URL
+									currentFile,
+									videoTracks,
+									audioTracks);
+								tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+							}
+							string introPathName = stagingBasePath + "/" + "destChunk"
+								+ "_" + currentCounter + "." + destFileFormat;
+							concatSourcePhysicalPaths.push_back(introPathName);
+							_encoding->_ffmpeg->introOverlay(
+								introSourceAssetPathName, introSourceDurationInMilliSeconds,
+								currentFile, currentFileDurationInMilliSeconds,
+
+								introOverlayDurationInSeconds,
+								muteIntroOverlay,
+
+								encodingProfileDetailsRoot,
+
+								introPathName,
+
+								_encodingJobKey,
 								_ingestionJobKey,
-								true,	// isMMSAssetPathName
-								-1,		// timeoutInSeconds,		// used only in case of URL
-								currentFile,
-								videoTracks,
-								audioTracks);
-							tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+								&(_encoding->_childPid));
 						}
-						string introPathName = stagingBasePath + "/" + "destChunk_"
-							+ "_" + currentCounter + "." + destFileFormat;
-						concatSourcePhysicalPaths.push_back(introPathName);
-						_encoding->_ffmpeg->introOverlay(
-							introSourceAssetPathName, introSourceDurationInMilliSeconds,
-							currentFile, currentFileDurationInMilliSeconds,
+						else
+						{
+							string errorMessage = __FILEREF__ + "chunk file is not present"
+								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+								+ ", currentFile: " + currentFile;
+							_logger->error(errorMessage);
 
-							introOverlayDurationInSeconds,
-							muteIntroOverlay,
+							throw runtime_error(errorMessage);
+						}
+					}
+					else if (!fs::exists(nextFile))
+					{
+						// ultimo file
+						if (fs::exists(currentFile))
+						{
+							int64_t currentFileDurationInMilliSeconds;
+							{
+								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+								pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+									_ingestionJobKey,
+									true,	// isMMSAssetPathName
+									-1,		// timeoutInSeconds,		// used only in case of URL
+									currentFile,
+									videoTracks,
+									audioTracks);
+								tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+							}
+							string outroPathName = stagingBasePath + "/" + "destChunk"
+								+ "_" + currentCounter + "." + destFileFormat;
+							concatSourcePhysicalPaths.push_back(outroPathName);
+							_encoding->_ffmpeg->outroOverlay(
+								currentFile, currentFileDurationInMilliSeconds,
+								outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
 
-							encodingProfileDetailsRoot,
+								outroOverlayDurationInSeconds,
+								muteOutroOverlay,
 
-							introPathName,
+								encodingProfileDetailsRoot,
 
-							_encodingJobKey,
-							_ingestionJobKey,
-							&(_encoding->_childPid));
+								outroPathName,
+
+								_encodingJobKey,
+								_ingestionJobKey,
+								&(_encoding->_childPid));
+						}
+						else
+						{
+							string errorMessage = __FILEREF__ + "chunk file is not present"
+								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+								+ ", currentFile: " + currentFile;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						filesAreFinished = true;
 					}
 					else
 					{
-						string errorMessage = __FILEREF__ + "chunk file is not present"
-							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-							+ ", currentFile: " + currentFile;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-				else if (!fs::exists(nextFile))
-				{
-					// ultimo file
-					if (fs::exists(currentFile))
-					{
-						int64_t currentFileDurationInMilliSeconds;
+						// file intermedio
+						if (fs::exists(currentFile))
 						{
-							vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
-							vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-							pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
-								_ingestionJobKey,
-								true,	// isMMSAssetPathName
-								-1,		// timeoutInSeconds,		// used only in case of URL
-								currentFile,
-								videoTracks,
-								audioTracks);
-							tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+							int64_t currentFileDurationInMilliSeconds;
+							{
+								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
+								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
+								pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+									_ingestionJobKey,
+									true,	// isMMSAssetPathName
+									-1,		// timeoutInSeconds,		// used only in case of URL
+									currentFile,
+									videoTracks,
+									audioTracks);
+								tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+							}
+							string encodedPathName = stagingBasePath + "/" + "destChunk"
+								+ "_" + currentCounter + "." + destFileFormat;
+							concatSourcePhysicalPaths.push_back(encodedPathName);
+							_encoding->_ffmpeg->encodeContent(
+								currentFile, currentFileDurationInMilliSeconds,
+								encodedPathName,
+								encodingProfileDetailsRoot,
+								true,
+								Json::nullValue, Json::nullValue,
+								-1, -1,
+								-1, _encodingJobKey, _ingestionJobKey,
+								&(_encoding->_childPid));
 						}
-						string outroPathName = stagingBasePath + "/" + "destChunk_"
-							+ "_" + currentCounter + "." + destFileFormat;
-						concatSourcePhysicalPaths.push_back(outroPathName);
-						_encoding->_ffmpeg->outroOverlay(
-							currentFile, currentFileDurationInMilliSeconds,
-							outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
-
-							outroOverlayDurationInSeconds,
-							muteOutroOverlay,
-
-							encodingProfileDetailsRoot,
-
-							outroPathName,
-
-							_encodingJobKey,
-							_ingestionJobKey,
-							&(_encoding->_childPid));
-					}
-					else
-					{
-						string errorMessage = __FILEREF__ + "chunk file is not present"
-							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-							+ ", currentFile: " + currentFile;
-						_logger->error(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					filesAreFinished = true;
-				}
-				else
-				{
-					// file intermedio
-					if (fs::exists(currentFile))
-					{
-						int64_t currentFileDurationInMilliSeconds;
+						else
 						{
-							vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
-							vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-							pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
-								_ingestionJobKey,
-								true,	// isMMSAssetPathName
-								-1,		// timeoutInSeconds,		// used only in case of URL
-								currentFile,
-								videoTracks,
-								audioTracks);
-							tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
-						}
-						string encodedPathName = stagingBasePath + "/" + "destChunk_"
-							+ "_" + currentCounter + "." + destFileFormat;
-						concatSourcePhysicalPaths.push_back(encodedPathName);
-						_encoding->_ffmpeg->encodeContent(
-							currentFile, currentFileDurationInMilliSeconds,
-							encodedPathName,
-							encodingProfileDetailsRoot,
-							true,
-							Json::nullValue, Json::nullValue,
-							-1, -1,
-							-1, _encodingJobKey, _ingestionJobKey,
-							&(_encoding->_childPid));
-					}
-					else
-					{
-						string errorMessage = __FILEREF__ + "chunk file is not present"
-							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-							+ ", currentFile: " + currentFile;
-						_logger->error(errorMessage);
+							string errorMessage = __FILEREF__ + "chunk file is not present"
+								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+								+ ", currentFile: " + currentFile;
+							_logger->error(errorMessage);
 
-						throw runtime_error(errorMessage);
+							throw runtime_error(errorMessage);
+						}
 					}
+
+					currentFileIndex++;
 				}
 
-				currentFileIndex++;
+				_encoding->_ffmpeg->concat(
+					_ingestionJobKey,
+					true,
+					concatSourcePhysicalPaths,
+					encodedStagingAssetPathName);
+
+				_logger->info(__FILEREF__ + "removing temporary directory"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", stagingBasePath: " + stagingBasePath
+				);
+				fs::remove_all(stagingBasePath);
 			}
+			catch(runtime_error e)
+			{
+				_logger->error(__FILEREF__ + "Intro outro procedure failed"
+					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+					+ ", e.what(): " + e.what()
+				);
 
-			_encoding->_ffmpeg->concat(
-				_ingestionJobKey,
-				true,
-				concatSourcePhysicalPaths,
-				encodedStagingAssetPathName);
+				if (fs::exists(stagingBasePath))
+				{
+					_logger->info(__FILEREF__ + "removing temporary directory"
+						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+						+ ", stagingBasePath: " + stagingBasePath
+					);
+					fs::remove_all(stagingBasePath);
+				}
 
-			_logger->info(__FILEREF__ + "removing temporary directory"
-				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-				+ ", stagingBasePath: " + stagingBasePath
-			);
-			fs::remove_all(stagingBasePath);
+				throw e;
+			}
 
 			/* implementazione che divide il video in tre parti tramite cutWithoutEncoding su keyframes
 			string stagingBasePath;
