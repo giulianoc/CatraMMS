@@ -385,12 +385,12 @@ void IntroOutroOverlay::encodeContent(
 			*/
 			// il prossimo algoritmo cerca di massimizzare il modulo (indica che siamo vicini alla meta del periodo)
 			int selectedChunkPeriodInSeconds;
-			int selectedModule = -1;
+			long selectedModule = -1;
 			{
 				int candidateChunkPeriodInSeconds = introOutroDurationInSeconds;
 				for(int index = 0; index < 5; index++)
 				{
-					int mod = mainSourceDurationInMilliSeconds % (candidateChunkPeriodInSeconds * 1000);
+					long mod = mainSourceDurationInMilliSeconds % (candidateChunkPeriodInSeconds * 1000);
 					if (selectedModule = -1)
 					{
 						selectedModule = mod;
@@ -398,7 +398,7 @@ void IntroOutroOverlay::encodeContent(
 					}
 					else
 					{
-						if (abs(mod - (candidateChunkPeriodInSeconds / 2)) > selectedModule)
+						if (abs(mod - ((candidateChunkPeriodInSeconds * 1000) / 2)) > selectedModule)
 						{
 							selectedModule = mod;
 							selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
@@ -412,7 +412,7 @@ void IntroOutroOverlay::encodeContent(
 				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 				+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
-				+ ", selectedModule: " + to_string(selectedModule)
+				+ ", selectedModule: " + to_string(selectedModule / 1000)
 			);
 
 			// implementazione che utilizza lo split del video
