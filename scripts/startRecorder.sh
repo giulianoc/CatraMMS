@@ -3,15 +3,16 @@
 help()
 {
 	echo "Usage $0
-		[ -t | --env <prod or test> ]
+		[ -t | --env <prod (default) or test> ]
 		[ -u | --userKey <userKey> ]
 		[ -a | --apiKey <apiKey> ]
 		[ -k | --streamKey <i.e.: 1234> ]
-		[ -m | --minutesToBeRun <i.e.: 60> ]
+		[ -m | --minutesToBeRun <default: 60> ]
 		[ -s | --startTime <date YY-%m-%dT%H:%M:%S> ]
 		[ -e | --endTime <date YY-%m-%dT%H:%M:%S> ]
 		[ -r | --retention <i.e.: 3y> ]
-		[ -v | --virtualVOD <true or false> ]"
+		[ -v | --virtualVOD <default: false> ]
+		[ -c | --cdn77Proxy <default: false> ]"
 
     exit 1
 }
@@ -19,8 +20,8 @@ help()
 #Due punti singoli (:) : il valore è obbligatorio per questa opzione
 #Due punti doppi (::) - Il valore è facoltativo
 #Senza due punti : non sono richiesti valori
-SHORT=t:,u:,a:,k:,m:,s:,e:,r:,v:,h
-LONG=env:,userKey:,apiKey:,streamKey:,minutesToBeRun:,startTime:,endTime:,retention:,virtualVOD:,help
+SHORT=t:,u:,a:,k:,m:,s:,e:,r:,v:,c:,h
+LONG=env:,userKey:,apiKey:,streamKey:,minutesToBeRun:,startTime:,endTime:,retention:,virtualVOD:,cdn77Proxy:,help
 OPTS=$(getopt -a -n recorder --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -42,6 +43,7 @@ minutesToBeRun=60
 startTime=$(date +'%Y-%m-%dT%H:%M:%S')
 endTime=$(date --date="+$minutesToBeRun minutes" +'%Y-%m-%dT%H:%M:%S')
 virtualVOD=false
+cdn77Proxy=false
 
 while :
 do
@@ -84,6 +86,10 @@ do
 			virtualVOD="$2"
 			shift 2
 			;;
+		-c | --cdn77Proxy )
+			cdn77Proxy="$2"
+			shift 2
+			;;
 		-h | --help)
 			help
 			;;
@@ -120,7 +126,5 @@ else
 fi
 
 
-#echo "curl \"https://$hostname/catramms/rest/api/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&monitoringFrameIncreasingEnabled=false&autoRenew=false&startRecording=$startTime&stopRecording=$endTime\""
-#echo ""
-curl "https://$hostname/catramms/rest/api/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&monitoringFrameIncreasingEnabled=false&autoRenew=false&startRecording=$startTime&stopRecording=$endTime"
+curl "https://$hostname/catramms/rest/api/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&cdn77Proxy=$cdn77Proxy&monitoringFrameIncreasingEnabled=false&autoRenew=false&startRecording=$startTime&stopRecording=$endTime"
 

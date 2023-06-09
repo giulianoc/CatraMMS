@@ -550,6 +550,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
             + ", startStatisticDate: " + startStatisticDate
             + ", endStatisticDate: " + endStatisticDate
             + ", minimalNextRequestDistanceInSeconds: " + to_string(minimalNextRequestDistanceInSeconds)
+            + ", totalNumFoundToBeCalculated: " + to_string(totalNumFoundToBeCalculated)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
         );

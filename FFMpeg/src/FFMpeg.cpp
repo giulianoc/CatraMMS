@@ -8259,6 +8259,10 @@ void FFMpeg::splitVideoInChunks(
 	}
 
 	// This operation is very quick
+	// -reset_timestamps: Reset timestamps at the beginning of each segment, so that each segment
+	//		will start with near-zero timestamps.
+	//		Rather than splitting based on a particular time, it splits on the nearest keyframe
+	//		following the requested time, so each new segment always starts with a keyframe.
     string ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg "
 		+ "-i " + sourcePhysicalPath + " "
 		+ "-c copy -map 0 -segment_time " + secondsToTime(ingestionJobKey, chunksDurationInSeconds, _logger) + " "
@@ -8330,7 +8334,7 @@ void FFMpeg::cutWithoutEncoding(
 	int64_t ingestionJobKey,
 	string sourcePhysicalPath,
 	bool isVideo,
-	string cutType,	// KeyFrameSeeking (input seeking), FrameAccurateWithoutEncoding, KeyFrameSeekingInterval
+	string cutType,	// KeyFrameSeeking, FrameAccurateWithoutEncoding, KeyFrameSeekingInterval
 	string startKeyFrameSeekingInterval,
 	string endKeyFrameSeekingInterval,
 	string startTime, // [-][HH:]MM:SS[.m...] or [-]S+[.m...]
@@ -8535,6 +8539,7 @@ void FFMpeg::cutWithoutEncoding(
 			{
 				// input seeking: beginning of the generated video will be to the nearest keyframe
 				// found before your specified timestamp
+				// KeyFrameSeeking è impreciso (perchè utilizza il keyframe) ma veloce
 
 				ffmpegExecuteCommand += (string("-ss ") + startTimeToBeUsed + " "
 					+ "-i " + sourcePhysicalPath + " ")
@@ -8543,6 +8548,7 @@ void FFMpeg::cutWithoutEncoding(
 			else // if (cutType == "FrameAccurateWithoutEncoding") output seeking or "KeyFrameSeekingInterval"
 			{
 				// FrameAccurateWithoutEncoding: it means it is used any frame even if it is not a key frame
+				// FrameAccurateWithoutEncoding è lento (perchè NON utilizza il keyframe) ma preciso (pechè utilizza il frame indicato)
 				ffmpegExecuteCommand += (string("-i ") + sourcePhysicalPath + " "
 					+ "-ss " + startTimeToBeUsed + " ")
 				;

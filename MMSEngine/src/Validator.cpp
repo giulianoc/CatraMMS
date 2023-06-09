@@ -7581,7 +7581,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 		liveProxyOutputType = JSONUtils::asString(outputRoot, field, "");
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Channel, UDP_Stream or HLS_Channel or HLS or DASH)"
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Channel, CDN_AWS, CDN_CDN77, UDP_Stream or HLS_Channel)"
 				+ ", Field: " + field
 				+ ", liveProxyOutputType: " + liveProxyOutputType
 				+ ", label: " + label

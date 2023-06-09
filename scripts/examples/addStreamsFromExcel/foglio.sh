@@ -12,5 +12,5 @@ userKey=$2
 apiKey=$3
 mmsApiHostname=$4
 
-awk -v userKey=$userKey -v apiKey=$apiKey -v mmsApiHostname=$mmsApiHostname -f ./utility/serieUpdate.awk $tsvPathName
+awk -v userKey=$userKey -v apiKey=$apiKey -v mmsApiHostname=$mmsApiHostname -f ./utility/movie_2.awk $tsvPathName
 
