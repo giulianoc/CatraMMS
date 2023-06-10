@@ -34,6 +34,9 @@ getAlarmDescription()
 		"alarm_memory_usage")
 			echo "Memory Usage too high"
 			;;
+		"alarm_mount_error")
+			echo "Mount Error"
+			;;
 		"alarm_nginx_gui_error")
 			echo "Nginx GUI Error"
 			;;
@@ -241,6 +244,27 @@ memory_usage()
 	else
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
 		notify "$(hostname)" "alarm_memory_usage" "alarm_memory_usage" $alarmNotificationPeriod "${memoryUsage}%"
+		return 1
+	fi
+}
+
+mount_error()
+{
+	mountErrorFileName=/tmp/mount.error
+	mountError=$(ls -la /mnt/ > /dev/null 2> $mountErrorFileName)
+	mountErrorFileSize=$(stat -c%s "$mountErrorFileName")
+	if [ $mountErrorFileSize = 0 ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mount_error, mount is fine, mount error file size: $mountErrorFileSize" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mount_error"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		alarmNotificationPeriod=$((60 * 5))		#5 minuti
+		notify "$(hostname)" "alarm_mount_error" "alarm_mount_error" $alarmNotificationPeriod "$(cat $mountErrorFileName)"
 		return 1
 	fi
 }

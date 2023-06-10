@@ -52,6 +52,9 @@ do
 	case "$1" in
 		"engine")
 			echo "" >> $debugFilename
+			mount_error
+
+			echo "" >> $debugFilename
 			sql_slave_off
 
 			echo "" >> $debugFilename
@@ -79,6 +82,9 @@ do
 			;;
 		"delivery")
 			echo "" >> $debugFilename
+			mount_error
+
+			echo "" >> $debugFilename
 			nginx_binary_error
 
 			echo "" >> $debugFilename
@@ -86,6 +92,12 @@ do
 
 			;;
 		"encoder" | "externalEncoder")
+			if [ "$1" = "encoder" ]
+			then
+				echo "" >> $debugFilename
+				mount_error
+			fi
+
 			echo "" >> $debugFilename
 			nginx_encoder_error
 

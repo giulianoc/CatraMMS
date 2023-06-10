@@ -12,7 +12,7 @@ help()
 		[ -e | --endTime <date YY-%m-%dT%H:%M:%S> ]
 		[ -r | --retention <i.e.: 3y> ]
 		[ -v | --virtualVOD <default: false> ]
-		[ -c | --cdn77Proxy <default: false> ]"
+		[ -c | --cdn77ChannelConfigurationLabel <i.e.: camera_1_main> ]"
 
     exit 1
 }
@@ -21,7 +21,7 @@ help()
 #Due punti doppi (::) - Il valore è facoltativo
 #Senza due punti : non sono richiesti valori
 SHORT=t:,u:,a:,k:,m:,s:,e:,r:,v:,c:,h
-LONG=env:,userKey:,apiKey:,streamKey:,minutesToBeRun:,startTime:,endTime:,retention:,virtualVOD:,cdn77Proxy:,help
+LONG=env:,userKey:,apiKey:,streamKey:,minutesToBeRun:,startTime:,endTime:,retention:,virtualVOD:,cdn77ChannelConfigurationLabel:,help
 OPTS=$(getopt -a -n recorder --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -43,7 +43,7 @@ minutesToBeRun=60
 startTime=$(date +'%Y-%m-%dT%H:%M:%S')
 endTime=$(date --date="+$minutesToBeRun minutes" +'%Y-%m-%dT%H:%M:%S')
 virtualVOD=false
-cdn77Proxy=false
+cdn77ChannelConfigurationLabel=
 
 while :
 do
@@ -86,8 +86,8 @@ do
 			virtualVOD="$2"
 			shift 2
 			;;
-		-c | --cdn77Proxy )
-			cdn77Proxy="$2"
+		-c | --cdn77ChannelConfigurationLabel )
+			cdn77ChannelConfigurationLabel="$2"
 			shift 2
 			;;
 		-h | --help)
@@ -126,5 +126,5 @@ else
 fi
 
 
-curl "https://$hostname/catramms/rest/api/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&cdn77Proxy=$cdn77Proxy&monitoringFrameIncreasingEnabled=false&autoRenew=false&startRecording=$startTime&stopRecording=$endTime"
+curl "https://$hostname/catramms/rest/api/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&cdn77ChannelConfigurationLabel=$cdn77ChannelConfigurationLabel&monitoringFrameIncreasingEnabled=false&autoRenew=false&startRecording=$startTime&stopRecording=$endTime"
 

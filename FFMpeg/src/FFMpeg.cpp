@@ -13873,7 +13873,15 @@ tuple<long, string, string, int, int64_t, Json::Value
 
 								continue;
 							}
-							destBinaryFileName = sourcePhysicalReference.substr(fileNameIndex + 1);
+							// 2023-06-10: nel destBinaryFileName è necessario aggiungere
+							//	ingestionJobKey and encodingJobKey come per il nome della playlist.
+							//	Infatti, nel caso in cui avessimo due IngestionJob (due VOD Proxy)
+							//	che usano lo stesso source file, entrambi farebbero il download dello stesso file,
+							//	con lo stesso nome, nella stessa directory (_ffmpegEndlessRecursivePlaylistDir).
+							//	Per questo motivo aggiungiamo, come prefisso al source file name,
+							//	ingestionJobKey and encodingJobKey
+							destBinaryFileName = to_string(ingestionJobKey) + "_" + to_string(encodingJobKey) + "_"
+								+ sourcePhysicalReference.substr(fileNameIndex + 1);
 
 							size_t extensionIndex = destBinaryFileName.find_last_of(".");
 							if (extensionIndex != string::npos)
