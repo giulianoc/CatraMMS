@@ -2623,6 +2623,7 @@ void MMSCURL::downloadFile(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", url: " + url
 				+ ", destBinaryPathName: " + destBinaryPathName
+				+ ", retryNumber: " + to_string(retryNumber)
 			);
 
 			// store response headers in the response                                                         
@@ -2641,6 +2642,8 @@ void MMSCURL::downloadFile(
 					chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 			;
 			logger->info(message);
+
+			break;
 		}
 		catch (curlpp::LogicError & e) 
 		{

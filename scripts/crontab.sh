@@ -112,7 +112,13 @@ else
 			timeoutInMinutes=$threeDaysInMinutes
 		fi
 
-		find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/ -mmin +$sixMonthsInMinutes -type f -delete -print >> $debugFilename
+		#in ffmpegEndlessRecursivePlaylist troviamo i files (source + playlist) trasmessi come VODProxy
+		#	- source files solo in caso di external encoder
+		#	- playlist files sia per encoder interni che esterni
+		#6 mesi di timeout potrebbero non essere sufficienti, spesso si esegue il VODProxy per anni!!!
+		#Bisogna anche dire che proabilmente, per ogni nuovo deploy dell'encoder, questi files vengono riscritti.
+		#Commentiamo per ora
+		#find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/ -mmin +$sixMonthsInMinutes -type f -delete -print >> $debugFilename
 
 		commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f -delete -print"
 		timeoutValue="1h"
