@@ -377,13 +377,12 @@ void IntroOutroOverlay::encodeContent(
 				di 60 secondi, l'ultimo chunk è capitato di pochi secondi e l'outro overlay è fallito.
 
 				Per evitare questo problema, dobbiamo assicurarci per il periodo sia tale che
-					"durata main video" modulo "periodo" sia vicino alla meta del periodo
+					"durata main video" modulo "periodo" sia il piu grande possibile
 				Non siamo certi al 100% (perchè dipende da come vengono fatti i chunks) ma dovrebbe funzionare.
 
-				Per fare questo verifichiamo qualche periodo e prendiamo quello che piu si avvicina
-				alla meta del periodo.
+				Per fare questo verifichiamo qualche periodo e prendiamo quello che piu grande.
 			*/
-			// il prossimo algoritmo cerca di massimizzare il modulo (indica che siamo vicini alla meta del periodo)
+			// il prossimo algoritmo cerca di massimizzare il modulo
 			int selectedChunkPeriodInSeconds;
 			long selectedModule = -1;
 			{
@@ -398,8 +397,17 @@ void IntroOutroOverlay::encodeContent(
 					}
 					else
 					{
-						if (abs(mod - ((candidateChunkPeriodInSeconds * 1000) / 2)) > selectedModule)
+						if (abs(mod - (candidateChunkPeriodInSeconds * 1000)) > selectedModule)
 						{
+							_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds, changing period"
+								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
+								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+								+ ", prev selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
+								+ ", new selectedChunkPeriodInSeconds: " + to_string(candidateChunkPeriodInSeconds)
+								+ ", prev selectedModule: " + to_string(selectedModule / 1000)
+								+ ", new selectedModule: " + to_string(mod / 1000)
+							);
+
 							selectedModule = mod;
 							selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
 						}
@@ -411,6 +419,7 @@ void IntroOutroOverlay::encodeContent(
 			_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds"
 				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+				+ ", mainSourceDurationInMilliSeconds: " + to_string(mainSourceDurationInMilliSeconds)
 				+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
 				+ ", selectedModule: " + to_string(selectedModule / 1000)
 			);

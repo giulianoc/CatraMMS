@@ -383,22 +383,37 @@ create-directory()
 		mkdir /mnt/logs/mmsAPI
 	fi
 	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-		mkdir /mnt/logs/mmsEncoder
+		mkdir -p /mnt/logs/mmsEncoder
 	fi
 	if [ "$moduleType" == "engine" ]; then
 		mkdir /mnt/logs/mmsEngineService
 	fi
 	if [ "$moduleType" == "api" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "integration" ]; then
-		mkdir /mnt/logs/nginx
+		mkdir -p /mnt/logs/nginx
 	fi
 	chown -R mms:mms /mnt/logs
 
-	mkdir /mnt/mmsStorage
-	mkdir /mnt/mmsRepository0000
 
 	if [ "$moduleType" != "integration" ]; then
-		mkdir /mnt/mmsRepository0000
-		chown mms:mms /mnt/mmsRepository0000
+		if [[ ! -d "/mnt/mmsStorage" ]]
+		then
+			mkdir /mnt/mmsStorage
+			chown mms:mms /mnt/mmsStorage
+		fi
+		if [[ ! -d "/mnt/mmsRepository0000" ]]
+		then
+			mkdir /mnt/mmsRepository0000
+			chown mms:mms /mnt/mmsRepository0000
+		fi
+
+		if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
+		then
+			if [[ ! -d "/mnt/MMSTranscoderWorkingAreaRepository" ]]
+			then
+				mkdir /mnt/MMSTranscoderWorkingAreaRepository
+				chown mms:mms /mnt/MMSTranscoderWorkingAreaRepository
+			fi
+		fi
 	fi
 
 	read -n 1 -s -r -p "links..."
@@ -460,6 +475,7 @@ create-directory()
 		if [ ! -d "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist" ];
 		then
 			mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+			chown mms:mms /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 		fi
 		ln -s /var/catramms/storage /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 	fi
@@ -589,7 +605,10 @@ install-mms-packages()
 	rm -rf /opt/catramms/nginx/logs
 	ln -s /var/catramms/logs/nginx /opt/catramms/nginx/logs
 
-	mv /opt/catramms/nginx/conf/nginx.conf /opt/catramms/nginx/conf/nginx.conf.backup
+	if [[ -f /opt/catramms/nginx/conf/nginx.conf ]]
+	then
+		mv /opt/catramms/nginx/conf/nginx.conf /opt/catramms/nginx/conf/nginx.conf.backup
+	fi
 	ln -s /opt/catramms/CatraMMS/conf/nginx.conf /opt/catramms/nginx/conf/
 
 	mkdir /opt/catramms/nginx/conf/sites-enabled

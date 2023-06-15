@@ -705,10 +705,10 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				// mmsDataRoot["main"] = main;
 				mmsDataRoot["main"] = true;
 				// if (!highAvailability)
-				{
-					bool validated = true;
-					mmsDataRoot["validated"] = validated;
-				}
+				// {
+				// 	bool validated = true;
+				// 	mmsDataRoot["validated"] = validated;
+				// }
 				mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
 				mmsDataRoot["utcPreviousChunkStartTime"] =
 					(time_t) (utcCurrentRecordedFileCreationTime - lastRecordedAssetDurationInSeconds);
@@ -1187,10 +1187,10 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 								// mmsDataRoot["main"] = main;
 								mmsDataRoot["main"] = true;
 								// if (!highAvailability)
-								{
-									bool validated = true;
-									mmsDataRoot["validated"] = validated;
-								}
+								// {
+								// 	bool validated = true;
+								// 	mmsDataRoot["validated"] = validated;
+								// }
 								mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
 								/*
 								mmsDataRoot["utcPreviousChunkStartTime"] =

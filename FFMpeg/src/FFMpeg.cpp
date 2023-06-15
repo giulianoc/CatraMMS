@@ -3973,8 +3973,8 @@ ffmpeg \
 			if (introStartOverlayInSeconds < 0 || outroStartOverlayInSeconds < 0)
 			{
 				string errorMessage = __FILEREF__ + "introOutroOverlay: wrong durations"
-					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", introStartOverlayInSeconds: " + to_string(introStartOverlayInSeconds)
 					+ ", outroStartOverlayInSeconds: " + to_string(outroStartOverlayInSeconds)
 				;

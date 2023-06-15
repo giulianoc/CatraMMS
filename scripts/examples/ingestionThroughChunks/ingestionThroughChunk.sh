@@ -12,6 +12,14 @@ continueFromIndex=$7
 if [ $# -lt 6 -o $# -gt 7 ]; then
 	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <ingester> <retention> <binaryFilePathName> [<continueFromIndex>]"
 
+	echo "The current parameters number is: $#, it shall be 6 or 7"
+	paramIndex=1
+	for param in "$@"
+	do
+		echo "Param #$paramIndex: $param";
+		paramIndex=$((paramIndex + 1));
+	done
+
 	exit 1
 elif [ $# -eq 6 ]; then
 	continueFromIndex=""

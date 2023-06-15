@@ -1662,6 +1662,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 
+				// 2023-06-15: scenario: tanti encoding stanno aspettando di essere gestiti.
+				//	L'encoder finisce il task in corso, tutti gli encoding in attesa 
+				//	verificano che la CPU è bassa e, tutti entrano per essere gestiti.
+				// Per risolvere questo problema, è necessario aggiornare _lastEncodingAcceptedTime
+				// as soon as possible, altrimenti tutti quelli in coda entrano per essere gestiti
+				*_lastEncodingAcceptedTime = chrono::system_clock::now();
+
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
@@ -1750,8 +1757,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
 				}
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
 			catch(exception e)
 			{

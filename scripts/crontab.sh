@@ -168,12 +168,19 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$oneHourInMinutes
+			timeoutInMinutes=$oneDayInMinutes
 		fi
 
 		#elimina le directory in staging vuote
 		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
-		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/* -empty -mmin +$timeoutInMinutes -type d -delete -print"
+		#2023-06-12: rimosso .../Staging/*, in questo modo non avremo piu l'errore 'Argument list too long'
+		#	Per evitare che il comando rimuove anche la dir Staging, aggiunto -not -path
+		#	Incrementato il timeout per evitare che accade il seguente scenario
+		#	- creato un Task Recording che ha aspettato diverse ore prima di ricevere il flusso di streaming
+		#	- a causa di un piccolo timeout qui, la directory in MMSWorkingAreaRepository/Staging viene rimossa
+		#	- quando finalmente è arrivato il flusso di streaming, la copia dei chunks in Staging falliva perchè
+		#		non esisteva piu la directory (rimossa dal comando find ... -delete)
+		commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging -not -path /var/catramms/storage/MMSWorkingAreaRepository/Staging -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		timeoutValue="1h"
 	elif [ $commandIndex -eq 11 ]
 	then

@@ -40,6 +40,9 @@
 
 		// optional
 		"keyFrameIntervalInSeconds": 2
+
+		// optional
+		"forceKeyFrames": false
 	}
 
 	// mandatory
