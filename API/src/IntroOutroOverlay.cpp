@@ -402,8 +402,8 @@ void IntroOutroOverlay::encodeContent(
 						if (currentDistanceFromHalf < selectedDistanceFromHalf)
 						{
 							_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds, changing period"
-								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+								+ ", ingestionJobKey: " + to_string(_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(_encodingJobKey)
 								+ ", prev selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
 								+ ", new selectedChunkPeriodInSeconds: " + to_string(candidateChunkPeriodInSeconds)
 								+ ", prev selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
@@ -413,14 +413,23 @@ void IntroOutroOverlay::encodeContent(
 							selectedDistanceFromHalf = currentDistanceFromHalf;
 							selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
 						}
+						else
+						{
+							_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds, NO changing period"
+								+ ", ingestionJobKey: " + to_string(_ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(_encodingJobKey)
+								+ ", currentDistanceFromHalf: " + to_string(currentDistanceFromHalf)
+								+ ", selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
+							);
+						}
 					}
 
 					candidateChunkPeriodInSeconds++;
 				}
 			}
 			_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds"
-				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(_ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(_encodingJobKey)
 				+ ", mainSourceDurationInMilliSeconds: " + to_string(mainSourceDurationInMilliSeconds)
 				+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
 				+ ", selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
