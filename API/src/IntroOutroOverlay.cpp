@@ -420,6 +420,7 @@ void IntroOutroOverlay::encodeContent(
 								+ ", encodingJobKey: " + to_string(_encodingJobKey)
 								+ ", currentDistanceFromHalf: " + to_string(currentDistanceFromHalf)
 								+ ", selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
+								+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
 							);
 						}
 					}
