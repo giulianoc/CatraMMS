@@ -391,7 +391,7 @@ void IntroOutroOverlay::encodeContent(
 				for(int index = 0; index < 10; index++)
 				{
 					long mod = mainSourceDurationInMilliSeconds % (candidateChunkPeriodInSeconds * 1000);
-					if (selectedDistanceFromHalf = -1)
+					if (selectedDistanceFromHalf == -1)
 					{
 						selectedDistanceFromHalf = abs(mod - ((candidateChunkPeriodInSeconds * 1000) / 2));
 						selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
@@ -413,6 +413,7 @@ void IntroOutroOverlay::encodeContent(
 							selectedDistanceFromHalf = currentDistanceFromHalf;
 							selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
 						}
+/*
 						else
 						{
 							_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds, NO changing period"
@@ -423,6 +424,7 @@ void IntroOutroOverlay::encodeContent(
 								+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
 							);
 						}
+*/
 					}
 
 					candidateChunkPeriodInSeconds++;
