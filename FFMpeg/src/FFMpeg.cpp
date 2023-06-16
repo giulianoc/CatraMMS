@@ -117,6 +117,7 @@ void FFMpeg::encodeContent(
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", isVideo: " + to_string(isVideo)
 			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+			+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 			// + ", videoTracksRoot.size: " + (videoTracksRoot == Json::nullValue ? "0" : to_string(videoTracksRoot.size()))
 			// + ", audioTracksRoot.size: " + (audioTracksRoot == Json::nullValue ? "0" : to_string(audioTracksRoot.size()))
 			+ ", videoTrackIndexToBeUsed: " + to_string(videoTrackIndexToBeUsed)

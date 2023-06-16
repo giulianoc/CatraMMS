@@ -376,39 +376,41 @@ void IntroOutroOverlay::encodeContent(
 				Infatti ho visto che, nel caso di un video di 600 secondi, avendo un periodo del chunk
 				di 60 secondi, l'ultimo chunk è capitato di pochi secondi e l'outro overlay è fallito.
 
-				Per evitare questo problema, dobbiamo assicurarci per il periodo sia tale che
-					"durata main video" modulo "periodo" sia il piu grande possibile
+				Per evitare questo problema, dobbiamo assicurarci che il periodo sia tale che
+					"durata main video" modulo "periodo" sia il piu vicino possibile alla metà del periodo
+				...spiegare.....
 				Non siamo certi al 100% (perchè dipende da come vengono fatti i chunks) ma dovrebbe funzionare.
 
 				Per fare questo verifichiamo qualche periodo e prendiamo quello che piu grande.
 			*/
 			// il prossimo algoritmo cerca di massimizzare il modulo
 			int selectedChunkPeriodInSeconds;
-			long selectedModule = -1;
+			long selectedDistanceFromHalf = -1;
 			{
 				int candidateChunkPeriodInSeconds = introOutroDurationInSeconds;
 				for(int index = 0; index < 10; index++)
 				{
 					long mod = mainSourceDurationInMilliSeconds % (candidateChunkPeriodInSeconds * 1000);
-					if (selectedModule = -1)
+					if (selectedDistanceFromHalf = -1)
 					{
-						selectedModule = mod;
+						selectedDistanceFromHalf = abs(mod - ((candidateChunkPeriodInSeconds * 1000) / 2));
 						selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
 					}
 					else
 					{
-						if (abs(mod - (candidateChunkPeriodInSeconds * 1000)) > selectedModule)
+						int64_t currentDistanceFromHalf = abs(mod - ((candidateChunkPeriodInSeconds * 1000) / 2));
+						if (currentDistanceFromHalf < selectedDistanceFromHalf)
 						{
 							_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds, changing period"
 								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 								+ ", prev selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
 								+ ", new selectedChunkPeriodInSeconds: " + to_string(candidateChunkPeriodInSeconds)
-								+ ", prev selectedModule: " + to_string(selectedModule / 1000)
-								+ ", new selectedModule: " + to_string(mod / 1000)
+								+ ", prev selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
+								+ ", new selectedDistanceFromHalf: " + to_string(currentDistanceFromHalf)
 							);
 
-							selectedModule = mod;
+							selectedDistanceFromHalf = currentDistanceFromHalf;
 							selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
 						}
 					}
@@ -421,7 +423,7 @@ void IntroOutroOverlay::encodeContent(
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 				+ ", mainSourceDurationInMilliSeconds: " + to_string(mainSourceDurationInMilliSeconds)
 				+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
-				+ ", selectedModule: " + to_string(selectedModule / 1000)
+				+ ", selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
 			);
 
 			// implementazione che utilizza lo split del video
