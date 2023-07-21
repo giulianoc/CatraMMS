@@ -7246,9 +7246,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
 	int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
 	Json::Value captureRoot,
-
-	string tvType, int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
-	int64_t tvBandwidthInHz, string tvModulation, int tvVideoPid, int tvAudioItalianPid,
+	Json::Value tvRoot,
 
 	bool monitorHLS,
 	bool liveRecorderVirtualVOD,
@@ -7341,29 +7339,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "capture";
 				parametersRoot[field] = captureRoot;
 
-				field = "tvType";
-				parametersRoot[field] = tvType;
-
-				field = "tvServiceId";
-				parametersRoot[field] = tvServiceId;
-
-				field = "tvFrequency";
-				parametersRoot[field] = tvFrequency;
-
-				field = "tvSymbolRate";
-				parametersRoot[field] = tvSymbolRate;
-
-				field = "tvBandwidthInHz";
-				parametersRoot[field] = tvBandwidthInHz;
-
-				field = "tvModulation";
-				parametersRoot[field] = tvModulation;
-
-				field = "tvVideoPid";
-				parametersRoot[field] = tvVideoPid;
-
-				field = "tvAudioItalianPid";
-				parametersRoot[field] = tvAudioItalianPid;
+				field = "tv";
+				parametersRoot[field] = tvRoot;
 
 				field = "monitorHLS";
 				parametersRoot[field] = monitorHLS;

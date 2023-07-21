@@ -1801,10 +1801,7 @@ public:
 
 		int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
 		Json::Value captureRoot,
-
-		string tvType, int64_t tvServiceId, int64_t tvFrequency,
-		int64_t tvSymbolRate, int64_t tvBandwidthInHz, string tvModulation, int tvVideoPid,
-		int tvAudioItalianPid,
+		Json::Value tvRoot,
 
 		bool monitorHLS,
 		bool liveRecorderVirtualVOD,

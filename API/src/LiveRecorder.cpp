@@ -222,18 +222,18 @@ void LiveRecorder::encodeContent(
 
 		if (_liveRecording->_streamSourceType == "TV")
 		{
-			tvType = JSONUtils::asString(encodingParametersRoot, "tvType", "");
-			tvServiceId = JSONUtils::asInt64(encodingParametersRoot,
+			tvType = JSONUtils::asString(encodingParametersRoot["tv"], "tvType", "");
+			tvServiceId = JSONUtils::asInt64(encodingParametersRoot["tv"],
 				"tvServiceId", -1);
-			tvFrequency = JSONUtils::asInt64(encodingParametersRoot,
+			tvFrequency = JSONUtils::asInt64(encodingParametersRoot["tv"],
 				"tvFrequency", -1);
-			tvSymbolRate = JSONUtils::asInt64(encodingParametersRoot,
+			tvSymbolRate = JSONUtils::asInt64(encodingParametersRoot["tv"],
 				"tvSymbolRate", -1);
-			tvBandwidthInHz = JSONUtils::asInt64(encodingParametersRoot,
+			tvBandwidthInHz = JSONUtils::asInt64(encodingParametersRoot["tv"],
 				"tvBandwidthInHz", -1);
-			tvModulation = JSONUtils::asString(encodingParametersRoot, "tvModulation", "");
-			tvVideoPid = JSONUtils::asInt(encodingParametersRoot, "tvVideoPid", -1);
-			tvAudioItalianPid = JSONUtils::asInt(encodingParametersRoot,
+			tvModulation = JSONUtils::asString(encodingParametersRoot["tv"], "tvModulation", "");
+			tvVideoPid = JSONUtils::asInt(encodingParametersRoot["tv"], "tvVideoPid", -1);
+			tvAudioItalianPid = JSONUtils::asInt(encodingParametersRoot["tv"],
 				"tvAudioItalianPid", -1);
 
 			// In case ffmpeg crashes and is automatically restarted, it should use the same
