@@ -377,7 +377,8 @@ create-directory()
 
 	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
 		mkdir /mnt/logs/tomcat-gui
-		mkdir /mnt/logs/tomcatWorkDir
+		mkdir -p /mnt/logs/tomcatWorkDir/work
+		mkdir -p /mnt/logs/tomcatWorkDir/temp
 	fi
 	if [ "$moduleType" == "api" ]; then
 		mkdir /mnt/logs/mmsAPI
@@ -395,11 +396,6 @@ create-directory()
 
 
 	if [ "$moduleType" != "integration" ]; then
-		if [[ ! -d "/mnt/mmsStorage" ]]
-		then
-			mkdir /mnt/mmsStorage
-			chown mms:mms /mnt/mmsStorage
-		fi
 		if [[ ! -d "/mnt/mmsRepository0000" ]]
 		then
 			mkdir /mnt/mmsRepository0000
@@ -419,9 +415,15 @@ create-directory()
 	read -n 1 -s -r -p "links..."
 	echo ""
 
-	if [ ! -d "/mnt/mmsStorage/IngestionRepository" ];
+	if [[ ! -d "/mnt/mmsStorage" ]]
 	then
-		mkdir /mnt/mmsStorage/IngestionRepository
+		mkdir /mnt/mmsStorage
+		chown mms:mms /mnt/mmsStorage
+	fi
+	if [ ! -d "/mnt/mmsIngestionRepository" ];
+	then
+		mkdir /mnt/mmsIngestionRepository
+		chown mms:mms /mnt/mmsIngestionRepository
 	fi
 	if [ ! -d "/mnt/mmsStorage/MMSGUI" ];
 	then
@@ -449,7 +451,6 @@ create-directory()
 	fi
 
 	if [ "$moduleType" == "externalEncoder" ]; then
-		chown mms:mms /mnt/mmsStorage/IngestionRepository
 		chown mms:mms /mnt/mmsStorage/MMSWorkingAreaRepository
 		chown mms:mms /mnt/mmsStorage/MMSRepository-free
 		chown mms:mms /mnt/mmsStorage/MMSLive
@@ -458,7 +459,7 @@ create-directory()
 	if [ "$moduleType" != "integration" ]; then
 		#these links will be broken until the partition will not be mounted
 
-		ln -s /mnt/mmsStorage/IngestionRepository /var/catramms/storage
+		ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
 		ln -s /mnt/mmsStorage/MMSGUI /var/catramms/storage
 		ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
 		ln -s /mnt/mmsStorage/dbDump /var/catramms/storage
@@ -646,7 +647,10 @@ install-mms-packages()
 		#di p:fileUpload della GUI catramms. Per questo motivo viene rediretto, tramite questo link,
 		#in /var/catramms/logs/tomcatWorkDir
 		rm -rf /opt/catramms/tomcat/work
-		ln -s /var/catramms/logs/tomcatWorkDir /opt/catramms/tomcat/work
+		ln -s /var/catramms/logs/tomcatWorkDir/work /opt/catramms/tomcat/work
+		#/opt/catramms/tomcat/temp viene anche usato da tomcat per salvare i file temporanei (System.getProperty("java.io.tmpdir"))
+		rm -rf /opt/catramms/tomcat/temp
+		ln -s /var/catramms/logs/tomcatWorkDir/temp /opt/catramms/tomcat/temp
 
 		echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomcat/webapps/ROOT/index.html
 
@@ -1032,7 +1036,7 @@ else
 	echo ""
 	echo "- run the commands as mms user <sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001> for the others repositories"
 	echo ""
-	echo "- in case of the storage is just created and has to be initialized OR in case of an external transcoder, run the following commands (it is assumed the storage partition is /mnt/mmsStorage): mkdir /mnt/mmsStorage/IngestionRepository; mkdir /mnt/mmsStorage/MMSGUI; mkdir /mnt/mmsStorage/MMSWorkingAreaRepository; mkdir /mnt/mmsStorage/MMSRepository-free; mkdir /mnt/mmsStorage/MMSLive; mkdir /mnt/mmsStorage/dbDump; mkdir /mnt/mmsStorage/commonConfiguration; chown -R mms:mms /mnt/mmsStorage/*"
+	echo "- in case of the storage is just created and has to be initialized OR in case of an external transcoder, run the following commands (it is assumed the storage partition is /mnt/mmsStorage): mkdir /mnt/mmsIngestionRepository; mkdir /mnt/mmsStorage/MMSGUI; mkdir /mnt/mmsStorage/MMSWorkingAreaRepository; mkdir /mnt/mmsStorage/MMSRepository-free; mkdir /mnt/mmsStorage/MMSLive; mkdir /mnt/mmsStorage/dbDump; mkdir /mnt/mmsStorage/commonConfiguration; chown -R mms:mms /mnt/mmsStorage/*"
 	echo ""
 	echo "- in case it is NOT an external transcoder OR it is a nginx-load-balancer, in /etc/fstab add:"
 	echo "10.24.71.41:zpool-127340/mnt/mmsStorage	/mmsStorage	nfs	rw,_netdev,mountproto=tcp	0	0"

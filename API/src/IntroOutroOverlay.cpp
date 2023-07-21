@@ -378,10 +378,11 @@ void IntroOutroOverlay::encodeContent(
 
 				Per evitare questo problema, dobbiamo assicurarci che il periodo sia tale che
 					"durata main video" modulo "periodo" sia il piu vicino possibile alla metà del periodo
-				...spiegare.....
-				Non siamo certi al 100% (perchè dipende da come vengono fatti i chunks) ma dovrebbe funzionare.
-
-				Per fare questo verifichiamo qualche periodo e prendiamo quello che piu grande.
+				Questo perchè la durata dei chunks sarà intorno al Periodo, un po piu e un po meno.
+				Per ogni chunk ci sarà una piccola perdita (milliseconds) in negativo o in positivo.
+				I nostri calcoli mirano ad avere un ultimo chunk con durata il piu vicino possibile alla metà del periodo
+				cosi' da minimizzare la probabilità che l'ultimo chunk non abbia durata sufficiente per
+				fare l'outro overlay.
 			*/
 			// il prossimo algoritmo cerca di massimizzare il modulo
 			int selectedChunkPeriodInSeconds;
@@ -413,18 +414,6 @@ void IntroOutroOverlay::encodeContent(
 							selectedDistanceFromHalf = currentDistanceFromHalf;
 							selectedChunkPeriodInSeconds = candidateChunkPeriodInSeconds;
 						}
-/*
-						else
-						{
-							_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds, NO changing period"
-								+ ", ingestionJobKey: " + to_string(_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(_encodingJobKey)
-								+ ", currentDistanceFromHalf: " + to_string(currentDistanceFromHalf)
-								+ ", selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
-								+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
-							);
-						}
-*/
 					}
 
 					candidateChunkPeriodInSeconds++;

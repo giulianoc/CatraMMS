@@ -96,6 +96,7 @@ notify()
 	notifyFileName=$3
 	alarmNotificationPeriodInSeconds=$4
 	alarmDetails=$5
+	customersToBeSentToo=$6
 
 	alarmNotificationPathFileName="/tmp/$notifyFileName"
 
@@ -121,6 +122,12 @@ notify()
 		--data-urlencode "chat_id=${TELEGRAM_GROUPALARMS_ID}" \
 		--data-urlencode "text=${message}" \
 		"https://api.telegram.org/bot${TELEGRAM_GROUPALARMS_BOT_TOKEN}/sendMessage" > /dev/null
+
+	alarmNotificationIntegration="/home/mms/mms/scripts/alarmNotificationIntegration.sh"
+	if [ -x "$alarmNotificationIntegration" ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): Calling $alarmNotificationIntegration" >> $debugFilename
+		$alarmNotificationIntegration "$alarmType" "${message}" >> $debugFilename 2>&1
+	fi
 
 	return 0
 }
@@ -148,7 +155,7 @@ sql_slave_off()
 			return 0
 		else
 			alarmNotificationPeriod=$((60 * 15))		#15 minuti
-			notify "$(hostname)" "alarm_sql_slave_off" "alarm_sql_slave_off" $alarmNotificationPeriod ""
+			notify "$(hostname)" "alarm_sql_slave_off" "alarm_sql_slave_off" $alarmNotificationPeriod "isMysqlSlave: $isMysqlSlave, mysqlSlaveStatus: $mysqlSlaveStatus"
 			return 1
 		fi
 	else

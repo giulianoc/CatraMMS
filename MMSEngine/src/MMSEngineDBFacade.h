@@ -1800,10 +1800,7 @@ public:
 		EncodingPriority encodingPriority,
 
 		int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
-		int captureVideoDeviceNumber,
-		string captureVideoInputFormat, int captureFrameRate,
-		int captureWidth, int captureHeight, int captureAudioDeviceNumber,
-		int captureChannelsNumber,
+		Json::Value captureRoot,
 
 		string tvType, int64_t tvServiceId, int64_t tvFrequency,
 		int64_t tvSymbolRate, int64_t tvBandwidthInHz, string tvModulation, int tvVideoPid,

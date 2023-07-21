@@ -7245,10 +7245,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	EncodingPriority encodingPriority,
 
 	int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
-	int captureVideoDeviceNumber,
-	string captureVideoInputFormat, int captureFrameRate,
-	int captureWidth, int captureHeight, int captureAudioDeviceNumber,
-	int captureChannelsNumber,
+	Json::Value captureRoot,
 
 	string tvType, int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
 	int64_t tvBandwidthInHz, string tvModulation, int tvVideoPid, int tvAudioItalianPid,
@@ -7341,26 +7338,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "pushServerName";
 				parametersRoot[field] = pushServerName;
 
-				field = "captureVideoDeviceNumber";
-				parametersRoot[field] = captureVideoDeviceNumber;
-
-				field = "captureVideoInputFormat";
-				parametersRoot[field] = captureVideoInputFormat;
-
-				field = "captureFrameRate";
-				parametersRoot[field] = captureFrameRate;
-
-				field = "captureWidth";
-				parametersRoot[field] = captureWidth;
-
-				field = "captureHeight";
-				parametersRoot[field] = captureHeight;
-
-				field = "captureAudioDeviceNumber";
-				parametersRoot[field] = captureAudioDeviceNumber;
-
-				field = "captureChannelsNumber";
-				parametersRoot[field] = captureChannelsNumber;
+				field = "capture";
+				parametersRoot[field] = captureRoot;
 
 				field = "tvType";
 				parametersRoot[field] = tvType;

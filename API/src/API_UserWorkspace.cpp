@@ -3047,7 +3047,7 @@ void API::deleteWorkspace(
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
             
-            _mmsStorage->deleteWorkspace( workspace);
+            _mmsStorage->deleteWorkspace(workspace);
 
             _logger->info(__FILEREF__ + "Workspace from Storage deleted"
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)

@@ -12950,6 +12950,18 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 		}
 
+		Json::Value captureRoot = Json::nullValue;
+		if (streamSourceType == "CaptureLive")
+		{
+			captureRoot["videoDeviceNumber"] = captureVideoDeviceNumber;
+			captureRoot["videoInputFormat"] = captureVideoInputFormat;
+			captureRoot["frameRate"] = captureFrameRate;
+			captureRoot["width"] = captureWidth;
+			captureRoot["height"] = captureHeight;
+			captureRoot["audioDeviceNumber"] = captureAudioDeviceNumber;
+			captureRoot["channelsNumber"] = captureChannelsNumber;
+		}
+
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			ingestionJobLabel, streamSourceType,
 			configurationLabel, confKey, liveURL, encodersPoolLabel,
@@ -12957,10 +12969,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			encodingPriority,
 
 			pushListenTimeout, pushEncoderKey, pushServerName,
-			captureVideoDeviceNumber,
-			captureVideoInputFormat, captureFrameRate,
-			captureWidth, captureHeight, captureAudioDeviceNumber,
-			captureChannelsNumber,
+			captureRoot,
 
 			tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInHz,
 			tvModulation, tvVideoPid, tvAudioItalianPid,

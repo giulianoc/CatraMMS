@@ -39,19 +39,19 @@ echo ""
 echo -n "deploy su cloud production (rel 22)? " 
 read deploy
 if [ "$deploy" == "y" ]; then
-	echo "hetzner-api-gui-1"
+	echo "hetzner-api-1"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@159.69.251.50:/opt/catramms
 	date
 
-	echo "hetzner-api-gui-2"
+	echo "hetzner-api-2"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@168.119.250.162:/opt/catramms
 	date
 
-	echo "hetzner-api-gui-3"
+	echo "hetzner-delivery-binary-gui-3"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@142.132.238.211:/opt/catramms
 	date
 
-	echo "hetzner-api-gui-4"
+	echo "hetzner-delivery-binary-gui-4"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@49.13.18.245:/opt/catramms
 	date
 
@@ -77,10 +77,6 @@ if [ "$deploy" == "y" ]; then
 
 	echo "hetzner-transcoder-5"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@46.4.98.135:/opt/catramms
-	date
-
-	echo "hetzner-transcoder-6"
-	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@157.90.134.230:/opt/catramms
 	date
 
 	echo "aws-cibortv-transcoder-mil-1"

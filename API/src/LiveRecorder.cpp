@@ -117,8 +117,7 @@ void LiveRecorder::encodeContent(
 
 		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
 		//		checks this field is set before to see if there are chunks to be ingested
-		_liveRecording->_encodingParametersRoot =
-			metadataRoot["encodingParametersRoot"];
+		_liveRecording->_encodingParametersRoot = encodingParametersRoot;
 		_liveRecording->_ingestedParametersRoot =
 			metadataRoot["ingestedParametersRoot"];
 
@@ -191,12 +190,11 @@ void LiveRecorder::encodeContent(
 		_liveRecording->_lastRecordedAssetDurationInSeconds	= 0.0;
 		_liveRecording->_lastRecordedSegmentUtcStartTimeInMillisecs	= -1;
 
-        _liveRecording->_streamSourceType = JSONUtils::asString(metadataRoot["encodingParametersRoot"],
+        _liveRecording->_streamSourceType = JSONUtils::asString(encodingParametersRoot,
 			"streamSourceType", "IP_PULL");
-		int ipMMSAsServer_listenTimeoutInSeconds = metadataRoot["encodingParametersRoot"]
+		int ipMMSAsServer_listenTimeoutInSeconds = encodingParametersRoot
 			.get("ActAsServerListenTimeout", 300).asInt();
-		int pushListenTimeout = JSONUtils::asInt(
-			metadataRoot["encodingParametersRoot"], "pushListenTimeout", -1);
+		int pushListenTimeout = JSONUtils::asInt(encodingParametersRoot, "pushListenTimeout", -1);
 
 		int captureLive_videoDeviceNumber = -1;
 		string captureLive_videoInputFormat;
@@ -207,48 +205,35 @@ void LiveRecorder::encodeContent(
 		int captureLive_channelsNumber = -1;
 		if (_liveRecording->_streamSourceType == "CaptureLive")
 		{
-			captureLive_videoDeviceNumber = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"],
-				"captureVideoDeviceNumber", -1);
-			captureLive_videoInputFormat =
-				JSONUtils::asString(metadataRoot["encodingParametersRoot"],
-				"captureVideoInputFormat", "");
-			captureLive_frameRate = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"], "captureFrameRate", -1);
-			captureLive_width = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"], "captureWidth", -1);
-			captureLive_height = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"], "captureHeight", -1);
-			captureLive_audioDeviceNumber = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"],
-				"captureAudioDeviceNumber", -1);
-			captureLive_channelsNumber = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"],
-				"captureChannelsNumber", -1);
+			captureLive_videoDeviceNumber = JSONUtils::asInt(encodingParametersRoot["capture"],
+				"videoDeviceNumber", -1);
+			captureLive_videoInputFormat = JSONUtils::asString(encodingParametersRoot["capture"],
+				"videoInputFormat", "");
+			captureLive_frameRate = JSONUtils::asInt(encodingParametersRoot["capture"], "frameRate", -1);
+			captureLive_width = JSONUtils::asInt(encodingParametersRoot["capture"], "width", -1);
+			captureLive_height = JSONUtils::asInt(encodingParametersRoot["capture"], "height", -1);
+			captureLive_audioDeviceNumber = JSONUtils::asInt(encodingParametersRoot["capture"],
+				"audioDeviceNumber", -1);
+			captureLive_channelsNumber = JSONUtils::asInt(encodingParametersRoot["capture"],
+				"channelsNumber", -1);
 		}
 
         string liveURL;
 
 		if (_liveRecording->_streamSourceType == "TV")
 		{
-			tvType = JSONUtils::asString(metadataRoot["encodingParametersRoot"], "tvType", "");
-			tvServiceId = JSONUtils::asInt64(
-				metadataRoot["encodingParametersRoot"],
+			tvType = JSONUtils::asString(encodingParametersRoot, "tvType", "");
+			tvServiceId = JSONUtils::asInt64(encodingParametersRoot,
 				"tvServiceId", -1);
-			tvFrequency = JSONUtils::asInt64(
-				metadataRoot["encodingParametersRoot"],
+			tvFrequency = JSONUtils::asInt64(encodingParametersRoot,
 				"tvFrequency", -1);
-			tvSymbolRate = JSONUtils::asInt64(
-				metadataRoot["encodingParametersRoot"],
+			tvSymbolRate = JSONUtils::asInt64(encodingParametersRoot,
 				"tvSymbolRate", -1);
-			tvBandwidthInHz = JSONUtils::asInt64(
-				metadataRoot["encodingParametersRoot"],
+			tvBandwidthInHz = JSONUtils::asInt64(encodingParametersRoot,
 				"tvBandwidthInHz", -1);
-			tvModulation = JSONUtils::asString(metadataRoot["encodingParametersRoot"], "tvModulation", "");
-			tvVideoPid = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"], "tvVideoPid", -1);
-			tvAudioItalianPid = JSONUtils::asInt(
-				metadataRoot["encodingParametersRoot"],
+			tvModulation = JSONUtils::asString(encodingParametersRoot, "tvModulation", "");
+			tvVideoPid = JSONUtils::asInt(encodingParametersRoot, "tvVideoPid", -1);
+			tvAudioItalianPid = JSONUtils::asInt(encodingParametersRoot,
 				"tvAudioItalianPid", -1);
 
 			// In case ffmpeg crashes and is automatically restarted, it should use the same
@@ -311,19 +296,18 @@ void LiveRecorder::encodeContent(
 			liveURL = JSONUtils::asString(encodingParametersRoot, "liveURL", "");
 		}
 
-		Json::Value outputsRoot = _liveRecording->_encodingParametersRoot["outputsRoot"];
+		Json::Value outputsRoot = encodingParametersRoot["outputsRoot"];
 
 		{
-			bool monitorHLS = JSONUtils::asBool(_liveRecording->_encodingParametersRoot,
-				"monitorHLS", false);
-			_liveRecording->_virtualVOD = JSONUtils::asBool(_liveRecording->_encodingParametersRoot,
+			bool monitorHLS = JSONUtils::asBool(encodingParametersRoot, "monitorHLS", false);
+			_liveRecording->_virtualVOD = JSONUtils::asBool(encodingParametersRoot,
 				"liveRecorderVirtualVOD", false);
 
 			if (monitorHLS || _liveRecording->_virtualVOD)
 			{
 				// monitorVirtualVODOutputRootIndex has to be initialized in case of monitor/virtualVOD
 				int monitorVirtualVODOutputRootIndex = JSONUtils::asInt(
-					_liveRecording->_encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
+					encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
 
 				if (monitorVirtualVODOutputRootIndex >= 0)
 				{
@@ -435,8 +419,7 @@ void LiveRecorder::encodeContent(
 			}
 		}
 
-		Json::Value framesToBeDetectedRoot = _liveRecording->_encodingParametersRoot[
-			"framesToBeDetectedRoot"];
+		Json::Value framesToBeDetectedRoot = encodingParametersRoot["framesToBeDetectedRoot"];
 
 		string otherInputOptions = JSONUtils::asString(_liveRecording->_ingestedParametersRoot,
 			"otherInputOptions", "");
