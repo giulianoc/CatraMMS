@@ -255,9 +255,13 @@ else
 			dbName=${arrayOfDBUserPwd[$((dbUserPwdIndex+2))]}
 			dumpDirectory=${arrayOfDBUserPwd[$((dbUserPwdIndex+3))]}
 
-			dumpFileName=${dbUser}_$(date +"%Y-%m-%d").sql
+			dumpFileName=${dbUser}_$(date +"%Y-%m-%d")_forSlave.sql
 			#echo $dbUser $dbPwd $dbName $dumpFileName
-			mysqldump --no-tablespaces --single-transaction -u $dbUser -p$dbPwd -h db-slaves $dbName > $dumpDirectory$dumpFileName && gzip -f $dumpDirectory$dumpFileName
+			#--dump-replica: esegue STOP SLAVE, fa il dump e alla fine esegue START SLAVE. Aggiunge nel dump CHANGE REPLICATION SOURCE TO (per quando questo file viene importato dallo slave)
+			#--apply-replica-statements: aggiunge nel dump STOP SLAVE and START SLAVE (per quando questo file viene importato dallo slave)
+			#--include-source-host-port: aggiunge server and port nel comando di CHANGE REPLICATION SOURCE TO
+			#dbUser deve avere i diritti per eseguire SHOW REPLICA STATUS
+			mysqldump --no-tablespaces --dump-replica --apply-replica-statements --include-source-host-port -u $dbUser -p$dbPwd -h db-slaves $dbName | gzip > $dumpDirectory$dumpFileName.gz # && gzip -f $dumpDirectory$dumpFileName
 
 			dbUserPwdIndex=$((dbUserPwdIndex+4))
 
