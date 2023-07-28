@@ -617,7 +617,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				int intervalInSecondsBetweenEncodingAccept;
 				if (externalEncoder)
-					intervalInSecondsBetweenEncodingAccept = _intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
+					intervalInSecondsBetweenEncodingAccept = _intervalInSecondsBetweenEncodingAcceptForExternalEncoder;
 				else
 					intervalInSecondsBetweenEncodingAccept = _intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
 
