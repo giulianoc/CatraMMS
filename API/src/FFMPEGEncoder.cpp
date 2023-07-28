@@ -625,19 +625,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(intervalInSecondsBetweenEncodingAccept))
+				int elapsedSecondsSinceLastEncodingAccepted = chrono::duration_cast<chrono::seconds>(
+					now - *_lastEncodingAcceptedTime).count();
+				if (elapsedSecondsSinceLastEncodingAccepted < intervalInSecondsBetweenEncodingAccept)
 				{
-					int secondsToWait =
-						chrono::seconds(intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
+					int secondsToWait = intervalInSecondsBetweenEncodingAccept - elapsedSecondsSinceLastEncodingAccepted;
 					string errorMessage = string("Too early to accept a new encoding request")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
+						+ ", elapsedSecondsSinceLastEncodingAccepted: " + to_string(elapsedSecondsSinceLastEncodingAccepted)
+						+ ", intervalInSecondsBetweenEncodingAccept: " + to_string(intervalInSecondsBetweenEncodingAccept)
 						+ ", secondsToWait: " + to_string(secondsToWait)
 						+ ", " + NoEncodingAvailable().what();
 
@@ -647,6 +644,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 					// throw runtime_error(noEncodingAvailableMessage);
 					return;
+				}
+				else {
+					_logger->info(__FILEREF__ + "Accept a new encoding request"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", elapsedSecondsSinceLastEncodingAccepted: " + to_string(elapsedSecondsSinceLastEncodingAccepted)
+						+ ", intervalInSecondsBetweenEncodingAccept: " + to_string(intervalInSecondsBetweenEncodingAccept)
+					);
 				}
 
 				// 2023-06-15: scenario: tanti encoding stanno aspettando di essere gestiti.
