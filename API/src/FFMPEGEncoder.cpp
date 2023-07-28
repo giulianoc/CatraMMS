@@ -385,9 +385,13 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->cpuUsageThresholdForProxy: " + to_string(_cpuUsageThresholdForProxy)
 	);
-    _intervalInSecondsBetweenEncodingAccept = JSONUtils::asInt(_configuration["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 5);
+    _intervalInSecondsBetweenEncodingAcceptForInternalEncoder = JSONUtils::asInt(_configuration["ffmpeg"], "intervalInSecondsBetweenEncodingAcceptForInternalEncoder", 5);
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->intervalInSecondsBetweenEncodingAccept: " + to_string(_intervalInSecondsBetweenEncodingAccept)
+        + ", ffmpeg->intervalInSecondsBetweenEncodingAcceptForInternalEncoder: " + to_string(_intervalInSecondsBetweenEncodingAcceptForInternalEncoder)
+    );
+    _intervalInSecondsBetweenEncodingAcceptForExternalEncoder = JSONUtils::asInt(_configuration["ffmpeg"], "intervalInSecondsBetweenEncodingAcceptForExternalEncoder", 120);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->intervalInSecondsBetweenEncodingAcceptForExternalEncoder: " + to_string(_intervalInSecondsBetweenEncodingAcceptForExternalEncoder)
     );
 
 
@@ -518,1034 +522,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
-	/*
-    else if (method == "encodeContent")
-    {
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt == queryParameters.end())
-        {
-			_logger->error(__FILEREF__ + "The 'ingestionJobKey' parameter is not found");
-
-			string errorMessage = string("Internal server error");
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt == queryParameters.end())
-        {
-			_logger->error(__FILEREF__ + "The 'encodingJobKey' parameter is not found");
-
-			string errorMessage = string("Internal server error");
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
-			bool					freeEncodingFound = false;
-			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
-
-				if (encoding->_available)
-				{
-					if (!freeEncodingFound)
-					{
-						freeEncodingFound = true;
-						selectedEncoding = encoding;
-					}
-				}
-				else
-				{
-					if (encoding->_encodingJobKey == encodingJobKey)
-						encodingAlreadyRunning = true;
-				}
-			}
-			if (encodingAlreadyRunning || !freeEncodingFound)
-			{
-				string errorMessage;
-				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + EncodingIsAlreadyRunning().what();
-				else if (maxEncodingsCapability == 0)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + MaxConcurrentJobsReached().what();
-				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + NoEncodingAvailable().what();
-
-				_logger->error(__FILEREF__ + errorMessage
-					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
-					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
-				);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-
-			try
-			{
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
-				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait: " + to_string(secondsToWait)
-						+ ", " + NoEncodingAvailable().what();
-
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					// throw runtime_error(noEncodingAvailableMessage);
-					return;
-				}
-
-				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0;	// not running
-				selectedEncoding->_encodingJobKey = encodingJobKey;
-
-				_logger->info(__FILEREF__ + "Creating encodeContent thread"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				);
-				thread encodeContentThread(&FFMPEGEncoder::encodeContentThread, this,
-					selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				encodeContentThread.detach();
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
-			}
-			catch(exception e)
-			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0;	// not running
-
-				_logger->error(__FILEREF__ + "encodeContentThread failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-					+ ", e.what(): " + e.what()
-				);
-
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-        try
-        {
-			Json::Value responseBodyRoot;
-			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
-			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
-
-			string responseBody = JSONUtils::toString(responseBodyRoot);
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, 200, responseBody);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "encodeContentThread failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    else if (method == "cutFrameAccurate")
-    {
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'encodingJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
-			bool					freeEncodingFound = false;
-			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
-
-				if (encoding->_available)
-				{
-					if (!freeEncodingFound)
-					{
-						freeEncodingFound = true;
-						selectedEncoding = encoding;
-					}
-				}
-				else
-				{
-					if (encoding->_encodingJobKey == encodingJobKey)
-						encodingAlreadyRunning = true;
-				}
-			}
-			if (encodingAlreadyRunning || !freeEncodingFound)
-			{
-				string errorMessage;
-				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + EncodingIsAlreadyRunning().what();
-				else if (maxEncodingsCapability == 0)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + MaxConcurrentJobsReached().what();
-				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + NoEncodingAvailable().what();
-
-				_logger->error(__FILEREF__ + errorMessage
-					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
-					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
-				);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-
-			try
-			{
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
-				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait: " + to_string(secondsToWait)
-						+ ", " + NoEncodingAvailable().what();
-
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					// throw runtime_error(noEncodingAvailableMessage);
-					return;
-				}
-
-				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0;	// not running
-				selectedEncoding->_encodingJobKey = encodingJobKey;
-
-				_logger->info(__FILEREF__ + "Creating cut thread"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				);
-				thread cutFrameAccurateThread(&FFMPEGEncoder::cutFrameAccurateThread,
-					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				cutFrameAccurateThread.detach();
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
-			}
-			catch(exception e)
-			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0;	// not running
-
-				_logger->error(__FILEREF__ + "cutFrameAccurateThread failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-					+ ", e.what(): " + e.what()
-				);
-
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-        try
-        {            
-			Json::Value responseBodyRoot;
-			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
-			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
-
-			string responseBody = JSONUtils::toString(responseBodyRoot);
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, 200, responseBody);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "cutFrameAccurateThread failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    else if (method == "overlayImageOnVideo")
-    {
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'encodingJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
-			bool					freeEncodingFound = false;
-			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
-
-				if (encoding->_available)
-				{
-					if (!freeEncodingFound)
-					{
-						freeEncodingFound = true;
-						selectedEncoding = encoding;
-					}
-				}
-				else
-				{
-					if (encoding->_encodingJobKey == encodingJobKey)
-						encodingAlreadyRunning = true;
-				}
-			}
-			if (encodingAlreadyRunning || !freeEncodingFound)
-			{
-				string errorMessage;
-				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + EncodingIsAlreadyRunning().what();
-				else if (maxEncodingsCapability == 0)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + MaxConcurrentJobsReached().what();
-				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + NoEncodingAvailable().what();
-
-				_logger->error(__FILEREF__ + errorMessage
-					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
-					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
-				);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-
-			try
-			{
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
-				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait: " + to_string(secondsToWait)
-						+ ", " + NoEncodingAvailable().what();
-
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					// throw runtime_error(noEncodingAvailableMessage);
-					return;
-				}
-
-				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0;	// not running
-				selectedEncoding->_encodingJobKey = encodingJobKey;
-
-				_logger->info(__FILEREF__ + "Creating overlayImageOnVideo thread"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				);
-				thread overlayImageOnVideoThread(&FFMPEGEncoder::overlayImageOnVideoThread,
-					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				overlayImageOnVideoThread.detach();
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
-			}
-			catch(exception e)
-			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0;	// not running
-
-				_logger->error(__FILEREF__ + "overlayImageOnVideoThread failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-					+ ", e.what(): " + e.what()
-				);
-
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-        try
-        {
-			Json::Value responseBodyRoot;
-			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
-			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
-
-			string responseBody = JSONUtils::toString(responseBodyRoot);
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, 200, responseBody);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "overlayImageOnVideoThread failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    else if (method == "overlayTextOnVideo")
-    {
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'encodingJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
-			bool					freeEncodingFound = false;
-			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
-
-				if (encoding->_available)
-				{
-					if (!freeEncodingFound)
-					{
-						freeEncodingFound = true;
-						selectedEncoding = encoding;
-					}
-				}
-				else
-				{
-					if (encoding->_encodingJobKey == encodingJobKey)
-						encodingAlreadyRunning = true;
-				}
-			}
-			if (encodingAlreadyRunning || !freeEncodingFound)
-			{
-				string errorMessage;
-				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + EncodingIsAlreadyRunning().what();
-				else if (maxEncodingsCapability == 0)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + MaxConcurrentJobsReached().what();
-				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + NoEncodingAvailable().what();
-
-				_logger->error(__FILEREF__ + errorMessage
-					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
-					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
-				);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-
-			try
-			{            
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
-				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait: " + to_string(secondsToWait)
-						+ ", " + NoEncodingAvailable().what();
-
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					// throw runtime_error(noEncodingAvailableMessage);
-					return;
-				}
-
-				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0;	// not running
-				selectedEncoding->_encodingJobKey = encodingJobKey;
-
-				_logger->info(__FILEREF__ + "Creating overlayTextOnVideo thread"
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				);
-				thread overlayTextOnVideoThread(&FFMPEGEncoder::overlayTextOnVideoThread,
-					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				overlayTextOnVideoThread.detach();
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
-			}
-			catch(exception e)
-			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0;	// not running
-
-				_logger->error(__FILEREF__ + "overlayTextOnVideoThread failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-					+ ", e.what(): " + e.what()
-				);
-
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-        try
-        {            
-			Json::Value responseBodyRoot;
-			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
-			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
-
-			string responseBody = JSONUtils::toString(responseBodyRoot);
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, 200, responseBody);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "overlayTextOnVideoThread failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    else if (method == "generateFrames")
-    {
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'encodingJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
-			bool					freeEncodingFound = false;
-			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
-
-				if (encoding->_available)
-				{
-					if (!freeEncodingFound)
-					{
-						freeEncodingFound = true;
-						selectedEncoding = encoding;
-					}
-				}
-				else
-				{
-					if (encoding->_encodingJobKey == encodingJobKey)
-						encodingAlreadyRunning = true;
-				}
-			}
-			if (encodingAlreadyRunning || !freeEncodingFound)
-			{
-				string errorMessage;
-				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + EncodingIsAlreadyRunning().what();
-				else if (maxEncodingsCapability == 0)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + MaxConcurrentJobsReached().what();
-				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + NoEncodingAvailable().what();
-
-				_logger->error(__FILEREF__ + errorMessage
-					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
-					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
-				);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-
-			try
-			{            
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
-				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait: " + to_string(secondsToWait)
-						+ ", " + NoEncodingAvailable().what();
-
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					// throw runtime_error(noEncodingAvailableMessage);
-					return;
-				}
-
-				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0;	// not running
-				selectedEncoding->_encodingJobKey = encodingJobKey;
-
-				_logger->info(__FILEREF__ + "Creating generateFrames thread"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				);
-				thread generateFramesThread(&FFMPEGEncoder::generateFramesThread,
-					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				generateFramesThread.detach();
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
-			}
-			catch(exception e)
-			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0;	// not running
-
-				_logger->error(__FILEREF__ + "generateFrames failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-					+ ", e.what(): " + e.what()
-				);
-
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-        try
-        {            
-			Json::Value responseBodyRoot;
-			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
-			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
-
-			string responseBody = JSONUtils::toString(responseBodyRoot);
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, 200, responseBody);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "generateFramesThread failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    else if (method == "slideShow")
-    {
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'encodingJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
-			bool					freeEncodingFound = false;
-			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
-
-				if (encoding->_available)
-				{
-					if (!freeEncodingFound)
-					{
-						freeEncodingFound = true;
-						selectedEncoding = encoding;
-					}
-				}
-				else
-				{
-					if (encoding->_encodingJobKey == encodingJobKey)
-						encodingAlreadyRunning = true;
-				}
-			}
-			if (encodingAlreadyRunning || !freeEncodingFound)
-			{
-				string errorMessage;
-				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + EncodingIsAlreadyRunning().what();
-				else if (maxEncodingsCapability == 0)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + MaxConcurrentJobsReached().what();
-				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + NoEncodingAvailable().what();
-
-				_logger->error(__FILEREF__ + errorMessage
-					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
-					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
-				);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-
-			try
-			{            
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
-				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait: " + to_string(secondsToWait)
-						+ ", " + NoEncodingAvailable().what();
-
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					// throw runtime_error(noEncodingAvailableMessage);
-					return;
-				}
-
-				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0;	// not running
-				selectedEncoding->_encodingJobKey = encodingJobKey;
-
-				_logger->info(__FILEREF__ + "Creating slideShow thread"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				);
-				thread slideShowThread(&FFMPEGEncoder::slideShowThread,
-					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				slideShowThread.detach();
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
-			}
-			catch(exception e)
-			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0;	// not running
-
-				_logger->error(__FILEREF__ + "slideShow failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-					+ ", e.what(): " + e.what()
-				);
-
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-        try
-        {            
-			Json::Value responseBodyRoot;
-			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
-			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
-
-			string responseBody = JSONUtils::toString(responseBodyRoot);
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, 200, responseBody);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "slideShowThread failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-	*/
     else if (method == "videoSpeed"
 		|| method == "encodeContent"
 		|| method == "cutFrameAccurate"
@@ -1633,16 +609,27 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			}
 
 			try
-			{            
+			{
+				Json::Value metadataRoot = JSONUtils::toJson(
+					-1, encodingJobKey, requestBody);
+
+				bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
+
+				int intervalInSecondsBetweenEncodingAccept;
+				if (externalEncoder)
+					intervalInSecondsBetweenEncodingAccept = _intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
+				else
+					intervalInSecondsBetweenEncodingAccept = _intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
+
 				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
 				// Make some time after the acception of the previous encoding request
 				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
 				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+					chrono::seconds(intervalInSecondsBetweenEncodingAccept))
 				{
 					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
+						chrono::seconds(intervalInSecondsBetweenEncodingAccept).count() -
 						chrono::duration_cast<chrono::seconds>(
 							now - *_lastEncodingAcceptedTime).count();
 					string errorMessage = string("Too early to accept a new encoding request")
@@ -1681,61 +668,61 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				if (method == "videoSpeed")
 				{
 					thread videoSpeedThread(&FFMPEGEncoder::videoSpeedThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					videoSpeedThread.detach();
 				}
 				else if (method == "encodeContent")
 				{
 					thread encodeContentThread(&FFMPEGEncoder::encodeContentThread, this,
-						selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					encodeContentThread.detach();
 				}
 				else if (method == "cutFrameAccurate")
 				{
 					thread cutFrameAccurateThread(&FFMPEGEncoder::cutFrameAccurateThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					cutFrameAccurateThread.detach();
 				}
 				else if (method == "overlayImageOnVideo")
 				{
 					thread overlayImageOnVideoThread(&FFMPEGEncoder::overlayImageOnVideoThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					overlayImageOnVideoThread.detach();
 				}
 				else if (method == "overlayTextOnVideo")
 				{
 					thread overlayTextOnVideoThread(&FFMPEGEncoder::overlayTextOnVideoThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					overlayTextOnVideoThread.detach();
 				}
 				else if (method == "addSilentAudio")
 				{
 					thread addSilentAudioThread(&FFMPEGEncoder::addSilentAudioThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					addSilentAudioThread.detach();
 				}
 				else if (method == "slideShow")
 				{
 					thread slideShowThread(&FFMPEGEncoder::slideShowThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					slideShowThread.detach();
 				}
 				else if (method == "generateFrames")
 				{
 					thread generateFramesThread(&FFMPEGEncoder::generateFramesThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					generateFramesThread.detach();
 				}
 				else if (method == "pictureInPicture")
 				{
 					thread pictureInPictureThread(&FFMPEGEncoder::pictureInPictureThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					pictureInPictureThread.detach();
 				}
 				else if (method == "introOutroOverlay")
 				{
 					thread introOutroOverlayThread(&FFMPEGEncoder::introOutroOverlayThread,
-						this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
+						this, selectedEncoding, ingestionJobKey, encodingJobKey, metadataRoot);
 					introOutroOverlayThread.detach();
 				}
 				else
@@ -1808,350 +795,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
-	/*
-    else if (method == "pictureInPicture")
-    {
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'encodingJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
-			bool					freeEncodingFound = false;
-			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
-
-				if (encoding->_available)
-				{
-					if (!freeEncodingFound)
-					{
-						freeEncodingFound = true;
-						selectedEncoding = encoding;
-					}
-				}
-				else
-				{
-					if (encoding->_encodingJobKey == encodingJobKey)
-						encodingAlreadyRunning = true;
-				}
-			}
-			if (encodingAlreadyRunning || !freeEncodingFound)
-			{
-				string errorMessage;
-				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + EncodingIsAlreadyRunning().what();
-				else if (maxEncodingsCapability == 0)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + MaxConcurrentJobsReached().what();
-				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + NoEncodingAvailable().what();
-
-				_logger->error(__FILEREF__ + errorMessage
-					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
-					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
-				);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-
-			try
-			{            
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
-				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait: " + to_string(secondsToWait)
-						+ ", " + NoEncodingAvailable().what();
-
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					// throw runtime_error(noEncodingAvailableMessage);
-					return;
-				}
-
-				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0;	// not running
-				selectedEncoding->_encodingJobKey = encodingJobKey;
-
-				_logger->info(__FILEREF__ + "Creating pictureInPicture thread"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				);
-				thread pictureInPictureThread(&FFMPEGEncoder::pictureInPictureThread,
-					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				pictureInPictureThread.detach();
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
-			}
-			catch(exception e)
-			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0;	// not running
-
-				_logger->error(__FILEREF__ + "pictureInPictureThread failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-					+ ", e.what(): " + e.what()
-				);
-
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-        try
-        {            
-			Json::Value responseBodyRoot;
-			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
-			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
-
-			string responseBody = JSONUtils::toString(responseBodyRoot);
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, 200, responseBody);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "sendSuccess failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    else if (method == "introOutroOverlay")
-    {
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-        if (encodingJobKeyIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'encodingJobKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-        
-		{
-			lock_guard<mutex> locker(*_encodingMutex);
-
-			shared_ptr<FFMPEGEncoderBase::Encoding>    selectedEncoding;
-			bool					freeEncodingFound = false;
-			bool					encodingAlreadyRunning = false;
-			// for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding: *_encodingsCapability)
-			int maxEncodingsCapability = getMaxEncodingsCapability();
-			for(int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
-			{
-				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
-
-				if (encoding->_available)
-				{
-					if (!freeEncodingFound)
-					{
-						freeEncodingFound = true;
-						selectedEncoding = encoding;
-					}
-				}
-				else
-				{
-					if (encoding->_encodingJobKey == encodingJobKey)
-						encodingAlreadyRunning = true;
-				}
-			}
-			if (encodingAlreadyRunning || !freeEncodingFound)
-			{
-				string errorMessage;
-				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + EncodingIsAlreadyRunning().what();
-				else if (maxEncodingsCapability == 0)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + MaxConcurrentJobsReached().what();
-				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-						+ ", " + NoEncodingAvailable().what();
-
-				_logger->error(__FILEREF__ + errorMessage
-					+ ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning)
-					+ ", freeEncodingFound: " + to_string(freeEncodingFound)
-				);
-
-				sendError(request, 400, errorMessage);
-
-				// throw runtime_error(noEncodingAvailableMessage);
-				return;
-			}
-
-			try
-			{            
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
-				chrono::system_clock::time_point now = chrono::system_clock::now();
-				if (now - *_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
-				{
-					int secondsToWait =
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
-						chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count();
-					string errorMessage = string("Too early to accept a new encoding request")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", seconds since the last request: "
-							+ to_string(chrono::duration_cast<chrono::seconds>(
-							now - *_lastEncodingAcceptedTime).count())
-						+ ", secondsToWait: " + to_string(secondsToWait)
-						+ ", " + NoEncodingAvailable().what();
-
-					_logger->warn(__FILEREF__ + errorMessage);
-
-					sendError(request, 400, errorMessage);
-
-					// throw runtime_error(noEncodingAvailableMessage);
-					return;
-				}
-
-				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0;	// not running
-				selectedEncoding->_encodingJobKey = encodingJobKey;
-
-				_logger->info(__FILEREF__ + "Creating introOutroOverlay thread"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-				);
-				thread introOutroOverlayThread(&FFMPEGEncoder::introOutroOverlayThread,
-					this, selectedEncoding, ingestionJobKey, encodingJobKey, requestBody);
-				introOutroOverlayThread.detach();
-
-				*_lastEncodingAcceptedTime = chrono::system_clock::now();
-			}
-			catch(exception e)
-			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0;	// not running
-
-				_logger->error(__FILEREF__ + "introOutroOverlayThread failed"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-					+ ", requestBody: " + requestBody
-					+ ", e.what(): " + e.what()
-				);
-
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-        try
-        {
-			Json::Value responseBodyRoot;
-			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
-			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
-
-			string responseBody = JSONUtils::toString(responseBodyRoot);
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, 200, responseBody);
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "sendSuccess failed"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-	*/
     else if (method == "liveRecorder")
     {
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
@@ -3534,13 +2177,13 @@ void FFMPEGEncoder::encodeContentThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		EncodeContent encodeContent(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		encodeContent.encodeContent(requestBody);
+		encodeContent.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
     {
@@ -3576,13 +2219,13 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		OverlayImageOnVideo overlayImageOnVideo(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		overlayImageOnVideo.encodeContent(requestBody);
+		overlayImageOnVideo.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3613,13 +2256,13 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		OverlayTextOnVideo overlayTextOnVideo(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		overlayTextOnVideo.encodeContent(requestBody);
+		overlayTextOnVideo.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3650,13 +2293,13 @@ void FFMPEGEncoder::generateFramesThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		GenerateFrames generateFrames(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		generateFrames.encodeContent(requestBody);
+		generateFrames.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3676,13 +2319,13 @@ void FFMPEGEncoder::slideShowThread(
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	string requestBody)
+	Json::Value metadataRoot)
 {
     try
     {
 		SlideShow slideShow(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		slideShow.encodeContent(requestBody);
+		slideShow.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3703,13 +2346,13 @@ void FFMPEGEncoder::videoSpeedThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		VideoSpeed videoSpeed(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		videoSpeed.encodeContent(requestBody);
+		videoSpeed.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3740,13 +2383,13 @@ void FFMPEGEncoder::addSilentAudioThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		AddSilentAudio addSilentAudio(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		addSilentAudio.encodeContent(requestBody);
+		addSilentAudio.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3777,13 +2420,13 @@ void FFMPEGEncoder::pictureInPictureThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		PictureInPicture pictureInPicture(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		pictureInPicture.encodeContent(requestBody);
+		pictureInPicture.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3814,13 +2457,13 @@ void FFMPEGEncoder::introOutroOverlayThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		IntroOutroOverlay introOutroOverlay(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		introOutroOverlay.encodeContent(requestBody);
+		introOutroOverlay.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{
@@ -3851,13 +2494,13 @@ void FFMPEGEncoder::cutFrameAccurateThread(
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody)
+        Json::Value metadataRoot)
 {
     try
     {
 		CutFrameAccurate cutFrameAccurate(encoding, ingestionJobKey, encodingJobKey,                                    
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
-		cutFrameAccurate.encodeContent(requestBody);
+		cutFrameAccurate.encodeContent(metadataRoot);
     }
 	catch(FFMpegEncodingKilledByUser e)
 	{

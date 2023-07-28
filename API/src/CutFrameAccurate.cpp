@@ -6,19 +6,19 @@
 
 
 void CutFrameAccurate::encodeContent(
-	string requestBody)
+	Json::Value metadataRoot)
 {
 	string api = "cutFrameAccurate";
 
 	_logger->info(__FILEREF__ + "Received " + api
 		+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 		+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-		+ ", requestBody: " + requestBody
+		+ ", requestBody: " + JSONUtils::toString(metadataRoot)
 	);
 
     try
     {
-        Json::Value metadataRoot = JSONUtils::toJson(-1, _encodingJobKey, requestBody);
+        // Json::Value metadataRoot = JSONUtils::toJson(-1, _encodingJobKey, requestBody);
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
 		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
@@ -234,7 +234,7 @@ void CutFrameAccurate::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
@@ -259,7 +259,7 @@ void CutFrameAccurate::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (runtime_error)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
@@ -285,7 +285,7 @@ void CutFrameAccurate::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (exception)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);

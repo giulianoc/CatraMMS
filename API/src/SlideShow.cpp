@@ -6,7 +6,7 @@
 
 
 void SlideShow::encodeContent(
-	string requestBody)
+	Json::Value metadataRoot)
 {
     string api = "slideShow";
 
@@ -18,8 +18,8 @@ void SlideShow::encodeContent(
 
     try
     {
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, _encodingJobKey, requestBody);
+        // Json::Value metadataRoot = JSONUtils::toJson(
+		// 	-1, _encodingJobKey, requestBody);
 
 		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
@@ -348,7 +348,7 @@ void SlideShow::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
@@ -373,7 +373,7 @@ void SlideShow::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (runtime_error)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
@@ -399,7 +399,7 @@ void SlideShow::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (exception)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);

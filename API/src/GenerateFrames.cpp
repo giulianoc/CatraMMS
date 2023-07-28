@@ -8,22 +8,22 @@
 
 
 void GenerateFrames::encodeContent(
-	string requestBody)
+	Json::Value metadataRoot)
 {
     string api = "generateFrames";
 
     _logger->info(__FILEREF__ + "Received " + api
 		+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 		+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-        + ", requestBody: " + requestBody
+        + ", requestBody: " + JSONUtils::toString(metadataRoot)
     );
 
 	bool externalEncoder = false;
 	string imagesDirectory;
     try
     {
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, _encodingJobKey, requestBody);
+        // Json::Value metadataRoot = JSONUtils::toJson(
+		// 	-1, _encodingJobKey, requestBody);
 
         bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
         // int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
@@ -507,7 +507,7 @@ void GenerateFrames::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
@@ -542,7 +542,7 @@ void GenerateFrames::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (runtime_error)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);
@@ -578,7 +578,7 @@ void GenerateFrames::encodeContent(
         string errorMessage = string(strDateTime) + " API failed (exception)"
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
             + ", API: " + api
-            + ", requestBody: " + requestBody
+            + ", requestBody: " + JSONUtils::toString(metadataRoot)
             + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
         ;
         _logger->error(__FILEREF__ + errorMessage);

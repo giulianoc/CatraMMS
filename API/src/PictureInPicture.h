@@ -17,7 +17,7 @@ class PictureInPicture: public FFMPEGEncoderTask {
 			encodingCompletedMap, logger)
 		{ };
 
-		void encodeContent(string requestBody);
+		void encodeContent(Json::Value metadataRoot);
 
 	private:
 };

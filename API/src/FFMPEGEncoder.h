@@ -99,7 +99,8 @@ private:
 	//	since the cpu usage is OK at this time, all the requestes are accepted overloading the process 
 	//	To solve this issue, we will force to wait at lease 5 seconds to accept a second encoding request.
 	//	That will allow the cpuUsage to be updated for the next encoding request
-	int							_intervalInSecondsBetweenEncodingAccept;
+	int							_intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
+	int							_intervalInSecondsBetweenEncodingAcceptForExternalEncoder;
 	chrono::system_clock::time_point*	_lastEncodingAcceptedTime;
 
 	int							_cpuUsageThresholdForEncoding;
@@ -143,35 +144,35 @@ private:
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
     
     void overlayImageOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
     void overlayTextOnVideoThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
     void generateFramesThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
     void slideShowThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
 	void liveRecorderThread(
         // FCGX_Request& request,
@@ -199,35 +200,35 @@ private:
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
 	void addSilentAudioThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
 	void pictureInPictureThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
 	void introOutroOverlayThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
 	void cutFrameAccurateThread(
         // FCGX_Request& request,
         shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey,
         int64_t encodingJobKey,
-        string requestBody);
+        Json::Value metadataRoot);
 
 	void encodingCompletedRetention();
 
