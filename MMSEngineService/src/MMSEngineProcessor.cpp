@@ -25566,7 +25566,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 request.setOpt(new curlpp::options::CustomRequest{"PUT"});
                 request.setOpt(new curlpp::options::Url(youTubeUploadURL));
                 request.setOpt(new curlpp::options::Timeout(
-					_youTubeDataAPITimeoutInSeconds));
+					60 * 10));	// _youTubeDataAPITimeoutInSeconds));
 
                 if (_youTubeDataAPIProtocol == "https")
                 {
