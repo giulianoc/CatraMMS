@@ -25419,6 +25419,9 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 field = "privacyStatus";
                 statusRoot[field] = youTubePrivacy;
 
+                field = "selfDeclaredMadeForKids";
+                statusRoot[field] = false;
+
                 field = "embeddable";
                 statusRoot[field] = true;
 
