@@ -8,20 +8,20 @@
 	"parameters": {
 
 		// mandatory, one of the MMS YouTube Configuration label 
-		"YouTubeConfigurationLabel": "My YouTube Conf",
+		"youTubeConfigurationLabel": "My YouTube Conf",
 
 		// mandatory, it is the YouTube Live Broadcast title
-		"Title": "my title",
+		"title": "my title",
 
 		// optional, it is the YouTube Live Broadcast description
-		"Description": "my description",
+		"description": "my description",
 
 		// optional, it could be: private, public, unlisted (visible from who has the link)
 		// default is unlisted
-		"PrivacyStatus": "private",
+		"privacyStatus": "private",
 
 		// optional, default is true
-		"MadeForKids": true,
+		"madeForKids": true,
 
 		// optional, it could be: normal, low, ultraLow
 		// Indicates which latency setting to use for this broadcast.
@@ -32,10 +32,10 @@
 		// for video to be visible to viewers, making interaction with viewers
 		// easier, but ultra-low latency does not support resolutions higher
 		// than 1080p.
-		"LatencyPreference": "normal",
+		"latencyPreference": "normal",
 
 		// mandatory, options: Live or MediaItem (video or audio media item)
-		"SourceType": "MediaItem",
+		"sourceType": "MediaItem",
 
 		// mandatory in case SourceType is Live, it identifies the channel
 		"configurationLabel": "",

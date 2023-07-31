@@ -212,6 +212,10 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds)
     );
+    _youTubeDataAPITimeoutInSecondsForUploadVideo   = JSONUtils::asInt(_configuration["YouTubeDataAPI"], "timeoutForUploadVideo", 0);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", YouTubeDataAPI->timeoutForUploadVideo: " + to_string(_youTubeDataAPITimeoutInSecondsForUploadVideo)
+    );
     _youTubeDataAPIClientId       = JSONUtils::asString(_configuration["YouTubeDataAPI"], "clientId", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId
@@ -10737,20 +10741,20 @@ void MMSEngineProcessor::postOnYouTubeThread(
             }
             youTubeConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "Title";
+            field = "title";
 			youTubeTitle = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "Description";
+            field = "description";
 			youTubeDescription = JSONUtils::asString(parametersRoot, field, "");
             
             field = "tags";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 youTubeTags = parametersRoot[field];
             
-            field = "CategoryId";
+            field = "categoryId";
 			youTubeCategoryId = JSONUtils::asInt(parametersRoot, field, -1);
 
-            field = "PrivacyStatus";
+            field = "privacyStatus";
 			youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "private");
         }
         
@@ -25317,6 +25321,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
             + ", youTubeTitle: " + youTubeTitle
             + ", youTubeDescription: " + youTubeDescription
             + ", youTubeCategoryId: " + to_string(youTubeCategoryId)
+            + ", youTubePrivacy: " + youTubePrivacy
         );
 
 		// 1. get refresh_token from the configuration
@@ -25566,7 +25571,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 request.setOpt(new curlpp::options::CustomRequest{"PUT"});
                 request.setOpt(new curlpp::options::Url(youTubeUploadURL));
                 request.setOpt(new curlpp::options::Timeout(
-					60 * 10));	// _youTubeDataAPITimeoutInSeconds));
+					_youTubeDataAPITimeoutInSecondsForUploadVideo));
 
                 if (_youTubeDataAPIProtocol == "https")
                 {

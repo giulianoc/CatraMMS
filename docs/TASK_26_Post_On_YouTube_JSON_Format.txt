@@ -43,10 +43,10 @@
 		"configurationLabel": "My YouTube Conf",
 
 		// Optional, Title of the video, if not present the MMS title of the video is used
-		"Title": "YYYY",
+		"title": "YYYY",
 
 		// Optional, Description of the video
-		"Description": "ZZZZZ",
+		"description": "ZZZZZ",
 
 		// Optional, tags of the video
 		"tags": [
@@ -54,11 +54,11 @@
 		],
 
 		// Optional, category id of the video
-		"CategoryId": 22,
+		"categoryId": 22,
 
 		// optional, it could be: private, public or unlisted,
 		//	default is private
-		"PrivacyStatus": "private",
+		"privacyStatus": "private",
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

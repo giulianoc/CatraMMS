@@ -139,6 +139,7 @@ private:
 	string					_youTubeDataAPILiveStreamURI;
 	string					_youTubeDataAPILiveBroadcastBindURI;
     long                    _youTubeDataAPITimeoutInSeconds;
+    long                    _youTubeDataAPITimeoutInSecondsForUploadVideo;
     string                  _youTubeDataAPIClientId;
     string                  _youTubeDataAPIClientSecret;
 

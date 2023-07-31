@@ -3645,7 +3645,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
         }
     }
 
-    string field = "PrivacyStatus";
+    string field = "privacyStatus";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
         string youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "");
