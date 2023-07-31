@@ -10728,6 +10728,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
         Json::Value youTubeTags = Json::nullValue;
         int youTubeCategoryId = -1;
         string youTubePrivacyStatus;
+		bool youTubeMadeForKids;
         {
             string field = "configurationLabel";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -10756,6 +10757,9 @@ void MMSEngineProcessor::postOnYouTubeThread(
 
             field = "privacyStatus";
 			youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "private");
+
+            field = "madeForKids";
+			youTubeMadeForKids = JSONUtils::asBool(parametersRoot, field, false);
         }
         
 		int dependencyIndex = 0;
@@ -10835,7 +10839,8 @@ void MMSEngineProcessor::postOnYouTubeThread(
 					sizeInBytes, ingestionJobKey, workspace,
 					youTubeConfigurationLabel, youTubeTitle,
 					youTubeDescription, youTubeTags,
-					youTubeCategoryId, youTubePrivacyStatus);
+					youTubeCategoryId, youTubePrivacyStatus,
+					youTubeMadeForKids);
 			}
 			catch(runtime_error e)
 			{
@@ -25302,7 +25307,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string youTubeConfigurationLabel, string youTubeTitle,
         string youTubeDescription, Json::Value youTubeTags,
-        int youTubeCategoryId, string youTubePrivacy)
+        int youTubeCategoryId, string youTubePrivacy,
+		bool youTubeMadeForKids)
 {
 
     string youTubeURL;
@@ -25322,6 +25328,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
             + ", youTubeDescription: " + youTubeDescription
             + ", youTubeCategoryId: " + to_string(youTubeCategoryId)
             + ", youTubePrivacy: " + youTubePrivacy
+            + ", youTubeMadeForKids: " + to_string(youTubeMadeForKids)
         );
 
 		// 1. get refresh_token from the configuration
@@ -25420,7 +25427,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
                 statusRoot[field] = youTubePrivacy;
 
                 field = "selfDeclaredMadeForKids";
-                statusRoot[field] = false;
+                statusRoot[field] = youTubeMadeForKids;
 
                 field = "embeddable";
                 statusRoot[field] = true;

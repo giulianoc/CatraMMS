@@ -60,6 +60,10 @@
 		//	default is private
 		"privacyStatus": "private",
 
+		// optional, it could be: true, false
+		//	default: false
+		"madeForKids": false,
+
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:

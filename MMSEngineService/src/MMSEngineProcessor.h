@@ -539,7 +539,8 @@ private:
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string youTubeConfigurationLabel, string youTubeTitle,
         string youTubeDescription, Json::Value youTubeTags,
-        int youTubeCategoryId, string youTubePrivacy);
+        int youTubeCategoryId, string youTubePrivacy,
+		bool youTubeMadeForKids);
 
 	string getYouTubeAccessTokenByConfigurationLabel(
 		int64_t ingestionJobKey,
