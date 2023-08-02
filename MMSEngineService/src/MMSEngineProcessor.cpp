@@ -12704,11 +12704,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
 			workspace, ingestionJobKey, false);
-		_logger->info(__FILEREF__ + "localOutputsRoot"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", localOutputsRoot.size: " + to_string(localOutputsRoot.size())
-		);
 
 		// in case we have monitorHLS and/or liveRecorderVirtualVOD,
 		// this will be "translated" in one entry added to the outputsRoot
@@ -12988,11 +12983,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			tvRoot["audioItalianPid"] = tvAudioItalianPid;
 		}
 
-		_logger->info(__FILEREF__ + "localOutputsRoot"
-			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", localOutputsRoot.size: " + to_string(localOutputsRoot.size())
-		);
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			ingestionJobLabel, streamSourceType,
 			configurationLabel, confKey, liveURL, encodersPoolLabel,

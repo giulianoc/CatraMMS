@@ -7276,14 +7276,13 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ingestionJobLabel: " + ingestionJobLabel
             + ", streamSourceType: " + streamSourceType
-            // + ", highAvailability: " + to_string(highAvailability)
             + ", configurationLabel: " + configurationLabel
             + ", confKey: " + to_string(confKey)
             + ", liveURL: " + liveURL
             + ", encodingPriority: " + toString(encodingPriority)
             + ", monitorHLS: " + to_string(monitorHLS)
             + ", liveRecorderVirtualVOD: " + to_string(liveRecorderVirtualVOD)
-
+            + ", outputsRoot.size: " + (outputsRoot != Json::nullValue ? to_string(outputsRoot.size()) : to_string(0))
         );
 
         conn = connectionPool->borrow();	
