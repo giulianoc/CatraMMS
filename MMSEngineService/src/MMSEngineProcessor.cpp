@@ -12384,12 +12384,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string virtualVODHlsChannelConfigurationLabel;
 		int liveRecorderVirtualVODMaxDurationInMinutes = 30;
 		int64_t virtualVODEncodingProfileKey = -1;
-		int virtualVODSegmentDurationInSeconds = 10;
+		// int virtualVODSegmentDurationInSeconds = 10;
 
 		bool monitorHLS = false;
 		string monitorHlsChannelConfigurationLabel;
-		int monitorPlaylistEntriesNumber = 0;
-		int monitorSegmentDurationInSeconds = 0;
+		// int monitorPlaylistEntriesNumber = 0;
+		// int monitorSegmentDurationInSeconds = 0;
 		int64_t monitorEncodingProfileKey = -1;
 
 		Json::Value outputsRoot = Json::nullValue;
@@ -12478,11 +12478,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 				field = "hlsChannelConfigurationLabel";
 				monitorHlsChannelConfigurationLabel = JSONUtils::asString(monitorHLSRoot, field, "");
 
-				field = "playlistEntriesNumber";
-				monitorPlaylistEntriesNumber = JSONUtils::asInt(monitorHLSRoot, field, 6);
+				// field = "playlistEntriesNumber";
+				// monitorPlaylistEntriesNumber = JSONUtils::asInt(monitorHLSRoot, field, 6);
 
-				field = "segmentDurationInSeconds";
-				monitorSegmentDurationInSeconds = JSONUtils::asInt(monitorHLSRoot, field, 10);
+				// field = "segmentDurationInSeconds";
+				// monitorSegmentDurationInSeconds = JSONUtils::asInt(monitorHLSRoot, field, 10);
 
 
 				string keyField = "encodingProfileKey";
@@ -12532,8 +12532,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 				liveRecorderVirtualVODMaxDurationInMinutes = JSONUtils::asInt(
 					virtualVODRoot, field, 30);
 
-				field = "segmentDurationInSeconds";
-				virtualVODSegmentDurationInSeconds = JSONUtils::asInt(virtualVODRoot, field, 10);
+				// field = "segmentDurationInSeconds";
+				// virtualVODSegmentDurationInSeconds = JSONUtils::asInt(virtualVODRoot, field, 10);
 
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";
@@ -12702,9 +12702,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 		}
 
-		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
-			workspace, ingestionJobKey, false);
-
 		// in case we have monitorHLS and/or liveRecorderVirtualVOD,
 		// this will be "translated" in one entry added to the outputsRoot
 		int monitorVirtualVODOutputRootIndex = -1;
@@ -12744,6 +12741,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				encodingProfileDetailsRoot = JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
 			}
 
+			/*
 			int monitorVirtualVODSegmentDurationInSeconds;
 			{
 				if (liveRecorderVirtualVOD)
@@ -12762,11 +12760,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 				else
 					monitorVirtualVODPlaylistEntriesNumber = monitorPlaylistEntriesNumber;
 			}
+			*/
 
 			Json::Value localOutputRoot;
 
 			field = "outputType";
-			// localOutputRoot[field] = string("HLS");
 			localOutputRoot[field] = string("HLS_Channel");
 
 			field = "hlsChannelConfigurationLabel";
@@ -12788,12 +12786,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "filters";
 			localOutputRoot[field] = Json::nullValue;
 
-			field = "segmentDurationInSeconds";
-			localOutputRoot[field] = monitorVirtualVODSegmentDurationInSeconds;
-
-			field = "playlistEntriesNumber";
-			localOutputRoot[field] = monitorVirtualVODPlaylistEntriesNumber;
-
 			{
 				field = "encodingProfileKey";
 				localOutputRoot[field] = monitorVirtualVODEncodingProfileKey;
@@ -12805,9 +12797,18 @@ void MMSEngineProcessor::manageLiveRecorder(
 				localOutputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
 			}
 
-			localOutputsRoot.append(localOutputRoot);
-			monitorVirtualVODOutputRootIndex = localOutputsRoot.size() - 1;
+			outputsRoot.append(localOutputRoot);
+			monitorVirtualVODOutputRootIndex = outputsRoot.size() - 1;
+
+			field = "outputs";
+			parametersRoot[field] = outputsRoot;
+
+			_mmsEngineDBFacade->updateIngestionJobMetadataContent (
+				ingestionJobKey, JSONUtils::toString(parametersRoot));
 		}
+
+		Json::Value localOutputsRoot = getReviewedOutputsRoot(outputsRoot,
+			workspace, ingestionJobKey, false);
 
 		// the recorder generates the chunks in a local(transcoder) directory
 		string chunksTranscoderStagingContentsPath;

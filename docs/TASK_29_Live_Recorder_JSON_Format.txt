@@ -91,9 +91,6 @@
 			"encodingProfileKey": 1,
 			"encodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92",
 			"contentType": "video",
-
-			// optional. Default: 10
-			"segmentDurationInSeconds": 10
 		}
 
 		// monitorHLS allows to monitor the input stream providing an HLS delivery
@@ -117,15 +114,6 @@
 			"encodingProfileKey": 1,
 			"encodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92",
 			"contentType": "video",
-
-			// In case LiveRecorderVirtualVOD is true, this parameter is not used
-			// optional. Default: 6
-			"playlistEntriesNumber": 6,
-
-			// In case LiveRecorderVirtualVOD is true, is is used the duration
-			//	specified into the LiveRecorderVirtualVOD json section
-			// optional. Default: 10
-			"segmentDurationInSeconds": 10
 		},
 
 		// optional: frames to be detected
