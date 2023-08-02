@@ -118,8 +118,7 @@ void LiveRecorder::encodeContent(
 		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
 		//		checks this field is set before to see if there are chunks to be ingested
 		_liveRecording->_encodingParametersRoot = encodingParametersRoot;
-		_liveRecording->_ingestedParametersRoot =
-			metadataRoot["ingestedParametersRoot"];
+		_liveRecording->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 		time_t utcRecordingPeriodStart;
 		time_t utcRecordingPeriodEnd;
@@ -317,6 +316,25 @@ void LiveRecorder::encodeContent(
 					_liveRecording->_monitorVirtualVODManifestFileName =
 						JSONUtils::asString(outputsRoot[monitorVirtualVODOutputRootIndex],
 						"manifestFileName", "");
+				}
+			}
+
+			// in case of virtualVOD, è necessario modificare PlaylistEntriesNumber considerando
+			// il parametro VirtualVODMaxDurationInMinutes
+			if (_liveRecording->_virtualVOD)
+			{
+				int monitorVirtualVODOutputRootIndex = JSONUtils::asInt(
+					encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
+
+				if (monitorVirtualVODOutputRootIndex >= 0)
+				{
+					Json::Value virtualVODOutputRoot = outputsRoot[monitorVirtualVODOutputRootIndex];
+
+					int maxDurationInMinutes = JSONUtils::asInt(
+						_liveRecording->_ingestedParametersRoot["liveRecorderVirtualVOD"], "maxDuration", 30);
+					int segmentDurationInSeconds = JSONUtils::asInt(virtualVODOutputRoot, "segmentDurationInSeconds", 10);
+					virtualVODOutputRoot["playlistEntriesNumber"] = (maxDurationInMinutes * 60) / segmentDurationInSeconds;
+					outputsRoot[monitorVirtualVODOutputRootIndex] = virtualVODOutputRoot;
 				}
 			}
 		}

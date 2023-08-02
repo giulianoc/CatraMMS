@@ -10324,8 +10324,7 @@ void FFMpeg::liveRecorder(
 				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 				string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
 				int playlistEntriesNumber = JSONUtils::asInt(outputRoot, "playlistEntriesNumber", 5);
-				int localSegmentDurationInSeconds =
-					JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
+				int localSegmentDurationInSeconds = JSONUtils::asInt(outputRoot, "segmentDurationInSeconds", 10);
 
 				// filter to be managed with the others
 				string ffmpegVideoResolutionParameter;
