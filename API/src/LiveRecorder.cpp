@@ -191,8 +191,7 @@ void LiveRecorder::encodeContent(
 
         _liveRecording->_streamSourceType = JSONUtils::asString(encodingParametersRoot,
 			"streamSourceType", "IP_PULL");
-		int ipMMSAsServer_listenTimeoutInSeconds = encodingParametersRoot
-			.get("ActAsServerListenTimeout", 300).asInt();
+		int ipMMSAsServer_listenTimeoutInSeconds = encodingParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
 		int pushListenTimeout = JSONUtils::asInt(encodingParametersRoot, "pushListenTimeout", -1);
 
 		int captureLive_videoDeviceNumber = -1;
@@ -316,25 +315,6 @@ void LiveRecorder::encodeContent(
 					_liveRecording->_monitorVirtualVODManifestFileName =
 						JSONUtils::asString(outputsRoot[monitorVirtualVODOutputRootIndex],
 						"manifestFileName", "");
-				}
-			}
-
-			// in case of virtualVOD, è necessario modificare PlaylistEntriesNumber considerando
-			// il parametro VirtualVODMaxDurationInMinutes
-			if (_liveRecording->_virtualVOD)
-			{
-				int monitorVirtualVODOutputRootIndex = JSONUtils::asInt(
-					encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
-
-				if (monitorVirtualVODOutputRootIndex >= 0)
-				{
-					Json::Value virtualVODOutputRoot = outputsRoot[monitorVirtualVODOutputRootIndex];
-
-					int maxDurationInMinutes = JSONUtils::asInt(
-						_liveRecording->_ingestedParametersRoot["liveRecorderVirtualVOD"], "maxDuration", 30);
-					int segmentDurationInSeconds = JSONUtils::asInt(virtualVODOutputRoot, "segmentDurationInSeconds", 10);
-					virtualVODOutputRoot["playlistEntriesNumber"] = (maxDurationInMinutes * 60) / segmentDurationInSeconds;
-					outputsRoot[monitorVirtualVODOutputRootIndex] = virtualVODOutputRoot;
 				}
 			}
 		}

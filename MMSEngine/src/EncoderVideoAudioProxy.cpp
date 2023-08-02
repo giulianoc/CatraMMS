@@ -102,24 +102,6 @@ void EncoderVideoAudioProxy::init(
         + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
     );        
 
-	/*
-	_liveRecorderVirtualVODImageLabel = _configuration["ffmpeg"].get("liveRecorderVirtualVODImageLabel",
-		"").asString();
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
-	);
-	*/
-
-	/*
-    _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
-    );
-    _ffmpegEncoderPort = JSONUtils::asInt(_configuration["ffmpeg"], "encoderPort", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
-    );
-	*/
     _ffmpegEncoderUser = JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser
@@ -5947,12 +5929,30 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							field = "segmentDurationInSeconds";
 							outputRoot[field] = segmentDurationInSeconds;
 						}
+						else	// same default used in FFMpeg.cpp
+							segmentDurationInSeconds = 10;
 
 						if (playlistEntriesNumber > 0)
 						{
 							// if not present, default is decided by the encoder
 							field = "playlistEntriesNumber";
 							outputRoot[field] = playlistEntriesNumber;
+						}
+
+						if (outputIndex == monitorVirtualVODOutputRootIndex)
+						{
+							// in case of virtualVOD, è necessario modificare PlaylistEntriesNumber considerando
+							// il parametro VirtualVODMaxDurationInMinutes
+
+							bool liveRecorderVirtualVOD = JSONUtils::asBool(
+								_encodingItem->_encodingParametersRoot, "liveRecorderVirtualVOD", false);
+
+							if (liveRecorderVirtualVOD)
+							{
+								int maxDurationInMinutes = JSONUtils::asInt(
+									_encodingItem->_ingestedParametersRoot["liveRecorderVirtualVOD"], "maxDuration", 30);
+								outputRoot["playlistEntriesNumber"] = (maxDurationInMinutes * 60) / segmentDurationInSeconds;
+							}
 						}
 
 						string manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(
