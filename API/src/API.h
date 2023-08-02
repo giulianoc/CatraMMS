@@ -108,6 +108,8 @@ private:
     string				_ffmpegEncoderKillEncodingURI;
 	string				_ffmpegEncoderChangeLiveProxyPlaylistURI;
 
+	int					_intervalInSecondsToCheckEncodingFinished;
+
 	int					_maxSecondsToWaitAPIIngestionLock;
 
     int                 _defaultTTLInSeconds;

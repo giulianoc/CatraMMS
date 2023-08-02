@@ -473,6 +473,12 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 		+ ", ffmpeg->encoderChangeLiveProxyPlaylistURI: " + _ffmpegEncoderChangeLiveProxyPlaylistURI
     );
 
+	_intervalInSecondsToCheckEncodingFinished         = JSONUtils::asInt(_configuration["encoding"],
+		"intervalInSecondsToCheckEncodingFinished", 0);
+	_logger->info(__FILEREF__ + "Configuration item"
+		+ ", encoding->intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+	);
+
 	_maxSecondsToWaitAPIIngestionLock  = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", mms->locks->maxSecondsToWaitAPIIngestionLock: " + to_string(_maxSecondsToWaitAPIIngestionLock)

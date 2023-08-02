@@ -359,16 +359,19 @@ void API::killOrCancelEncodingJob(
 				{
 					if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 					{
-						// In this case we may have 2 scenarios:
+						// In this case we may have 3 scenarios:
 						// 1. process (ffmpeg) is running
 						// 2. process (ffmpeg) fails to run and we have the Task in the loop
 						//		within EncoderVideoAudioProxy trying to make ffmpeg starting calling the Transcoder.
+						// 3. process (ffmpeg) is not running, EncoderVideoAudioProxy is not managing the EncodingJob
+						//		and the status is Processing
 						//
 						// In case 1, the below killEncodingJob works fine and this is the solution
 						// In case 2, killEncodingJob will fail because there is no ffmpeg process running.
 						//		For this reason we call updateEncodingJobIsKilled and set isKilled
 						//		to true. This is an 'aggreement' with EncoderVideoAudioProxy making
 						//		the EncoderVideoAudioProxy thread to terminate his loop 
+						// In case 3, the EncodingJob is updated to KilledByUser
 						try
 						{
 							_logger->info(__FILEREF__ + "killEncodingJob"
@@ -392,6 +395,43 @@ void API::killOrCancelEncodingJob(
 								);
 								_mmsEngineDBFacade->updateEncodingJobIsKilled(
 									encodingJobKey, isKilled);
+
+								// case 3: in case updateEncodingJobIsKilled did not work, we are in scenario 3
+								//		To check that updateEncodingJobIsKilled did not work, we will sleep and check again the status
+								this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));;
+
+								encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(
+									encodingJobKey,
+									// 2022-12-18: true perchè serve una info sicura
+									true);
+								tie(ingestionJobKey, type, encoderKey, status, ignore) = encodingJobDetails;
+								_logger->info(__FILEREF__ + "getEncodingJobDetails"
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+									+ ", type: " + type
+									+ ", encoderKey: " + to_string(encoderKey)
+									+ ", status: " + MMSEngineDBFacade::toString(status)
+								);
+								if (status == MMSEngineDBFacade::EncodingStatus::Processing)
+								{
+									_logger->info(__FILEREF__ + "killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
+										+ ", encoderKey: " + to_string(encoderKey)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(encodingJobKey)
+									);
+
+									{
+										_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+											+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+											+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+										);
+
+										_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
+											MMSEngineDBFacade::EncodingError::KilledByUser,
+											false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
+											ingestionJobKey, "killEncodingJob failed");
+									}
+								}
 							}
 						}
 						catch (...)
@@ -409,25 +449,42 @@ void API::killOrCancelEncodingJob(
 								_mmsEngineDBFacade->updateEncodingJobIsKilled(
 									encodingJobKey, isKilled);
 
-								/* 2022-09-03: it should be needed anymore
-								_logger->info(__FILEREF__ + "killEncodingJob failed, force update of the status"
-									+ ", encoderKey: " + to_string(encoderKey)
+								// case 3: in case updateEncodingJobIsKilled did not work, we are in scenario 3
+								//		To check that updateEncodingJobIsKilled did not work, we will sleep and check again the status
+								this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));;
+
+								encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(
+									encodingJobKey,
+									// 2022-12-18: true perchè serve una info sicura
+									true);
+								tie(ingestionJobKey, type, encoderKey, status, ignore) = encodingJobDetails;
+								_logger->info(__FILEREF__ + "getEncodingJobDetails"
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", encodingJobKey: " + to_string(encodingJobKey)
+									+ ", type: " + type
+									+ ", encoderKey: " + to_string(encoderKey)
+									+ ", status: " + MMSEngineDBFacade::toString(status)
 								);
-
+								if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 								{
-									_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
-										+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
-										+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+									_logger->info(__FILEREF__ + "killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
+										+ ", encoderKey: " + to_string(encoderKey)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", encodingJobKey: " + to_string(encodingJobKey)
 									);
 
-									_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
-										MMSEngineDBFacade::EncodingError::KilledByUser,
-										false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
-										ingestionJobKey, "killEncodingJob failed");
+									{
+										_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+											+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+											+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+										);
+
+										_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
+											MMSEngineDBFacade::EncodingError::KilledByUser,
+											false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
+											ingestionJobKey, "killEncodingJob failed");
+									}
 								}
-								*/
 							}
 						}
 					}
@@ -441,12 +498,15 @@ void API::killOrCancelEncodingJob(
 					// 1. process (ffmpeg) is running
 					// 2. process (ffmpeg) fails to run and we have the Task in the loop
 					//		within EncoderVideoAudioProxy trying to make ffmpeg starting calling the Transcoder.
+					// 3. process (ffmpeg) is not running, EncoderVideoAudioProxy is not managing the EncodingJob
+					//		and the status is Processing
 					//
 					// In case 1, the below killEncodingJob works fine and this is the solution
 					// In case 2, killEncodingJob will fail because there is no ffmpeg process running.
 					//		For this reason we call updateEncodingJobIsKilled and set isKilled
 					//		to true. This is an 'aggreement' with EncoderVideoAudioProxy making
 					//		the EncoderVideoAudioProxy thread to terminate his loop 
+					// In case 3, the EncodingJob is updated to KilledByUser
 
 					try
 					{
@@ -471,6 +531,43 @@ void API::killOrCancelEncodingJob(
 							);
 							_mmsEngineDBFacade->updateEncodingJobIsKilled(
 								encodingJobKey, isKilled);
+
+							// case 3: in case updateEncodingJobIsKilled did not work, we are in scenario 3
+							//		To check that updateEncodingJobIsKilled did not work, we will sleep and check again the status
+							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));;
+
+							encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(
+								encodingJobKey,
+								// 2022-12-18: true perchè serve una info sicura
+								true);
+							tie(ingestionJobKey, type, encoderKey, status, ignore) = encodingJobDetails;
+							_logger->info(__FILEREF__ + "getEncodingJobDetails"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", type: " + type
+								+ ", encoderKey: " + to_string(encoderKey)
+								+ ", status: " + MMSEngineDBFacade::toString(status)
+							);
+							if (status == MMSEngineDBFacade::EncodingStatus::Processing)
+							{
+								_logger->info(__FILEREF__ + "killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
+									+ ", encoderKey: " + to_string(encoderKey)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+								);
+
+								{
+									_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+										+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+									);
+
+									_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
+										MMSEngineDBFacade::EncodingError::KilledByUser,
+										false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
+										ingestionJobKey, "killEncodingJob failed");
+								}
+							}
 						}
 					}
 					catch(runtime_error e)
@@ -487,6 +584,43 @@ void API::killOrCancelEncodingJob(
 							);
 							_mmsEngineDBFacade->updateEncodingJobIsKilled(
 								encodingJobKey, isKilled);
+
+							// case 3: in case updateEncodingJobIsKilled did not work, we are in scenario 3
+							//		To check that updateEncodingJobIsKilled did not work, we will sleep and check again the status
+							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));;
+
+							encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetails(
+								encodingJobKey,
+								// 2022-12-18: true perchè serve una info sicura
+								true);
+							tie(ingestionJobKey, type, encoderKey, status, ignore) = encodingJobDetails;
+							_logger->info(__FILEREF__ + "getEncodingJobDetails"
+								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+								+ ", encodingJobKey: " + to_string(encodingJobKey)
+								+ ", type: " + type
+								+ ", encoderKey: " + to_string(encoderKey)
+								+ ", status: " + MMSEngineDBFacade::toString(status)
+							);
+							if (status == MMSEngineDBFacade::EncodingStatus::Processing)
+							{
+								_logger->info(__FILEREF__ + "killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
+									+ ", encoderKey: " + to_string(encoderKey)
+									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+									+ ", encodingJobKey: " + to_string(encodingJobKey)
+								);
+
+								{
+									_logger->info(__FILEREF__ + "updateEncodingJob KilledByUser"                                
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)                         
+										+ ", encodingJobKey: " + to_string(encodingJobKey)                           
+									);
+
+									_mmsEngineDBFacade->updateEncodingJob (encodingJobKey,
+										MMSEngineDBFacade::EncodingError::KilledByUser,
+										false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
+										ingestionJobKey, "killEncodingJob failed");
+								}
+							}
 						}
 					}
 				}
