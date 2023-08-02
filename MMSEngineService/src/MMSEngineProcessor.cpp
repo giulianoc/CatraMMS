@@ -12392,7 +12392,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int monitorSegmentDurationInSeconds = 0;
 		int64_t monitorEncodingProfileKey = -1;
 
-		Json::Value outputsRoot = Json::nullValue;
+		Json::Value outputsRoot;
 		Json::Value framesToBeDetectedRoot = Json::nullValue;
         {
 			{

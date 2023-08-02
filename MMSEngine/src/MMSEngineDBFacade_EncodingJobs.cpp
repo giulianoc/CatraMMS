@@ -7351,10 +7351,10 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "monitorVirtualVODOutputRootIndex";
 				parametersRoot[field] = monitorVirtualVODOutputRootIndex;
 
-				field = "outputsRoot";
+				field = "outputs";
 				parametersRoot[field] = outputsRoot;
 
-				field = "framesToBeDetectedRoot";
+				field = "framesToBeDetected";
 				parametersRoot[field] = framesToBeDetectedRoot;
 
 				field = "chunksTranscoderStagingContentsPath";

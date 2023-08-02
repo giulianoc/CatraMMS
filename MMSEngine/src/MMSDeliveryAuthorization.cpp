@@ -369,7 +369,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
 				string errorMessage =
-					string("A Live-Proxy without Outputs cannot be delivered")
+					string("A Proxy/Countdown/Recorder without outputs cannot be delivered")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				;
 				_logger->error(__FILEREF__ + errorMessage);

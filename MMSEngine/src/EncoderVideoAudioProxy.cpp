@@ -5522,7 +5522,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 	}
 
 	{
-		string field = "outputsRoot";
+		string field = "outputs";
 		Json::Value outputsRoot = (_encodingItem->_encodingParametersRoot)[field];
 
 		bool killedByUser = false;
@@ -5607,7 +5607,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputsRoot";
+						field = "outputs";
 						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
 
 						try
@@ -5750,7 +5750,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputsRoot";
+						field = "outputs";
 						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
 
 						try
@@ -5857,7 +5857,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputsRoot";
+						field = "outputs";
 						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
 
 						try
@@ -6007,7 +6007,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputsRoot";
+						field = "outputs";
 						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
 
 						try

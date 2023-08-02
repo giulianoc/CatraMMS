@@ -296,7 +296,7 @@ void LiveRecorder::encodeContent(
 			liveURL = JSONUtils::asString(encodingParametersRoot, "liveURL", "");
 		}
 
-		Json::Value outputsRoot = encodingParametersRoot["outputsRoot"];
+		Json::Value outputsRoot = encodingParametersRoot["outputs"];
 
 		{
 			bool monitorHLS = JSONUtils::asBool(encodingParametersRoot, "monitorHLS", false);
@@ -419,7 +419,7 @@ void LiveRecorder::encodeContent(
 			}
 		}
 
-		Json::Value framesToBeDetectedRoot = encodingParametersRoot["framesToBeDetectedRoot"];
+		Json::Value framesToBeDetectedRoot = encodingParametersRoot["framesToBeDetected"];
 
 		string otherInputOptions = JSONUtils::asString(_liveRecording->_ingestedParametersRoot,
 			"otherInputOptions", "");
