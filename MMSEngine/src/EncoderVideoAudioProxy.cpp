@@ -5945,6 +5945,14 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							bool liveRecorderVirtualVOD = JSONUtils::asBool(
 								_encodingItem->_encodingParametersRoot, "liveRecorderVirtualVOD", false);
 
+							_logger->info(__FILEREF__ + "testttttttt"
+								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+								+ ", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) 
+								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+								+ ", liveRecorderVirtualVOD: " + to_string(liveRecorderVirtualVOD) 
+								+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds) 
+							);
 							if (liveRecorderVirtualVOD)
 							{
 								// 10 is the same default used in FFMpeg.cpp
@@ -6020,6 +6028,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								+ ", hlsChannelConfigurationLabel: " + hlsChannelConfigurationLabel 
 								+ ", reservedLabel: " + reservedLabel 
 								+ ", outputIndex: " + to_string(outputIndex)
+								+ ", monitorVirtualVODOutputRootIndex: " + to_string(monitorVirtualVODOutputRootIndex)
 								+ ", deliveryCode: " + to_string(deliveryCode)
 								+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 								+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
