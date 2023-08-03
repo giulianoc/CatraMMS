@@ -3785,13 +3785,19 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 			//	ma è sufficiente che ci sia il deliveryCode.
 			//	Nello scenario di LiveRecording e monitor/virtualVOD, Outputs[outputIndex] non esiste.
 			// Per questo motivo abbiamo IF nel SQL
+			// 2023-08-03: in MMSEngineService.cpp ho aggiunto outputs in MMS_IngestionJob nel caso di monitor/virtualVOD
+			//	perchè penso IF nel sql statement sotto non funzionava in alcuni casi (quando outputs non esisteva)
+			//	Per cui ho semplificato il comando sotto
             lastSQLCommand = 
 				string("update MMS_IngestionJob set ")
+				/*
 				+ "metaDataContent = IF(JSON_EXTRACT(metaDataContent, '$.outputs[" + to_string(outputIndex) + "]') is null, "
 					+ "JSON_ARRAY_APPEND(metaDataContent, '$.outputs', "
 						+ "CAST('{\"outputType\": \"HLS_Channel\", \"deliveryCode\": " + to_string(deliveryCode) + "}' AS JSON)), "
 					+ "JSON_SET(metaDataContent, '$.outputs[" + to_string(outputIndex) + "].deliveryCode', ?) "
 					+ ") "
+				*/
+				+ "metaDataContent = JSON_SET(metaDataContent, '$.outputs[" + to_string(outputIndex) + "].deliveryCode', ?) "
 				"where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -7350,7 +7356,11 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "monitorVirtualVODOutputRootIndex";
 				parametersRoot[field] = monitorVirtualVODOutputRootIndex;
 
-				field = "outputs";
+				// 2023-08-03: ho provato a eliminare Root dalla label. Il problema è che non posso cambiare
+				//	outputsRoot da tutti gli update di MMS_EncodingJob in quanto LiveProxy, Countdown, VODProxy
+				//	usano outputsRoot. Questi ultimi non li posso cambiare perchè dovrei far ripartire tutti
+				//	i canali di CiborTV
+				field = "outputsRoot";
 				parametersRoot[field] = outputsRoot;
 
 				field = "framesToBeDetected";

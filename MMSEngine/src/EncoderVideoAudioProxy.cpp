@@ -5504,7 +5504,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 	}
 
 	{
-		string field = "outputs";
+		string field = "outputsRoot";
 		Json::Value outputsRoot = (_encodingItem->_encodingParametersRoot)[field];
 
 		bool killedByUser = false;
@@ -5589,7 +5589,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputs";
+						field = "outputsRoot";
 						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
 
 						try
@@ -5732,7 +5732,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputs";
+						field = "outputsRoot";
 						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
 
 						try
@@ -5839,7 +5839,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputs";
+						field = "outputsRoot";
 						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
 
 						try
@@ -5929,8 +5929,6 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							field = "segmentDurationInSeconds";
 							outputRoot[field] = segmentDurationInSeconds;
 						}
-						else	// same default used in FFMpeg.cpp
-							segmentDurationInSeconds = 10;
 
 						if (playlistEntriesNumber > 0)
 						{
@@ -5949,9 +5947,11 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 							if (liveRecorderVirtualVOD)
 							{
+								// 10 is the same default used in FFMpeg.cpp
+								int localSegmentDurationInSeconds = segmentDurationInSeconds > 0 ? segmentDurationInSeconds : 10;
 								int maxDurationInMinutes = JSONUtils::asInt(
 									_encodingItem->_ingestedParametersRoot["liveRecorderVirtualVOD"], "maxDuration", 30);
-								outputRoot["playlistEntriesNumber"] = (maxDurationInMinutes * 60) / segmentDurationInSeconds;
+								outputRoot["playlistEntriesNumber"] = (maxDurationInMinutes * 60) / localSegmentDurationInSeconds;
 							}
 						}
 
@@ -6007,7 +6007,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputs";
+						field = "outputsRoot";
 						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
 
 						try

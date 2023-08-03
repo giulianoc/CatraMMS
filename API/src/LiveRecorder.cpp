@@ -294,7 +294,7 @@ void LiveRecorder::encodeContent(
 			liveURL = JSONUtils::asString(encodingParametersRoot, "liveURL", "");
 		}
 
-		Json::Value outputsRoot = encodingParametersRoot["outputs"];
+		Json::Value outputsRoot = encodingParametersRoot["outputsRoot"];
 
 		{
 			bool monitorHLS = JSONUtils::asBool(encodingParametersRoot, "monitorHLS", false);
