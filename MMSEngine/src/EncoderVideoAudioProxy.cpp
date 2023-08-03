@@ -6019,9 +6019,13 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 								+ ", hlsChannelConfigurationLabel: " + hlsChannelConfigurationLabel 
 								+ ", reservedLabel: " + reservedLabel 
+								+ ", outputIndex: " + to_string(outputIndex)
 								+ ", deliveryCode: " + to_string(deliveryCode)
 								+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
 								+ ", playlistEntriesNumber: " + to_string(playlistEntriesNumber)
+								+ ", manifestDirectoryPath: " + manifestDirectoryPath
+								+ ", manifestFileName: " + manifestFileName
+								+ ", otherOutputOptions: " + otherOutputOptions
 								+ ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
 							);
 
