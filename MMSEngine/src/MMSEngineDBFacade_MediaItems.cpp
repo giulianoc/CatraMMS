@@ -5363,7 +5363,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             int64_t retentionInMinutes = _contentRetentionInMinutesDefaultValue;
             // string encodingProfilesSet;
 
-            string field = "Title";
+            string field = "title";
             title = JSONUtils::asString(parametersRoot, field, "");
             
             field = "ingester";
@@ -5528,14 +5528,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
         {
             string uniqueName;
-            if (JSONUtils::isMetadataPresent(parametersRoot, "UniqueName"))
-                uniqueName = JSONUtils::asString(parametersRoot, "UniqueName", "");
+            if (JSONUtils::isMetadataPresent(parametersRoot, "uniqueName"))
+                uniqueName = JSONUtils::asString(parametersRoot, "uniqueName", "");
 
             if (uniqueName != "")
             {
 				bool allowUniqueNameOverride = false;
 				allowUniqueNameOverride =
-					JSONUtils::asBool(parametersRoot, "AllowUniqueNameOverride", false);
+					JSONUtils::asBool(parametersRoot, "allowUniqueNameOverride", false);
 
 				manageExternalUniqueName(conn, workspace->_workspaceKey, mediaItemKey,
 					allowUniqueNameOverride, uniqueName);
@@ -6129,7 +6129,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 		if (uniqueName == "")
 		{
 			/*
-			string errorMessage = __FILEREF__ + "UniqueName is empty"
+			string errorMessage = __FILEREF__ + "uniqueName is empty"
 				+ ", uniqueName: " + uniqueName
 			;
 			_logger->error(errorMessage);

@@ -3,15 +3,15 @@
 	"task": {
 		"label": "urban_male_lounge.mp4",
 		"parameters": {
-			"AllowUniqueNameOverride": false,
+			"allowUniqueNameOverride": false,
 			"fileFormat": "mp4",
 			"PushBinaryFileName": "urban_male_lounge.mp4",
 			"ingester": "Giuliano",
 			"retention": "10y",
-			"Title": "urban_male_lounge"
+			"title": "urban_male_lounge"
 		},
 		"type": "Add-Content",
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"label": "encode urban_male_lounge",
 				"parameters": {

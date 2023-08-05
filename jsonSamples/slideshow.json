@@ -2,7 +2,7 @@
     "type": "Workflow",
     "label": "My workflow",
     "Variables": {
-        "Title": "My Title of the content"
+        "title": "My Title of the content"
     },
     "task": {
         "label": "my label",
@@ -16,10 +16,10 @@
                 { "mediaItemKey": 330 },
                 { "mediaItemKey": 332 }
             ],
-            "DurationOfEachSlideInSeconds": 5,
+            "durationOfEachSlideInSeconds": 5,
             "OutputFrameRate": 30,
             "userData": { "MyData": "this is my data" },
-            "Title": "${Title}"
+            "title": "${title}"
         }
     }
 }

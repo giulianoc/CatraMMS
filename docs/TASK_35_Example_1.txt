@@ -2,16 +2,16 @@
 	"label": "Use of a WorkflowAsLibrary",
 
 	"parameters": {
-		"WorkflowAsLibraryLabel": "Best Picture of the Video",
-		"WorkflowAsLibraryType": "MMS",
+		"workflowAsLibraryLabel": "Best Picture of the Video",
+		"workflowAsLibraryType": "MMS",
 
-		"ImageRetention": "1d",
-		"ImageTags": "FACE",
+		"imageRetention": "1d",
+		"imageTags": "FACE",
 		"ingester": "Admin",
-		"InitialFramesNumberToBeSkipped": 1500,
-		"InstantInSeconds": 60,
+		"initialFramesNumberToBeSkipped": 1500,
+		"instantInSeconds": 60,
 		"label": "Image label",
-		"Title": "My Title"
+		"title": "My Title"
 	},
 	"type": "Workflow-As-Library"
 }

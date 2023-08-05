@@ -2,8 +2,8 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"TitleOfVideo": "My Title of the video content",
-		"TitleOfFrame": "My Title of the frame content"
+		"titleOfVideo": "My Title of the video content",
+		"titleOfFrame": "My Title of the frame content"
 	},
 	"task": {
 		"label": "...",
@@ -13,16 +13,16 @@
 			"fileFormat": "mp4",
 			"contentType": "video",
 			"userData": { "MyData": "this is my video data" },
-			"Title": "${TitleOfVideo}"
+			"title": "${titleOfVideo}"
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"type": "Motion-JPEG-by-I-Frames",
 				"parameters": {
 					"startTimeInSeconds": 0.0,
 					"MaxFramesNumber": 5,
 					"userData": { "MyData": "this is my frame data" },
-					"Title": "${TitleOfFrame}"
+					"title": "${titleOfFrame}"
 				}
 			}
 		}

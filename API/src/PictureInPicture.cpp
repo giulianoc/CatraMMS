@@ -321,7 +321,7 @@ void PictureInPicture::encodeContent(
 			}
 
 			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
+				JSONUtils::asString(ingestedParametersRoot, "title", "")
 				+ " (add pictureInPicture from external transcoder)"
 			;
 

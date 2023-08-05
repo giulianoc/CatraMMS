@@ -2,9 +2,9 @@
     "type": "Workflow",
     "label": "1",
     "Variables": {
-        "TitleOfVideo_1": "My Title of the video_1 content",
-        "TitleOfVideo_2": "My Title of the video_2 content",
-        "TitleOfConcatVideo": "My Title of the concat video content"
+        "titleOfVideo_1": "My Title of the video_1 content",
+        "titleOfVideo_2": "My Title of the video_2 content",
+        "titleOfConcatVideo": "My Title of the concat video content"
     },
     "GroupOfTasks": {
 		"executionType": "parallel",
@@ -17,7 +17,7 @@
                     "fileFormat": "mp4",
                     "contentType": "video",
                     "userData": { "MyData": "this is my video data" },
-                    "Title": "${TitleOfVideo_1}"
+                    "title": "${titleOfVideo_1}"
                 }
             },
             {
@@ -28,16 +28,16 @@
                     "fileFormat": "mp4",
                     "contentType": "video",
                     "userData": { "MyData": "this is my video data" },
-                    "Title": "${TitleOfVideo_2}"
+                    "title": "${titleOfVideo_2}"
                 }
             }
         ],
-        "OnSuccess": {
+        "onSuccess": {
             "task": {
                 "type": "Concat-Demuxer",
                 "parameters": {
                     "userData": { "MyData": "this is my frame data" },
-                    "Title": "${TitleOfConcatVideo}"
+                    "title": "${titleOfConcatVideo}"
                 }
             }
         }

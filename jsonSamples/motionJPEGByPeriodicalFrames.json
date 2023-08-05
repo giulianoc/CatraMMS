@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"Title": "My Title of the content"
+		"title": "My Title of the content"
 	},
 	"task": {
 		"label": "my label",
@@ -13,7 +13,7 @@
 			"PeriodInSeconds": 2,
 			"MaxFramesNumber": 5,
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"title": "${title}"
 		}
 	}
 }

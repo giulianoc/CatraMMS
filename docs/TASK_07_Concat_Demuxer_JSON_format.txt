@@ -82,7 +82,7 @@
 		"physicalItemRetention": "30m".
 
 		// optional
-		"Title": "My title",
+		"title": "My title",
 
 		// optional
 		"ingester": "my ingester",
@@ -98,12 +98,12 @@
 
 		// Optional: UniqueName can be used by the Client to set a Key to the content.
 		// Since it represents a unique key, the Client cannot add two contents using the same UniqueName within a Workspace,
-		// unless the field 'AllowUniqueNameOverride' is set to true
-		"UniqueName": "XXX",
+		// unless the field 'allowUniqueNameOverride' is set to true
+		"uniqueName": "XXX",
 
 		// Optional: if true this field allow a unique name to be override. Since the UniqueName has to be unique in MMS,
 		// in case a UniqueName is override, the previous one is changed to be <previous unique name>-<timestamp>
-		"AllowUniqueNameOverride": false,
+		"allowUniqueNameOverride": false,
 
 		// optional: by default the content is published.
 		//    It specifies if and when the content is published.

@@ -12064,7 +12064,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			oneFramePerSecond = true;
 			if (faceRecognitionOutput == "FrameContainingFace")
 			{
-				field = "InitialFramesNumberToBeSkipped";
+				field = "initialFramesNumberToBeSkipped";
 				initialFramesNumberToBeSkipped = JSONUtils::asInt(parametersRoot, field, 0);
 
 				field = "OneFramePerSecond";
@@ -14874,15 +14874,15 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				{
 					Json::Value eventsRoot = internalMMSRoot[field];
 
-					field = "OnSuccess";
+					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						liveCutOnSuccess = eventsRoot[field];
 
-					field = "OnError";
+					field = "onError";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						liveCutOnError = eventsRoot[field];
 
-					field = "OnComplete";
+					field = "onComplete";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						liveCutOnComplete = eventsRoot[field];
 				}
@@ -15086,17 +15086,17 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 
 				if (liveCutOnSuccess != Json::nullValue)
 				{
-					field = "OnSuccess";
+					field = "onSuccess";
 					cutRoot[field] = liveCutOnSuccess;
 				}
 				if (liveCutOnError != Json::nullValue)
 				{
-					field = "OnError";
+					field = "onError";
 					cutRoot[field] = liveCutOnError;
 				}
 				if (liveCutOnComplete != Json::nullValue)
 				{
-					field = "OnComplete";
+					field = "onComplete";
 					cutRoot[field] = liveCutOnComplete;
 				}
 			}
@@ -15107,7 +15107,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				string field = "task";
 				cutTaskRoot[field] = cutRoot;
 
-				field = "OnSuccess";
+				field = "onSuccess";
 				concatDemuxerRoot[field] = cutTaskRoot;
 			}
 
@@ -15804,15 +15804,15 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				{
 					Json::Value eventsRoot = internalMMSRoot[field];
 
-					field = "OnSuccess";
+					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						liveCutOnSuccess = eventsRoot[field];
 
-					field = "OnError";
+					field = "onError";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						liveCutOnError = eventsRoot[field];
 
-					field = "OnComplete";
+					field = "onComplete";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						liveCutOnComplete = eventsRoot[field];
 				}
@@ -16020,17 +16020,17 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 				if (liveCutOnSuccess != Json::nullValue)
 				{
-					field = "OnSuccess";
+					field = "onSuccess";
 					cutRoot[field] = liveCutOnSuccess;
 				}
 				if (liveCutOnError != Json::nullValue)
 				{
-					field = "OnError";
+					field = "onError";
 					cutRoot[field] = liveCutOnError;
 				}
 				if (liveCutOnComplete != Json::nullValue)
 				{
-					field = "OnComplete";
+					field = "onComplete";
 					cutRoot[field] = liveCutOnComplete;
 				}
 			}
@@ -16041,7 +16041,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				string field = "task";
 				cutTaskRoot[field] = cutRoot;
 
-				field = "OnSuccess";
+				field = "onSuccess";
 				concatDemuxerRoot[field] = cutTaskRoot;
 			}
 
@@ -16209,7 +16209,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
             }
             youTubeConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "Title";
+            field = "title";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -17006,15 +17006,15 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				{
 					Json::Value eventsRoot = internalMMSRoot[field];
 
-					field = "OnSuccess";
+					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						youTubeLiveBroadcastOnSuccess = eventsRoot[field];
 
-					field = "OnError";
+					field = "onError";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						youTubeLiveBroadcastOnError = eventsRoot[field];
 
-					field = "OnComplete";
+					field = "onComplete";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						youTubeLiveBroadcastOnComplete = eventsRoot[field];
 				}
@@ -17047,7 +17047,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					}
 					{
 						Json::Value removed;
-						field = "Title";
+						field = "title";
 						liveProxyParametersRoot.removeMember(field, &removed);
 					}
 					{
@@ -17139,7 +17139,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					}
 					{
 						Json::Value removed;
-						field = "Title";
+						field = "title";
 						vodProxyParametersRoot.removeMember(field, &removed);
 					}
 					{
@@ -17652,15 +17652,15 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				{
 					Json::Value eventsRoot = internalMMSRoot[field];
 
-					field = "OnSuccess";
+					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						facebookLiveBroadcastOnSuccess = eventsRoot[field];
 
-					field = "OnError";
+					field = "onError";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						facebookLiveBroadcastOnError = eventsRoot[field];
 
-					field = "OnComplete";
+					field = "onComplete";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						facebookLiveBroadcastOnComplete = eventsRoot[field];
 				}
@@ -18245,7 +18245,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 
                 string title;
                 {
-                    string field = "Title";
+                    string field = "title";
                     if (JSONUtils::isMetadataPresent(multiLocalAssetIngestionEvent.getParametersRoot(), field))
                         title = JSONUtils::asString(multiLocalAssetIngestionEvent.getParametersRoot(), field, "");                    
                     title += (
@@ -18676,7 +18676,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 		{
 			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
 			{
-				field = "InstantInSeconds";
+				field = "instantInSeconds";
 				startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
 			}
 			else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
@@ -18709,9 +18709,9 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 		//	endTimeInSeconds is bigger of few milliseconds of the duration of the media
 		//	For this reason this field is set to true by default
 		bool fixStartTimeIfOvercomeDuration = true;
-		if (JSONUtils::isMetadataPresent(parametersRoot, "FixInstantInSecondsIfOvercomeDuration"))
+		if (JSONUtils::isMetadataPresent(parametersRoot, "fixInstantInSecondsIfOvercomeDuration"))
 			fixStartTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot,
-				"FixInstantInSecondsIfOvercomeDuration", true);
+				"fixInstantInSecondsIfOvercomeDuration", true);
 		else if (JSONUtils::isMetadataPresent(parametersRoot, "FixStartTimeIfOvercomeDuration"))
 			fixStartTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot,
 				"FixStartTimeIfOvercomeDuration", true);
@@ -23153,7 +23153,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 		parametersRoot[field] = crossReferenceRoot;
 	}
 
-    field = "Title";
+    field = "title";
     if (title != "")
         parametersRoot[field] = title;
 

@@ -2,8 +2,8 @@
 	"type": "Workflow",
 	"label": "My Workflow",
 	"Variables": {
-		"TitleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
-		"TitleOfFrame": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
+		"titleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"titleOfFrame": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"label": "My ingestion",
@@ -12,9 +12,9 @@
 			"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"fileFormat": "mp4",
 			"userData": { "MyData": "this is my video data" },
-			"Title": "${TitleOfVideo}"
+			"title": "${titleOfVideo}"
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"label": "My I-Frames",
 				"type": "I-Frames",
@@ -22,7 +22,7 @@
 					"startTimeInSeconds": 0.0,
 					"MaxFramesNumber": 5,
 					"userData": { "MyData": "this is my frame data" },
-					"Title": "${TitleOfFrame}"
+					"title": "${titleOfFrame}"
 				}
 			}
 		}

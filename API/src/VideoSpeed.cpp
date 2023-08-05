@@ -209,7 +209,7 @@ void VideoSpeed::encodeContent(
 			}
 
 			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
+				JSONUtils::asString(ingestedParametersRoot, "title", "")
 				+ " (add videoSpeed from external transcoder)"
 			;
 

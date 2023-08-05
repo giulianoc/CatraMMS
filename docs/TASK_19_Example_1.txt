@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
+		"title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"label": "my label",
@@ -15,7 +15,7 @@
 			"ImagePosition_X_InPixel": "10",                                  
 			"ImagePosition_Y_InPixel": "10",                                
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"title": "${title}"
 		}
 	}
 }

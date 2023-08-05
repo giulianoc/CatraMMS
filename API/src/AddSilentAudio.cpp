@@ -179,7 +179,7 @@ void AddSilentAudio::encodeContent(
 				}
 
 				string workflowLabel =
-					JSONUtils::asString(ingestedParametersRoot, "Title", "")
+					JSONUtils::asString(ingestedParametersRoot, "title", "")
 					+ " (add " + api + " from external transcoder)"
 				;
 

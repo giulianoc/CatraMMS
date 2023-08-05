@@ -1,28 +1,66 @@
 {
+  "Variables": {
+    "mediaItemTitle": {
+      "Description": "Media item title",
+      "IsNull": false,
+      "Position": 3,
+      "type": "string",
+      "Value": ""
+    },
+    "recordingCode": {
+      "Description": "Recording Code",
+      "IsNull": false,
+      "Position": 2,
+      "type": "integer",
+      "Value": 0
+    },
+    "liveCutStart": {
+      "Description": "Start of the LiveCut",
+      "IsNull": false,
+      "Position": 0,
+      "type": "datetime-millisecs",
+      "Value": "2022-01-24T21:07:34.088Z"
+    },
+    "liveCutEnd": {
+      "Description": "End of the LiveCut",
+      "IsNull": false,
+      "Position": 1,
+      "type": "datetime-millisecs",
+      "Value": "2022-01-24T21:09:05.011Z"
+    },
+    "mediaItemRetention": {
+      "Description": "Media item retention",
+      "IsNull": false,
+      "Position": 4,
+      "type": "string",
+      "Value": ""
+    }
+  },
   "label": "Cut from Recording",
+  "type": "Workflow",
   "task": {
     "label": "Cut from Recording",
-    "OnSuccess": {"task": {
+    "onSuccess": {"task": {
       "label": "<no label>",
       "parameters": {
         "executionType": "parallel",
         "tasks": [
           {
             "label": "Picture of Cut",
+            "type": "Workflow-As-Library",
             "parameters": {
-              "AllowUniqueNameOverride": false,
-              "ImageRetention": "${MediaItemRetention}",
-              "ImageTags": "[ \"FACE\" ]",
-              "ImageUserData": "",
+              "workflowAsLibraryType": "MMS",
+              "workflowAsLibraryLabel": "Best Picture of the Video",
+              "allowUniqueNameOverride": false,
+              "imageRetention": "${mediaItemRetention}",
+              "imageTags": "[ \"FACE\" ]",
+              "imageUserData": "",
               "ingester": "Admin",
-              "InitialFramesNumberToBeSkipped": 1500,
-              "InstantInSeconds": 60,
-              "Title": "${MediaItemTitle}",
-              "UniqueName": "",
-              "WorkflowAsLibraryLabel": "Best Picture of the Video",
-              "WorkflowAsLibraryType": "MMS"
-            },
-            "type": "Workflow-As-Library"
+              "initialFramesNumberToBeSkipped": 1500,
+              "instantInSeconds": 60,
+              "title": "${mediaItemTitle}",
+              "uniqueName": ""
+            }
           },
           {
             "label": "Cut encoding",
@@ -43,56 +81,18 @@
       "type": "GroupOfTasks"
     }},
     "parameters": {
-      "AllowUniqueNameOverride": false,
+      "allowUniqueNameOverride": false,
       "CutPeriod": {
-        "End": "${LiveCutEnd}",
-        "Start": "${LiveCutStart}"
+        "End": "${liveCutEnd}",
+        "Start": "${liveCutStart}"
       },
-      "DeliveryCode": "${RecordingCode}",
+      "DeliveryCode": "${recordingCode}",
       "ErrorIfAChunkIsMissing": false,
       "ingester": "Giuliano Catrambone",
       "MaxWaitingForLastChunkInSeconds": 90,
-      "retention": "${MediaItemRetention}",
-      "Title": "${MediaItemTitle}"
+      "retention": "${mediaItemRetention}",
+      "title": "${mediaItemTitle}"
     },
     "type": "Live-Cut"
-  },
-  "type": "Workflow",
-  "Variables": {
-    "LiveCutEnd": {
-      "Description": "End of the LiveCut",
-      "IsNull": false,
-      "Position": 1,
-      "type": "datetime-millisecs",
-      "Value": "2022-01-24T21:09:05.011Z"
-    },
-    "LiveCutStart": {
-      "Description": "Start of the LiveCut",
-      "IsNull": false,
-      "Position": 0,
-      "type": "datetime-millisecs",
-      "Value": "2022-01-24T21:07:34.088Z"
-    },
-    "MediaItemRetention": {
-      "Description": "Media item retention",
-      "IsNull": false,
-      "Position": 4,
-      "type": "string",
-      "Value": ""
-    },
-    "MediaItemTitle": {
-      "Description": "Media item title",
-      "IsNull": false,
-      "Position": 3,
-      "type": "string",
-      "Value": ""
-    },
-    "RecordingCode": {
-      "Description": "Recording Code",
-      "IsNull": false,
-      "Position": 2,
-      "type": "integer",
-      "Value": 0
-    }
   }
 }

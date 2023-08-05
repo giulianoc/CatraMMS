@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {  
-		"Title": "My Title of the content"
+		"title": "My Title of the content"
 	},
 	"task": {
 		"label": "This is my video",
@@ -12,9 +12,9 @@
 			"fileFormat": "mp4",
 			"contentType": "video",
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"title": "${title}"
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"type": "Email-Notification",
 				"parameters": {

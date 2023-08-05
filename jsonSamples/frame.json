@@ -2,16 +2,16 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {  
-		"Title": "My Title of the content"
+		"title": "My Title of the content"
 	},
 	"task": {
 		"label": "my label",
 		"type": "Frame",
 		"parameters": {
 			"ReferenceMediaItemKey": 11,
-			"InstantInSeconds": 2.5,
+			"instantInSeconds": 2.5,
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"title": "${title}"
 		}
 	}
 }

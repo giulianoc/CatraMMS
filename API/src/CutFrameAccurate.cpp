@@ -198,7 +198,7 @@ void CutFrameAccurate::encodeContent(
 			}
 
 			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
+				JSONUtils::asString(ingestedParametersRoot, "title", "")
 				+ " (add cutFrameAccurate from external transcoder)"
 			;
 

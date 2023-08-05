@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "My Workflow",
 	"Variables": {  
-		"Title": "My Title of the content"
+		"title": "My Title of the content"
 	},
 	"task": {
 		"label": "My Task",
@@ -11,7 +11,7 @@
 			"fileFormat": "mpg",
 			"contentType": "video",
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"title": "${title}"
 		}
 	}
 }

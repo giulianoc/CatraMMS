@@ -943,7 +943,7 @@ void IntroOutroOverlay::encodeContent(
 			}
 
 			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
+				JSONUtils::asString(ingestedParametersRoot, "title", "")
 				+ " (add introOutroOverlay from external transcoder)"
 			;
 

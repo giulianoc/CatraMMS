@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
+		"title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"label": "my label",
@@ -17,7 +17,7 @@
 			"Overlay_Width_InPixel": "100",                                  
 			"Overlay_Height_InPixel": "100",                                
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"title": "${title}"
 		}
 	}
 }

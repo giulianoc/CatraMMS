@@ -1,39 +1,39 @@
 {
   "Variables": {
-    "Title": {
+    "title": {
       "Position": 0,
 	  "IsNull": false,
       "Description": "Title of the Picture",
       "type": "string",
       "Value": "My Title"
     },
-    "ImageTags": {
+    "imageTags": {
       "Position": 1,
 	  "IsNull": false,
       "Description": "string representing a json array of strings. i.e.: [\"tag 1\", \"tag 2\"]",
       "type": "jsonArray",
       "Value": [ "FACE" ]
     },
-    "InstantInSeconds": {
+    "instantInSeconds": {
       "Position": 2,
 	  "IsNull": false,
       "Description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
       "type": "decimal",
       "Value": 60
     },
-    "UniqueName": {
+    "uniqueName": {
       "Position": 3,
 	  "IsNull": false,
       "type": "string",
       "Value": ""
     },
-    "AllowUniqueNameOverride": {
+    "allowUniqueNameOverride": {
       "Position": 4,
 	  "IsNull": false,
       "type": "boolean",
       "Value": false
     },
-    "ImageRetention": {
+    "imageRetention": {
       "Position": 5,
 	  "IsNull": false,
       "type": "string",
@@ -45,14 +45,14 @@
       "type": "string",
       "Value": "Admin"
     },
-    "InitialFramesNumberToBeSkipped": {
+    "initialFramesNumberToBeSkipped": {
       "Position": 7,
 	  "IsNull": false,
       "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
       "type": "integer",
       "Value": 1500
     },
-    "ImageUserData": {
+    "imageUserData": {
       "Position": 8,
 	  "IsNull": false,
       "type": "jsonObject",
@@ -76,29 +76,29 @@
   "label": "Best Picture of the Video",
   "type": "Workflow",
   "task": {
-    "label": "${Title}",
+    "label": "${title}",
     "type": "GroupOfTasks",
     "parameters": {
       "executionType": "parallel",
 	  "processingStartingFrom": "${processingStartingFrom}",
       "referencesOutput": [
-        {"label": "Frame Containing Face: ${Title}"},
-        {"label": "Frame: ${Title}"}
+        {"label": "Frame Containing Face: ${title}"},
+        {"label": "Frame: ${title}"}
       ],
       "tasks": [{
-        "label": "Frame Containing Face: ${Title}",
+        "label": "Frame Containing Face: ${title}",
         "type": "Face-Recognition",
-        "OnError": {"task": {
-          "label": "Frame: ${Title}",
+        "onError": {"task": {
+          "label": "Frame: ${title}",
           "type": "Frame",
-          "OnSuccess": {"task": {
-			"label": "Encoding profiles (Frame): ${Title}",
+          "onSuccess": {"task": {
+			"label": "Encoding profiles (Frame): ${title}",
 			"parameters": {
 				"executionType": "parallel",
 				"processingStartingFrom": "${processingStartingFrom}",
 				"tasks": [
 					{
-						"label": "Encode image MMS_JPG_W240 (Frame): ${Title}",
+						"label": "Encode image MMS_JPG_W240 (Frame): ${title}",
 						"parameters": {
 							"contentType": "image",
 							"encodingPriority": "High",
@@ -108,7 +108,7 @@
 						"type": "Encode"
 					},
 					{
-						"label": "Encode image MMS_PNG_W240 (Frame): ${Title}",
+						"label": "Encode image MMS_PNG_W240 (Frame): ${title}",
 						"parameters": {
 							"contentType": "image",
 							"encodingPriority": "High",
@@ -122,27 +122,27 @@
 			"type": "GroupOfTasks"
 			}},
           "parameters": {
-            "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
-            "UniqueName": "${UniqueName}",
+            "allowUniqueNameOverride": "${allowUniqueNameOverride}",
+            "uniqueName": "${uniqueName}",
             "height": 480,
             "ingester": "${ingester}",
-            "InstantInSeconds": "${InstantInSeconds}",
+            "instantInSeconds": "${instantInSeconds}",
 			"processingStartingFrom": "${processingStartingFrom}",
-            "retention": "${ImageRetention}",
-            "tags": "${ImageTags}",
-            "Title": "${Title}",
-			"userData": "${ImageUserData}",
+            "retention": "${imageRetention}",
+            "tags": "${imageTags}",
+            "title": "${title}",
+			"userData": "${imageUserData}",
             "width": 640
           }
         }},
-        "OnSuccess": {"task": {
-          "label": "Encoding profiles (FrameContainingFace): ${Title}",
+        "onSuccess": {"task": {
+          "label": "Encoding profiles (FrameContainingFace): ${title}",
           "parameters": {
 			"executionType": "parallel",
 			"processingStartingFrom": "${processingStartingFrom}",
 			"tasks": [
 				{
-					"label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${Title}",
+					"label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${title}",
 					"parameters": {
 						"contentType": "image",
 						"encodingPriority": "High",
@@ -152,7 +152,7 @@
 					"type": "Encode"
 				},
 				{
-					"label": "Encode image MMS_PNG_W240 (FrameContainingFace): ${Title}",
+					"label": "Encode image MMS_PNG_W240 (FrameContainingFace): ${title}",
 					"parameters": {
 						"contentType": "image",
 						"encodingPriority": "High",
@@ -166,20 +166,20 @@
           "type": "GroupOfTasks"
 		}},
         "parameters": {
-          "AllowUniqueNameOverride": "${AllowUniqueNameOverride}",
-          "UniqueName": "${UniqueName}",
+          "allowUniqueNameOverride": "${allowUniqueNameOverride}",
+          "uniqueName": "${uniqueName}",
           "CascadeName": "haarcascade_frontalface_alt_tree",
           "encodingPriority": "High",
           "ingester": "${ingester}",
-          "InitialFramesNumberToBeSkipped": "${InitialFramesNumberToBeSkipped}",
+          "initialFramesNumberToBeSkipped": "${initialFramesNumberToBeSkipped}",
           "OneFramePerSecond": true,
           "Output": "FrameContainingFace",
 		  "processingStartingFrom": "${processingStartingFrom}",
 		  "references": "${references}",
-          "retention": "${ImageRetention}",
-          "tags": "${ImageTags}",
-          "Title": "${Title}",
-		  "userData": "${ImageUserData}"
+          "retention": "${imageRetention}",
+          "tags": "${imageTags}",
+          "title": "${title}",
+		  "userData": "${imageUserData}"
         }
       }]
     }

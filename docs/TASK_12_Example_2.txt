@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
+		"title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"label": "My video",
@@ -11,9 +11,9 @@
 			"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"fileFormat": "mp4",
 			"userData": { "MyData": "this is my video data" },
-			"Title": "${TitleOfVideo}"
+			"title": "${titleOfVideo}"
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"label": "my label",
 				"type": "Encode",
@@ -23,7 +23,7 @@
 				}
 			}
 		},
-		"OnComplete": {
+		"onComplete": {
 			"task": {
 				"type": "Email-Notification",
 				"parameters": {

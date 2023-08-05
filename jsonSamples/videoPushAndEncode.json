@@ -2,7 +2,7 @@
     "type": "Workflow",
     "label": "1",
     "Variables": {
-        "TitleOfVideo": "My Title of the video content"
+        "titleOfVideo": "My Title of the video content"
     },
     "task": {
         "label": "My video (push)",
@@ -10,10 +10,10 @@
         "parameters": {
             "fileFormat": "mp4",
             "userData": { "MyData": "this is my video data" },
-            "Title": "${TitleOfVideo}",
+            "title": "${titleOfVideo}",
 	    "FileSizeInBytes": 278341022
         },
-        "OnSuccess": {
+        "onSuccess": {
             "task": {
                 "label": "my label",
                 "type": "Encode",

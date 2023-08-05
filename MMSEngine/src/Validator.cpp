@@ -209,7 +209,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot,
 	bool validateDependenciesToo)
 {
-    string field = "OnSuccess";
+    string field = "onSuccess";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
@@ -252,7 +252,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         }
     }
 
-    field = "OnError";
+    field = "onError";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
@@ -295,7 +295,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
         }
     }    
     
-    field = "OnComplete";
+    field = "onComplete";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
@@ -4084,7 +4084,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "UniqueName";
+    field = "uniqueName";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -5152,8 +5152,8 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
 		dependencies)
 {
     vector<string> mandatoryFields = {
-        "WorkflowAsLibraryType",
-        "WorkflowAsLibraryLabel"
+        "workflowAsLibraryType",
+        "workflowAsLibraryLabel"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -5172,12 +5172,12 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
         }
     }
 
-    string field = "WorkflowAsLibraryType";
+    string field = "workflowAsLibraryType";
     string workflowAsLibraryType = JSONUtils::asString(parametersRoot, field, "");
 
     if (!isWorkflowAsLibraryTypeValid(workflowAsLibraryType))
     {
-        string errorMessage = string("Unknown WorkflowAsLibraryType")
+        string errorMessage = string("Unknown workflowAsLibraryType")
             + ", workflowAsLibraryType: " + workflowAsLibraryType
             + ", label: " + label
         ;

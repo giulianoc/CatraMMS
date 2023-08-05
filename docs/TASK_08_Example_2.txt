@@ -2,8 +2,8 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"TitleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
-		"TitleOfCut": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
+		"titleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"titleOfCut": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"label": "...",
@@ -12,16 +12,16 @@
 			"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"fileFormat": "mp4",
 			"userData": { "MyData": "this is my video data" },
-			"Title": "${TitleOfVideo}"
+			"title": "${titleOfVideo}"
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"type": "Cut",
 				"parameters": {
 					"startTimeInSeconds": 1.0,
 					"endTimeInSeconds": 5.0,
 					"userData": { "MyData": "this is my frame data" },
-					"Title": "${TitleOfCut}"
+					"title": "${titleOfCut}"
 				}
 			}
 		}

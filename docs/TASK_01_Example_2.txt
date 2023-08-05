@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "...",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
+		"title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"label": "...",
@@ -11,7 +11,7 @@
 			"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"fileFormat": "mp4",
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"title": "${title}"
 		}
 	}
 }

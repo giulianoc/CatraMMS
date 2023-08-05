@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
+		"title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"label": "my label",
@@ -11,9 +11,9 @@
 			"references": [
 				{ "mediaItemKey": 11 }
 			],
-			"InstantInSeconds": 2.5,
+			"instantInSeconds": 2.5,
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"title": "${title}"
 		}
 	}
 }

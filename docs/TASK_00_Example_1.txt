@@ -2,8 +2,8 @@
 	"type": "Workflow",
 	"label": "GroupOfTasks example",
 	"Variables": {
-		"TitleOfVideo_1": { "Value": "My Title of the video_1 content", "type": "string", "Description": "..." },
-		"TitleOfVideo_2": { "Value": "My Title of the video_2 content", "type": "string", "Description": "..." }
+		"titleOfVideo_1": { "Value": "My Title of the video_1 content", "type": "string", "Description": "..." },
+		"titleOfVideo_2": { "Value": "My Title of the video_2 content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"type": "GroupOfTasks",
@@ -18,7 +18,7 @@
 						"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"fileFormat": "mp4",
 						"userData": { "MyData": "this is my video data" },
-						"Title": "${TitleOfVideo_1}"
+						"title": "${titleOfVideo_1}"
 					}
 				},
 				{
@@ -28,7 +28,7 @@
 						"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 						"fileFormat": "mp4",
 						"userData": { "MyData": "this is my video data" },
-						"Title": "${TitleOfVideo_2}"
+						"title": "${titleOfVideo_2}"
 					}
 				}
 			]

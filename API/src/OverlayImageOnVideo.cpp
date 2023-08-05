@@ -236,7 +236,7 @@ void OverlayImageOnVideo::encodeContent(
 			}
 
 			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
+				JSONUtils::asString(ingestedParametersRoot, "title", "")
 				+ " (add overlayImageOnVideo from external transcoder)"
 			;
 

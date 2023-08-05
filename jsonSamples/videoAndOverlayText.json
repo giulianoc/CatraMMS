@@ -2,8 +2,8 @@
     "type": "Workflow",
     "label": "1",
     "Variables": {
-        "TitleOfVideo": "My Title of the video content",
-        "TitleOfOverlayVideo": "My Title of the overlay video content"
+        "titleOfVideo": "My Title of the video content",
+        "titleOfOverlayVideo": "My Title of the overlay video content"
     },
     "task": {
         "label": "My video",
@@ -12,9 +12,9 @@
             "sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
             "fileFormat": "mp4",
             "userData": { "MyData": "this is my video data" },
-            "Title": "${TitleOfVideo}"
+            "title": "${titleOfVideo}"
         },
-        "OnSuccess": {
+        "onSuccess": {
             "task": {
                 "label": "my label",
                 "type": "Overlay-Text-On-Video",
@@ -30,7 +30,7 @@
                     "BoxPercentageOpacity": 20,
 
                     "userData": { "MyData": "this is my data" },
-                    "Title": "${TitleOfOverlayVideo}"
+                    "title": "${titleOfOverlayVideo}"
                 }
             }
         }

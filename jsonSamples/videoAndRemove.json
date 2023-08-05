@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"TitleOfVideo": "My Title of the video content"
+		"titleOfVideo": "My Title of the video content"
 	},
 	"task": {
 		"label": "My label ...",
@@ -11,9 +11,9 @@
 			"sourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"fileFormat": "mp4",
 			"userData": { "MyData": "this is my video data" },
-			"Title": "${TitleOfVideo}"
+			"title": "${titleOfVideo}"
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"type": "Remove-Content",
 				"parameters": {

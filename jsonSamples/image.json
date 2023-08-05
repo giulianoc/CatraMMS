@@ -2,7 +2,7 @@
     "type": "Add-Content",         // mandatory
     "Version": "1.0",           // mandatory
     "ContentIngestion": {
-        "Title": "RiscaldamentoDiMaradona.jpg",            // mandatory
+        "title": "RiscaldamentoDiMaradona.jpg",            // mandatory
         "SubTitle": "aaaa",            // optional
         "ingester": "aaaa",         // optional
         "tags": "aaa",          // optional

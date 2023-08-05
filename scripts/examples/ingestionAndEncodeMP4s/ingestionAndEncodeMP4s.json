@@ -5,14 +5,14 @@
 		"label": "__FILENAME__",
 		"type": "Add-Content",
 		"parameters": {
-			"AllowUniqueNameOverride": false,
+			"allowUniqueNameOverride": false,
 			"fileFormat": "__FILEFORMAT__",
 			"PushBinaryFileName": "__FILENAME__",
 			"ingester": "Giuliano",
 			"retention": "10y",
-			"Title": "__TITLE__"
+			"title": "__TITLE__"
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"label": "GroupOfTasks __TITLE__",
 				"type": "GroupOfTasks",
@@ -33,17 +33,17 @@
 							"label": "Best Picture: __TITLE__",
 							"type": "Workflow-As-Library",
 							"parameters": {
-								"AllowUniqueNameOverride": false,
-								"ImageRetention": "10y",
-								"ImageTags": ["FACE"],
-								"ImageUserData": {},
+								"allowUniqueNameOverride": false,
+								"imageRetention": "10y",
+								"imageTags": ["FACE"],
+								"imageUserData": {},
 								"ingester": "Giuliano",
-								"InitialFramesNumberToBeSkipped": 1500,
-								"InstantInSeconds": 60,
-								"Title": "__TITLE__",
-								"UniqueName": "",
-								"WorkflowAsLibraryLabel": "Best Picture of the Video",
-								"WorkflowAsLibraryType": "MMS"
+								"initialFramesNumberToBeSkipped": 1500,
+								"instantInSeconds": 60,
+								"title": "__TITLE__",
+								"uniqueName": "",
+								"workflowAsLibraryLabel": "Best Picture of the Video",
+								"workflowAsLibraryType": "MMS"
 							}
 						}
 					]

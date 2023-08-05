@@ -191,7 +191,7 @@ void LiveRecorder::encodeContent(
 
         _liveRecording->_streamSourceType = JSONUtils::asString(encodingParametersRoot,
 			"streamSourceType", "IP_PULL");
-		int ipMMSAsServer_listenTimeoutInSeconds = encodingParametersRoot.get("ActAsServerListenTimeout", 300).asInt();
+		int ipMMSAsServer_listenTimeoutInSeconds = encodingParametersRoot.get("actAsServerListenTimeout", 300).asInt();
 		int pushListenTimeout = JSONUtils::asInt(encodingParametersRoot, "pushListenTimeout", -1);
 
 		int captureLive_videoDeviceNumber = -1;

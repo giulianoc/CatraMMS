@@ -753,7 +753,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 
 			if (title != "")
 			{
-				field = "Title";
+				field = "title";
 				addContentParametersRoot[field] = title;
 			}
 

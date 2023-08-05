@@ -8,10 +8,10 @@
 	"parameters": {
 
 		// mandatory. Options: MMS or User
-		"WorkflowLibraryType": "User",
+		"workflowAsLibraryType": "User",
 
 		// mandatory.
-		"WorkflowLibraryLabel": "Best Picture",
+		"workflowAsLibraryLabel": "Best Picture",
 
 		// optional, here follows all the parameters of the WorkflowLibrary as defined by the Workflow Library.
 		//		The default value is used in case a parameter is not present

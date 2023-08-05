@@ -3,8 +3,8 @@
 	"task": {
 		"label": "task label 1",
 		"parameters": {
-			"WorkflowAsLibraryLabel": "test userData variable",
-			"WorkflowAsLibraryType": "User",
+			"workflowAsLibraryLabel": "test userData variable",
+			"workflowAsLibraryType": "User",
 			"cutEnd": "2021-08-24T20:38:04.049Z",
 			"cutStart": "2021-08-24T20:38:04.049Z",
 			"recordingDeliveryCode": 363615,

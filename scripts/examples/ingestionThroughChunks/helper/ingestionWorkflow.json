@@ -6,13 +6,13 @@
     "label": "Add Content ${title}",
     "type": "Add-Content",
     "parameters": {
-      "Title": "${title}",
-      "AllowUniqueNameOverride": false,
+      "title": "${title}",
+      "allowUniqueNameOverride": false,
       "fileFormat": "${fileFormat}",
       "ingester": "${ingester}",
       "retention": "${retention}"
     },
-    "OnSuccess": {
+    "onSuccess": {
       "task":
       {
         "label": "${title}",
@@ -24,17 +24,17 @@
               "label": "Generate Picture ${title}",
               "type": "Workflow-As-Library",
               "parameters": {
-                "Title": "${title}",
-                "WorkflowAsLibraryType": "MMS",
-                "WorkflowAsLibraryLabel": "Best Picture of the Video",
-                "AllowUniqueNameOverride": false,
-                "ImageRetention": "${retention}",
-                "ImageTags": ["FACE"],
-                "ImageUserData": {},
+                "title": "${title}",
+                "workflowAsLibraryType": "MMS",
+                "workflowAsLibraryLabel": "Best Picture of the Video",
+                "allowUniqueNameOverride": false,
+                "imageRetention": "${retention}",
+                "imageTags": ["FACE"],
+                "imageUserData": {},
                 "ingester": "${ingester}",
-                "InitialFramesNumberToBeSkipped": 1500,
-                "InstantInSeconds": 60,
-                "UniqueName": ""
+                "initialFramesNumberToBeSkipped": 1500,
+                "instantInSeconds": 60,
+                "uniqueName": ""
               }
             },
             {

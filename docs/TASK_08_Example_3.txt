@@ -2,10 +2,10 @@
 	"type": "Workflow",
 	"label": "My workflow",
 	"Variables": {
-		"TitleOfVideo_1": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
-		"TitleOfVideo_2": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
-		"TitleOfConcatVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." },
-		"TitleOfCutVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
+		"titleOfVideo_1": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"titleOfVideo_2": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
+		"titleOfConcatVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." },
+		"titleOfCutVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"type": "GroupOfTasks",
@@ -13,38 +13,38 @@
 			"executionType": "parallel",
 			"tasks": [
 				{
-					"label": "${TitleOfVideo_1}",
+					"label": "${titleOfVideo_1}",
 					"type": "Add-Content",
 					"parameters": {
 						"sourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"fileFormat": "mp4",
 						"contentType": "video",
 						"userData": { "MyData": "this is my video data" },
-						"Title": "${TitleOfVideo_1}"
+						"title": "${titleOfVideo_1}"
 					}
 				},
 				{
-					"label": "${TitleOfVideo_2}",
+					"label": "${titleOfVideo_2}",
 					"type": "Add-Content",
 					"parameters": {
 						"sourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"fileFormat": "mp4",
 						"contentType": "video",
 						"userData": { "MyData": "this is my video data" },
-						"Title": "${TitleOfVideo_2}"
+						"title": "${titleOfVideo_2}"
 					}
 				}
 			]
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"label": "My concat",
 				"type": "Concat-Demuxer",
 				"parameters": {
 					"userData": { "MyData": "this is my frame data" },
-					"Title": "${TitleOfConcatVideo}"
+					"title": "${titleOfConcatVideo}"
 				},
-				"OnSuccess": {
+				"onSuccess": {
 					"task": {
 						"label": "My cut",
 						"type": "Cut",
@@ -52,9 +52,9 @@
 							"startTimeInSeconds": 1200.0,
 							"endTimeInSeconds": 3000.0,
 							"userData": { "MyData": "this is my frame data" },
-							"Title": "${TitleOfCutVideo}"
+							"title": "${titleOfCutVideo}"
 						},
-						"OnSuccess": {
+						"onSuccess": {
 							"task": {
 								"label": "my encode",
 								"type": "Encode",
@@ -68,7 +68,7 @@
 				}
 			}
 		},
-		"OnComplete": {
+		"onComplete": {
 			"task": {
 				"type": "Email-Notification",
 				"parameters": {

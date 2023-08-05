@@ -177,7 +177,7 @@ void GenerateFrames::encodeContent(
 						&& 0 == entry.path().filename().string().compare(0, imageBaseFileName.size(), imageBaseFileName)))
 						continue;
 
-					string generateFrameTitle = JSONUtils::asString(ingestedParametersRoot, "Title", "");
+					string generateFrameTitle = JSONUtils::asString(ingestedParametersRoot, "title", "");
 
 					string ingestionJobLabel = generateFrameTitle + " (" + to_string(generatedFrameIndex) + ")";
 

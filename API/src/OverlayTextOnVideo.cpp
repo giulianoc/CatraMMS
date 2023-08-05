@@ -207,7 +207,7 @@ void OverlayTextOnVideo::encodeContent(
 			}
 
 			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
+				JSONUtils::asString(ingestedParametersRoot, "title", "")
 				+ " (add overlayTextOnVideo from external transcoder)"
 			;
 

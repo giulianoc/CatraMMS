@@ -78,11 +78,11 @@ void API::updateMediaItem(
 		string newUniqueName;
 
         {
-			string field = "Title";
+			string field = "title";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
 				titleModified = true;
-				newTitle = JSONUtils::asString(metadataRoot, "Title", "");
+				newTitle = JSONUtils::asString(metadataRoot, "title", "");
 			}
 
 			field = "userData";
@@ -106,7 +106,7 @@ void API::updateMediaItem(
 				newTagsRoot = metadataRoot[field];
 			}
 
-			field = "UniqueName";
+			field = "uniqueName";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
 				uniqueNameModified = true;

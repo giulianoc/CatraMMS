@@ -1859,15 +1859,15 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				{
 					Json::Value eventsRoot = internalMMSRoot[field];
 
-					field = "OnSuccess";
+					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						addContentRoot[field] = eventsRoot[field];
 
-					field = "OnError";
+					field = "onError";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						addContentRoot[field] = eventsRoot[field];
 
-					field = "OnComplete";
+					field = "onComplete";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
 						addContentRoot[field] = eventsRoot[field];
 				}
@@ -1895,7 +1895,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 		field = "ingester";
 		addContentParametersRoot[field] = "Live Recorder Task";
 
-		field = "Title";
+		field = "title";
 		addContentParametersRoot[field] = addContentTitle;
 
 		field = "userData";
@@ -1906,7 +1906,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			// in case of no high availability, we can set just now the UniqueName for this content
 			// in case of high availability, the unique name will be set only of the selected content
 			//		choosing between main and bqckup
-			field = "UniqueName";
+			field = "uniqueName";
 			addContentParametersRoot[field] = uniqueName;
 		}
 
@@ -3185,13 +3185,13 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		field = "ingester";
 		addContentParametersRoot[field] = "Live Recorder Task";
 
-		field = "Title";
+		field = "title";
 		addContentParametersRoot[field] = "Virtual VOD: " + addContentLabel;
 
-		field = "UniqueName";
+		field = "uniqueName";
 		addContentParametersRoot[field] = liveRecorderVirtualVODUniqueName;
 
-		field = "AllowUniqueNameOverride";
+		field = "allowUniqueNameOverride";
 		addContentParametersRoot[field] = true;
 
 		field = "retention";

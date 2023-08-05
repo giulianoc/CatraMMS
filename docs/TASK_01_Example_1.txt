@@ -2,7 +2,7 @@
 	"type": "Workflow",
 	"label": "My Workflow",
 	"Variables": {
-		"Title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
+		"title": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"task": {
 		"label": "My Task",
@@ -10,7 +10,7 @@
 		"parameters": {
 			"fileFormat": "ts",
 			"userData": { "MyData": "this is my data" },
-			"Title": "${Title}",
+			"title": "${title}",
 			"retention": "1h"
 		}
 	}

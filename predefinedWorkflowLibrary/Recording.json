@@ -2,9 +2,9 @@
   "label": "Recording",
   "task": {
     "label": "<no label>",
-    "OnSuccess": {"task": {
+    "onSuccess": {"task": {
       "label": "VOD creation",
-      "OnSuccess": {"task": {
+      "onSuccess": {"task": {
         "label": "<no label>",
         "parameters": {
           "executionType": "parallel",
@@ -21,18 +21,18 @@
             {
               "label": "Creation picture for the VOD",
               "parameters": {
-                "AllowUniqueNameOverride": false,
-                "ImageRetention": "1d",
-                "ImageTags": "[ \"FACE\" ]",
-                "ImageUserData": "",
+                "allowUniqueNameOverride": false,
+                "imageRetention": "1d",
+                "imageTags": "[ \"FACE\" ]",
+                "imageUserData": "",
                 "ingester": "Admin",
-                "InitialFramesNumberToBeSkipped": 1500,
-                "InstantInSeconds": 60,
+                "initialFramesNumberToBeSkipped": 1500,
+                "instantInSeconds": 60,
                 "processingStartingFrom": "2021-08-11T13:56:23Z",
-                "Title": "My Title",
-                "UniqueName": "",
-                "WorkflowAsLibraryLabel": "Best Picture of the Video",
-                "WorkflowAsLibraryType": "MMS"
+                "title": "My Title",
+                "uniqueName": "",
+                "workflowAsLibraryLabel": "Best Picture of the Video",
+                "workflowAsLibraryType": "MMS"
               },
               "type": "Workflow-As-Library"
             }
@@ -41,7 +41,7 @@
         "type": "GroupOfTasks"
       }},
       "parameters": {
-        "AllowUniqueNameOverride": false,
+        "allowUniqueNameOverride": false,
         "ingester": "Giuliano Catrambone",
         "retention": "1h"
       },
@@ -51,7 +51,7 @@
       "executionType": "parallel",
       "tasks": [{
         "label": "Recorder",
-        "OnSuccess": {"task": {
+        "onSuccess": {"task": {
           "label": "Chunk encoding",
           "parameters": {
             "contentType": "video",
@@ -61,8 +61,8 @@
           "type": "Encode"
         }},
         "parameters": {
-          "ActAsServerListenTimeout": -1,
-          "AllowUniqueNameOverride": false,
+          "actAsServerListenTimeout": -1,
+          "allowUniqueNameOverride": false,
           "CaptureLive": {},
           "ChannelType": "IP_MMSAsClient",
           "configurationLabel": "R101",

@@ -328,16 +328,16 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 				"label": "Use of a WorkflowAsLibrary",
 
 				"parameters": {
-					"WorkflowAsLibraryLabel": "Best Picture of the Video",
-					"WorkflowAsLibraryType": "MMS",
+					"workflowAsLibraryLabel": "Best Picture of the Video",
+					"workflowAsLibraryType": "MMS",
 
-					"ImageRetention": "1d",
-					"ImageTags": "FACE",
+					"imageRetention": "1d",
+					"imageTags": "FACE",
 					"ingester": "Admin",
-					"InitialFramesNumberToBeSkipped": 1500,
-					"InstantInSeconds": 60,
+					"initialFramesNumberToBeSkipped": 1500,
+					"instantInSeconds": 60,
 					"label": "Image label",
-					"Title": "My Title"
+					"title": "My Title"
 				},
 				"type": "Workflow-As-Library"
 			}
@@ -1214,19 +1214,19 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "parameters";
 			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
         
-			field = "OnSuccess";
+			field = "onSuccess";
 			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
 
-			field = "OnError";
+			field = "onError";
 			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
 
-			field = "OnComplete";
+			field = "onComplete";
 			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
@@ -1294,15 +1294,15 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				field = "parameters";
 				newTaskRoot[field] = newParametersRoot;
 
-				field = "OnSuccess";
+				field = "onSuccess";
 				if (JSONUtils::isMetadataPresent(taskRoot, field))
 					newTaskRoot[field] = taskRoot[field];
 
-				field = "OnError";
+				field = "onError";
 				if (JSONUtils::isMetadataPresent(taskRoot, field))
 					newTaskRoot[field] = taskRoot[field];
 
-				field = "OnComplete";
+				field = "onComplete";
 				if (JSONUtils::isMetadataPresent(taskRoot, field))
 					newTaskRoot[field] = taskRoot[field];
         
@@ -1365,9 +1365,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
         Json::Value eventsRoot;
 		{
-			string onSuccessField = "OnSuccess";
-			string onErrorField = "OnError";
-			string onCompleteField = "OnComplete";
+			string onSuccessField = "onSuccess";
+			string onErrorField = "onError";
+			string onCompleteField = "onComplete";
 			if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
 				|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
 				|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
@@ -1436,9 +1436,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 		Json::Value eventsRoot;
 		{
-			string onSuccessField = "OnSuccess";
-			string onErrorField = "OnError";
-			string onCompleteField = "OnComplete";
+			string onSuccessField = "onSuccess";
+			string onErrorField = "onError";
+			string onCompleteField = "onComplete";
 			if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField)
 				|| JSONUtils::isMetadataPresent(taskRoot, onErrorField)
 				|| JSONUtils::isMetadataPresent(taskRoot, onCompleteField)
@@ -1541,13 +1541,13 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		// read the WorkflowAsLibrary
 		string workflowLibraryContent;
 		{
-			string workflowAsLibraryTypeField = "WorkflowAsLibraryType";
-			string workflowAsLibraryLabelField = "WorkflowAsLibraryLabel";
+			string workflowAsLibraryTypeField = "workflowAsLibraryType";
+			string workflowAsLibraryLabelField = "workflowAsLibraryLabel";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, workflowAsLibraryTypeField)
 				|| !JSONUtils::isMetadataPresent(parametersRoot, workflowAsLibraryLabelField)
 			)
 			{
-				string errorMessage = __FILEREF__ + "No WorkflowAsLibraryType/WorkflowAsLibraryLabel parameters into the Workflow-As-Library Task"
+				string errorMessage = __FILEREF__ + "No workflowAsLibraryType/WorkflowAsLibraryLabel parameters into the Workflow-As-Library Task"
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 					+ ", type: " + type
 					+ ", taskLabel: " + taskLabel
@@ -1615,19 +1615,19 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "parameters";
 			newGroupOfTasksRoot[field] = newGroupOfTasksParametersRoot;
         
-			field = "OnSuccess";
+			field = "onSuccess";
 			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newGroupOfTasksRoot[field] = taskRoot[field];
 			}
 
-			field = "OnError";
+			field = "onError";
 			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newGroupOfTasksRoot[field] = taskRoot[field];
 			}
 
-			field = "OnComplete";
+			field = "onComplete";
 			if (JSONUtils::isMetadataPresent(taskRoot, field))
 			{
 				newGroupOfTasksRoot[field] = taskRoot[field];
@@ -2327,7 +2327,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         /* string& responseBody, */ Json::Value& responseBodyTasksRoot)
 {
 
-    string field = "OnSuccess";
+    string field = "onSuccess";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value& onSuccessRoot = taskOrGroupOfTasksRoot[field];
@@ -2414,7 +2414,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 		}
     }
 
-    field = "OnError";
+    field = "onError";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value& onErrorRoot = taskOrGroupOfTasksRoot[field];
@@ -2502,7 +2502,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 		}
     }
 
-    field = "OnComplete";
+    field = "onComplete";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
         Json::Value& onCompleteRoot = taskOrGroupOfTasksRoot[field];

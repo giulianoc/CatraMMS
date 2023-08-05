@@ -2,7 +2,7 @@
     "type": "Workflow",
     "label": "1",
     "Variables": {
-        "TitleOfVideo": "My Title of the video content"
+        "titleOfVideo": "My Title of the video content"
     },
     "task": {
         "label": "My video",
@@ -11,10 +11,10 @@
             "sourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/05/15/2577986.mp4",
             "fileFormat": "mp4",
             "userData": { "MyData": "this is my video data" },
-            "Title": "${TitleOfVideo}",
+            "title": "${titleOfVideo}",
 		"retention": "1d"
         },
-        "OnSuccess": {
+        "onSuccess": {
             "task": {
                 "label": "my label",
                 "type": "Encode",
@@ -24,7 +24,7 @@
                 }
             }
         },
-		"OnComplete": {
+		"onComplete": {
 			"task": {
 				"type": "Email-Notification",
 				"parameters": {

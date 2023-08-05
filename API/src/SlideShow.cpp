@@ -312,7 +312,7 @@ void SlideShow::encodeContent(
 			string targetFileFormat = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "Title", "")
+				JSONUtils::asString(ingestedParametersRoot, "title", "")
 				+ " (add slideShow from external transcoder)"
 			;
 

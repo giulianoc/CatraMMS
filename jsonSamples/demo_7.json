@@ -2,9 +2,9 @@
 	"type": "Workflow",
 	"label": "1",
 	"Variables": {
-		"TitleOfVideo_1": "My Title of the video_1 content",
-		"TitleOfImage_1": "My Title of the logo content",
-		"TitleOfOverlayVideo_1": "My Title of the overlay content"
+		"titleOfVideo_1": "My Title of the video_1 content",
+		"titleOfImage_1": "My Title of the logo content",
+		"titleOfOverlayVideo_1": "My Title of the overlay content"
 	},
 	"task": {
 		"type": "GroupOfTasks",
@@ -12,27 +12,27 @@
 			"executionType": "parallel",
 			"tasks": [
 				{
-					"label": "${TitleOfVideo_1}",
+					"label": "${titleOfVideo_1}",
 					"type": "Add-Content",
 					"parameters": {
            				"sourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"fileFormat": "mp4",
 						"contentType": "video",
 						"userData": { "MyData": "this is my video data" },
-						"Title": "${TitleOfVideo_1}"
+						"title": "${titleOfVideo_1}"
 					}
 				},
 				{
-					"label": "${TitleOfImage_1}",
+					"label": "${titleOfImage_1}",
 					"type": "Add-Content",
 					"parameters": {
            				"sourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
 						"fileFormat": "jpg",
 						"contentType": "image",
 						"userData": { "MyData": "this is my image data" },
-						"Title": "${TitleOfImage_1}"
+						"title": "${titleOfImage_1}"
 					},
-					"OnSuccess": {
+					"onSuccess": {
 						"task": {
 							"label": "my image encode",
 							"type": "Encode",

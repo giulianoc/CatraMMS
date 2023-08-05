@@ -5,14 +5,14 @@
 		"label": "__title__",
 		"type": "Add-Content",
 		"parameters": {
-			"Title": "__title__",
+			"title": "__title__",
 			"sourceURL": "__url__",
 			"fileFormat": "__fileformat__",
-			"UniqueName": "__title__",
+			"uniqueName": "__title__",
 			"retention": "__retention__",
 			"ingester": "Giuliano Catrambone"
 		},
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"label": "Encodes __title__",
 				"type": "GroupOfTasks",

@@ -2,46 +2,46 @@
 	"type": "Workflow",
 	"label": "My workflow",
 	"Variables": {
-		"TitleOfVideo_1": "My Title of the video_1 content",
-		"TitleOfVideo_2": "My Title of the video_2 content",
-		"TitleOfConcatVideo": "My Title of the concat video content",
-		"TitleOfCutVideo": "My Title of the concat video content"
+		"titleOfVideo_1": "My Title of the video_1 content",
+		"titleOfVideo_2": "My Title of the video_2 content",
+		"titleOfConcatVideo": "My Title of the concat video content",
+		"titleOfCutVideo": "My Title of the concat video content"
 	},
 	"GroupOfTasks": {
 		"executionType": "parallel",
 		"tasks": [
 			{
-				"label": "${TitleOfVideo_1}",
+				"label": "${titleOfVideo_1}",
 				"type": "Add-Content",
 				"parameters": {
 					"sourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 					"fileFormat": "mp4",
 					"contentType": "video",
 					"userData": { "MyData": "this is my video data" },
-					"Title": "${TitleOfVideo_1}"
+					"title": "${titleOfVideo_1}"
 				}
 			},
 			{
-				"label": "${TitleOfVideo_2}",
+				"label": "${titleOfVideo_2}",
 				"type": "Add-Content",
 				"parameters": {
             				"sourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 					"fileFormat": "mp4",
 					"contentType": "video",
 					"userData": { "MyData": "this is my video data" },
-					"Title": "${TitleOfVideo_2}"
+					"title": "${titleOfVideo_2}"
 				}
 			}
 		],
-		"OnSuccess": {
+		"onSuccess": {
 			"task": {
 				"label": "My concat",
 				"type": "Concat-Demuxer",
 				"parameters": {
 					"userData": { "MyData": "this is my frame data" },
-					"Title": "${TitleOfConcatVideo}"
+					"title": "${titleOfConcatVideo}"
 				},
-				"OnSuccess": {
+				"onSuccess": {
 					"task": {
 						"label": "My cut",
 						"type": "Cut",
@@ -49,9 +49,9 @@
 							"startTimeInSeconds": 1200.0,
 							"endTimeInSeconds": 3000.0,
 							"userData": { "MyData": "this is my frame data" },
-							"Title": "${TitleOfCutVideo}"
+							"title": "${titleOfCutVideo}"
 						},
-						"OnSuccess": {
+						"onSuccess": {
 							"task": {
 								"label": "my encode",
 								"type": "Encode",
@@ -65,7 +65,7 @@
 				}
 			}
 		},
-		"OnComplete": {
+		"onComplete": {
 			"task": {
 				"label": "My email",
 				"type": "Email-Notification",
