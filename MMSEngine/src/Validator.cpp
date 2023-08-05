@@ -5916,7 +5916,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
     // see sample in directory samples
 
 	vector<string> mandatoryFields = {
-		"CutPeriod"
+		"cutPeriod"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -5950,7 +5950,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 
-    field = "CutPeriod";
+    field = "cutPeriod";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -5965,7 +5965,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 	Json::Value cutPeriodRoot = parametersRoot[field];
-    field = "Start";
+    field = "start";
 	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -5983,7 +5983,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 	string cutPeriodStart = JSONUtils::asString(cutPeriodRoot, field, "");
 	int64_t utcCutPeriodStart = DateTime::sDateMilliSecondsToUtc(cutPeriodStart);
 
-    field = "End";
+    field = "end";
 	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);

@@ -9,9 +9,9 @@
 		"type": "Live-Cut",
 
 		"parameters": {
-			"CutPeriod": {
-				"Start": "2019-01-21T13:00:00Z",
-				"End": "2019-01-21T14:00:00Z"
+			"cutPeriod": {
+				"start": "2019-01-21T13:00:00Z",
+				"end": "2019-01-21T14:00:00Z"
 			},
 
 			"userData": { "MyData": "this is my data" },

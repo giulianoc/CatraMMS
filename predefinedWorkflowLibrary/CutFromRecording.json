@@ -40,8 +40,10 @@
   "type": "Workflow",
   "task": {
     "label": "Cut from Recording",
+    "type": "Live-Cut",
     "onSuccess": {"task": {
       "label": "<no label>",
+      "type": "GroupOfTasks",
       "parameters": {
         "executionType": "parallel",
         "tasks": [
@@ -49,8 +51,8 @@
             "label": "Picture of Cut",
             "type": "Workflow-As-Library",
             "parameters": {
-              "workflowAsLibraryType": "MMS",
               "workflowAsLibraryLabel": "Best Picture of the Video",
+              "workflowAsLibraryType": "MMS",
               "allowUniqueNameOverride": false,
               "imageRetention": "${mediaItemRetention}",
               "imageTags": "[ \"FACE\" ]",
@@ -64,35 +66,33 @@
           },
           {
             "label": "Cut encoding",
+            "type": "Encode",
             "parameters": {
               "contentType": "video",
               "encodingPriority": "Low",
               "encodingProfileLabel": "MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92"
-            },
-            "type": "Encode"
+            }
           },
           {
             "label": "Generate MP4 profile",
-            "parameters": {"outputFileFormat": "mp4"},
-            "type": "Change-File-Format"
+            "type": "Change-File-Format",
+            "parameters": {"outputFileFormat": "mp4"}
           }
         ]
-      },
-      "type": "GroupOfTasks"
+      }
     }},
     "parameters": {
       "allowUniqueNameOverride": false,
-      "CutPeriod": {
-        "End": "${liveCutEnd}",
-        "Start": "${liveCutStart}"
+      "cutPeriod": {
+        "end": "${liveCutEnd}",
+        "start": "${liveCutStart}"
       },
-      "DeliveryCode": "${recordingCode}",
-      "ErrorIfAChunkIsMissing": false,
+      "recordingCode": "${recordingCode}",
+      "errorIfAChunkIsMissing": false,
       "ingester": "Giuliano Catrambone",
-      "MaxWaitingForLastChunkInSeconds": 90,
+      "maxWaitingForLastChunkInSeconds": 90,
       "retention": "${mediaItemRetention}",
       "title": "${mediaItemTitle}"
-    },
-    "type": "Live-Cut"
+    }
   }
 }

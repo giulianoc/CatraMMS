@@ -14426,16 +14426,16 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			}
 			recordingCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
 
-			field = "MaxWaitingForLastChunkInSeconds";
+			field = "maxWaitingForLastChunkInSeconds";
 			maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
 
-			field = "ErrorIfAChunkIsMissing";
+			field = "errorIfAChunkIsMissing";
 			errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, field, false);
 
-            field = "CutPeriod";
+            field = "cutPeriod";
 			Json::Value cutPeriodRoot = liveCutParametersRoot[field];
 
-            field = "Start";
+            field = "start";
             if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14448,7 +14448,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
             }
             cutPeriodStartTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
 
-            field = "End";
+            field = "end";
             if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -14925,17 +14925,17 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				*/
 				{
 					Json::Value removed;
-					field = "DeliveryCode";
+					field = "recordingCode";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
 
 				{
 					Json::Value removed;
-					field = "CutPeriod";
+					field = "cutPeriod";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
 				{
-					field = "MaxWaitingForLastChunkInSeconds";
+					field = "maxWaitingForLastChunkInSeconds";
 					if (JSONUtils::isMetadataPresent(concatDemuxerParametersRoot, field))
 					{
 						Json::Value removed;
@@ -15319,22 +15319,22 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			}
 			recordingCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
 
-			field = "ChunkEncodingProfileKey";
+			field = "chunkEncodingProfileKey";
 			chunkEncodingProfileKey = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
 
-			field = "ChunkEncodingProfileLabel";
+			field = "chunkEncodingProfileLabel";
 			chunkEncodingProfileLabel = JSONUtils::asString(liveCutParametersRoot, field, "");
 
-			field = "MaxWaitingForLastChunkInSeconds";
+			field = "maxWaitingForLastChunkInSeconds";
 			maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
 
-			field = "ErrorIfAChunkIsMissing";
+			field = "errorIfAChunkIsMissing";
 			errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, field, false);
 
-            field = "CutPeriod";
+            field = "cutPeriod";
 			Json::Value cutPeriodRoot = liveCutParametersRoot[field];
 
-            field = "Start";
+            field = "start";
             if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -15347,7 +15347,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
             }
             cutPeriodStartTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
 
-            field = "End";
+            field = "end";
             if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -15855,17 +15855,17 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				*/
 				{
 					Json::Value removed;
-					field = "DeliveryCode";
+					field = "recordingCode";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
 
 				{
 					Json::Value removed;
-					field = "CutPeriod";
+					field = "cutPeriod";
 					concatDemuxerParametersRoot.removeMember(field, &removed);
 				}
 				{
-					field = "MaxWaitingForLastChunkInSeconds";
+					field = "maxWaitingForLastChunkInSeconds";
 					if (JSONUtils::isMetadataPresent(concatDemuxerParametersRoot, field))
 					{
 						Json::Value removed;
