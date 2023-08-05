@@ -6046,11 +6046,8 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
     {
         Json::Value referenceRoot = referencesRoot[referenceIndex];
 
-		bool stopIfReferenceProcessingError = false;
 		field = "stopIfReferenceProcessingError";
-		if (JSONUtils::isMetadataPresent(referenceRoot, field))
-			stopIfReferenceProcessingError =
-				JSONUtils::asBool(referenceRoot, field, stopIfReferenceProcessingError);
+		bool stopIfReferenceProcessingError = JSONUtils::asBool(referenceRoot, field, false);
 
         int64_t referenceMediaItemKey = -1;
         int64_t referencePhysicalPathKey = -1;
@@ -6452,7 +6449,13 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             else    // referenceLabel
                 ;
         }
-    }
+	}
+
+	_logger->info(__FILEREF__ + "fillDependencies"
+		+ ", label: " + label
+		+ ", references: " + JSONUtils::toString(referencesRoot)
+		+ ", dependencies.size: " + to_string(dependencies.size())
+	);
 }
 
 void Validator::fillReferencesOutput(
