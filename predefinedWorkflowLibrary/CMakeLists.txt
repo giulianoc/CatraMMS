@@ -22,8 +22,6 @@
 
 SET (WORKFLOWs
 	BestPictureOfTheVideo.json
-	ProxyFromCapture.json
-	ProxyOfAPicture.json
 	Recording.json
 	CutFromRecording.json
 )
