@@ -15141,6 +15141,8 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 			otherHeaders
 		).second;
 
+		// mancherebbe la parte aggiunta a LiveCut hls segmenter
+
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", IngestionStatus: " + "End_TaskSuccess"
@@ -15821,6 +15823,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 
 		// create workflow to ingest
 		string workflowMetadata;
+		string cutLabel;
 		{
 			Json::Value concatDemuxerRoot;
 			Json::Value concatDemuxerParametersRoot;
@@ -15886,9 +15889,10 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			Json::Value cutRoot;
 			{
 				string field = "label";
-				cutRoot[field] = string("Cut (Live) from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				cutRoot = string("Cut (Live) from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
+				cutRoot[field] = cutRoot;
 
 				field = "type";
 				cutRoot[field] = "Cut";
@@ -16063,7 +16067,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		}
 
 		vector<string> otherHeaders;
-		string sResponse = MMSCURL::httpPostString(
+		Json::Value workflowResponseRoot = MMSCURL::httpPostStringAndGetJson(
 			_logger,
 			ingestionJobKey,
 			_mmsWorkflowIngestionURL,
@@ -16073,7 +16077,80 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			workflowMetadata,
 			"application/json", // contentType
 			otherHeaders
-		).second;
+		);
+
+		/*
+			Problema: abbiamo il seguente workflow:
+					GroupOfTask (ingestionJobKey: 5624319) composto da due LiveCut (ingestionJobKey: 5624317 e 5624318)
+					Concat dipende dal GroupOfTask per concatenare i due file ottenuti dai due LiveCut
+				L'engine esegue i due LiveCut che creano ognuno un Workflow (Concat e poi Cut, vedi codice c++ sopra)
+				Il GroupOfTask, e quindi il Concat, finiti i due LiveCut, vengono eseguiti ma
+				non ricevono i due file perchè il LiveCut non ottiene il file ma crea un Workflow per
+				ottenere il file.
+				La tabella MMS_IngestionJobDependency contiene le seguenti due righe:
+mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
++---------------------------+-----------------+-----------------+-------------------------+-------------+---------------------------+
+| ingestionJobDependencyKey | ingestionJobKey | dependOnSuccess | dependOnIngestionJobKey | orderNumber | referenceOutputDependency |
++---------------------------+-----------------+-----------------+-------------------------+-------------+---------------------------+
+|                   7315565 |         5624319 |               1 |                 5624317 |           0 |                         0 |
+|                   7315566 |         5624319 |               1 |                 5624318 |           1 |                         0 |
++---------------------------+-----------------+-----------------+-------------------------+-------------+---------------------------+
+2 rows in set (0.00 sec)
+
+			Per risolvere questo problema, prima che il LiveCut venga marcato come End_TaskSuccess,
+			bisogna aggiornare la tabella sopra per cambiare le dipendenze, in sostanza tutti gli ingestionJobKey
+			che dipendevano dal LiveCut, dovranno dipendere dall'ingestionJobKey del Cut che è il Task
+			che genera il file all'interno del workflow creato dal LiveCut.
+			Per questo motivo, dalla risposta dell'ingestion del workflow, ci andiamo a recuperare
+			l'ingestionJobKey del Cut ed eseguiamo una update della tabella MMS_IngestionJobDependency
+		*/
+		{
+			int64_t cutIngestionJobKey = -1;
+			{
+				if (!JSONUtils::isMetadataPresent(workflowResponseRoot, "tasks"))
+				{
+					string errorMessage = string("LiveCut workflow ingestion: wrong response, tasks not found")
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", workflowResponseRoot: " + JSONUtils::toString(workflowResponseRoot)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				Json::Value tasksRoot = workflowResponseRoot["tasks"];
+				for(int taskIndex = 0; taskIndex < tasksRoot.size(); taskIndex++)
+				{
+					Json::Value taskRoot = tasksRoot[taskIndex];
+					string taskIngestionJobLabel = JSONUtils::asString(taskRoot, "label", "");
+					if (taskIngestionJobLabel == cutLabel)
+					{
+						cutIngestionJobKey = JSONUtils::asInt64(taskRoot, "ingestionJobKey", -1);
+
+						break;
+					}
+				}
+				if (cutIngestionJobKey == -1)
+				{
+					string errorMessage = string("LiveCut workflow ingestion: wrong response, cutLabel not found")
+						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", cutLabel: " + cutLabel
+						+ ", workflowResponseRoot: " + JSONUtils::toString(workflowResponseRoot)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			_logger->info(__FILEREF__ + "changeIngestionJobDependency"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", cutIngestionJobKey: " + to_string(cutIngestionJobKey)
+			);
+			_mmsEngineDBFacade->changeIngestionJobDependency (ingestionJobKey,
+                cutIngestionJobKey);
+		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)

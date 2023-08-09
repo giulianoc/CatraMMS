@@ -1385,6 +1385,10 @@ public:
         int orderNumber,
 		bool referenceOutputDependency);
 
+	void changeIngestionJobDependency (
+		int64_t previousDependOnIngestionJobKey,
+		int64_t newDependOnIngestionJobKey);
+
     int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
     	int64_t workspaceKey, int64_t ingestionRootKey, 
         string label, string metadataContent,

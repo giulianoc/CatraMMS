@@ -1664,6 +1664,152 @@ void MMSEngineDBFacade::addIngestionJobDependency (
     }    
 }
 
+void MMSEngineDBFacade::changeIngestionJobDependency (
+	int64_t previousDependOnIngestionJobKey,
+	int64_t newDependOnIngestionJobKey
+)
+{
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _masterConnectionPool;
+
+    try
+    {
+		conn = connectionPool->borrow();	
+		_logger->debug(__FILEREF__ + "DB connection borrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+
+        {
+            lastSQLCommand = 
+                "update MMS_IngestionJobDependency set dependOnIngestionJobKey = ? where dependOnIngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, newDependOnIngestionJobKey);
+            preparedStatement->setInt64(queryParameterIndex++, previousDependOnIngestionJobKey);
+
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            int rowsUpdated = preparedStatement->executeUpdate();
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", newDependOnIngestionJobKey: " + to_string(newDependOnIngestionJobKey)
+				+ ", previousDependOnIngestionJobKey: " + to_string(previousDependOnIngestionJobKey)
+				+ ", rowsUpdated: " + to_string(rowsUpdated)
+				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", newDependOnIngestionJobKey: " + to_string(newDependOnIngestionJobKey)
+                        + ", previousDependOnIngestionJobKey: " + to_string(previousDependOnIngestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->info(__FILEREF__ + "MMS_IngestionJobDependency updated successful"
+			+ ", newDependOnIngestionJobKey: " + to_string(newDependOnIngestionJobKey)
+			+ ", previousDependOnIngestionJobKey: " + to_string(previousDependOnIngestionJobKey)
+		);
+
+		_logger->debug(__FILEREF__ + "DB connection unborrow"
+			+ ", getConnectionId: " + to_string(conn->getConnectionId())
+		);
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+	}
+	catch(sql::SQLException se)
+	{
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(previousDependOnIngestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }
+    catch(AlreadyLocked e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(previousDependOnIngestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(previousDependOnIngestionJobKey)
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", ingestionJobKey: " + to_string(previousDependOnIngestionJobKey)
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    }    
+}
+
+
 void MMSEngineDBFacade::updateIngestionJobMetadataContent (
 	int64_t ingestionJobKey,
 	string metadataContent

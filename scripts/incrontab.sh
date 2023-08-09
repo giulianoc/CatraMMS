@@ -4,6 +4,16 @@ debug=0
 #2021-01-08: it has to be a path in home user otherwise incron does not run the script
 debugFileName=/home/mms/incrontab.log
 
+if [ ! -f "$debugFilename" ]; then
+	echo "" > $debugFilename
+else
+	filesize=$(stat -c %s $debugFilename)
+	if [ $filesize -gt 10000000 ]
+	then    
+		echo "" > $debugFilename
+	fi              
+fi
+
 if [ $# -ne 3 ]
 then
 	if [ $debug -eq 1 ]
