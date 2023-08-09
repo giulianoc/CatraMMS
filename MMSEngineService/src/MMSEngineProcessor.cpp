@@ -15889,10 +15889,10 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 			Json::Value cutRoot;
 			{
 				string field = "label";
-				cutRoot = string("Cut (Live) from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
+				cutLabel = string("Cut (Live) from ") + to_string(utcCutPeriodStartTimeInMilliSeconds)
 					+ " (" + cutPeriodStartTimeInMilliSeconds + ") to "
 					+ to_string(utcCutPeriodEndTimeInMilliSeconds) + " (" + cutPeriodEndTimeInMilliSeconds + ")";
-				cutRoot[field] = cutRoot;
+				cutRoot[field] = cutLabel;
 
 				field = "type";
 				cutRoot[field] = "Cut";
