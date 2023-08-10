@@ -4130,7 +4130,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 	int64_t ingestionJobKey,
 	int64_t mediaItemKey,
 	int64_t physicalPathKey,
-	int64_t liveRecordingIngestionJobKey
+	int64_t sourceIngestionJobKey
 )
 {
 	string      lastSQLCommand;
@@ -4147,7 +4147,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 		);
 
 		addIngestionJobOutput(conn, ingestionJobKey, mediaItemKey, physicalPathKey,
-				liveRecordingIngestionJobKey);
+				sourceIngestionJobKey);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -4223,7 +4223,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 	int64_t ingestionJobKey,
 	int64_t mediaItemKey,
 	int64_t physicalPathKey,
-	int64_t liveRecordingIngestionJobKey
+	int64_t sourceIngestionJobKey
 )
 {
 	string      lastSQLCommand;
@@ -4262,7 +4262,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			);                            
 		}
 
-		if (liveRecordingIngestionJobKey != -1)
+		if (sourceIngestionJobKey != -1)
 		{
 			lastSQLCommand = 
 				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
@@ -4271,7 +4271,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
 			int queryParameterIndex = 1;
-			preparedStatement->setInt64(queryParameterIndex++, liveRecordingIngestionJobKey);
+			preparedStatement->setInt64(queryParameterIndex++, sourceIngestionJobKey);
 			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 			preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
 
@@ -4279,7 +4279,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			int rowsUpdated = preparedStatement->executeUpdate();
 			_logger->info(__FILEREF__ + "@SQL statistics@"
 				+ ", lastSQLCommand: " + lastSQLCommand
-				+ ", liveRecordingIngestionJobKey: " + to_string(liveRecordingIngestionJobKey)
+				+ ", sourceIngestionJobKey: " + to_string(sourceIngestionJobKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)
@@ -4288,7 +4288,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			);
 
 			_logger->info(__FILEREF__ + "insert into MMS_IngestionJobOutput"
-				+ ", liveRecordingIngestionJobKey: " + to_string(liveRecordingIngestionJobKey)
+				+ ", sourceIngestionJobKey: " + to_string(sourceIngestionJobKey)
 				+ ", mediaItemKey: " + to_string(mediaItemKey)
 				+ ", physicalPathKey: " + to_string(physicalPathKey)
 				+ ", rowsUpdated: " + to_string(rowsUpdated)

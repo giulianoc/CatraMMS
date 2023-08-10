@@ -8157,8 +8157,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					localAssetIngestionEvent.getWorkspace()->_workspaceKey)
 				+ ", ingestionJobKey: " + to_string(
 					localAssetIngestionEvent.getIngestionJobKey())
-				+ ", sourceIngestionJobKey: " + to_string(
-					sourceIngestionJobKey)
+				+ ", sourceIngestionJobKey: " + to_string(sourceIngestionJobKey)
 				+ ", variantOfMediaItemKey: " + to_string(variantOfMediaItemKey)
 				+ ", ExternalReadOnlyStorage: " + to_string(
 					localAssetIngestionEvent.getExternalReadOnlyStorage())
@@ -16080,7 +16079,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		);
 
 		/*
-			Problema: abbiamo il seguente workflow:
+			Scenario: abbiamo il seguente workflow:
 					GroupOfTask (ingestionJobKey: 5624319) composto da due LiveCut (ingestionJobKey: 5624317 e 5624318)
 					Concat dipende dal GroupOfTask per concatenare i due file ottenuti dai due LiveCut
 				L'engine esegue i due LiveCut che creano ognuno un Workflow (Concat e poi Cut, vedi codice c++ sopra)
@@ -16097,12 +16096,27 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
 +---------------------------+-----------------+-----------------+-------------------------+-------------+---------------------------+
 2 rows in set (0.00 sec)
 
+			In questo scenario abbiamo 2 problemi:
+				1. Il GroupOfTask aspetta i due LiveCut mentre dovrebbe aspettare i due Cut che generano i files
+					e che si trovano all'interno dei due workflow generati dai LiveCut
+				2. GroupOfTask, al suo interno ha come referenceOutput gli ingestionJobKey dei due LiveCut.
+					Poichè i LiveCut non generano files (i files vengono generati dai due Cut), GroupOfTask non riceverà alcun file di output
+
+			Per risolvere il problema nr. 1:
 			Per risolvere questo problema, prima che il LiveCut venga marcato come End_TaskSuccess,
 			bisogna aggiornare la tabella sopra per cambiare le dipendenze, in sostanza tutti gli ingestionJobKey
 			che dipendevano dal LiveCut, dovranno dipendere dall'ingestionJobKey del Cut che è il Task
 			che genera il file all'interno del workflow creato dal LiveCut.
 			Per questo motivo, dalla risposta dell'ingestion del workflow, ci andiamo a recuperare
 			l'ingestionJobKey del Cut ed eseguiamo una update della tabella MMS_IngestionJobDependency
+
+			Per risolvere il problema nr. 2:
+			Salviamo cutIngestionJobKey tra i metadati dell'ingestionJob del LiveCut.
+			In validate::fillReferenceOutput, se l'ingestionJobKey è un LiveCut, recuperiamo cutIngestionJobKey
+			e usiamo quella key per recuperare i file di output
+			
+			Altra opzione è quella di dare al Task Cut, l'ingestionJobKey livecut. Cut dovrebbe userlo
+			per aggiungere all'ingestionJobOutput
 		*/
 		{
 			int64_t cutIngestionJobKey = -1;

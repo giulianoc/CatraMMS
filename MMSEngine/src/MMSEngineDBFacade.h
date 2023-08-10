@@ -1296,7 +1296,7 @@ public:
 		int64_t ingestionJobKey,
 		int64_t mediaItemKey,
 		int64_t physicalPathKey,
-		int64_t liveRecordingIngestionJobKey
+		int64_t sourceIngestionJobKey
 	);
 
 	long getIngestionJobOutputsCount(int64_t ingestionJobKey, bool fromMaster);
@@ -2771,7 +2771,7 @@ private:
 		int64_t ingestionJobKey,
 		int64_t mediaItemKey,
 		int64_t physicalPathKey,
-		int64_t liveRecordingIngestionJobKey
+		int64_t sourceIngestionJobKey
 	);
 
 	int getIngestionTypePriority(MMSEngineDBFacade::IngestionType);
