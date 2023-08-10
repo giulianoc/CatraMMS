@@ -128,23 +128,23 @@ void MMSStorage::createDirectories(
 	catch(runtime_error e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string()
 			+ ", e.what(): " + e.what()
 		);
 	}
 	catch(exception e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string()
 			+ ", e.what(): " + e.what()
 		);
 	}
 
+	fs::path MMS_0000Path = MMSStorage::getMMSRootRepository(storage) / "MMS_0000";
 	try
 	{
 		// create MMS_0000 in case it does not exist (first running of MMS)
 		{
-			fs::path MMS_0000Path = MMSStorage::getMMSRootRepository(storage) / "MMS_0000";
-
-
 			logger->info(__FILEREF__ + "Creating directory (if needed)"
 				+ ", MMS_0000 Path: " + MMS_0000Path.string()
 			);
@@ -159,12 +159,14 @@ void MMSStorage::createDirectories(
 	catch(runtime_error e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", MMS_0000 Path: " + MMS_0000Path.string()
 			+ ", e.what(): " + e.what()
 		);
 	}
 	catch(exception e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
+			+ ", MMS_0000 Path: " + MMS_0000Path.string()
 			+ ", e.what(): " + e.what()
 		);
 	}

@@ -703,7 +703,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				}
 				mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
 				// mmsDataRoot["main"] = main;
-				mmsDataRoot["main"] = true;
+				// mmsDataRoot["main"] = true;
 				// if (!highAvailability)
 				// {
 				// 	bool validated = true;

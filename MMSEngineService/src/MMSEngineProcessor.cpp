@@ -16011,6 +16011,11 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					field = "recordingCode";
 					mmsDataRoot[field] = recordingCode;
 
+					// Per capire il motivo dell'aggiunta dei due campi dataType e ingestionJobKey,
+					// leggi il commento sotto (2023-08-10) in particolare la parte "Per risolvere il problema nr. 2"
+					mmsDataRoot["dataType"] = "liveCut";
+					mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
+
 					field = "mmsData";
 					userDataRoot["mmsData"] = mmsDataRoot;
 
@@ -16079,6 +16084,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		);
 
 		/*
+			2023-08-10
 			Scenario: abbiamo il seguente workflow:
 					GroupOfTask (ingestionJobKey: 5624319) composto da due LiveCut (ingestionJobKey: 5624317 e 5624318)
 					Concat dipende dal GroupOfTask per concatenare i due file ottenuti dai due LiveCut
@@ -16100,7 +16106,7 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
 				1. Il GroupOfTask aspetta i due LiveCut mentre dovrebbe aspettare i due Cut che generano i files
 					e che si trovano all'interno dei due workflow generati dai LiveCut
 				2. GroupOfTask, al suo interno ha come referenceOutput gli ingestionJobKey dei due LiveCut.
-					Poichè i LiveCut non generano files (i files vengono generati dai due Cut), GroupOfTask non riceverà alcun file di output
+					Poichè i LiveCut non generano files (perchè i files vengono generati dai due Cut), GroupOfTask non riceverà alcun file di output
 
 			Per risolvere il problema nr. 1:
 			Per risolvere questo problema, prima che il LiveCut venga marcato come End_TaskSuccess,
@@ -16111,12 +16117,9 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
 			l'ingestionJobKey del Cut ed eseguiamo una update della tabella MMS_IngestionJobDependency
 
 			Per risolvere il problema nr. 2:
-			Salviamo cutIngestionJobKey tra i metadati dell'ingestionJob del LiveCut.
-			In validate::fillReferenceOutput, se l'ingestionJobKey è un LiveCut, recuperiamo cutIngestionJobKey
-			e usiamo quella key per recuperare i file di output
-			
-			Altra opzione è quella di dare al Task Cut, l'ingestionJobKey livecut. Cut dovrebbe userlo
-			per aggiungere all'ingestionJobOutput
+			Come già accade in a,tri casi (LiveRecorder con i chunks) indichiamo al Task Cut, di
+			aggiungere il suo output anche come output del livecut. Questo accade anche quando viene
+			ingestato un Chunk che appare anche come output del task Live-Recorder.
 		*/
 		{
 			int64_t cutIngestionJobKey = -1;
