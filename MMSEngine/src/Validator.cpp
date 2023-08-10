@@ -209,11 +209,6 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot,
 	bool validateDependenciesToo)
 {
-{
-string errorMessage = __FILEREF__ + "validateEvents"
-+ ", taskOrGroupOfTasksRoot: " + JSONUtils::toString(taskOrGroupOfTasksRoot);
-_logger->info(errorMessage);
-}    
     string field = "onSuccess";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
