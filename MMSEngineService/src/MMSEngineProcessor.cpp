@@ -20225,10 +20225,28 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					destMmsDataRoot.removeMember(field);
 				destMmsDataRoot[field] = newUtcStartTimeInMilliSecs;
 
+				field = "utcStartTimeInMilliSecs_str";
+				{
+					time_t newUtcStartTimeInSecs = newUtcStartTimeInMilliSecs / 1000;
+					// i.e.: 2021-02-26T15:41:15Z
+					string utcToUtcString = DateTime::utcToUtcString(newUtcStartTimeInSecs);
+					utcToUtcString.insert(utcToUtcString.size() - 1, "." + to_string(newUtcStartTimeInMilliSecs % 1000));
+					destMmsDataRoot[field] = utcToUtcString;
+				}
+
 				field = "utcEndTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
 					destMmsDataRoot.removeMember(field);
 				destMmsDataRoot[field] = newUtcEndTimeInMilliSecs;
+
+				field = "utcEndTimeInMilliSecs_str";
+				{
+					time_t newUtcEndTimeInSecs = newUtcEndTimeInMilliSecs / 1000;
+					// i.e.: 2021-02-26T15:41:15Z
+					string utcToUtcString = DateTime::utcToUtcString(newUtcEndTimeInSecs);
+					utcToUtcString.insert(utcToUtcString.size() - 1, "." + to_string(newUtcEndTimeInMilliSecs % 1000));
+					destMmsDataRoot[field] = utcToUtcString;
+				}
 
 				field = "mmsData";
 				destUserDataRoot[field] = destMmsDataRoot;

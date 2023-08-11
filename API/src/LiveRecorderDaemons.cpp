@@ -3112,42 +3112,14 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		field = "utcEndTimeInMilliSecs";
 		mmsDataRoot[field] = utcEndTimeInMilliSecs;
 
-		string sUtcEndTimeForContentTitle;
 		{
-			char    utcEndTime_str [64];
-			tm      tmDateTime;
-
-
 			time_t utcEndTimeInSeconds = utcEndTimeInMilliSecs / 1000;
+			// i.e.: 2021-02-26T15:41:15Z
+			string utcToUtcString = DateTime::utcToUtcString(utcEndTimeInSeconds);
+			utcToUtcString.insert(utcToUtcString.size() - 1, "." + to_string(utcEndTimeInMilliSecs % 1000));
 
-			// from utc to local time
-			localtime_r (&utcEndTimeInSeconds, &tmDateTime);
-
-			{
-				sprintf (utcEndTime_str,
-					"%04d-%02d-%02d %02d:%02d:%02d",
-					tmDateTime. tm_year + 1900,
-					tmDateTime. tm_mon + 1,
-					tmDateTime. tm_mday,
-					tmDateTime. tm_hour,
-					tmDateTime. tm_min,
-					tmDateTime. tm_sec);
-
-				string sUtcEndTime = utcEndTime_str;
-
-				field = "utcEndTime_str";
-				mmsDataRoot[field] = sUtcEndTime;
-			}
-
-			{
-				sprintf (utcEndTime_str,
-					"%02d:%02d:%02d",
-					tmDateTime. tm_hour,
-					tmDateTime. tm_min,
-					tmDateTime. tm_sec);
-
-				sUtcEndTimeForContentTitle = utcEndTime_str;
-			}
+			field = "utcEndTimeInMilliSecs_str";
+			mmsDataRoot[field] = utcToUtcString;
 		}
 
 		field = "recordingCode";
@@ -3161,7 +3133,6 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		Json::Value addContentRoot;
 
 		string addContentLabel = liveRecorderIngestionJobLabel;
-			// + " V-VOD (up to " + sUtcEndTimeForContentTitle + ")";
 
 		field = "label";
 		addContentRoot[field] = addContentLabel;
