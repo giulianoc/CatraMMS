@@ -693,7 +693,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 					int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
 						"recordingCode", 0);
 					// recordingCode is used by DB generated column
-					mmsDataRoot["recordingCode"] = recordingCode;
+					liveRecordingChunkRoot["recordingCode"] = recordingCode;
 				}
 				liveRecordingChunkRoot["ingestionJobLabel"] = ingestionJobLabel;
 				liveRecordingChunkRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
@@ -1165,7 +1165,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 									int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
 										"recordingCode", 0);
 									// recordingCode is used by DB generated column
-									mmsDataRoot["recordingCode"] = recordingCode;
+									liveRecordingChunkRoot["recordingCode"] = recordingCode;
 								}
 								liveRecordingChunkRoot["ingestionJobLabel"] = ingestionJobLabel;
 								liveRecordingChunkRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
@@ -3103,7 +3103,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 
 		// recordingCode is used by DB generated column
 		field = "recordingCode";
-		mmsDataRoot[field] = recordingCode;
+		liveRecordingVODRoot[field] = recordingCode;
 
 		field = "liveRecordingVOD";
 		mmsDataRoot[field] = liveRecordingVODRoot;

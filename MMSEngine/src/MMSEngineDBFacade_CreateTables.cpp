@@ -1723,7 +1723,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					// This is automatically set to false when overrideUniqueName is applied
 					"markedAsRemoved		TINYINT NOT NULL,"
                     "processorMMSForRetention	VARCHAR (128) NULL,"
-					"recordingCode_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(userData, '$.mmsData.recordingCode')) NULL,"
+					"recordingCode_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(userData, '$.mmsData.liveRecordingChunk.recordingCode')) NULL,"
 					"utcStartTimeInMilliSecs_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(userData, '$.mmsData.utcStartTimeInMilliSecs')) NULL,"
 					"utcEndTimeInMilliSecs_virtual	BIGINT GENERATED ALWAYS AS (JSON_EXTRACT(userData, '$.mmsData.utcEndTimeInMilliSecs')) NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "

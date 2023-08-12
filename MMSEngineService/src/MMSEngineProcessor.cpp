@@ -15434,36 +15434,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				// PS: Playout Start, PE: Playout End
 				// --------------SC--------------SC--------------SC--------------SC
 				//                       PS-------------------------------PE
-
-				jsonCondition = "(";
-
-				// first chunk of the cut
-				jsonCondition += (
-					"(JSON_EXTRACT(userData, '$.mmsData.utcStartTimeInMilliSecs') <= "
-						+ to_string(utcCutPeriodStartTimeInMilliSeconds) + " "
-					+ "and " + to_string(utcCutPeriodStartTimeInMilliSeconds)
-						+ " < JSON_EXTRACT(userData, '$.mmsData.utcEndTimeInMilliSecs') ) "
-				);
-
-				jsonCondition += " or ";
-
-				// internal chunk of the cut
-				jsonCondition += (
-					"( " + to_string(utcCutPeriodStartTimeInMilliSeconds) + " <= JSON_EXTRACT(userData, '$.mmsData.utcStartTimeInMilliSecs') "
-					+ "and JSON_EXTRACT(userData, '$.mmsData.utcEndTimeInMilliSecs') <= " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond) + ") "
-				);
-
-				jsonCondition += " or ";
-
-				// last chunk of the cut
-				jsonCondition += (
-					"( JSON_EXTRACT(userData, '$.mmsData.utcStartTimeInMilliSecs') < " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond) + " "
-						+ "and " + to_string(utcCutPeriodEndTimeInMilliSecondsPlusOneSecond) + " <= JSON_EXTRACT(userData, '$.mmsData.utcEndTimeInMilliSecs') ) "
-					);
-
-				jsonCondition += ")";
 			}
-			string jsonOrderBy = "JSON_EXTRACT(userData, '$.mmsData.utcStartTimeInMilliSecs') asc";
 			*/
 			string jsonOrderBy;
 			orderBy = "utcStartTimeInMilliSecs_virtual asc";
@@ -15983,32 +15954,13 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					mmsDataRoot[field] = utcCutPeriodEndTimeInMilliSeconds;
 					*/
 
-					/*
-					field = "streamSourceType";
-					mmsDataRoot[field] = streamSourceType;
-
-					if (streamSourceType == "IP_PULL")
-					{
-						field = "configurationLabel";
-						mmsDataRoot[field] = ipConfigurationLabel;
-					}
-					else if (streamSourceType == "Satellite")
-					{
-						field = "configurationLabel";
-						mmsDataRoot[field] = satConfigurationLabel;
-					}
-					else // if (streamSourceType == "IP_PUSH")
-					{
-						field = "actAsServerChannelCode";
-						mmsDataRoot[field] = actAsServerChannelCode;
-					}
-					*/
-					field = "recordingCode";
-					mmsDataRoot[field] = recordingCode;
+					// field = "recordingCode";
+					// mmsDataRoot[field] = recordingCode;
 
 					// Per capire il motivo dell'aggiunta dei due campi liveCut e ingestionJobKey,
 					// leggi il commento sotto (2023-08-10) in particolare la parte "Per risolvere il problema nr. 2"
 					Json::Value liveCutRoot;
+					liveCutRoot["recordingCode"] = recordingCode;
 					liveCutRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
 					mmsDataRoot["liveCut"] = liveCutRoot;
 
@@ -19299,16 +19251,16 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 						Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
 
 						string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
-						string utcChunkStartTimeField = "utcChunkStartTime";
+						// string utcChunkStartTimeField = "utcChunkStartTime";
 						if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
-						{
 							utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
-						}
+						/*
 						else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkStartTimeField))
 						{
 							utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkStartTimeField, 0);
 							utcStartTimeInMilliSecs *= 1000;
 						}
+						*/
 					}
 				}
 			}
@@ -19405,16 +19357,16 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
 
 					string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
-					string utcChunkEndTimeField = "utcChunkEndTime";
+					// string utcChunkEndTimeField = "utcChunkEndTime";
 					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
-					{
 						utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
-					}
+					/*
 					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkEndTimeField))
 					{
 						utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField, 0);
 						utcEndTimeInMilliSecs *= 1000;
 					}
+					*/
 				}
 			}
 
@@ -19455,27 +19407,6 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 					destMmsDataRoot.removeMember(field);
 				destMmsDataRoot[field] = utcEndTimeInMilliSecs;
 
-
-				/*
-				{
-					string json = JSONUtils::toString(destMmsDataRoot);
-
-					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", destMmsDataRoot: " + json
-					);
-				}
-				{
-					string json = JSONUtils::toString(parametersRoot);
-
-					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", parametersRoot: " + json
-					);
-				}
-				*/
 
 				// next statements will provoke an std::exception in case parametersRoot -> UserData
 				// is a string (i.e.: "userData" : "{\"matchId\": 363615, \"groupName\": \"CI\",
@@ -20044,30 +19975,30 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
 
 					string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
-					string utcChunkStartTimeField = "utcChunkStartTime";
+					// string utcChunkStartTimeField = "utcChunkStartTime";
 					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
-					{
 						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
-					}
+					/*
 					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkStartTimeField))
 					{
 						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkStartTimeField, 0);
 						utcStartTimeInMilliSecs *= 1000;
 					}
+					*/
 
 					if (utcStartTimeInMilliSecs != -1)
 					{
 						string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
-						string utcChunkEndTimeField = "utcChunkEndTime";
+						// string utcChunkEndTimeField = "utcChunkEndTime";
 						if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
-						{
 							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
-						}
+						/*
 						else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcChunkEndTimeField))
 						{
 							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField, 0);
 							utcEndTimeInMilliSecs *= 1000;
 						}
+						*/
 
 						// utcStartTimeInMilliSecs and utcEndTimeInMilliSecs will be set in parametersRoot
 						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
