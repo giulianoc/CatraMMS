@@ -187,10 +187,13 @@ void GenerateFrames::encodeContent(
 							userDataRoot = ingestedParametersRoot["userData"];
 
 						Json::Value mmsDataRoot;
-						mmsDataRoot["dataType"] = "generatedFrame";
-						mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-						mmsDataRoot["ingestionJobKey"] = _ingestionJobKey;
-						mmsDataRoot["generatedFrameIndex"] = generatedFrameIndex;
+
+						Json::Value generatedFrameRoot;
+						generatedFrameRoot["ingestionJobLabel"] = ingestionJobLabel;
+						generatedFrameRoot["ingestionJobKey"] = _ingestionJobKey;
+						generatedFrameRoot["generatedFrameIndex"] = generatedFrameIndex;
+
+						mmsDataRoot["generatedFrame"] = generatedFrameRoot;
 
 						userDataRoot["mmsData"] = mmsDataRoot;
 					}

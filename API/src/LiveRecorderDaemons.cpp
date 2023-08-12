@@ -687,35 +687,24 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 					userDataRoot = ingestedParametersRoot["userData"];
 
 				Json::Value mmsDataRoot;
-				mmsDataRoot["dataType"] = "liveRecordingChunk";
-				/*
-				mmsDataRoot["streamSourceType"] = streamSourceType;
-				if (streamSourceType == "IP_PULL")
-					mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else if (streamSourceType == "TV")
-					mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-				else // if (streamSourceType == "IP_PUSH")
-				*/
+
+				Json::Value liveRecordingChunkRoot;
 				{
 					int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
 						"recordingCode", 0);
+					// recordingCode is used by DB generated column
 					mmsDataRoot["recordingCode"] = recordingCode;
 				}
-				mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-				// mmsDataRoot["main"] = main;
-				// mmsDataRoot["main"] = true;
-				// if (!highAvailability)
-				// {
-				// 	bool validated = true;
-				// 	mmsDataRoot["validated"] = validated;
-				// }
-				mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
-				mmsDataRoot["utcPreviousChunkStartTime"] =
+				liveRecordingChunkRoot["ingestionJobLabel"] = ingestionJobLabel;
+				liveRecordingChunkRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
+				liveRecordingChunkRoot["utcPreviousChunkStartTime"] =
 					(time_t) (utcCurrentRecordedFileCreationTime - lastRecordedAssetDurationInSeconds);
-				mmsDataRoot["utcChunkStartTime"] = utcCurrentRecordedFileCreationTime;
-				mmsDataRoot["utcChunkEndTime"] = utcCurrentRecordedFileLastModificationTime;
+				liveRecordingChunkRoot["utcChunkStartTime"] = utcCurrentRecordedFileCreationTime;
+				liveRecordingChunkRoot["utcChunkEndTime"] = utcCurrentRecordedFileLastModificationTime;
 
-				mmsDataRoot["uniqueName"] = uniqueName;
+				liveRecordingChunkRoot["uniqueName"] = uniqueName;
+
+				mmsDataRoot["liveRecordingChunk"] = liveRecordingChunkRoot;
 
 				userDataRoot["mmsData"] = mmsDataRoot;
 			}
@@ -1169,44 +1158,32 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 									userDataRoot = ingestedParametersRoot["userData"];
 
 								Json::Value mmsDataRoot;
-								mmsDataRoot["dataType"] = "liveRecordingChunk";
-								/*
-								mmsDataRoot["streamSourceType"] = streamSourceType;
-								if (streamSourceType == "IP_PULL")
-									mmsDataRoot["ipConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-								else if (streamSourceType == "TV")
-									mmsDataRoot["satConfKey"] = JSONUtils::asInt64(encodingParametersRoot, "confKey", 0);
-								else // if (streamSourceType == "IP_PUSH")
-								*/
+
+								Json::Value liveRecordingChunkRoot;
+
 								{
 									int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot,
 										"recordingCode", 0);
+									// recordingCode is used by DB generated column
 									mmsDataRoot["recordingCode"] = recordingCode;
 								}
-								mmsDataRoot["ingestionJobLabel"] = ingestionJobLabel;
-								// mmsDataRoot["main"] = main;
-								mmsDataRoot["main"] = true;
-								// if (!highAvailability)
-								// {
-								// 	bool validated = true;
-								// 	mmsDataRoot["validated"] = validated;
-								// }
-								mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
-								/*
-								mmsDataRoot["utcPreviousChunkStartTime"] =
-									(time_t) (utcCurrentRecordedFileCreationTime - lastRecordedAssetDurationInSeconds);
-								*/
-								mmsDataRoot["utcChunkStartTime"] =
+								liveRecordingChunkRoot["ingestionJobLabel"] = ingestionJobLabel;
+								liveRecordingChunkRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
+								liveRecordingChunkRoot["utcChunkStartTime"] =
 									(int64_t) (toBeIngestedSegmentUtcStartTimeInMillisecs / 1000);
+								// utcStartTimeInMilliSecs is used by DB generated column
 								mmsDataRoot["utcStartTimeInMilliSecs"] =
 									toBeIngestedSegmentUtcStartTimeInMillisecs;
 
-								mmsDataRoot["utcChunkEndTime"] =
+								liveRecordingChunkRoot["utcChunkEndTime"] =
 									(int64_t) (toBeIngestedSegmentUtcEndTimeInMillisecs / 1000);
+								// utcStartTimeInMilliSecs is used by DB generated column
 								mmsDataRoot["utcEndTimeInMilliSecs"] =
 									toBeIngestedSegmentUtcEndTimeInMillisecs;
 
-								mmsDataRoot["uniqueName"] = uniqueName;
+								liveRecordingChunkRoot["uniqueName"] = uniqueName;
+
+								mmsDataRoot["liveRecordingChunk"] = liveRecordingChunkRoot;
 
 								userDataRoot["mmsData"] = mmsDataRoot;
 							}
@@ -1836,9 +1813,10 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 		}
 		*/
 		Json::Value mmsDataRoot = userDataRoot["mmsData"];
-		int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcPreviousChunkStartTime", -1);
-		int64_t utcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkStartTime", -1);
-		int64_t utcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, "utcChunkEndTime", -1);
+		Json::Value liveRecordingChunkRoot = mmsDataRoot["liveRecordingChunk"];
+		int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcPreviousChunkStartTime", -1);
+		int64_t utcChunkStartTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcChunkStartTime", -1);
+		int64_t utcChunkEndTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcChunkEndTime", -1);
 
 		Json::Value addContentRoot;
 
@@ -3103,12 +3081,13 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 
 		// 2020-04-28: set it to liveRecordingChunk to avoid to be visible into the GUI (view MediaItems).
 		//	This is because this MediaItem is not completed yet
-		string field = "dataType";
-		mmsDataRoot[field] = "liveRecordingVOD";
+		Json::Value liveRecordingVODRoot;
 
-		field = "utcStartTimeInMilliSecs";
+		// utcStartTimeInMilliSecs is used by DB generated column
+		string field = "utcStartTimeInMilliSecs";
 		mmsDataRoot[field] = utcStartTimeInMilliSecs;
 
+		// utcEndTimeInMilliSecs is used by DB generated column
 		field = "utcEndTimeInMilliSecs";
 		mmsDataRoot[field] = utcEndTimeInMilliSecs;
 
@@ -3122,8 +3101,12 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 			mmsDataRoot[field] = utcToUtcString;
 		}
 
+		// recordingCode is used by DB generated column
 		field = "recordingCode";
 		mmsDataRoot[field] = recordingCode;
+
+		field = "liveRecordingVOD";
+		mmsDataRoot[field] = liveRecordingVODRoot;
 
 		Json::Value userDataRoot;
 

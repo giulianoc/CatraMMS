@@ -230,8 +230,12 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			userDataRoot = ingestedParametersRoot["userData"];
 
 		Json::Value mmsDataRoot;
-		mmsDataRoot["dataType"] = "externalTranscoder";
-		mmsDataRoot["ingestionJobKey"] = ingestionJobKey;
+
+		Json::Value externalTranscoderRoot;
+
+		externalTranscoderRoot["ingestionJobKey"] = ingestionJobKey;
+
+		mmsDataRoot["externalTranscoder"] = externalTranscoderRoot;
 
 		userDataRoot["mmsData"] = mmsDataRoot;
 	}

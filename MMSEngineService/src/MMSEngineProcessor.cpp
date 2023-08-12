@@ -8137,15 +8137,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					{
 						Json::Value mmsDataRoot = userDataRoot[field];
 
-						field = "dataType";
-						if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
+						if (JSONUtils::isMetadataPresent(mmsDataRoot, "externalTranscoder"))
 						{
-							string dataType = JSONUtils::asString(mmsDataRoot, field, "");
-							if (dataType == "externalTranscoder")
-							{
-								field = "ingestionJobKey";
-								sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
-							}
+							field = "ingestionJobKey";
+							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
 						}
 					}
 				}
@@ -16011,10 +16006,11 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 					field = "recordingCode";
 					mmsDataRoot[field] = recordingCode;
 
-					// Per capire il motivo dell'aggiunta dei due campi dataType e ingestionJobKey,
+					// Per capire il motivo dell'aggiunta dei due campi liveCut e ingestionJobKey,
 					// leggi il commento sotto (2023-08-10) in particolare la parte "Per risolvere il problema nr. 2"
-					mmsDataRoot["dataType"] = "liveCut";
-					mmsDataRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
+					Json::Value liveCutRoot;
+					liveCutRoot["ingestionJobKey"] = (int64_t) (ingestionJobKey);
+					mmsDataRoot["liveCut"] = liveCutRoot;
 
 					field = "mmsData";
 					userDataRoot["mmsData"] = mmsDataRoot;

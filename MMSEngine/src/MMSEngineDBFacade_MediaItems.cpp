@@ -2398,12 +2398,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
         if (contentTypePresent && contentType == ContentType::Video && liveRecordingChunk != -1)
 		{
 			if (liveRecordingChunk == 0)
-			{
-				sqlWhere += ("and (JSON_EXTRACT(userData, '$.mmsData.dataType') is NULL ");
-				sqlWhere += ("OR JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) not like 'liveRecordingChunk%') ");
-			}
+				sqlWhere += ("and JSON_EXTRACT(userData, '$.mmsData.liveRecordingChunk') is NULL ");
 			else if (liveRecordingChunk == 1)
-				sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
+				sqlWhere += ("and JSON_EXTRACT(userData, '$.mmsData.liveRecordingChunk') is not NULL ");
+				// sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 		}
 		if (recordingCode != -1)
 			sqlWhere += ("and mi.recordingCode_virtual = ? ");
@@ -2745,12 +2743,10 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			if (contentTypePresent && contentType == ContentType::Video && liveRecordingChunk != -1)
 			{
 				if (liveRecordingChunk == 0)
-				{
-					sqlWhere += ("and (JSON_EXTRACT(mi.userData, '$.mmsData.dataType') is NULL ");
-					sqlWhere += ("OR JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) not like 'liveRecordingChunk%') ");
-				}
+					sqlWhere += ("and JSON_EXTRACT(mi.userData, '$.mmsData.liveRecordingChunk') is NULL ");
 				else if (liveRecordingChunk == 1)
-					sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
+					sqlWhere += ("and JSON_EXTRACT(mi.userData, '$.mmsData.liveRecordingChunk') is not NULL ");
+					// sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 			}
 			if (recordingCode != -1)
 				sqlWhere += ("and mi.recordingCode_virtual = ? ");
@@ -5642,19 +5638,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					{
 						Json::Value mmsDataRoot = userDataRoot[field];
 
-						field = "dataType";
-						if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
+						if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveRecordingChunk")
+							|| JSONUtils::isMetadataPresent(mmsDataRoot, "generatedFrame")
+							|| JSONUtils::isMetadataPresent(mmsDataRoot, "externalTranscoder")
+							|| JSONUtils::isMetadataPresent(mmsDataRoot, "liveCut")
+						)
 						{
-							string dataType = JSONUtils::asString(mmsDataRoot, field, "");
-							if (dataType == "liveRecordingChunk"
-								|| dataType == "generatedFrame"
-								|| dataType == "externalTranscoder"
-								|| dataType == "liveCut"
-							)
-							{
-								field = "ingestionJobKey";
-								sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
-							}
+							field = "ingestionJobKey";
+							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
 						}
 					}
 				}
@@ -7783,12 +7774,10 @@ Json::Value MMSEngineDBFacade::getTagsList (
         if (tagNameFilter != "")
             sqlWhere += ("and t.name like ? ");
 		if (liveRecordingChunk == 0)
-		{
-			sqlWhere += ("and (JSON_EXTRACT(mi.userData, '$.mmsData.dataType') is NULL ");
-			sqlWhere += ("OR JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) not like 'liveRecordingChunk%') ");
-		}
+			sqlWhere += ("and JSON_EXTRACT(mi.userData, '$.mmsData.liveRecordingChunk') is NULL ");
 		else if (liveRecordingChunk == 1)
-			sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
+			sqlWhere += ("and JSON_EXTRACT(mi.userData, '$.mmsData.liveRecordingChunk') is not NULL ");
+			// sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(mi.userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
         
         Json::Value responseRoot;
         {
