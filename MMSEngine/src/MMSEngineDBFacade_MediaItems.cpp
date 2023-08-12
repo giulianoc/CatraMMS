@@ -5638,15 +5638,15 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					{
 						Json::Value mmsDataRoot = userDataRoot[field];
 
-						if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveRecordingChunk")
-							|| JSONUtils::isMetadataPresent(mmsDataRoot, "generatedFrame")
-							|| JSONUtils::isMetadataPresent(mmsDataRoot, "externalTranscoder")
-							|| JSONUtils::isMetadataPresent(mmsDataRoot, "liveCut")
-						)
-						{
-							field = "ingestionJobKey";
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
-						}
+						field = "ingestionJobKey";
+						if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveRecordingChunk"))
+							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveRecordingChunk"], field, -1);
+						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "generatedFrame"))
+							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["generatedFrame"], field, -1);
+						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "externalTranscoder"))
+							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["externalTranscoder"], field, -1);
+						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveCut"))
+							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveCut"], field, -1);
 					}
 				}
 			}

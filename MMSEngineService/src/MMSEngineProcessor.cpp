@@ -15760,7 +15760,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				}
 
 				field = "retention";
-				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "1d");
+				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- utcFirstChunkStartTimeInMilliSecs;
