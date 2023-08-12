@@ -300,12 +300,12 @@ private:
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
 
-	void liveCutThread_streamSegmenter(
+	void manageLiveCutThread_streamSegmenter(
 		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
-	void liveCutThread_hlsSegmenter(
+	void manageLiveCutThread_hlsSegmenter(
 		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
 		string ingestionJobLabel,

@@ -5339,7 +5339,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									getMaxAdditionalProcessorThreads();
 								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
 								{
-									_logger->warn(__FILEREF__ + "Not enough available threads to manage liveCutThread, activity is postponed"
+									_logger->warn(__FILEREF__ + "Not enough available threads to manage manageLiveCutThread, activity is postponed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 										+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -5369,29 +5369,29 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									// string segmenterType = "streamSegmenter";
 									if (segmenterType == "hlsSegmenter")
 									{
-										thread liveCutThread(
-											&MMSEngineProcessor::liveCutThread_hlsSegmenter, this, 
+										thread manageLiveCutThread(
+											&MMSEngineProcessor::manageLiveCutThread_hlsSegmenter, this, 
 											_processorsThreadsNumber,
 											ingestionJobKey, ingestionJobLabel,
 											workspace,
 											parametersRoot
 										);
-										liveCutThread.detach();
+										manageLiveCutThread.detach();
 									}
 									else
 									{
-										thread liveCutThread(&MMSEngineProcessor::liveCutThread_streamSegmenter, this, 
+										thread manageLiveCutThread(&MMSEngineProcessor::manageLiveCutThread_streamSegmenter, this, 
 											_processorsThreadsNumber, ingestionJobKey,
 											workspace,
 											parametersRoot
 										);
-										liveCutThread.detach();
+										manageLiveCutThread.detach();
 									}
 								}
 							}
 							catch(runtime_error e)
 							{
-								_logger->error(__FILEREF__ + "liveCutThread failed"
+								_logger->error(__FILEREF__ + "manageLiveCutThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", exception: " + e.what()
@@ -5435,7 +5435,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch(exception e)
 							{
-								_logger->error(__FILEREF__ + "liveCutThread failed"
+								_logger->error(__FILEREF__ + "manageLiveCutThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 									+ ", exception: " + e.what()
@@ -14336,7 +14336,7 @@ void MMSEngineProcessor::manageLiveGrid(
     }
 }
 
-void MMSEngineProcessor::liveCutThread_streamSegmenter(
+void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 	shared_ptr<long> processorsThreadsNumber,
 	int64_t ingestionJobKey,
 	shared_ptr<Workspace> workspace,
@@ -14345,7 +14345,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 {
     try
     {
-		_logger->info(__FILEREF__ + "liveCutThread"
+		_logger->info(__FILEREF__ + "manageLiveCutThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -14897,26 +14897,6 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 				concatDemuxerRoot[field] = "Concat-Demuxer";
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
-				/*
-				if (streamSourceType == "IP_PULL")
-				{
-					Json::Value removed;
-					field = "configurationLabel";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
-				}
-				else if (streamSourceType == "Satellite")
-				{
-					Json::Value removed;
-					field = "configurationLabel";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
-				}
-				else // if (streamSourceType == "IP_PUSH")
-				{
-					Json::Value removed;
-					field = "ActAsServerChannelCode";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
-				}
-				*/
 				{
 					Json::Value removed;
 					field = "recordingCode";
@@ -15149,7 +15129,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
 	}
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "liveCutThread failed"
+        _logger->error(__FILEREF__ + "manageLiveCutThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -15189,7 +15169,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "liveCutThread failed"
+        _logger->error(__FILEREF__ + "manageLiveCutThread failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -15228,7 +15208,7 @@ void MMSEngineProcessor::liveCutThread_streamSegmenter(
     }
 }
 
-void MMSEngineProcessor::liveCutThread_hlsSegmenter(
+void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 	shared_ptr<long> processorsThreadsNumber,
 	int64_t ingestionJobKey,
 	string ingestionJobLabel,
@@ -15238,15 +15218,12 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 {
     try
     {
-		_logger->info(__FILEREF__ + "liveCutThread"
+		_logger->info(__FILEREF__ + "manageLiveCutThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
 
-		// string streamSourceType;
-		// string ipConfigurationLabel;
-		// string satConfigurationLabel;
 		int64_t recordingCode;
 		int64_t chunkEncodingProfileKey = -1;
 		string chunkEncodingProfileLabel;
@@ -15255,53 +15232,6 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		int maxWaitingForLastChunkInSeconds = 90;
 		bool errorIfAChunkIsMissing = false;
         {
-			/*
-            string field = "streamSourceType";
-            if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-			streamSourceType = liveCutParametersRoot.get(field, "").asString();
-
-			if (streamSourceType == "IP_PULL")
-			{
-				field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				ipConfigurationLabel = liveCutParametersRoot.get(field, "").asString();
-			}
-			else if (streamSourceType == "Satellite")
-			{
-				field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
-				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", Field: " + field;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				satConfigurationLabel = liveCutParametersRoot.get(field, "").asString();
-			}
-			*/
-
-			// else if (streamSourceType == "IP_PUSH")
 			string field = "recordingCode";
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
@@ -15373,23 +15303,6 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 		 * For this reason, when we retrieve the chunks, we will use 'period end time' plus one second
 		 */
 		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = utcCutPeriodEndTimeInMilliSeconds + 1000;
-
-		/*
-		int64_t confKey = -1;
-		if (streamSourceType == "IP_PULL")
-		{
-			bool warningIfMissing = false;
-			pair<int64_t, string> confKeyAndLiveURL = _mmsEngineDBFacade->getIPChannelConfDetails(
-				workspace->_workspaceKey, ipConfigurationLabel, warningIfMissing);
-			tie(confKey, ignore) = confKeyAndLiveURL;
-		}
-		else if (streamSourceType == "Satellite")
-		{
-			bool warningIfMissing = false;
-			confKey = _mmsEngineDBFacade->getSATChannelConfDetails(
-				workspace->_workspaceKey, satConfigurationLabel, warningIfMissing);
-		}
-		*/
 
 		Json::Value mediaItemKeyReferencesRoot(Json::arrayValue);
 		int64_t utcFirstChunkStartTimeInMilliSecs;
@@ -15717,9 +15630,6 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", firstRequestedChunk: " + to_string(firstRequestedChunk)
 				+ ", lastRequestedChunk: " + to_string(lastRequestedChunk)
-				// + ", streamSourceType: " + streamSourceType
-				// + ", ipConfigurationLabel: " + ipConfigurationLabel
-				// + ", satConfigurationLabel: " + satConfigurationLabel
 				+ ", recordingCode: " + to_string(recordingCode)
 				+ ", cutPeriodStartTimeInMilliSeconds: " + cutPeriodStartTimeInMilliSeconds
 				+ ", cutPeriodEndTimeInMilliSeconds: " + cutPeriodEndTimeInMilliSeconds
@@ -15801,26 +15711,6 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				concatDemuxerRoot[field] = "Concat-Demuxer";
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
-				/*
-				if (streamSourceType == "IP_PULL")
-				{
-					Json::Value removed;
-					field = "configurationLabel";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
-				}
-				else if (streamSourceType == "Satellite")
-				{
-					Json::Value removed;
-					field = "configurationLabel";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
-				}
-				else // if (streamSourceType == "IP_PUSH")
-				{
-					Json::Value removed;
-					field = "ActAsServerChannelCode";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
-				}
-				*/
 				{
 					Json::Value removed;
 					field = "recordingCode";
@@ -15870,7 +15760,7 @@ void MMSEngineProcessor::liveCutThread_hlsSegmenter(
 				}
 
 				field = "retention";
-				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "");
+				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "1d");
 
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds
 					- utcFirstChunkStartTimeInMilliSecs;
@@ -16065,7 +15955,7 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
 			l'ingestionJobKey del Cut ed eseguiamo una update della tabella MMS_IngestionJobDependency
 
 			Per risolvere il problema nr. 2:
-			Come già accade in a,tri casi (LiveRecorder con i chunks) indichiamo al Task Cut, di
+			Come già accade in altri casi (LiveRecorder con i chunks) indichiamo al Task Cut, di
 			aggiungere il suo output anche come output del livecut. Questo accade anche quando viene
 			ingestato un Chunk che appare anche come output del task Live-Recorder.
 		*/
@@ -16129,7 +16019,7 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
 	}
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "liveCutThread failed"
+        _logger->error(__FILEREF__ + "manageLiveCutThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -16169,7 +16059,7 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "liveCutThread failed"
+        _logger->error(__FILEREF__ + "manageLiveCutThread failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
