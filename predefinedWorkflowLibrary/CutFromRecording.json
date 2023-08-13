@@ -1,39 +1,39 @@
 {
   "Variables": {
     "mediaItemTitle": {
-      "Description": "Media item title",
-      "IsNull": false,
-      "Position": 3,
+      "description": "Media item title",
+      "isNull": false,
+      "position": 3,
       "type": "string",
-      "Value": ""
+      "value": ""
     },
     "recordingCode": {
-      "Description": "Recording Code",
-      "IsNull": false,
-      "Position": 2,
+      "description": "Recording Code",
+      "isNull": false,
+      "position": 2,
       "type": "integer",
-      "Value": 0
+      "value": 0
     },
     "liveCutStart": {
-      "Description": "Start of the LiveCut",
-      "IsNull": false,
-      "Position": 0,
+      "description": "Start of the LiveCut",
+      "isNull": false,
+      "position": 0,
       "type": "datetime-millisecs",
-      "Value": "2022-01-24T21:07:34.088Z"
+      "value": "2022-01-24T21:07:34.088Z"
     },
     "liveCutEnd": {
-      "Description": "End of the LiveCut",
-      "IsNull": false,
-      "Position": 1,
+      "description": "End of the LiveCut",
+      "isNull": false,
+      "position": 1,
       "type": "datetime-millisecs",
-      "Value": "2022-01-24T21:09:05.011Z"
+      "value": "2022-01-24T21:09:05.011Z"
     },
     "mediaItemRetention": {
-      "Description": "Media item retention",
-      "IsNull": false,
-      "Position": 4,
+      "description": "Media item retention",
+      "isNull": false,
+      "position": 4,
       "type": "string",
-      "Value": ""
+      "value": ""
     }
   },
   "label": "Cut from Recording",

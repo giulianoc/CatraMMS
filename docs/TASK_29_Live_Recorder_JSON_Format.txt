@@ -7,11 +7,11 @@
 
 	// The Workflow ingested by the MMS Task Manager to add the generated Chunks
 	// will have the following variables:
-	// - CurrentUtcChunkStartTime, integer, UTC Start Time of the current chunk
-	// - PreviousUtcChunkStartTime, integer, UTC Start Time of the previous chunk
-	// - CurrentUtcChunkStartTime_HHMISS, string, Local Time having the HH:MI:SS format
-	// - DeliveryCode, integer, delivery code of the Live Recorder
-	// - IngestionJobLabel, string, ingestion job label of the Live Recorder
+	// - currentUtcChunkStartTime, integer, UTC Start Time of the current chunk
+	// - currentUtcChunkStartTime_HHMISS, string, Local Time having the HH:MI:SS format
+	// - previousUtcChunkStartTime, integer, UTC Start Time of the previous chunk
+	// - recordingCode, integer, delivery code of the Live Recorder
+	// - ingestionJobLabel, string, ingestion job label of the Live Recorder
 	"parameters": {
 
 		// mandatory: it identifies the channel

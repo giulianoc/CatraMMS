@@ -1909,11 +1909,11 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				field = "type";
 				variableWorkflowRoot[field] = "integer";
 
-				field = "Value";
+				field = "value";
 				variableWorkflowRoot[field] = utcChunkStartTime;
 
 				// name of the variable
-				field = "CurrentUtcChunkStartTime";
+				field = "currentUtcChunkStartTime";
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
@@ -1931,35 +1931,31 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 					tmDateTime. tm_sec);
 
 			}
-			// field = "CurrentUtcChunkStartTime_HHMISS";
-			// variablesWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
 			{
 				Json::Value variableWorkflowRoot;
 
 				field = "type";
 				variableWorkflowRoot[field] = "string";
 
-				field = "Value";
+				field = "value";
 				variableWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
 
 				// name of the variable
-				field = "CurrentUtcChunkStartTime_HHMISS";
+				field = "currentUtcChunkStartTime_HHMISS";
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
-			// field = "PreviousUtcChunkStartTime";
-			// variablesWorkflowRoot[field] = utcPreviousChunkStartTime;
 			{
 				Json::Value variableWorkflowRoot;
 
 				field = "type";
 				variableWorkflowRoot[field] = "integer";
 
-				field = "Value";
+				field = "value";
 				variableWorkflowRoot[field] = utcPreviousChunkStartTime;
 
 				// name of the variable
-				field = "PreviousUtcChunkStartTime";
+				field = "previousUtcChunkStartTime";
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
@@ -1970,7 +1966,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				field = "type";
 				variableWorkflowRoot[field] = "integer";
 
-				field = "Value";
+				field = "value";
 				variableWorkflowRoot[field] = recordingCode;
 
 				// name of the variable
@@ -1985,11 +1981,11 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				field = "type";
 				variableWorkflowRoot[field] = "string";
 
-				field = "Value";
+				field = "value";
 				variableWorkflowRoot[field] = ingestionJobLabel;
 
 				// name of the variable
-				field = "IngestionJobLabel";
+				field = "ingestionJobLabel";
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 

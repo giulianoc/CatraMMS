@@ -1,76 +1,76 @@
 {
   "Variables": {
     "title": {
-      "Position": 0,
-	  "IsNull": false,
-      "Description": "Title of the Picture",
+      "position": 0,
+	  "isNull": false,
+      "description": "Title of the Picture",
       "type": "string",
-      "Value": "My Title"
+      "value": "My Title"
     },
     "imageTags": {
-      "Position": 1,
-	  "IsNull": false,
-      "Description": "string representing a json array of strings. i.e.: [\"tag 1\", \"tag 2\"]",
+      "position": 1,
+	  "isNull": false,
+      "description": "string representing a json array of strings. i.e.: [\"tag 1\", \"tag 2\"]",
       "type": "jsonArray",
-      "Value": [ "FACE" ]
+      "value": [ "FACE" ]
     },
     "instantInSeconds": {
-      "Position": 2,
-	  "IsNull": false,
-      "Description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
+      "position": 2,
+	  "isNull": false,
+      "description": "Used by the Frame Task to get the Instant in seconds where to get the Picture ",
       "type": "decimal",
-      "Value": 60
+      "value": 60
     },
     "uniqueName": {
-      "Position": 3,
-	  "IsNull": false,
+      "position": 3,
+	  "isNull": false,
       "type": "string",
-      "Value": ""
+      "value": ""
     },
     "allowUniqueNameOverride": {
-      "Position": 4,
-	  "IsNull": false,
+      "position": 4,
+	  "isNull": false,
       "type": "boolean",
-      "Value": false
+      "value": false
     },
     "imageRetention": {
-      "Position": 5,
-	  "IsNull": false,
+      "position": 5,
+	  "isNull": false,
       "type": "string",
-      "Value": "1d"
+      "value": "1d"
     },
     "ingester": {
-      "Position": 6,
-	  "IsNull": false,
+      "position": 6,
+	  "isNull": false,
       "type": "string",
-      "Value": "Admin"
+      "value": "Admin"
     },
     "initialFramesNumberToBeSkipped": {
-      "Position": 7,
-	  "IsNull": false,
-      "Description": "In case of Face Recognition, number of frames to be skipped at the beginning",
+      "position": 7,
+	  "isNull": false,
+      "description": "In case of Face Recognition, number of frames to be skipped at the beginning",
       "type": "integer",
-      "Value": 1500
+      "value": 1500
     },
     "imageUserData": {
-      "Position": 8,
-	  "IsNull": false,
+      "position": 8,
+	  "isNull": false,
       "type": "jsonObject",
-	  "Value": {},
-      "Description": "string representing a json object. i.e: {\"data 1\": \"value 1\", \"data 2\": 32 }"
+	  "value": {},
+      "description": "string representing a json object. i.e: {\"data 1\": \"value 1\", \"data 2\": 32 }"
     },
     "processingStartingFrom": {
-      "IsNull": true,
-      "Position": 9,
+      "isNull": true,
+      "position": 9,
       "type": "datetime",
-      "Value": ""
+      "value": ""
     },
     "references": {
-      "Position": 10,
-	  "IsNull": false,
-      "Description": "string representing a json array of ONE References. i.e.: [{\"mediaItemKey\", 123456}]",
+      "position": 10,
+	  "isNull": false,
+      "description": "string representing a json array of ONE References. i.e.: [{\"mediaItemKey\", 123456}]",
       "type": "jsonArray",
-      "Value": [ ]
+      "value": [ ]
     }
   },
   "label": "Best Picture of the Video",

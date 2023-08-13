@@ -311,15 +311,15 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 		"Variables": {
 			"var n. 1": {
 				"type": "int",	// or string
-				"IsNull": false,
-				"Value": 10,
-				"Description": "..."
+				"isNull": false,
+				"value": 10,
+				"description": "..."
 			},
 			"var n. 2": {
 				"type": "string",
-				"IsNull": false,
-				"Value": "...",
-				"Description": "..."
+				"isNull": false,
+				"value": "...",
+				"description": "..."
 			}
 		}
 
@@ -373,7 +373,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 						field = "type";
 						string variableType = JSONUtils::asString(variableDetails, field, "");
 
-						field = "IsNull";
+						field = "isNull";
 						bool variableIsNull = JSONUtils::asBool(variableDetails, field, false);
 
 						if (variableType == "jsonObject" || variableType == "jsonArray")
@@ -383,7 +383,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 						if (variablesValuesToBeUsedRoot == Json::nullValue)
 						{
-							field = "Value";
+							field = "value";
 							if (variableType == "string")
 							{
 								if (variableIsNull)
