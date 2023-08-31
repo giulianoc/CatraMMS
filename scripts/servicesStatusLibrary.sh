@@ -89,6 +89,35 @@ getAlarmDescription()
 	esac
 }
 
+getIngestionJobLabelByIngestionJobKey()
+{
+	ingestionJobKey=$1
+
+	#dominio da essere cambiato con catramms-cloud
+	apiIngestionJobDetailsURL="https://mms-api.cibortv-mms.com:443/catramms/1.0.1/ingestionJob/__INGESTIONJOBKEY__?ingestionJobOutputs=true&fromMaster=false"
+	#custom key
+	basicAuthentication="MTpITlZPb1ZoSHgweW9XTkl4RnUtVGhCQTF2QVBFS1dzeG5lR2d6ZTZlb2RkRXY5YUIxeHA5TnpzQktEQkRNRUZO"
+	maxTime=5
+	apiIngestionJobDetailsURL=${apiIngestionJobDetailsURL/__INGESTIONJOBKEY__/$ingestionJobKey}
+	ingestionJobKeyPathName=/tmp/$ingestionJobKey.json
+	start=$(date +%s)
+	curl -k --silent --output $ingestionJobKeyPathName --max-time $maxTime -H 'accept:: application/json' -H "Authorization: Basic $basicAuthentication" -X 'GET' "$apiIngestionJobDetailsURL"
+	end=$(date +%s)
+	ingestionJobLabel=""
+	if [ -f "$ingestionJobKeyPathName" ]; then
+		fileSize=$(stat -c%s "$ingestionJobKeyPathName")
+		if [ $fileSize -gt 1000 ]; then
+			ingestionJobLabel=$(cat $ingestionJobKeyPathName | jq '.response.ingestionJobs[0].label')
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, ingestionJobLabel: $ingestionJobLabel, elapsed: $((end-start)) secs" >> $debugFilename
+		else
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, $ingestionJobKeyPathName size: $(stat -c%s "$ingestionJobKeyPathName"), elapsed: $((end-start)) secs" >> $debugFilename
+		fi
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, elapsed: $((end-start)) secs" >> $debugFilename
+	fi
+	rm -f $ingestionJobKeyPathName
+}
+
 notify()
 {
 	serverName=$1
@@ -560,6 +589,9 @@ ffmpeg_filter_detect()
 {
 	filterName=$1
 
+	#2880: 2 giorni
+	find /tmp -maxdepth 1 -name "alarm_${filterName}_*" -mmin +2880 -type f -delete
+
 	for logFile in /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/*.log
 	do
 		fileName=$(basename $logFile)
@@ -570,12 +602,14 @@ ffmpeg_filter_detect()
 		if [ $filterCount -eq 0 ]; then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, logFile: $logFile" >> $debugFilename
 
-			if [ -f "$alarmNotificationPathFileName" ]; then
-				rm -f $alarmNotificationPathFileName
-			fi
-			if [ -f "$infoPathFileName" ]; then
-				rm -f $infoPathFileName
-			fi
+			#2023-08-31: remove non funzionante perchè, dopo che nel log saranno trovati i filtri, filterCount non sarà mai 0
+			#	Per questo motivo è stato aggiunto il find -delete sopra
+			#if [ -f "$alarmNotificationPathFileName" ]; then
+			#	rm -f $alarmNotificationPathFileName
+			#fi
+			#if [ -f "$infoPathFileName" ]; then
+			#	rm -f $infoPathFileName
+			#fi
 		else
 			#controllo il contatore precedente per verificare che è aumentato
 			counterIncreased=0
@@ -597,7 +631,10 @@ ffmpeg_filter_detect()
 				array=(${fileName//_/ })
 				ingestionJobKey=${array[0]}
 
-				notify "$(hostname)" "alarm_${filterName}" "alarm_${filterName}_${fileName}" $alarmNotificationPeriod "got ${filterCount} times on file $logFile, ingestionJobKey: $ingestionJobKey"
+				#inizializza ingestionJobLabel
+				getIngestionJobLabelByIngestionJobKey $ingestionJobKey
+
+				notify "$(hostname)" "alarm_${filterName}" "alarm_${filterName}_${fileName}" $alarmNotificationPeriod "got ${filterCount} times on file $fileName, ingestionJob: $ingestionJobKey - $ingestionJobLabel"
 				status=$?
 				if [ $status -eq 0 ]; then
 					#status 0 means alarm was sent

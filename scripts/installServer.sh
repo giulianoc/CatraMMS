@@ -11,7 +11,6 @@ ssh-port()
 	/etc/init.d/ssh restart
 }
 
-
 mms-account-creation()
 {
 	read -n 1 -s -r -p "mms account creation..."
@@ -42,7 +41,6 @@ mms-account-creation()
 	vi /home/mms/.ssh/authorized_keys
 	echo ""
 }
-
 
 time-zone()
 {
@@ -145,6 +143,11 @@ install-packages()
 	read -n 1 -s -r -p "install libtiff-dev..."
 	echo ""
 	apt-get -y install libtiff-dev
+
+	echo ""
+	read -n 1 -s -r -p "install jq..."
+	echo ""
+	apt-get -y install jq
 
 	#used by ffmpeg:
 	echo ""
