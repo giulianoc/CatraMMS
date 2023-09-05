@@ -37,6 +37,7 @@ SET (SCRIPTs
 	printLogFileName.sh
 	crontab.sh
 	incrontab.sh
+	incronServiceCheck.sh
 	sqlQueries.txt
 	checkStatistics.sh
 	checkConsistencyFileSystem-Database.sh
