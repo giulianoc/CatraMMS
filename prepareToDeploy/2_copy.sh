@@ -63,14 +63,6 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@167.235.14.105:/opt/catramms
 	date
 
-	echo "hetzner-transcoder-2"
-	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@78.46.72.77:/opt/catramms
-	date
-
-	echo "hetzner-transcoder-3"
-	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@78.46.93.238:/opt/catramms
-	date
-
 	echo "cibortv-transcoder-4"
 	scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem /opt/catrasoftware/deploy/$tarFileName mms@151.21.205.148:/opt/catramms
 	date
