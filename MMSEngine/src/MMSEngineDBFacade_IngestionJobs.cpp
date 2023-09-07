@@ -3801,7 +3801,7 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
 	shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
 	bool processedMetadata, bool fromMaster
 )
-{    
+{
     string      lastSQLCommand;
 	string		metaDataContent;
     

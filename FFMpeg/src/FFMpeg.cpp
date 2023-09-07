@@ -15802,7 +15802,10 @@ void FFMpeg::changeFileFormat(
 				_ffmpegPath + "/ffmpeg "
 				+ "-i " + sourcePhysicalPath + " "
 				// -map 0:v and -map 0:a is to get all video-audio tracks
-				+ "-map 0:v -c:v copy -map 0:a -c:a copy "
+				// 2023-09-07: ottengo un errore eseguendo questo comando su un .ts
+				//	Ho risolto il problema eliminando i due -map 
+				// + "-map 0:v -c:v copy -map 0:a -c:a copy "
+				+ "-c:v copy -c:a copy "
 				//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
 				+ "-q 0 "
 				+ destinationPathName + " "
