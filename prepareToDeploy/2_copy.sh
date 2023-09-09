@@ -64,7 +64,7 @@ if [ "$deploy" == "y" ]; then
 	date
 
 	echo "cibortv-transcoder-4"
-	scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem /opt/catrasoftware/deploy/$tarFileName mms@151.21.205.148:/opt/catramms
+	scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem /opt/catrasoftware/deploy/$tarFileName mms@151.21.249.188:/opt/catramms
 	date
 
 	echo "hetzner-transcoder-5"
