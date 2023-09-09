@@ -1,7 +1,7 @@
 {
 	"type": "Workflow",
 	"label": "1",
-	"Variables": {
+	"variables": {
 		"titleOfVideo": "My Title of the video content",
 		"titleOfFrame": "My Title of the frame content"
 	},

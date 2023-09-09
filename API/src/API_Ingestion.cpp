@@ -308,7 +308,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 		/*
 		 * Definition of the Variables into the Workflow:
-		"Variables": {
+		"variables": {
 			"var n. 1": {
 				"type": "int",	// or string
 				"isNull": false,
@@ -342,7 +342,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 				"type": "Workflow-As-Library"
 			}
 		 */
-		string field = "Variables";
+		string field = "variables";
 		if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 		{
 			Json::Value variablesRoot = requestBodyRoot[field];

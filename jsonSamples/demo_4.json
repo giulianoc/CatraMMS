@@ -1,7 +1,7 @@
 {
 	"type": "Workflow",
 	"label": "1",
-	"Variables": {
+	"variables": {
 		"titleOfVideo_1": "My Title of the video_1 content",
 		"titleOfVideo_2": "My Title of the video_2 content",
 		"titleOfConcatVideo": "My Title of the concat video content",

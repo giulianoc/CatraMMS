@@ -1,7 +1,7 @@
 {
 	"type": "Workflow",
 	"label": "Workflow 1",
-	"Variables": {  
+	"variables": {  
 		"title": "My Title of the content"
 	},
 	"task": {

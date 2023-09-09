@@ -1,7 +1,7 @@
 {
 	"type": "Workflow",
 	"label": "1",
-	"Variables": {
+	"variables": {
 		"titleOfVideo": { "Value": "My Title of the video content", "type": "string", "Description": "..." },
 		"titleOfOverlayVideo": { "Value": "My Title of the frame content", "type": "string", "Description": "..." }
 	},

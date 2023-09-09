@@ -554,7 +554,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
                         continue;
                     }
 
-                    field = "Variables";
+                    field = "variables";
 					if (!JSONUtils::isMetadataPresent(workflowRoot, field))
 						workflowLibraryRoot["variables"] = Json::nullValue;
 					else

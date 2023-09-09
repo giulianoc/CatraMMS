@@ -1989,7 +1989,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
-			field = "Variables";
+			field = "variables";
 			workflowRoot[field] = variablesWorkflowRoot;
 		}
 

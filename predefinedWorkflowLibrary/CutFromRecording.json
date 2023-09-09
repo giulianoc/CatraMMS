@@ -1,5 +1,5 @@
 {
-  "Variables": {
+  "variables": {
     "mediaItemTitle": {
       "description": "Media item title",
       "isNull": false,

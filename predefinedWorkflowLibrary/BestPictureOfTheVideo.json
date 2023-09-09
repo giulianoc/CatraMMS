@@ -1,5 +1,5 @@
 {
-  "Variables": {
+  "variables": {
     "title": {
       "position": 0,
 	  "isNull": false,

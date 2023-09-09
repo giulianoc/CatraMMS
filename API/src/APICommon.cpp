@@ -129,7 +129,7 @@ int APICommon::operator()()
 
     bool shutdown = false;    
     while (!shutdown)
-    {
+	{
         _requestIdentifier++;
 
         int returnAcceptCode;
@@ -140,26 +140,26 @@ int APICommon::operator()()
             );
             lock_guard<mutex> locker(*_fcgiAcceptMutex);
 
-            _logger->debug(__FILEREF__ + "APICommon::listen"
+			_logger->debug(__FILEREF__ + "APICommon::listen"
 				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
-                + ", threadId: " + sThreadId
-            );        
+				+ ", threadId: " + sThreadId
+			);        
 
-            returnAcceptCode = FCGX_Accept_r(&request);
-        }
+			returnAcceptCode = FCGX_Accept_r(&request);
+		}
         _logger->debug(__FILEREF__ + "FCGX_Accept_r"
 			+ ", _requestIdentifier: " + to_string(_requestIdentifier)
 			+ ", threadId: " + sThreadId
-            + ", returnAcceptCode: " + to_string(returnAcceptCode)
-        );
-        
-        if (returnAcceptCode != 0)
-        {
-            shutdown = true;
+			+ ", returnAcceptCode: " + to_string(returnAcceptCode)
+		);
 
-            FCGX_Finish_r(&request);
-            
-            continue;
+		if (returnAcceptCode != 0)
+		{
+			shutdown = true;
+
+			FCGX_Finish_r(&request);
+
+			continue;
         }
 
         _logger->debug(__FILEREF__ + "Request to be managed"
@@ -489,7 +489,7 @@ int APICommon::operator()()
 
             string requestMethod;
             if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
-                requestMethod = it->second;
+				requestMethod = it->second;
 
             // string xCatraMMSResumeHeader;
             /*

@@ -212,8 +212,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	}
 
     _logger->info(__FILEREF__ + "Creating MySQLConnectionFactory...");
-	// Beginning with MySQL 8.0.34, the automatic reconnection feature is deprecated
-	bool reconnect = false;
+	bool reconnect = true;
 	// string defaultCharacterSet = "utf8";
 	_mySQLMasterConnectionFactory = 
 		make_shared<MySQLConnectionFactory>(masterDbServer, masterDbUsername, dbPassword, dbName,

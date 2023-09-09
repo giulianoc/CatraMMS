@@ -1,7 +1,7 @@
 {
 	"type": "Workflow",
 	"label": "1",
-	"Variables": {
+	"variables": {
 		"titleOfVideo": { "Value": "My Title of the content", "type": "string", "Description": "..." }
 	},
 	"task": {

@@ -1,7 +1,7 @@
 {
 	"type": "Workflow",
 	"label": "1",
-	"Variables": {
+	"variables": {
 		"titleOfVideo_1": "My Title of the video_1 content",
 		"titleOfImage_1": "My Title of the logo content",
 		"titleOfOverlayVideo_1": "My Title of the overlay content"
