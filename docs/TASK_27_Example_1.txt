@@ -7,7 +7,7 @@
 		"references": [
 			{ "mediaItemKey": 11 }
 		],
-		"CascadeName": "haarcascade_frontalface_alt",
-		"Output": "VideoWithHighlightedFaces"
+		"cascadeName": "haarcascade_frontalface_alt",
+		"output": "VideoWithHighlightedFaces"
 	}
 }

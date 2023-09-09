@@ -12030,7 +12030,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 		long initialFramesNumberToBeSkipped;
 		bool oneFramePerSecond;
         {
-            string field = "CascadeName";
+            string field = "cascadeName";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12042,7 +12042,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
             }
             faceRecognitionCascadeName = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "Output";
+            field = "output";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12061,7 +12061,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				field = "initialFramesNumberToBeSkipped";
 				initialFramesNumberToBeSkipped = JSONUtils::asInt(parametersRoot, field, 0);
 
-				field = "OneFramePerSecond";
+				field = "oneFramePerSecond";
 				oneFramePerSecond = JSONUtils::asBool(parametersRoot, field, true);
 			}
         }
@@ -12207,7 +12207,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 		string faceIdentificationCascadeName;
         string deepLearnedModelTagsCommaSeparated;
         {
-            string field = "CascadeName";
+            string field = "cascadeName";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -12219,7 +12219,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
             }
             faceIdentificationCascadeName = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "DeepLearnedModelTags";
+            field = "deepLearnedModelTags";
             if (!JSONUtils::isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"

@@ -31,11 +31,11 @@
 
 		// mandatory. It could be haarcascade_frontalface_alt, haarcascade_frontalface_alt2,
 		//		haarcascade_frontalface_alt_tree or haarcascade_frontalface_default
-		"CascadeName": "haarcascade_frontalface_alt",
+		"cascadeName": "haarcascade_frontalface_alt",
 
 		// mandatory. It is a list of tags to select all the images that will be used to train
 		//	the deep learned model to identify the faces
-		"DeepLearnedModelTags": [
+		"deepLearnedModelTags": [
 			"GIULIANO"
 		],
 

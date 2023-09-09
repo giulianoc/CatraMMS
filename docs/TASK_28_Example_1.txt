@@ -8,9 +8,9 @@
 			{ "mediaItemKey": 11 }
 		],
 
-		"CascadeName": "haarcascade_frontalface_alt",
+		"cascadeName": "haarcascade_frontalface_alt",
 
-		"DeepLearnedModelTags": [
+		"deepLearnedModelTags": [
 			"GIULIANO"
 		]
 	}

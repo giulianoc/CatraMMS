@@ -3749,8 +3749,8 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 {
         
     vector<string> mandatoryFields = {
-        "CascadeName",
-        "Output"
+        "cascadeName",
+        "output"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -3769,7 +3769,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
         }
     }
 
-    string field = "CascadeName";
+    string field = "cascadeName";
     string faceRecognitionCascadeName = JSONUtils::asString(parametersRoot, field, "");
     if (!isFaceRecognitionCascadeNameValid(faceRecognitionCascadeName))
     {
@@ -3786,7 +3786,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
         throw runtime_error(errorMessage);
     }
 
-    field = "Output";
+    field = "output";
     string faceRecognitionOutput = JSONUtils::asString(parametersRoot, field, "");
     if (!isFaceRecognitionOutputValid(faceRecognitionOutput))
     {
@@ -3898,8 +3898,8 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 {
         
     vector<string> mandatoryFields = {
-        "CascadeName",
-        "DeepLearnedModelTags"
+        "cascadeName",
+        "deepLearnedModelTags"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -3918,7 +3918,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
         }
     }
 
-    string field = "CascadeName";
+    string field = "cascadeName";
     string faceIdentificationCascadeName = JSONUtils::asString(parametersRoot, field, "");
     if (!isFaceRecognitionCascadeNameValid(faceIdentificationCascadeName))
     {
@@ -3935,7 +3935,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
         throw runtime_error(errorMessage);
     }
 
-    field = "DeepLearnedModelTags";
+    field = "deepLearnedModelTags";
     if (!parametersRoot[field].isArray()
 			|| parametersRoot[field].size() == 0)
     {

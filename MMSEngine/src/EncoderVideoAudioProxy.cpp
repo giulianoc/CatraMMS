@@ -4072,7 +4072,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 	cv::CascadeClassifier cascade;
 	if (!cascade.load(cascadePathName))
 	{
-		string errorMessage = __FILEREF__ + "CascadeName could not be loaded"
+		string errorMessage = __FILEREF__ + "cascadeName could not be loaded"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -4976,7 +4976,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 	cv::CascadeClassifier cascade;
 	if (!cascade.load(cascadePathName))
 	{
-		string errorMessage = __FILEREF__ + "CascadeName could not be loaded"
+		string errorMessage = __FILEREF__ + "cascadeName could not be loaded"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)

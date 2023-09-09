@@ -31,11 +31,11 @@
 
 		// mandatory. It could be haarcascade_frontalface_alt, haarcascade_frontalface_alt2,
 		//		haarcascade_frontalface_alt_tree or haarcascade_frontalface_default
-		"CascadeName": "haarcascade_frontalface_alt",
+		"cascadeName": "haarcascade_frontalface_alt",
 
 		// mandatory. It could be VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel
 		//	or FrameContainingFace
-		"Output": "VideoWithHighlightedFaces",
+		"output": "VideoWithHighlightedFaces",
 
 		// Used only in case of FrameContainingFace, it specifies the number of initial frames of the video
 		// where the face is not looked for (frames to be skipped)
@@ -43,7 +43,7 @@
 
 		// Used only in case of FrameContainingFace, it specifies if the algorithm has to consider
 		// just one frame per seconds
-		"OneFramePerSecond": true,
+		"oneFramePerSecond": true,
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
