@@ -518,8 +518,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
     _fileUploadProgressThreadShutdown       = false;
 }
 
-API::~API() {
-}
+API::~API() = default;
 
 /*
 void API::getBinaryAndResponse(
@@ -886,7 +885,7 @@ void API::manageRequestAndResponse(
 			int64_t tokenComingFromURL;
 
 			bool isNumber = !(tokenIt->second).empty()
-				&& find_if(
+				&& ranges::find_if(
 					(tokenIt->second).begin(),
 					(tokenIt->second).end(),
 					[](unsigned char c) {
@@ -1191,7 +1190,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 </MPD>
 */
 						xmlDocPtr doc = xmlParseFile(manifestPathFileName.string().c_str());
-						if (doc == NULL)
+						if (doc == nullptr)
 						{
 							string errorMessage = string("xmlParseFile failed")
 								+ ", manifestPathFileName: " + manifestPathFileName.string()
@@ -1205,7 +1204,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 
 						/* Create xpath evaluation context */
 						xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
-						if(xpathCtx == NULL)
+						if(xpathCtx == nullptr)
 						{
 							xmlFreeDoc(doc);
 
@@ -1265,7 +1264,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 						// Evaluate xpath expression
 						const char *xpathExpr = "//xmlns:Period/xmlns:AdaptationSet/xmlns:Representation/xmlns:SegmentTemplate";
 						xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(BAD_CAST xpathExpr, xpathCtx);
-						if(xpathObj == NULL)
+						if(xpathObj == nullptr)
 						{
 							xmlXPathFreeContext(xpathCtx);
 							xmlFreeDoc(doc);
@@ -1285,7 +1284,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 						);
 						for (int nodeIndex = 0; nodeIndex < nodes->nodeNr; nodeIndex++)
 						{
-							if (nodes->nodeTab[nodeIndex] == NULL)
+							if (nodes->nodeTab[nodeIndex] == nullptr)
 							{
 								xmlXPathFreeContext(xpathCtx);
 								xmlFreeDoc(doc);
@@ -1305,8 +1304,8 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 									BAD_CAST mediaAttributeName);
 							xmlChar* initializationValue = xmlGetProp(nodes->nodeTab[nodeIndex],
 									BAD_CAST initializationAttributeName);
-							if (mediaValue == (xmlChar*) NULL
-									|| initializationValue == (xmlChar*) NULL)
+							if (mediaValue == (xmlChar*) nullptr
+									|| initializationValue == (xmlChar*) nullptr)
 							{
 								xmlXPathFreeContext(xpathCtx);
 								xmlFreeDoc(doc);

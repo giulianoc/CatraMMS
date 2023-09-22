@@ -371,11 +371,17 @@ void API::createBulkOfDeliveryAuthorization(
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
 				Json::Value mediaItemKeyListRoot = deliveryAutorizationDetailsRoot[field];
+				for(Json::Value::iterator it=mediaItemKeyListRoot.begin();
+					it!=mediaItemKeyListRoot.end(); ++it)
+				/*
 				for (int mediaItemKeyIndex = 0;
 					mediaItemKeyIndex < mediaItemKeyListRoot.size();
 					mediaItemKeyIndex++)
+				*/
 				{
-					Json::Value mediaItemKeyRoot = mediaItemKeyListRoot[mediaItemKeyIndex];
+					_logger->info(__FILEREF__ + "AAAAAAAAAAA");
+					// Json::Value mediaItemKeyRoot = mediaItemKeyListRoot[mediaItemKeyIndex];
+					Json::Value mediaItemKeyRoot = *it;
 
 					field = "mediaItemKey";
 					int64_t mediaItemKey = JSONUtils::asInt64(mediaItemKeyRoot, field, -1);
@@ -462,7 +468,8 @@ void API::createBulkOfDeliveryAuthorization(
 					field = "deliveryURL";
 					mediaItemKeyRoot[field] = deliveryURL;
 
-					mediaItemKeyListRoot[mediaItemKeyIndex] = mediaItemKeyRoot;
+					// mediaItemKeyListRoot[mediaItemKeyIndex] = mediaItemKeyRoot;
+					*it = mediaItemKeyRoot;
 				}
 
 				field = "mediaItemKeyList";

@@ -49,8 +49,7 @@ APICommon::APICommon(
 		fcgiAcceptMutex, logger);
 }
 
-APICommon::~APICommon() {
-}
+APICommon::~APICommon() = default;
 
 void APICommon::init(
 	Json::Value configuration,
