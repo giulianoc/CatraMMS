@@ -28,7 +28,6 @@
 #include "catralibraries/Convert.h"
 #include "catralibraries/LdapWrapper.h"
 #include "Validator.h"
-// #include "EMailSender.h"
 #include "catralibraries/Encrypt.h"
 // #include <openssl/md5.h>
 #include <openssl/evp.h>
@@ -109,9 +108,6 @@ int main(int argc, char** argv)
 		auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
 		spdlog::register_logger(logger);
 
-		// shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
-		// shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
-    
 		// trigger flush if the log severity is error or higher
 		logger->flush_on(spdlog::level::trace);
     
@@ -217,7 +213,7 @@ int main(int argc, char** argv)
 			xmlMemoryDump();
 		}
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         cerr << __FILEREF__ + "main failed. SQL exception"
             + ", se.what(): " + se.what()
@@ -226,7 +222,7 @@ int main(int argc, char** argv)
         // throw se;
 		return 1;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         cerr << __FILEREF__ + "main failed"
             + ", e.what(): " + e.what()
@@ -235,7 +231,7 @@ int main(int argc, char** argv)
         // throw e;
 		return 1;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         cerr << __FILEREF__ + "main failed"
             + ", e.what(): " + e.what()
@@ -283,7 +279,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 
         _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "Configuration item is wrong. 'low' encoding priority is set"
             + ", api->encodingPriorityWorkspaceDefaultValue: " + encodingPriority
@@ -649,7 +645,7 @@ void API::manageRequestAndResponse(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, sJson);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "status failed"
                 + ", requestBody: " + requestBody
@@ -712,7 +708,7 @@ void API::manageRequestAndResponse(
 
                             requestData._contentRangePresent = true;                
                         }
-                        catch(exception e)
+                        catch(exception& e)
                         {
                             string errorMessage = string("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'")
                                 + ", contentRange: " + contentRange
@@ -741,7 +737,7 @@ void API::manageRequestAndResponse(
                         + ", _binaryListenHost: " + requestData._binaryListenHost
                     );
                 }
-                catch (exception e)
+                catch (exception& e)
                 {
                     _logger->error(__FILEREF__ + "ProgressId not found"
                         + ", progressIdIt->second: " + progressIdIt->second
@@ -799,7 +795,7 @@ void API::manageRequestAndResponse(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("Not authorized");
             _logger->warn(__FILEREF__ + errorMessage);
@@ -807,7 +803,7 @@ void API::manageRequestAndResponse(
 			string responseBody;
 			sendError(request, 403, errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Not authorized: exception managing token");
             _logger->warn(__FILEREF__ + errorMessage);
@@ -842,7 +838,7 @@ void API::manageRequestAndResponse(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("Not authorized");
             _logger->warn(__FILEREF__ + errorMessage);
@@ -850,7 +846,7 @@ void API::manageRequestAndResponse(
 			string responseBody;
 			sendError(request, 403, errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Not authorized: exception managing token");
             _logger->warn(__FILEREF__ + errorMessage);
@@ -1432,7 +1428,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 						enableCorsGETHeader, originHeader);
 			}
 		}
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("Not authorized");
             _logger->warn(__FILEREF__ + errorMessage);
@@ -1440,7 +1436,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 			string responseBody;
 			sendError(request, 403, errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Not authorized: exception managing token");
             _logger->warn(__FILEREF__ + errorMessage);
@@ -2715,7 +2711,7 @@ void API::parseContentRange(string contentRange,
         sizeIndex++;
         contentRangeSize = stoll(contentRange.substr(sizeIndex));
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'")
             + ", contentRange: " + contentRange
@@ -2751,7 +2747,7 @@ void API::mmsSupport(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + e.what());
 
@@ -2814,7 +2810,7 @@ void API::mmsSupport(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 201, responseBody);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2827,7 +2823,7 @@ void API::mmsSupport(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2841,7 +2837,7 @@ void API::mmsSupport(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2851,7 +2847,7 @@ void API::mmsSupport(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
