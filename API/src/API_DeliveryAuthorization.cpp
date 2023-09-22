@@ -371,13 +371,14 @@ void API::createBulkOfDeliveryAuthorization(
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
 				Json::Value mediaItemKeyListRoot = deliveryAutorizationDetailsRoot[field];
-				for(Json::Value::iterator it=mediaItemKeyListRoot.begin();
-					it!=mediaItemKeyListRoot.end(); ++it)
+
 				/*
 				for (int mediaItemKeyIndex = 0;
 					mediaItemKeyIndex < mediaItemKeyListRoot.size();
 					mediaItemKeyIndex++)
 				*/
+				for(Json::Value::iterator it=mediaItemKeyListRoot.begin();
+					it!=mediaItemKeyListRoot.end(); ++it)
 				{
 					_logger->info(__FILEREF__ + "AAAAAAAAAAA");
 					// Json::Value mediaItemKeyRoot = mediaItemKeyListRoot[mediaItemKeyIndex];

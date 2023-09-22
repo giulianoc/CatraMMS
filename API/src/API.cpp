@@ -254,11 +254,14 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
     :APICommon(configuration, 
 		fcgiAcceptMutex,
 		mmsEngineDBFacade,
-		logger) 
+		logger),
+		_noFileSystemAccess(noFileSystemAccess),
+		_mmsStorage(mmsStorage),
+		_mmsDeliveryAuthorization(mmsDeliveryAuthorization)
 {
-	_noFileSystemAccess = noFileSystemAccess;
-	_mmsStorage = mmsStorage;
-	_mmsDeliveryAuthorization = mmsDeliveryAuthorization;
+	// _noFileSystemAccess = noFileSystemAccess;
+	// _mmsStorage = mmsStorage;
+	// _mmsDeliveryAuthorization = mmsDeliveryAuthorization;
 
     string encodingPriority =  JSONUtils::asString(_configuration["api"]["workspaceDefaults"], "encodingPriority", "low");
     _logger->info(__FILEREF__ + "Configuration item"
