@@ -40,13 +40,13 @@ LiveRecorderDaemons::LiveRecorderDaemons(
 			+ ", ffmpeg->liveRecorderVirtualVODIngestionInSeconds: " + to_string(_liveRecorderVirtualVODIngestionInSeconds)
 		);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
@@ -59,13 +59,13 @@ LiveRecorderDaemons::~LiveRecorderDaemons()
 	try
 	{
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
@@ -159,7 +159,7 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 							// liveRecording->_lastRecordedAssetDurationInSeconds	= lastRecordedAssetInfo.second;
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string ("processSegmenterOutput failed")
 							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
@@ -169,7 +169,7 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 
 						_logger->error(__FILEREF__ + errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string ("processSegmenterOutput failed")
 							+ ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey)
@@ -198,7 +198,7 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 				) + "@"
 			);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string ("liveRecorderChunksIngestion failed")
 				+ ", e.what(): " + e.what()
@@ -206,7 +206,7 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 
 			_logger->error(__FILEREF__ + errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string ("liveRecorderChunksIngestion failed")
 				+ ", e.what(): " + e.what()
@@ -422,7 +422,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 							mmsWorkflowIngestionURL,
 							mmsBinaryIngestionURL);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string ("buildAndIngestVirtualVOD failed")
 							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -432,7 +432,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 
 						_logger->error(__FILEREF__ + errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string ("buildAndIngestVirtualVOD failed")
 							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -462,7 +462,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 				) + "@"
 			);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string ("liveRecorderVirtualVODIngestion failed")
 				+ ", e.what(): " + e.what()
@@ -470,7 +470,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 
 			_logger->error(__FILEREF__ + errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string ("liveRecorderVirtualVODIngestion failed")
 				+ ", e.what(): " + e.what()
@@ -651,7 +651,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 					);
 				}
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -839,7 +839,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 							ingestedParametersRoot, encodingParametersRoot,
 							false);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "ingestRecordedMedia failed"
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -855,7 +855,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 					// throw e;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "ingestRecordedMedia failed"
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -884,7 +884,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 			newLastRecordedAssetFileName	= "";
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processStreamSegmenterOutput failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -897,7 +897,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processStreamSegmenterOutput failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1297,7 +1297,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 											ingestedParametersRoot, encodingParametersRoot,
 											true);
 								}
-								catch(runtime_error e)
+								catch(runtime_error& e)
 								{
 									_logger->error(__FILEREF__ + "ingestRecordedMedia failed"
 										+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1313,7 +1313,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 
 									// throw e;
 								}
-								catch(exception e)
+								catch(exception& e)
 								{
 									_logger->error(__FILEREF__ + "ingestRecordedMedia failed"
 										+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1381,7 +1381,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 			}
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processHLSSegmenterOutput failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1394,7 +1394,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processHLSSegmenterOutput failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2082,7 +2082,7 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
 					}
 				}
             }
-            catch(runtime_error e)
+            catch(runtime_error& e)
             {
                 string errorMessage = __FILEREF__ + "listing directory failed"
                        + ", e.what(): " + e.what()
@@ -2091,7 +2091,7 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
 
                 throw e;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 string errorMessage = __FILEREF__ + "listing directory failed"
                        + ", e.what(): " + e.what()
@@ -2102,13 +2102,13 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
             }
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "isLastLiveRecorderFile failed"
             + ", e.what(): " + e.what()
         );
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "isLastLiveRecorderFile failed");
     }
@@ -2617,7 +2617,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 						);
 						fs::copy(sourceTSPathFileName, copiedTSPathFileName);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage =
 							string("copyFile failed, previous segments of the manifest will be omitted")
@@ -2754,7 +2754,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 					fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = string("tar command failed")
 					+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -2767,7 +2767,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			}
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = string("build the live recorder VOD failed")
 			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)
@@ -2796,7 +2796,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 		throw runtime_error(errorMessage);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("build the live recorder VOD failed")
 			+ ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey)

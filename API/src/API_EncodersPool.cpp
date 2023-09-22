@@ -108,7 +108,7 @@ void API::addEncoder(
 					port = 443;
 			}
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -118,7 +118,7 @@ void API::addEncoder(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -140,7 +140,7 @@ void API::addEncoder(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncoder failed"
                 + ", e.what(): " + e.what()
@@ -148,7 +148,7 @@ void API::addEncoder(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncoder failed"
                 + ", e.what(): " + e.what()
@@ -160,7 +160,7 @@ void API::addEncoder(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -175,7 +175,7 @@ void API::addEncoder(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -296,7 +296,7 @@ void API::modifyEncoder(
 			else
 				portToBeModified = false;
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -306,7 +306,7 @@ void API::modifyEncoder(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -349,7 +349,7 @@ void API::modifyEncoder(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncoder failed"
                 + ", e.what(): " + e.what()
@@ -357,7 +357,7 @@ void API::modifyEncoder(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncoder failed"
                 + ", e.what(): " + e.what()
@@ -369,7 +369,7 @@ void API::modifyEncoder(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -384,7 +384,7 @@ void API::modifyEncoder(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -440,7 +440,7 @@ void API::removeEncoder(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncoder failed"
                 + ", e.what(): " + e.what()
@@ -448,7 +448,7 @@ void API::removeEncoder(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncoder failed"
                 + ", e.what(): " + e.what()
@@ -460,7 +460,7 @@ void API::removeEncoder(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -474,7 +474,7 @@ void API::removeEncoder(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -628,7 +628,7 @@ void API::encoderList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -642,7 +642,7 @@ void API::encoderList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -746,7 +746,7 @@ void API::encodersPoolList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -760,7 +760,7 @@ void API::encodersPoolList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -821,7 +821,7 @@ void API::addEncodersPool(
 				}
             }
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -831,7 +831,7 @@ void API::addEncodersPool(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -853,7 +853,7 @@ void API::addEncodersPool(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodersPool failed"
                 + ", e.what(): " + e.what()
@@ -861,7 +861,7 @@ void API::addEncodersPool(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodersPool failed"
                 + ", e.what(): " + e.what()
@@ -873,7 +873,7 @@ void API::addEncodersPool(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -888,7 +888,7 @@ void API::addEncodersPool(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -963,7 +963,7 @@ void API::modifyEncodersPool(
 				}
             }
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -973,7 +973,7 @@ void API::modifyEncodersPool(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -995,7 +995,7 @@ void API::modifyEncodersPool(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncodersPool failed"
                 + ", e.what(): " + e.what()
@@ -1003,7 +1003,7 @@ void API::modifyEncodersPool(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncodersPool failed"
                 + ", e.what(): " + e.what()
@@ -1015,7 +1015,7 @@ void API::modifyEncodersPool(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1030,7 +1030,7 @@ void API::modifyEncodersPool(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1086,7 +1086,7 @@ void API::removeEncodersPool(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodersPool failed"
                 + ", e.what(): " + e.what()
@@ -1094,7 +1094,7 @@ void API::removeEncodersPool(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodersPool failed"
                 + ", e.what(): " + e.what()
@@ -1106,7 +1106,7 @@ void API::removeEncodersPool(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1120,7 +1120,7 @@ void API::removeEncodersPool(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1188,7 +1188,7 @@ void API::addAssociationWorkspaceEncoder(
 					+ "}"
 				);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed"
                 + ", e.what(): " + e.what()
@@ -1196,7 +1196,7 @@ void API::addAssociationWorkspaceEncoder(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed"
                 + ", e.what(): " + e.what()
@@ -1208,7 +1208,7 @@ void API::addAssociationWorkspaceEncoder(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1222,7 +1222,7 @@ void API::addAssociationWorkspaceEncoder(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1290,7 +1290,7 @@ void API::removeAssociationWorkspaceEncoder(
 					+ "}"
 				);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed"
                 + ", e.what(): " + e.what()
@@ -1298,7 +1298,7 @@ void API::removeAssociationWorkspaceEncoder(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed"
                 + ", e.what(): " + e.what()
@@ -1310,7 +1310,7 @@ void API::removeAssociationWorkspaceEncoder(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1324,7 +1324,7 @@ void API::removeAssociationWorkspaceEncoder(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api

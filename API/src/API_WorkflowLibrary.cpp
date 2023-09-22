@@ -44,7 +44,7 @@ void API::workflowsAsLibraryList(
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, responseBody);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -58,7 +58,7 @@ void API::workflowsAsLibraryList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -107,7 +107,7 @@ void API::workflowAsLibraryContent(
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, workflowLibraryContent);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -121,7 +121,7 @@ void API::workflowAsLibraryContent(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -224,7 +224,7 @@ void API::saveWorkflowAsLibrary(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, responseBody);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -239,7 +239,7 @@ void API::saveWorkflowAsLibrary(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -314,7 +314,7 @@ void API::removeWorkflowAsLibrary(
 				workflowAsLibraryScope == "MMS" ? -1 : workspace->_workspaceKey,
 				workflowLibraryKey, admin);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__
 				+ "_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
@@ -323,7 +323,7 @@ void API::removeWorkflowAsLibrary(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__
 				+ "_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
@@ -338,7 +338,7 @@ void API::removeWorkflowAsLibrary(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, responseBody);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -352,7 +352,7 @@ void API::removeWorkflowAsLibrary(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api

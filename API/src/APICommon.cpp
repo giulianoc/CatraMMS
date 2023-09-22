@@ -303,7 +303,7 @@ int APICommon::operator()()
             // throw runtime_error(errorMessage);
             continue;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
@@ -410,7 +410,7 @@ int APICommon::operator()()
 				// 	+ ", threadId: " + sThreadId
 				// );
             }
-            catch(WrongBasicAuthentication e)
+            catch(WrongBasicAuthentication& e)
             {
                 _logger->error(__FILEREF__ + "APIKey failed"
                     + ", e.what(): " + e.what()
@@ -426,7 +426,7 @@ int APICommon::operator()()
                 // throw runtime_error(errorMessage);
                 continue;
             }
-            catch(APIKeyNotFoundOrExpired e)
+            catch(APIKeyNotFoundOrExpired& e)
             {
                 _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
 					+ ", _requestIdentifier: " + to_string(_requestIdentifier)
@@ -444,7 +444,7 @@ int APICommon::operator()()
                 //  throw runtime_error(errorMessage);
                 continue;
             }
-            catch(runtime_error e)
+            catch(runtime_error& e)
             {
                 _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
 					+ ", _requestIdentifier: " + to_string(_requestIdentifier)
@@ -462,7 +462,7 @@ int APICommon::operator()()
                 // throw runtime_error(errorMessage);
                 continue;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
 					+ ", _requestIdentifier: " + to_string(_requestIdentifier)
@@ -518,7 +518,7 @@ int APICommon::operator()()
 				basicAuthenticationPresent, userKeyWorkspaceAndFlags, apiKey,
 				contentLength, requestBody, requestDetails);            
         }
-        catch(AlreadyLocked e)
+        catch(AlreadyLocked& e)
         {
             _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
 				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
@@ -526,7 +526,7 @@ int APICommon::operator()()
                 + ", e: " + e.what()
             );
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
 				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
@@ -534,7 +534,7 @@ int APICommon::operator()()
                 + ", e: " + e.what()
             );
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
 				+ ", _requestIdentifier: " + to_string(_requestIdentifier)
@@ -688,7 +688,7 @@ int APICommon::manageBinaryRequest()
             }
         }
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
@@ -751,7 +751,7 @@ int APICommon::manageBinaryRequest()
 
         _logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
     }
-    catch(WrongBasicAuthentication e)
+    catch(WrongBasicAuthentication& e)
     {
         _logger->error(__FILEREF__ + "APIKey failed"
             + ", e.what(): " + e.what()
@@ -764,7 +764,7 @@ int APICommon::manageBinaryRequest()
 
         throw runtime_error(errorMessage);
     }
-    catch(APIKeyNotFoundOrExpired e)
+    catch(APIKeyNotFoundOrExpired& e)
     {
         _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
             + ", e.what(): " + e.what()
@@ -777,7 +777,7 @@ int APICommon::manageBinaryRequest()
 
         throw runtime_error(errorMessage);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
             + ", e.what(): " + e.what()
@@ -790,7 +790,7 @@ int APICommon::manageBinaryRequest()
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
             + ", e.what(): " + e.what()
@@ -828,13 +828,13 @@ int APICommon::manageBinaryRequest()
                 xCatraMMSResumeHeader, queryParameters,
                 userKeyWorkspaceAndFlags, contentLength);            
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "getBinaryAndResponse failed"
             + ", e: " + e.what()
         );
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "getBinaryAndResponse failed"
             + ", e: " + e.what()

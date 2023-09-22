@@ -1644,7 +1644,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 			// it generate an exception in case of wrong string
             MMSEngineDBFacade::toEncodingPriority(encodingPriority);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
                     + ", EncodingPriority: " + encodingPriority
@@ -2627,7 +2627,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
         {
             MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
                     + ", EncodingPriority: " + encodingPriority
@@ -6327,7 +6327,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
             {
             }
         }
-        catch(MediaItemKeyNotFound e)
+        catch(MediaItemKeyNotFound& e)
         {
             string errorMessage = __FILEREF__ + "fillDependencies failed (MediaItemKeyNotFound)"
 				+ ", workspaceKey,: " + to_string(workspaceKey)
@@ -6352,7 +6352,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 				continue;
 			}
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = __FILEREF__ + "fillDependencies failed (runtime_error)"
 				+ ", workspaceKey,: " + to_string(workspaceKey)
@@ -6368,7 +6368,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = __FILEREF__ + "fillDependencies failed (exception)"
 				+ ", workspaceKey,: " + to_string(workspaceKey)
@@ -6545,7 +6545,7 @@ void Validator::fillReferencesOutput(
 
 					referencesOutput.push_back(make_pair(referenceMediaItemKey, localPhysicalPathKey));
 				}
-				catch(MediaItemKeyNotFound e)
+				catch(MediaItemKeyNotFound& e)
 				{
 					_logger->warn(__FILEREF__
 						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
@@ -6573,7 +6573,7 @@ void Validator::fillReferencesOutput(
 
 					referencesOutput.push_back(make_pair(localMediaItemKey, referencePhysicalPathKey));
 				}
-				catch(MediaItemKeyNotFound e)
+				catch(MediaItemKeyNotFound& e)
 				{
 					_logger->warn(__FILEREF__
 						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
@@ -6642,7 +6642,7 @@ void Validator::fillReferencesOutput(
 
 					referencesOutput.push_back(make_pair(localMediaItemKey, localPhysicalPathKey));
 				}
-				catch(MediaItemKeyNotFound e)
+				catch(MediaItemKeyNotFound& e)
 				{
 					_logger->warn(__FILEREF__
 						+ "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
@@ -6652,7 +6652,7 @@ void Validator::fillReferencesOutput(
 				}
             }
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -6664,7 +6664,7 @@ void Validator::fillReferencesOutput(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -7124,7 +7124,7 @@ void Validator::validateCrossReference(
 	{
 		crossReferenceType = MMSEngineDBFacade::toCrossReferenceType(sCrossReferenceType);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
            

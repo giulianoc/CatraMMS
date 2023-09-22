@@ -38,13 +38,13 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 			+ ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds)
 		);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
@@ -57,13 +57,13 @@ FFMPEGEncoderDaemons::~FFMPEGEncoderDaemons()
 	try
 	{
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
@@ -308,7 +308,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								string errorMessage = string ("liveProxyMonitor (HLS) on manifest path name failed")
 									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -318,7 +318,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 								_logger->error(__FILEREF__ + errorMessage);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								string errorMessage = string ("liveProxyMonitor (HLS) on manifest path name failed")
 									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -378,7 +378,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string ("liveProxyMonitor (rtmp) Non-monotonous DTS failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -388,7 +388,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 						_logger->error(__FILEREF__ + errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string ("liveProxyMonitor (rtmp) Non-monotonous DTS failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -539,7 +539,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 															firstChunkRead = true;
 														}
 													}
-													catch(runtime_error e)
+													catch(runtime_error& e)
 													{
 														string errorMessage = __FILEREF__ + "liveProxyMonitor. listing directory failed"
 															+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -551,7 +551,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 														// throw e;
 													}
-													catch(exception e)
+													catch(exception& e)
 													{
 														string errorMessage = __FILEREF__ + "liveProxyMonitor. listing directory failed"
 															+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -566,7 +566,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												}
 											}
 										}
-										catch(runtime_error e)
+										catch(runtime_error& e)
 										{
 											_logger->error(__FILEREF__ + "liveProxyMonitor. scan LiveProxy files failed"
 												+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -626,7 +626,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 														+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
 													fs::remove_all(segmentPathNameToBeRemoved);
 												}
-												catch(runtime_error e)
+												catch(runtime_error& e)
 												{
 													_logger->error(__FILEREF__ + "liveProxyMonitor. remove failed"
 														+ ", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -640,7 +640,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								string errorMessage = string ("liveProxyMonitor (HLS) on segments (and retention) failed")
 									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -650,7 +650,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 								_logger->error(__FILEREF__ + errorMessage);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								string errorMessage = string ("liveProxyMonitor (HLS) on segments (and retention) failed")
 									+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -705,7 +705,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							localErrorMessage = " restarted because of 'frame is not increasing'";
 						}
 					}
-					catch(FFMpegEncodingStatusNotAvailable e)
+					catch(FFMpegEncodingStatusNotAvailable& e)
 					{
 						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -714,7 +714,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						;
 						_logger->warn(__FILEREF__ + errorMessage);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -723,7 +723,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -772,7 +772,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							localErrorMessage = " restarted because of 'HTTP error 403 Forbidden'";
 						}
 					}
-					catch(FFMpegEncodingStatusNotAvailable e)
+					catch(FFMpegEncodingStatusNotAvailable& e)
 					{
 						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -781,7 +781,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						;
 						_logger->warn(__FILEREF__ + errorMessage);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -791,7 +791,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string ("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -863,7 +863,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								+ localErrorMessage;
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string("liveProxyMonitor. ProcessUtility::kill/quit/term Process failed")
 							+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
@@ -892,7 +892,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
 			);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string ("liveProxyMonitor failed")
 				+ ", e.what(): " + e.what()
@@ -900,7 +900,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 			_logger->error(__FILEREF__ + errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string ("liveProxyMonitor failed")
 				+ ", e.what(): " + e.what()
@@ -1126,7 +1126,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string ("liveRecordingMonitor on path name failed")
 							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1136,7 +1136,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 						_logger->error(__FILEREF__ + errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string ("liveRecordingMonitor on path name failed")
 							+ ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1247,7 +1247,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								string errorMessage = string ("liveRecorderMonitor (HLS) on manifest path name failed")
 									+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1257,7 +1257,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 								_logger->error(__FILEREF__ + errorMessage);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								string errorMessage = string ("liveRecorderMonitor (HLS) on manifest path name failed")
 									+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1317,7 +1317,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string ("liveRecorderMonitor (rtmp) Non-monotonous DTS failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1327,7 +1327,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 						_logger->error(__FILEREF__ + errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string ("liveRecorderMonitor (rtmp) Non-monotonous DTS failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1491,7 +1491,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 														firstChunkRead = true;
 													}
 												}
-												catch(runtime_error e)
+												catch(runtime_error& e)
 												{
 													string errorMessage = __FILEREF__ + "liveRecordingMonitor. listing directory failed"
 														+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1503,7 +1503,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 													// throw e;
 												}
-												catch(exception e)
+												catch(exception& e)
 												{
 													string errorMessage = __FILEREF__ + "liveRecordingMonitor. listing directory failed"
 														+ ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1518,7 +1518,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											}
 										}
 									}
-									catch(runtime_error e)
+									catch(runtime_error& e)
 									{
 										_logger->error(__FILEREF__ + "liveRecordingMonitor. scan LiveRecorder files failed"
 											+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1578,7 +1578,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 													+ ", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved);
 												fs::remove_all(segmentPathNameToBeRemoved);
 											}
-											catch(runtime_error e)
+											catch(runtime_error& e)
 											{
 												_logger->error(__FILEREF__ + "liveRecordingMonitor. remove failed"
 													+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1591,7 +1591,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								string errorMessage = string ("liveRecorderMonitor (HLS) on segments (and retention) failed")
 									+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1601,7 +1601,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 								_logger->error(__FILEREF__ + errorMessage);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								string errorMessage = string ("liveRecorderMonitor (HLS) on segments (and retention) failed")
 									+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1657,7 +1657,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							localErrorMessage = " restarted because of 'frame is not increasing'";
 						}
 					}
-					catch(FFMpegEncodingStatusNotAvailable e)
+					catch(FFMpegEncodingStatusNotAvailable& e)
 					{
 						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1666,7 +1666,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						;
 						_logger->warn(__FILEREF__ + errorMessage);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1675,7 +1675,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						;
 						_logger->error(__FILEREF__ + errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1730,7 +1730,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								localErrorMessage;
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string("liveRecordingMonitor. ProcessUtility::kill/quit Process failed")
 							+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
@@ -1760,7 +1760,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
 			);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string ("liveRecordingMonitor failed")
 				+ ", e.what(): " + e.what()
@@ -1768,7 +1768,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 			_logger->error(__FILEREF__ + errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string ("liveRecordingMonitor failed")
 				+ ", e.what(): " + e.what()
@@ -1817,7 +1817,7 @@ void FFMPEGEncoderDaemons::startCPUUsageThread()
 				);
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string ("cpuUsage thread failed")
 				+ ", e.what(): " + e.what()
@@ -1825,7 +1825,7 @@ void FFMPEGEncoderDaemons::startCPUUsageThread()
 
 			_logger->error(__FILEREF__ + errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string ("cpuUsage thread failed")
 				+ ", e.what(): " + e.what()

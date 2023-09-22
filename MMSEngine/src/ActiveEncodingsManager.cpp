@@ -230,17 +230,17 @@ void ActiveEncodingsManager::operator()()
                                 _mmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
                                     encodingPercentage);
                             }
-                            catch(FFMpegEncodingStatusNotAvailable e)
+                            catch(FFMpegEncodingStatusNotAvailable& e)
                             {
 
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "getEncodingProgress failed"
                                     + ", runtime_error: " + e.what()
                                 );
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "getEncodingProgress failed");
                             }
@@ -310,7 +310,7 @@ void ActiveEncodingsManager::operator()()
                                 + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
                             );
                         }
-                        catch(runtime_error e)
+                        catch(runtime_error& e)
                         {
                             _logger->error(__FILEREF__ + "processEncodingJob failed"
                                 + ", @MMS statistics@ - elapsed (seconds): @" + 
@@ -323,7 +323,7 @@ void ActiveEncodingsManager::operator()()
                                 + ", runtime_error: " + e.what()
                             );
                         }
-                        catch(exception e)
+                        catch(exception& e)
                         {
                             _logger->error(__FILEREF__ + "processEncodingJob failed"
                                 + ", @MMS statistics@ - elapsed (seconds): @" + 
@@ -364,7 +364,7 @@ void ActiveEncodingsManager::operator()()
 				+ ", @MMS statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
 			);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->info(__FILEREF__ + "ActiveEncodingsManager loop failed");
         }
@@ -446,17 +446,17 @@ void ActiveEncodingsManager::getEncodingsProgressThread()
 							_mmsEngineDBFacade->updateEncodingJobProgress (
 								encodingJob->_encodingItem->_encodingJobKey, encodingPercentage);
 						}
-						catch(FFMpegEncodingStatusNotAvailable e)
+						catch(FFMpegEncodingStatusNotAvailable& e)
 						{
 
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__ + "getEncodingProgress failed"
 								+ ", runtime_error: " + e.what()
 							);
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__ + "getEncodingProgress failed");
 						}
@@ -472,7 +472,7 @@ void ActiveEncodingsManager::getEncodingsProgressThread()
 
 			this_thread::sleep_for(secondsToSleep);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->info(__FILEREF__ + "getEncodingsProgressThread loop failed");
         }
@@ -624,7 +624,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             addEncodingItem (encodingItem);
             ulEncodingsNumberAdded++;
         }
-        catch(MaxEncodingsManagerCapacityReached e)
+        catch(MaxEncodingsManagerCapacityReached& e)
         {
             _logger->info(__FILEREF__ + "Max Encodings Manager Capacity reached "
 				+ to_string(encodingItemIndex) + "/" + to_string(encodingItemsNumber)
@@ -640,7 +640,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                     false,  // isIngestionJobFinished: this field is not used by updateEncodingJob
                     encodingItem->_ingestionJobKey);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "addEncodingItem failed "
 				+ to_string(encodingItemIndex) + "/" + to_string(encodingItemsNumber)

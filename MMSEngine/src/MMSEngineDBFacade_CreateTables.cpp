@@ -27,7 +27,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             jsonTypeSupported = isJsonTypeSupported(statement);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -52,7 +52,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -82,7 +82,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"ENGINE=InnoDB";
 			statement->execute(lastSQLCommand);
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			if (isRealDBError(se.what()))
 			{
@@ -185,7 +185,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				}
             }
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -208,7 +208,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"ENGINE=InnoDB";
 			statement->execute(lastSQLCommand);
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			if (isRealDBError(se.what()))
 			{
@@ -268,7 +268,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				}
             }
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -296,7 +296,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"ENGINE=InnoDB";
 			statement->execute(lastSQLCommand);    
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			if (isRealDBError(se.what()))
 			{
@@ -337,7 +337,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -356,7 +356,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create unique index MMS_Workspace_idx on MMS_Workspace (directoryName)";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -386,7 +386,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -422,7 +422,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -487,7 +487,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			;
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -507,7 +507,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create index MMS_RequestStatistic_idx on MMS_RequestStatistic (workspaceKey, requestTimestamp, title, userId, upToNextRequestInSeconds)";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -527,7 +527,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create index MMS_RequestStatistic_idx2 on MMS_RequestStatistic (workspaceKey, requestTimestamp, userId, title, upToNextRequestInSeconds)";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -547,7 +547,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create index MMS_RequestStatistic_idx3 on MMS_RequestStatistic (workspaceKey, requestTimestamp, upToNextRequestInSeconds)";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -570,7 +570,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create index MMS_RequestStatistic_idx4 on MMS_RequestStatistic (workspaceKey, userId, requestStatisticKey)";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -606,7 +606,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -625,7 +625,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create unique index MMS_APIKey_idx on MMS_APIKey (userKey, workspaceKey)";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -658,7 +658,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -684,7 +684,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -717,7 +717,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -752,7 +752,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -779,7 +779,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -816,7 +816,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -993,7 +993,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                             }
                         }
                     }
-                    catch(runtime_error e)
+                    catch(runtime_error& e)
                     {
                         string errorMessage = __FILEREF__ + "listing directory failed"
                                + ", e.what(): " + e.what()
@@ -1002,7 +1002,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                         throw e;
                     }
-                    catch(exception e)
+                    catch(exception& e)
                     {
                         string errorMessage = __FILEREF__ + "listing directory failed"
                                + ", e.what(): " + e.what()
@@ -1014,7 +1014,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 }
             }
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1046,7 +1046,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1074,7 +1074,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1104,7 +1104,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1123,7 +1123,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_Encoder_idx on MMS_Encoder (publicServerName)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1150,7 +1150,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1178,7 +1178,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1206,7 +1206,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1241,7 +1241,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1260,7 +1260,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionRoot_idx on MMS_IngestionRoot (workspaceKey, label)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1279,7 +1279,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionRoot_idx2 on MMS_IngestionRoot (workspaceKey, ingestionDate)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1323,7 +1323,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1342,7 +1342,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx on MMS_IngestionJob (processorMMS, ingestionType, status)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1361,7 +1361,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx2 on MMS_IngestionJob (parentGroupOfTasksIngestionJobKey)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1380,7 +1380,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx3 on MMS_IngestionJob (ingestionType)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1399,7 +1399,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx4 on MMS_IngestionJob (configurationLabel_virtual)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1418,7 +1418,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx5 on MMS_IngestionJob (priority)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1437,7 +1437,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx6 on MMS_IngestionJob (processingStartingFrom)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1456,7 +1456,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx8 on MMS_IngestionJob (recordingCode_virtual)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1475,7 +1475,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx9 on MMS_IngestionJob (broadcastIngestionJobKey_virtual)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1494,7 +1494,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx10 on MMS_IngestionJob (status)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1513,7 +1513,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJob_idx11 on MMS_IngestionJob (label)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1545,7 +1545,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1564,7 +1564,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_IngestionJobDependency_idx on MMS_IngestionJobDependency (ingestionJobKey)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1600,7 +1600,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1655,7 +1655,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						addUpdateWorkflowAsLibrary(conn, -1, workspaceKey, label, -1,
 							jsonWorkflow, true);
                     }
-                    catch(runtime_error e)
+                    catch(runtime_error& e)
                     {
                         string errorMessage = __FILEREF__ + "listing directory failed"
                                + ", e.what(): " + e.what()
@@ -1664,7 +1664,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                         throw e;
                     }
-                    catch(exception e)
+                    catch(exception& e)
                     {
                         string errorMessage = __FILEREF__ + "listing directory failed"
                                + ", e.what(): " + e.what()
@@ -1676,7 +1676,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 }
             }
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1734,7 +1734,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1753,7 +1753,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_MediaItem_idx2 on MMS_MediaItem (contentType, ingestionDate)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1772,7 +1772,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_MediaItem_idx3 on MMS_MediaItem (contentType, startPublishing, endPublishing)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1791,7 +1791,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_MediaItem_idx4 on MMS_MediaItem (contentType, title)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1810,7 +1810,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_MediaItem_idx5 on MMS_MediaItem (recordingCode_virtual)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1829,7 +1829,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_MediaItem_idx6 on MMS_MediaItem (utcStartTimeInMilliSecs_virtual)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1848,7 +1848,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_MediaItem_idx7 on MMS_MediaItem (utcEndTimeInMilliSecs_virtual)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1875,7 +1875,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1905,7 +1905,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1924,7 +1924,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_ExternalUniqueName_idx on MMS_ExternalUniqueName (workspaceKey, mediaItemKey)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -1983,7 +1983,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2003,7 +2003,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_PhysicalPath_idx2 on MMS_PhysicalPath (mediaItemKey, physicalPathKey, encodingProfileKey, partitionNumber)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2023,7 +2023,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_PhysicalPath_idx3 on MMS_PhysicalPath (relativePath, fileName)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2053,7 +2053,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2082,7 +2082,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2119,7 +2119,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2153,7 +2153,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2183,7 +2183,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2216,7 +2216,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2244,7 +2244,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2274,7 +2274,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2303,7 +2303,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"ENGINE=InnoDB";
 			statement->execute(lastSQLCommand);
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			if (isRealDBError(se.what()))
 			{
@@ -2332,7 +2332,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"ENGINE=InnoDB";
 			statement->execute(lastSQLCommand);
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			if (isRealDBError(se.what()))
 			{
@@ -2361,7 +2361,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"ENGINE=InnoDB";
 			statement->execute(lastSQLCommand);
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			if (isRealDBError(se.what()))
 			{
@@ -2421,7 +2421,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2463,7 +2463,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2482,7 +2482,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_Conf_SourceTVStream_idx1 on MMS_Conf_SourceTVStream (name)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2517,7 +2517,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2553,7 +2553,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2590,7 +2590,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2626,7 +2626,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2658,7 +2658,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2688,7 +2688,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2721,7 +2721,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2759,7 +2759,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2781,7 +2781,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_Publishing_idx2 on MMS_Publishing (mediaItemKey, startPublishing, endPublishing, publishingStatus)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2803,7 +2803,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_Publishing_idx3 on MMS_Publishing (publishingStatus, startPublishing, endPublishing)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2825,7 +2825,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_Publishing_idx4 on MMS_Publishing (publishingStatus, endPublishing, startPublishing)";            
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2881,7 +2881,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2900,7 +2900,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_EncodingJob_idx1 on MMS_EncodingJob (status, processorMMS, failuresNumber, encodingJobStart)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2919,7 +2919,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_EncodingJob_idx2 on MMS_EncodingJob (utcScheduleStart_virtual)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2938,7 +2938,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create index MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, encodingPriority)";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -2990,7 +2990,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
-        catch(sql::SQLException se)
+        catch(sql::SQLException& se)
         {
             if (isRealDBError(se.what()))
             {
@@ -3666,7 +3666,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3683,7 +3683,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			conn = nullptr;
         }
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3703,7 +3703,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		// no exception because called by a constructor/thread
         // throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3760,7 +3760,7 @@ bool MMSEngineDBFacade::isJsonTypeSupported(shared_ptr<sql::Statement> statement
             "drop table MMS_JsonTest";
         statement->execute(lastSQLCommand);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         jsonTypeSupported = false;
     }

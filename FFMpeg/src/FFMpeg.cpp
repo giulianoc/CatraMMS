@@ -420,7 +420,7 @@ void FFMpeg::encodeContent(
 						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -528,7 +528,7 @@ void FFMpeg::encodeContent(
 						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -640,7 +640,7 @@ void FFMpeg::encodeContent(
 						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -809,7 +809,7 @@ void FFMpeg::encodeContent(
 						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -919,7 +919,7 @@ void FFMpeg::encodeContent(
 						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -1036,7 +1036,7 @@ void FFMpeg::encodeContent(
 						+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -1199,7 +1199,7 @@ void FFMpeg::encodeContent(
                         + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
 					*pChildPid = 0;
 
@@ -1309,7 +1309,7 @@ void FFMpeg::encodeContent(
                         + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
 					*pChildPid = 0;
 
@@ -1369,7 +1369,7 @@ void FFMpeg::encodeContent(
 
 						ffmpegEncodingParameters.removeMultiTrackPathNames();
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__ + "muxAllFiles failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1455,7 +1455,7 @@ void FFMpeg::encodeContent(
                         + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
 					*pChildPid = 0;
 
@@ -1512,7 +1512,7 @@ void FFMpeg::encodeContent(
 
 						ffmpegEncodingParameters.removeMultiTrackPathNames();
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__ + "muxAllFiles failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1559,7 +1559,7 @@ void FFMpeg::encodeContent(
             }
         }
     }
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1585,7 +1585,7 @@ void FFMpeg::encodeContent(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1611,7 +1611,7 @@ void FFMpeg::encodeContent(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1814,7 +1814,7 @@ void FFMpeg::overlayImageOnVideo(
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1953,7 +1953,7 @@ void FFMpeg::overlayImageOnVideo(
                         + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
 					*pChildPid = 0;
 
@@ -2020,7 +2020,7 @@ void FFMpeg::overlayImageOnVideo(
             }
         }        
     }
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg overlay failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2048,7 +2048,7 @@ void FFMpeg::overlayImageOnVideo(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg overlay failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2077,7 +2077,7 @@ void FFMpeg::overlayImageOnVideo(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg overlay failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2266,7 +2266,7 @@ void FFMpeg::overlayTextOnVideo(
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2420,7 +2420,7 @@ void FFMpeg::overlayTextOnVideo(
 							+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
 					*pChildPid = 0;
 
@@ -2496,7 +2496,7 @@ void FFMpeg::overlayTextOnVideo(
             }
         }        
     }
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg drawtext failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2524,7 +2524,7 @@ void FFMpeg::overlayTextOnVideo(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg drawtext failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2552,7 +2552,7 @@ void FFMpeg::overlayTextOnVideo(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg drawtext failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2742,7 +2742,7 @@ void FFMpeg::videoSpeed(
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3011,7 +3011,7 @@ void FFMpeg::videoSpeed(
                         + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
 					*pChildPid = 0;
 
@@ -3080,7 +3080,7 @@ void FFMpeg::videoSpeed(
             }
         }        
     }
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3108,7 +3108,7 @@ void FFMpeg::videoSpeed(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3136,7 +3136,7 @@ void FFMpeg::videoSpeed(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3357,7 +3357,7 @@ void FFMpeg::pictureInPicture(
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3530,7 +3530,7 @@ void FFMpeg::pictureInPicture(
 							chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
                     );
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
 					*pChildPid = 0;
 
@@ -3598,7 +3598,7 @@ void FFMpeg::pictureInPicture(
             }
         }        
     }
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3627,7 +3627,7 @@ void FFMpeg::pictureInPicture(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3656,7 +3656,7 @@ void FFMpeg::pictureInPicture(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3899,7 +3899,7 @@ void FFMpeg::introOutroOverlay(
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4108,7 +4108,7 @@ ffmpeg \
 							endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -4176,7 +4176,7 @@ ffmpeg \
 			}
 		}
 	}
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg introOutroOverlay failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4203,7 +4203,7 @@ ffmpeg \
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg introOutroOverlay failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4230,7 +4230,7 @@ ffmpeg \
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg introOutroOverlay failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4520,7 +4520,7 @@ ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/14/000/000/001/3450777
 							endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -4588,7 +4588,7 @@ ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/14/000/000/001/3450777
 			}
 		}
 	}
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg " + toString(_currentApiName) + " failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4615,7 +4615,7 @@ ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/14/000/000/001/3450777
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg " + toString(_currentApiName) + " failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4642,7 +4642,7 @@ ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/14/000/000/001/3450777
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg " + toString(_currentApiName) + " failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4928,7 +4928,7 @@ ffmpeg -y
 							endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -4996,7 +4996,7 @@ ffmpeg -y
 			}
 		}
 	}
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg " + toString(_currentApiName) + " failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5023,7 +5023,7 @@ ffmpeg -y
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg " + toString(_currentApiName) + " failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5050,7 +5050,7 @@ ffmpeg -y
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: ffmpeg " + toString(_currentApiName) + " failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5364,7 +5364,7 @@ void FFMpeg::silentAudio(
 							endFfmpegCommand - startFfmpegCommand).count()) + "@"
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					*pChildPid = 0;
 
@@ -5432,7 +5432,7 @@ void FFMpeg::silentAudio(
 			}
 		}
 	}
-    catch(FFMpegEncodingKilledByUser e)
+    catch(FFMpegEncodingKilledByUser& e)
     {
         _logger->error(__FILEREF__ + toString(_currentApiName) + " ffmpeg failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5459,7 +5459,7 @@ void FFMpeg::silentAudio(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + toString(_currentApiName) + " ffmpeg failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5486,7 +5486,7 @@ void FFMpeg::silentAudio(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + toString(_currentApiName) + " ffmpeg failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -5694,7 +5694,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 				endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
@@ -6271,7 +6271,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
             + ", detailsPathFileName: " + detailsPathFileName);
         fs::remove_all(detailsPathFileName);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6286,7 +6286,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6489,7 +6489,7 @@ string FFMpeg::getNearestKeyFrameTime(
 				endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
@@ -6682,7 +6682,7 @@ string FFMpeg::getNearestKeyFrameTime(
             + ", detailsPathFileName: " + detailsPathFileName);
         fs::remove_all(detailsPathFileName);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6697,7 +6697,7 @@ string FFMpeg::getNearestKeyFrameTime(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -6786,7 +6786,7 @@ int FFMpeg::probeChannel(
 					endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 			outputProbePathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -6901,7 +6901,7 @@ void FFMpeg::muxAllFiles(
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = __FILEREF__ + "ffmpeg command failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7027,7 +7027,7 @@ void FFMpeg::getLiveStreamingInfo(
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(
 			outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -7283,7 +7283,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 								{
 									videoWidth = stoi(sWidth);
 								}
-								catch(exception e)
+								catch(exception& e)
 								{
 									string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7307,7 +7307,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 								{
 									videoHeight = stoi(sHeight);
 								}
-								catch(exception e)
+								catch(exception& e)
 								{
 									string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7406,7 +7406,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 								{
 									audioSamplingRate = stoi(sSamplingRate);
 								}
-								catch(exception e)
+								catch(exception& e)
 								{
 									string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7458,7 +7458,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 			+ ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
 		fs::remove_all(outputFfmpegPathFileName);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7473,7 +7473,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = __FILEREF__ + "getLiveStreamingInfo error"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -7625,7 +7625,7 @@ void FFMpeg::generateFrameToIngest(
 				chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		*pChildPid = 0;
 
@@ -7915,7 +7915,7 @@ void FFMpeg::generateFramesToIngest(
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		*pChildPid = 0;
 
@@ -8124,7 +8124,7 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -8306,7 +8306,7 @@ void FFMpeg::splitVideoInChunks(
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -8627,7 +8627,7 @@ void FFMpeg::cutWithoutEncoding(
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -8878,7 +8878,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -8972,7 +8972,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 					+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				*pChildPid = 0;
 
@@ -9014,7 +9014,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			fs::remove_all(_outputFfmpegPathFileName);    
 		}
 	}
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -9042,7 +9042,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 
 		throw e;
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -9070,7 +9070,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 
 		throw e;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed"
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -9392,7 +9392,7 @@ void FFMpeg::slideShow(
 			FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 			FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -9537,7 +9537,7 @@ void FFMpeg::slideShow(
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		*pChildPid = 0;
 
@@ -9739,7 +9739,7 @@ void FFMpeg::extractTrackMediaToIngest(
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -10437,7 +10437,7 @@ void FFMpeg::liveRecorder(
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter,
 							ffmpegEncodingProfileArgumentList);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__
 							+ "encodingProfileParameter retrieving failed"
@@ -10748,7 +10748,7 @@ void FFMpeg::liveRecorder(
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -10838,7 +10838,7 @@ void FFMpeg::liveRecorder(
 					{
 						getMediaInfo(ingestionJobKey, false, liveURL, inputVideoTracks, inputAudioTracks);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__ + "ffmpeg: getMediaInfo failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11024,7 +11024,7 @@ void FFMpeg::liveRecorder(
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter,
 							ffmpegEncodingProfileArgumentList);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__
 							+ "encodingProfileParameter retrieving failed"
@@ -11331,7 +11331,7 @@ void FFMpeg::liveRecorder(
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioChannelsParameter, ffmpegEncodingProfileArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioSampleRateParameter, ffmpegEncodingProfileArgumentList);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11675,7 +11675,7 @@ void FFMpeg::liveRecorder(
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11687,7 +11687,7 @@ void FFMpeg::liveRecorder(
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11717,7 +11717,7 @@ void FFMpeg::liveRecorder(
 					);
 					fs::remove_all(segmentListPath);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string errorMessage = __FILEREF__ + "remove directory failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11729,7 +11729,7 @@ void FFMpeg::liveRecorder(
 
 					// throw e;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					string errorMessage = __FILEREF__ + "remove directory failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11781,7 +11781,7 @@ void FFMpeg::liveRecorder(
 		}
 		*/
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		*pChildPid = 0;
 
@@ -11883,7 +11883,7 @@ void FFMpeg::liveRecorder(
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11895,7 +11895,7 @@ void FFMpeg::liveRecorder(
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11923,7 +11923,7 @@ void FFMpeg::liveRecorder(
 					);
 					fs::remove_all(segmentListPath);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string errorMessage = __FILEREF__ + "remove directory failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11935,7 +11935,7 @@ void FFMpeg::liveRecorder(
 
 					// throw e;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					string errorMessage = __FILEREF__ + "remove directory failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12240,7 +12240,7 @@ void FFMpeg::liveProxy2(
 				);
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = __FILEREF__ + "liveProxy. Wrong input parameters"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12254,7 +12254,7 @@ void FFMpeg::liveProxy2(
 
 			throw runtime_error(errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = __FILEREF__ + "liveProxy. Wrong input parameters"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12300,7 +12300,7 @@ void FFMpeg::liveProxy2(
 				);
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = __FILEREF__ + "liveProxy. Wrong output parameters"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12314,7 +12314,7 @@ void FFMpeg::liveProxy2(
 
 			throw runtime_error(errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = __FILEREF__ + "liveProxy. Wrong output parameters"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12508,7 +12508,7 @@ void FFMpeg::liveProxy2(
 								);
 								fs::remove_all(manifestDirectoryPath);
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								string errorMessage = __FILEREF__ + "remove directory failed"
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12523,7 +12523,7 @@ void FFMpeg::liveProxy2(
 
 								// throw e;
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								string errorMessage = __FILEREF__ + "remove directory failed"
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12580,7 +12580,7 @@ void FFMpeg::liveProxy2(
 				currentNumberOfRepeatingSameInput = 0;
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			*pChildPid = 0;
 
@@ -12734,7 +12734,7 @@ void FFMpeg::liveProxy2(
 								);
 								fs::remove_all(manifestDirectoryPath);
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								string errorMessage = __FILEREF__ + "remove directory failed"
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -12749,7 +12749,7 @@ void FFMpeg::liveProxy2(
 
 								// throw e;
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								string errorMessage = __FILEREF__ + "remove directory failed"
 									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -13185,7 +13185,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 				int timeoutInSeconds = 20;
 				getMediaInfo(ingestionJobKey, false, timeoutInSeconds, url, videoTracks, audioTracks);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg: getMediaInfo failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -13297,7 +13297,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 					+ ", otherOutputOptionsBecauseOfMaxWidth: " + otherOutputOptionsBecauseOfMaxWidth
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg: getLiveStreamingInfo or associate processing failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -13619,7 +13619,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 				int timeoutInSeconds = 20;
 				getMediaInfo(ingestionJobKey, false, timeoutInSeconds, url, videoTracks, audioTracks);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg: getMediaInfo failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -14350,7 +14350,7 @@ void FFMpeg::liveProxyOutput(
 					_logger->warn(errorMessage);
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -14782,7 +14782,7 @@ void FFMpeg::liveGrid(
 				);
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -14793,7 +14793,7 @@ void FFMpeg::liveGrid(
 
 			throw runtime_error(errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -15472,7 +15472,7 @@ int videoBitRateInKbps = -1;
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -15484,7 +15484,7 @@ int videoBitRateInKbps = -1;
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -15523,7 +15523,7 @@ int videoBitRateInKbps = -1;
 			}
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		*pChildPid = 0;
 
@@ -15621,7 +15621,7 @@ int videoBitRateInKbps = -1;
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -15633,7 +15633,7 @@ int videoBitRateInKbps = -1;
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -15851,7 +15851,7 @@ void FFMpeg::changeFileFormat(
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -16012,7 +16012,7 @@ void FFMpeg::streamingToFile(
             + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
@@ -16078,7 +16078,7 @@ int FFMpeg::getEncodingProgress()
             
             ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding progress file"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16182,7 +16182,7 @@ int FFMpeg::getEncodingProgress()
             }
         }
     }
-    catch(FFMpegEncodingStatusNotAvailable e)
+    catch(FFMpegEncodingStatusNotAvailable& e)
     {
         _logger->warn(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16194,7 +16194,7 @@ int FFMpeg::getEncodingProgress()
 
         throw FFMpegEncodingStatusNotAvailable();
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16242,7 +16242,7 @@ bool FFMpeg::nonMonotonousDTSInOutputLog()
             
             ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16266,7 +16266,7 @@ bool FFMpeg::nonMonotonousDTSInOutputLog()
 		else
 			return false;
     }
-    catch(FFMpegEncodingStatusNotAvailable e)
+    catch(FFMpegEncodingStatusNotAvailable& e)
     {
         _logger->warn(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16278,7 +16278,7 @@ bool FFMpeg::nonMonotonousDTSInOutputLog()
 
         throw FFMpegEncodingStatusNotAvailable();
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: nonMonotonousDTSInOutputLog failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16324,7 +16324,7 @@ bool FFMpeg::forbiddenErrorInOutputLog()
             
             ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
                 + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16353,7 +16353,7 @@ bool FFMpeg::forbiddenErrorInOutputLog()
 		else
 			return false;
     }
-    catch(FFMpegEncodingStatusNotAvailable e)
+    catch(FFMpegEncodingStatusNotAvailable& e)
     {
         _logger->warn(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16365,7 +16365,7 @@ bool FFMpeg::forbiddenErrorInOutputLog()
 
         throw FFMpegEncodingStatusNotAvailable();
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ffmpeg: forbiddenErrorInOutputLog failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16429,7 +16429,7 @@ bool FFMpeg::isFrameIncreasing(int maxMilliSecondsToWait)
 			{
 				ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "isFrameIncreasing: Failure reading the encoding status file"
 					+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16447,7 +16447,7 @@ bool FFMpeg::isFrameIncreasing(int maxMilliSecondsToWait)
 			{
 				firstFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
 			}
-			catch(FFMpegFrameInfoNotAvailable e)
+			catch(FFMpegFrameInfoNotAvailable& e)
 			{
 				frameIncreasing = false;
 
@@ -16486,7 +16486,7 @@ bool FFMpeg::isFrameIncreasing(int maxMilliSecondsToWait)
 					ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName,
 						lastCharsToBeReadToGetInfo);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__
 						+ "isFrameIncreasing: Failure reading the encoding status file"
@@ -16507,7 +16507,7 @@ bool FFMpeg::isFrameIncreasing(int maxMilliSecondsToWait)
 				{
 					secondFramesValue = getFrameByOutputLog(ffmpegEncodingStatus);
 				}
-				catch(FFMpegFrameInfoNotAvailable e)
+				catch(FFMpegFrameInfoNotAvailable& e)
 				{
 					frameIncreasing = false;
 
@@ -16554,7 +16554,7 @@ bool FFMpeg::isFrameIncreasing(int maxMilliSecondsToWait)
 				chrono::system_clock::now() - startCheck).count())
         );
     }
-    catch(FFMpegEncodingStatusNotAvailable e)
+    catch(FFMpegEncodingStatusNotAvailable& e)
     {
         _logger->info(__FILEREF__ + "isFrameIncreasing failed"
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -16570,7 +16570,7 @@ bool FFMpeg::isFrameIncreasing(int maxMilliSecondsToWait)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "isFrameIncreasing failed" + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
@@ -16674,7 +16674,7 @@ string FFMpeg::getLastPartOfFile(
             delete[] buffer;
         }
     }
-    catch(exception e)
+    catch(exception& e)
     {
         if (buffer != nullptr)
             delete [] buffer;
@@ -16774,7 +16774,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 					+ to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()) + "@"
 			);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -16791,7 +16791,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(
 
 			throw e;
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -16905,7 +16905,7 @@ format code  extension  resolution note
 			throw runtime_error(errorMessage);
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profile error processing or format code not found"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -16922,7 +16922,7 @@ format code  extension  resolution note
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profiles error processing"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17030,7 +17030,7 @@ format code  extension  resolution note
 				fs::remove_all(detailsYouTubeProfilesPath);
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17047,7 +17047,7 @@ format code  extension  resolution note
 
 			throw e;
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17921,7 +17921,7 @@ void FFMpeg::renameOutputFfmpegPathFileName(
 		if (fs::exists(outputFfmpegPathFileName))
 			fs::rename(outputFfmpegPathFileName, debugOutputFfmpegPathFileName);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "move failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -17945,7 +17945,7 @@ bool FFMpeg::isNumber(int64_t ingestionJobKey, string number,
 
 		return true;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("isNumber failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -18028,7 +18028,7 @@ double FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time,
 
 		return dSeconds;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("timeToSeconds failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -18074,7 +18074,7 @@ string FFMpeg::secondsToTime(int64_t ingestionJobKey, double dSeconds,
 
 		return time;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("secondsToTime failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)

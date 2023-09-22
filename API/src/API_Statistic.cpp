@@ -89,7 +89,7 @@ void API::addRequestStatistic(
             }
             title = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -99,7 +99,7 @@ void API::addRequestStatistic(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -117,7 +117,7 @@ void API::addRequestStatistic(
 
 			sResponse = JSONUtils::toString(statisticRoot);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addRequestStatistic failed"
 				+ ", e.what(): " + e.what()
@@ -125,7 +125,7 @@ void API::addRequestStatistic(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addRequestStatistic failed"
                 + ", e.what(): " + e.what()
@@ -137,7 +137,7 @@ void API::addRequestStatistic(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -152,7 +152,7 @@ void API::addRequestStatistic(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -280,7 +280,7 @@ void API::requestStatisticList(
 				request, "", api, 200, responseBody);
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -294,7 +294,7 @@ void API::requestStatisticList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -434,7 +434,7 @@ void API::requestStatisticPerContentList(
 				request, "", api, 200, responseBody);
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -448,7 +448,7 @@ void API::requestStatisticPerContentList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -587,7 +587,7 @@ void API::requestStatisticPerUserList(
 				request, "", api, 200, responseBody);
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -601,7 +601,7 @@ void API::requestStatisticPerUserList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -740,7 +740,7 @@ void API::requestStatisticPerMonthList(
 				request, "", api, 200, responseBody);
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -754,7 +754,7 @@ void API::requestStatisticPerMonthList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -893,7 +893,7 @@ void API::requestStatisticPerDayList(
 				request, "", api, 200, responseBody);
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -907,7 +907,7 @@ void API::requestStatisticPerDayList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1046,7 +1046,7 @@ void API::requestStatisticPerHourList(
 				request, "", api, 200, responseBody);
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1060,7 +1060,7 @@ void API::requestStatisticPerHourList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api

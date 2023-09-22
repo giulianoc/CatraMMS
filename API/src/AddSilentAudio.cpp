@@ -131,11 +131,11 @@ void AddSilentAudio::encodeContent(
 					+ ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
 				);
 			}
-			catch(FFMpegEncodingKilledByUser e)
+			catch(FFMpegEncodingKilledByUser& e)
 			{
 				throw e;
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				if (stopIfReferenceProcessingError || sourceIndex + 1 == sourcesRoot.size())
 					throw e;
@@ -150,7 +150,7 @@ void AddSilentAudio::encodeContent(
 					continue;
 				}
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				if (stopIfReferenceProcessingError || sourceIndex + 1 == sourcesRoot.size())
 					throw e;
@@ -201,7 +201,7 @@ void AddSilentAudio::encodeContent(
 			}
 		}
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		char strDateTime [64];
 		{
@@ -226,7 +226,7 @@ void AddSilentAudio::encodeContent(
 
 		throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		char strDateTime [64];
 		{
@@ -252,7 +252,7 @@ void AddSilentAudio::encodeContent(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		char strDateTime [64];
 		{

@@ -136,7 +136,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 
 		return make_tuple(encoderKey, encoderURL, externalEncoder);
 	}
-    catch(EncoderNotFound e)
+    catch(EncoderNotFound& e)
     {
         _logger->error(__FILEREF__ + "getRunningEncoderByEncodersPool failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -148,7 +148,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "getRunningEncoderByEncodersPool failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -160,7 +160,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("getRunningEncoderByEncodersPool failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)

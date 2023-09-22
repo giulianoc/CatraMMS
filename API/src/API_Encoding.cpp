@@ -175,7 +175,7 @@ void API::encodingJobsStatus(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -190,7 +190,7 @@ void API::encodingJobsStatus(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -275,7 +275,7 @@ void API::encodingJobPriority(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -290,7 +290,7 @@ void API::encodingJobPriority(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -570,7 +570,7 @@ void API::killOrCancelEncodingJob(
 							}
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						// this is the case 2
 						if (!lightKill)
@@ -667,7 +667,7 @@ void API::killOrCancelEncodingJob(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -682,7 +682,7 @@ void API::killOrCancelEncodingJob(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -741,7 +741,7 @@ void API::encodingProfilesSetsList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -755,7 +755,7 @@ void API::encodingProfilesSetsList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -828,7 +828,7 @@ void API::encodingProfilesList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -842,7 +842,7 @@ void API::encodingProfilesList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -946,7 +946,7 @@ void API::addUpdateEncodingProfilesSet(
             responseBody.insert(0, beginOfResponseBody);
             responseBody += " ] }";
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             bool commit = false;
             _mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
@@ -957,7 +957,7 @@ void API::addUpdateEncodingProfilesSet(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             bool commit = false;
             _mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
@@ -972,7 +972,7 @@ void API::addUpdateEncodingProfilesSet(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, responseBody);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -987,7 +987,7 @@ void API::addUpdateEncodingProfilesSet(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1100,7 +1100,7 @@ void API::addEncodingProfile(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodingProfile failed"
                 + ", e.what(): " + e.what()
@@ -1108,7 +1108,7 @@ void API::addEncodingProfile(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodingProfile failed"
                 + ", e.what(): " + e.what()
@@ -1120,7 +1120,7 @@ void API::addEncodingProfile(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, responseBody);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1135,7 +1135,7 @@ void API::addEncodingProfile(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1182,7 +1182,7 @@ void API::removeEncodingProfile(
             _mmsEngineDBFacade->removeEncodingProfile(
                 workspace->_workspaceKey, encodingProfileKey);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfile failed"
                 + ", e.what(): " + e.what()
@@ -1190,7 +1190,7 @@ void API::removeEncodingProfile(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfile failed"
                 + ", e.what(): " + e.what()
@@ -1204,7 +1204,7 @@ void API::removeEncodingProfile(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, responseBody);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1218,7 +1218,7 @@ void API::removeEncodingProfile(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1264,7 +1264,7 @@ void API::removeEncodingProfilesSet(
             _mmsEngineDBFacade->removeEncodingProfilesSet(
                 workspace->_workspaceKey, encodingProfilesSetKey);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfilesSet failed"
                 + ", e.what(): " + e.what()
@@ -1272,7 +1272,7 @@ void API::removeEncodingProfilesSet(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfilesSet failed"
                 + ", e.what(): " + e.what()
@@ -1286,7 +1286,7 @@ void API::removeEncodingProfilesSet(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, responseBody);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1300,7 +1300,7 @@ void API::removeEncodingProfilesSet(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api

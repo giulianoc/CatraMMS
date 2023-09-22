@@ -45,13 +45,13 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 		_encoding->_errorMessage = "";
 		removeEncodingCompletedIfPresent();
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
@@ -68,13 +68,13 @@ FFMPEGEncoderTask::~FFMPEGEncoderTask()
 		_encoding->_childPid = 0;	// set to 0 just to be sure because it is already set info the FFMpeg lib
 		_encoding->_available = true;	// this is the last setting making the encoding available again
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
@@ -437,7 +437,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				chrono::system_clock::now() - startWaiting).count())
 		);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -585,7 +585,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 
 					localBinaryFileSizeInBytes = fs::file_size(localBinaryPathFileName);                                                                          
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string errorMessage = string("tar command failed")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey) 

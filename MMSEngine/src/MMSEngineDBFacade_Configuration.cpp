@@ -92,7 +92,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
 
 		return youTubeConfRoot;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -113,7 +113,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -132,7 +132,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -338,7 +338,7 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
 
 		return youTubeConfRoot;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -359,7 +359,7 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -378,7 +378,7 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -452,7 +452,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -473,7 +473,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -492,7 +492,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -646,7 +646,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -667,7 +667,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -686,7 +686,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -782,7 +782,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 
 		return make_tuple(youTubeTokenType, youTubeRefreshToken, youTubeAccessToken);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -803,7 +803,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -822,7 +822,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -892,7 +892,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -913,7 +913,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -932,7 +932,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1018,7 +1018,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1039,7 +1039,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1058,7 +1058,7 @@ void MMSEngineDBFacade::modifyFacebookConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1132,7 +1132,7 @@ void MMSEngineDBFacade::removeFacebookConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1153,7 +1153,7 @@ void MMSEngineDBFacade::removeFacebookConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1172,7 +1172,7 @@ void MMSEngineDBFacade::removeFacebookConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1341,7 +1341,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1362,7 +1362,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1381,7 +1381,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1465,7 +1465,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1486,7 +1486,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1505,7 +1505,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1577,7 +1577,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1598,7 +1598,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1617,7 +1617,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1703,7 +1703,7 @@ void MMSEngineDBFacade::modifyTwitchConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1724,7 +1724,7 @@ void MMSEngineDBFacade::modifyTwitchConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1743,7 +1743,7 @@ void MMSEngineDBFacade::modifyTwitchConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1817,7 +1817,7 @@ void MMSEngineDBFacade::removeTwitchConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1838,7 +1838,7 @@ void MMSEngineDBFacade::removeTwitchConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1857,7 +1857,7 @@ void MMSEngineDBFacade::removeTwitchConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2026,7 +2026,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2047,7 +2047,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2066,7 +2066,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2150,7 +2150,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2171,7 +2171,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2190,7 +2190,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2262,7 +2262,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2283,7 +2283,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2302,7 +2302,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2388,7 +2388,7 @@ void MMSEngineDBFacade::modifyTiktokConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2409,7 +2409,7 @@ void MMSEngineDBFacade::modifyTiktokConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2428,7 +2428,7 @@ void MMSEngineDBFacade::modifyTiktokConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2502,7 +2502,7 @@ void MMSEngineDBFacade::removeTiktokConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2523,7 +2523,7 @@ void MMSEngineDBFacade::removeTiktokConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2542,7 +2542,7 @@ void MMSEngineDBFacade::removeTiktokConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2711,7 +2711,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2732,7 +2732,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2751,7 +2751,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2835,7 +2835,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2856,7 +2856,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2875,7 +2875,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3158,7 +3158,7 @@ Json::Value MMSEngineDBFacade::addStream(
 
 		return streamsRoot[0];
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3179,7 +3179,7 @@ Json::Value MMSEngineDBFacade::addStream(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3198,7 +3198,7 @@ Json::Value MMSEngineDBFacade::addStream(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3838,7 +3838,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 
 		return streamsRoot[0];
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3859,7 +3859,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3878,7 +3878,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3974,7 +3974,7 @@ void MMSEngineDBFacade::removeStream(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3995,7 +3995,7 @@ void MMSEngineDBFacade::removeStream(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4014,7 +4014,7 @@ void MMSEngineDBFacade::removeStream(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4068,7 +4068,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4088,7 +4088,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4106,7 +4106,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -4433,7 +4433,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 							field = "encodersPoolLabel";
 							streamRoot[field] = encodersPoolLabel;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__ + "getEncodersPoolDetails failed"
 								+ ", confKey: " + to_string(confKey)
@@ -4482,7 +4482,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 								field = "pushEncoderLabel";
 								streamRoot[field] = pushEncoderLabel;
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								_logger->error(__FILEREF__ + "getEncoderDetails failed"
 									+ ", pushEncoderKey: " + to_string(pushEncoderKey)
@@ -4641,7 +4641,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
         field = "response";
         streamListRoot[field] = responseRoot;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4652,7 +4652,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4661,7 +4661,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4770,7 +4770,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
 					{
 						encodersPoolLabel = getEncodersPoolDetails (encodersPoolKey);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "getEncodersPoolDetails failed"
 							+ ", encodersPoolKey: " + to_string(encodersPoolKey)
@@ -4823,7 +4823,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
 			captureLiveAudioDeviceNumber, captureLiveChannelsNumber,
 			tvSourceTVConfKey);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4844,7 +4844,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
 
         throw se;
     }
-    catch(ConfKeyNotFound e)
+    catch(ConfKeyNotFound& e)
     {
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "ConfKeyNotFound SQL exception"
@@ -4868,7 +4868,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4887,7 +4887,7 @@ tuple<int64_t, string, string, string, string, int64_t, string, int, string, int
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4976,7 +4976,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
 
 		return make_tuple(url, channelName, userData);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4997,7 +4997,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5016,7 +5016,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5238,7 +5238,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 
 		return sourceTVStreamsRoot[0];
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5259,7 +5259,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5278,7 +5278,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5742,7 +5742,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 
 		return sourceTVStreamsRoot[0];
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5763,7 +5763,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5782,7 +5782,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5854,7 +5854,7 @@ void MMSEngineDBFacade::removeSourceTVStream(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5875,7 +5875,7 @@ void MMSEngineDBFacade::removeSourceTVStream(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5894,7 +5894,7 @@ void MMSEngineDBFacade::removeSourceTVStream(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6322,7 +6322,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6343,7 +6343,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6362,7 +6362,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6473,7 +6473,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 		return make_tuple(type, serviceId, frequency, symbolRate, bandwidthInHz,
 			modulation, videoPid, audioItalianPid);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6494,7 +6494,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 
         throw se;
     }
-    catch(ConfKeyNotFound e)
+    catch(ConfKeyNotFound& e)
     {
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "ConfKeyNotFound SQL exception"
@@ -6518,7 +6518,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6537,7 +6537,7 @@ tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6617,7 +6617,7 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6638,7 +6638,7 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6657,7 +6657,7 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6752,7 +6752,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6773,7 +6773,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6792,7 +6792,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6867,7 +6867,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6888,7 +6888,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6907,7 +6907,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -7101,7 +7101,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -7122,7 +7122,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -7141,7 +7141,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -7418,7 +7418,7 @@ tuple<string, string, string, bool>
 		return make_tuple(reservedChannelId, reservedRtmpURL,
 			reservedPlayURL, channelAlreadyReserved);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -7445,7 +7445,7 @@ tuple<string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -7457,7 +7457,7 @@ tuple<string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -7475,7 +7475,7 @@ tuple<string, string, string, bool>
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -7500,7 +7500,7 @@ tuple<string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -7512,7 +7512,7 @@ tuple<string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -7530,7 +7530,7 @@ tuple<string, string, string, bool>
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -7554,7 +7554,7 @@ tuple<string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -7566,7 +7566,7 @@ tuple<string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -7691,7 +7691,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
 
 		return reservedChannelId;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -7712,7 +7712,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -7731,7 +7731,7 @@ string MMSEngineDBFacade::releaseAWSChannel(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -7815,7 +7815,7 @@ int64_t MMSEngineDBFacade::addCDN77ChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -7836,7 +7836,7 @@ int64_t MMSEngineDBFacade::addCDN77ChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -7855,7 +7855,7 @@ int64_t MMSEngineDBFacade::addCDN77ChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -7954,7 +7954,7 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -7975,7 +7975,7 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -7994,7 +7994,7 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -8069,7 +8069,7 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -8090,7 +8090,7 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -8109,7 +8109,7 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -8315,7 +8315,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -8336,7 +8336,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -8355,7 +8355,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -8449,7 +8449,7 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails (
 
 		return make_tuple(resourceURL, filePath, secureToken);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -8470,7 +8470,7 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails (
 
         throw se;
     }    
-    catch(ConfKeyNotFound e)
+    catch(ConfKeyNotFound& e)
     {
 		_logger->error(__FILEREF__ + "ConfKeyNotFound SQL exception"
 			+ ", lastSQLCommand: " + lastSQLCommand
@@ -8488,7 +8488,7 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails (
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -8507,7 +8507,7 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -8787,7 +8787,7 @@ tuple<string, string, string, string, string, bool>
 		return make_tuple(reservedLabel, reservedRtmpURL, reservedResourceURL, reservedFilePath,
 			reservedSecureToken, channelAlreadyReserved);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -8814,7 +8814,7 @@ tuple<string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -8826,7 +8826,7 @@ tuple<string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -8844,7 +8844,7 @@ tuple<string, string, string, string, string, bool>
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -8869,7 +8869,7 @@ tuple<string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -8881,7 +8881,7 @@ tuple<string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -8899,7 +8899,7 @@ tuple<string, string, string, string, string, bool>
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -8923,7 +8923,7 @@ tuple<string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -8935,7 +8935,7 @@ tuple<string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -9056,7 +9056,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9077,7 +9077,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9096,7 +9096,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9191,7 +9191,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9212,7 +9212,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9231,7 +9231,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9341,7 +9341,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9362,7 +9362,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9381,7 +9381,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9456,7 +9456,7 @@ void MMSEngineDBFacade::removeRTMPChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9477,7 +9477,7 @@ void MMSEngineDBFacade::removeRTMPChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9496,7 +9496,7 @@ void MMSEngineDBFacade::removeRTMPChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9715,7 +9715,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9736,7 +9736,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9755,7 +9755,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9861,7 +9861,7 @@ tuple<int64_t, string, string, string, string, string> MMSEngineDBFacade::getRTM
 
 		return make_tuple(confKey, rtmpURL, streamName, userName, password, playURL);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9882,7 +9882,7 @@ tuple<int64_t, string, string, string, string, string> MMSEngineDBFacade::getRTM
 
         throw se;
     }    
-    catch(ConfKeyNotFound e)
+    catch(ConfKeyNotFound& e)
     {
 		_logger->error(__FILEREF__ + "ConfKeyNotFound SQL exception"
 			+ ", lastSQLCommand: " + lastSQLCommand
@@ -9900,7 +9900,7 @@ tuple<int64_t, string, string, string, string, string> MMSEngineDBFacade::getRTM
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9919,7 +9919,7 @@ tuple<int64_t, string, string, string, string, string> MMSEngineDBFacade::getRTM
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -10205,7 +10205,7 @@ tuple<string, string, string, string, string, string, bool>
 		return make_tuple(reservedLabel, reservedRtmpURL, reservedStreamName, reservedUserName,
 			reservedPassword, reservedPlayURL, channelAlreadyReserved);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -10232,7 +10232,7 @@ tuple<string, string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -10244,7 +10244,7 @@ tuple<string, string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -10262,7 +10262,7 @@ tuple<string, string, string, string, string, string, bool>
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -10287,7 +10287,7 @@ tuple<string, string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -10299,7 +10299,7 @@ tuple<string, string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -10317,7 +10317,7 @@ tuple<string, string, string, string, string, string, bool>
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -10341,7 +10341,7 @@ tuple<string, string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -10353,7 +10353,7 @@ tuple<string, string, string, string, string, string, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -10474,7 +10474,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -10495,7 +10495,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -10514,7 +10514,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -10599,7 +10599,7 @@ int64_t MMSEngineDBFacade::addHLSChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -10620,7 +10620,7 @@ int64_t MMSEngineDBFacade::addHLSChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -10639,7 +10639,7 @@ int64_t MMSEngineDBFacade::addHLSChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -10739,7 +10739,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -10760,7 +10760,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -10779,7 +10779,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -10854,7 +10854,7 @@ void MMSEngineDBFacade::removeHLSChannelConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -10875,7 +10875,7 @@ void MMSEngineDBFacade::removeHLSChannelConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -10894,7 +10894,7 @@ void MMSEngineDBFacade::removeHLSChannelConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -11096,7 +11096,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -11117,7 +11117,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -11136,7 +11136,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -11236,7 +11236,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails (
 
 		return make_tuple(confKey, deliveryCode, segmentDuration, playlistEntriesNumber);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -11257,7 +11257,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails (
 
         throw se;
     }    
-    catch(ConfKeyNotFound e)
+    catch(ConfKeyNotFound& e)
     {
 		_logger->error(__FILEREF__ + "ConfKeyNotFound SQL exception"
 			+ ", lastSQLCommand: " + lastSQLCommand
@@ -11275,7 +11275,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails (
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -11294,7 +11294,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -11574,7 +11574,7 @@ tuple<string, int64_t, int, int, bool>
 		return make_tuple(reservedLabel, reservedDeliveryCode, reservedSegmentDuration,
 			reservedPlaylistEntriesNumber, channelAlreadyReserved);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -11601,7 +11601,7 @@ tuple<string, int64_t, int, int, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -11613,7 +11613,7 @@ tuple<string, int64_t, int, int, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -11631,7 +11631,7 @@ tuple<string, int64_t, int, int, bool>
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -11656,7 +11656,7 @@ tuple<string, int64_t, int, int, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -11668,7 +11668,7 @@ tuple<string, int64_t, int, int, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -11686,7 +11686,7 @@ tuple<string, int64_t, int, int, bool>
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -11710,7 +11710,7 @@ tuple<string, int64_t, int, int, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -11722,7 +11722,7 @@ tuple<string, int64_t, int, int, bool>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -11843,7 +11843,7 @@ void MMSEngineDBFacade::releaseHLSChannel(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -11864,7 +11864,7 @@ void MMSEngineDBFacade::releaseHLSChannel(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -11883,7 +11883,7 @@ void MMSEngineDBFacade::releaseHLSChannel(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -11961,7 +11961,7 @@ int64_t MMSEngineDBFacade::addFTPConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -11982,7 +11982,7 @@ int64_t MMSEngineDBFacade::addFTPConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -12001,7 +12001,7 @@ int64_t MMSEngineDBFacade::addFTPConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -12094,7 +12094,7 @@ void MMSEngineDBFacade::modifyFTPConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -12115,7 +12115,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -12134,7 +12134,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -12208,7 +12208,7 @@ void MMSEngineDBFacade::removeFTPConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -12229,7 +12229,7 @@ void MMSEngineDBFacade::removeFTPConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -12248,7 +12248,7 @@ void MMSEngineDBFacade::removeFTPConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -12396,7 +12396,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -12417,7 +12417,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -12436,7 +12436,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -12526,7 +12526,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -12547,7 +12547,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -12566,7 +12566,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -12642,7 +12642,7 @@ int64_t MMSEngineDBFacade::addEMailConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -12663,7 +12663,7 @@ int64_t MMSEngineDBFacade::addEMailConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -12682,7 +12682,7 @@ int64_t MMSEngineDBFacade::addEMailConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -12771,7 +12771,7 @@ void MMSEngineDBFacade::modifyEMailConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -12792,7 +12792,7 @@ void MMSEngineDBFacade::modifyEMailConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -12811,7 +12811,7 @@ void MMSEngineDBFacade::modifyEMailConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -12885,7 +12885,7 @@ void MMSEngineDBFacade::removeEMailConf(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -12906,7 +12906,7 @@ void MMSEngineDBFacade::removeEMailConf(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -12925,7 +12925,7 @@ void MMSEngineDBFacade::removeEMailConf(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -13067,7 +13067,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -13088,7 +13088,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -13107,7 +13107,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -13195,7 +13195,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -13216,7 +13216,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -13235,7 +13235,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -13465,7 +13465,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 			streamInputRoot[field] = tvAudioItalianPid;
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "getStreamInputRoot failed"
             + ", e.what(): " + e.what()
@@ -13473,7 +13473,7 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
  
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "getStreamInputRoot failed"
         );
@@ -13534,7 +13534,7 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 		field = "drawTextDetails";
 		vodInputRoot[field] = drawTextDetailsRoot;
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "getVodInputRoot failed"
             + ", e.what(): " + e.what()
@@ -13542,7 +13542,7 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
  
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "getVodInputRoot failed"
         );
@@ -13581,7 +13581,7 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 		field = "drawTextDetails";
 		countdownInputRoot[field] = drawTextDetailsRoot;
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "getCountdownInputRoot failed"
             + ", e.what(): " + e.what()
@@ -13589,7 +13589,7 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
  
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "getVodInputRoot failed"
         );
@@ -13615,7 +13615,7 @@ Json::Value MMSEngineDBFacade::getDirectURLInputRoot(
 		field = "drawTextDetails";
 		directURLInputRoot[field] = drawTextDetailsRoot;
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "getDirectURLInputRoot failed"
             + ", e.what(): " + e.what()
@@ -13623,7 +13623,7 @@ Json::Value MMSEngineDBFacade::getDirectURLInputRoot(
  
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "getDirectURLInputRoot failed"
         );
@@ -13666,7 +13666,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(
 		if (hoursFromLastCalculatedURL < retrieveStreamingYouTubeURLPeriodInHours)
 			streamingYouTubeLiveURL = lastCalculatedURL;
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = __FILEREF__
 			+ "youTubeURLCalculate. getLastYouTubeURLDetails failed"
@@ -13695,7 +13695,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(
 				+ ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
 			);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			// in case ffmpeg.retrieveStreamingYouTubeURL fails
 			// we will use the last saved URL
@@ -13723,14 +13723,14 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(
 
 				appendIngestionJobErrorMessage(ingestionJobKey, firstLineOfErrorMessage);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", e.what(): " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -13754,7 +13754,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(
 				updateChannelDataWithNewYouTubeURL(workspace, ingestionJobKey,
 					confKey, streamingYouTubeLiveURL);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__
 					+ "youTubeURLCalculate. updateChannelDataWithNewYouTubeURL failed"

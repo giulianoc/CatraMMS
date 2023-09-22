@@ -102,7 +102,7 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 
 		_initialized = true;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: init failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -112,7 +112,7 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 
 		throw e;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "ffmpeg: init failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -859,7 +859,7 @@ void FFMpegEncodingParameters::applyEncoding(
             }
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: applyEncoding failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -869,7 +869,7 @@ void FFMpegEncodingParameters::applyEncoding(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: applyEncoding failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -959,7 +959,7 @@ void FFMpegEncodingParameters::createManifestFile()
 		ofstream ofMasterManifestFile(masterManifestPathFileName);
 		ofMasterManifestFile << masterManifest;
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -969,7 +969,7 @@ void FFMpegEncodingParameters::createManifestFile()
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -1372,7 +1372,7 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 			}
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: applyEncoding_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -1382,7 +1382,7 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: applyEncoding_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -1449,7 +1449,7 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 		ofstream manifestFile(mainManifestPathName);
 		manifestFile << mainManifest;
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -1459,7 +1459,7 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -1493,7 +1493,7 @@ string FFMpegEncodingParameters::getManifestFileName()
 
 		return manifestFileName;
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -1503,7 +1503,7 @@ string FFMpegEncodingParameters::getManifestFileName()
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -2220,7 +2220,7 @@ void FFMpegEncodingParameters::removeTwoPassesTemporaryFiles()
                     fs::remove_all(entry.path());
                 }
             }
-            catch(runtime_error e)
+            catch(runtime_error& e)
             {
                 string errorMessage = __FILEREF__ + "listing directory failed"
                        + ", e.what(): " + e.what()
@@ -2229,7 +2229,7 @@ void FFMpegEncodingParameters::removeTwoPassesTemporaryFiles()
 
                 throw e;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 string errorMessage = __FILEREF__ + "listing directory failed"
                        + ", e.what(): " + e.what()
@@ -2240,13 +2240,13 @@ void FFMpegEncodingParameters::removeTwoPassesTemporaryFiles()
             }
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "removeTwoPassesTemporaryFiles failed"
             + ", e.what(): " + e.what()
         );
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "removeTwoPassesTemporaryFiles failed");
     }

@@ -25,13 +25,13 @@ FFMPEGEncoderBase::FFMPEGEncoderBase(
 		);
 
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
@@ -44,13 +44,13 @@ FFMPEGEncoderBase::~FFMPEGEncoderBase()
 	try
 	{
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()

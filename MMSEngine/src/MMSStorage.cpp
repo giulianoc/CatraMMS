@@ -45,13 +45,13 @@ MMSStorage::MMSStorage(
 			refreshPartitionsFreeSizes() ;
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
@@ -100,13 +100,13 @@ void MMSStorage::createDirectories(
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
@@ -125,14 +125,14 @@ void MMSStorage::createDirectories(
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string()
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string()
@@ -156,14 +156,14 @@ void MMSStorage::createDirectories(
 				fs::perm_options::replace);
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", MMS_0000 Path: " + MMS_0000Path.string()
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", MMS_0000 Path: " + MMS_0000Path.string()
@@ -183,13 +183,13 @@ void MMSStorage::createDirectories(
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
@@ -208,13 +208,13 @@ void MMSStorage::createDirectories(
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
@@ -233,13 +233,13 @@ void MMSStorage::createDirectories(
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
@@ -258,13 +258,13 @@ void MMSStorage::createDirectories(
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
@@ -284,13 +284,13 @@ void MMSStorage::createDirectories(
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
@@ -309,13 +309,13 @@ void MMSStorage::createDirectories(
 			| fs::perms::others_read | fs::perms::others_write | fs::perms::others_exec,
 			fs::perm_options::replace);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed"
 			+ ", e.what(): " + e.what()
@@ -377,7 +377,7 @@ tuple<int64_t, fs::path, int, string, string, int64_t, string>
 		return make_tuple(physicalPathKey, physicalPath, mmsPartitionNumber,
 				relativePath, fileName, sizeInBytes, deliveryFileName);
     }
-    catch(MediaItemKeyNotFound e)
+    catch(MediaItemKeyNotFound& e)
     {
         string errorMessage = string("getPhysicalPathDetails failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -391,7 +391,7 @@ tuple<int64_t, fs::path, int, string, string, int64_t, string>
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("getPhysicalPathDetails failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -403,7 +403,7 @@ tuple<int64_t, fs::path, int, string, string, int64_t, string>
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("getPhysicalPathDetails failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -454,7 +454,7 @@ tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPat
 		return make_tuple(physicalPath, mmsPartitionNumber, relativePath,
 			fileName, sizeInBytes, deliveryFileName);
     }
-    catch(MediaItemKeyNotFound e)
+    catch(MediaItemKeyNotFound& e)
     {
         string errorMessage = string("getPhysicalPathDetails failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -465,7 +465,7 @@ tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPat
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("getPhysicalPathDetails failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -476,7 +476,7 @@ tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPat
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("getPhysicalPathDetails failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -560,7 +560,7 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(
 
 		return make_tuple(title, mmsPartitionNumber, deliveryFileName, deliveryURI);
     }
-    catch(MediaItemKeyNotFound e)
+    catch(MediaItemKeyNotFound& e)
     {
         string errorMessage = string("getDeliveryURI failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -571,7 +571,7 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("getDeliveryURI failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -582,7 +582,7 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("getDeliveryURI failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -662,7 +662,7 @@ tuple<string, int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
 		return make_tuple(title, mmsPartitionNumber, physicalPathKey,
 			deliveryFileName, deliveryURI);
     }
-    catch(MediaItemKeyNotFound e)
+    catch(MediaItemKeyNotFound& e)
     {
         string errorMessage = string("getDeliveryURI failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -674,7 +674,7 @@ tuple<string, int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("getDeliveryURI failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -686,7 +686,7 @@ tuple<string, int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("getDeliveryURI failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -761,7 +761,7 @@ tuple<fs::path, fs::path, string> MMSStorage::getLiveDeliveryDetails(
 			deliveryPathName = deliveryPath / deliveryFileName;
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("getLiveDeliveryDetails failed")
             + ", directoryId: " + directoryId
@@ -772,7 +772,7 @@ tuple<fs::path, fs::path, string> MMSStorage::getLiveDeliveryDetails(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("getLiveDeliveryDetails failed")
             + ", directoryId: " + directoryId
@@ -1155,7 +1155,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 
         _mmsEngineDBFacade->removePhysicalPath(physicalPathKey);
     }
-    catch(MediaItemKeyNotFound e)
+    catch(MediaItemKeyNotFound& e)
     {
         string errorMessage = string("removePhysicalPath failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -1166,7 +1166,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         
         throw runtime_error(errorMessage);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("removePhysicalPath failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -1177,7 +1177,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("removePhysicalPath failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -1245,7 +1245,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
         );
         _mmsEngineDBFacade->removeMediaItem(mediaItemKey);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("removeMediaItem failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1256,7 +1256,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("removeMediaItem failed")
             + ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1336,7 +1336,7 @@ void MMSStorage::removePhysicalPathFile(
 						);
 						fs::remove_all(mmsAssetPathName);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string("removeDirectory failed")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1348,7 +1348,7 @@ void MMSStorage::removePhysicalPathFile(
 
 						throw e;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string("removeDirectory failed")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1377,7 +1377,7 @@ void MMSStorage::removePhysicalPathFile(
 						);
 						fs::remove_all(mmsAssetPathName);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string("remove failed")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1390,7 +1390,7 @@ void MMSStorage::removePhysicalPathFile(
 
 						throw e;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						string errorMessage = string("remove failed")
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1422,7 +1422,7 @@ void MMSStorage::removePhysicalPathFile(
 			}
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = string("removePhysicalPathFile failed")
 			+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1434,7 +1434,7 @@ void MMSStorage::removePhysicalPathFile(
 
 		throw runtime_error(errorMessage);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("removePhysicalPathFile failed")
 			+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -1591,7 +1591,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				);
 				fs::remove_all(sourceAssetPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				// we will not raise an exception, it is a staging directory,
 				// it will be removed by cronjob (see the comment above)
@@ -1626,7 +1626,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			{
 				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName, _logger);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "Move file failed, wait a bit, retrieve again the size and try again"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1701,7 +1701,7 @@ int64_t MMSStorage::move(
 		fs::rename(source, dest);
 		endPoint = chrono::system_clock::now();
 	}
-	catch(fs::filesystem_error e)
+	catch(fs::filesystem_error& e)
 	{
 		if (e.code().value() == 18)	// filesystem error: cannot rename: Invalid cross-device link
 		{
@@ -1713,7 +1713,7 @@ int64_t MMSStorage::move(
 				fs::remove_all(source);
 				endPoint = chrono::system_clock::now();
 			}
-			catch(fs::filesystem_error e)
+			catch(fs::filesystem_error& e)
 			{
 				logger->error(__FILEREF__ + "move (copy and remove) failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1902,7 +1902,7 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(
 						ullDirectoryUsageInBytes += entry.file_size();
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				ullDirectoryUsageInBytes		= 0;
 
@@ -2191,7 +2191,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 					+ ", @MMS REMOVE statistics@ - removeDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = string("removeDirectory failed")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
@@ -2203,7 +2203,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			}
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey) 

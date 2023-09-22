@@ -648,7 +648,7 @@ void IntroOutroOverlay::encodeContent(
 				);
 				fs::remove_all(stagingBasePath);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "Intro outro procedure failed"
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -975,7 +975,7 @@ void IntroOutroOverlay::encodeContent(
 			);
 		}
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		char strDateTime [64];
 		{
@@ -1000,7 +1000,7 @@ void IntroOutroOverlay::encodeContent(
 
 		throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		char strDateTime [64];
 		{
@@ -1026,7 +1026,7 @@ void IntroOutroOverlay::encodeContent(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		char strDateTime [64];
 		{

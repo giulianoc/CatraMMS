@@ -133,7 +133,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -160,7 +160,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -172,7 +172,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -190,7 +190,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -215,7 +215,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -227,7 +227,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -245,7 +245,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -269,7 +269,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -281,7 +281,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -440,7 +440,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -467,7 +467,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -479,7 +479,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -497,7 +497,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -522,7 +522,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -534,7 +534,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -552,7 +552,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -576,7 +576,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -588,7 +588,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -712,7 +712,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -739,7 +739,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -751,7 +751,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -769,7 +769,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -794,7 +794,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -806,7 +806,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -824,7 +824,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -848,7 +848,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -860,7 +860,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -937,7 +937,7 @@ fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -958,7 +958,7 @@ fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -977,7 +977,7 @@ fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1046,7 +1046,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1067,7 +1067,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1086,7 +1086,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand

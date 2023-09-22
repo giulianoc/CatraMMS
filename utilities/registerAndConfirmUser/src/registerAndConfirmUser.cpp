@@ -88,7 +88,7 @@ int main (int iArgc, char *pArgv [])
 			+ ", confirmationCode: " + get<2>(workspaceKeyUserKeyAndConfirmationCode)
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "mmsEngineDBFacade->registerUserAndAddWorkspace failed");
 
@@ -136,7 +136,7 @@ int main (int iArgc, char *pArgv [])
 			emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 		}
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "mmsEngineDBFacade->confirmRegistration failed");
 

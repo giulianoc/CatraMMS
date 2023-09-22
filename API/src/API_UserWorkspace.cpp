@@ -63,7 +63,7 @@ void API::registerUser(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Json metadata failed during the parsing"
                     ", json data: " + requestBody
@@ -159,7 +159,7 @@ void API::registerUser(
 					+ ", confirmationCode: " + confirmationCode
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -172,7 +172,7 @@ void API::registerUser(
 
 				throw runtime_error(errorMessage);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -198,7 +198,7 @@ void API::registerUser(
 					_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
 						_sharedEncodersPoolLabel, _sharedEncodersLabel);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -213,7 +213,7 @@ void API::registerUser(
 
 					// throw runtime_error(errorMessage);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -240,7 +240,7 @@ void API::registerUser(
 						_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1),
 							hlsChannelIndex + 1, -1, -1, "SHARED");
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -255,7 +255,7 @@ void API::registerUser(
 
 					// throw runtime_error(errorMessage);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -301,7 +301,7 @@ void API::registerUser(
 					+ ", confirmationCode: " + confirmationCode
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -314,7 +314,7 @@ void API::registerUser(
 
 				throw runtime_error(errorMessage);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -381,7 +381,7 @@ void API::registerUser(
 			// bool useMMSCCToo = true;
             // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -394,7 +394,7 @@ void API::registerUser(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -408,7 +408,7 @@ void API::registerUser(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -418,7 +418,7 @@ void API::registerUser(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -516,7 +516,7 @@ void API::createWorkspace(
 			workspaceKey = get<0>(workspaceKeyAndConfirmationCode);
 			confirmationCode = get<1>(workspaceKeyAndConfirmationCode);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -529,7 +529,7 @@ void API::createWorkspace(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -555,7 +555,7 @@ void API::createWorkspace(
 				_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
 					_sharedEncodersPoolLabel, _sharedEncodersLabel);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -570,7 +570,7 @@ void API::createWorkspace(
 
 				// throw runtime_error(errorMessage);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -597,7 +597,7 @@ void API::createWorkspace(
 					_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1),
 						hlsChannelIndex + 1, -1, -1, "SHARED");
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -612,7 +612,7 @@ void API::createWorkspace(
 
 				// throw runtime_error(errorMessage);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -672,7 +672,7 @@ void API::createWorkspace(
 			// bool useMMSCCToo = true;
             // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -685,7 +685,7 @@ void API::createWorkspace(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -699,7 +699,7 @@ void API::createWorkspace(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -709,7 +709,7 @@ void API::createWorkspace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -746,7 +746,7 @@ void API::shareWorkspace_(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Json metadata failed during the parsing"
                     ", json data: " + requestBody
@@ -804,7 +804,7 @@ void API::shareWorkspace_(
 
 				userAlreadyPresent = true;
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->warn(__FILEREF__ + api + " failed"
 					+ ", e.what(): " + e.what()
@@ -988,7 +988,7 @@ void API::shareWorkspace_(
 				// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 			}
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -1001,7 +1001,7 @@ void API::shareWorkspace_(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -1015,7 +1015,7 @@ void API::shareWorkspace_(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1025,7 +1025,7 @@ void API::shareWorkspace_(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1097,7 +1097,7 @@ void API::workspaceList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1106,7 +1106,7 @@ void API::workspaceList(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1198,7 +1198,7 @@ void API::confirmRegistration(
 			// bool useMMSCCToo = true;
             // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -1211,7 +1211,7 @@ void API::confirmRegistration(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -1225,7 +1225,7 @@ void API::confirmRegistration(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1234,7 +1234,7 @@ void API::confirmRegistration(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1269,7 +1269,7 @@ void API::login(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Json metadata failed during the parsing"
                     ", json data: " + requestBody
@@ -1340,7 +1340,7 @@ void API::login(
 						+ ", email: " + email
 					);
 				}
-				catch(LoginFailed e)
+				catch(LoginFailed& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -1353,7 +1353,7 @@ void API::login(
 
 					throw runtime_error(errorMessage);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -1366,7 +1366,7 @@ void API::login(
 
 					throw runtime_error(errorMessage);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -1448,7 +1448,7 @@ void API::login(
 
 								break;
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "ldap URL failed"
 									+ ", ldapURL: " + ldapURL
@@ -1492,11 +1492,11 @@ void API::login(
 
 						userAlreadyRegistered = true;
 					}
-					catch(LoginFailed e)
+					catch(LoginFailed& e)
 					{
 						userAlreadyRegistered = false;
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + api + " failed"
 							+ ", e.what(): " + e.what()
@@ -1509,7 +1509,7 @@ void API::login(
 
 						throw runtime_error(errorMessage);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + api + " failed"
 							+ ", e.what(): " + e.what()
@@ -1581,7 +1581,7 @@ void API::login(
 						);
 					}
 				}
-				catch(LoginFailed e)
+				catch(LoginFailed& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -1594,7 +1594,7 @@ void API::login(
 
 					throw runtime_error(errorMessage);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", ldapURL: " + _ldapURL
@@ -1610,7 +1610,7 @@ void API::login(
 
 					throw runtime_error(errorMessage);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + api + " failed"
 						+ ", e.what(): " + e.what()
@@ -1821,7 +1821,7 @@ void API::login(
 					);
 
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__
 						+ "_mmsEngineDBFacade->saveLoginStatistics failed"
@@ -1832,7 +1832,7 @@ void API::login(
 
 					throw e;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__
 						+ "_mmsEngineDBFacade->saveLoginStatistics failed"
@@ -1844,7 +1844,7 @@ void API::login(
 					throw e;
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
 					+ ", userKey: " + to_string(userKey)
@@ -1859,7 +1859,7 @@ void API::login(
 
 				// throw runtime_error(errorMessage);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
 					+ ", userKey: " + to_string(userKey)
@@ -1907,7 +1907,7 @@ void API::login(
 					);
 
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__
 						+ "_mmsEngineDBFacade->saveLoginStatistics failed"
@@ -1918,7 +1918,7 @@ void API::login(
 
 					throw e;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__
 						+ "_mmsEngineDBFacade->saveLoginStatistics failed"
@@ -1930,7 +1930,7 @@ void API::login(
 					throw e;
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
 					+ ", userKey: " + to_string(userKey)
@@ -1945,7 +1945,7 @@ void API::login(
 
 				// throw runtime_error(errorMessage);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
 					+ ", userKey: " + to_string(userKey)
@@ -1981,7 +1981,7 @@ void API::login(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -1994,7 +1994,7 @@ void API::login(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2008,7 +2008,7 @@ void API::login(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2018,7 +2018,7 @@ void API::login(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2067,7 +2067,7 @@ void API::updateUser(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Json metadata failed during the parsing"
                     ", json data: " + requestBody
@@ -2164,7 +2164,7 @@ void API::updateUser(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2177,7 +2177,7 @@ void API::updateUser(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2191,7 +2191,7 @@ void API::updateUser(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2201,7 +2201,7 @@ void API::updateUser(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2267,7 +2267,7 @@ void API::createTokenToResetPassword(
 
 			resetPasswordToken = _mmsEngineDBFacade->createResetPasswordToken(userKey);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2280,7 +2280,7 @@ void API::createTokenToResetPassword(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2332,7 +2332,7 @@ void API::createTokenToResetPassword(
 			// bool useMMSCCToo = true;
             // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2345,7 +2345,7 @@ void API::createTokenToResetPassword(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2359,7 +2359,7 @@ void API::createTokenToResetPassword(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2368,7 +2368,7 @@ void API::createTokenToResetPassword(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2405,7 +2405,7 @@ void API::resetPassword(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Json metadata failed during the parsing"
                     ", json data: " + requestBody
@@ -2452,7 +2452,7 @@ void API::resetPassword(
 			name = details.first;
 			email = details.second;
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2465,7 +2465,7 @@ void API::resetPassword(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2508,7 +2508,7 @@ void API::resetPassword(
 			// bool useMMSCCToo = true;
             // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2521,7 +2521,7 @@ void API::resetPassword(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2535,7 +2535,7 @@ void API::resetPassword(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2545,7 +2545,7 @@ void API::resetPassword(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2602,7 +2602,7 @@ void API::updateWorkspace(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("Json metadata failed during the parsing"
                     ", json data: " + requestBody
@@ -2779,7 +2779,7 @@ void API::updateWorkspace(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2792,7 +2792,7 @@ void API::updateWorkspace(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2806,7 +2806,7 @@ void API::updateWorkspace(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2816,7 +2816,7 @@ void API::updateWorkspace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2877,7 +2877,7 @@ void API::setWorkspaceAsDefault(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2890,7 +2890,7 @@ void API::setWorkspaceAsDefault(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -2904,7 +2904,7 @@ void API::setWorkspaceAsDefault(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2914,7 +2914,7 @@ void API::setWorkspaceAsDefault(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3013,7 +3013,7 @@ void API::deleteWorkspace(
 				}
 			}
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -3026,7 +3026,7 @@ void API::deleteWorkspace(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -3058,7 +3058,7 @@ void API::deleteWorkspace(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -3071,7 +3071,7 @@ void API::deleteWorkspace(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -3085,7 +3085,7 @@ void API::deleteWorkspace(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3096,7 +3096,7 @@ void API::deleteWorkspace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3156,7 +3156,7 @@ void API::workspaceUsage (
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, responseBody);            
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "getWorkspaceUsage exception"
             + ", e.what(): " + e.what()
@@ -3166,7 +3166,7 @@ void API::workspaceUsage (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "getWorkspaceUsage exception"
         );

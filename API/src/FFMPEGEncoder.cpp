@@ -308,7 +308,7 @@ int main(int argc, char** argv)
 
 		logger->info(__FILEREF__ + "FFMPEGEncoder shutdown");
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         cerr << __FILEREF__ + "main failed"
             + ", e.what(): " + e.what()
@@ -317,7 +317,7 @@ int main(int argc, char** argv)
         // throw e;
 		return 1;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         cerr << __FILEREF__ + "main failed"
             + ", e.what(): " + e.what()
@@ -468,7 +468,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "status failed"
                 + ", requestBody: " + requestBody
@@ -507,7 +507,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "status failed"
                 + ", requestBody: " + requestBody
@@ -750,7 +750,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					return;
 				}
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0;	// not running
@@ -783,7 +783,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "sendSuccess failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -926,7 +926,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				// *_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				selectedLiveRecording->_available = true;
 				selectedLiveRecording->_childPid = 0;	// not running
@@ -959,7 +959,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "liveRecorderThread failed"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1145,7 +1145,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				// *_lastEncodingAcceptedTime = chrono::system_clock::now();
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				selectedLiveProxy->_available = true;
 				selectedLiveProxy->_childPid = 0;	// not running
@@ -1179,7 +1179,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "liveProxy/vodProxy/liveGrid/awaitingTheBeginning Thread failed"
                 + ", method: " + method
@@ -1422,7 +1422,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 									endEncodingProgress - startEncodingProgress).count()) + "@"
 							);
 				}
-				catch(FFMpegEncodingStatusNotAvailable e)
+				catch(FFMpegEncodingStatusNotAvailable& e)
 				{
 					string errorMessage = string("_ffmpeg->getEncodingProgress failed")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1436,7 +1436,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					// throw e;
 					// return;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					string errorMessage = string("_ffmpeg->getEncodingProgress failed")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1749,7 +1749,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					endKillProcess - startKillProcess).count()) + "@"
 			);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("ProcessUtility::killProcess failed")
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1839,7 +1839,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			newInputsRoot = JSONUtils::toJson(
 				-1, encodingJobKey, requestBody);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			_logger->error(__FILEREF__ + e.what());
 
@@ -1906,7 +1906,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					// ProcessUtility::quitProcess(selectedLiveProxy->_childPid);
 					ProcessUtility::termProcess(selectedLiveProxy->_childPid);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string errorMessage = string("ProcessUtility::termProcess failed")
 						+ ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey)
@@ -2042,7 +2042,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
 			}
-			catch(FFMpegEncodingStatusNotAvailable e)
+			catch(FFMpegEncodingStatusNotAvailable& e)
 			{
 				string errorMessage = string("_ffmpeg->getEncodingProgress failed")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2055,7 +2055,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw e;
 				return;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				string errorMessage = string("_ffmpeg->getEncodingProgress failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2086,7 +2086,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// encodingProgress = selectedLiveProxy->_ffmpeg->getEncodingProgress();
 				encodingProgress = -1;
 			}
-			catch(FFMpegEncodingStatusNotAvailable e)
+			catch(FFMpegEncodingStatusNotAvailable& e)
 			{
 				string errorMessage = string("_ffmpeg->getEncodingProgress failed")
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2099,7 +2099,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// throw e;
 				return;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				string errorMessage = string("_ffmpeg->getEncodingProgress failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2190,7 +2190,7 @@ void FFMPEGEncoder::encodeContentThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		encodeContent.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2199,7 +2199,7 @@ void FFMPEGEncoder::encodeContentThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2208,7 +2208,7 @@ void FFMPEGEncoder::encodeContentThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2232,11 +2232,11 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		overlayImageOnVideo.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2245,7 +2245,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2269,11 +2269,11 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		overlayTextOnVideo.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2282,7 +2282,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2306,15 +2306,15 @@ void FFMPEGEncoder::generateFramesThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		generateFrames.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 	}
@@ -2332,15 +2332,15 @@ void FFMPEGEncoder::slideShowThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		slideShow.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
     }
@@ -2359,11 +2359,11 @@ void FFMPEGEncoder::videoSpeedThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		videoSpeed.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2372,7 +2372,7 @@ void FFMPEGEncoder::videoSpeedThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2396,11 +2396,11 @@ void FFMPEGEncoder::addSilentAudioThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		addSilentAudio.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2409,7 +2409,7 @@ void FFMPEGEncoder::addSilentAudioThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2433,11 +2433,11 @@ void FFMPEGEncoder::pictureInPictureThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		pictureInPicture.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2446,7 +2446,7 @@ void FFMPEGEncoder::pictureInPictureThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2470,11 +2470,11 @@ void FFMPEGEncoder::introOutroOverlayThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		introOutroOverlay.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2483,7 +2483,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2507,11 +2507,11 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		cutFrameAccurate.encodeContent(metadataRoot);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2520,7 +2520,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2545,11 +2545,11 @@ void FFMPEGEncoder::liveRecorderThread(
 			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset);
 		liveRecorder.encodeContent(requestBody);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(FFMpegURLForbidden e)
+    catch(FFMpegURLForbidden& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2558,7 +2558,7 @@ void FFMPEGEncoder::liveRecorderThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(FFMpegURLNotFound e)
+    catch(FFMpegURLNotFound& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2567,7 +2567,7 @@ void FFMPEGEncoder::liveRecorderThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2576,7 +2576,7 @@ void FFMPEGEncoder::liveRecorderThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2601,11 +2601,11 @@ void FFMPEGEncoder::liveProxyThread(
 			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset);
 		liveProxy.encodeContent(requestBody);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(FFMpegURLForbidden e)
+    catch(FFMpegURLForbidden& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2614,7 +2614,7 @@ void FFMPEGEncoder::liveProxyThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(FFMpegURLNotFound e)
+    catch(FFMpegURLNotFound& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2623,7 +2623,7 @@ void FFMPEGEncoder::liveProxyThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2632,7 +2632,7 @@ void FFMPEGEncoder::liveProxyThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2656,11 +2656,11 @@ void FFMPEGEncoder::liveGridThread(
 			_configuration, _encodingCompletedMutex, _encodingCompletedMap, _logger);
 		liveGrid.encodeContent(requestBody);
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		_logger->error(__FILEREF__ + e.what());
     }
-    catch(FFMpegURLForbidden e)
+    catch(FFMpegURLForbidden& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2669,7 +2669,7 @@ void FFMPEGEncoder::liveGridThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(FFMpegURLNotFound e)
+    catch(FFMpegURLNotFound& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2678,7 +2678,7 @@ void FFMPEGEncoder::liveGridThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 
@@ -2687,7 +2687,7 @@ void FFMPEGEncoder::liveGridThread(
         // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + e.what());
 

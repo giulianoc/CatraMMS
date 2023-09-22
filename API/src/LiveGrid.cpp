@@ -85,7 +85,7 @@ void LiveGrid::encodeContent(
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey)
@@ -97,7 +97,7 @@ void LiveGrid::encodeContent(
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey)
@@ -136,7 +136,7 @@ void LiveGrid::encodeContent(
             // + ", _liveProxyData->_channelLabel: " + _liveProxyData->_channelLabel
         );
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		char strDateTime [64];
 		{
@@ -172,7 +172,7 @@ void LiveGrid::encodeContent(
 
 		throw e;
     }
-    catch(FFMpegURLForbidden e)
+    catch(FFMpegURLForbidden& e)
     {
 		char strDateTime [64];
 		{
@@ -199,7 +199,7 @@ void LiveGrid::encodeContent(
 
 		throw e;
     }
-    catch(FFMpegURLNotFound e)
+    catch(FFMpegURLNotFound& e)
     {
 		char strDateTime [64];
 		{
@@ -226,7 +226,7 @@ void LiveGrid::encodeContent(
 
 		throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		char strDateTime [64];
 		{
@@ -252,7 +252,7 @@ void LiveGrid::encodeContent(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		char strDateTime [64];
 		{

@@ -203,7 +203,7 @@ void UploadBinary::getBinaryAndResponse(
                     fileSize = fs::file_size(workspaceIngestionBinaryPathName);
                 }
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 string errorMessage = string("Error to retrieve the file size")
                     + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
@@ -233,7 +233,7 @@ void UploadBinary::getBinaryAndResponse(
                             fileSize = fs::file_size(workspaceIngestionBinaryPathName);
                         }
                     }
-                    catch(exception e)
+                    catch(exception& e)
                     {
                         string errorMessage = string("Error to retrieve the file size")
                             + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName

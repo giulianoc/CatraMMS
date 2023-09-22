@@ -252,7 +252,7 @@ void MMSEngineDBFacade::setLock(
 			}
 		}
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -280,7 +280,7 @@ void MMSEngineDBFacade::setLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -292,7 +292,7 @@ void MMSEngineDBFacade::setLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -310,7 +310,7 @@ void MMSEngineDBFacade::setLock(
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         _logger->warn(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -336,7 +336,7 @@ void MMSEngineDBFacade::setLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -348,7 +348,7 @@ void MMSEngineDBFacade::setLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -366,7 +366,7 @@ void MMSEngineDBFacade::setLock(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -392,7 +392,7 @@ void MMSEngineDBFacade::setLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -404,7 +404,7 @@ void MMSEngineDBFacade::setLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -422,7 +422,7 @@ void MMSEngineDBFacade::setLock(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -447,7 +447,7 @@ void MMSEngineDBFacade::setLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -459,7 +459,7 @@ void MMSEngineDBFacade::setLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -627,7 +627,7 @@ void MMSEngineDBFacade::releaseLock(
 			_logger->info(lockStatisticMessage);
 		}
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -655,7 +655,7 @@ void MMSEngineDBFacade::releaseLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -667,7 +667,7 @@ void MMSEngineDBFacade::releaseLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -685,7 +685,7 @@ void MMSEngineDBFacade::releaseLock(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -711,7 +711,7 @@ void MMSEngineDBFacade::releaseLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -723,7 +723,7 @@ void MMSEngineDBFacade::releaseLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -741,7 +741,7 @@ void MMSEngineDBFacade::releaseLock(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -766,7 +766,7 @@ void MMSEngineDBFacade::releaseLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -778,7 +778,7 @@ void MMSEngineDBFacade::releaseLock(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()

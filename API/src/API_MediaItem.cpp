@@ -57,7 +57,7 @@ void API::updateMediaItem(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + e.what());
 
@@ -142,7 +142,7 @@ void API::updateMediaItem(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -155,7 +155,7 @@ void API::updateMediaItem(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -169,7 +169,7 @@ void API::updateMediaItem(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -179,7 +179,7 @@ void API::updateMediaItem(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -246,7 +246,7 @@ void API::updatePhysicalPath(
         {
 			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + e.what());
 
@@ -302,7 +302,7 @@ void API::updatePhysicalPath(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -315,7 +315,7 @@ void API::updatePhysicalPath(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -329,7 +329,7 @@ void API::updatePhysicalPath(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -339,7 +339,7 @@ void API::updatePhysicalPath(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -693,7 +693,7 @@ void API::mediaItemsList(
 				chrono::system_clock::now() - startAPI).count()) + "@"
 		);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -708,7 +708,7 @@ void API::mediaItemsList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -814,7 +814,7 @@ void API::tagsList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -829,7 +829,7 @@ void API::tagsList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api

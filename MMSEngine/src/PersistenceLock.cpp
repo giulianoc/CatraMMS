@@ -42,21 +42,21 @@ PersistenceLock::~PersistenceLock()
 		}
 		*/
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
 		_logger->error(__FILEREF__ + "releaseLock failed"
 			+ ", _lockType: " + MMSEngineDBFacade::toString(_lockType)
 			+ ", exception: " + se.what()
 		);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "releaseLock failed"
 			+ ", _lockType: " + MMSEngineDBFacade::toString(_lockType)
 			+ ", exception: " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "releaseLock failed"
 			+ ", _lockType: " + MMSEngineDBFacade::toString(_lockType)

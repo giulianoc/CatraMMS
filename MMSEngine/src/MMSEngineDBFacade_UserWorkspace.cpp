@@ -74,7 +74,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
     
 		return workspace;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -95,7 +95,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -114,7 +114,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -202,7 +202,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     
 		return workspace;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -223,7 +223,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -242,7 +242,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -437,7 +437,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -464,7 +464,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -476,7 +476,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -494,7 +494,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -519,7 +519,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -531,7 +531,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -549,7 +549,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -573,7 +573,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -585,7 +585,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -800,7 +800,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -827,7 +827,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -839,7 +839,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -857,7 +857,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -882,7 +882,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -894,7 +894,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -912,7 +912,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -936,7 +936,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -948,7 +948,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -1084,7 +1084,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1111,7 +1111,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -1123,7 +1123,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -1141,7 +1141,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1166,7 +1166,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -1178,7 +1178,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -1196,7 +1196,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1220,7 +1220,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -1232,7 +1232,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -1291,7 +1291,7 @@ string MMSEngineDBFacade::createCode(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1311,7 +1311,7 @@ string MMSEngineDBFacade::createCode(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1329,7 +1329,7 @@ string MMSEngineDBFacade::createCode(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -1427,7 +1427,7 @@ string MMSEngineDBFacade::createCode(
 						chrono::system_clock::now() - startSql).count()) + "@"
 				);
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				string exceptionMessage(se.what());
 
@@ -1435,7 +1435,7 @@ string MMSEngineDBFacade::createCode(
 			}
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1447,7 +1447,7 @@ string MMSEngineDBFacade::createCode(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1457,7 +1457,7 @@ string MMSEngineDBFacade::createCode(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1604,7 +1604,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1631,7 +1631,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -1643,7 +1643,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -1661,7 +1661,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1686,7 +1686,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -1698,7 +1698,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -1716,7 +1716,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1740,7 +1740,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -1752,7 +1752,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -1814,7 +1814,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -1835,7 +1835,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 
         throw se;
     }
-    catch(APIKeyNotFoundOrExpired e)
+    catch(APIKeyNotFoundOrExpired& e)
     {        
         string exceptionMessage(e.what());
 
@@ -1856,7 +1856,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1875,7 +1875,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1998,7 +1998,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				workspaceKey, expirationInDaysWorkspaceDefaultValue);
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2010,7 +2010,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2020,7 +2020,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2236,7 +2236,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
                 _defaultTerritoryName);
         */        
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2248,7 +2248,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2258,7 +2258,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2546,7 +2546,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
         return make_tuple(apiKey, name, emailAddress);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2573,7 +2573,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2585,7 +2585,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2603,7 +2603,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2628,7 +2628,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2640,7 +2640,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2658,7 +2658,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2682,7 +2682,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2694,7 +2694,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2875,7 +2875,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 			);
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2887,7 +2887,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2897,7 +2897,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3107,7 +3107,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 
 		return usersToBeRemoved;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3134,7 +3134,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -3146,7 +3146,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -3164,7 +3164,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3189,7 +3189,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -3201,7 +3201,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -3219,7 +3219,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3243,7 +3243,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -3255,7 +3255,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -3346,7 +3346,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -3367,7 +3367,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
 
         throw se;
     }
-    catch(APIKeyNotFoundOrExpired e)
+    catch(APIKeyNotFoundOrExpired& e)
     {        
         string exceptionMessage(e.what());
 
@@ -3388,7 +3388,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3407,7 +3407,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3562,7 +3562,7 @@ Json::Value MMSEngineDBFacade::login (
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			string exceptionMessage(se.what());
 
@@ -3583,7 +3583,7 @@ Json::Value MMSEngineDBFacade::login (
 
 			throw se;
 		}
-		catch(LoginFailed e)
+		catch(LoginFailed& e)
 		{        
 			string exceptionMessage(e.what());
 
@@ -3604,7 +3604,7 @@ Json::Value MMSEngineDBFacade::login (
 
 			throw e;
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{        
 			_logger->error(__FILEREF__ + "SQL exception"
 				+ ", e.what(): " + e.what()
@@ -3623,7 +3623,7 @@ Json::Value MMSEngineDBFacade::login (
 
 			throw e;
 		}
-		catch(exception e)
+		catch(exception& e)
 		{        
 			_logger->error(__FILEREF__ + "SQL exception"
 				+ ", lastSQLCommand: " + lastSQLCommand
@@ -3693,7 +3693,7 @@ Json::Value MMSEngineDBFacade::login (
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			string exceptionMessage(se.what());
 
@@ -3714,7 +3714,7 @@ Json::Value MMSEngineDBFacade::login (
 
 			// throw se;
 		}
-		catch(LoginFailed e)
+		catch(LoginFailed& e)
 		{        
 			string exceptionMessage(e.what());
 
@@ -3735,7 +3735,7 @@ Json::Value MMSEngineDBFacade::login (
 
 			// throw e;
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{        
 			_logger->error(__FILEREF__ + "SQL exception"
 				+ ", e.what(): " + e.what()
@@ -3754,7 +3754,7 @@ Json::Value MMSEngineDBFacade::login (
 
 			// throw e;
 		}
-		catch(exception e)
+		catch(exception& e)
 		{        
 			_logger->error(__FILEREF__ + "SQL exception"
 				+ ", lastSQLCommand: " + lastSQLCommand
@@ -3916,7 +3916,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -3937,7 +3937,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3956,7 +3956,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4092,7 +4092,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -4113,7 +4113,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4132,7 +4132,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4336,7 +4336,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			}
 		}
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -4347,7 +4347,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4356,7 +4356,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
@@ -4754,7 +4754,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -4775,7 +4775,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4794,7 +4794,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4918,7 +4918,7 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -4939,7 +4939,7 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4958,7 +4958,7 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5005,7 +5005,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5025,7 +5025,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5043,7 +5043,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5061,7 +5061,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5079,7 +5079,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5096,7 +5096,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5191,7 +5191,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
         
         return make_pair(totalSizeInBytes, maxStorageInMB);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5202,7 +5202,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5211,7 +5211,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5277,7 +5277,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -5298,7 +5298,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
 
         throw se;
     }
-    catch(APIKeyNotFoundOrExpired e)
+    catch(APIKeyNotFoundOrExpired& e)
     {        
         string exceptionMessage(e.what());
 
@@ -5319,7 +5319,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5338,7 +5338,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5419,7 +5419,7 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -5440,7 +5440,7 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5459,7 +5459,7 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5719,7 +5719,7 @@ Json::Value MMSEngineDBFacade::updateUser (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -5740,7 +5740,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5759,7 +5759,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5831,7 +5831,7 @@ string MMSEngineDBFacade::createResetPasswordToken(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5852,7 +5852,7 @@ string MMSEngineDBFacade::createResetPasswordToken(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5871,7 +5871,7 @@ string MMSEngineDBFacade::createResetPasswordToken(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5998,7 +5998,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6019,7 +6019,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6038,7 +6038,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6161,7 +6161,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 		connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6182,7 +6182,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6201,7 +6201,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand

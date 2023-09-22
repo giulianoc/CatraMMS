@@ -98,7 +98,7 @@ int main (int iArgc, char *pArgv [])
 
 		cout << endl;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "ffmpeg.getLiveStreamingInfo failed");
 

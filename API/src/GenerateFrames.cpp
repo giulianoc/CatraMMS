@@ -235,7 +235,7 @@ void GenerateFrames::encodeContent(
 								ingestedParametersRoot, encodingParametersRoot)
 						);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "generateFrames_ingestFrame failed"
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
@@ -250,7 +250,7 @@ void GenerateFrames::encodeContent(
 
 						throw e;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "generateFrames_ingestFrame failed"
 							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
@@ -275,7 +275,7 @@ void GenerateFrames::encodeContent(
 
 					generatedFrameIndex++;
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string errorMessage = __FILEREF__ + "listing directory failed"
 						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -289,7 +289,7 @@ void GenerateFrames::encodeContent(
 
 					// throw e;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					string errorMessage = __FILEREF__ + "listing directory failed"
 						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -469,7 +469,7 @@ void GenerateFrames::encodeContent(
 						chrono::system_clock::now() - startWaiting).count())
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "waiting addContent ingestion failed"
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
@@ -485,7 +485,7 @@ void GenerateFrames::encodeContent(
             + ", _completedWithError: " + to_string(_completedWithError)
         );
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		if (externalEncoder)
 		{
@@ -520,7 +520,7 @@ void GenerateFrames::encodeContent(
 
 		throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		if (externalEncoder)
 		{
@@ -556,7 +556,7 @@ void GenerateFrames::encodeContent(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		if (externalEncoder)
 		{

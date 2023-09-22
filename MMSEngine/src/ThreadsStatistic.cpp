@@ -23,13 +23,13 @@ ThreadsStatistic::ThreadStatistic::ThreadStatistic(
 
 		_mmsThreadsStatistic->addThread(_threadId, threadData);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
@@ -43,13 +43,13 @@ ThreadsStatistic::ThreadStatistic::~ThreadStatistic()
 	{
 		_mmsThreadsStatistic->removeThread(_threadId);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
@@ -86,13 +86,13 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 
 		_runningThreads.insert(make_pair(threadId, threadData));
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 			+ ", exception: " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 			+ ", exception: " + e.what()
@@ -135,13 +135,13 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 		;
 		_logger->info(message);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 			+ ", exception: " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 			+ ", exception: " + e.what()
@@ -187,13 +187,13 @@ void ThreadsStatistic::logRunningThreads()
 		_logger->info(__FILEREF__ + "threadsStatistic, running threads: "
 			+ message);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "threadsStatistic logRunningThreads failed"
 			+ ", exception: " + e.what()
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "threadsStatistic logRunningThreads failed"
 			+ ", exception: " + e.what()

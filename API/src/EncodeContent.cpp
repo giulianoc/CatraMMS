@@ -298,7 +298,7 @@ void EncodeContent::encodeContent(
 			}
 		}
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		if (externalEncoder)
 		{
@@ -351,7 +351,7 @@ void EncodeContent::encodeContent(
 
 		throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		if (externalEncoder)
 		{
@@ -405,7 +405,7 @@ void EncodeContent::encodeContent(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		if (externalEncoder)
 		{

@@ -181,7 +181,7 @@ int main (int iArgc, char *pArgv [])
         {
             mmsEngineDBFacade->resetProcessingJobsIfNeeded(processorMMS);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             logger->error(__FILEREF__ + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
                     + ", exception: " + e.what()
@@ -190,7 +190,7 @@ int main (int iArgc, char *pArgv [])
             // throw e;
 			return 1;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             logger->error(__FILEREF__ + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
             );

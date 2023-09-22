@@ -312,7 +312,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					title
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed")
 					+ ", e.what: " + e.what()
@@ -686,7 +686,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					configurationLabel
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed")
 					+ ", e.what: " + e.what()
@@ -1013,7 +1013,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					configurationLabel
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed")
 					+ ", e.what: " + e.what()
@@ -1371,7 +1371,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 
 		return signedURL;
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = string("getSignedCDN77URL failed")
 			+ ", e.what(): " + e.what()
@@ -1380,7 +1380,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 
 		throw runtime_error(errorMessage);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("getSignedCDN77URL failed")
 			+ ", e.what(): " + e.what()

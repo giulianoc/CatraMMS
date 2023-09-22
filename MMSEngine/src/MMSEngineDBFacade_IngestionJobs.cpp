@@ -494,7 +494,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			+ ", othersToBeIngested: " + to_string(othersToBeIngested)
         );
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -521,7 +521,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -533,7 +533,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -551,7 +551,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         string exceptionMessage(e.what());
         
@@ -578,7 +578,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -590,7 +590,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -608,7 +608,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -633,7 +633,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -645,7 +645,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -663,7 +663,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -687,7 +687,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -699,7 +699,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -881,7 +881,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 		return make_tuple(ingestionJobToBeManaged, dependOnIngestionJobKey,
 			dependOnSuccess, ingestionStatusDependency);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -893,7 +893,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -903,7 +903,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -938,7 +938,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
             statement->execute(lastSQLCommand);
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -959,7 +959,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -978,7 +978,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1082,7 +1082,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1103,7 +1103,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1122,7 +1122,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1191,7 +1191,7 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
             ingestionRootKey = getLastInsertId(conn);           
         }        
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1202,7 +1202,7 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1211,7 +1211,7 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1376,7 +1376,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             }
         }        
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1387,7 +1387,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1396,7 +1396,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1491,7 +1491,7 @@ void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1512,7 +1512,7 @@ void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1531,7 +1531,7 @@ void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1631,7 +1631,7 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 			);
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1643,7 +1643,7 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1653,7 +1653,7 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1726,7 +1726,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency (
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-	catch(sql::SQLException se)
+	catch(sql::SQLException& se)
 	{
         string exceptionMessage(se.what());
         
@@ -1748,7 +1748,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency (
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(previousDependOnIngestionJobKey)
@@ -1768,7 +1768,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency (
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(previousDependOnIngestionJobKey)
@@ -1788,7 +1788,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(previousDependOnIngestionJobKey)
@@ -1836,7 +1836,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1858,7 +1858,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1878,7 +1878,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1898,7 +1898,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1967,7 +1967,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1979,7 +1979,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1989,7 +1989,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2048,7 +2048,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2060,7 +2060,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2070,7 +2070,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2144,7 +2144,7 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2165,7 +2165,7 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2184,7 +2184,7 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2243,7 +2243,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-	catch(sql::SQLException se)
+	catch(sql::SQLException& se)
 	{
 		string exceptionMessage(se.what());
 
@@ -2265,7 +2265,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 		throw se;
 	}
-	catch(AlreadyLocked e)
+	catch(AlreadyLocked& e)
 	{
 		_logger->error(__FILEREF__ + "SQL exception"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2285,7 +2285,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 		throw e;
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{        
 		_logger->error(__FILEREF__ + "SQL exception"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2305,7 +2305,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 		throw e;
 	}    
-	catch(exception e)
+	catch(exception& e)
 	{        
 		_logger->error(__FILEREF__ + "SQL exception"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2495,7 +2495,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 			updateToBeTriedAgain = false;
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			string exceptionMessage(se.what());
         
@@ -2524,7 +2524,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 				throw se;
 			}
 		}    
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{        
 			_logger->error(__FILEREF__ + "SQL exception"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2534,7 +2534,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 			throw e;
 		}    
-		catch(exception e)
+		catch(exception& e)
 		{        
 			_logger->error(__FILEREF__ + "SQL exception"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2627,7 +2627,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2649,7 +2649,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2669,7 +2669,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3010,7 +3010,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
             }
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3022,7 +3022,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3032,7 +3032,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3124,7 +3124,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
 			+ ", elapsed (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count())
         );
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3152,7 +3152,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -3164,7 +3164,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -3182,7 +3182,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3208,7 +3208,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -3220,7 +3220,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -3238,7 +3238,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3264,7 +3264,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -3276,7 +3276,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -3294,7 +3294,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3319,7 +3319,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -3331,7 +3331,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -3445,7 +3445,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3467,7 +3467,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3487,7 +3487,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3605,7 +3605,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3627,7 +3627,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3647,7 +3647,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3734,7 +3734,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3756,7 +3756,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3776,7 +3776,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3868,7 +3868,7 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3889,7 +3889,7 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3908,7 +3908,7 @@ string MMSEngineDBFacade::getIngestionRootMetaDataContent (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4060,7 +4060,7 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4082,7 +4082,7 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4102,7 +4102,7 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4155,7 +4155,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4177,7 +4177,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4197,7 +4197,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4295,7 +4295,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			);                            
 		}
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4308,7 +4308,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4319,7 +4319,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4387,7 +4387,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4408,7 +4408,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4427,7 +4427,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4808,7 +4808,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4829,7 +4829,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4848,7 +4848,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5203,7 +5203,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5224,7 +5224,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5243,7 +5243,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5583,7 +5583,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 				);
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5606,7 +5606,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5627,7 +5627,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5994,7 +5994,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6015,7 +6015,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "exception"
             + ", e.what: " + e.what()
@@ -6033,7 +6033,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6135,7 +6135,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 
 				toBeExecutedAgain = false;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				currentRetriesOnError++;
 				if (currentRetriesOnError >= maxRetriesOnError)
@@ -6171,7 +6171,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6192,7 +6192,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6211,7 +6211,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6354,7 +6354,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
 
@@ -6375,7 +6375,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6394,7 +6394,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6484,7 +6484,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 					currentRetriesOnError = 0;
 				}
-				catch(sql::SQLException se)
+				catch(sql::SQLException& se)
 				{
 					// Deadlock!!!
 					_logger->error(__FILEREF__ + "SQL exception"
@@ -6580,7 +6580,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 					toBeExecutedAgain = false;
 				}
-				catch(sql::SQLException se)
+				catch(sql::SQLException& se)
 				{
 					// Deadlock!!!
 					_logger->error(__FILEREF__ + "SQL exception"
@@ -6673,7 +6673,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 					toBeExecutedAgain = false;
 				}
-				catch(sql::SQLException se)
+				catch(sql::SQLException& se)
 				{
 					// Deadlock!!!
 					_logger->error(__FILEREF__ + "SQL exception"
@@ -6715,7 +6715,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6736,7 +6736,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "runtime_error exception"
             + ", e.what(): " + e.what()
@@ -6755,7 +6755,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "exception"
             + ", lastSQLCommand: " + lastSQLCommand

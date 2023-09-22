@@ -393,7 +393,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 							encodingItem->_ingestedParametersRoot =
 								JSONUtils::toJson(encodingItem->_ingestionJobKey, -1, ingestionParameters);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(e.what());
 
@@ -582,7 +582,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 			+ ", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
         );
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -610,7 +610,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -622,7 +622,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -638,7 +638,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -663,7 +663,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -675,7 +675,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -691,7 +691,7 @@ void MMSEngineDBFacade::getEncodingJobs(
         
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -716,7 +716,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -728,7 +728,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -744,7 +744,7 @@ void MMSEngineDBFacade::getEncodingJobs(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -768,7 +768,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -780,7 +780,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -1336,7 +1336,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-		catch(sql::SQLException se)
+		catch(sql::SQLException& se)
 		{
 			string exceptionMessage(se.what());
         
@@ -1374,7 +1374,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 						connectionPool->unborrow(conn);
 						conn = nullptr;
 					}
-					catch(sql::SQLException se)
+					catch(sql::SQLException& se)
 					{
 						_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 							+ ", exceptionMessage: " + se.what()
@@ -1386,7 +1386,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 						connectionPool->unborrow(conn);
 						conn = nullptr;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "exception doing unborrow"
 							+ ", exceptionMessage: " + e.what()
@@ -1441,7 +1441,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 						connectionPool->unborrow(conn);
 						conn = nullptr;
 					}
-					catch(sql::SQLException se)
+					catch(sql::SQLException& se)
 					{
 						_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 							+ ", exceptionMessage: " + se.what()
@@ -1453,7 +1453,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 						connectionPool->unborrow(conn);
 						conn = nullptr;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "exception doing unborrow"
 							+ ", exceptionMessage: " + e.what()
@@ -1470,7 +1470,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 				throw se;
 			}
 		}
-		catch(AlreadyLocked e)
+		catch(AlreadyLocked& e)
 		{
 			if (retriesNumber < maxRetriesNumber)
 			{
@@ -1505,7 +1505,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 						connectionPool->unborrow(conn);
 						conn = nullptr;
 					}
-					catch(sql::SQLException se)
+					catch(sql::SQLException& se)
 					{
 						_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 							+ ", exceptionMessage: " + se.what()
@@ -1517,7 +1517,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 						connectionPool->unborrow(conn);
 						conn = nullptr;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "exception doing unborrow"
 							+ ", exceptionMessage: " + e.what()
@@ -1572,7 +1572,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 						connectionPool->unborrow(conn);
 						conn = nullptr;
 					}
-					catch(sql::SQLException se)
+					catch(sql::SQLException& se)
 					{
 						_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 							+ ", exceptionMessage: " + se.what()
@@ -1584,7 +1584,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 						connectionPool->unborrow(conn);
 						conn = nullptr;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "exception doing unborrow"
 							+ ", exceptionMessage: " + e.what()
@@ -1601,7 +1601,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 				throw e;
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			_logger->error(__FILEREF__ + "SQL exception"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1634,7 +1634,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 					connectionPool->unborrow(conn);
 					conn = nullptr;
 				}
-				catch(sql::SQLException se)
+				catch(sql::SQLException& se)
 				{
 					_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 						+ ", exceptionMessage: " + se.what()
@@ -1646,7 +1646,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 					connectionPool->unborrow(conn);
 					conn = nullptr;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "exception doing unborrow"
 						+ ", exceptionMessage: " + e.what()
@@ -1662,7 +1662,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         
 			throw e;
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			_logger->error(__FILEREF__ + "SQL exception"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1694,7 +1694,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 					connectionPool->unborrow(conn);
 					conn = nullptr;
 				}
-				catch(sql::SQLException se)
+				catch(sql::SQLException& se)
 				{
 					_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 						+ ", exceptionMessage: " + se.what()
@@ -1706,7 +1706,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 					connectionPool->unborrow(conn);
 					conn = nullptr;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "exception doing unborrow"
 						+ ", exceptionMessage: " + e.what()
@@ -1844,7 +1844,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1866,7 +1866,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1886,7 +1886,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2074,7 +2074,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2104,7 +2104,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2116,7 +2116,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2134,7 +2134,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2162,7 +2162,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2174,7 +2174,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2192,7 +2192,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2219,7 +2219,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2231,7 +2231,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2430,7 +2430,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2460,7 +2460,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2472,7 +2472,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2490,7 +2490,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2518,7 +2518,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2530,7 +2530,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2548,7 +2548,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2575,7 +2575,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -2587,7 +2587,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -2673,7 +2673,7 @@ void MMSEngineDBFacade::forceCancelEncodingJob(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2695,7 +2695,7 @@ void MMSEngineDBFacade::forceCancelEncodingJob(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2715,7 +2715,7 @@ void MMSEngineDBFacade::forceCancelEncodingJob(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2802,7 +2802,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2824,7 +2824,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2844,7 +2844,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2934,7 +2934,7 @@ void MMSEngineDBFacade::updateEncodingPid (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2956,7 +2956,7 @@ void MMSEngineDBFacade::updateEncodingPid (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -2976,7 +2976,7 @@ void MMSEngineDBFacade::updateEncodingPid (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3096,7 +3096,7 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3118,7 +3118,7 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3138,7 +3138,7 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3227,7 +3227,7 @@ void MMSEngineDBFacade::updateEncodingJobIsKilled (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3249,7 +3249,7 @@ void MMSEngineDBFacade::updateEncodingJobIsKilled (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3269,7 +3269,7 @@ void MMSEngineDBFacade::updateEncodingJobIsKilled (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3356,7 +3356,7 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3378,7 +3378,7 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3398,7 +3398,7 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3482,7 +3482,7 @@ void MMSEngineDBFacade::updateEncodingJobParameters (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3504,7 +3504,7 @@ void MMSEngineDBFacade::updateEncodingJobParameters (
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3524,7 +3524,7 @@ void MMSEngineDBFacade::updateEncodingJobParameters (
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3544,7 +3544,7 @@ void MMSEngineDBFacade::updateEncodingJobParameters (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3677,7 +3677,7 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3699,7 +3699,7 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3719,7 +3719,7 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3739,7 +3739,7 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3916,7 +3916,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3938,7 +3938,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 
         throw se;
     }
-    catch(AlreadyLocked e)
+    catch(AlreadyLocked& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3958,7 +3958,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -3978,7 +3978,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4079,7 +4079,7 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 		//		theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey);
 		return make_tuple(ingestionJobKey, type, encoderKey, status, parameters);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4101,7 +4101,7 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4121,7 +4121,7 @@ tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -4206,7 +4206,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngest
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4227,7 +4227,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngest
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4246,7 +4246,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngest
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4725,7 +4725,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4746,7 +4746,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4765,7 +4765,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -4866,7 +4866,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 
 				toBeExecutedAgain = false;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				currentRetriesOnError++;
 				if (currentRetriesOnError >= maxRetriesOnError)
@@ -4902,7 +4902,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -4923,7 +4923,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -4942,7 +4942,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5113,7 +5113,7 @@ void MMSEngineDBFacade::addEncodingJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5140,7 +5140,7 @@ void MMSEngineDBFacade::addEncodingJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5152,7 +5152,7 @@ void MMSEngineDBFacade::addEncodingJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5170,7 +5170,7 @@ void MMSEngineDBFacade::addEncodingJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5195,7 +5195,7 @@ void MMSEngineDBFacade::addEncodingJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5207,7 +5207,7 @@ void MMSEngineDBFacade::addEncodingJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5225,7 +5225,7 @@ void MMSEngineDBFacade::addEncodingJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5249,7 +5249,7 @@ void MMSEngineDBFacade::addEncodingJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5261,7 +5261,7 @@ void MMSEngineDBFacade::addEncodingJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5459,7 +5459,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5486,7 +5486,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5498,7 +5498,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5516,7 +5516,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5541,7 +5541,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5553,7 +5553,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5571,7 +5571,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5595,7 +5595,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5607,7 +5607,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5787,7 +5787,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -5814,7 +5814,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5826,7 +5826,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5844,7 +5844,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -5869,7 +5869,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5881,7 +5881,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -5899,7 +5899,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -5923,7 +5923,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -5935,7 +5935,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6161,7 +6161,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6188,7 +6188,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6200,7 +6200,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6218,7 +6218,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6243,7 +6243,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6255,7 +6255,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6273,7 +6273,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6297,7 +6297,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6309,7 +6309,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6488,7 +6488,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6515,7 +6515,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6527,7 +6527,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6545,7 +6545,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6570,7 +6570,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6582,7 +6582,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6600,7 +6600,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6624,7 +6624,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6636,7 +6636,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6785,7 +6785,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -6812,7 +6812,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6824,7 +6824,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6842,7 +6842,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -6867,7 +6867,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6879,7 +6879,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -6897,7 +6897,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -6921,7 +6921,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -6933,7 +6933,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7074,7 +7074,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -7101,7 +7101,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7113,7 +7113,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7131,7 +7131,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -7156,7 +7156,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7168,7 +7168,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7186,7 +7186,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -7210,7 +7210,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7222,7 +7222,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7483,7 +7483,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -7510,7 +7510,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7522,7 +7522,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7540,7 +7540,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -7565,7 +7565,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7577,7 +7577,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7595,7 +7595,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -7619,7 +7619,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7631,7 +7631,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7803,7 +7803,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -7830,7 +7830,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7842,7 +7842,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7860,7 +7860,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -7885,7 +7885,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7897,7 +7897,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -7915,7 +7915,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -7939,7 +7939,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -7951,7 +7951,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8113,7 +8113,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -8140,7 +8140,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8152,7 +8152,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8170,7 +8170,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -8195,7 +8195,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8207,7 +8207,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8225,7 +8225,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -8249,7 +8249,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8261,7 +8261,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8414,7 +8414,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -8441,7 +8441,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8453,7 +8453,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8471,7 +8471,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -8496,7 +8496,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8508,7 +8508,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8526,7 +8526,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -8550,7 +8550,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8562,7 +8562,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8711,7 +8711,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -8738,7 +8738,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8750,7 +8750,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8768,7 +8768,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -8793,7 +8793,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8805,7 +8805,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -8823,7 +8823,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -8847,7 +8847,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -8859,7 +8859,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9043,7 +9043,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9070,7 +9070,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9082,7 +9082,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9100,7 +9100,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9125,7 +9125,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9137,7 +9137,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9155,7 +9155,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9179,7 +9179,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9191,7 +9191,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9347,7 +9347,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9374,7 +9374,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9386,7 +9386,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9404,7 +9404,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9429,7 +9429,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9441,7 +9441,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9459,7 +9459,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9483,7 +9483,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9495,7 +9495,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9707,7 +9707,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -9734,7 +9734,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9746,7 +9746,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9764,7 +9764,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -9789,7 +9789,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9801,7 +9801,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -9819,7 +9819,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -9843,7 +9843,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -9855,7 +9855,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -10087,7 +10087,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -10114,7 +10114,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -10126,7 +10126,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -10144,7 +10144,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -10169,7 +10169,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -10181,7 +10181,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -10199,7 +10199,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -10223,7 +10223,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -10235,7 +10235,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -10436,7 +10436,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -10463,7 +10463,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -10475,7 +10475,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -10493,7 +10493,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -10518,7 +10518,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -10530,7 +10530,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()
@@ -10548,7 +10548,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
         
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -10572,7 +10572,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(sql::SQLException se)
+            catch(sql::SQLException& se)
             {
                 _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
                     + ", exceptionMessage: " + se.what()
@@ -10584,7 +10584,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
                 connectionPool->unborrow(conn);
 				conn = nullptr;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "exception doing unborrow"
                     + ", exceptionMessage: " + e.what()

@@ -42,7 +42,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -63,7 +63,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -82,7 +82,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -253,7 +253,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
             }
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -264,7 +264,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -273,7 +273,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -366,7 +366,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -387,7 +387,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -406,7 +406,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -547,7 +547,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
                     {
 						workflowRoot = JSONUtils::toJson(-1, -1, jsonWorkflow);
                     }
-                    catch(runtime_error e)
+                    catch(runtime_error& e)
                     {
                         _logger->error(__FILEREF__ + e.what());
 
@@ -577,7 +577,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -598,7 +598,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -617,7 +617,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -707,7 +707,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -728,7 +728,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -747,7 +747,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -843,7 +843,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -864,7 +864,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -883,7 +883,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand

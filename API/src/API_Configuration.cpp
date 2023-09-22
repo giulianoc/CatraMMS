@@ -98,7 +98,7 @@ void API::addYouTubeConf(
 				accessToken = JSONUtils::asString(requestBodyRoot, field, "");            
 			}
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -108,7 +108,7 @@ void API::addYouTubeConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -158,7 +158,7 @@ void API::addYouTubeConf(
 
 			sResponse = JSONUtils::toString(youTubeRoot);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addYouTubeConf failed"
                 + ", e.what(): " + e.what()
@@ -166,7 +166,7 @@ void API::addYouTubeConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addYouTubeConf failed"
                 + ", e.what(): " + e.what()
@@ -178,7 +178,7 @@ void API::addYouTubeConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -193,7 +193,7 @@ void API::addYouTubeConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -267,7 +267,7 @@ void API::modifyYouTubeConf(
 				accessTokenModified = true;
 			}
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -277,7 +277,7 @@ void API::modifyYouTubeConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -346,7 +346,7 @@ void API::modifyYouTubeConf(
 
 			sResponse = JSONUtils::toString(youTubeRoot);
 		}
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyYouTubeConf failed"
                 + ", e.what(): " + e.what()
@@ -354,7 +354,7 @@ void API::modifyYouTubeConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyYouTubeConf failed"
                 + ", e.what(): " + e.what()
@@ -366,7 +366,7 @@ void API::modifyYouTubeConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -381,7 +381,7 @@ void API::modifyYouTubeConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -437,7 +437,7 @@ void API::removeYouTubeConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeYouTubeConf failed"
                 + ", e.what(): " + e.what()
@@ -445,7 +445,7 @@ void API::removeYouTubeConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeYouTubeConf failed"
                 + ", e.what(): " + e.what()
@@ -457,7 +457,7 @@ void API::removeYouTubeConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -471,7 +471,7 @@ void API::removeYouTubeConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -509,7 +509,7 @@ void API::youTubeConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -523,7 +523,7 @@ void API::youTubeConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -584,7 +584,7 @@ void API::addFacebookConf(
             }    
             userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -594,7 +594,7 @@ void API::addFacebookConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -616,7 +616,7 @@ void API::addFacebookConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFacebookConf failed"
                 + ", e.what(): " + e.what()
@@ -624,7 +624,7 @@ void API::addFacebookConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFacebookConf failed"
                 + ", e.what(): " + e.what()
@@ -636,7 +636,7 @@ void API::addFacebookConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -651,7 +651,7 @@ void API::addFacebookConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -713,7 +713,7 @@ void API::modifyFacebookConf(
             }    
             userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -723,7 +723,7 @@ void API::modifyFacebookConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -758,7 +758,7 @@ void API::modifyFacebookConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed"
                 + ", e.what(): " + e.what()
@@ -766,7 +766,7 @@ void API::modifyFacebookConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed"
                 + ", e.what(): " + e.what()
@@ -778,7 +778,7 @@ void API::modifyFacebookConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -793,7 +793,7 @@ void API::modifyFacebookConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -849,7 +849,7 @@ void API::removeFacebookConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed"
                 + ", e.what(): " + e.what()
@@ -857,7 +857,7 @@ void API::removeFacebookConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed"
                 + ", e.what(): " + e.what()
@@ -869,7 +869,7 @@ void API::removeFacebookConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -883,7 +883,7 @@ void API::removeFacebookConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -950,7 +950,7 @@ void API::facebookConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -964,7 +964,7 @@ void API::facebookConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1025,7 +1025,7 @@ void API::addTwitchConf(
             }    
             refreshToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -1035,7 +1035,7 @@ void API::addTwitchConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -1057,7 +1057,7 @@ void API::addTwitchConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addTwitchConf failed"
                 + ", e.what(): " + e.what()
@@ -1065,7 +1065,7 @@ void API::addTwitchConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addTwitchConf failed"
                 + ", e.what(): " + e.what()
@@ -1077,7 +1077,7 @@ void API::addTwitchConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1092,7 +1092,7 @@ void API::addTwitchConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1154,7 +1154,7 @@ void API::modifyTwitchConf(
             }    
             refreshToken = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -1164,7 +1164,7 @@ void API::modifyTwitchConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -1199,7 +1199,7 @@ void API::modifyTwitchConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyTwitchConf failed"
                 + ", e.what(): " + e.what()
@@ -1207,7 +1207,7 @@ void API::modifyTwitchConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyTwitchConf failed"
                 + ", e.what(): " + e.what()
@@ -1219,7 +1219,7 @@ void API::modifyTwitchConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1234,7 +1234,7 @@ void API::modifyTwitchConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1290,7 +1290,7 @@ void API::removeTwitchConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeTwitchConf failed"
                 + ", e.what(): " + e.what()
@@ -1298,7 +1298,7 @@ void API::removeTwitchConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeTwitchConf failed"
                 + ", e.what(): " + e.what()
@@ -1310,7 +1310,7 @@ void API::removeTwitchConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1324,7 +1324,7 @@ void API::removeTwitchConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1391,7 +1391,7 @@ void API::twitchConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1405,7 +1405,7 @@ void API::twitchConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1466,7 +1466,7 @@ void API::addTiktokConf(
             }    
             token = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -1476,7 +1476,7 @@ void API::addTiktokConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -1498,7 +1498,7 @@ void API::addTiktokConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addTiktokConf failed"
                 + ", e.what(): " + e.what()
@@ -1506,7 +1506,7 @@ void API::addTiktokConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addTiktokConf failed"
                 + ", e.what(): " + e.what()
@@ -1518,7 +1518,7 @@ void API::addTiktokConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1533,7 +1533,7 @@ void API::addTiktokConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1595,7 +1595,7 @@ void API::modifyTiktokConf(
             }    
             token = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -1605,7 +1605,7 @@ void API::modifyTiktokConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -1640,7 +1640,7 @@ void API::modifyTiktokConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyTiktokConf failed"
                 + ", e.what(): " + e.what()
@@ -1648,7 +1648,7 @@ void API::modifyTiktokConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyTiktokConf failed"
                 + ", e.what(): " + e.what()
@@ -1660,7 +1660,7 @@ void API::modifyTiktokConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1675,7 +1675,7 @@ void API::modifyTiktokConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1731,7 +1731,7 @@ void API::removeTiktokConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeTiktokConf failed"
                 + ", e.what(): " + e.what()
@@ -1739,7 +1739,7 @@ void API::removeTiktokConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeTiktokConf failed"
                 + ", e.what(): " + e.what()
@@ -1751,7 +1751,7 @@ void API::removeTiktokConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1765,7 +1765,7 @@ void API::removeTiktokConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1832,7 +1832,7 @@ void API::tiktokConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -1846,7 +1846,7 @@ void API::tiktokConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2010,7 +2010,7 @@ void API::addStream(
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				userData = requestBodyRoot[field];
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -2020,7 +2020,7 @@ void API::addStream(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -2058,7 +2058,7 @@ void API::addStream(
 
             sResponse = JSONUtils::toString(streamRoot);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addStream failed"
                 + ", e.what(): " + e.what()
@@ -2066,7 +2066,7 @@ void API::addStream(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addStream failed"
                 + ", e.what(): " + e.what()
@@ -2078,7 +2078,7 @@ void API::addStream(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2093,7 +2093,7 @@ void API::addStream(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2408,7 +2408,7 @@ void API::modifyStream(
 				userDataToBeModified = true;
             }
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -2418,7 +2418,7 @@ void API::modifyStream(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -2493,7 +2493,7 @@ void API::modifyStream(
 
             sResponse = JSONUtils::toString(streamRoot);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyStream failed"
                 + ", e.what(): " + e.what()
@@ -2501,7 +2501,7 @@ void API::modifyStream(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyStream failed"
                 + ", e.what(): " + e.what()
@@ -2513,7 +2513,7 @@ void API::modifyStream(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2528,7 +2528,7 @@ void API::modifyStream(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2602,7 +2602,7 @@ void API::removeStream(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeStream failed"
                 + ", e.what(): " + e.what()
@@ -2610,7 +2610,7 @@ void API::removeStream(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeStream failed"
                 + ", e.what(): " + e.what()
@@ -2622,7 +2622,7 @@ void API::removeStream(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2636,7 +2636,7 @@ void API::removeStream(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2846,7 +2846,7 @@ void API::streamList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2860,7 +2860,7 @@ void API::streamList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -2998,7 +2998,7 @@ void API::addSourceTVStream(
 			field = "deliverySystem";
 			deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -3008,7 +3008,7 @@ void API::addSourceTVStream(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -3032,7 +3032,7 @@ void API::addSourceTVStream(
 
             sResponse = JSONUtils::toString(sourceTVStreamRoot);
 		}
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceTVStream failed"
                 + ", e.what(): " + e.what()
@@ -3040,7 +3040,7 @@ void API::addSourceTVStream(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceTVStream failed"
                 + ", e.what(): " + e.what()
@@ -3052,7 +3052,7 @@ void API::addSourceTVStream(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3067,7 +3067,7 @@ void API::addSourceTVStream(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3277,7 +3277,7 @@ void API::modifySourceTVStream(
 				deliverySystemToBeModified = true;
             }
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -3287,7 +3287,7 @@ void API::modifySourceTVStream(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -3339,7 +3339,7 @@ void API::modifySourceTVStream(
 
             sResponse = JSONUtils::toString(sourceTVStreamRoot);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceTVStream failed"
                 + ", e.what(): " + e.what()
@@ -3347,7 +3347,7 @@ void API::modifySourceTVStream(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceTVStream failed"
                 + ", e.what(): " + e.what()
@@ -3359,7 +3359,7 @@ void API::modifySourceTVStream(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3374,7 +3374,7 @@ void API::modifySourceTVStream(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3429,7 +3429,7 @@ void API::removeSourceTVStream(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceTVStream failed"
                 + ", e.what(): " + e.what()
@@ -3437,7 +3437,7 @@ void API::removeSourceTVStream(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceTVStream failed"
                 + ", e.what(): " + e.what()
@@ -3449,7 +3449,7 @@ void API::removeSourceTVStream(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3463,7 +3463,7 @@ void API::removeSourceTVStream(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3623,7 +3623,7 @@ void API::sourceTVStreamList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3637,7 +3637,7 @@ void API::sourceTVStreamList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3734,7 +3734,7 @@ void API::addAWSChannelConf(
             }    
             type = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -3744,7 +3744,7 @@ void API::addAWSChannelConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -3767,7 +3767,7 @@ void API::addAWSChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAWSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -3775,7 +3775,7 @@ void API::addAWSChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAWSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -3787,7 +3787,7 @@ void API::addAWSChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3802,7 +3802,7 @@ void API::addAWSChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3900,7 +3900,7 @@ void API::modifyAWSChannelConf(
             }    
             type = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -3910,7 +3910,7 @@ void API::modifyAWSChannelConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -3946,7 +3946,7 @@ void API::modifyAWSChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyAWSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -3954,7 +3954,7 @@ void API::modifyAWSChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyAWSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -3966,7 +3966,7 @@ void API::modifyAWSChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3981,7 +3981,7 @@ void API::modifyAWSChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4037,7 +4037,7 @@ void API::removeAWSChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAWSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4045,7 +4045,7 @@ void API::removeAWSChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAWSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4057,7 +4057,7 @@ void API::removeAWSChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4071,7 +4071,7 @@ void API::removeAWSChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4126,7 +4126,7 @@ void API::awsChannelConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4140,7 +4140,7 @@ void API::awsChannelConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4241,7 +4241,7 @@ void API::addCDN77ChannelConf(
             }    
             type = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -4251,7 +4251,7 @@ void API::addCDN77ChannelConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -4273,7 +4273,7 @@ void API::addCDN77ChannelConf(
 				+ "}"
 			);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addCDN77ChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4281,7 +4281,7 @@ void API::addCDN77ChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addCDN77ChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4293,7 +4293,7 @@ void API::addCDN77ChannelConf(
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4308,7 +4308,7 @@ void API::addCDN77ChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4418,7 +4418,7 @@ void API::modifyCDN77ChannelConf(
             }
             type = JSONUtils::asString(requestBodyRoot, field, "");
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -4428,7 +4428,7 @@ void API::modifyCDN77ChannelConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -4464,7 +4464,7 @@ void API::modifyCDN77ChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4472,7 +4472,7 @@ void API::modifyCDN77ChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4484,7 +4484,7 @@ void API::modifyCDN77ChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4499,7 +4499,7 @@ void API::modifyCDN77ChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4555,7 +4555,7 @@ void API::removeCDN77ChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeCDN77ChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4563,7 +4563,7 @@ void API::removeCDN77ChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeCDN77ChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4575,7 +4575,7 @@ void API::removeCDN77ChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4589,7 +4589,7 @@ void API::removeCDN77ChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4644,7 +4644,7 @@ void API::cdn77ChannelConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4658,7 +4658,7 @@ void API::cdn77ChannelConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4747,7 +4747,7 @@ void API::addRTMPChannelConf(
             }    
             type = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -4757,7 +4757,7 @@ void API::addRTMPChannelConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -4779,7 +4779,7 @@ void API::addRTMPChannelConf(
 				+ "}"
 			);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addRTMPChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4787,7 +4787,7 @@ void API::addRTMPChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addRTMPChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4799,7 +4799,7 @@ void API::addRTMPChannelConf(
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4814,7 +4814,7 @@ void API::addRTMPChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4936,7 +4936,7 @@ void API::modifyRTMPChannelConf(
             }
             type = JSONUtils::asString(requestBodyRoot, field, "");
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -4946,7 +4946,7 @@ void API::modifyRTMPChannelConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -4982,7 +4982,7 @@ void API::modifyRTMPChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyRTMPChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -4990,7 +4990,7 @@ void API::modifyRTMPChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyRTMPChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5002,7 +5002,7 @@ void API::modifyRTMPChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5017,7 +5017,7 @@ void API::modifyRTMPChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5073,7 +5073,7 @@ void API::removeRTMPChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeRTMPChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5081,7 +5081,7 @@ void API::removeRTMPChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeRTMPChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5093,7 +5093,7 @@ void API::removeRTMPChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5107,7 +5107,7 @@ void API::removeRTMPChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5162,7 +5162,7 @@ void API::rtmpChannelConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5176,7 +5176,7 @@ void API::rtmpChannelConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5257,7 +5257,7 @@ void API::addHLSChannelConf(
             }    
             type = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -5267,7 +5267,7 @@ void API::addHLSChannelConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -5289,7 +5289,7 @@ void API::addHLSChannelConf(
 				+ "}"
 			);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addHLSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5297,7 +5297,7 @@ void API::addHLSChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addHLSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5309,7 +5309,7 @@ void API::addHLSChannelConf(
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5324,7 +5324,7 @@ void API::addHLSChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5422,7 +5422,7 @@ void API::modifyHLSChannelConf(
             }
             type = JSONUtils::asString(requestBodyRoot, field, "");
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -5432,7 +5432,7 @@ void API::modifyHLSChannelConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -5468,7 +5468,7 @@ void API::modifyHLSChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyHLSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5476,7 +5476,7 @@ void API::modifyHLSChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyHLSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5488,7 +5488,7 @@ void API::modifyHLSChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5503,7 +5503,7 @@ void API::modifyHLSChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5559,7 +5559,7 @@ void API::removeHLSChannelConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeHLSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5567,7 +5567,7 @@ void API::removeHLSChannelConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeHLSChannelConf failed"
                 + ", e.what(): " + e.what()
@@ -5579,7 +5579,7 @@ void API::removeHLSChannelConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5593,7 +5593,7 @@ void API::removeHLSChannelConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5648,7 +5648,7 @@ void API::hlsChannelConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5662,7 +5662,7 @@ void API::hlsChannelConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5771,7 +5771,7 @@ void API::addFTPConf(
             }    
             remoteDirectory = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -5781,7 +5781,7 @@ void API::addFTPConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -5804,7 +5804,7 @@ void API::addFTPConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFTPConf failed"
                 + ", e.what(): " + e.what()
@@ -5812,7 +5812,7 @@ void API::addFTPConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFTPConf failed"
                 + ", e.what(): " + e.what()
@@ -5824,7 +5824,7 @@ void API::addFTPConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5839,7 +5839,7 @@ void API::addFTPConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5949,7 +5949,7 @@ void API::modifyFTPConf(
             }    
             remoteDirectory = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -5959,7 +5959,7 @@ void API::modifyFTPConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -5995,7 +5995,7 @@ void API::modifyFTPConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFTPConf failed"
                 + ", e.what(): " + e.what()
@@ -6003,7 +6003,7 @@ void API::modifyFTPConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFTPConf failed"
                 + ", e.what(): " + e.what()
@@ -6015,7 +6015,7 @@ void API::modifyFTPConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6030,7 +6030,7 @@ void API::modifyFTPConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6086,7 +6086,7 @@ void API::removeFTPConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFTPConf failed"
                 + ", e.what(): " + e.what()
@@ -6094,7 +6094,7 @@ void API::removeFTPConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFTPConf failed"
                 + ", e.what(): " + e.what()
@@ -6106,7 +6106,7 @@ void API::removeFTPConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6120,7 +6120,7 @@ void API::removeFTPConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6159,7 +6159,7 @@ void API::ftpConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6173,7 +6173,7 @@ void API::ftpConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6258,7 +6258,7 @@ void API::addEMailConf(
             }    
             message = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -6268,7 +6268,7 @@ void API::addEMailConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -6290,7 +6290,7 @@ void API::addEMailConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEMailConf failed"
                 + ", e.what(): " + e.what()
@@ -6298,7 +6298,7 @@ void API::addEMailConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEMailConf failed"
                 + ", e.what(): " + e.what()
@@ -6310,7 +6310,7 @@ void API::addEMailConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 201, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6325,7 +6325,7 @@ void API::addEMailConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6411,7 +6411,7 @@ void API::modifyEMailConf(
             }    
             message = JSONUtils::asString(requestBodyRoot, field, "");            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -6421,7 +6421,7 @@ void API::modifyEMailConf(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = string("requestBody json is not well format")
                     + ", requestBody: " + requestBody
@@ -6457,7 +6457,7 @@ void API::modifyEMailConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEMailConf failed"
                 + ", e.what(): " + e.what()
@@ -6465,7 +6465,7 @@ void API::modifyEMailConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEMailConf failed"
                 + ", e.what(): " + e.what()
@@ -6477,7 +6477,7 @@ void API::modifyEMailConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6492,7 +6492,7 @@ void API::modifyEMailConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6548,7 +6548,7 @@ void API::removeEMailConf(
                     + "}"
                     );            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEMailConf failed"
                 + ", e.what(): " + e.what()
@@ -6556,7 +6556,7 @@ void API::removeEMailConf(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEMailConf failed"
                 + ", e.what(): " + e.what()
@@ -6568,7 +6568,7 @@ void API::removeEMailConf(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, sResponse);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6582,7 +6582,7 @@ void API::removeEMailConf(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6621,7 +6621,7 @@ void API::emailConfList(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -6635,7 +6635,7 @@ void API::emailConfList(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api

@@ -92,7 +92,7 @@ void LiveProxy::encodeContent(
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey)
@@ -104,7 +104,7 @@ void LiveProxy::encodeContent(
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey)
@@ -342,7 +342,7 @@ void LiveProxy::encodeContent(
             // + ", _liveProxyData->_channelLabel: " + _liveProxyData->_channelLabel
         );
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		if (_liveProxyData->_inputsRoot != Json::nullValue)
 		{
@@ -418,7 +418,7 @@ void LiveProxy::encodeContent(
 
 		throw e;
     }
-    catch(FFMpegURLForbidden e)
+    catch(FFMpegURLForbidden& e)
     {
 		if (_liveProxyData->_inputsRoot != Json::nullValue)
 		{
@@ -487,7 +487,7 @@ void LiveProxy::encodeContent(
 
 		throw e;
     }
-    catch(FFMpegURLNotFound e)
+    catch(FFMpegURLNotFound& e)
     {
 		if (_liveProxyData->_inputsRoot != Json::nullValue)
 		{
@@ -556,7 +556,7 @@ void LiveProxy::encodeContent(
 
 		throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		if (_liveProxyData->_inputsRoot != Json::nullValue)
 		{
@@ -623,7 +623,7 @@ void LiveProxy::encodeContent(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		if (_liveProxyData->_inputsRoot != Json::nullValue)
 		{

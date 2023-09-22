@@ -178,7 +178,7 @@ void API::ingestion(
 				responseBodyRoot["tasks"] = responseBodyTasksRoot;
 			}
         }
-        catch(AlreadyLocked e)
+        catch(AlreadyLocked& e)
         {
 			if (dbTransactionStarted)
 			{
@@ -192,7 +192,7 @@ void API::ingestion(
 
             throw e;
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
 			if (dbTransactionStarted)
 			{
@@ -206,7 +206,7 @@ void API::ingestion(
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
 			if (dbTransactionStarted)
 			{
@@ -231,7 +231,7 @@ void API::ingestion(
             + ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
         );
     }
-	catch(AlreadyLocked e)
+	catch(AlreadyLocked& e)
 	{
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -246,7 +246,7 @@ void API::ingestion(
 
         throw runtime_error(errorMessage);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -261,7 +261,7 @@ void API::ingestion(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -564,7 +564,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 			}
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = string("requestBody json is not well format")
 			+ ", requestBody: " + requestBody
@@ -574,7 +574,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 
 		throw runtime_error(errorMessage);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("requestBody json is not well format")
 			+ ", requestBody: " + requestBody
@@ -2637,7 +2637,7 @@ void API::uploadedBinary(
 
                 contentRangePresent = true;                
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 string errorMessage = string("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'")
                     + ", contentRange: " + contentRange
@@ -2678,7 +2678,7 @@ void API::uploadedBinary(
 					segmentedContent = true;
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string("mmsEngineDBFacade->getIngestionJobDetails failed")
 				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -2691,7 +2691,7 @@ void API::uploadedBinary(
 
 			throw runtime_error(errorMessage);            
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string("mmsEngineDBFacade->getIngestionJobDetails failed")
 				+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -2718,7 +2718,7 @@ void API::uploadedBinary(
 
                 MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, _logger);
             }
-            catch(runtime_error e)
+            catch(runtime_error& e)
             {
                 string errorMessage = string("Error to move file")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2730,7 +2730,7 @@ void API::uploadedBinary(
 
                 throw runtime_error(errorMessage);            
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 string errorMessage = string("Error to move file")
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2756,7 +2756,7 @@ void API::uploadedBinary(
 							destBinaryPathName, workspaceIngestionRepository,
 							localSourceBinaryPathFile);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2858,7 +2858,7 @@ void API::uploadedBinary(
 
 					fs::remove_all(sourceBinaryPathFile);
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     string errorMessage = string("Content-Range. Error to concat file")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2895,7 +2895,7 @@ void API::uploadedBinary(
 
                     MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, _logger);
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     string errorMessage = string("Content-Range. Error to move file")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2924,7 +2924,7 @@ void API::uploadedBinary(
 							destBinaryPathName, workspaceIngestionRepository,
 							localSourceBinaryPathFile);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3507,7 +3507,7 @@ void API::ingestionRootsStatus(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3522,7 +3522,7 @@ void API::ingestionRootsStatus(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3583,7 +3583,7 @@ void API::ingestionRootMetaDataContent(
 				request, "", api, 200, ingestionRootMetaDataContent);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3598,7 +3598,7 @@ void API::ingestionRootMetaDataContent(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3847,7 +3847,7 @@ void API::ingestionJobsStatus(
 				request, "", api, 200, responseBody);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3862,7 +3862,7 @@ void API::ingestionJobsStatus(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -3991,7 +3991,7 @@ void API::cancelIngestionJob(
         sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, "", api, 200, responseBody);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4006,7 +4006,7 @@ void API::cancelIngestionJob(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4204,7 +4204,7 @@ void API::updateIngestionJob(
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -4217,7 +4217,7 @@ void API::updateIngestionJob(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -4231,7 +4231,7 @@ void API::updateIngestionJob(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4241,7 +4241,7 @@ void API::updateIngestionJob(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -4715,7 +4715,7 @@ void API::changeLiveProxyPlaylist(
             }
 
 		}
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -4728,7 +4728,7 @@ void API::changeLiveProxyPlaylist(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -5409,7 +5409,7 @@ void API::changeLiveProxyPlaylist(
 				}
 			}
 		}
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -5422,7 +5422,7 @@ void API::changeLiveProxyPlaylist(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -5490,7 +5490,7 @@ void API::changeLiveProxyPlaylist(
 				tie(broadcastEncodingJobKey, broadcastEncoderKey, broadcastParameters)
 					= encodingJobDetails;
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->warn(__FILEREF__ + e.what());
 
@@ -5625,7 +5625,7 @@ void API::changeLiveProxyPlaylist(
 			throw e;
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -5635,7 +5635,7 @@ void API::changeLiveProxyPlaylist(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api

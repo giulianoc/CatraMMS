@@ -95,7 +95,7 @@ int main (int iArgc, char *pArgv [])
 			+ ", apiKey: " + apiKey
 		);
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		logger->error(__FILEREF__ + "mmsEngineDBFacade->registerActiveDirectoryUser failed");
 

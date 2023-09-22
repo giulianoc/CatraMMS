@@ -398,7 +398,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 						MMSEngineDBFacade::IngestionStatus::End_CanceledByMMS,
 						errorMessage);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "reset updateIngestionJob failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -407,7 +407,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 						+ ", e.what(): " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "reset updateIngestionJob failed"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -536,7 +536,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -557,7 +557,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -576,7 +576,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -666,7 +666,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -687,7 +687,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -706,7 +706,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -879,7 +879,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         return make_tuple(physicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath,
 			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -900,7 +900,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -919,7 +919,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1141,7 +1141,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         return make_tuple(physicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath,
 			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1162,7 +1162,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
         throw se;
     }    
-    catch(MediaItemKeyNotFound e)
+    catch(MediaItemKeyNotFound& e)
     {        
 		if (warningIfMissing)
 			_logger->warn(__FILEREF__ + "MediaItemKeyNotFound"
@@ -1188,7 +1188,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
         throw e;
     }        
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "runtime_error"
             + ", e.what(): " + e.what()
@@ -1207,7 +1207,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1351,7 +1351,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1372,7 +1372,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1391,7 +1391,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1491,7 +1491,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1512,7 +1512,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1531,7 +1531,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1671,7 +1671,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1692,7 +1692,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1711,7 +1711,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
 
         // throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1792,7 +1792,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 
 					currentRetriesOnError = 0;
 				}
-				catch(sql::SQLException se)
+				catch(sql::SQLException& se)
 				{
 					currentRetriesOnError++;
 					if (currentRetriesOnError >= maxRetriesOnError)
@@ -1827,7 +1827,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1848,7 +1848,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1867,7 +1867,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1920,7 +1920,7 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
             throw runtime_error(error);
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1931,7 +1931,7 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1940,7 +1940,7 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2033,7 +2033,7 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 
 		return alreadyExecuted;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2054,7 +2054,7 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2073,7 +2073,7 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand

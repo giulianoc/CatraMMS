@@ -172,7 +172,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 
 		return statisticRoot;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -193,7 +193,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -212,7 +212,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -461,7 +461,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -482,7 +482,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -501,7 +501,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -740,7 +740,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -761,7 +761,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -780,7 +780,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1018,7 +1018,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1039,7 +1039,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1058,7 +1058,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1298,7 +1298,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1319,7 +1319,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1338,7 +1338,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1578,7 +1578,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1599,7 +1599,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1618,7 +1618,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1858,7 +1858,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1879,7 +1879,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1898,7 +1898,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2080,7 +2080,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 
 				toBeExecutedAgain = false;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				currentRetriesOnError++;
 				if (currentRetriesOnError >= maxRetriesOnError)
@@ -2112,7 +2112,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2133,7 +2133,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "runtime_error exception"
             + ", e.what(): " + e.what()
@@ -2152,7 +2152,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "exception"
             + ", lastSQLCommand: " + lastSQLCommand

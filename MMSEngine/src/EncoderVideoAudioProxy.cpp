@@ -378,7 +378,7 @@ void EncoderVideoAudioProxy::operator()()
             throw runtime_error(errorMessage);
         }
     }
-    catch(MaxConcurrentJobsReached e)
+    catch(MaxConcurrentJobsReached& e)
     {
 		_logger->warn(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -401,7 +401,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_ingestionJobKey);
                 // main ? _encodingItem->_ingestionJobKey : -1);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			_logger->error(__FILEREF__ + "updateEncodingJob MaxCapacityReached FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -411,7 +411,7 @@ void EncoderVideoAudioProxy::operator()()
 				+ ", e.what(): " + e.what()
 			);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			_logger->error(__FILEREF__ + "updateEncodingJob MaxCapacityReached FAILED"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -447,7 +447,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-    catch(YouTubeURLNotRetrieved e)
+    catch(YouTubeURLNotRetrieved& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -502,7 +502,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-    catch(EncoderError e)
+    catch(EncoderError& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -568,7 +568,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-    catch(EncoderNotFound e)
+    catch(EncoderNotFound& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -634,7 +634,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-	catch(EncodingKilledByUser e)
+	catch(EncodingKilledByUser& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -685,7 +685,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-	catch(FFMpegURLForbidden e)
+	catch(FFMpegURLForbidden& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -756,7 +756,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-	catch(FFMpegURLNotFound e)
+	catch(FFMpegURLNotFound& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -826,7 +826,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -893,7 +893,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -1116,7 +1116,7 @@ void EncoderVideoAudioProxy::operator()()
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -1141,7 +1141,7 @@ void EncoderVideoAudioProxy::operator()()
 				);
 				fs::remove_all(stagingEncodedAssetPathName);
 			}
-			catch(runtime_error er)
+			catch(runtime_error& er)
 			{
 				_logger->error(__FILEREF__ + "remove FAILED"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -1213,7 +1213,7 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -1313,7 +1313,7 @@ void EncoderVideoAudioProxy::operator()()
 			isIngestionJobCompleted,
 			_encodingItem->_ingestionJobKey);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "updateEncodingJob failed: " + e.what()
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -1548,7 +1548,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: "
@@ -1593,7 +1593,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: "
@@ -1722,7 +1722,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -1762,7 +1762,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: "
@@ -1805,7 +1805,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: "
@@ -1848,7 +1848,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: "
@@ -1862,7 +1862,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 
 				throw runtime_error(e.what());
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height"
 					+ ", encodingItem->_encodingJobKey: "
@@ -1891,7 +1891,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: "
@@ -1939,7 +1939,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 					_encodingItem->_workspace->_territories
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
 					+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -1965,7 +1965,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -1978,7 +1978,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 
 				throw e;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
 					+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -2003,7 +2003,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 							fs::remove_all(directoryPathName);
 						}
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "removeDirectory failed"
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2034,7 +2034,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 						fs::remove_all(directoryPathName);
 					}
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "removeDirectory failed"
 						+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -2106,7 +2106,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 					+ ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
 					+ ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2122,7 +2122,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 				throw e;
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			_logger->error(__FILEREF__ + "process media input failed"
 				+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -2133,7 +2133,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 			if (sourcesToBeEncodedRoot.size() == 1)
 				throw e;
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			_logger->error(__FILEREF__ + "process media input failed"
 				+ ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
@@ -2247,7 +2247,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 					otherHeaders
 				);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string error = e.what();
 				if (error.find(EncodingIsAlreadyRunning().what()) != string::npos)
@@ -2368,7 +2368,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 
 		throw e;
 	}
-	catch(MaxConcurrentJobsReached e)
+	catch(MaxConcurrentJobsReached& e)
 	{
 		string errorMessage = string("MaxConcurrentJobsReached")
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2577,7 +2577,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
         //     videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
         //     audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2605,7 +2605,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 					fs::remove_all(directoryPathName);
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2618,7 +2618,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2645,7 +2645,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 					fs::remove_all(directoryPathName);
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2696,7 +2696,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             _encodingItem->_workspace->_territories
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2724,7 +2724,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 					fs::remove_all(directoryPathName);
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2737,7 +2737,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2764,7 +2764,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 					fs::remove_all(directoryPathName);
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "removeDirectory failed"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -2795,7 +2795,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 				fs::remove_all(directoryPathName);
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			_logger->error(__FILEREF__ + "removeDirectory failed"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2891,7 +2891,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
             + ", encodedFileName: " + encodedFileName
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2909,7 +2909,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3026,7 +3026,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(bool killedByUser)
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3039,7 +3039,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(bool killedByUser)
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3146,7 +3146,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(bool killedByUser)
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3159,7 +3159,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(bool killedByUser)
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3266,7 +3266,7 @@ void EncoderVideoAudioProxy::processVideoSpeed(bool killedByUser)
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processVideoSpeed failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3279,7 +3279,7 @@ void EncoderVideoAudioProxy::processVideoSpeed(bool killedByUser)
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processVideoSpeed failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3405,7 +3405,7 @@ void EncoderVideoAudioProxy::processAddSilentAudio(bool killedByUser)
 				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processVideoSpeed failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3418,7 +3418,7 @@ void EncoderVideoAudioProxy::processAddSilentAudio(bool killedByUser)
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processVideoSpeed failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3525,7 +3525,7 @@ void EncoderVideoAudioProxy::processPictureInPicture(bool killedByUser)
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processPictureInPicture failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3538,7 +3538,7 @@ void EncoderVideoAudioProxy::processPictureInPicture(bool killedByUser)
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processPictureInPicture failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3645,7 +3645,7 @@ void EncoderVideoAudioProxy::processIntroOutroOverlay()
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processIntroOutroOverlay failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3658,7 +3658,7 @@ void EncoderVideoAudioProxy::processIntroOutroOverlay()
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processIntroOutroOverlay failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3805,7 +3805,7 @@ void EncoderVideoAudioProxy::processCutFrameAccurate()
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processIntroOutroOverlay failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3818,7 +3818,7 @@ void EncoderVideoAudioProxy::processCutFrameAccurate()
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processIntroOutroOverlay failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3980,7 +3980,7 @@ void EncoderVideoAudioProxy::processSlideShow()
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3993,7 +3993,7 @@ void EncoderVideoAudioProxy::processSlideShow()
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -4231,7 +4231,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 					_mmsEngineDBFacade->updateEncodingJobProgress (
 						_encodingItem->_encodingJobKey, _localEncodingProgress);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -4239,7 +4239,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 						+ ", e.what(): " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -4295,7 +4295,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 				_mmsEngineDBFacade->updateEncodingJobProgress (
 					_encodingItem->_encodingJobKey, _localEncodingProgress);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -4303,7 +4303,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 					+ ", e.what(): " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -4763,7 +4763,7 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processFaceRecognition failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -4776,7 +4776,7 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processFaceRecognition failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -5140,7 +5140,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 				_mmsEngineDBFacade->updateEncodingJobProgress (
 					_encodingItem->_encodingJobKey, _localEncodingProgress);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -5148,7 +5148,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 					+ ", e.what(): " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -5381,7 +5381,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processFaceIdentification failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -5394,7 +5394,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
                 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processFaceIdentification failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -5563,7 +5563,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 						{
 							playURL = getAWSSignedURL(playURL, awsExpirationInMinutes);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->error(__FILEREF__
 								+ "getAWSSignedURL failed"
@@ -5624,7 +5624,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 							// 	_encodingItem->_encodingJobKey,
 							// 	encodingParameters);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -5637,7 +5637,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -5706,7 +5706,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								resourceURL, filePath, secureToken, cdn77ExpirationInMinutes,
 								_logger);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->error(__FILEREF__
 								+ "getSignedCDN77URL failed"
@@ -5757,7 +5757,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								_encodingItem->_encodingJobKey,
 								outputIndex, rtmpURL, playURL);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -5768,7 +5768,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -5861,7 +5861,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								_encodingItem->_encodingJobKey,
 								outputIndex, rtmpURL, playURL);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -5872,7 +5872,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -6038,7 +6038,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								outputIndex, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber,
 								manifestDirectoryPath, manifestFileName, otherOutputOptions);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -6049,7 +6049,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -6453,7 +6453,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 						otherHeaders
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string error = e.what();
 					if (error.find(EncodingIsAlreadyRunning().what()) != string::npos)
@@ -6586,7 +6586,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							_mmsEngineDBFacade->appendIngestionJobErrorMessage(
 								_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
 								+ ", _ingestionJobKey: " +
@@ -6596,7 +6596,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								+ ", e.what(): " + e.what()
 							);
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
 								+ ", _ingestionJobKey: " +
@@ -6701,7 +6701,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							_mmsEngineDBFacade->updateEncodingJobProgress (
 								_encodingItem->_encodingJobKey, encodingProgress);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -6709,7 +6709,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								+ ", e.what(): " + e.what()
 							);
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 								+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -6730,7 +6730,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 								lastEncodingPid = encodingPid;
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "updateEncodingPid failed"
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -6739,7 +6739,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 									+ ", e.what(): " + e.what()
 								);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								_logger->error(__FILEREF__ + "updateEncodingPid failed"
 									+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -6937,7 +6937,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				}
 			}
 		}
-		catch(EncoderNotFound e)
+		catch(EncoderNotFound& e)
 		{
             string errorMessage = string("EncoderNotFound")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -6950,7 +6950,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			// is finished or not. This encodingJob will be set as failed
             throw runtime_error(e.what());
         }
-		catch(MaxConcurrentJobsReached e)
+		catch(MaxConcurrentJobsReached& e)
 		{
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -7101,7 +7101,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 				errorMessage);
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processLiveRecorder failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -7113,7 +7113,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(bool killedByUser)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processLiveRecorder failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -7276,7 +7276,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 						{
 							playURL = getAWSSignedURL(playURL, awsExpirationInMinutes);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->error(__FILEREF__
 								+ "getAWSSignedURL failed"
@@ -7338,7 +7338,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 							// 	_encodingItem->_encodingJobKey,
 							// 	encodingParameters);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -7351,7 +7351,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -7419,7 +7419,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								resourceURL, filePath, secureToken, cdn77ExpirationInMinutes,
 								_logger);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->error(__FILEREF__
 								+ "getSignedCDN77URL failed"
@@ -7470,7 +7470,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								_encodingItem->_encodingJobKey,
 								outputIndex, rtmpURL, playURL);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -7481,7 +7481,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -7574,7 +7574,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								_encodingItem->_encodingJobKey,
 								outputIndex, rtmpURL, playURL);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -7585,7 +7585,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -7691,7 +7691,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 								outputIndex, deliveryCode, segmentDuration, playlistEntriesNumber,
 								manifestDirectoryPath, manifestFileName, otherOutputOptions);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -7702,7 +7702,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "updateEncodingJobParameters failed"
@@ -8173,7 +8173,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
 								encodingParameters);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__ + "getEncodingJobDetails failed"
 								+ ", _ingestionJobKey: " +
@@ -8185,7 +8185,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 							throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__ + "getEncodingJobDetails failed"
 								+ ", _ingestionJobKey: " +
@@ -8226,7 +8226,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						otherHeaders
 					);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string error = e.what();
 					if (error.find(EncodingIsAlreadyRunning().what()) != string::npos)
@@ -8339,7 +8339,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					_mmsEngineDBFacade->updateEncodingJobProgress (
 						_encodingItem->_encodingJobKey, encodingProgress);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 						+ ", _ingestionJobKey: "
@@ -8348,7 +8348,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						+ ", e.what(): " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 						+ ", _ingestionJobKey: "
@@ -8443,7 +8443,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							_mmsEngineDBFacade->appendIngestionJobErrorMessage(
 								_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__
 								+ "appendIngestionJobErrorMessage failed"
@@ -8454,7 +8454,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 								+ ", e.what(): " + e.what()
 							);
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							_logger->error(__FILEREF__
 								+ "appendIngestionJobErrorMessage failed"
@@ -8685,7 +8685,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 								_mmsEngineDBFacade->updateEncodingJobProgress (
 									_encodingItem->_encodingJobKey, encodingProgress);
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__
 									+ "updateEncodingJobProgress failed"
@@ -8698,7 +8698,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 									+ ", e.what(): " + e.what()
 								);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								_logger->error(__FILEREF__
 									+ "updateEncodingJobProgress failed"
@@ -8729,7 +8729,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 								lastEncodingPid = encodingPid;
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "updateEncodingPid failed"
 									+ ", _ingestionJobKey: "
@@ -8740,7 +8740,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 									+ ", e.what(): " + e.what()
 								);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								_logger->error(__FILEREF__ + "updateEncodingPid failed"
 									+ ", _ingestionJobKey: "
@@ -8763,7 +8763,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						}
 					}
                 }
-				catch(EncoderNotReachable e)
+				catch(EncoderNotReachable& e)
 				{
 					encoderNotReachableFailures++;
 
@@ -8876,7 +8876,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(
 							_encodingItem->_ingestionJobKey, firstLineOfErrorMessage);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__
 							+ "appendIngestionJobErrorMessage failed"
@@ -8887,7 +8887,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							+ ", e.what(): " + e.what()
 						);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__
 							+ "appendIngestionJobErrorMessage failed"
@@ -8961,7 +8961,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(
 						_encodingItem->_ingestionJobKey, firstLineOfErrorMessage);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
 						+ ", _ingestionJobKey: " +
@@ -8971,7 +8971,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						+ ", e.what(): " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
 						+ ", _ingestionJobKey: " +
@@ -8982,7 +8982,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
 			}
 		}
-		catch(YouTubeURLNotRetrieved e)
+		catch(YouTubeURLNotRetrieved& e)
 		{
             string errorMessage = string("YouTubeURLNotRetrieved")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -9051,7 +9051,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
             // throw e;
         }
-		catch(MaxConcurrentJobsReached e)
+		catch(MaxConcurrentJobsReached& e)
 		{
             string errorMessage = string("MaxConcurrentJobsReached")
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -9256,7 +9256,7 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
 				errorMessage);
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processLiveProxy failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -9268,7 +9268,7 @@ void EncoderVideoAudioProxy::processLiveProxy(bool killedByUser)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processLiveProxy failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -9291,7 +9291,7 @@ void EncoderVideoAudioProxy::processLiveGrid(bool killedByUser)
 		// - transcoding killed by the user 
 		// - The max number of calls to the URL were all done and all failed
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "processLiveGrid failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -9303,7 +9303,7 @@ void EncoderVideoAudioProxy::processLiveGrid(bool killedByUser)
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "processLiveGrid failed"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -10034,7 +10034,7 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(
 						_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -10042,7 +10042,7 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 						+ ", e.what(): " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "appendIngestionJobErrorMessage failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -10075,7 +10075,7 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 					_mmsEngineDBFacade->updateEncodingJobProgress (
 						_encodingItem->_encodingJobKey, encodingProgress);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -10083,7 +10083,7 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 						+ ", e.what(): " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->error(__FILEREF__ + "updateEncodingJobProgress failed"
 						+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -10104,7 +10104,7 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 
 						lastEncodingPid = encodingPid;
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "updateEncodingPid failed"
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -10113,7 +10113,7 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 							+ ", e.what(): " + e.what()
 						);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "updateEncodingPid failed"
 							+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)

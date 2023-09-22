@@ -387,7 +387,7 @@ void LiveRecorder::encodeContent(
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey)
@@ -399,7 +399,7 @@ void LiveRecorder::encodeContent(
 
 							// throw e;
 						}
-						catch(exception e)
+						catch(exception& e)
 						{
 							string errorMessage = __FILEREF__ + "remove directory failed"
 								+ ", ingestionJobKey: "
@@ -516,7 +516,7 @@ void LiveRecorder::encodeContent(
 				+ _liveRecording->_segmentListFileName);
 		}
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		if (_liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
@@ -580,7 +580,7 @@ void LiveRecorder::encodeContent(
 
 		throw e;
     }
-    catch(FFMpegURLForbidden e)
+    catch(FFMpegURLForbidden& e)
     {
 		if (_liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
@@ -634,7 +634,7 @@ void LiveRecorder::encodeContent(
 
 		throw e;
     }
-    catch(FFMpegURLNotFound e)
+    catch(FFMpegURLNotFound& e)
     {
 		if (_liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
@@ -688,7 +688,7 @@ void LiveRecorder::encodeContent(
 
 		throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		if (_liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized
@@ -742,7 +742,7 @@ void LiveRecorder::encodeContent(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		if (_liveRecording->_streamSourceType == "TV"
 			&& tvServiceId != -1	// this is just to be sure variables are initialized

@@ -83,7 +83,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent (
             }
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -94,7 +94,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -103,7 +103,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent (
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -154,7 +154,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -175,7 +175,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -194,7 +194,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 
         throw e;
     }    
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -385,7 +385,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             }
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -396,7 +396,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -405,7 +405,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -472,7 +472,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -493,7 +493,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -512,7 +512,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -659,7 +659,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
             }
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -670,7 +670,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -679,7 +679,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -746,7 +746,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -767,7 +767,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -786,7 +786,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -984,7 +984,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                             {
 								profileRoot = JSONUtils::toJson(-1, -1, jsonProfile);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 string errorMessage = string("Json metadata failed during the parsing"
                                         ", json data: " + jsonProfile
@@ -1021,7 +1021,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1042,7 +1042,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1061,7 +1061,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1246,7 +1246,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                     {
 						profileRoot = JSONUtils::toJson(-1, -1, jsonProfile);
                     }
-                    catch(exception e)
+                    catch(exception& e)
                     {
                         string errorMessage = string("Json metadata failed during the parsing"
                                 ", json data: " + jsonProfile
@@ -1276,7 +1276,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1297,7 +1297,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1316,7 +1316,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1428,7 +1428,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1449,7 +1449,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1468,7 +1468,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
         
         throw e;
     }       
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1572,7 +1572,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1593,7 +1593,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1612,7 +1612,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
         
         throw e;
     }       
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1721,7 +1721,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1742,7 +1742,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1761,7 +1761,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1856,7 +1856,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
 
 		return make_tuple(label, contentType, deliveryTechnology, jsonProfile);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1877,7 +1877,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
 
         throw se;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1896,7 +1896,7 @@ tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnol
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand

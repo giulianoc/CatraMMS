@@ -257,7 +257,7 @@ void OverlayImageOnVideo::encodeContent(
 			);
 		}
     }
-	catch(FFMpegEncodingKilledByUser e)
+	catch(FFMpegEncodingKilledByUser& e)
 	{
 		char strDateTime [64];
 		{
@@ -282,7 +282,7 @@ void OverlayImageOnVideo::encodeContent(
 
 		throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		char strDateTime [64];
 		{
@@ -308,7 +308,7 @@ void OverlayImageOnVideo::encodeContent(
 
 		throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
 		char strDateTime [64];
 		{

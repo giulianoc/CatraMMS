@@ -239,7 +239,7 @@ void API::createDeliveryAuthorization(
 					request, "", api, 201, responseBody);
 			}
         }
-        catch(MediaItemKeyNotFound e)
+        catch(MediaItemKeyNotFound& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -252,7 +252,7 @@ void API::createDeliveryAuthorization(
 
             throw runtime_error(errorMessage);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -265,7 +265,7 @@ void API::createDeliveryAuthorization(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -279,7 +279,7 @@ void API::createDeliveryAuthorization(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -288,7 +288,7 @@ void API::createDeliveryAuthorization(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -344,7 +344,7 @@ void API::createBulkOfDeliveryAuthorization(
         {
 			deliveryAutorizationDetailsRoot = JSONUtils::toJson(-1, -1, requestBody);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + e.what());
 
@@ -675,7 +675,7 @@ void API::createBulkOfDeliveryAuthorization(
 					request, "", api, 201, responseBody);
 			}
 		}
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -688,7 +688,7 @@ void API::createBulkOfDeliveryAuthorization(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
@@ -702,7 +702,7 @@ void API::createBulkOfDeliveryAuthorization(
             throw runtime_error(errorMessage);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -711,7 +711,7 @@ void API::createBulkOfDeliveryAuthorization(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -960,14 +960,14 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			}
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = string("Not authorized");
 		_logger->warn(__FILEREF__ + errorMessage);
 
 		throw e;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("Not authorized: exception managing token");
 		_logger->warn(__FILEREF__ + errorMessage);
@@ -1213,14 +1213,14 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 			throw runtime_error(errorMessage);
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		string errorMessage = string("Not authorized");
 		_logger->warn(__FILEREF__ + errorMessage);
 
 		throw e;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		string errorMessage = string("Not authorized: exception managing token");
 		_logger->warn(__FILEREF__ + errorMessage);

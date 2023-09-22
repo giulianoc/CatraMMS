@@ -345,7 +345,7 @@ MMSEngineProcessor::MMSEngineProcessor(
         {
             _mmsEngineDBFacade->resetProcessingJobsIfNeeded(_processorMMS);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -354,7 +354,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 
             // throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -436,7 +436,7 @@ void MMSEngineProcessor::operator ()()
                 {
                     handleCheckIngestionEvent ();
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "handleCheckIngestionEvent failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -533,14 +533,14 @@ void MMSEngineProcessor::operator ()()
                         handleLocalAssetIngestionEventThread.detach();
 					}
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
                     _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", exception: " + e.what()
                     );
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -566,7 +566,7 @@ void MMSEngineProcessor::operator ()()
                 {
                     handleCheckEncodingEvent ();
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "handleCheckEncodingEvent failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -607,7 +607,7 @@ void MMSEngineProcessor::operator ()()
                         contentRetention.detach();
                     }
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "handleContentRetentionEventThread failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -691,14 +691,14 @@ void MMSEngineProcessor::operator ()()
                         handleMultiLocalAssetIngestionEventThread.detach();
 					}
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
                     _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", exception: " + e.what()
                     );
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -739,7 +739,7 @@ void MMSEngineProcessor::operator ()()
                         dbDataRetention.detach();
                     }
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "handleDBDataRetentionEventThread failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -781,7 +781,7 @@ void MMSEngineProcessor::operator ()()
                         checkRefreshPartitionFreeSize.detach();
                     }
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "handleCheckRefreshPartitionFreeSizeEvent failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -806,7 +806,7 @@ void MMSEngineProcessor::operator ()()
                 {
 					_mmsThreadsStatistic->logRunningThreads();
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "_mmsThreadsStatistic->logRunningThreads failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -901,7 +901,7 @@ void MMSEngineProcessor::cpuUsageThread()
 				);
 			}
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string ("cpuUsage thread failed")
 				+ ", e.what(): " + e.what()
@@ -909,7 +909,7 @@ void MMSEngineProcessor::cpuUsageThread()
 
 			_logger->error(__FILEREF__ + errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string ("cpuUsage thread failed")
 				+ ", e.what(): " + e.what()
@@ -984,7 +984,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     + ", ingestionsToBeManaged.size: " + to_string(ingestionsToBeManaged.size())
             );
         }
-        catch(AlreadyLocked e)
+        catch(AlreadyLocked& e)
         {
             _logger->warn(__FILEREF__ + "getIngestionsToBeManaged failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -994,7 +994,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			return;
             // throw e;
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "getIngestionsToBeManaged failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1003,7 +1003,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
             throw e;
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "getIngestionsToBeManaged failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1050,7 +1050,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             workspace->_workspaceKey);
 					}
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
                     _logger->error(__FILEREF__ + "checkWorkspaceStorageAndMaxIngestionNumber failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1081,7 +1081,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							+ ", errorMessage: " + re.what()
 						);
 					}
-					catch(exception ex)
+					catch(exception& ex)
 					{
 						_logger->info(__FILEREF__ + "Update IngestionJob failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1093,7 +1093,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                     throw e;
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "checkWorkspaceStorageAndMaxIngestionNumber failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1124,7 +1124,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							+ ", errorMessage: " + re.what()
 						);
 					}
-					catch(exception ex)
+					catch(exception& ex)
 					{
 						_logger->info(__FILEREF__ + "Update IngestionJob failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1184,7 +1184,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					{
 						parametersRoot = JSONUtils::toJson(ingestionJobKey, -1, metaDataContent);
 					}
-                    catch(runtime_error e)
+                    catch(runtime_error& e)
                     {
                         string errorMessage = string("metadata json is not well format")
                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1216,7 +1216,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								+ ", errorMessage: " + re.what()
 							);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->info(__FILEREF__ + "Update IngestionJob failed"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1242,7 +1242,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							dependencies = validator.validateSingleTaskMetadata(
                                 workspace->_workspaceKey, ingestionType, parametersRoot);
                     }
-                    catch(runtime_error e)
+                    catch(runtime_error& e)
                     {
                         _logger->error(__FILEREF__ + "validateMetadata failed"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1274,7 +1274,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								+ ", errorMessage: " + re.what()
 							);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->info(__FILEREF__ + "Update IngestionJob failed"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1286,7 +1286,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                         throw runtime_error(errorMessage);
                     }
-                    catch(exception e)
+                    catch(exception& e)
                     {
                         _logger->error(__FILEREF__ + "validateMetadata failed"
                             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1319,7 +1319,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								+ ", errorMessage: " + re.what()
 							);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->info(__FILEREF__ + "Update IngestionJob failed"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1342,7 +1342,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									workspace, 
 									parametersRoot);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageGroupOfTasks failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1375,7 +1375,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1387,7 +1387,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageGroupOfTasks failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1420,7 +1420,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1452,7 +1452,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage) =
 									mediaSourceDetails;                        
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1485,7 +1485,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1497,7 +1497,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1530,7 +1530,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1800,7 +1800,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
 								}
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 string errorMessage = string("Downloading media source or update Ingestion job failed")
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1869,7 +1869,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     removeContentThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "removeContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1901,7 +1901,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1913,7 +1913,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "removeContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1946,7 +1946,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2016,7 +2016,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     ftpDeliveryContentThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "ftpDeliveryContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2048,7 +2048,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2060,7 +2060,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "ftpDeliveryContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2093,7 +2093,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2175,7 +2175,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     localCopyContentThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "localCopyContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2207,7 +2207,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2219,7 +2219,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "localCopyContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2252,7 +2252,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2323,7 +2323,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     httpCallbackThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "httpCallbackThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2355,7 +2355,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2367,7 +2367,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "httpCallbackThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2400,7 +2400,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2423,7 +2423,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageEncodeTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2456,7 +2456,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2468,7 +2468,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageEncodeTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2501,7 +2501,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2524,7 +2524,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2557,7 +2557,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2569,7 +2569,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2602,7 +2602,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2625,7 +2625,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2658,7 +2658,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2670,7 +2670,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2703,7 +2703,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2726,7 +2726,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2759,7 +2759,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2771,7 +2771,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2804,7 +2804,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2827,7 +2827,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageAddSilentAudioTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2860,7 +2860,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2872,7 +2872,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageAddSilentAudioTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -2905,7 +2905,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3001,7 +3001,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestFramesTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3034,7 +3034,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3046,7 +3046,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestFramesTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3079,7 +3079,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3104,7 +3104,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot,
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageSlideShowTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3137,7 +3137,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3149,7 +3149,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageSlideShowTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3182,7 +3182,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3251,7 +3251,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									generateAndIngestConcatenationThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestConcatenationThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3283,7 +3283,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3295,7 +3295,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestConcatenationThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3328,7 +3328,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3392,7 +3392,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									generateAndIngestCutMediaThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3424,7 +3424,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3436,7 +3436,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3469,7 +3469,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3490,7 +3490,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestCutMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3523,7 +3523,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3535,7 +3535,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestCutMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3568,7 +3568,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3630,7 +3630,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     extractTracksContentThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "extractTracksContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3662,7 +3662,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3674,7 +3674,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "extractTracksContentThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3707,7 +3707,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3732,7 +3732,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3765,7 +3765,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3777,7 +3777,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3810,7 +3810,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3835,7 +3835,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3868,7 +3868,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3880,7 +3880,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3913,7 +3913,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -3982,7 +3982,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         dependencies);
 								*/
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "emailNotificationThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4015,7 +4015,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4027,7 +4027,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "emailNotificationThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4060,7 +4060,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4119,7 +4119,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     checkStreamingThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "checkStreamingThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4152,7 +4152,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4164,7 +4164,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "checkStreamingThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4197,7 +4197,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4222,7 +4222,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot, 
                                         dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4255,7 +4255,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4267,7 +4267,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4300,7 +4300,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4370,7 +4370,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         dependencies);
 								*/
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "postOnFacebookThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4402,7 +4402,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4414,7 +4414,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "postOnFacebookThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4447,7 +4447,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4519,7 +4519,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         dependencies);
 								*/
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4551,7 +4551,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4563,7 +4563,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4596,7 +4596,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4622,7 +4622,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									parametersRoot, 
 									dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4655,7 +4655,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4667,7 +4667,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4700,7 +4700,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4726,7 +4726,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									parametersRoot, 
 									dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageFaceIdentificationMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4759,7 +4759,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4771,7 +4771,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageFaceIdentificationMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4804,7 +4804,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4828,7 +4828,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									workspace, 
 									parametersRoot);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageLiveRecorder failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4861,7 +4861,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4873,7 +4873,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageLiveRecorder failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4906,7 +4906,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4929,7 +4929,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									workspace, 
 									parametersRoot);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageLiveProxy failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4962,7 +4962,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -4974,7 +4974,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageLiveProxy failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5007,7 +5007,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5031,7 +5031,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									parametersRoot,
 									dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageVODProxy failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5064,7 +5064,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5076,7 +5076,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageVODProxy failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5109,7 +5109,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5134,7 +5134,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									parametersRoot,
 									dependencies);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageCountdown failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5167,7 +5167,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5179,7 +5179,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageCountdown failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5212,7 +5212,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5235,7 +5235,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									workspace, 
 									parametersRoot);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "manageLiveGrid failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5268,7 +5268,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5280,7 +5280,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "manageLiveGrid failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5313,7 +5313,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5389,7 +5389,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "manageLiveCutThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5421,7 +5421,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5433,7 +5433,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								throw runtime_error(errorMessage);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								_logger->error(__FILEREF__ + "manageLiveCutThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5466,7 +5466,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5534,7 +5534,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									youTubeLiveBroadcastThread.detach();
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5566,7 +5566,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5578,7 +5578,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								throw runtime_error(errorMessage);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								_logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5611,7 +5611,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5679,7 +5679,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									facebookLiveBroadcastThread.detach();
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "facebookLiveBroadcastThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5711,7 +5711,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5723,7 +5723,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								throw runtime_error(errorMessage);
 							}
-							catch(exception e)
+							catch(exception& e)
 							{
 								_logger->error(__FILEREF__ + "facebookLiveBroadcastThread failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5756,7 +5756,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5818,7 +5818,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     changeFileFormatThread.detach();
                                 }
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->error(__FILEREF__ + "changeFileFormatThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5850,7 +5850,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5862,7 +5862,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 throw runtime_error(errorMessage);
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->error(__FILEREF__ + "changeFileFormatThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5895,7 +5895,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										+ ", errorMessage: " + re.what()
 									);
 								}
-								catch(exception ex)
+								catch(exception& ex)
 								{
 									_logger->info(__FILEREF__ + "Update IngestionJob failed"
 										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5939,7 +5939,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									+ ", errorMessage: " + re.what()
 								);
 							}
-							catch(exception ex)
+							catch(exception& ex)
 							{
 								_logger->info(__FILEREF__ + "Update IngestionJob failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5954,7 +5954,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     }
                 }
             }
-            catch(runtime_error e)
+            catch(runtime_error& e)
             {
                 _logger->error(__FILEREF__ + "Exception managing the Ingestion entry"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5962,7 +5962,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     + ", exception: " + e.what()
                 );
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "Exception managing the Ingestion entry"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6033,7 +6033,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		parametersRoot = JSONUtils::toJson(
 			localAssetIngestionEvent.getIngestionJobKey(), -1, sMetadataContent);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "parsing parameters failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6066,7 +6066,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6079,7 +6079,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "validateMetadata failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6111,7 +6111,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6196,7 +6196,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 							_mmsStorage->getWorkspaceIngestionRepository(localAssetIngestionEvent.getWorkspace()),
 							localSourceBinaryPathFile);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 							+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
@@ -6240,7 +6240,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			binaryPathName /= externalStorageRelativePathName;
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "binaryPathName initialization failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6272,7 +6272,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6285,7 +6285,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "binaryPathName initialization failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6317,7 +6317,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6349,7 +6349,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			localAssetIngestionEvent.getIngestionType(),
 			parametersRoot);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "validateMetadata failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6382,7 +6382,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6404,7 +6404,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(binaryPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6412,7 +6412,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6425,7 +6425,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "validateMetadata failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6457,7 +6457,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6479,7 +6479,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(binaryPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6487,7 +6487,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6550,7 +6550,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6582,7 +6582,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6604,7 +6604,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(binaryPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6612,7 +6612,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6625,7 +6625,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6657,7 +6657,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6679,7 +6679,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(binaryPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6687,7 +6687,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6708,7 +6708,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
                 binaryPathName.string(), mediaFileFormat,
                 md5FileCheckSum, fileSizeInBytes);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6740,7 +6740,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6762,7 +6762,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(binaryPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6770,7 +6770,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6783,7 +6783,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6815,7 +6815,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6837,7 +6837,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(binaryPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6845,7 +6845,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6929,7 +6929,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			mediaSourceFileName = externalStorageRelativePathName.substr(fileNameIndex + 1);
 		}
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6958,7 +6958,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 			);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6979,7 +6979,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(binaryPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -6987,7 +6987,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7000,7 +7000,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7028,7 +7028,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 			);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7049,7 +7049,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(binaryPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7057,7 +7057,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7096,7 +7096,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						break;
 					}
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string errorMessage = __FILEREF__ + "listing directory failed"
 						+ ", e.what(): " + e.what()
@@ -7105,7 +7105,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					throw e;
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					string errorMessage = __FILEREF__ + "listing directory failed"
 						+ ", e.what(): " + e.what()
@@ -7130,7 +7130,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 			mediaSourceFileName = m3u8FileName;
 		}
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "retrieving m3u8 file failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7150,7 +7150,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					fs::remove_all(mmsAssetPathName);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7158,7 +7158,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7189,7 +7189,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7201,7 +7201,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			// throw e;
 			return;	// return because it is a thread
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "retrieving m3u8 file failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7221,7 +7221,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					fs::remove_all(mmsAssetPathName);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7229,7 +7229,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7260,7 +7260,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7338,7 +7338,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
             else
                 contentType = MMSEngineDBFacade::ContentType::Video;
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7379,7 +7379,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					int64_t elapsedInSeconds = MMSStorage::move(localAssetIngestionEvent.getIngestionJobKey(), sourcePathName, destBinaryPathName, _logger);
 					*/
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7387,7 +7387,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7418,7 +7418,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7430,7 +7430,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			// throw e;
 			return;	// return because it is a thread
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7449,7 +7449,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					fs::remove_all(mmsAssetPathName);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7457,7 +7457,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7488,7 +7488,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7546,7 +7546,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					fs::remove_all(mmsAssetPathName);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7554,7 +7554,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7585,7 +7585,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7618,7 +7618,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					fs::remove_all(mmsAssetPathName);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7626,7 +7626,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7657,7 +7657,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7690,7 +7690,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					fs::remove_all(mmsAssetPathName);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7698,7 +7698,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7729,7 +7729,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7762,7 +7762,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					fs::remove_all(mmsAssetPathName);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7770,7 +7770,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7801,7 +7801,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7814,7 +7814,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			// throw e;
 			return;	// return because it is a thread
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7833,7 +7833,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 					fs::remove_all(mmsAssetPathName);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7841,7 +7841,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 						+ ", errorMessage: " + e.what()
 					);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					_logger->info(__FILEREF__ + "remove failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7872,7 +7872,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7908,7 +7908,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(mmsAssetPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7916,7 +7916,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7947,7 +7947,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8225,7 +8225,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			);
 		}
     }
-    catch(DeadlockFound e)
+    catch(DeadlockFound& e)
     {
         _logger->error(__FILEREF__
 			+ "_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey failed"
@@ -8250,7 +8250,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(mmsAssetPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8259,7 +8259,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8294,7 +8294,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8307,7 +8307,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
     }
-    catch(MediaItemKeyNotFound e)	// getMediaItemDetailsByIngestionJobKey failure
+    catch(MediaItemKeyNotFound& e)	// getMediaItemDetailsByIngestionJobKey failure
     {
         _logger->error(__FILEREF__
 			+ "_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey failed"
@@ -8332,7 +8332,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(mmsAssetPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8341,7 +8341,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8376,7 +8376,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8389,7 +8389,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__
 			+ "_mmsEngineDBFacade->saveSourceContentMetadata failed"
@@ -8412,7 +8412,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(mmsAssetPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8421,7 +8421,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8456,7 +8456,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8469,7 +8469,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
         // throw e;
 		return;	// return because it is a thread
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__
 			+ "_mmsEngineDBFacade->saveSourceContentMetadata failed"
@@ -8491,7 +8491,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 				fs::remove_all(mmsAssetPathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8500,7 +8500,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					+ ", errorMessage: " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->info(__FILEREF__ + "remove failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8535,7 +8535,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8597,7 +8597,7 @@ void MMSEngineProcessor::manageGroupOfTasks(
 				_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey,
 					referenceOutput.first, referenceOutput.second, liveRecordingIngestionJobKey);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addIngestionJobOutput failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8607,7 +8607,7 @@ void MMSEngineProcessor::manageGroupOfTasks(
 					+ ", e.what(): " + e.what()
 				);
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addIngestionJobOutput failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8684,7 +8684,7 @@ void MMSEngineProcessor::manageGroupOfTasks(
                 errorMessage
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageGroupOfTasks failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8696,7 +8696,7 @@ void MMSEngineProcessor::manageGroupOfTasks(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageGroupOfTasks failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8849,7 +8849,7 @@ void MMSEngineProcessor::removeContentThread(
 					_mmsStorage->removePhysicalPath(key);
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "Remove Content failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8900,7 +8900,7 @@ void MMSEngineProcessor::removeContentThread(
 			"" // errorMessage
 		);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "removeContentThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8928,7 +8928,7 @@ void MMSEngineProcessor::removeContentThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8941,7 +8941,7 @@ void MMSEngineProcessor::removeContentThread(
         // throw e;
 		return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "removeContentThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8968,7 +8968,7 @@ void MMSEngineProcessor::removeContentThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9105,7 +9105,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 					ftpServer, ftpPort, ftpUserName, ftpPassword,
 					ftpRemoteDirectory, deliveryFileName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "FTP Content failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9156,7 +9156,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 			"" // errorMessage
 		);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9184,7 +9184,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9197,7 +9197,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
         // throw e;
 		return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9224,7 +9224,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9330,7 +9330,7 @@ void MMSEngineProcessor::localCopyContentThread(
 
 				copyContent(ingestionJobKey, mmsAssetPathName, localPath, localFileName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "local copy Content failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9381,7 +9381,7 @@ void MMSEngineProcessor::localCopyContentThread(
 			"" // errorMessage
 		);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "localCopyContentThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9409,7 +9409,7 @@ void MMSEngineProcessor::localCopyContentThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9422,7 +9422,7 @@ void MMSEngineProcessor::localCopyContentThread(
         // throw e;
 		return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "localCopyContentThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9449,7 +9449,7 @@ void MMSEngineProcessor::localCopyContentThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9681,7 +9681,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 					}
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "extract track failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9760,7 +9760,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -9799,7 +9799,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10021,7 +10021,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							callbackTimeoutInSeconds, httpHeadersRoot, httpBody,
 							userName, password, maxRetries);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__ + "http callback failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10209,7 +10209,7 @@ void MMSEngineProcessor::httpCallbackThread(
 
 									callbackMedatada["durationInSeconds"] = durationInSeconds;
 								}
-								catch(runtime_error e)
+								catch(runtime_error& e)
 								{
 									_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -10218,7 +10218,7 @@ void MMSEngineProcessor::httpCallbackThread(
 										+ ", exception: " + e.what()
 									);
 								}
-								catch(exception e)
+								catch(exception& e)
 								{
 									_logger->error(__FILEREF__ + "getMediaDurationInMilliseconds failed"
 										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -10236,7 +10236,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							callbackTimeoutInSeconds, httpHeadersRoot, data,
 							userName, password, maxRetries);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = __FILEREF__ + "http callback failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10287,7 +10287,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					callbackTimeoutInSeconds, httpHeadersRoot, httpBody,
 					userName, password, maxRetries);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "http callback failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10322,7 +10322,7 @@ void MMSEngineProcessor::httpCallbackThread(
 			"" // errorMessage
 		);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "httpCallbackTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10350,7 +10350,7 @@ void MMSEngineProcessor::httpCallbackThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10363,7 +10363,7 @@ void MMSEngineProcessor::httpCallbackThread(
         // throw e;
 		return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "httpCallbackTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10390,7 +10390,7 @@ void MMSEngineProcessor::httpCallbackThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10553,7 +10553,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 				{
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "post on facebook failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10604,7 +10604,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 			"" // errorMessage
 		);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "postOnFacebookTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10632,7 +10632,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10645,7 +10645,7 @@ void MMSEngineProcessor::postOnFacebookThread(
         // throw e;
 		return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "postOnFacebookTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10672,7 +10672,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10836,7 +10836,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 					youTubeCategoryId, youTubePrivacyStatus,
 					youTubeMadeForKids);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "post on youtube failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10887,7 +10887,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			"" // errorMessage
 		);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10915,7 +10915,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10928,7 +10928,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
         // throw e;
 		return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -10955,7 +10955,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11141,7 +11141,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							+ ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
 						);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "ffmpeg.changeFileFormat failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11154,7 +11154,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 						throw e;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "ffmpeg.changeFileFormat failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11194,7 +11194,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						// 	videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
 						// 	audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "getMediaInfo failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11219,7 +11219,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 									fs::remove_all(directoryPathName);
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "removeDirectory failed"
 									+ ", _ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11232,7 +11232,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 						throw e;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "getMediaInfo failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11256,7 +11256,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 									fs::remove_all(directoryPathName);
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "removeDirectory failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11291,7 +11291,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							workspace->_territories
 						);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11317,7 +11317,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 									fs::remove_all(directoryPathName);
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "removeDirectory failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11331,7 +11331,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 						throw e;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11357,7 +11357,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 									fs::remove_all(directoryPathName);
 								}
 							}
-							catch(runtime_error e)
+							catch(runtime_error& e)
 							{
 								_logger->error(__FILEREF__ + "removeDirectory failed"
 									+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11389,7 +11389,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 								fs::remove_all(directoryPathName);
 							}
 						}
-						catch(runtime_error e)
+						catch(runtime_error& e)
 						{
 							_logger->error(__FILEREF__ + "removeDirectory failed"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11453,7 +11453,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							+ ", changeFormatPhysicalPathKey: " + to_string(changeFormatPhysicalPathKey)
 						);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11475,7 +11475,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "change file format failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11554,7 +11554,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11593,7 +11593,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11663,7 +11663,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					+ ", errorMessage: " + re.what()
 					);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11828,7 +11828,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 						handleLocalAssetIngestionEventThread (
 							processorsThreadsNumber, *localAssetIngestionEvent);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11846,7 +11846,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 						throw e;
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11866,7 +11866,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					}
 				}
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "generate and ingest frame failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11907,7 +11907,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			dependencyIndex++;
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11935,7 +11935,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11948,7 +11948,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
         // throw e;
 		return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -11975,7 +11975,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -12144,7 +12144,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				initialFramesNumberToBeSkipped, oneFramePerSecond);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -12156,7 +12156,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -12302,7 +12302,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 				encodingPriority);
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageFaceIdendificationMediaTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -12314,7 +12314,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageFaceIdendificationMediaTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13002,7 +13002,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageLiveRecorder failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13014,7 +13014,7 @@ void MMSEngineProcessor::manageLiveRecorder(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageLiveRecorder failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13334,7 +13334,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			localOutputsRoot		// used by FFMPEGEncoder
 		);
 	}
-    catch(ConfKeyNotFound e)
+    catch(ConfKeyNotFound& e)
     {
         _logger->error(__FILEREF__ + "manageLiveProxy failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13346,7 +13346,7 @@ void MMSEngineProcessor::manageLiveProxy(
         
         throw runtime_error(e.what());
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageLiveProxy failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13358,7 +13358,7 @@ void MMSEngineProcessor::manageLiveProxy(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageLiveProxy failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13658,7 +13658,7 @@ void MMSEngineProcessor::manageVODProxy(
 			localOutputsRoot,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageVODProxy failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13670,7 +13670,7 @@ void MMSEngineProcessor::manageVODProxy(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageVODProxy failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13951,7 +13951,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
 			localOutputsRoot,
 			maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageCountdown failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -13963,7 +13963,7 @@ void MMSEngineProcessor::manageCountdown( int64_t ingestionJobKey,
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageCountdown failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -14311,7 +14311,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			localOutputsRoot		// used by FFMPEGEncoder
 		);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageLiveGrid failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -14323,7 +14323,7 @@ void MMSEngineProcessor::manageLiveGrid(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageLiveGrid failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -15127,7 +15127,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
                 "" // errorMessage
         );
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageLiveCutThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -15155,7 +15155,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -15167,7 +15167,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		return;
         // throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageLiveCutThread failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -15194,7 +15194,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16017,7 +16017,7 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
                 "" // errorMessage
         );
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageLiveCutThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16045,7 +16045,7 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16057,7 +16057,7 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
 		return;
         // throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageLiveCutThread failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16084,7 +16084,7 @@ mysql> select * from MMS_IngestionJobDependency where ingestionJobKey = 5624319;
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16502,7 +16502,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			sResponse = "";
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string("YouTube live broadcast management failed")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16515,7 +16515,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			throw runtime_error(errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string("YouTube live broadcast management failed")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16754,7 +16754,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			sResponse = "";
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string("YouTube live stream management failed")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16767,7 +16767,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			throw runtime_error(errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string("YouTube live stream management failed")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16878,7 +16878,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 			*/
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string("YouTube live stream management failed")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -16891,7 +16891,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			throw runtime_error(errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string("YouTube live stream management failed")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17030,7 +17030,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 							_mmsEngineDBFacade->modifyRTMPChannelConf(confKey, workspace->_workspaceKey,
 								youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
 						}
-						catch(ConfKeyNotFound e)
+						catch(ConfKeyNotFound& e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey,
 								youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
@@ -17125,7 +17125,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 							_mmsEngineDBFacade->modifyRTMPChannelConf(confKey, workspace->_workspaceKey,
 								youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
 						}
-						catch(ConfKeyNotFound e)
+						catch(ConfKeyNotFound& e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey,
 								youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
@@ -17186,7 +17186,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
                 "" // errorMessage
         );
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
         _logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17214,7 +17214,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17226,7 +17226,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		return;
         // throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "youTubeLiveBroadcastThread failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17253,7 +17253,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17523,7 +17523,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			}
 			rtmpURL = JSONUtils::asString(responseRoot, field, "");
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = string("Facebook live broadcast management failed")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17536,7 +17536,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 			throw runtime_error(errorMessage);
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			string errorMessage = string("Facebook live broadcast management failed")
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17701,7 +17701,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 							_mmsEngineDBFacade->modifyRTMPChannelConf(confKey, workspace->_workspaceKey,
 								facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
 						}
-						catch(ConfKeyNotFound e)
+						catch(ConfKeyNotFound& e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey,
 								facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
@@ -17802,7 +17802,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 							_mmsEngineDBFacade->modifyRTMPChannelConf(confKey, workspace->_workspaceKey,
 								facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
 						}
-						catch(ConfKeyNotFound e)
+						catch(ConfKeyNotFound& e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey,
 								facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED");
@@ -17863,7 +17863,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
                 "" // errorMessage
         );
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
         _logger->error(__FILEREF__ + "facebookLiveBroadcastThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17891,7 +17891,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17903,7 +17903,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		return;
         // throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "facebookLiveBroadcastThread failed"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -17930,7 +17930,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18087,7 +18087,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 						&& 0 == entry.path().filename().string().compare(0, generatedFrames_BaseFileName.size(), generatedFrames_BaseFileName))
                         generatedFramesFileNames.push_back(entry.path().filename().string());
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
                     string errorMessage = __FILEREF__ + "listing directory failed"
                            + ", e.what(): " + e.what()
@@ -18096,7 +18096,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 
                     throw e;
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     string errorMessage = __FILEREF__ + "listing directory failed"
                            + ", e.what(): " + e.what()
@@ -18229,7 +18229,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                         handleLocalAssetIngestionEventThread (
 							processorsThreadsNumber, *localAssetIngestionEvent);
                     }
-                    catch(runtime_error e)
+                    catch(runtime_error& e)
                     {
                         generatedFrameIngestionFailed = true;
 
@@ -18238,7 +18238,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
                             + ", exception: " + e.what()
                         );
                     }
-                    catch(exception e)
+                    catch(exception& e)
                     {
                         generatedFrameIngestionFailed = true;
 
@@ -18300,7 +18300,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
         }
         */
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18329,7 +18329,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18353,7 +18353,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18381,7 +18381,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18536,7 +18536,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL
 		);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageGenerateFramesTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18548,7 +18548,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageGenerateFramesTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18723,7 +18723,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					true);
 			}
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18735,7 +18735,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 
             throw runtime_error(errorMessage);
         }
-        catch(exception e)
+        catch(exception& e)
         {
             string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18781,7 +18781,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 			}
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "fillGenerateFramesParameters failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18791,7 +18791,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
         
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "fillGenerateFramesParameters failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18976,7 +18976,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageSlideShowTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -18988,7 +18988,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageSlideShowTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19534,7 +19534,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			}
         }
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestConcatenationThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19562,7 +19562,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19575,7 +19575,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
         // throw e;
         return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestConcatenationThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19602,7 +19602,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19969,7 +19969,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 							ignore, ignore) = videoTrack;
 					}
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -19980,7 +19980,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 					throw runtime_error(errorMessage);
 				}
-				catch(exception e)
+				catch(exception& e)
 				{
 					string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20257,7 +20257,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				newUtcStartTimeInMilliSecs, newUtcEndTimeInMilliSecs);
 		}
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20286,7 +20286,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20299,7 +20299,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         // throw e;
         return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20326,7 +20326,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20533,7 +20533,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 							throw runtime_error(errorMessage);
 						}
-						catch(MediaItemKeyNotFound e)
+						catch(MediaItemKeyNotFound& e)
 						{
 						}
 					}
@@ -20723,7 +20723,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 					sourcesToBeEncodedRoot.append(sourceRoot);
 				}
-				catch(runtime_error e)
+				catch(runtime_error& e)
 				{
 					_logger->error(__FILEREF__ + "processing media input failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20762,7 +20762,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + "manageEncodeTask failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20774,7 +20774,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 		throw e;
 	}
-    catch(exception e)
+    catch(exception& e)
     {
 		_logger->error(__FILEREF__ + "manageEncodeTask failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20922,7 +20922,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -20934,7 +20934,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageVideoSpeedTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21085,7 +21085,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
 		_logger->error(__FILEREF__ + "manageAddSilentAudioTask failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21097,7 +21097,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageAddSilentAudioTask failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21330,7 +21330,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL,
 			encodingPriority);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21342,7 +21342,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "managePictureInPictureTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21535,7 +21535,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 
 			encodingPriority);
 	}
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21547,7 +21547,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageIntroOutroOverlayTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21766,7 +21766,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			encodingPriority,
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21778,7 +21778,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21921,7 +21921,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			encodedNFSStagingAssetPathName.string(),
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL);
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -21933,7 +21933,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22331,7 +22331,7 @@ void MMSEngineProcessor::emailNotificationThread(
                 "" // errorMessage
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "sendEmail failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22359,7 +22359,7 @@ void MMSEngineProcessor::emailNotificationThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22370,7 +22370,7 @@ void MMSEngineProcessor::emailNotificationThread(
         
         return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "sendEmail failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22397,7 +22397,7 @@ void MMSEngineProcessor::emailNotificationThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22542,7 +22542,7 @@ void MMSEngineProcessor::checkStreamingThread(
                 "" // errorMessage
         );
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "checkStreamingThread failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22570,7 +22570,7 @@ void MMSEngineProcessor::checkStreamingThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22581,7 +22581,7 @@ void MMSEngineProcessor::checkStreamingThread(
         
         return;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "checkStreamingThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22608,7 +22608,7 @@ void MMSEngineProcessor::checkStreamingThread(
 				+ ", errorMessage: " + re.what()
 				);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22938,7 +22938,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
                 "" // errorMessage
         );
     }
-    catch(DeadlockFound e)
+    catch(DeadlockFound& e)
     {
         _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22950,7 +22950,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22962,7 +22962,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {
         _logger->error(__FILEREF__ + "manageMediaCrossReferenceTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23139,7 +23139,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 			+ ", encodingItems.size: " + to_string(encodingItems.size())
 		);
 	}
-	catch(AlreadyLocked e)
+	catch(AlreadyLocked& e)
 	{
 		_logger->warn(__FILEREF__ + "getEncodingJobs was not done"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23149,7 +23149,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 		return;
 		// throw e;
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "getEncodingJobs failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23158,7 +23158,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 
 		throw e;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "getEncodingJobs failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23205,7 +23205,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                 if (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() == 0)
                     moreRemoveToBeDone = false;
             }
-            catch(runtime_error e)
+            catch(runtime_error& e)
             {
                 _logger->error(__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23216,7 +23216,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                 // throw e;
                 break;
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 _logger->error(__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies failed"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23252,7 +23252,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 					else
 						_mmsStorage->removePhysicalPath(physicalPathKey);
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
                     _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23268,7 +23268,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 						string processorMMSForRetention = "";
 						_mmsEngineDBFacade->updateMediaItem(mediaItemKey, processorMMSForRetention);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "updateMediaItem failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23277,7 +23277,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 							+ ", exception: " + e.what()
 						);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "updateMediaItem failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23295,7 +23295,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                     // no throw since it is running in a detached thread
                     // throw e;
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23310,7 +23310,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 						string processorMMSForRetention = "";
 						_mmsEngineDBFacade->updateMediaItem(mediaItemKey, processorMMSForRetention);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "updateMediaItem failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23319,7 +23319,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 							+ ", exception: " + e.what()
 						);
 					}
-					catch(exception e)
+					catch(exception& e)
 					{
 						_logger->error(__FILEREF__ + "updateMediaItem failed"
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23397,7 +23397,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 
                                 FileIO::removeDirectory(pathName, removeRecursively);
                             }
-                            catch(runtime_error e)
+                            catch(runtime_error& e)
                             {
                                 _logger->warn(__FILEREF__ + "Error removing staging directory because of Retention"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23407,7 +23407,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                                     + ", e.what(): " + e.what()
                                 );
                             }
-                            catch(exception e)
+                            catch(exception& e)
                             {
                                 _logger->warn(__FILEREF__ + "Error removing staging directory because of Retention"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23433,11 +23433,11 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
                         }
                     }
                 }
-                catch(DirectoryListFinished e)
+                catch(DirectoryListFinished& e)
                 {
                     scanDirectoryFinished = true;
                 }
-                catch(runtime_error e)
+                catch(runtime_error& e)
                 {
                     string errorMessage = __FILEREF__ + "listing directory failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23447,7 +23447,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 
                     throw e;
                 }
-                catch(exception e)
+                catch(exception& e)
                 {
                     string errorMessage = __FILEREF__ + "listing directory failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23461,14 +23461,14 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
 
             FileIO::closeDirectory (directory);
         }
-        catch(runtime_error e)
+        catch(runtime_error& e)
         {
             _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 + ", e.what(): " + e.what()
             );
         }
-        catch(exception e)
+        catch(exception& e)
         {
             _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23505,7 +23505,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		alreadyExecuted = _mmsEngineDBFacade->oncePerDayExecution(
 			MMSEngineDBFacade::OncePerDayType::DBDataRetention);
 	}
-	catch(runtime_error e)
+	catch(runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23515,7 +23515,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		// no throw since it is running in a detached thread
 		// throw e;
 	}
-	catch(exception e)
+	catch(exception& e)
 	{
 		_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23539,7 +23539,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			{
 				_mmsEngineDBFacade->retentionOfIngestionData();
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23549,7 +23549,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 				// no throw since it is running in a detached thread
 				// throw e;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Ingestion Data failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23578,7 +23578,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			{
 				_mmsEngineDBFacade->retentionOfDeliveryAuthorization();
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Delivery Autorization failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23588,7 +23588,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 				// no throw since it is running in a detached thread
 				// throw e;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Delivery Autorization failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23617,7 +23617,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			{
 				_mmsEngineDBFacade->retentionOfStatisticData();
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Statistic Data failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23627,7 +23627,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 				// no throw since it is running in a detached thread
 				// throw e;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Statistic Data failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23657,7 +23657,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 				// Scenarios: IngestionJob in final status but EncodingJob not in final status
 				_mmsEngineDBFacade->fixEncodingJobsHavingWrongStatus();
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23667,7 +23667,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 				// no throw since it is running in a detached thread
 				// throw e;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Fix of EncodingJobs having wrong status failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23698,7 +23698,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 				//		even it it was passed long time
 				_mmsEngineDBFacade->fixIngestionJobsHavingWrongStatus();
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23708,7 +23708,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 				// no throw since it is running in a detached thread
 				// throw e;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "DBDataRetention: Fix of IngestionJobs having wrong status failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23749,7 +23749,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread ()
 		{
 			_mmsStorage->refreshPartitionsFreeSizes();
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			_logger->error(__FILEREF__ + "refreshPartitionsFreeSizes failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -23759,7 +23759,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread ()
 			// no throw since it is running in a detached thread
 			// throw e;
 		}
-		catch(exception e)
+		catch(exception& e)
 		{
 			_logger->error(__FILEREF__ + "refreshPartitionsFreeSizes failed"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24099,7 +24099,7 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
                 FileIO::concatFile(curlDownloadData->workspaceIngestionBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
             }
-            catch(runtime_error e)
+            catch(runtime_error& e)
             {
                 string errorMessage = string("Error to concat file")
                     + ", localPathFileName: " + localPathFileName
@@ -24110,7 +24110,7 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
                 throw runtime_error(errorMessage);            
             }
-            catch(exception e)
+            catch(exception& e)
             {
                 string errorMessage = string("Error to concat file")
                     + ", localPathFileName: " + localPathFileName
@@ -24228,7 +24228,7 @@ RESUMING FILE TRANSFERS
 				// for sure localM3u8TarGzOrM3u8Streaming has to be false
 				localM3u8TarGzOrM3u8Streaming = 0;
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = __FILEREF__ + "ffmpeg.retrieveStreamingYouTubeURL failed"
 					+ ", may be the YouTube URL is not available anymore"
@@ -24267,7 +24267,7 @@ RESUMING FILE TRANSFERS
 						+ ", errorMessage: " + re.what()
 					);
 				}
-				catch(exception ex)
+				catch(exception& ex)
 				{
 					_logger->info(__FILEREF__ + "Update IngestionJob failed"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24330,7 +24330,7 @@ RESUMING FILE TRANSFERS
 			_mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
 				ingestionJobKey, downloadingCompleted);
 		}
-		catch(runtime_error e)
+		catch(runtime_error& e)
 		{
 			string errorMessage = __FILEREF__ + "ffmpeg.streamingToFile failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24369,7 +24369,7 @@ RESUMING FILE TRANSFERS
 					+ ", errorMessage: " + re.what()
 				);
 			}
-			catch(exception ex)
+			catch(exception& ex)
 			{
 				_logger->info(__FILEREF__ + "Update IngestionJob failed"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24541,7 +24541,7 @@ RESUMING FILE TRANSFERS
 							destBinaryPathName, workspaceIngestionRepository,
 							sourcePathName);
 					}
-					catch(runtime_error e)
+					catch(runtime_error& e)
 					{
 						string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24609,7 +24609,7 @@ RESUMING FILE TRANSFERS
 								+ ", errorMessage: " + re.what()
 								);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->info(__FILEREF__ + "Update IngestionJob failed"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24675,7 +24675,7 @@ RESUMING FILE TRANSFERS
 								+ ", errorMessage: " + re.what()
 							);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->info(__FILEREF__ + "Update IngestionJob failed"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24741,7 +24741,7 @@ RESUMING FILE TRANSFERS
 								+ ", errorMessage: " + re.what()
 								);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->info(__FILEREF__ + "Update IngestionJob failed"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -24807,7 +24807,7 @@ RESUMING FILE TRANSFERS
 								+ ", errorMessage: " + re.what()
 							);
 						}
-						catch(exception ex)
+						catch(exception& ex)
 						{
 							_logger->info(__FILEREF__ + "Update IngestionJob failed"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -25948,7 +25948,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
         
         return JSONUtils::asString(youTubeResponseRoot, field, "");
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("youTube refresh token failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -25960,7 +25960,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("youTube refresh token failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -26033,7 +26033,7 @@ string MMSEngineProcessor::getFacebookPageToken(int64_t ingestionJobKey,
 
         return JSONUtils::asString(responseRoot, field, "");
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         string errorMessage = string("facebook access token failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -26045,7 +26045,7 @@ string MMSEngineProcessor::getFacebookPageToken(int64_t ingestionJobKey,
 
         throw runtime_error(errorMessage);
     }
-    catch(exception e)
+    catch(exception& e)
     {
         string errorMessage = string("facebook access token failed")
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -26297,7 +26297,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 					destBinaryPathName, workspaceIngestionRepository,
 					sourcePathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26352,7 +26352,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 				+ ", errorMessage: " + re.what()
 			);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26394,7 +26394,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 				+ ", errorMessage: " + re.what()
 			);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26474,7 +26474,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 					destBinaryPathName, workspaceIngestionRepository,
 					sourcePathName);
 			}
-			catch(runtime_error e)
+			catch(runtime_error& e)
 			{
 				string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments failed")
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26530,7 +26530,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 				+ ", errorMessage: " + re.what()
 			);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26572,7 +26572,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 				+ ", errorMessage: " + re.what()
 			);
 		}
-		catch(exception ex)
+		catch(exception& ex)
 		{
 			_logger->info(__FILEREF__ + "Update IngestionJob failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)

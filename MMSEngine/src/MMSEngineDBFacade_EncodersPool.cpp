@@ -79,7 +79,7 @@ int64_t MMSEngineDBFacade::addEncoder(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -100,7 +100,7 @@ int64_t MMSEngineDBFacade::addEncoder(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -119,7 +119,7 @@ int64_t MMSEngineDBFacade::addEncoder(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -334,7 +334,7 @@ void MMSEngineDBFacade::modifyEncoder(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -355,7 +355,7 @@ void MMSEngineDBFacade::modifyEncoder(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -374,7 +374,7 @@ void MMSEngineDBFacade::modifyEncoder(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -446,7 +446,7 @@ void MMSEngineDBFacade::removeEncoder(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -467,7 +467,7 @@ void MMSEngineDBFacade::removeEncoder(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -486,7 +486,7 @@ void MMSEngineDBFacade::removeEncoder(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -577,7 +577,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails (
 
 		return make_tuple(label, publicServerName, internalServerName);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -598,7 +598,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails (
 
         throw se;
     }
-    catch(EncoderNotFound e)
+    catch(EncoderNotFound& e)
     {        
         _logger->error(__FILEREF__ + "Encoder Not Found"
             + ", e.what(): " + e.what()
@@ -617,7 +617,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails (
 
         throw e;
     } 
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -636,7 +636,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -680,7 +680,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -701,7 +701,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -720,7 +720,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -774,7 +774,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 			);
         }
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -786,7 +786,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -796,7 +796,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -870,7 +870,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -891,7 +891,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -910,7 +910,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1010,7 +1010,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1031,7 +1031,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1050,7 +1050,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1127,7 +1127,7 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 
 		return encoderWorkspacesAssociatedRoot;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1148,7 +1148,7 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1167,7 +1167,7 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1474,7 +1474,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1495,7 +1495,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1514,7 +1514,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -1602,7 +1602,7 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 			encoderRoot[field] = getEncoderWorkspacesAssociation(encoderKey);
 		}
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1612,7 +1612,7 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1620,7 +1620,7 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
         );
@@ -1817,7 +1817,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails (int64_t encodersPoolKey)
 
 		return label;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -1838,7 +1838,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails (int64_t encodersPoolKey)
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -1857,7 +1857,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails (int64_t encodersPoolKey)
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2122,7 +2122,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2143,7 +2143,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2162,7 +2162,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2295,7 +2295,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2316,7 +2316,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2335,7 +2335,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2592,7 +2592,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2613,7 +2613,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2632,7 +2632,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -2706,7 +2706,7 @@ void MMSEngineDBFacade::removeEncodersPool(
         connectionPool->unborrow(conn);
 		conn = nullptr;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -2727,7 +2727,7 @@ void MMSEngineDBFacade::removeEncodersPool(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -2746,7 +2746,7 @@ void MMSEngineDBFacade::removeEncodersPool(
 
         throw e;
     }        
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3083,7 +3083,7 @@ tuple<int64_t, bool, string, string, string, int>
 		return make_tuple(encoderKey, external, protocol,
 			publicServerName, internalServerName, port);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3110,7 +3110,7 @@ tuple<int64_t, bool, string, string, string, int>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -3122,7 +3122,7 @@ tuple<int64_t, bool, string, string, string, int>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -3140,7 +3140,7 @@ tuple<int64_t, bool, string, string, string, int>
 
         throw se;
     }    
-    catch(EncoderNotFound e)
+    catch(EncoderNotFound& e)
     {
         _logger->error(__FILEREF__ + "Encoder Not Found"
             + ", e.what(): " + e.what()
@@ -3165,7 +3165,7 @@ tuple<int64_t, bool, string, string, string, int>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -3177,7 +3177,7 @@ tuple<int64_t, bool, string, string, string, int>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -3195,7 +3195,7 @@ tuple<int64_t, bool, string, string, string, int>
 
         throw e;
     }
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3220,7 +3220,7 @@ tuple<int64_t, bool, string, string, string, int>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -3232,7 +3232,7 @@ tuple<int64_t, bool, string, string, string, int>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -3250,7 +3250,7 @@ tuple<int64_t, bool, string, string, string, int>
 
         throw e;
     }
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3274,7 +3274,7 @@ tuple<int64_t, bool, string, string, string, int>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(sql::SQLException se)
+			catch(sql::SQLException& se)
 			{
 				_logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
 					+ ", exceptionMessage: " + se.what()
@@ -3286,7 +3286,7 @@ tuple<int64_t, bool, string, string, string, int>
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
-			catch(exception e)
+			catch(exception& e)
 			{
 				_logger->error(__FILEREF__ + "exception doing unborrow"
 					+ ", exceptionMessage: " + e.what()
@@ -3439,7 +3439,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
 
 		return encodersNumber;
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3460,7 +3460,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3479,7 +3479,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
@@ -3601,7 +3601,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 
 		return make_pair(encoderURL, external);
     }
-    catch(sql::SQLException se)
+    catch(sql::SQLException& se)
     {
         string exceptionMessage(se.what());
         
@@ -3622,7 +3622,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 
         throw se;
     }    
-    catch(runtime_error e)
+    catch(runtime_error& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
@@ -3641,7 +3641,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 
         throw e;
     } 
-    catch(exception e)
+    catch(exception& e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
