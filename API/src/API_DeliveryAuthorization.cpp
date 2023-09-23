@@ -430,7 +430,7 @@ void API::createBulkOfDeliveryAuthorization(
 							userId
 						);
 					}
-					catch (MediaItemKeyNotFound e)
+					catch (MediaItemKeyNotFound& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -440,7 +440,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
-					catch (runtime_error e)
+					catch (runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -450,7 +450,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
-					catch (exception e)
+					catch (exception& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", mediaItemKey: " + to_string(mediaItemKey)
@@ -531,7 +531,7 @@ void API::createBulkOfDeliveryAuthorization(
 							userId
 						);
 					}
-					catch (MediaItemKeyNotFound e)
+					catch (MediaItemKeyNotFound& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", uniqueName: " + uniqueName
@@ -541,7 +541,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
-					catch (runtime_error e)
+					catch (runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", uniqueName: " + uniqueName
@@ -551,7 +551,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
-					catch (exception e)
+					catch (exception& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", uniqueName: " + uniqueName
@@ -630,7 +630,7 @@ void API::createBulkOfDeliveryAuthorization(
 							userId
 						);
 					}
-					catch (MediaItemKeyNotFound e)
+					catch (MediaItemKeyNotFound& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -640,7 +640,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
-					catch (runtime_error e)
+					catch (runtime_error& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -650,7 +650,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
-					catch (exception e)
+					catch (exception& e)
 					{
 						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
 							+ ", ingestionJobKey: " + to_string(ingestionJobKey)

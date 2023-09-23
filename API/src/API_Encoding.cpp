@@ -1458,7 +1458,7 @@ void API::killEncodingJob(int64_t encoderKey,
 
 		throw runtime_error(errorMessage);
 	}
-	catch (runtime_error e)
+	catch (runtime_error& e)
 	{
 		_logger->error(__FILEREF__ + "killEncoding URL failed (runtime_error)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey) 
@@ -1469,7 +1469,7 @@ void API::killEncodingJob(int64_t encoderKey,
 
 		throw e;
 	}
-	catch (exception e)
+	catch (exception& e)
 	{
 		_logger->error(__FILEREF__ + "killEncoding URL failed (exception)"
 			+ ", encodingJobKey: " + to_string(encodingJobKey) 
