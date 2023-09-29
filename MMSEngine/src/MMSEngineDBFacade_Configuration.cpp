@@ -7311,10 +7311,12 @@ tuple<string, string, string, bool>
 			else
 			{
 				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
+				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
+				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
 				lastSQLCommand =
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
 					"from MMS_Conf_AWSChannel " 
-					"where workspaceKey = ? and type = 'DEDICATED' "
+					"where workspaceKey = ? " // and type = 'DEDICATED' "
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
@@ -8684,10 +8686,12 @@ tuple<string, string, string, string, string, bool>
 			else
 			{
 				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
+				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
+				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel " 
-					"where workspaceKey = ? and type = 'DEDICATED' "
+					"where workspaceKey = ? " // and type = 'DEDICATED' "
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
@@ -10103,10 +10107,12 @@ tuple<string, string, string, string, string, string, bool>
 			else
 			{
 				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
+				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
+				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
 				lastSQLCommand =
 					"select confKey, label, rtmpURL, streamName, userName, password, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel " 
-					"where workspaceKey = ? and type = 'DEDICATED' "
+					"where workspaceKey = ? " // and type = 'DEDICATED' "
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
@@ -11482,10 +11488,12 @@ tuple<string, int64_t, int, int, bool>
 			else
 			{
 				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
+				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
+				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
 				lastSQLCommand =
 					"select confKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, "
 					"reservedByIngestionJobKey from MMS_Conf_HLSChannel " 
-					"where workspaceKey = ? and type = 'DEDICATED' "
+					"where workspaceKey = ? " // and type = 'DEDICATED' "
 					"and label = ? "
 					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = ?) "
 					"for update";
