@@ -2336,7 +2336,8 @@ public:
 		int64_t confKey);
 
 	Json::Value getAWSChannelConfList (
-        int64_t workspaceKey, int64_t confKey, string label);
+        int64_t workspaceKey, int64_t confKey, string label,
+		int type);	// 0: all, 1: SHARED, 2: DEDICATED
 
 	tuple<string, string, string, bool> reserveAWSChannel(
 		int64_t workspaceKey, string label,
@@ -2360,7 +2361,8 @@ public:
 		int64_t confKey);
 
 	Json::Value getCDN77ChannelConfList (
-        int64_t workspaceKey, int64_t confKey, string label);
+        int64_t workspaceKey, int64_t confKey, string label,
+		int type);	// 0: all, 1: SHARED, 2: DEDICATED
 
 	tuple<string, string, string> getCDN77ChannelDetails (
         int64_t workspaceKey, string label);
@@ -2387,7 +2389,8 @@ public:
 		int64_t confKey);
 
 	Json::Value getRTMPChannelConfList (
-        int64_t workspaceKey, int64_t confKey, string label);
+        int64_t workspaceKey, int64_t confKey, string label,
+		int type);	// 0: all, 1: SHARED, 2: DEDICATED
 
 	tuple<int64_t, string, string, string, string, string> getRTMPChannelDetails (
         int64_t workspaceKey, string label, bool warningIfMissing);
@@ -2414,7 +2417,8 @@ public:
 		int64_t confKey);
 
 	Json::Value getHLSChannelConfList (
-		int64_t workspaceKey, int64_t confKey, string label);
+		int64_t workspaceKey, int64_t confKey, string label,
+		int type);	// 0: all, 1: SHARED, 2: DEDICATED
 
 	tuple<int64_t, int64_t, int, int> getHLSChannelDetails (
 		int64_t workspaceKey, string label, bool warningIfMissing);

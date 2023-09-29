@@ -6928,7 +6928,9 @@ void MMSEngineDBFacade::removeAWSChannelConf(
 }
 
 Json::Value MMSEngineDBFacade::getAWSChannelConfList (
-	int64_t workspaceKey, int64_t confKey, string label)
+	int64_t workspaceKey, int64_t confKey, string label,
+	int type	// 0: all, 1: SHARED, 2: DEDICATED
+)
 {
     string      lastSQLCommand;
     Json::Value awsChannelConfListRoot;
@@ -6972,7 +6974,11 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 		if (confKey != -1)                                                                                    
 			sqlWhere += "and ac.confKey = ? ";                                                                
 		else if (label != "")                                                                                 
-			sqlWhere += "and ac.label = ? ";                                                                  
+			sqlWhere += "and ac.label = ? ";
+		if (type == 1)
+			sqlWhere += "and ac.type = 'SHARED' ";
+		else if (type == 2)
+			sqlWhere += "and ac.type = 'DEDICATED' ";
         
         Json::Value responseRoot;
         {
@@ -8130,7 +8136,9 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(
 }
 
 Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
-	int64_t workspaceKey, int64_t confKey, string label)
+	int64_t workspaceKey, int64_t confKey, string label,
+	int type	// 0: all, 1: SHARED, 2: DEDICATED
+)
 {
     string      lastSQLCommand;
     Json::Value cdn77ChannelConfListRoot;
@@ -8175,6 +8183,10 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 			sqlWhere += "and cc.confKey = ? ";
 		else if (label != "")
 			sqlWhere += "and cc.label = ? ";
+		if (type == 1)
+			sqlWhere += "and cc.type = 'SHARED' ";
+		else if (type == 2)
+			sqlWhere += "and cc.type = 'DEDICATED' ";
         
         Json::Value responseRoot;
         {
@@ -9517,7 +9529,9 @@ void MMSEngineDBFacade::removeRTMPChannelConf(
 }
 
 Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
-	int64_t workspaceKey, int64_t confKey, string label)
+	int64_t workspaceKey, int64_t confKey, string label,
+	int type	// 0: all, 1: SHARED, 2: DEDICATED
+)
 {
     string      lastSQLCommand;
     Json::Value rtmpChannelConfListRoot;
@@ -9562,7 +9576,11 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 			sqlWhere += "and rc.confKey = ? ";
 		else if (label != "")
 			sqlWhere += "and rc.label = ? ";
-        
+		if (type == 1)
+			sqlWhere += "and rc.type = 'SHARED' ";
+		else if (type == 2)
+			sqlWhere += "and rc.type = 'DEDICATED' ";
+
         Json::Value responseRoot;
         {
             lastSQLCommand = 
@@ -10915,7 +10933,9 @@ void MMSEngineDBFacade::removeHLSChannelConf(
 }
 
 Json::Value MMSEngineDBFacade::getHLSChannelConfList (
-	int64_t workspaceKey, int64_t confKey, string label)
+	int64_t workspaceKey, int64_t confKey, string label,
+	int type	// 0: all, 1: SHARED, 2: DEDICATED
+)
 {
     string      lastSQLCommand;
     Json::Value hlsChannelConfListRoot;
@@ -10960,7 +10980,11 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 			sqlWhere += "and hc.confKey = ? ";
 		else if (label != "")
 			sqlWhere += "and hc.label = ? ";
-        
+		if (type == 1)
+			sqlWhere += "and hc.type = 'SHARED' ";
+		else if (type == 2)
+			sqlWhere += "and hc.type = 'DEDICATED' ";
+
         Json::Value responseRoot;
         {
             lastSQLCommand = 

@@ -4116,9 +4116,19 @@ void API::awsChannelConfList(
 			label = curlpp::unescape(firstDecoding);
 		}
 
+		int type = 0;	// ALL
+		string sType;
+		auto typeIt = queryParameters.find("type");
+		if (typeIt != queryParameters.end() && typeIt->second != "")
+		{
+			if(typeIt->second == "SHARED")
+				type = 1;
+			else if(typeIt->second == "DEDICATED")
+				type = 2;
+		}
         {
             Json::Value awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(
-                    workspace->_workspaceKey, -1, label);
+                    workspace->_workspaceKey, -1, label, type);
 
             string responseBody = JSONUtils::toString(awsChannelConfListRoot);
             
@@ -4634,9 +4644,19 @@ void API::cdn77ChannelConfList(
 			label = curlpp::unescape(firstDecoding);
 		}
 
+		int type = 0;	// ALL
+		string sType;
+		auto typeIt = queryParameters.find("type");
+		if (typeIt != queryParameters.end() && typeIt->second != "")
+		{
+			if(typeIt->second == "SHARED")
+				type = 1;
+			else if(typeIt->second == "DEDICATED")
+				type = 2;
+		}
         {
 			Json::Value cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(
-				workspace->_workspaceKey, -1, label);
+				workspace->_workspaceKey, -1, label, type);
 
             string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
             
@@ -5152,9 +5172,20 @@ void API::rtmpChannelConfList(
 			label = curlpp::unescape(firstDecoding);
 		}
 
+		int type = 0;	// ALL
+		string sType;
+		auto typeIt = queryParameters.find("type");
+		if (typeIt != queryParameters.end() && typeIt->second != "")
+		{
+			if(typeIt->second == "SHARED")
+				type = 1;
+			else if(typeIt->second == "DEDICATED")
+				type = 2;
+		}
+
         {
 			Json::Value rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(
-				workspace->_workspaceKey, -1, label);
+				workspace->_workspaceKey, -1, label, type);
 
             string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
             
@@ -5638,9 +5669,20 @@ void API::hlsChannelConfList(
 			label = curlpp::unescape(firstDecoding);
 		}
 
+		int type = 0;	// ALL
+		string sType;
+		auto typeIt = queryParameters.find("type");
+		if (typeIt != queryParameters.end() && typeIt->second != "")
+		{
+			if(typeIt->second == "SHARED")
+				type = 1;
+			else if(typeIt->second == "DEDICATED")
+				type = 2;
+		}
+
         {
 			Json::Value hlsChannelConfListRoot = _mmsEngineDBFacade->getHLSChannelConfList(
-				workspace->_workspaceKey, -1, label);
+				workspace->_workspaceKey, -1, label, type);
 
             string responseBody = JSONUtils::toString(hlsChannelConfListRoot);
             
