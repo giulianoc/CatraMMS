@@ -8787,7 +8787,7 @@ void MMSEngineProcessor::removeContentThread(
 							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", ingestionDependenciesNumber not finished: " + to_string(ingestionDependenciesNumber);
+								+ ", ingestionDependenciesNumber not finished: " + to_string(ingestionDependenciesNumber)
 								+ ", ingestionJobKeyOfItemToBeRemoved: " + to_string(ingestionJobKeyOfItemToBeRemoved);
 							_logger->error(errorMessage);
 
@@ -8823,7 +8823,7 @@ void MMSEngineProcessor::removeContentThread(
 							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", ingestionDependenciesNumber not finished: " + to_string(ingestionDependenciesNumber);
+								+ ", ingestionDependenciesNumber not finished: " + to_string(ingestionDependenciesNumber)
 								+ ", ingestionJobKeyOfItemToBeRemoved: " + to_string(ingestionJobKeyOfItemToBeRemoved);
 							_logger->error(errorMessage);
 
