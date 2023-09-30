@@ -8764,8 +8764,7 @@ void MMSEngineProcessor::removeContentThread(
 					{
 						bool warningIfMissing = false;
 						tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-							contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
-							_mmsEngineDBFacade->getMediaItemKeyDetails(
+							mediaItemKeyDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
 								workspace->_workspaceKey, key, warningIfMissing,
 								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
 								true);
@@ -8774,14 +8773,13 @@ void MMSEngineProcessor::removeContentThread(
 						string localTitle;
 						string localUserData;
 						string localIngestionDate;
-						int64_t localIngestionJobKey;
+						int64_t ingestionJobKeyOfItemToBeRemoved;
 						tie(localContentType, localTitle, localUserData, localIngestionDate, ignore,
-							localIngestionJobKey)
-							= contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+							ingestionJobKeyOfItemToBeRemoved) = mediaItemKeyDetails;
 
 						int ingestionDependenciesNumber = 
 							_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-								localIngestionJobKey,
+								ingestionJobKeyOfItemToBeRemoved,
 								// 2022-12-18: importante essere sicuri
 								true);
 						if (ingestionDependenciesNumber > 0)
@@ -8789,7 +8787,8 @@ void MMSEngineProcessor::removeContentThread(
 							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", ingestionDependenciesNumber: " + to_string(ingestionDependenciesNumber);
+								+ ", ingestionDependenciesNumber not finished: " + to_string(ingestionDependenciesNumber);
+								+ ", ingestionJobKeyOfItemToBeRemoved: " + to_string(ingestionJobKeyOfItemToBeRemoved);
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
@@ -8810,13 +8809,13 @@ void MMSEngineProcessor::removeContentThread(
 						string localTitle;
 						string localUserData;
 						string localIngestionDate;
-						int64_t localIngestionJobKey;
+						int64_t ingestionJobKeyOfItemToBeRemoved;
 						tie(localMediaItemKey, localContentType, localTitle, localUserData, localIngestionDate,
-							localIngestionJobKey, ignore, ignore, ignore) = mediaItemDetails;
+							ingestionJobKeyOfItemToBeRemoved, ignore, ignore, ignore) = mediaItemDetails;
 
 						int ingestionDependenciesNumber = 
 						_mmsEngineDBFacade->getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-							localIngestionJobKey,
+							ingestionJobKeyOfItemToBeRemoved,
 							// 2022-12-18: importante essere sicuri
 							true);
 						if (ingestionDependenciesNumber > 0)
@@ -8824,7 +8823,8 @@ void MMSEngineProcessor::removeContentThread(
 							string errorMessage = __FILEREF__ + "MediaItem cannot be removed because there are still ingestion dependencies"
 								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", ingestionDependenciesNumber: " + to_string(ingestionDependenciesNumber);
+								+ ", ingestionDependenciesNumber not finished: " + to_string(ingestionDependenciesNumber);
+								+ ", ingestionJobKeyOfItemToBeRemoved: " + to_string(ingestionJobKeyOfItemToBeRemoved);
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
