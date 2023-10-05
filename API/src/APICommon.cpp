@@ -1198,7 +1198,7 @@ void APICommon::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
         + ", response: " + completeHttpResponse
     );
 
-    cout << completeHttpResponse;
+    // cout << completeHttpResponse;
 }
 
 void APICommon::sendError(FCGX_Request& request, int htmlResponseCode, string errorMessage)
@@ -1329,7 +1329,7 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
         + ", response: " + completeHttpResponse
     );
 
-    cout << completeHttpResponse;
+    // cout << completeHttpResponse;
 }
 
 string APICommon::getClientIPAddress(

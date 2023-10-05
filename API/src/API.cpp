@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 			}
 			else if(logType == "rotating")
 			{
-				int64_t maxSizeInKBytes = JSONUtils::asInt64(configuration["log"]["encoder"]["rotating"],
+				int64_t maxSizeInKBytes = JSONUtils::asInt64(configuration["log"]["api"]["rotating"],
 					"maxSizeInKBytes", 1000);
 				int maxFiles = JSONUtils::asInt(configuration["log"]["api"]["rotating"],
 					"maxFiles", 10);

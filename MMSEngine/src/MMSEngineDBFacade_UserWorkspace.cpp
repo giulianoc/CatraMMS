@@ -3472,7 +3472,7 @@ Json::Value MMSEngineDBFacade::login (
 					"select userKey, name, country, "
 					"DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
 					"DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
-					"from MMS_User where eMailAddress = ? and password = ?";
+					"from MMS_User where eMailAddress = ? and password = ? and expirationDate > NOW()";
 				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
 				preparedStatement->setString(queryParameterIndex++, eMailAddress);
@@ -3546,7 +3546,7 @@ Json::Value MMSEngineDBFacade::login (
 				}
 				else
 				{
-					string errorMessage = __FILEREF__ + "email and/or password are wrong"
+					string errorMessage = __FILEREF__ + "email and/or password are wrong or user expired"
 						+ ", eMailAddress: " + eMailAddress
 						+ ", lastSQLCommand: " + lastSQLCommand
 					;
