@@ -21,6 +21,7 @@
 #include "spdlog/spdlog.h"
 #include "Workspace.h"
 #include "json/json.h"
+#define DBCONNECTIONPOOL_LOG
 #include "catralibraries/MySQLConnection.h"
 #include "catralibraries/PostgresConnection.h"
 
