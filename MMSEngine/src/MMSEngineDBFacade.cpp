@@ -12,6 +12,8 @@
  */
 
 
+#define DBCONNECTIONPOOL_LOG
+
 #include "JSONUtils.h"
 #include "catralibraries/Encrypt.h"
 

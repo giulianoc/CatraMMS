@@ -11,6 +11,7 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
+
 #include "JSONUtils.h"
 #include "AWSSigner.h"
 #include "MMSCURL.h"
@@ -70,6 +71,7 @@ int main(int argc, char** argv)
 		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
 		string logPathName =  JSONUtils::asString(configuration["log"]["api"], "pathName", "");
+		string logErrorPathName =  JSONUtils::asString(configuration["log"]["api"], "errorPathName", "");
 		string logType =  JSONUtils::asString(configuration["log"]["api"], "type", "");
 		bool stdout =  JSONUtils::asBool(configuration["log"]["api"], "stdout", false);
     
@@ -85,6 +87,11 @@ int main(int argc, char** argv)
 				auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(),
 					logRotationHour, logRotationMinute);
 				sinks.push_back(dailySink);
+
+				auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logErrorPathName.c_str(),
+					logRotationHour, logRotationMinute);
+				sinks.push_back(errorDailySink);
+				errorDailySink->set_level(spdlog::level::err);
 			}
 			else if(logType == "rotating")
 			{
@@ -96,6 +103,11 @@ int main(int argc, char** argv)
 				auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logPathName.c_str(),
 					maxSizeInKBytes * 1000, maxFiles);
 				sinks.push_back(rotatingSink);
+
+				auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logErrorPathName.c_str(),
+					maxSizeInKBytes * 1000, maxFiles);
+				sinks.push_back(errorRotatingSink);
+				errorRotatingSink->set_level(spdlog::level::err);
 			}
 
 			if (stdout)
@@ -116,8 +128,12 @@ int main(int argc, char** argv)
 			spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
 		else if (logLevel == "info")
 			spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+		else if (logLevel == "warn")
+			spdlog::set_level(spdlog::level::warn); // trace, debug, info, warn, err, critical, off
 		else if (logLevel == "err")
 			spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
+		else if (logLevel == "critical")
+			spdlog::set_level(spdlog::level::critical); // trace, debug, info, warn, err, critical, off
 		string pattern =  JSONUtils::asString(configuration["log"]["api"], "pattern", "");
 		spdlog::set_pattern(pattern);
 
@@ -136,6 +152,8 @@ int main(int argc, char** argv)
 		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
 		// spdlog::register_logger(logger);
 		*/
+
+		spdlog::set_default_logger(logger);
 
 		size_t masterDbPoolSize = JSONUtils::asInt(configuration["database"]["master"], "apiPoolSize", 5);
 		logger->info(__FILEREF__ + "Configuration item"

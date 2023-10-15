@@ -98,6 +98,7 @@ int main (int iArgc, char *pArgv [])
     Json::Value configuration = loadConfigurationFile(configPathName);
 
     string logPathName =  JSONUtils::asString(configuration["log"]["mms"], "pathName", "");
+	string logErrorPathName =  JSONUtils::asString(configuration["log"]["mms"], "errorPathName", "");
 	string logType =  JSONUtils::asString(configuration["log"]["mms"], "type", "");
     bool stdout =  JSONUtils::asBool(configuration["log"]["mms"], "stdout", false);
     
@@ -113,6 +114,11 @@ int main (int iArgc, char *pArgv [])
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(),
 				logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
+
+			auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logErrorPathName.c_str(),
+				logRotationHour, logRotationMinute);
+			sinks.push_back(errorDailySink);
+			errorDailySink->set_level(spdlog::level::err);
 		}
 		else if(logType == "rotating")
 		{
@@ -124,6 +130,11 @@ int main (int iArgc, char *pArgv [])
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logPathName.c_str(),
 				maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
+
+			auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logErrorPathName.c_str(),
+				maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(errorRotatingSink);
+			errorRotatingSink->set_level(spdlog::level::err);
 		}
 
 		if (stdout)
@@ -148,11 +159,17 @@ int main (int iArgc, char *pArgv [])
         spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "info")
         spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+    else if (logLevel == "warn")
+        spdlog::set_level(spdlog::level::warn); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
+    else if (logLevel == "critical")
+        spdlog::set_level(spdlog::level::critical); // trace, debug, info, warn, err, critical, off
 
     string pattern =  JSONUtils::asString(configuration["log"]["mms"], "pattern", "");
     spdlog::set_pattern(pattern);
+
+	spdlog::set_default_logger(logger);
 
     // install a signal handler
     signal(SIGSEGV, signalHandler);
