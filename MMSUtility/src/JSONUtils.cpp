@@ -303,25 +303,28 @@ Json::Value JSONUtils::toJson(int64_t ingestionJobKey, int64_t encodingJobKey, s
 
 	try
 	{
-		Json::CharReaderBuilder builder;
-		Json::CharReader* reader = builder.newCharReader();
-		string errors;
-
-		bool parsingSuccessful = reader->parse(json.c_str(),
-			json.c_str() + json.size(), 
-			&joValue, &errors);
-		delete reader;
-
-		if (!parsingSuccessful)
+		if (json != "")
 		{
-			string errorMessage = string("failed to parse the json")
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(encodingJobKey)
-				+ ", json: " + json
-				+ ", errors: " + errors
-			;
+			Json::CharReaderBuilder builder;
+			Json::CharReader* reader = builder.newCharReader();
+			string errors;
 
-			throw runtime_error(errorMessage);
+			bool parsingSuccessful = reader->parse(json.c_str(),
+				json.c_str() + json.size(), 
+				&joValue, &errors);
+			delete reader;
+
+			if (!parsingSuccessful)
+			{
+				string errorMessage = string("failed to parse the json")
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", json: " + json
+					+ ", errors: " + errors
+				;
+
+				throw runtime_error(errorMessage);
+			}
 		}
 	}
 	catch(...)

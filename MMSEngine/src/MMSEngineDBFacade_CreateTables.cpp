@@ -435,6 +435,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
 
+		/*
         try
         {
 			string currentPartition_YYYYMM_1;
@@ -582,6 +583,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
+		*/
 
         try
         {

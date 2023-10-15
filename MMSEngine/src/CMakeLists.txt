@@ -27,6 +27,7 @@ SET (SOURCES
 	MMSEngineDBFacade.cpp
 	MMSEngineDBFacade_Configuration.cpp
 	MMSEngineDBFacade_CreateTables.cpp
+	MMSEngineDBFacade_CreateTables_Postgres.cpp
 	MMSEngineDBFacade_EncodersPool.cpp
 	MMSEngineDBFacade_EncodingJobs.cpp
 	MMSEngineDBFacade_EncodingProfiles.cpp
@@ -34,7 +35,7 @@ SET (SOURCES
 	MMSEngineDBFacade_Lock.cpp
 	MMSEngineDBFacade_MediaItems.cpp
 	MMSEngineDBFacade_PartitionInfo.cpp
-	MMSEngineDBFacade_Statistic.cpp
+	MMSEngineDBFacade_Statistic_Postgres.cpp
 	MMSEngineDBFacade_UserWorkspace.cpp
 	MMSEngineDBFacade_WorkflowLibrary.cpp
 	PersistenceLock.cpp

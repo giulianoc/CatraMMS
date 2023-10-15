@@ -15,17 +15,6 @@
 #include "JSONUtils.h"
 #include "catralibraries/Encrypt.h"
 
-#define ENABLE_DBLOGGER 0
-#if ENABLE_DBLOGGER == 1
-    #include "spdlog/spdlog.h"
-    static shared_ptr<spdlog::logger> _globalLogger = nullptr;
-    #define DB_BORROW_DEBUG_LOGGER(x) if (_globalLogger != nullptr) _globalLogger->info(x);
-    #define DB_BORROW_ERROR_LOGGER(x) if (_globalLogger != nullptr) _globalLogger->info(x);
-    // #include <iostream>
-    // #define DB_DEBUG_LOGGER(x) std::cout << x << std::endl;
-    // #define DB_ERROR_LOGGER(x) std::cerr << x << std::endl;
-#endif
-
 #include "PersistenceLock.h"
 #include "MMSEngineDBFacade.h"
 #include <fstream>
@@ -42,52 +31,14 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 {
     _logger			= logger;
 	_configuration	= configuration;
-    #if ENABLE_DBLOGGER == 1
-        _globalLogger = logger;
-    #endif
 
 	_defaultContentProviderName     = "default";
-	// _defaultTerritoryName           = "default";
 
-    string masterDbServer = JSONUtils::asString(configuration["database"]["master"], "server", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->master->server: " + masterDbServer
-    );
-    string slaveDbServer = JSONUtils::asString(configuration["database"]["slave"], "server", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->slave->server: " + slaveDbServer
-    );
-    string defaultCharacterSet = JSONUtils::asString(configuration["database"], "defaultCharacterSet", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->defaultCharacterSet: " + defaultCharacterSet
-    );
     _dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt(configuration["database"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
     );
 
-	string masterDbUsername = JSONUtils::asString(configuration["database"]["master"], "userName", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", database->master->userName: " + masterDbUsername
-	);
-	string slaveDbUsername = JSONUtils::asString(configuration["database"]["slave"], "userName", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", database->slave->userName: " + slaveDbUsername
-	);
-    string dbPassword;
-    {
-        string encryptedPassword = JSONUtils::asString(configuration["database"], "password", "");
-        dbPassword = Encrypt::opensslDecrypt(encryptedPassword);        
-		// dbPassword = encryptedPassword;
-    }    
-    string dbName = JSONUtils::asString(configuration["database"], "dbName", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->dbName: " + dbName
-    );
-    string selectTestingConnection = JSONUtils::asString(configuration["database"], "selectTestingConnection", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->selectTestingConnection: " + selectTestingConnection
-    );
     _ingestionWorkflowRetentionInDays = JSONUtils::asInt(configuration["database"], "ingestionWorkflowRetentionInDays", 30);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
@@ -211,32 +162,123 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 		);
 	}
 
-    _logger->info(__FILEREF__ + "Creating MySQLConnectionFactory...");
-	bool reconnect = true;
-	// string defaultCharacterSet = "utf8";
-	_mySQLMasterConnectionFactory = 
-		make_shared<MySQLConnectionFactory>(masterDbServer, masterDbUsername, dbPassword, dbName,
-			reconnect, defaultCharacterSet, selectTestingConnection);
-	_mySQLSlaveConnectionFactory = 
-		make_shared<MySQLConnectionFactory>(slaveDbServer, slaveDbUsername, dbPassword, dbName,
-			reconnect, defaultCharacterSet, selectTestingConnection);
+	{
+		string masterDbServer = JSONUtils::asString(configuration["database"]["master"], "server", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->master->server: " + masterDbServer
+		);
+		string slaveDbServer = JSONUtils::asString(configuration["database"]["slave"], "server", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->slave->server: " + slaveDbServer
+		);
+		string defaultCharacterSet = JSONUtils::asString(configuration["database"], "defaultCharacterSet", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->defaultCharacterSet: " + defaultCharacterSet
+		);
+		string masterDbUsername = JSONUtils::asString(configuration["database"]["master"], "userName", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->master->userName: " + masterDbUsername
+		);
+		string slaveDbUsername = JSONUtils::asString(configuration["database"]["slave"], "userName", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->slave->userName: " + slaveDbUsername
+		);
+		string dbPassword;
+		{
+			string encryptedPassword = JSONUtils::asString(configuration["database"], "password", "");
+			dbPassword = Encrypt::opensslDecrypt(encryptedPassword);        
+			// dbPassword = encryptedPassword;
+		}    
+		string dbName = JSONUtils::asString(configuration["database"], "dbName", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->dbName: " + dbName
+		);
+		string selectTestingConnection = JSONUtils::asString(configuration["database"], "selectTestingConnection", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->selectTestingConnection: " + selectTestingConnection
+		);
 
-    // 2018-04-05: without an open stream the first connection fails
-    // 2018-05-22: It seems the problem is when the stdout of the spdlog is true!!!
-    //      Stdout of the spdlog is now false and I commented the ofstream statement
-    // ofstream aaa("/tmp/a.txt");
-	_logger->info(__FILEREF__ + "Creating MasterDBConnectionPool...");
-	_masterConnectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
-		masterDbPoolSize, _mySQLMasterConnectionFactory);
+		_logger->info(__FILEREF__ + "Creating MySQLConnectionFactory...");
+		bool reconnect = true;
+		_mySQLMasterConnectionFactory = 
+			make_shared<MySQLConnectionFactory>(masterDbServer, masterDbUsername, dbPassword, dbName,
+				reconnect, defaultCharacterSet, selectTestingConnection);
+		_mySQLSlaveConnectionFactory = 
+			make_shared<MySQLConnectionFactory>(slaveDbServer, slaveDbUsername, dbPassword, dbName,
+				reconnect, defaultCharacterSet, selectTestingConnection);
 
-	_logger->info(__FILEREF__ + "Creating SlaveDBConnectionPool...");
-	_slaveConnectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
-		slaveDbPoolSize, _mySQLSlaveConnectionFactory);
+		// 2018-04-05: without an open stream the first connection fails
+		// 2018-05-22: It seems the problem is when the stdout of the spdlog is true!!!
+		//      Stdout of the spdlog is now false and I commented the ofstream statement
+		// ofstream aaa("/tmp/a.txt");
+		_logger->info(__FILEREF__ + "Creating MasterDBConnectionPool...");
+		_masterConnectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
+			masterDbPoolSize, _mySQLMasterConnectionFactory);
+
+		_logger->info(__FILEREF__ + "Creating SlaveDBConnectionPool...");
+		_slaveConnectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
+			slaveDbPoolSize, _mySQLSlaveConnectionFactory);
+	}
+	{
+		string masterDbServer = JSONUtils::asString(configuration["postgres"]["master"], "server", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->master->server: " + masterDbServer
+		);
+		string slaveDbServer = JSONUtils::asString(configuration["postgres"]["slave"], "server", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->slave->server: " + slaveDbServer
+		);
+		string masterDbUsername = JSONUtils::asString(configuration["postgres"]["master"], "userName", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->master->userName: " + masterDbUsername
+		);
+		string slaveDbUsername = JSONUtils::asString(configuration["postgres"]["slave"], "userName", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->slave->userName: " + slaveDbUsername
+		);
+		string dbPassword;
+		{
+			string encryptedPassword = JSONUtils::asString(configuration["postgres"], "password", "");
+			dbPassword = Encrypt::opensslDecrypt(encryptedPassword);        
+			// dbPassword = encryptedPassword;
+		}    
+		string dbName = JSONUtils::asString(configuration["postgres"], "dbName", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->dbName: " + dbName
+		);
+		string selectTestingConnection = JSONUtils::asString(configuration["postgres"], "selectTestingConnection", "");
+		_logger->info(__FILEREF__ + "Configuration item"
+			+ ", database->selectTestingConnection: " + selectTestingConnection
+		);
+
+		_logger->info(__FILEREF__ + "Creating PostgresConnectionFactory...");
+		bool reconnect = true;
+		_postgresMasterConnectionFactory = 
+			make_shared<PostgresConnectionFactory>(masterDbServer, masterDbUsername, dbPassword, dbName,
+				selectTestingConnection);
+		_postgresSlaveConnectionFactory = 
+			make_shared<PostgresConnectionFactory>(slaveDbServer, slaveDbUsername, dbPassword, dbName,
+				selectTestingConnection);
+
+		// 2018-04-05: without an open stream the first connection fails
+		// 2018-05-22: It seems the problem is when the stdout of the spdlog is true!!!
+		//      Stdout of the spdlog is now false and I commented the ofstream statement
+		// ofstream aaa("/tmp/a.txt");
+		_logger->info(__FILEREF__ + "Creating MasterDBConnectionPool...");
+		_masterPostgresConnectionPool = make_shared<DBConnectionPool<PostgresConnection>>(
+			masterDbPoolSize, _postgresMasterConnectionFactory);
+
+		_logger->info(__FILEREF__ + "Creating SlaveDBConnectionPool...");
+		_slavePostgresConnectionPool = make_shared<DBConnectionPool<PostgresConnection>>(
+			slaveDbPoolSize, _postgresSlaveConnectionFactory);
+	}
 
     _lastConnectionStatsReport = chrono::system_clock::now();
 
     _logger->info(__FILEREF__ + "createTablesIfNeeded...");
     createTablesIfNeeded();
+    _logger->info(__FILEREF__ + "createTablesIfNeeded_Postgres...");
+    createTablesIfNeeded_Postgres();
 }
 
 MMSEngineDBFacade::~MMSEngineDBFacade() 

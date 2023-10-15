@@ -22,6 +22,7 @@
 #include "Workspace.h"
 #include "json/json.h"
 #include "catralibraries/MySQLConnection.h"
+#include "catralibraries/PostgresConnection.h"
 
 namespace fs = std::filesystem;
 
@@ -2688,6 +2689,11 @@ private:
 	shared_ptr<MySQLConnectionFactory>				_mySQLSlaveConnectionFactory;
 	shared_ptr<DBConnectionPool<MySQLConnection>>	_slaveConnectionPool;
 
+	shared_ptr<PostgresConnectionFactory>				_postgresMasterConnectionFactory;
+	shared_ptr<DBConnectionPool<PostgresConnection>>	_masterPostgresConnectionPool;
+	shared_ptr<PostgresConnectionFactory>				_postgresSlaveConnectionFactory;
+	shared_ptr<DBConnectionPool<PostgresConnection>>	_slavePostgresConnectionPool;
+
     string                          _defaultContentProviderName;
     // string                          _defaultTerritoryName;
     int								_ingestionJobsSelectPageSize;
@@ -2947,6 +2953,7 @@ private:
 		shared_ptr<sql::ResultSet> resultSet);
 
     void createTablesIfNeeded();
+    void createTablesIfNeeded_Postgres();
 
     bool isRealDBError(string exceptionMessage);
 
