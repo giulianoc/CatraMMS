@@ -104,6 +104,7 @@ int main (int iArgc, char *pArgv [])
     
     std::vector<spdlog::sink_ptr> sinks;
 	{
+		string logLevel =  JSONUtils::asString(configuration["log"]["api"], "level", "");
 		if(logType == "daily")
 		{
 			int logRotationHour = JSONUtils::asInt(configuration["log"]["mms"]["daily"],
@@ -114,6 +115,16 @@ int main (int iArgc, char *pArgv [])
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(),
 				logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
+			if (logLevel == "debug")
+				dailySink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				dailySink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				dailySink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				dailySink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				dailySink->set_level(spdlog::level::critical);
 
 			auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logErrorPathName.c_str(),
 				logRotationHour, logRotationMinute);
@@ -130,6 +141,16 @@ int main (int iArgc, char *pArgv [])
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logPathName.c_str(),
 				maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
+			if (logLevel == "debug")
+				rotatingSink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				rotatingSink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				rotatingSink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				rotatingSink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				rotatingSink->set_level(spdlog::level::critical);
 
 			auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logErrorPathName.c_str(),
 				maxSizeInKBytes * 1000, maxFiles);
@@ -141,6 +162,7 @@ int main (int iArgc, char *pArgv [])
 		{
 			auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
 			sinks.push_back(stdoutSink);
+			stdoutSink->set_level(spdlog::level::debug);
 		}
 	}
 
@@ -154,17 +176,7 @@ int main (int iArgc, char *pArgv [])
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
     
-    string logLevel =  JSONUtils::asString(configuration["log"]["mms"], "level", "");
-    if (logLevel == "debug")
-        spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "info")
-        spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "warn")
-        spdlog::set_level(spdlog::level::warn); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "err")
-        spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "critical")
-        spdlog::set_level(spdlog::level::critical); // trace, debug, info, warn, err, critical, off
+	spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
 
     string pattern =  JSONUtils::asString(configuration["log"]["mms"], "pattern", "");
     spdlog::set_pattern(pattern);

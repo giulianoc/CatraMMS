@@ -20,6 +20,10 @@ void MMSEngineDBFacade::createTablesIfNeeded_Postgres()
 	try
 	{
 		{
+			// 2023-10-16: la partizione dovrebbe essere fatta da (workspaceKey, requestTimestamp) ma
+			//	- poichè la sua gestione si complica un po
+			//	- attualmente abbiamo un solo cliente che utilizza le statistiche
+			// lasciamo solamente la partizione su requestTimestamp
 			string sqlStatement =
 				"create table if not exists MMS_RequestStatistic ("
 					"requestStatisticKey		bigserial, "

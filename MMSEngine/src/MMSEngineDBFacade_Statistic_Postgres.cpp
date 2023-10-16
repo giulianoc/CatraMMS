@@ -1576,7 +1576,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
     shared_ptr<PostgresConnection> conn = nullptr;
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
-	conn = connectionPool->borrow();	
+	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 

@@ -894,13 +894,14 @@ firewall-rules()
 		ufw allow from $internalNetwork to any port 8092        #mms-delivery-path
 		ufw allow from $internalNetwork to any port 8093        #mms-delivery-f
 	elif [ "$moduleType" == "engine" ]; then
-		# -> mysql
+		# -> mysql/postgres
 		#ufw allow 3306
 		#echo ""
 		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
 		#read internalNetwork
 		internalNetwork=10.0.0.0/16
 		ufw allow from $internalNetwork to any port 3306
+		ufw allow from $internalNetwork to any port 5432
 	elif [ "$moduleType" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)
 		ufw allow 80
