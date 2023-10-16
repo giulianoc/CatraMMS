@@ -976,7 +976,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 		if (startStatisticDate != "")
 			sqlWhere += fmt::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp y= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
