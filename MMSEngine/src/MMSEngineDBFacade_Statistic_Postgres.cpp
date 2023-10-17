@@ -38,10 +38,10 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 			"{}, {}, {}, {}, {}, {}, current_timestamp) returning requestStatisticKey",
 			workspaceKey,
 			(ipAddress == "" ? "null" : trans.quote(ipAddress)),
-			userId,
+			trans.quote(userId),
 			(physicalPathKey == -1 ? "null" : to_string(physicalPathKey)),
 			(confStreamKey == -1 ? "null" : to_string(confStreamKey)),
-			title
+			trans.quote(title)
 		);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		int64_t requestStatisticKey = trans.exec1(sqlStatement)[0].as<int64_t>();
