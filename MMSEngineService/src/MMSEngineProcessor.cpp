@@ -22307,7 +22307,6 @@ void MMSEngineProcessor::emailNotificationThread(
         emailBody.push_back(message);
 
 		MMSCURL::sendEmail(
-			_logger,
 			_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 			_emailUserName,	// i.e.: info@catramms-cloud.com
 			tosCommaSeparated,

@@ -33,7 +33,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")

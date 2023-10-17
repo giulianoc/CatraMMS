@@ -368,7 +368,6 @@ void API::registerUser(
             emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_logger,
 				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	// i.e.: info@catramms-cloud.com
 				tosCommaSeparated,
@@ -659,7 +658,6 @@ void API::createWorkspace(
             emailBody.push_back("<p>MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_logger,
 				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	// i.e.: info@catramms-cloud.com
 				tosCommaSeparated,
@@ -904,7 +902,6 @@ void API::shareWorkspace_(
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 				MMSCURL::sendEmail(
-					_logger,
 					_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 					_emailUserName,	// i.e.: info@catramms-cloud.com
 					tosCommaSeparated,
@@ -974,7 +971,6 @@ void API::shareWorkspace_(
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 				MMSCURL::sendEmail(
-					_logger,
 					_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 					_emailUserName,	// i.e.: info@catramms-cloud.com
 					tosCommaSeparated,
@@ -1185,7 +1181,6 @@ void API::confirmRegistration(
             emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_logger,
 				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	// i.e.: info@catramms-cloud.com
 				tosCommaSeparated,
@@ -2319,7 +2314,6 @@ void API::createTokenToResetPassword(
             emailBody.push_back("<p>MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_logger,
 				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	// i.e.: info@catramms-cloud.com
 				tosCommaSeparated,
@@ -2495,7 +2489,6 @@ void API::resetPassword(
             emailBody.push_back("<p>MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_logger,
 				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	// i.e.: info@catramms-cloud.com
 				tosCommaSeparated,
@@ -3001,7 +2994,6 @@ void API::deleteWorkspace(
 					emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 					MMSCURL::sendEmail(
-						_logger,
 						_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 						_emailUserName,	// i.e.: info@catramms-cloud.com
 						tosCommaSeparated,

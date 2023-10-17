@@ -27,6 +27,7 @@ SET (COMMON_SOURCES
 )
 
 SET (SOURCES_API
+	api.cpp
 	API.cpp
 	API_DeliveryAuthorization.cpp
 	API_Encoding.cpp
@@ -44,6 +45,7 @@ SET (SOURCES_API
 #)
 
 SET (SOURCES_FFMPEGENCODER
+	ffmpegEncoder.cpp
 	FFMPEGEncoder.cpp
 	FFMPEGEncoderDaemons.cpp
 	FFMPEGEncoderBase.cpp
@@ -74,9 +76,10 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+include_directories ("${PROJECT_SOURCE_DIR}/FastCGIAPI/src")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/include")
@@ -110,6 +113,7 @@ link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
 #API
     add_executable(api.fcgi ${SOURCES_API} ${COMMON_SOURCES} ${HEADERS})
+    target_link_libraries (api.fcgi fastCGIAPI)
     target_link_libraries (api.fcgi MMSUtility)
     target_link_libraries (api.fcgi MMSEngine)
     target_link_libraries (api.fcgi FFMpeg)
@@ -200,6 +204,7 @@ link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
 #FFMPEGEncoder
     add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER} ${COMMON_SOURCES} ${HEADERS})
+    target_link_libraries (ffmpegEncoder.fcgi fastCGIAPI)
     target_link_libraries (ffmpegEncoder.fcgi MMSUtility)
     target_link_libraries (ffmpegEncoder.fcgi MMSEngine)
     target_link_libraries (ffmpegEncoder.fcgi FFMpeg)

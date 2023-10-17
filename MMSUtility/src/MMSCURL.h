@@ -78,7 +78,6 @@ public:
 	};
 
 	struct CurlUploadEmailData {
-		string			loggerName;
 		deque<string>	emailLines;
 	};
 
@@ -373,7 +372,6 @@ public:
 	);
 
 	static void sendEmail(
-		shared_ptr<spdlog::logger> logger,
 		string emailServerURL,	// i.e.: smtps://smtppro.zoho.eu:465
 		string from,	// i.e.: info@catramms-cloud.com
 		string tosCommaSeparated,

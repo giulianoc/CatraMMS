@@ -15,8 +15,7 @@ void API::createDeliveryAuthorization(
 {
     string api = "createDeliveryAuthorization";
 
-    _logger->info(__FILEREF__ + "Received " + api
-    );
+    SPDLOG_INFO("Received {}", api);
 
     try
     {
@@ -98,7 +97,7 @@ void API::createDeliveryAuthorization(
 			&& ingestionJobKey == -1)
 		{
             string errorMessage = string("The 'physicalPathKey' or the (mediaItemKey-uniqueName)/(encodingProfileKey-encodingProfileLabel) or ingestionJobKey parameters have to be present");
-            _logger->error(__FILEREF__ + errorMessage);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 400, errorMessage);
 
@@ -241,12 +240,13 @@ void API::createDeliveryAuthorization(
         }
         catch(MediaItemKeyNotFound& e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
+            SPDLOG_ERROR("{} failed"
+                ", e.what(): {}",
+				api, e.what()
             );
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("Internal server error: {}", e.what());
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 500, errorMessage);
 
@@ -254,12 +254,13 @@ void API::createDeliveryAuthorization(
         }
         catch(runtime_error& e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
+            SPDLOG_ERROR("{} failed"
+                ", e.what(): {}",
+				api, e.what()
             );
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("Internal server error: {}", e.what());
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 500, errorMessage);
 
@@ -267,12 +268,13 @@ void API::createDeliveryAuthorization(
         }
         catch(exception& e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
+            SPDLOG_ERROR("{} failed"
+                ", e.what(): {}",
+				api, e.what()
             );
 
             string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 500, errorMessage);
 
@@ -281,22 +283,24 @@ void API::createDeliveryAuthorization(
     }
     catch(runtime_error& e)
     {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
+        SPDLOG_ERROR("API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
         );
 
         throw e;
     }
     catch(exception& e)
     {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
+        SPDLOG_ERROR("API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
         );
 
         string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+        SPDLOG_ERROR(errorMessage);
 
         sendError(request, 500, errorMessage);
 
@@ -315,8 +319,7 @@ void API::createBulkOfDeliveryAuthorization(
 {
     string api = "createBulkOfDeliveryAuthorization";
 
-    _logger->info(__FILEREF__ + "Received " + api
-    );
+    SPDLOG_INFO("Received {}", api);
 
 	try
 	{
@@ -346,7 +349,7 @@ void API::createBulkOfDeliveryAuthorization(
         }
         catch(exception& e)
         {
-            _logger->error(__FILEREF__ + e.what());
+            SPDLOG_ERROR(e.what());
 
             sendError(request, 400, e.what());
 
@@ -380,7 +383,6 @@ void API::createBulkOfDeliveryAuthorization(
 				for(Json::Value::iterator it=mediaItemKeyListRoot.begin();
 					it!=mediaItemKeyListRoot.end(); ++it)
 				{
-					_logger->info(__FILEREF__ + "AAAAAAAAAAA");
 					// Json::Value mediaItemKeyRoot = mediaItemKeyListRoot[mediaItemKeyIndex];
 					Json::Value mediaItemKeyRoot = *it;
 
@@ -432,30 +434,33 @@ void API::createBulkOfDeliveryAuthorization(
 					}
 					catch (MediaItemKeyNotFound& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", mediaItemKey: " + to_string(mediaItemKey)
-							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", mediaItemKey: {}"
+							", encodingProfileKey: {}"
+							", e.what(): {}",
+							mediaItemKey, encodingProfileKey, e.what()
 						);
 
 						continue;
 					}
 					catch (runtime_error& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", mediaItemKey: " + to_string(mediaItemKey)
-							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", mediaItemKey: {}"
+							", encodingProfileKey: {}"
+							", e.what(): {}",
+							mediaItemKey, encodingProfileKey, e.what()
 						);
 
 						continue;
 					}
 					catch (exception& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", mediaItemKey: " + to_string(mediaItemKey)
-							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", mediaItemKey: {}"
+							", encodingProfileKey: {}"
+							", e.what(): {}",
+							mediaItemKey, encodingProfileKey, e.what()
 						);
 
 						continue;
@@ -533,30 +538,33 @@ void API::createBulkOfDeliveryAuthorization(
 					}
 					catch (MediaItemKeyNotFound& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", uniqueName: " + uniqueName
-							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", uniqueName: {}"
+							", encodingProfileKey: {}"
+							", e.what(): {}",
+							uniqueName, encodingProfileKey, e.what()
 						);
 
 						continue;
 					}
 					catch (runtime_error& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", uniqueName: " + uniqueName
-							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", uniqueName: {}"
+							", encodingProfileKey: {}"
+							", e.what(): {}",
+							uniqueName, encodingProfileKey, e.what()
 						);
 
 						continue;
 					}
 					catch (exception& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", uniqueName: " + uniqueName
-							+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", uniqueName: {}"
+							", encodingProfileKey: {}"
+							", e.what(): {}",
+							uniqueName, encodingProfileKey, e.what()
 						);
 
 						continue;
@@ -632,30 +640,33 @@ void API::createBulkOfDeliveryAuthorization(
 					}
 					catch (MediaItemKeyNotFound& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", deliveryCode: " + to_string(deliveryCode)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", ingestionJobKey: {}"
+							", deliveryCode: {}"
+							", e.what(): {}",
+							ingestionJobKey, deliveryCode, e.what()
 						);
 
 						continue;
 					}
 					catch (runtime_error& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", deliveryCode: " + to_string(deliveryCode)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", ingestionJobKey: {}"
+							", deliveryCode: {}"
+							", e.what(): {}",
+							ingestionJobKey, deliveryCode, e.what()
 						);
 
 						continue;
 					}
 					catch (exception& e)
 					{
-						_logger->error(__FILEREF__ + "createDeliveryAuthorization failed"
-							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							+ ", deliveryCode: " + to_string(deliveryCode)
-							+ ", e.what(): " + e.what()
+						SPDLOG_ERROR("createDeliveryAuthorization failed"
+							", ingestionJobKey: {}"
+							", deliveryCode: {}"
+							", e.what(): {}",
+							ingestionJobKey, deliveryCode, e.what()
 						);
 
 						continue;
@@ -685,12 +696,14 @@ void API::createBulkOfDeliveryAuthorization(
 		}
         catch(runtime_error& e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			SPDLOG_ERROR("API failed"
+				", API: {}"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("Internal server error: {}", e.what());
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 500, errorMessage);
 
@@ -698,12 +711,14 @@ void API::createBulkOfDeliveryAuthorization(
         }
         catch(exception& e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			SPDLOG_ERROR("API failed"
+				", API: {}"
+				", e.what(): {}",
+				api, e.what()
+			);
 
             string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 500, errorMessage);
 
@@ -712,22 +727,24 @@ void API::createBulkOfDeliveryAuthorization(
     }
     catch(runtime_error& e)
     {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
+        SPDLOG_ERROR("API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
         );
 
         throw e;
     }
     catch(exception& e)
     {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
+        SPDLOG_ERROR("API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
         );
 
         string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+        SPDLOG_ERROR(errorMessage);
 
         sendError(request, 500, errorMessage);
 
@@ -741,9 +758,10 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 	int64_t tokenComingFromURL;
 	try
 	{
-		_logger->info(__FILEREF__ + "checkDeliveryAuthorizationThroughParameter, received"
-			+ ", contentURI: " + contentURI
-			+ ", tokenParameter: " + tokenParameter
+		SPDLOG_INFO("checkDeliveryAuthorizationThroughParameter, received"
+			", contentURI: {}"
+			", tokenParameter: {}",
+			contentURI, tokenParameter
 		);
 
 		string firstPartOfToken;
@@ -764,11 +782,12 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			size_t endOfTokenIndex = tokenParameter.rfind(separator);
 			if (endOfTokenIndex == string::npos)
 			{
-				string errorMessage = string("Wrong token format, no --- is present")
-					+ ", contentURI: " + contentURI
-					+ ", tokenParameter: " + tokenParameter
-				;
-				_logger->warn(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("Wrong token format, no --- is present"
+					", contentURI: {}"
+					", tokenParameter: {}",
+					contentURI, tokenParameter
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -803,13 +822,14 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 
 			if (cookie == "")
 			{
-				string errorMessage = string("cookie is wrong")
-					+ ", contentURI: " + contentURI
-					+ ", cookie: " + cookie
-					+ ", firstPartOfToken: " + firstPartOfToken
-					+ ", secondPartOfToken: " + secondPartOfToken
-				;
-				_logger->info(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("cookie is wrong"
+					", contentURI: {}"
+					", cookie: {}"
+					", firstPartOfToken: {}"
+					", secondPartOfToken: {}",
+					contentURI, cookie, firstPartOfToken, secondPartOfToken
+				);
+				SPDLOG_INFO(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -822,11 +842,12 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 				size_t beginOfTokenIndex = manifestLineAndToken.rfind(separator);
 				if (beginOfTokenIndex == string::npos)
 				{
-					string errorMessage = string("Wrong parameter format")
-						+ ", contentURI: " + contentURI
-						+ ", manifestLineAndToken: " + manifestLineAndToken
-						;
-					_logger->info(__FILEREF__ + errorMessage);
+					string errorMessage = fmt::format("Wrong parameter format"
+						", contentURI: {}"
+						", manifestLineAndToken: {}",
+						contentURI, manifestLineAndToken
+					);
+					SPDLOG_INFO(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -838,15 +859,17 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			string sTokenComingFromCookie = Encrypt::opensslDecrypt(cookie);
 			int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
-			_logger->info(__FILEREF__ + "check token info"
-				+ ", encryptedToken: " + encryptedToken
-				+ ", manifestLineAndToken: " + manifestLineAndToken
-				+ ", manifestLine: " + manifestLine
-				+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-				+ ", cookie: " + cookie
-				+ ", sTokenComingFromCookie: " + sTokenComingFromCookie
-				+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
-				+ ", contentURI: " + contentURI
+			SPDLOG_INFO("check token info"
+				", encryptedToken: {}"
+				", manifestLineAndToken: {}"
+				", manifestLine: {}"
+				", tokenComingFromURL: {}"
+				", cookie: {}"
+				", sTokenComingFromCookie: {}"
+				", tokenComingFromCookie: {}"
+				", contentURI: {}",
+				encryptedToken, manifestLineAndToken, manifestLine, tokenComingFromURL, cookie,
+				sTokenComingFromCookie, tokenComingFromCookie, contentURI
 			);
 
 			if (tokenComingFromCookie != tokenComingFromURL
@@ -858,98 +881,37 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 					// || contentURI.find(manifestLine) == string::npos
 			)
 			{
-				string errorMessage = string("Wrong parameter format")
-					+ ", contentURI: " + contentURI
-					+ ", manifestLine: " + manifestLine
-					+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
-					+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-					;
-				_logger->info(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("Wrong parameter format"
+					", contentURI: {}"
+					", manifestLine: {}"
+					", tokenComingFromCookie: {}"
+					", tokenComingFromURL: {}",
+					contentURI, manifestLine, tokenComingFromCookie, tokenComingFromURL
+				);
+				SPDLOG_INFO(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
-			_logger->info(__FILEREF__ + "token authorized"
-				+ ", contentURI: " + contentURI
-				+ ", manifestLine: " + manifestLine
-				+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-				+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
+			SPDLOG_INFO("token authorized"
+				", contentURI: {}"
+				", manifestLine: {}"
+				", tokenComingFromURL: {}"
+				", tokenComingFromCookie: {}",
+				contentURI, manifestLine, tokenComingFromURL, tokenComingFromCookie
 			);
 
 			// authorized
 			// string responseBody;
 			// sendSuccess(request, 200, responseBody);
 		}
-		/*
-		else if (
-			(contentURI.size() >= m4sExtension.size() && 0 == contentURI.compare(
-			contentURI.size()-m4sExtension.size(), m4sExtension.size(), m4sExtension))
-		)
-		{
-			// .m4s content to be authorized
-
-			string encryptedToken = firstPartOfToken;
-			string cookie = secondPartOfToken;
-
-			// manifestLineAndToken comes from ts URL
-			//string manifestLineAndToken = Encrypt::decrypt(encryptedToken);
-			//string manifestLine;
-			//int64_t tokenComingFromURL;
-			//{
-			//	string separator = "+++";
-			//	size_t beginOfTokenIndex = manifestLineAndToken.rfind(separator);
-			//	if (beginOfTokenIndex == string::npos)
-			//	{
-			//		string errorMessage = string("Wrong parameter format")
-			//			+ ", contentURI: " + contentURI
-			//			+ ", manifestLineAndToken: " + manifestLineAndToken
-			//			;
-			//		_logger->info(__FILEREF__ + errorMessage);
-//
-//					throw runtime_error(errorMessage);
-//				}
-//				manifestLine = manifestLineAndToken.substr(0, beginOfTokenIndex);
-//				string sTokenComingFromURL = manifestLineAndToken.substr(beginOfTokenIndex + separator.length());
-//				tokenComingFromURL = stoll(sTokenComingFromURL);
-//			}
-
-			string sTokenComingFromCookie = Encrypt::decrypt(cookie);
-			int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
-
-//			if (tokenComingFromCookie != tokenComingFromURL
-//
-//					// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
-//					|| contentURI.find(manifestLine) == string::npos)
-//			{
-//				string errorMessage = string("Wrong parameter format")
-//					+ ", contentURI: " + contentURI
-//					+ ", manifestLine: " + manifestLine
-//					+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
-//					+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-//					;
-//				_logger->info(__FILEREF__ + errorMessage);
-//
-//				throw runtime_error(errorMessage);
-//			}
-
-			_logger->info(__FILEREF__ + "token authorized"
-				+ ", contentURI: " + contentURI
-				// + ", manifestLine: " + manifestLine
-				// + ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-				+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
-			);
-
-			string responseBody;
-			sendSuccess(request, 200, responseBody);
-		}
-		*/
 		else
 		{
 			tokenComingFromURL = stoll(firstPartOfToken);
 			if (_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
 			{
-				_logger->info(__FILEREF__ + "token authorized"
-					+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+				SPDLOG_INFO("token authorized"
+					", tokenComingFromURL: {}", tokenComingFromURL
 				);
 
 				// authorized
@@ -959,10 +921,10 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			}
 			else
 			{
-				string errorMessage = string("Not authorized: token invalid")
-					+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-                          ;
-				_logger->warn(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("Not authorized: token invalid"
+					", tokenComingFromURL: {}", tokenComingFromURL
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -971,14 +933,14 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 	catch(runtime_error& e)
 	{
 		string errorMessage = string("Not authorized");
-		_logger->warn(__FILEREF__ + errorMessage);
+		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
 	catch(exception& e)
 	{
 		string errorMessage = string("Not authorized: exception managing token");
-		_logger->warn(__FILEREF__ + errorMessage);
+		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
@@ -992,8 +954,8 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 	int64_t tokenComingFromURL = -1;
 	try
 	{
-		_logger->info(__FILEREF__ + "checkDeliveryAuthorizationThroughPath, received"
-			+ ", contentURI: " + contentURI
+		SPDLOG_INFO("checkDeliveryAuthorizationThroughPath, received"
+			", contentURI: {}", contentURI
 		);
 
 		string tokenLabel = "/token_";
@@ -1001,10 +963,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		size_t startTokenIndex = contentURI.find("/token_");
 		if (startTokenIndex == string::npos)
 		{
-			string errorMessage = string("Wrong token format")
-				+ ", contentURI: " + contentURI
-			;
-			_logger->warn(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("Wrong token format"
+				", contentURI: {}", contentURI
+			);
+			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1014,10 +976,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		size_t endTokenIndex = contentURI.find(",", startTokenIndex);
 		if (endTokenIndex == string::npos)
 		{
-			string errorMessage = string("Wrong token format")
-				+ ", contentURI: " + contentURI
-			;
-			_logger->warn(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("Wrong token format"
+				", contentURI: {}", contentURI
+			);
+			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1025,10 +987,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		size_t endExpirationIndex = contentURI.find("/", endTokenIndex);
 		if (endExpirationIndex == string::npos)
 		{
-			string errorMessage = string("Wrong token format")
-				+ ", contentURI: " + contentURI
-			;
-			_logger->warn(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("Wrong token format"
+				", contentURI: {}", contentURI
+			);
+			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1060,12 +1022,13 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 			string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-			_logger->info(__FILEREF__ + "Authorization through path (m3u8)"
-				+ ", contentURI: " + contentURI
-				+ ", contentURIToBeVerified: " + contentURIToBeVerified
-				+ ", expirationTime: " + to_string(expirationTime)
-				+ ", tokenSigned: " + tokenSigned
-				+ ", md5Base64: " + md5Base64
+			SPDLOG_INFO("Authorization through path (m3u8)"
+				", contentURI: {}"
+				", contentURIToBeVerified: {}"
+				", expirationTime: {}"
+				", tokenSigned: {}"
+				", md5Base64: {}",
+				contentURI, contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
 			);
 
 			if (md5Base64 != tokenSigned)
@@ -1080,21 +1043,23 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 				string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-				_logger->info(__FILEREF__ + "Authorization through path (m3u8 2)"
-					+ ", contentURI: " + contentURI
-					+ ", contentURIToBeVerified: " + contentURIToBeVerified
-					+ ", expirationTime: " + to_string(expirationTime)
-					+ ", tokenSigned: " + tokenSigned
-					+ ", md5Base64: " + md5Base64
+				SPDLOG_INFO("Authorization through path (m3u8 2)"
+					", contentURI: {}"
+					", contentURIToBeVerified: {}"
+					", expirationTime: {}"
+					", tokenSigned: {}"
+					", md5Base64: {}",
+					contentURI, contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
 				);
 
 				if (md5Base64 != tokenSigned)
 				{
-					string errorMessage = string("Wrong token (m3u8)")
-						+ ", md5Base64: " + md5Base64
-						+ ", tokenSigned: " + tokenSigned
-					;
-					_logger->warn(__FILEREF__ + errorMessage);
+					string errorMessage = fmt::format("Wrong token (m3u8)"
+						", md5Base64: {}"
+						", tokenSigned: {}",
+						md5Base64, tokenSigned
+					);
+					SPDLOG_WARN(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1114,12 +1079,13 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 				string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
 					expirationTime);
 
-				_logger->info(__FILEREF__ + "Authorization through path"
-					+ ", contentURI: " + contentURI
-					+ ", contentURIToBeVerified: " + contentURIToBeVerified
-					+ ", expirationTime: " + to_string(expirationTime)
-					+ ", tokenSigned: " + tokenSigned
-					+ ", md5Base64: " + md5Base64
+				SPDLOG_INFO("Authorization through path"
+					", contentURI: {}"
+					", contentURIToBeVerified: {}"
+					", expirationTime: {}"
+					", tokenSigned: {}"
+					", md5Base64: {}",
+					contentURI, contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
 				);
 
 				if (md5Base64 != tokenSigned)
@@ -1136,12 +1102,13 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 					md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
 						expirationTime);
 
-					_logger->info(__FILEREF__ + "Authorization through path (ts 1)"
-						+ ", contentURI: " + contentURI
-						+ ", contentURIToBeVerified: " + contentURIToBeVerified
-						+ ", expirationTime: " + to_string(expirationTime)
-						+ ", tokenSigned: " + tokenSigned
-						+ ", md5Base64: " + md5Base64
+					SPDLOG_INFO("Authorization through path (ts 1)"
+						", contentURI: {}"
+						", contentURIToBeVerified: {}"
+						", expirationTime: {}"
+						", tokenSigned: {}"
+						", md5Base64: {}",
+						contentURI, contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
 					);
 
 					if (md5Base64 != tokenSigned)
@@ -1160,23 +1127,25 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 						string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
 							expirationTime);
 
-						_logger->info(__FILEREF__ + "Authorization through path (ts 2)"
-							+ ", contentURI: " + contentURI
-							+ ", contentURIToBeVerified: " + contentURIToBeVerified
-							+ ", expirationTime: " + to_string(expirationTime)
-							+ ", tokenSigned: " + tokenSigned
-							+ ", md5Base64: " + md5Base64
+						SPDLOG_INFO("Authorization through path (ts 2)"
+							", contentURI: {}"
+							", contentURIToBeVerified: {}"
+							", expirationTime: {}"
+							", tokenSigned: {}"
+							", md5Base64: {}",
+							contentURI, contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
 						);
 
 						if (md5Base64 != tokenSigned)
 						{
 							// non siamo in nessuno dei 3 casi
 
-							string errorMessage = string("Wrong token (ts)")
-								+ ", md5Base64: " + md5Base64
-								+ ", tokenSigned: " + tokenSigned
-							;
-							_logger->warn(__FILEREF__ + errorMessage);
+							string errorMessage = fmt::format("Wrong token (ts)"
+								", md5Base64: {}"
+								", tokenSigned: {}",
+								md5Base64, tokenSigned
+							);
+							SPDLOG_WARN(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1188,21 +1157,23 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		{
 			string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-			_logger->info(__FILEREF__ + "Authorization through path"
-				+ ", contentURI: " + contentURI
-				+ ", contentURIToBeVerified: " + contentURIToBeVerified
-				+ ", expirationTime: " + to_string(expirationTime)
-				+ ", tokenSigned: " + tokenSigned
-				+ ", md5Base64: " + md5Base64
+			SPDLOG_INFO("Authorization through path"
+				", contentURI: {}"
+				", contentURIToBeVerified: {}"
+				", expirationTime: {}"
+				", tokenSigned: {}"
+				", md5Base64: {}",
+				contentURI, contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
 			);
 
 			if (md5Base64 != tokenSigned)
 			{
-				string errorMessage = string("Wrong token")
-					+ ", md5Base64: " + md5Base64
-					+ ", tokenSigned: " + tokenSigned
-				;
-				_logger->warn(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("Wrong token"
+					", md5Base64: {}"
+					", tokenSigned: {}",
+					md5Base64, tokenSigned
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1212,11 +1183,12 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 		if (expirationTime < utcNow)
 		{
-			string errorMessage = string("Token expired")
-				+ ", expirationTime: " + to_string(expirationTime)
-				+ ", utcNow: " + to_string(utcNow)
-			;
-			_logger->warn(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("Token expired"
+				", expirationTime: {}"
+				", utcNow: {}",
+				expirationTime, utcNow
+			);
+			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1224,14 +1196,14 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 	catch(runtime_error& e)
 	{
 		string errorMessage = string("Not authorized");
-		_logger->warn(__FILEREF__ + errorMessage);
+		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
 	catch(exception& e)
 	{
 		string errorMessage = string("Not authorized: exception managing token");
-		_logger->warn(__FILEREF__ + errorMessage);
+		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}

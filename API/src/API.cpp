@@ -30,7 +30,6 @@
 #include "catralibraries/LdapWrapper.h"
 #include "Validator.h"
 #include "catralibraries/Encrypt.h"
-// #include <openssl/md5.h>
 #include <openssl/evp.h>
 
 #include <libxml/tree.h>
@@ -40,227 +39,6 @@
 
 #include "API.h"
 
-int main(int argc, char** argv) 
-{
-
-	try
-	{
-		bool noFileSystemAccess = false;
-
-		if (argc == 2)
-		{
-			string sAPIType = argv[1];
-			if (sAPIType == "NoFileSystem")
-				noFileSystemAccess = true;
-		}
-
-		// Init libxml
-		{
-			xmlInitParser();
-			LIBXML_TEST_VERSION
-		}
-
-		const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
-		if (configurationPathName == nullptr)
-		{
-			cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
-        
-			return 1;
-		}
-    
-		Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
-    
-		string logPathName =  JSONUtils::asString(configuration["log"]["api"], "pathName", "");
-		string logErrorPathName =  JSONUtils::asString(configuration["log"]["api"], "errorPathName", "");
-		string logType =  JSONUtils::asString(configuration["log"]["api"], "type", "");
-		bool stdout =  JSONUtils::asBool(configuration["log"]["api"], "stdout", false);
-    
-		std::vector<spdlog::sink_ptr> sinks;
-		{
-			string logLevel =  JSONUtils::asString(configuration["log"]["api"], "level", "");
-			if(logType == "daily")
-			{
-				int logRotationHour = JSONUtils::asInt(configuration["log"]["api"]["daily"],
-					"rotationHour", 1);
-				int logRotationMinute = JSONUtils::asInt(configuration["log"]["api"]["daily"],
-					"rotationMinute", 1);
-
-				auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(),
-					logRotationHour, logRotationMinute);
-				sinks.push_back(dailySink);
-				if (logLevel == "debug")
-					dailySink->set_level(spdlog::level::debug);
-				else if (logLevel == "info")
-					dailySink->set_level(spdlog::level::info);
-				else if (logLevel == "warn")
-					dailySink->set_level(spdlog::level::warn);
-				else if (logLevel == "err")
-					dailySink->set_level(spdlog::level::err);
-				else if (logLevel == "critical")
-					dailySink->set_level(spdlog::level::critical);
-
-				auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logErrorPathName.c_str(),
-					logRotationHour, logRotationMinute);
-				sinks.push_back(errorDailySink);
-				errorDailySink->set_level(spdlog::level::err);
-			}
-			else if(logType == "rotating")
-			{
-				int64_t maxSizeInKBytes = JSONUtils::asInt64(configuration["log"]["api"]["rotating"],
-					"maxSizeInKBytes", 1000);
-				int maxFiles = JSONUtils::asInt(configuration["log"]["api"]["rotating"],
-					"maxFiles", 10);
-
-				auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logPathName.c_str(),
-					maxSizeInKBytes * 1000, maxFiles);
-				sinks.push_back(rotatingSink);
-				if (logLevel == "debug")
-					rotatingSink->set_level(spdlog::level::debug);
-				else if (logLevel == "info")
-					rotatingSink->set_level(spdlog::level::info);
-				else if (logLevel == "warn")
-					rotatingSink->set_level(spdlog::level::warn);
-				else if (logLevel == "err")
-					rotatingSink->set_level(spdlog::level::err);
-				else if (logLevel == "critical")
-					rotatingSink->set_level(spdlog::level::critical);
-
-				auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt> (logErrorPathName.c_str(),
-					maxSizeInKBytes * 1000, maxFiles);
-				sinks.push_back(errorRotatingSink);
-				errorRotatingSink->set_level(spdlog::level::err);
-			}
-
-			if (stdout)
-			{
-				auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
-				sinks.push_back(stdoutSink);
-				stdoutSink->set_level(spdlog::level::debug);
-			}
-		}
-
-		auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
-		spdlog::register_logger(logger);
-
-		// trigger flush if the log severity is error or higher
-		logger->flush_on(spdlog::level::trace);
-    
-		spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
-
-		string pattern =  JSONUtils::asString(configuration["log"]["api"], "pattern", "");
-		spdlog::set_pattern(pattern);
-
-		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-		// spdlog::register_logger(logger);
-
-		spdlog::set_default_logger(logger);
-
-		size_t masterDbPoolSize = JSONUtils::asInt(configuration["database"]["master"], "apiPoolSize", 5);
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->master->apiPoolSize: " + to_string(masterDbPoolSize)
-		);
-		size_t slaveDbPoolSize = JSONUtils::asInt(configuration["database"]["slave"], "apiPoolSize", 5);
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize)
-		);
-		logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
-            );
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            configuration, masterDbPoolSize, slaveDbPoolSize, logger);
-
-		logger->info(__FILEREF__ + "Creating MMSStorage"
-			+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
-		);
-		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-			noFileSystemAccess, mmsEngineDBFacade, configuration, logger);
-
-		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
-			make_shared<MMSDeliveryAuthorization>(configuration,
-			mmsStorage, mmsEngineDBFacade, logger);
-
-		FCGX_Init();
-
-		int threadsNumber = JSONUtils::asInt(configuration["api"], "threadsNumber", 1);
-		logger->info(__FILEREF__ + "Configuration item"
-			+ ", api->threadsNumber: " + to_string(threadsNumber)
-		);
-
-		mutex fcgiAcceptMutex;
-		API::FileUploadProgressData fileUploadProgressData;
-
-		vector<shared_ptr<API>> apis;
-		vector<thread> apiThreads;
-
-		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
-		{
-			shared_ptr<API> api = make_shared<API>(
-				noFileSystemAccess,
-				configuration, 
-                mmsEngineDBFacade,
-				mmsStorage,
-				mmsDeliveryAuthorization,
-                &fcgiAcceptMutex,
-                &fileUploadProgressData,
-                logger
-				);
-
-			apis.push_back(api);
-			apiThreads.push_back(thread(&API::operator(), api));
-		}
-
-		// shutdown should be managed in some way:
-		// - mod_fcgid send just one shutdown, so only one thread will go down
-		// - mod_fastcgi ???
-		if (threadsNumber > 0)
-		{
-			thread fileUploadProgressThread(&API::fileUploadProgressCheck, apis[0]);
-        
-			apiThreads[0].join();
-        
-			apis[0]->stopUploadFileProgressThread();
-		}
-
-		logger->info(__FILEREF__ + "API shutdown");
-
-		// libxml
-		{
-			// Shutdown libxml
-			xmlCleanupParser();
-
-			// this is to debug memory for regression tests
-			xmlMemoryDump();
-		}
-	}
-    catch(sql::SQLException& se)
-    {
-        cerr << __FILEREF__ + "main failed. SQL exception"
-            + ", se.what(): " + se.what()
-        ;
-
-        // throw se;
-		return 1;
-    }
-    catch(runtime_error& e)
-    {
-        cerr << __FILEREF__ + "main failed"
-            + ", e.what(): " + e.what()
-        ;
-
-        // throw e;
-		return 1;
-    }
-    catch(exception& e)
-    {
-        cerr << __FILEREF__ + "main failed"
-            + ", e.what(): " + e.what()
-        ;
-
-        // throw runtime_error(errorMessage);
-		return 1;
-    }
-
-    return 0;
-}
 
 API::API(bool noFileSystemAccess, Json::Value configuration, 
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
@@ -269,10 +47,9 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 		mutex* fcgiAcceptMutex,
 		FileUploadProgressData* fileUploadProgressData,
 		shared_ptr<spdlog::logger> logger)
-    :APICommon(configuration, 
-		fcgiAcceptMutex,
-		mmsEngineDBFacade,
-		logger),
+	:FastCGIAPI(configuration, 
+		fcgiAcceptMutex),
+		_mmsEngineDBFacade(mmsEngineDBFacade),
 		_noFileSystemAccess(noFileSystemAccess),
 		_mmsStorage(mmsStorage),
 		_mmsDeliveryAuthorization(mmsDeliveryAuthorization)
@@ -281,9 +58,11 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 	// _mmsStorage = mmsStorage;
 	// _mmsDeliveryAuthorization = mmsDeliveryAuthorization;
 
+_logger = spdlog::default_logger();
+
     string encodingPriority =  JSONUtils::asString(_configuration["api"]["workspaceDefaults"], "encodingPriority", "low");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->workspaceDefaults->encodingPriority: " + encodingPriority
+    SPDLOG_INFO("Configuration item"
+		", api->workspaceDefaults->encodingPriority: {}", encodingPriority
     );
     try
     {
@@ -302,8 +81,8 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
     }
     catch(exception& e)
     {
-        _logger->error(__FILEREF__ + "Configuration item is wrong. 'low' encoding priority is set"
-            + ", api->encodingPriorityWorkspaceDefaultValue: " + encodingPriority
+        SPDLOG_ERROR("Configuration item is wrong. 'low' encoding priority is set"
+            ", api->encodingPriorityWorkspaceDefaultValue: {}", encodingPriority
         );
 
         _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
@@ -315,8 +94,8 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 	);
 
     string encodingPeriod =  JSONUtils::asString(_configuration["api"]["workspaceDefaults"], "encodingPeriod", "daily");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->workspaceDefaults->encodingPeriod: " + encodingPeriod
+    SPDLOG_INFO("Configuration item"
+		", api->workspaceDefaults->encodingPeriod: {}", encodingPeriod
     );
     if (encodingPeriod == "daily")
         _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
@@ -324,133 +103,133 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
         _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
     _maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->workspaceDefaults->maxIngestionsNumber: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
+    SPDLOG_INFO("Configuration item"
+		", api->workspaceDefaults->maxIngestionsNumber: {}", _maxIngestionsNumberWorkspaceDefaultValue
     );
     _maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "maxStorageInMB", 100);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->workspaceDefaults->maxStorageInMBWorkspaceDefaultValue: " + to_string(_maxStorageInMBWorkspaceDefaultValue)
+    SPDLOG_INFO("Configuration item"
+		", api->workspaceDefaults->maxStorageInMBWorkspaceDefaultValue: {}", _maxStorageInMBWorkspaceDefaultValue
     );
     _expirationInDaysWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "expirationInDays", 30);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->workspaceDefaults->expirationInDaysWorkspaceDefaultValue: " + to_string(_expirationInDaysWorkspaceDefaultValue)
+    SPDLOG_INFO("Configuration item"
+		", api->workspaceDefaults->expirationInDaysWorkspaceDefaultValue: {}", _expirationInDaysWorkspaceDefaultValue
     );
 
 	{
 		Json::Value sharedEncodersPoolRoot = _configuration["api"]["sharedEncodersPool"];
 
 		_sharedEncodersPoolLabel = JSONUtils::asString(sharedEncodersPoolRoot, "label", "");
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", api->sharedEncodersPool->label: " + _sharedEncodersPoolLabel
+		SPDLOG_INFO("Configuration item"
+			", api->sharedEncodersPool->label: {}", _sharedEncodersPoolLabel
 		);
 
 		_sharedEncodersLabel = sharedEncodersPoolRoot["encodersLabel"];
 	}
 
     _defaultSharedHLSChannelsNumber = JSONUtils::asInt(_configuration["api"], "defaultSharedHLSChannelsNumber", 1);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->defaultSharedHLSChannelsNumber: " + to_string(_defaultSharedHLSChannelsNumber)
+    SPDLOG_INFO("Configuration item"
+        ", api->defaultSharedHLSChannelsNumber: {}", _defaultSharedHLSChannelsNumber
     );
 
     _apiProtocol =  JSONUtils::asString(_configuration["api"], "protocol", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->protocol: " + _apiProtocol
+    SPDLOG_INFO("Configuration item"
+        ", api->protocol: {}", _apiProtocol
     );
     _apiHostname =  JSONUtils::asString(_configuration["api"], "hostname", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->hostname: " + _apiHostname
+    SPDLOG_INFO("Configuration item"
+        ", api->hostname: {}", _apiHostname
     );
     _apiPort = JSONUtils::asInt(_configuration["api"], "port", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->port: " + to_string(_apiPort)
+    SPDLOG_INFO("Configuration item"
+        ", api->port: {}", _apiPort
     );
     _apiVersion =  JSONUtils::asString(_configuration["api"], "version", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->version: " + _apiVersion
+    SPDLOG_INFO("Configuration item"
+        ", api->version: {}", _apiVersion
     );
 
     Json::Value api = _configuration["api"];
     // _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
-    // _logger->info(__FILEREF__ + "Configuration item"
+    // SPDLOG_INFO(__FILEREF__ + "Configuration item"
     //    + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
     // );
     _progressUpdatePeriodInSeconds  = JSONUtils::asInt(api["binary"], "progressUpdatePeriodInSeconds", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
+    SPDLOG_INFO("Configuration item"
+        ", api->binary->progressUpdatePeriodInSeconds: {}", _progressUpdatePeriodInSeconds
     );
     _webServerPort  = JSONUtils::asInt(api["binary"], "webServerPort", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->webServerPort: " + to_string(_webServerPort)
+    SPDLOG_INFO("Configuration item"
+        ", api->binary->webServerPort: {}", _webServerPort
     );
     _maxProgressCallFailures  = JSONUtils::asInt(api["binary"], "maxProgressCallFailures", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
+    SPDLOG_INFO("Configuration item"
+        ", api->binary->maxProgressCallFailures: {}", _maxProgressCallFailures
     );
     _progressURI  = JSONUtils::asString(api["binary"], "progressURI", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->progressURI: " + _progressURI
+    SPDLOG_INFO("Configuration item"
+        ", api->binary->progressURI: {}", _progressURI
     );
     
     _defaultTTLInSeconds  = JSONUtils::asInt(api["delivery"], "defaultTTLInSeconds", 60);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->defaultTTLInSeconds: " + to_string(_defaultTTLInSeconds)
+    SPDLOG_INFO("Configuration item"
+        ", api->delivery->defaultTTLInSeconds: {}", _defaultTTLInSeconds
     );
 
     _defaultMaxRetries  = JSONUtils::asInt(api["delivery"], "defaultMaxRetries", 60);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->defaultMaxRetries: " + to_string(_defaultMaxRetries)
+    SPDLOG_INFO("Configuration item"
+        ", api->delivery->defaultMaxRetries: {}", _defaultMaxRetries
     );
 
     _defaultRedirect  = JSONUtils::asBool(api["delivery"], "defaultRedirect", true);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->defaultRedirect: " + to_string(_defaultRedirect)
+    SPDLOG_INFO("Configuration item"
+        ", api->delivery->defaultRedirect: {}", _defaultRedirect
     );
     
     _deliveryProtocol  = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->deliveryProtocol: " + _deliveryProtocol
+    SPDLOG_INFO("Configuration item"
+        ", api->delivery->deliveryProtocol: {}", _deliveryProtocol
     );
     _deliveryHost_authorizationThroughParameter  = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->deliveryHost_authorizationThroughParameter: " + _deliveryHost_authorizationThroughParameter
+    SPDLOG_INFO("Configuration item"
+        ", api->delivery->deliveryHost_authorizationThroughParameter: {}", _deliveryHost_authorizationThroughParameter
     );
     _deliveryHost_authorizationThroughPath  = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-		+ ", api->delivery->deliveryHost_authorizationThroughPath: " + _deliveryHost_authorizationThroughPath
+    SPDLOG_INFO("Configuration item"
+		", api->delivery->deliveryHost_authorizationThroughPath: {}", _deliveryHost_authorizationThroughPath
 	);
 
     _ldapEnabled  = JSONUtils::asBool(api["activeDirectory"], "enabled", false);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->activeDirectory->enabled: " + to_string(_ldapEnabled)
+    SPDLOG_INFO("Configuration item"
+        ", api->activeDirectory->enabled: {}", _ldapEnabled
     );
     _ldapURL  = JSONUtils::asString(api["activeDirectory"], "ldapURL", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->activeDirectory->ldapURL: " + _ldapURL
+    SPDLOG_INFO("Configuration item"
+        ", api->activeDirectory->ldapURL: {}", _ldapURL
     );
     _ldapCertificatePathName  = JSONUtils::asString(api["activeDirectory"], "certificatePathName", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->activeDirectory->certificatePathName: " + _ldapCertificatePathName
+    SPDLOG_INFO("Configuration item"
+        ", api->activeDirectory->certificatePathName: {}", _ldapCertificatePathName
     );
     _ldapManagerUserName  = JSONUtils::asString(api["activeDirectory"], "managerUserName", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->activeDirectory->managerUserName: " + _ldapManagerUserName
+    SPDLOG_INFO("Configuration item"
+        ", api->activeDirectory->managerUserName: {}", _ldapManagerUserName
     );
     _ldapManagerPassword  = JSONUtils::asString(api["activeDirectory"], "managerPassword", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->activeDirectory->managerPassword: " + _ldapManagerPassword
+    SPDLOG_INFO("Configuration item"
+        ", api->activeDirectory->managerPassword: {}", _ldapManagerPassword
     );
     _ldapBaseDn  = JSONUtils::asString(api["activeDirectory"], "baseDn", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->activeDirectory->baseDn: " + _ldapBaseDn
+    SPDLOG_INFO("Configuration item"
+        ", api->activeDirectory->baseDn: {}", _ldapBaseDn
     );
 	_ldapDefaultWorkspaceKeys	= JSONUtils::asString(api["activeDirectory"], "defaultWorkspaceKeys", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", api->activeDirectory->defaultWorkspaceKeys: " + _ldapDefaultWorkspaceKeys
+	SPDLOG_INFO("Configuration item"
+		", api->activeDirectory->defaultWorkspaceKeys: {}", _ldapDefaultWorkspaceKeys
 	);
 
 	_registerUserEnabled  = JSONUtils::asBool(api, "registerUserEnabled", false);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->registerUserEnabled: " + to_string(_registerUserEnabled)
+    SPDLOG_INFO("Configuration item"
+        ", api->registerUserEnabled: {}", _registerUserEnabled
     );
 	_savingGEOUserInfo = JSONUtils::asBool(_configuration["mms"]["geoService"], "savingGEOUserInfo", false);
 	if (_savingGEOUserInfo)
@@ -461,78 +240,91 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 
 	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
+    SPDLOG_INFO(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
     );
     _ffmpegEncoderPort = JSONUtils::asInt(_configuration["ffmpeg"], "encoderPort", 0);
-    _logger->info(__FILEREF__ + "Configuration item"
+    SPDLOG_INFO(__FILEREF__ + "Configuration item"
         + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
     );
 	*/
     _ffmpegEncoderUser = JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser
+    SPDLOG_INFO("Configuration item"
+        ", ffmpeg->encoderUser: {}", _ffmpegEncoderUser
     );
     _ffmpegEncoderPassword = JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->encoderPassword: " + "..."
+    SPDLOG_INFO("Configuration item"
+        ", ffmpeg->encoderPassword: {}", "..."
     );
     _ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->encoderTimeoutInSeconds: " + to_string(_ffmpegEncoderTimeoutInSeconds)
+    SPDLOG_INFO("Configuration item"
+        ", ffmpeg->encoderTimeoutInSeconds: {}", _ffmpegEncoderTimeoutInSeconds
     );
     _ffmpegEncoderKillEncodingURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderKillEncodingURI", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI
+    SPDLOG_INFO("Configuration item"
+        ", ffmpeg->encoderKillEncodingURI: {}", _ffmpegEncoderKillEncodingURI
     );
     _ffmpegEncoderChangeLiveProxyPlaylistURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderChangeLiveProxyPlaylistURI", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-		+ ", ffmpeg->encoderChangeLiveProxyPlaylistURI: " + _ffmpegEncoderChangeLiveProxyPlaylistURI
+    SPDLOG_INFO("Configuration item"
+		", ffmpeg->encoderChangeLiveProxyPlaylistURI: {}", _ffmpegEncoderChangeLiveProxyPlaylistURI
     );
 
 	_intervalInSecondsToCheckEncodingFinished         = JSONUtils::asInt(_configuration["encoding"],
 		"intervalInSecondsToCheckEncodingFinished", 0);
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", encoding->intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+	SPDLOG_INFO("Configuration item"
+		", encoding->intervalInSecondsToCheckEncodingFinished: {}", _intervalInSecondsToCheckEncodingFinished
 	);
 
 	_maxSecondsToWaitAPIIngestionLock  = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", mms->locks->maxSecondsToWaitAPIIngestionLock: " + to_string(_maxSecondsToWaitAPIIngestionLock)
+	SPDLOG_INFO("Configuration item"
+		", mms->locks->maxSecondsToWaitAPIIngestionLock: {}", _maxSecondsToWaitAPIIngestionLock
 	);
 
 	_keyPairId =  JSONUtils::asString(_configuration["aws"], "keyPairId", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", aws->keyPairId: " + _keyPairId
+	SPDLOG_INFO("Configuration item"
+		", aws->keyPairId: {}", _keyPairId
 	);
 	_privateKeyPEMPathName =  JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName
+	SPDLOG_INFO("Configuration item"
+		", aws->privateKeyPEMPathName: {}", _privateKeyPEMPathName
 	);
 	_vodCloudFrontHostNamesRoot =  _configuration["aws"]["vodCloudFrontHostNames"];
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", aws->vodCloudFrontHostNames: " + "..."
+	SPDLOG_INFO("Configuration item"
+		", aws->vodCloudFrontHostNames: {}", "..."
 	);
 
 	_emailProviderURL =  JSONUtils::asString(_configuration["EmailNotification"], "providerURL", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", EmailNotification->providerURL: " + _emailProviderURL
+	SPDLOG_INFO("Configuration item"
+		", EmailNotification->providerURL: {}", _emailProviderURL
 	);
 	_emailUserName =  JSONUtils::asString(_configuration["EmailNotification"], "userName", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", EmailNotification->userName: " + _emailUserName
+	SPDLOG_INFO("Configuration item"
+		", EmailNotification->userName: {}", _emailUserName
 	);
     {
 		string encryptedPassword = JSONUtils::asString(_configuration["EmailNotification"], "password", "");
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", EmailNotification->password: " + encryptedPassword
+		SPDLOG_INFO("Configuration item"
+			", EmailNotification->password: {}", encryptedPassword
 			// + ", _emailPassword: " + _emailPassword
 		);
     }
 	_emailCcsCommaSeparated =  JSONUtils::asString(_configuration["EmailNotification"], "cc", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", EmailNotification->cc: " + _emailCcsCommaSeparated
+	SPDLOG_INFO("Configuration item"
+		", EmailNotification->cc: {}", _emailCcsCommaSeparated
+	);
+
+	_guiProtocol =  JSONUtils::asString(_configuration["mms"], "guiProtocol", "");
+	SPDLOG_INFO("Configuration item"
+		", mms->guiProtocol: {}", _guiProtocol
+	);
+    _guiHostname =  JSONUtils::asString(_configuration["mms"], "guiHostname", "");
+	SPDLOG_INFO("Configuration item"
+		", mms->guiHostname: {}", _guiHostname
+	);
+    _guiPort = JSONUtils::asInt(_configuration["mms"], "guiPort", 0);
+	SPDLOG_INFO("Configuration item"
+		", mms->guiPort: {}", _guiPort
 	);
 
     _fileUploadProgressData     = fileUploadProgressData;
@@ -541,26 +333,6 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 
 API::~API() = default;
 
-/*
-void API::getBinaryAndResponse(
-        string requestURI,
-        string requestMethod,
-        string xCatraMMSResumeHeader,
-        unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool>& userKeyWorkspaceAndFlags,
-        unsigned long contentLength
-)
-{
-    _logger->error(__FILEREF__ + "API application is able to manage ONLY NON-Binary requests");
-    
-    string errorMessage = string("Internal server error");
-    _logger->error(__FILEREF__ + errorMessage);
-
-    sendError(500, errorMessage);
-
-    throw runtime_error(errorMessage);
-}
-*/
 
 void API::manageRequestAndResponse(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
@@ -568,10 +340,8 @@ void API::manageRequestAndResponse(
 	string requestURI,
 	string requestMethod,
 	unordered_map<string, string> queryParameters,
-	bool basicAuthenticationPresent,
-	tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>&
-		userKeyWorkspaceAndFlags,
-	string apiKey,
+	bool authorizationPresent,
+	string userName, string password,
 	unsigned long contentLength,
 	string requestBody,
 	unordered_map<string, string>& requestDetails
@@ -593,40 +363,44 @@ void API::manageRequestAndResponse(
     bool editEncodersPool;
     bool applicationRecorder;
 
-    if (basicAuthenticationPresent)
+    if (authorizationPresent)
     {
         tie(userKey, workspace, admin, createRemoveWorkspace, ingestWorkflow, createProfiles,
 				deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding,
 				cancelIngestionJob_, editEncodersPool, applicationRecorder) 
-                = userKeyWorkspaceAndFlags;
+                = _userKeyWorkspaceAndFlags;
 
-        _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
-            + ", requestURI: " + requestURI
-            + ", requestMethod: " + requestMethod
-            + ", contentLength: " + to_string(contentLength)
-            + ", userKey: " + to_string(userKey)
-            + ", workspace->_name: " + workspace->_name
-            + ", requestBody: " + requestBody
-            + ", admin: " + to_string(admin)
-            + ", createRemoveWorkspace: " + to_string(createRemoveWorkspace)
-            + ", ingestWorkflow: " + to_string(ingestWorkflow)
-            + ", createProfiles: " + to_string(createProfiles)
-            + ", deliveryAuthorization: " + to_string(deliveryAuthorization)
-            + ", shareWorkspace: " + to_string(shareWorkspace)
-            + ", editMedia: " + to_string(editMedia)
-            + ", editConfiguration: " + to_string(editConfiguration)
-            + ", killEncoding: " + to_string(killEncoding)
-            + ", cancelIngestionJob: " + to_string(cancelIngestionJob_)
-            + ", editEncodersPool: " + to_string(editEncodersPool)
-            + ", applicationRecorder: " + to_string(applicationRecorder)
-        );        
+        SPDLOG_INFO("Received manageRequestAndResponse"
+            ", requestURI: {}"
+            ", requestMethod: {}"
+            ", contentLength: {}"
+            ", userKey: {}"
+            ", workspace->_name: {}"
+            ", requestBody: {}"
+            ", admin: {}"
+            ", createRemoveWorkspace: {}"
+            ", ingestWorkflow: {}"
+            ", createProfiles: {}"
+            ", deliveryAuthorization: {}"
+            ", shareWorkspace: {}"
+            ", editMedia: {}"
+            ", editConfiguration: {}"
+            ", killEncoding: {}"
+            ", cancelIngestionJob: {}"
+            ", editEncodersPool: {}"
+            ", applicationRecorder: {}",
+			requestURI, requestMethod, contentLength, userKey, workspace->_name, requestBody,
+			admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
+			shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob_,
+			editEncodersPool, applicationRecorder
+        );
     }
 
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
     {
-        string errorMessage = string("The 'method' parameter is not found");
-        _logger->error(__FILEREF__ + errorMessage);
+        string errorMessage = fmt::format("The 'method' parameter is not found");
+        SPDLOG_ERROR(errorMessage);
 
         sendError(request, 400, errorMessage);
 
@@ -639,15 +413,17 @@ void API::manageRequestAndResponse(
     if (versionIt != queryParameters.end())
 		version = versionIt->second;
 
-    if (!basicAuthenticationPresent)
+    if (!authorizationPresent)
     {
-        _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
-            + ", requestURI: " + requestURI
-            + ", requestMethod: " + requestMethod
-            + ", contentLength: " + to_string(contentLength)
-            + ", method: " + method
+        SPDLOG_INFO("Received manageRequestAndResponse"
+            ", requestURI: {}"
+            ", requestMethod: {}"
+            ", contentLength: {}"
+            ", method: {}"
 			// next is to avoid to log the password
-            + (method == "login" ? ", requestBody: ..." : (", requestBody: " + requestBody))
+            ", requestBody: {}",
+			requestURI, requestMethod, contentLength, method,
+            (method == "login" ? "..." : requestBody)
         );
     }
 
@@ -667,13 +443,14 @@ void API::manageRequestAndResponse(
         }
         catch(exception& e)
         {
-            _logger->error(__FILEREF__ + "status failed"
-                + ", requestBody: " + requestBody
-                + ", e.what(): " + e.what()
+            SPDLOG_ERROR("status failed"
+                ", requestBody: {}"
+                ", e.what(): {}",
+				requestBody, e.what()
             );
 
             string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 500, errorMessage);
 
@@ -730,10 +507,10 @@ void API::manageRequestAndResponse(
                         }
                         catch(exception& e)
                         {
-                            string errorMessage = string("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'")
-                                + ", contentRange: " + contentRange
-                            ;
-                            _logger->error(__FILEREF__ + errorMessage);
+                            string errorMessage = fmt::format("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
+                                ", contentRange: {}", contentRange
+                            );
+                            SPDLOG_ERROR(errorMessage);
 
                             sendError(request, 500, errorMessage);
 
@@ -741,26 +518,30 @@ void API::manageRequestAndResponse(
                         }
                     }
 
-                    _logger->info(__FILEREF__ + "Content-Range details"
-                        + ", contentRangePresent: " + to_string(requestData._contentRangePresent)
-                        + ", contentRangeStart: " + to_string(requestData._contentRangeStart)
-                        + ", contentRangeEnd: " + to_string(requestData._contentRangeEnd)
-                        + ", contentRangeSize: " + to_string(requestData._contentRangeSize)
+                    SPDLOG_INFO("Content-Range details"
+                        ", contentRangePresent: {}"
+                        ", contentRangeStart: {}"
+                        ", contentRangeEnd: {}"
+                        ", contentRangeSize: {}",
+						requestData._contentRangePresent, requestData._contentRangeStart,
+						requestData._contentRangeEnd, requestData._contentRangeSize
                     );
 
                     lock_guard<mutex> locker(_fileUploadProgressData->_mutex);                    
 
                     _fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
-                    _logger->info(__FILEREF__ + "Added upload file progress to be monitored"
-                        + ", _progressId: " + requestData._progressId
-                        + ", _binaryVirtualHostName: " + requestData._binaryVirtualHostName
-                        + ", _binaryListenHost: " + requestData._binaryListenHost
+                    SPDLOG_INFO("Added upload file progress to be monitored"
+                        ", _progressId: {}"
+                        ", _binaryVirtualHostName: {}"
+                        ", _binaryListenHost: {}",
+						requestData._progressId, requestData._binaryVirtualHostName,
+						requestData._binaryListenHost
                     );
                 }
                 catch (exception& e)
                 {
-                    _logger->error(__FILEREF__ + "ProgressId not found"
-                        + ", progressIdIt->second: " + progressIdIt->second
+                    SPDLOG_ERROR("ProgressId not found"
+                        ", progressIdIt->second: {}", progressIdIt->second
                     );
                 }
             }
@@ -780,11 +561,13 @@ void API::manageRequestAndResponse(
 			if (tokenIt == requestDetails.end()
 				|| originalURIIt == requestDetails.end())
 			{
-				string errorMessage = string("deliveryAuthorization, not authorized")
-					+ ", token: " + (tokenIt != requestDetails.end() ? tokenIt->second : "null")
-					+ ", URI: " + (originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
-                          ;
-				_logger->warn(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("deliveryAuthorization, not authorized"
+					", token: {}"
+					", URI: {}",
+					(tokenIt != requestDetails.end() ? tokenIt->second : "null"),
+					(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+                );
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -793,10 +576,10 @@ void API::manageRequestAndResponse(
 			size_t endOfURIIndex = contentURI.find_last_of("?");
 			if (endOfURIIndex == string::npos)
 			{
-				string errorMessage = string("Wrong URI format")
-					+ ", contentURI: " + contentURI
-				;
-				_logger->warn(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("Wrong URI format"
+					", contentURI: {}", contentURI
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -804,9 +587,10 @@ void API::manageRequestAndResponse(
 
 			string tokenParameter = tokenIt->second;
 
-			_logger->info(__FILEREF__ + "Calling checkDeliveryAuthorizationThroughParameter"
-				+ ", contentURI: " + contentURI
-				+ ", tokenParameter: " + tokenParameter
+			SPDLOG_INFO("Calling checkDeliveryAuthorizationThroughParameter"
+				", contentURI: {}"
+				", tokenParameter: {}",
+				contentURI, tokenParameter
 			);
 
 			checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
@@ -818,7 +602,7 @@ void API::manageRequestAndResponse(
         catch(runtime_error& e)
         {
             string errorMessage = string("Not authorized");
-            _logger->warn(__FILEREF__ + errorMessage);
+            SPDLOG_WARN(errorMessage);
 
 			string responseBody;
 			sendError(request, 403, errorMessage);
@@ -826,7 +610,7 @@ void API::manageRequestAndResponse(
         catch(exception& e)
         {
             string errorMessage = string("Not authorized: exception managing token");
-            _logger->warn(__FILEREF__ + errorMessage);
+            SPDLOG_WARN(errorMessage);
 
             sendError(request, 500, errorMessage);
         }
@@ -839,17 +623,17 @@ void API::manageRequestAndResponse(
 			auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
 			if (originalURIIt == requestDetails.end())
 			{
-				string errorMessage = string("deliveryAuthorization, not authorized")
-					+ ", URI: " + (originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
-                          ;
-				_logger->warn(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("deliveryAuthorization, not authorized"
+					", URI: {}", (originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+                );
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			string contentURI = originalURIIt->second;
 
-			_logger->info(__FILEREF__ + "deliveryAuthorizationThroughPath. Calling checkAuthorizationThroughPath"
-				+ ", contentURI: " + contentURI
+			SPDLOG_INFO("deliveryAuthorizationThroughPath. Calling checkDeliveryAuthorizationThroughPath"
+				", contentURI: {}", contentURI
 			);
 
 			checkDeliveryAuthorizationThroughPath(contentURI);
@@ -861,7 +645,7 @@ void API::manageRequestAndResponse(
         catch(runtime_error& e)
         {
             string errorMessage = string("Not authorized");
-            _logger->warn(__FILEREF__ + errorMessage);
+            SPDLOG_WARN(errorMessage);
 
 			string responseBody;
 			sendError(request, 403, errorMessage);
@@ -869,7 +653,7 @@ void API::manageRequestAndResponse(
         catch(exception& e)
         {
             string errorMessage = string("Not authorized: exception managing token");
-            _logger->warn(__FILEREF__ + errorMessage);
+            SPDLOG_WARN(errorMessage);
 
             sendError(request, 500, errorMessage);
         }
@@ -880,10 +664,10 @@ void API::manageRequestAndResponse(
         {
 			if (_noFileSystemAccess)
 			{
-				string errorMessage = string("no rights to execute this method")
-					+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
-				;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("no rights to execute this method"
+					", _noFileSystemAccess: {}", _noFileSystemAccess
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -893,7 +677,7 @@ void API::manageRequestAndResponse(
 			{
 				string errorMessage = string("Not authorized: token parameter not present")
 					;
-				_logger->warn(__FILEREF__ + errorMessage);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -923,10 +707,11 @@ void API::manageRequestAndResponse(
 				secondaryManifest = true;
 				// tokenComingFromURL will be initialized in the next statement
 			}
-			_logger->info(__FILEREF__ + "manageHTTPStreamingManifest"
-				+ ", analizing the token " + tokenIt->second
-				+ ", isNumber: " + to_string(isNumber)
-				+ ", secondaryManifest: " + to_string(secondaryManifest)
+			SPDLOG_INFO("manageHTTPStreamingManifest"
+				", analizing the token {}"
+				", isNumber: {}"
+				", secondaryManifest: {}",
+				tokenIt->second, isNumber, secondaryManifest
 			);
 
 			string contentURI;
@@ -934,10 +719,10 @@ void API::manageRequestAndResponse(
 				size_t endOfURIIndex = requestURI.find_last_of("?");
 				if (endOfURIIndex == string::npos)
 				{
-					string errorMessage = string("Wrong URI format")
-						+ ", requestURI: " + requestURI
-					;
-					_logger->info(__FILEREF__ + errorMessage);
+					string errorMessage = fmt::format("Wrong URI format"
+						", requestURI: {}", requestURI
+					);
+					SPDLOG_INFO(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -950,16 +735,17 @@ void API::manageRequestAndResponse(
 				if (cookieIt == queryParameters.end())
 				{
 					string errorMessage = string("The 'cookie' parameter is not found");
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 				string cookie = cookieIt->second;
 
 				string tokenParameter = tokenIt->second + "---" + cookie;
-				_logger->info(__FILEREF__ + "Calling checkDeliveryAuthorizationThroughParameter"
-					+ ", contentURI: " + contentURI
-					+ ", tokenParameter: " + tokenParameter
+				SPDLOG_INFO("Calling checkDeliveryAuthorizationThroughParameter"
+					", contentURI: {}"
+					", tokenParameter: {}",
+					contentURI, tokenParameter
 				);
 				tokenComingFromURL = checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 			}
@@ -971,26 +757,28 @@ void API::manageRequestAndResponse(
 				if (cookieIt != queryParameters.end())
 					mmsInfoCookie = cookieIt->second;
 
-				_logger->info(__FILEREF__ + "manageHTTPStreamingManifest"
-					+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-					+ ", mmsInfoCookie: " + mmsInfoCookie
+				SPDLOG_INFO("manageHTTPStreamingManifest"
+					", tokenComingFromURL: {}"
+					", mmsInfoCookie: {}",
+					tokenComingFromURL, mmsInfoCookie
 				);
 
 				if (mmsInfoCookie == "")
 				{
 					if (!_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
 					{
-						string errorMessage = string("Not authorized: token invalid")
-							+ ", contentURI: " + contentURI
-							+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-						;
-						_logger->info(__FILEREF__ + errorMessage);
+						string errorMessage = fmt::format("Not authorized: token invalid"
+							", contentURI: {}"
+							", tokenComingFromURL: {}",
+							contentURI, tokenComingFromURL
+						);
+						SPDLOG_INFO(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 
-					_logger->info(__FILEREF__ + "token authorized"
-						+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+					SPDLOG_INFO("token authorized"
+						", tokenComingFromURL: {}", tokenComingFromURL
 					);
 				}
 				else
@@ -1000,31 +788,33 @@ void API::manageRequestAndResponse(
 
 					if (tokenComingFromCookie != tokenComingFromURL)
 					{
-						string errorMessage = string("cookie invalid, let's check the token")
-							+ ", tokenComingFromCookie: " + to_string(tokenComingFromCookie)
-							+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-						;
-						_logger->info(__FILEREF__ + errorMessage);
+						string errorMessage = fmt::format("cookie invalid, let's check the token"
+							", tokenComingFromCookie: {}"
+							", tokenComingFromURL: {}",
+							tokenComingFromCookie, tokenComingFromURL
+						);
+						SPDLOG_INFO(errorMessage);
 
 						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
 						{
-							string errorMessage = string("Not authorized: token invalid")
-								+ ", contentURI: " + contentURI
-								+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-							;
-							_logger->info(__FILEREF__ + errorMessage);
+							string errorMessage = fmt::format("Not authorized: token invalid"
+								", contentURI: {}"
+								", tokenComingFromURL: {}",
+								contentURI, tokenComingFromURL
+							);
+							SPDLOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 
-						_logger->info(__FILEREF__ + "token authorized"
-							+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+						SPDLOG_INFO("token authorized"
+							", tokenComingFromURL: {}", tokenComingFromURL
 						);
 					}
 					else
 					{
-						_logger->info(__FILEREF__ + "cookie authorized"
-							+ ", mmsInfoCookie: " + mmsInfoCookie
+						SPDLOG_INFO("cookie authorized"
+							", mmsInfoCookie: {}", mmsInfoCookie
 						);
 					}
 				}
@@ -1047,16 +837,16 @@ void API::manageRequestAndResponse(
 				{
 					fs::path manifestPathFileName = _mmsStorage->getMMSRootRepository() / contentURI.substr(1);
 
-					_logger->info(__FILEREF__ + "Reading manifest file"
-						+ ", manifestPathFileName: " + manifestPathFileName.string()
+					SPDLOG_INFO("Reading manifest file"
+						", manifestPathFileName: {}", manifestPathFileName.string()
 					);
 
 					if (!fs::exists (manifestPathFileName))
 					{
-						string errorMessage = string("manifest file not existing")
-							+ ", manifestPathFileName: " + manifestPathFileName.string()
-							;
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = fmt::format("manifest file not existing"
+							", manifestPathFileName: {}", manifestPathFileName.string()
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1069,10 +859,10 @@ void API::manageRequestAndResponse(
 						manifestFile.open(manifestPathFileName.string(), ios::in);
 						if (!manifestFile.is_open())
 						{
-							string errorMessage = string("Not authorized: manifest file not opened")
-								+ ", manifestPathFileName: " + manifestPathFileName.string()
-								;
-							_logger->info(__FILEREF__ + errorMessage);
+							string errorMessage = fmt::format("Not authorized: manifest file not opened"
+								", manifestPathFileName: {}", manifestPathFileName.string()
+							);
+							SPDLOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1093,7 +883,7 @@ void API::manageRequestAndResponse(
 							)
 							{
 								/*
-								_logger->info(__FILEREF__ + "Creation token parameter for ts"
+								SPDLOG_INFO(__FILEREF__ + "Creation token parameter for ts"
 									+ ", manifestLine: " + manifestLine
 									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 								);
@@ -1111,7 +901,7 @@ void API::manageRequestAndResponse(
 							{
 								// scenario where we have several .m3u8 manifest files
 								/*
-								_logger->info(__FILEREF__ + "Creation token parameter for m3u8"
+								SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
 									+ ", manifestLine: " + manifestLine
 									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 								);
@@ -1137,7 +927,7 @@ void API::manageRequestAndResponse(
 									{
 										string uri = manifestLine.substr(uriStartIndex, uriEndIndex - uriStartIndex);
 										/*
-										_logger->info(__FILEREF__ + "Creation token parameter for m3u8"
+										SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
 											+ ", uri: " + uri
 											+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 										);
@@ -1162,9 +952,9 @@ void API::manageRequestAndResponse(
 					{
 #if defined(LIBXML_TREE_ENABLED) && defined(LIBXML_OUTPUT_ENABLED) && \
 defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
-	_logger->info(__FILEREF__ + "libxml define OK");
+	SPDLOG_INFO("libxml define OK");
 #else
-	_logger->info(__FILEREF__ + "libxml define KO");
+	SPDLOG_INFO("libxml define KO");
 #endif
 
 /*
@@ -1213,10 +1003,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 						xmlDocPtr doc = xmlParseFile(manifestPathFileName.string().c_str());
 						if (doc == nullptr)
 						{
-							string errorMessage = string("xmlParseFile failed")
-								+ ", manifestPathFileName: " + manifestPathFileName.string()
-								;
-							_logger->info(__FILEREF__ + errorMessage);
+							string errorMessage = fmt::format("xmlParseFile failed"
+								", manifestPathFileName: {}", manifestPathFileName.string()
+							);
+							SPDLOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1229,10 +1019,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 						{
 							xmlFreeDoc(doc);
 
-							string errorMessage = string("xmlXPathNewContext failed")
-								+ ", manifestPathFileName: " + manifestPathFileName.string()
-								;
-							_logger->info(__FILEREF__ + errorMessage);
+							string errorMessage = fmt::format("xmlXPathNewContext failed"
+								", manifestPathFileName: {}", manifestPathFileName.string()
+							);
+							SPDLOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1244,10 +1034,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							xmlXPathFreeContext(xpathCtx);
 							xmlFreeDoc(doc);
 
-							string errorMessage = string("xmlXPathRegisterNs xmlns:xsi")
-								+ ", manifestPathFileName: " + manifestPathFileName.string()
-								;
-							_logger->info(__FILEREF__ + errorMessage);
+							string errorMessage = fmt::format("xmlXPathRegisterNs xmlns:xsi"
+								", manifestPathFileName: {}", manifestPathFileName.string()
+							);
+							SPDLOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1262,7 +1052,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							string errorMessage = string("xmlXPathRegisterNs xmlns:xlink")
 								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
-							_logger->info(__FILEREF__ + errorMessage);
+							SPDLOG_INFO(__FILEREF__ + errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1276,7 +1066,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							string errorMessage = string("xmlXPathRegisterNs xsi:schemaLocation")
 								+ ", manifestPathFileName: " + manifestPathFileName.string()
 								;
-							_logger->info(__FILEREF__ + errorMessage);
+							SPDLOG_INFO(__FILEREF__ + errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1290,18 +1080,19 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							xmlXPathFreeContext(xpathCtx);
 							xmlFreeDoc(doc);
 
-							string errorMessage = string("xmlXPathEvalExpression failed")
-								+ ", manifestPathFileName: " + manifestPathFileName.string()
-								;
-							_logger->info(__FILEREF__ + errorMessage);
+							string errorMessage = fmt::format("xmlXPathEvalExpression failed"
+								", manifestPathFileName: {}", manifestPathFileName.string()
+							);
+							SPDLOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 
 						xmlNodeSetPtr nodes = xpathObj->nodesetval;
-						_logger->info(__FILEREF__ + "processing mpd manifest file"
-							+ ", manifestPathFileName: " + manifestPathFileName.string()
-							+ ", nodesNumber: " + to_string(nodes->nodeNr)
+						SPDLOG_INFO("processing mpd manifest file"
+							", manifestPathFileName: {}"
+							", nodesNumber: {}",
+							manifestPathFileName.string(), nodes->nodeNr
 						);
 						for (int nodeIndex = 0; nodeIndex < nodes->nodeNr; nodeIndex++)
 						{
@@ -1310,11 +1101,12 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 								xmlXPathFreeContext(xpathCtx);
 								xmlFreeDoc(doc);
 
-								string errorMessage = string("nodes->nodeTab[nodeIndex] is null")
-									+ ", manifestPathFileName: " + manifestPathFileName.string()
-									+ ", nodeIndex: " + to_string(nodeIndex)
-								;
-								_logger->info(__FILEREF__ + errorMessage);
+								string errorMessage = fmt::format("nodes->nodeTab[nodeIndex] is null"
+									", manifestPathFileName: {}"
+									", nodeIndex: {}",
+									manifestPathFileName.string(), nodeIndex
+								);
+								SPDLOG_INFO(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -1331,10 +1123,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 								xmlXPathFreeContext(xpathCtx);
 								xmlFreeDoc(doc);
 
-								string errorMessage = string("xmlGetProp failed")
-									+ ", manifestPathFileName: " + manifestPathFileName.string()
-								;
-								_logger->info(__FILEREF__ + errorMessage);
+								string errorMessage = fmt::format("xmlGetProp failed"
+									", manifestPathFileName: {}", manifestPathFileName.string()
+								);
+								SPDLOG_INFO(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -1389,9 +1181,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 							xmlChar *xmlbuff;
 							int buffersize;
 							xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &buffersize, "UTF-8", 1);
-							_logger->info(__FILEREF__ + "dumping mpd manifest file"
-								+ ", manifestPathFileName: " + manifestPathFileName.string()
-								+ ", buffersize: " + to_string(buffersize)
+							SPDLOG_INFO("dumping mpd manifest file"
+								", manifestPathFileName: {}" 
+								", buffersize: {}",
+								manifestPathFileName.string(), buffersize
 							);
 
 							responseBody = (char*) xmlbuff;
@@ -1419,10 +1212,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 					size_t cookiePathIndex = contentURI.find_last_of("/");
 					if (cookiePathIndex == string::npos)
 					{
-						string errorMessage = string("Wrong URI format")
-							+ ", contentURI: " + contentURI
-							;
-						_logger->info(__FILEREF__ + errorMessage);
+						string errorMessage = fmt::format("Wrong URI format"
+							", contentURI: {}", contentURI
+						);
+						SPDLOG_INFO(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1451,7 +1244,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         catch(runtime_error& e)
         {
             string errorMessage = string("Not authorized");
-            _logger->warn(__FILEREF__ + errorMessage);
+            SPDLOG_WARN(errorMessage);
 
 			string responseBody;
 			sendError(request, 403, errorMessage);
@@ -1459,7 +1252,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         catch(exception& e)
         {
             string errorMessage = string("Not authorized: exception managing token");
-            _logger->warn(__FILEREF__ + errorMessage);
+            SPDLOG_WARN(errorMessage);
 
             sendError(request, 500, errorMessage);
         }
@@ -1501,10 +1294,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !createRemoveWorkspace)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", createRemoveWorkspace: " + to_string(createRemoveWorkspace)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", createRemoveWorkspace: {}", createRemoveWorkspace
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1518,10 +1311,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !createRemoveWorkspace)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", createRemoveWorkspace: " + to_string(createRemoveWorkspace)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", createRemoveWorkspace: {}", createRemoveWorkspace
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1540,10 +1333,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !shareWorkspace)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", shareWorkspace: " + to_string(shareWorkspace)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", shareWorkspace: {}", shareWorkspace
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1567,10 +1360,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1584,10 +1377,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1601,10 +1394,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1628,10 +1421,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editEncodersPool)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editEncodersPool: " + to_string(editEncodersPool)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", editEncodersPool: {}", editEncodersPool
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1645,10 +1438,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editEncodersPool)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editEncodersPool: " + to_string(editEncodersPool)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("APIKey does not have the permission"
+				", editEncodersPool: {}", editEncodersPool
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1662,10 +1455,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editEncodersPool)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editEncodersPool: " + to_string(editEncodersPool)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editEncodersPool: {}", editEncodersPool
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1679,10 +1472,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1696,10 +1489,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1713,10 +1506,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !deliveryAuthorization)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", deliveryAuthorization: " + to_string(deliveryAuthorization)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", deliveryAuthorization: {}", deliveryAuthorization
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1732,10 +1525,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !deliveryAuthorization)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", deliveryAuthorization: " + to_string(deliveryAuthorization)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", deliveryAuthorization: {}", deliveryAuthorization
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1751,10 +1544,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !ingestWorkflow)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", ingestWorkflow: " + to_string(ingestWorkflow)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", ingestWorkflow: {}", ingestWorkflow
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1762,7 +1555,7 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         }
         
         ingestion(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, userKey, apiKey, workspace, queryParameters, requestBody);
+			request, stoll(userName), password, workspace, queryParameters, requestBody);
     }
     else if (method == "ingestionRootsStatus")
     {
@@ -1783,10 +1576,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !cancelIngestionJob_)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", cancelIngestionJob: " + to_string(cancelIngestionJob_)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", cancelIngestionJob: {}", cancelIngestionJob_
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1800,10 +1593,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editMedia)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editMedia: " + to_string(editMedia)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editMedia: {}", editMedia
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1827,10 +1620,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !killEncoding)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", killEncoding: " + to_string(killEncoding)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", killEncoding: {}", killEncoding
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1854,10 +1647,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editMedia)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editMedia: " + to_string(editMedia)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editMedia: {}", editMedia
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1871,10 +1664,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editMedia)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editMedia: " + to_string(editMedia)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editMedia: {}", editMedia
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1899,10 +1692,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !createProfiles)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", createProfiles: " + to_string(createProfiles)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", createProfiles: {}", createProfiles
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1921,10 +1714,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !createProfiles)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", createProfiles: " + to_string(createProfiles)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", createProfiles: {}", createProfiles
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1938,10 +1731,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !createProfiles)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", createProfiles: " + to_string(createProfiles)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", createProfiles: {}", createProfiles
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1955,10 +1748,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !createProfiles)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", createProfiles: " + to_string(createProfiles)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", createProfiles: {}", createProfiles
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -1996,16 +1789,16 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     else if (method == "mmsSupport")
     {
 		mmsSupport(sThreadId, requestIdentifier, responseBodyCompressed, request,
-			userKey, apiKey, workspace, queryParameters, requestBody);
+			stoll(userName), password, workspace, queryParameters, requestBody);
     }
     else if (method == "addYouTubeConf")
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2019,10 +1812,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2036,10 +1829,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2058,10 +1851,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2075,10 +1868,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2092,10 +1885,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2114,10 +1907,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2131,10 +1924,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2148,10 +1941,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2170,10 +1963,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2187,10 +1980,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2204,10 +1997,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2226,10 +2019,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2243,10 +2036,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2260,10 +2053,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", admin: " + to_string(admin)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2282,10 +2075,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2299,10 +2092,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2316,10 +2109,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2338,10 +2131,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2355,10 +2148,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2372,10 +2165,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2394,10 +2187,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2411,10 +2204,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2428,10 +2221,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2450,10 +2243,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2467,10 +2260,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2484,10 +2277,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2506,10 +2299,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2523,10 +2316,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2540,10 +2333,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2562,10 +2355,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2579,10 +2372,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2596,10 +2389,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin && !editConfiguration)
         {
-            string errorMessage = string("APIKey does not have the permission"
-                    ", editConfiguration: " + to_string(editConfiguration)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", editConfiguration: {}", editConfiguration
+			);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2618,10 +2411,10 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     {
         if (!admin)
         {
-            string errorMessage = string("APIKey does not have the permission"
-				", admin: " + to_string(admin)
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
 			);
-            _logger->error(__FILEREF__ + errorMessage);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 403, errorMessage);
 
@@ -2663,17 +2456,103 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
     }
     else
     {
-        string errorMessage = string("No API is matched")
-            + ", requestURI: " + requestURI
-            + ", method: " + method
-            + ", requestMethod: " + requestMethod
-                ;
-        _logger->error(__FILEREF__ + errorMessage);
+        string errorMessage = fmt::format("No API is matched"
+			", requestURI: {}"
+			", method: {}"
+			", requestMethod: {}",
+			requestURI, method, requestMethod
+		);
+        SPDLOG_ERROR(errorMessage);
 
         sendError(request, 400, errorMessage);
 
         throw runtime_error(errorMessage);
     }
+}
+
+void API::checkAuthorization(string sThreadId, string userName, string password)
+{
+	string userKey = userName;
+	string apiKey = password;
+
+	try
+	{
+		_userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey,
+			// 2022-12-18: controllo della apikey, non vedo motivi per mettere true
+			false);
+	}
+	catch(APIKeyNotFoundOrExpired& e)
+	{
+		SPDLOG_INFO("_mmsEngineDBFacade->checkAPIKey failed"
+			", _requestIdentifier: {}"
+			", threadId: {}"
+			", apiKey: {}",
+			_requestIdentifier, sThreadId, apiKey
+		);
+
+		throw CheckAuthorizationFailed();
+	}
+	catch(exception& e)
+	{
+		SPDLOG_INFO("_mmsEngineDBFacade->checkAPIKey failed"
+			", _requestIdentifier: {}"
+			", threadId: {}"
+			", apiKey: {}",
+			_requestIdentifier, sThreadId, apiKey
+		);
+
+		throw CheckAuthorizationFailed();
+	}
+
+	if (get<0>(_userKeyWorkspaceAndFlags) != stoll(userName))
+	{
+		SPDLOG_INFO("Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
+			", _requestIdentifier: {}"
+			", threadId: {}"
+			", username of basic authorization (userKey): {}"
+			", userKey associated to the APIKey: {}"
+			", apiKey: {}",
+			_requestIdentifier, sThreadId, userKey, get<0>(_userKeyWorkspaceAndFlags), apiKey
+		);
+
+		throw CheckAuthorizationFailed();
+	}
+}
+
+bool API::basicAuthenticationRequired(
+	string requestURI,
+	unordered_map<string, string> queryParameters
+)
+{
+	bool        basicAuthenticationRequired = true;
+
+	auto methodIt = queryParameters.find("method");
+	if (methodIt == queryParameters.end())
+	{
+		SPDLOG_ERROR("The 'method' parameter is not found");
+
+		return basicAuthenticationRequired;
+	}
+	string method = methodIt->second;
+
+	if (method == "registerUser"
+		|| method == "confirmRegistration"
+		|| method == "createTokenToResetPassword"
+		|| method == "resetPassword"
+		|| method == "login"
+		|| method == "manageHTTPStreamingManifest_authorizationThroughParameter"
+		|| method == "deliveryAuthorizationThroughParameter"
+		|| method == "deliveryAuthorizationThroughPath"
+		|| method == "status"	// often used as healthy check
+	)
+		basicAuthenticationRequired = false;
+
+	// This is the authorization asked when the deliveryURL is received by nginx
+	// Here the token is checked and it is not needed any basic authorization
+	if (requestURI == "/catramms/delivery/authorization")
+		basicAuthenticationRequired = false;
+
+	return basicAuthenticationRequired;
 }
 
 void API::parseContentRange(string contentRange,
@@ -2692,10 +2571,10 @@ void API::parseContentRange(string contentRange,
         string prefix ("bytes ");
         if (!(contentRange.size() >= prefix.size() && 0 == contentRange.compare(0, prefix.size(), prefix)))
         {
-            string errorMessage = string("Content-Range does not start with 'bytes '")
-                    + ", contentRange: " + contentRange
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("Content-Range does not start with 'bytes '"
+				", contentRange: {}", contentRange
+			);
+            SPDLOG_ERROR(errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -2704,10 +2583,10 @@ void API::parseContentRange(string contentRange,
         int endIndex = contentRange.find("-", startIndex);
         if (endIndex == string::npos)
         {
-            string errorMessage = string("Content-Range does not have '-'")
-                    + ", contentRange: " + contentRange
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("Content-Range does not have '-'"
+				", contentRange: {}", contentRange
+			);
+            SPDLOG_ERROR(errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -2718,10 +2597,10 @@ void API::parseContentRange(string contentRange,
         int sizeIndex = contentRange.find("/", endIndex);
         if (sizeIndex == string::npos)
         {
-            string errorMessage = string("Content-Range does not have '/'")
-                    + ", contentRange: " + contentRange
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("Content-Range does not have '/'"
+				", contentRange: {}", contentRange
+			);
+            SPDLOG_ERROR(errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -2733,10 +2612,10 @@ void API::parseContentRange(string contentRange,
     }
     catch(exception& e)
     {
-        string errorMessage = string("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'")
-            + ", contentRange: " + contentRange
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
+        string errorMessage = fmt::format("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
+			", contentRange: {}", contentRange
+        );
+        SPDLOG_ERROR(errorMessage);
 
         throw runtime_error(errorMessage);            
     }
@@ -2752,8 +2631,9 @@ void API::mmsSupport(
 {
     string api = "mmsSupport";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
+    SPDLOG_INFO("Received {}"
+        ", requestBody: {}",
+		api, requestBody
     );
 
     try
@@ -2769,7 +2649,7 @@ void API::mmsSupport(
         }
         catch(runtime_error& e)
         {
-            _logger->error(__FILEREF__ + e.what());
+            SPDLOG_ERROR(e.what());
 
             sendError(request, 400, e.what());
 
@@ -2785,9 +2665,9 @@ void API::mmsSupport(
 		{
 			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				string errorMessage = string("Json field is not present or it is null")
-					+ ", Json field: " + field;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format("Json field is not present or it is null"
+					", Json field: {}", field);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -2813,7 +2693,6 @@ void API::mmsSupport(
 
             string tosCommaSeparated = "support@catramms-cloud.cloud";
 			MMSCURL::sendEmail(
-				_logger,
 				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	// i.e.: info@catramms-cloud.com
 				tosCommaSeparated,
@@ -2832,12 +2711,13 @@ void API::mmsSupport(
         }
         catch(runtime_error& e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
+            SPDLOG_ERROR("{} failed"
+				", e.what(): {}",
+				api, e.what()
             );
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("Internal server error: {}", e.what());
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 500, errorMessage);
 
@@ -2845,12 +2725,13 @@ void API::mmsSupport(
         }
         catch(exception& e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			SPDLOG_ERROR("{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
 
             string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+            SPDLOG_ERROR(errorMessage);
 
             sendError(request, 500, errorMessage);
 
@@ -2859,24 +2740,26 @@ void API::mmsSupport(
     }
     catch(runtime_error& e)
     {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+        SPDLOG_ERROR("API failed"
+            ", API: {}"
+            ", requestBody: {}"
+            ", e.what(): {}",
+			api, requestBody, e.what()
         );
 
         throw e;
     }
     catch(exception& e)
     {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
+        SPDLOG_ERROR("API failed"
+            ", API: {}"
+            ", requestBody: {}"
+            ", e.what(): {}",
+			api, requestBody, e.what()
         );
 
         string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+        SPDLOG_ERROR(errorMessage);
 
         sendError(request, 500, errorMessage);
 

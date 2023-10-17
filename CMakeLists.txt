@@ -55,6 +55,7 @@ add_compile_options(-DMAGICKCORE_QUANTUM_DEPTH=16)
 
 add_subdirectory(API/src)
 
+add_subdirectory(FastCGIAPI/src)
 add_subdirectory(MMSUtility/src)
 add_subdirectory(FFMpeg/src)
 add_subdirectory(MMSEngine/src)

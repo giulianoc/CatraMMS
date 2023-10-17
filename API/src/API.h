@@ -16,10 +16,10 @@
 
 #include "MMSStorage.h"
 #include "MMSDeliveryAuthorization.h"
-#include "APICommon.h"
+#include "FastCGIAPI.h"
 
 
-class API: public APICommon {
+class API: public FastCGIAPI {
 public:
     struct FileUploadProgressData {
         struct RequestData {
@@ -48,26 +48,35 @@ public:
 		shared_ptr<spdlog::logger> logger);
     
     ~API();
-    
-    virtual void manageRequestAndResponse(
-			string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-            FCGX_Request& request,
-            string requestURI,
-            string requestMethod,
-            unordered_map<string, string> queryParameters,
-            bool basicAuthenticationPresent,
-            tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>&
-				userKeyWorkspaceAndFlags,
-			string apiKey,
-            unsigned long contentLength,
-            string requestBody,
-            unordered_map<string, string>& requestDetails
-    );
-    
+
+	virtual void manageRequestAndResponse(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+		FCGX_Request& request,
+		string requestURI,
+		string requestMethod,
+		unordered_map<string, string> queryParameters,
+		bool authorizationPresent,
+		string userName, string password,
+		unsigned long contentLength,
+		string requestBody,
+		unordered_map<string, string>& requestDetails
+	);
+
+	virtual void checkAuthorization(string sThreadId, string userName, string password);
+
+	virtual bool basicAuthenticationRequired(
+		string requestURI,
+		unordered_map<string, string> queryParameters);
+
     void fileUploadProgressCheck();
     void stopUploadFileProgressThread();
 
 private:
+shared_ptr<spdlog::logger>	_logger;
+
+	tuple<int64_t,shared_ptr<Workspace>,bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
+		_userKeyWorkspaceAndFlags;
+	shared_ptr<MMSEngineDBFacade>			_mmsEngineDBFacade;
 	bool				_noFileSystemAccess;
 	shared_ptr<MMSStorage>					_mmsStorage;
 	shared_ptr<MMSDeliveryAuthorization>	_mmsDeliveryAuthorization;
@@ -139,6 +148,10 @@ private:
 	string				_emailCcsCommaSeparated;
 
 	bool				_registerUserEnabled;
+
+    string				_guiProtocol;
+    string				_guiHostname;
+    int					_guiPort;
 
     FileUploadProgressData*     _fileUploadProgressData;
     

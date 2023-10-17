@@ -55,7 +55,6 @@ int main (int iArgc, char *pArgv [])
         emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 		MMSCURL::sendEmail(
-			logger,
 			emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
 			emailUserName,	// i.e.: info@catramms-cloud.com
 			tosCommaSeparated,

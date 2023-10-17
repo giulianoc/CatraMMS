@@ -2900,8 +2900,6 @@ size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *f)
 {
 	MMSCURL::CurlUploadEmailData* curlUploadEmailData = (MMSCURL::CurlUploadEmailData*) f;
 
-    auto logger = spdlog::get(curlUploadEmailData->loggerName);
-
     if((size == 0) || (nmemb == 0) || ((size*nmemb) < 1))
     {
         return 0;
@@ -2925,7 +2923,6 @@ size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *f)
 }
 
 void MMSCURL:: sendEmail(
-	shared_ptr<spdlog::logger> logger,
 	string emailServerURL,	// i.e.: smtps://smtppro.zoho.eu:465
 	string from,	// i.e.: info@catramms-cloud.com
 	string tosCommaSeparated,
@@ -2942,7 +2939,6 @@ void MMSCURL:: sendEmail(
 	// curl --ssl-reqd --url 'smtps://smtppro.zoho.eu:465' --mail-from 'info@catramms-cloud.com' --mail-rcpt 'giulianocatrambone@gmail.com' --upload-file ./email.txt --user 'info@catramms-cloud.com:<write here the password>'
 
 	CurlUploadEmailData curlUploadEmailData;
-	curlUploadEmailData.loggerName = logger->name();
 
 	{
 		// add From
@@ -3066,25 +3062,26 @@ void MMSCURL:: sendEmail(
 			string body;
 			for(string emailLine: curlUploadEmailData.emailLines)
 				body += emailLine;
-			logger->info(__FILEREF__ + "Sending email"
-				+ ", emailServerURL: " + emailServerURL
-				+ ", from: " + from
+			SPDLOG_INFO("Sending email"
+				", emailServerURL: {}"
+				", from: {}"
 				// + ", password: " + password
-				+ ", to: " + tosCommaSeparated
-				+ ", cc: " + ccsCommaSeparated
-				+ ", subject: " + subject
-				+ ", body: " + body
+				", to: {}"
+				", cc: {}"
+				", subject: {}"
+				", body: {}",
+				emailServerURL, from, tosCommaSeparated, ccsCommaSeparated, subject, body
 			);
 		}
 
 		res = curl_easy_perform(curl);
 
 		if(res != CURLE_OK)
-			logger->error(__FILEREF__ + "curl_easy_perform() failed"
-				+ ", curl_easy_strerror(res): " + curl_easy_strerror(res)
+			SPDLOG_ERROR("curl_easy_perform() failed"
+				", curl_easy_strerror(res): {}", curl_easy_strerror(res)
 			);
 		else
-			logger->info(__FILEREF__ + "Email sent successful");
+			SPDLOG_INFO("Email sent successful");
 
 		/* Free the list of recipients */
 		curl_slist_free_all(recipients);

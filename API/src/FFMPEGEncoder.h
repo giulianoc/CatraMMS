@@ -14,7 +14,7 @@
 #ifndef FFMPEGEncoder_h
 #define FFMPEGEncoder_h
 
-#include "APICommon.h"
+#include "FastCGIAPI.h"
 #include "FFMpeg.h"
 #include <deque>
 #include "FFMPEGEncoderTask.h"
@@ -28,16 +28,8 @@
 #define __VECTOR__NO_LOCK_FOR_ENCODINGSTATUS
 
 
-class FFMPEGEncoder: public APICommon {
+class FFMPEGEncoder: public FastCGIAPI {
 public:
-/*
-	struct CurlUploadData {
-		ifstream	mediaSourceFileStream;
-
-		int64_t		lastByteSent;
-		int64_t		fileSizeInBytes;        
-	};
-*/
 
     FFMPEGEncoder(
 		Json::Value configuration, 
@@ -71,24 +63,28 @@ public:
     
     ~FFMPEGEncoder();
     
-    virtual void manageRequestAndResponse(
-			string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-            FCGX_Request& request,
-            string requestURI,
-            string requestMethod,
-            unordered_map<string, string> queryParameters,
-            bool basicAuthenticationPresent,
-            tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>& userKeyWorkspaceAndFlags,
-			string apiKey,
-            unsigned long contentLength,
-            string requestBody,
-            unordered_map<string, string>& requestDetails
-    );
+	virtual void manageRequestAndResponse(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+		FCGX_Request& request,
+		string requestURI,
+		string requestMethod,
+		unordered_map<string, string> queryParameters,
+		bool authorizationPresent,
+		string userName, string password,
+		unsigned long contentLength,
+		string requestBody,
+		unordered_map<string, string>& requestDetails
+	);
+
+	virtual void checkAuthorization(string sThreadId, string userName, string password);
+
+	virtual bool basicAuthenticationRequired(
+		string requestURI,
+		unordered_map<string, string> queryParameters);
 
 private:
-	// string						_encoderCapabilityConfigurationPathName;
+shared_ptr<spdlog::logger>	_logger;
 
-	// GetCpuUsage_t				_getCpuUsage;
 	mutex*						_cpuUsageMutex;
 	deque<int>*						_cpuUsage;
 	// bool						_cpuUsageThreadShutdown;
@@ -102,6 +98,9 @@ private:
 	int							_intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
 	int							_intervalInSecondsBetweenEncodingAcceptForExternalEncoder;
 	chrono::system_clock::time_point*	_lastEncodingAcceptedTime;
+
+	string						_encoderUser;
+	string						_encoderPassword;
 
 	int							_cpuUsageThresholdForEncoding;
 	int							_cpuUsageThresholdForProxy;

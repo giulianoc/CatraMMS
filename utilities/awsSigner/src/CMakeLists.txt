@@ -34,7 +34,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/curlpp/include")

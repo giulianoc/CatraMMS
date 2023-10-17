@@ -58,7 +58,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 			sqlStatement = fmt::format(
 				"select max(requestStatisticKey) as maxRequestStatisticKey from MMS_RequestStatistic "
 				"where workspaceKey = {} and requestStatisticKey < {} and userId = {}",
-				workspaceKey, requestStatisticKey, userId
+				workspaceKey, requestStatisticKey, trans.quote(userId)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
@@ -78,7 +78,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 					{
 						sqlStatement = fmt::format(
 							"update MMS_RequestStatistic "
-							"set upToNextRequestInSeconds = TIMESTAMPDIFF(SECOND, requestTimestamp, current_timestamp) "
+							"set upToNextRequestInSeconds = EXTRACT(EPOCH FROM (current_timestamp - requestTimestamp)) "
 							"where requestStatisticKey = {} returning count(*)",
 							previoudRequestStatisticKey
 						);
@@ -447,9 +447,9 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 		minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated, start, rows
 	);
 
-    Json::Value statisticsListRoot;
+	Json::Value statisticsListRoot;
 
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
