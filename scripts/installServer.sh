@@ -226,6 +226,7 @@ install-packages()
 
 		#api should have GUI as well
 
+		#MYSQL
 		echo ""
 		read -n 1 -s -r -p "install mysql-client..."
 		echo ""
@@ -275,6 +276,41 @@ install-packages()
 		echo "Follow the instructions to change the datadir (https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-18-04)"
 
 		echo "Then restart mysql and run the SQL command: create table if not exists MMS_TestConnection (testConnectionKey BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, constraint MMS_TestConnection_PK PRIMARY KEY (testConnectionKey)) ENGINE=InnoDB"
+
+
+		#Postgres
+		echo ""
+		read -n 1 -s -r -p "install postgres..."
+		echo ""
+		apt-get -y install postgresql postgresql-contrib
+
+		dbName=mms
+		dbUser=mms
+		echo -n "Type the DB password: "
+		read dbPassword
+		echo "edit config sudo vi /etc/postgresql/14/main/postgresql.conf, change: listen_addresses, max_connections"
+		echo "change the data directory following my 'postgres' document"
+		echo "Premi un tasto quando fatto per entrambi i punti sopra"
+		read
+
+		echo "host  mms  mms 10.0.0.0/16 scram-sha-256" >> /etc/postgresql/14/main/pg_hba.conf
+		echo "host replication mms_repl 10.0.0.0/16 md5" >> /etc/postgresql/14/main/pg_hba.conf
+
+		echo "CREATE ROLE mms_repl REPLICATION LOGIN ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
+		#penso che con il prossimo comando viene anche creato il DB
+		#DA VERIFICARE che prima il DB non esiste e dopo esiste
+		# DI DEFAULT l'encoding è UTF8 (si puo verificare con il comando SHOW SERVER_ENCODING;)
+		echo "CREATE ROLE mms CREATEDB LOGIN CREATEROLE ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
+
+		echo "sudo vi /etc/hosts inizializzare postgres-master e postgres-slaves"
+		echo "Premi un tasto quando fatto"
+		read
+
+		echo "se sei in ambiente master/slave seguire il mio documento su postgres"
+		echo "se serve eseguire il comando sotto"
+		echo "create table if not exists MMS_TestConnection (testConnectionKey integer)"
+		echo "Premi un tasto per continuare"
+		read
 	fi
 
 	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
@@ -533,7 +569,17 @@ adds-to-bashrc()
 	echo "alias h='history'" >> /home/mms/.bashrc
 	echo "export EDITOR=/usr/bin/vi" >> /home/mms/.bashrc
 
-	echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
+	if [[ "$serverName" == *"engine"* ]]; then
+		echo "masterIP=\$(cat /etc/hosts | grep postgres-master | cut -d' ' -f1)" >> /home/mms/.bashrc
+		echo "if [ \"\$(ifconfig | grep \"inet \$masterIP\")\" != \"\" ]; then" >> /home/mms/.bashrc
+		echo "	PS1=\${PS1//\\\\h/\\\\h-master-}" >> /home/mms/.bashrc
+		echo "else" >> /home/mms/.bashrc
+		echo "	PS1=\${PS1//\\\\h/\\\\h-slave-}" >> /home/mms/.bashrc
+		echo "fi" >> /home/mms/.bashrc
+	else
+		echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
+	fi
+
 	echo "date" >> /home/mms/.bashrc
 }
 
