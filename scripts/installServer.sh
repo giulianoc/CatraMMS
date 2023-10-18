@@ -297,10 +297,8 @@ install-packages()
 		echo "host replication mms_repl 10.0.0.0/16 md5" >> /etc/postgresql/14/main/pg_hba.conf
 
 		echo "CREATE ROLE mms_repl REPLICATION LOGIN ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
-		#penso che con il prossimo comando viene anche creato il DB
-		#DA VERIFICARE che prima il DB non esiste e dopo esiste
-		# DI DEFAULT l'encoding è UTF8 (si puo verificare con il comando SHOW SERVER_ENCODING;)
 		echo "CREATE ROLE mms CREATEDB LOGIN CREATEROLE ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
+		echo "CREATE DATABASE mms OWNER mms ENCODING UTF8" | sudo -u postgres psql
 
 		echo "sudo vi /etc/hosts inizializzare postgres-master e postgres-slaves"
 		echo "Premi un tasto quando fatto"

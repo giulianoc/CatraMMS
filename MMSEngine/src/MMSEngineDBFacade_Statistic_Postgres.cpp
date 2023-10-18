@@ -77,9 +77,9 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 
 					{
 						sqlStatement = fmt::format(
-							"update MMS_RequestStatistic "
+							"WITH rows AS (update MMS_RequestStatistic "
 							"set upToNextRequestInSeconds = EXTRACT(EPOCH FROM (current_timestamp - requestTimestamp)) "
-							"where requestStatisticKey = {} returning count(*)",
+							"where requestStatisticKey = {} returning 1) SELECT count(*) FROM rows;",
 							previoudRequestStatisticKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
