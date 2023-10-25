@@ -304,7 +304,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         {
 			string sqlStatement = fmt::format(
                 "select requestStatisticKey, ipAddress, userId, physicalPathKey, confStreamKey, title, "
-				"to_char(requestTimestamp, 'YYYY-MM-DDTHH24:MI:SSZ') as requestTimestamp "
+				"to_char(requestTimestamp, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as requestTimestamp "
 				"from MMS_RequestStatistic {}"
 				"order by requestTimestamp asc "
 				"limit {} offset {}",

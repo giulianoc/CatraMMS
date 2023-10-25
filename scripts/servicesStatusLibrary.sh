@@ -698,7 +698,7 @@ mms_api_timing_check_service()
 		lastLogTimestampChecked=-1
 	fi
 
-	maxAPIDuration=2
+	maxAPIDuration=2000
 	warningMessage=$(grep "manageRequestAndResponse, _requestIdentifier" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxAPIDuration=$maxAPIDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; } { datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2); newLastLogTimestampChecked=mktime(datespec); if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) { datetime=substr($0, 2, 23); method=$4; duration=$8; if (duration > maxAPIDuration) warningMessage=warningMessage""datetime" - "method" - "duration"\n"; } } END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
 
 	if [ "$warningMessage" = "" ]; then

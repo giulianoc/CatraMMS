@@ -344,6 +344,8 @@ Json::Value JSONUtils::toJson(int64_t ingestionJobKey, int64_t encodingJobKey, s
 string JSONUtils::toString(Json::Value joValueRoot)
 {
 	Json::StreamWriterBuilder wbuilder;                                                               
+	wbuilder.settings_["emitUTF8"] = true;
+	// wbuilder.settings_["indentation"] = "";
 
 	return Json::writeString(wbuilder, joValueRoot);
 }
