@@ -20,10 +20,16 @@ getAlarmDescription()
 
 	case $alarmType in
 		"alarm_sql_slave_off")
-			echo "SQL SLAVE is not working"
+			echo "MYSQL SLAVE is not working"
+			;;
+		"alarm_postgres_replication_check")
+			echo "Postgres replication is not working"
 			;;
 		"alarm_sql_check")
-			echo "SQL is not working"
+			echo "MYSQL is not working"
+			;;
+		"alarm_postgres_check")
+			echo "Postgres is not working"
 			;;
 		"alarm_disks_usage")
 			echo "File system full"
@@ -63,6 +69,9 @@ getAlarmDescription()
 			;;
 		"alarm_mms_encoder_service_running")
 			echo "mms encoder service is not running"
+			;;
+		"alarm_cibortv_service_running")
+			echo "cibortv service is not running"
 			;;
 		"alarm_blackdetect")
 			echo "got blackdetect"
@@ -168,11 +177,11 @@ sql_slave_off()
 	#replication_connection_status.service_state (Slave_IO_Running) ON indica che è stato eseguito il comando SQL: start slave.
 	#Nello scenario in cui abbiamo un problema, replication_connection_status.service_state rimane ON mentre
 	#replication_applier_status_by_coordinator.service_state (Slave_SQL_Running) è OFF
-	isMysqlSlave=$(echo "select service_state from performance_schema.replication_connection_status" | mysql -N -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -h localhost ${MYSQL_DBNAME})
+	isMysqlSlave=$(echo "select service_state from performance_schema.replication_connection_status" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
 	if [ "$isMysqlSlave" == "ON" ]; then
 
 		#solo se è uno slave verifico il suo stato
-		mysqlSlaveStatus=$(echo "select service_state from performance_schema.replication_applier_status_by_coordinator" | mysql -N -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -h localhost ${MYSQL_DBNAME})
+		mysqlSlaveStatus=$(echo "select service_state from performance_schema.replication_applier_status_by_coordinator" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
 		if [ "$mysqlSlaveStatus" == "ON" ]; then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, slave is working fine" >> $debugFilename
 
@@ -194,9 +203,56 @@ sql_slave_off()
 	fi
 }
 
+postgres_replication_check()
+{
+	isSlave=$(echo "select pg_is_in_recovery()" | psql -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+	#true(t) indica slave, false(f) indica master
+	if [ "$isSlave" == "t" ]; then
+		#in case of slave
+		status=$(echo "SELECT status FROM pg_stat_wal_receiver" | psql -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+		if [ "$status" == "streaming" ]; then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication slave is working fine" >> $debugFilename
+
+			alarmNotificationPathFileName="/tmp/alarm_postgres_replication_check"
+			if [ -f "$alarmNotificationPathFileName" ]; then
+				rm -f $alarmNotificationPathFileName
+			fi
+
+			return 0
+		else
+			alarmNotificationPeriod=$((60 * 15))		#15 minuti
+			notify "$(hostname)" "alarm_postgres_replication_check" "alarm_postgres_replication_check" $alarmNotificationPeriod "replication slave is not working, status: $status"
+			return 1
+		fi
+	elif [ "$isSlave" == "f" ]; then
+		#in case of master
+		#in questo caso avremo una riga per ogni slave connesso. In caso di funzionamento corretto,
+		#il campo state di ogni riga deve essere 'streaming'
+		count=$(echo "SELECT count(*) FROM pg_stat_replication where state != 'streaming'" | psql -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+		if [ $count -eq 0 ]; then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication master is working fine" >> $debugFilename
+
+			alarmNotificationPathFileName="/tmp/alarm_postgres_replication_check"
+			if [ -f "$alarmNotificationPathFileName" ]; then
+				rm -f $alarmNotificationPathFileName
+			fi
+
+			return 0
+		else
+			alarmNotificationPeriod=$((60 * 15))		#15 minuti
+			notify "$(hostname)" "alarm_postgres_replication_check" "alarm_postgres_replication_check" $alarmNotificationPeriod "replication master: at least one communication with slave is not working, count: $count"
+			return 1
+		fi
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, it is not a slave neither a master. isSlave: $isSlave" >> $debugFilename
+
+		return 0
+	fi
+}
+
 sql_check()
 {
-	count=$(echo "select count(*) from MMS_Code" | mysql -N -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -h localhost ${MYSQL_DBNAME})
+	count=$(echo "select count(*) from MMS_Code" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
 
 	#check if it is a number
 	regularExpression='^[0-9]+$'
@@ -204,7 +260,7 @@ sql_check()
 
 		# it is a number
 
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check, sql does not work. sql is working fine" >> $debugFilename
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check. sql is working fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_sql_check"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -213,10 +269,37 @@ sql_check()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check, sql does not work. sql count return: $count" >> $debugFilename
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check. sql count return: $count" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 15))		#15 minuti
 		notify "$(hostname)" "alarm_sql_check" "alarm_sql_check" $alarmNotificationPeriod "sql count return: $count"
+		return 1
+	fi
+}
+
+postgres_check()
+{
+	count=$(echo "select count(*) from MMS_TestConnection" | psql -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+
+	#check if it is a number
+	regularExpression='^[0-9]+$'
+	if [[ $count =~ $regularExpression ]] ; then
+
+		# it is a number
+
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_check. postgres is working fine" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_postgres_check"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_check. postgres count return: $count" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 15))		#15 minuti
+		notify "$(hostname)" "alarm_postgres_check" "alarm_postgres_check" $alarmNotificationPeriod "postgres count return: $count"
 		return 1
 	fi
 }
@@ -242,7 +325,7 @@ disks_usage()
 
 cpu_usage()
 {
-	maxCpuUsage=60.0
+	maxCpuUsage=70.0
 
 	cpuUsage=$(cat /proc/stat | grep "cpu " | awk '{ printf("%.2f", 100-(($5*100)/($2+$3+$4+$5+$6+$7+$8+$9+$10))); }')
 	result=$(echo "${cpuUsage}<${maxCpuUsage}" | bc)                                                                   
@@ -584,6 +667,66 @@ mms_encoder_service_running()
 		return 0
 	fi
 }
+
+cibortv_service_running()
+{
+	healthCheckURL=$1
+
+	outputHealthCheckURL=/tmp/cibortv_service_running.healthCheckURL.response
+	httpStatus=$(curl -k --output $outputHealthCheckURL -w "%{http_code}" --max-time 20 "$healthCheckURL")
+	if [ $httpStatus -ne 200 ]
+	then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): cibortv_service_running failed, httpStatus: $httpStatus, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
+
+		failuresNumberFileName=/tmp/alarm_cibortv_service_running.failuresNumber.txt
+		if [ -s $failuresNumberFileName ]
+		then
+			#exist and is not empty
+			failuresNumber=$(cat $failuresNumberFileName)
+		else
+			failuresNumber=0
+		fi
+		maxFailuresNumber=5
+		alarmNotificationPeriod=$((60 * 1))		#1 minuti
+		notify "$(hostname)" "alarm_cibortv_service_running" "alarm_cibortv_service_running" $alarmNotificationPeriod "healthCheckURL: $healthCheckURL, failuresNumber: $failuresNumber/$maxFailuresNumber"
+
+		#fix management
+		if [ $failuresNumber -ge $maxFailuresNumber ]
+		then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_cibortv_service_running, service is restarted" >> $debugFilename
+
+			~/mmsStopALL.sh
+			sleep 1
+			~/mmsStartALL.sh
+
+			rm -f $failuresNumberFileName
+		else
+			failuresNumber=$((failuresNumber+1))
+
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_cibortv_service_running, one more failure: $failuresNumber, serviceStatus: $serviceStatus, healthCheckURL: $healthCheckURL" >> $debugFilename
+
+			echo "$failuresNumber" > $failuresNumberFileName
+		fi
+
+		return 1
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_cibortv_service_running, cibortv is running" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_cibortv_service_running"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		#fix management
+		failuresNumberFileName=/tmp/alarm_cibortv_service_running.failuresNumber.txt
+		if [ -f "$failuresNumberFileName" ]; then
+			rm -f $failuresNumberFileName
+		fi
+
+		return 0
+	fi
+}
+
 
 ffmpeg_filter_detect()
 {

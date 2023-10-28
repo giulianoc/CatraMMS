@@ -58,7 +58,13 @@ do
 			sql_slave_off
 
 			echo "" >> $debugFilename
+			postgres_replication_check
+
+			echo "" >> $debugFilename
 			sql_check
+
+			echo "" >> $debugFilename
+			postgres_check
 
 			echo "" >> $debugFilename
 			mms_engine_service_running
@@ -122,6 +128,11 @@ do
 		"integration")
 			echo "" >> $debugFilename
 			nginx_integration_error
+
+			echo "" >> $debugFilename
+			healthCheckURL=$2
+			shift
+			cibortv_service_running $healthCheckURL
 
 			;;
         *) echo "$1 is not an option" >> $debugFilename

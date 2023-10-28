@@ -1214,9 +1214,9 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 		if (totalNumFoundToBeCalculated)
 		{
 			string sqlStatement = fmt::format(
-				"select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count "
+				"select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
 				"from MMS_RequestStatistic {} "
-				"group by to_char(requestTimestamp, 'YYYY-MM') order by count(*) desc ",
+				"group by to_char(requestTimestamp, 'YYYY-MM-DD') order by count(*) desc ",
 				sqlWhere
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1241,9 +1241,9 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
         Json::Value statisticsRoot(Json::arrayValue);
         {
             string sqlStatement = fmt::format(
-				"select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count "
+				"select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
 				"from MMS_RequestStatistic {}"
-				"group by to_char(requestTimestamp, 'YYYY-MM') order by count(*) desc "
+				"group by to_char(requestTimestamp, 'YYYY-MM-DD') order by count(*) desc "
 				"limit {} offset {}",
 				sqlWhere, rows, start
 			);

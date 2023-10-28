@@ -299,8 +299,10 @@ install-packages()
 		echo "CREATE ROLE mms_repl REPLICATION LOGIN ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
 		echo "CREATE ROLE mms CREATEDB LOGIN CREATEROLE ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
 		echo "CREATE DATABASE mms OWNER mms ENCODING UTF8" | sudo -u postgres psql
+		#per leggere lo stato dello slave (servicesStatusLibrary.sh):
+		echo "GRANT pg_read_all_stats TO mms" | sudo -u postgres psql
 
-		echo "sudo vi /etc/hosts inizializzare postgres-master e postgres-slaves"
+		echo "sudo vi /etc/hosts inizializzare postgres-master, postgres-slaves e postgres-localhost (usato da servicesStatusLibrary.sh)"
 		echo "Premi un tasto quando fatto"
 		read
 
