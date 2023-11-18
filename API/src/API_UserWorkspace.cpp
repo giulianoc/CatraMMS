@@ -2051,7 +2051,7 @@ void API::updateUser(
 		bool emailChanged;
         string country;
 		bool countryChanged;
-        string expirationDate;
+        string expirationUtcDate;
 		bool expirationDateChanged;
 		bool passwordChanged;
         string newPassword;
@@ -2107,7 +2107,7 @@ void API::updateUser(
 				field = "expirationDate";
 				if (JSONUtils::isMetadataPresent(metadataRoot, field))
 				{
-					expirationDate = JSONUtils::asString(metadataRoot, field, "");
+					expirationUtcDate = JSONUtils::asString(metadataRoot, field, "");
 					expirationDateChanged = true;
 				}
 			}
@@ -2145,7 +2145,7 @@ void API::updateUser(
 				nameChanged, name,
 				emailChanged, email,
 				countryChanged, country,
-				expirationDateChanged, expirationDate,
+				expirationDateChanged, expirationUtcDate,
 				passwordChanged, newPassword, oldPassword);
 
             _logger->info(__FILEREF__ + "User updated"
@@ -2577,7 +2577,7 @@ void API::updateWorkspace(
         int64_t newMaxIngestionsNumber; bool maxIngestionsNumberChanged = false;
         int64_t newMaxStorageInMB; bool maxStorageInMBChanged = false;
         string newLanguageCode; bool languageCodeChanged = false;
-        string newExpirationDate; bool expirationDateChanged = false;
+        string newExpirationUtcDate; bool expirationDateChanged = false;
         bool newCreateRemoveWorkspace;
         bool newIngestWorkflow;
         bool newCreateProfiles;
@@ -2695,7 +2695,7 @@ void API::updateWorkspace(
 			if (JSONUtils::isMetadataPresent(userAPIKeyRoot, field))
 			{
 				expirationDateChanged = true;
-				newExpirationDate = JSONUtils::asString(userAPIKeyRoot, field, "");
+				newExpirationUtcDate = JSONUtils::asString(userAPIKeyRoot, field, "");
 			}
 
 			field = "createRemoveWorkspace";
@@ -2749,7 +2749,7 @@ void API::updateWorkspace(
 				maxIngestionsNumberChanged, newMaxIngestionsNumber,
 				maxStorageInMBChanged, newMaxStorageInMB,
 				languageCodeChanged, newLanguageCode,
-				expirationDateChanged, newExpirationDate,
+				expirationDateChanged, newExpirationUtcDate,
 				newCreateRemoveWorkspace,
 				newIngestWorkflow,
 				newCreateProfiles,

@@ -20,6 +20,32 @@
 # License is allowed only after express negotiation of conditions
 # with the authors.
 
+if (DEFINED __POSTGRES__)
+SET (SOURCES
+	AWSSigner.cpp
+	MMSDeliveryAuthorization.cpp
+	MMSStorage.cpp
+	MMSEngineDBFacade_Postgres.cpp
+	MMSEngineDBFacade_Configuration_Postgres.cpp
+	MMSEngineDBFacade_CreateTables_Postgres.cpp
+	MMSEngineDBFacade_EncodersPool_Postgres.cpp
+	MMSEngineDBFacade_EncodingJobs_Postgres.cpp
+	MMSEngineDBFacade_EncodingProfiles_Postgres.cpp
+	MMSEngineDBFacade_IngestionJobs_Postgres.cpp
+	MMSEngineDBFacade_MediaItems_Postgres.cpp
+	MMSEngineDBFacade_PartitionInfo_Postgres.cpp
+	MMSEngineDBFacade_Statistic_Postgres.cpp
+	MMSEngineDBFacade_UserWorkspace_Postgres.cpp
+	MMSEngineDBFacade_WorkflowLibrary_Postgres.cpp
+	Workspace.cpp
+	Validator.cpp
+	ActiveEncodingsManager.cpp
+	EncoderVideoAudioProxy.cpp
+	EncodersLoadBalancer.cpp
+	EMailSender.cpp
+	ThreadsStatistic.cpp
+)
+else()
 SET (SOURCES
 	AWSSigner.cpp
 	MMSDeliveryAuthorization.cpp
@@ -27,7 +53,6 @@ SET (SOURCES
 	MMSEngineDBFacade.cpp
 	MMSEngineDBFacade_Configuration.cpp
 	MMSEngineDBFacade_CreateTables.cpp
-	MMSEngineDBFacade_CreateTables_Postgres.cpp
 	MMSEngineDBFacade_EncodersPool.cpp
 	MMSEngineDBFacade_EncodingJobs.cpp
 	MMSEngineDBFacade_EncodingProfiles.cpp
@@ -47,6 +72,7 @@ SET (SOURCES
 	EMailSender.cpp
 	ThreadsStatistic.cpp
 )
+endif()
 SET (HEADERS
 	AWSSigner.h
 	MMSDeliveryAuthorization.h

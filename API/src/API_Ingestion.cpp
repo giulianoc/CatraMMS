@@ -53,9 +53,13 @@ void API::ingestion(
         // string responseBody;
 		Json::Value responseBodyRoot;
 		Json::Value responseBodyTasksRoot(Json::arrayValue);
-        shared_ptr<MySQLConnection> conn;
-		bool dbTransactionStarted = false;
 
+		#ifdef __POSTGRES__
+        shared_ptr<PostgresConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
+		work trans{*(conn->_sqlConnection)};
+		#else
+        shared_ptr<MySQLConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
+		#endif
         try
         {
 			/*
@@ -71,9 +75,6 @@ void API::ingestion(
             // used to save <label of the task> ---> vector of ingestionJobKey. A vector is used in case the same label is used more times
             // It is used when ReferenceLabel is used.
             unordered_map<string, vector<int64_t>> mapLabelAndIngestionJobKey;
-
-            conn = _mmsEngineDBFacade->beginIngestionJobs();
-			dbTransactionStarted = true;
 
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             // it starts from the root and validate recursively the entire body
@@ -95,8 +96,13 @@ void API::ingestion(
             field = "label";
 			rootLabel = JSONUtils::asString(requestBodyRoot, field, "");
 
+			#ifdef __POSTGRES__
+            int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn, trans,
+                workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
+			#else
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
                 workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
+			#endif
 			field = "ingestionRootKey";
 			requestBodyRoot[field] = ingestionRootKey;
 
@@ -134,19 +140,33 @@ void API::ingestion(
 				//	we do two cuts. The workflow generated than was: two cuts in parallel and then the concat.
 				//	This scenario works if localDependOnSuccess is 1
 				int localDependOnSuccess = 1;
+				#ifdef __POSTGRES__
+                ingestionGroupOfTasks(conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                        dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+                        dependOnIngestionJobKeysForStarting,
+                        mapLabelAndIngestionJobKey, /* responseBody, */ responseBodyTasksRoot);
+				#else
                 ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting,
                         mapLabelAndIngestionJobKey, /* responseBody, */ responseBodyTasksRoot);
+				#endif
             }
             else
             {
                 vector<int64_t> dependOnIngestionJobKeysForStarting;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
+				#ifdef __POSTGRES__
+                ingestionSingleTask(conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                        dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+                        dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
+                        /* responseBody, */ responseBodyTasksRoot);            
+				#else
                 ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
                         /* responseBody, */ responseBodyTasksRoot);            
+				#endif
             }
 
 			string processedMetadataContent;
@@ -155,8 +175,13 @@ void API::ingestion(
 			}
 
 			bool commit = true;
+			#ifdef __POSTGRES__
+			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit,
+				ingestionRootKey, processedMetadataContent);
+			#else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit,
 				ingestionRootKey, processedMetadataContent);
+			#endif
 
 			{
 				/*
@@ -180,11 +205,12 @@ void API::ingestion(
         }
         catch(AlreadyLocked& e)
         {
-			if (dbTransactionStarted)
-			{
-				bool commit = false;
-				_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
-			}
+			bool commit = false;
+			#ifdef __POSTGRES__
+			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			#else
+			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
+			#endif
 
             _logger->error(__FILEREF__ + "Ingestion locked"
                 + ", e.what(): " + e.what()
@@ -194,11 +220,12 @@ void API::ingestion(
         }
         catch(runtime_error& e)
         {
-			if (dbTransactionStarted)
-			{
-				bool commit = false;
-				_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
-			}
+			bool commit = false;
+			#ifdef __POSTGRES__
+			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			#else
+			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
+			#endif
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
@@ -208,11 +235,12 @@ void API::ingestion(
         }
         catch(exception& e)
         {
-			if (dbTransactionStarted)
-			{
-				bool commit = false;
-				_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
-			}
+			bool commit = false;
+			#ifdef __POSTGRES__
+			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			#else
+			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
+			#endif
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
@@ -919,6 +947,23 @@ void API::manageReferencesInput(int64_t ingestionRootKey,
 }
 
 // return: ingestionJobKey associated to this task
+#ifdef __POSTGRES__
+vector<int64_t> API::ingestionSingleTask(shared_ptr<PostgresConnection> conn, work& trans,
+		int64_t userKey, string apiKey,
+		shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value& taskRoot, 
+
+		// dependOnSuccess == 0 -> OnError
+		// dependOnSuccess == 1 -> OnSuccess
+		// dependOnSuccess == -1 -> OnComplete
+		// list of ingestion job keys to be executed before this task
+        vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
+
+		// the media input are retrieved looking at the media generated by this list 
+        vector<int64_t> dependOnIngestionJobKeysOverallInput,
+
+        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
+        /* string& responseBody, */ Json::Value& responseBodyTasksRoot)
+#else
 vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
 		shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value& taskRoot, 
@@ -934,6 +979,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         /* string& responseBody, */ Json::Value& responseBodyTasksRoot)
+#endif
 {
     string field = "type";
     string type = JSONUtils::asString(taskRoot, field, "");
@@ -1232,10 +1278,17 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
         
+			#ifdef __POSTGRES__
+			return ingestionGroupOfTasks(conn, trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, 
+                dependOnIngestionJobKeysForStarting, dependOnSuccess,
+                dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                /* responseBody, */ responseBodyTasksRoot);
+			#else
 			return ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, 
                 dependOnIngestionJobKeysForStarting, dependOnSuccess,
                 dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                 /* responseBody, */ responseBodyTasksRoot);
+			#endif
 		}
 		else
 		{
@@ -1325,10 +1378,17 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			field = "parameters";
 			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
         
+			#ifdef __POSTGRES__
+			return ingestionGroupOfTasks(conn, trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, 
+                dependOnIngestionJobKeysForStarting, dependOnSuccess,
+                dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                /* responseBody, */ responseBodyTasksRoot);
+			#else
 			return ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, 
                 dependOnIngestionJobKeysForStarting, dependOnSuccess,
                 dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                 /* responseBody, */ responseBodyTasksRoot);
+			#endif
 		}
 		else
 		{
@@ -1634,10 +1694,17 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			}
 		}
 
+		#ifdef __POSTGRES__
+		return ingestionGroupOfTasks(conn, trans, userKey, apiKey, workspace, ingestionRootKey, newGroupOfTasksRoot, 
+			dependOnIngestionJobKeysForStarting, dependOnSuccess,
+			dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+			/* responseBody, */ responseBodyTasksRoot);
+		#else
 		return ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey, newGroupOfTasksRoot, 
 			dependOnIngestionJobKeysForStarting, dependOnSuccess,
 			dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 			/* responseBody, */ responseBodyTasksRoot);
+		#endif
     }
 
 	// just log initial parameters
@@ -1737,10 +1804,17 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         + ", waitForGlobalIngestionJobKeys.size(): " + to_string(waitForGlobalIngestionJobKeys.size())
     );
 
+	#ifdef __POSTGRES__
+	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn, trans,
+		workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata,
+		MMSEngineDBFacade::toIngestionType(type), processingStartingFrom,
+		dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys);
+	#else
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
 		workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata,
 		MMSEngineDBFacade::toIngestionType(type), processingStartingFrom,
 		dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys);
+	#endif
 	field = "ingestionJobKey";
 	taskRoot[field] = localDependOnIngestionJobKeyExecution;
 
@@ -1811,6 +1885,16 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		localDependOnIngestionJobKeysOverallInput.end());
 
 	vector<int64_t> referencesOutputIngestionJobKeys;
+	#ifdef __POSTGRES__
+	ingestionEvents(conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysOverallInput,
+
+		dependOnIngestionJobKeysOverallInputOnError,
+
+		referencesOutputIngestionJobKeys,
+
+		mapLabelAndIngestionJobKey, /* responseBody, */ responseBodyTasksRoot);
+	#else
 	ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
 		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysOverallInput,
 
@@ -1819,19 +1903,31 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 		referencesOutputIngestionJobKeys,
 
 		mapLabelAndIngestionJobKey, /* responseBody, */ responseBodyTasksRoot);
+	#endif
 
 
     return localDependOnIngestionJobKeysForStarting;
 }
 
-vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
-		int64_t userKey, string apiKey,
+#ifdef __POSTGRES__
+vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<PostgresConnection> conn, work& trans,
+	int64_t userKey, string apiKey,
 	shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
 	Json::Value& groupOfTasksRoot, 
 	vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
 	vector<int64_t> dependOnIngestionJobKeysOverallInput,
 	unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
 	/* string& responseBody, */ Json::Value& responseBodyTasksRoot)
+#else
+vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
+	int64_t userKey, string apiKey,
+	shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+	Json::Value& groupOfTasksRoot, 
+	vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
+	vector<int64_t> dependOnIngestionJobKeysOverallInput,
+	unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
+	/* string& responseBody, */ Json::Value& responseBodyTasksRoot)
+#endif
 {
 
 	string type = "GroupOfTasks";
@@ -1940,19 +2036,35 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
             {
                 int localDependOnSuccess = -1;
 
+				#ifdef __POSTGRES__
+                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                    conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                    dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    /* responseBody, */ responseBodyTasksRoot);
+				#else
                 localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
                     conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     /* responseBody, */ responseBodyTasksRoot);
+				#endif
             }
             else
             {
+				#ifdef __POSTGRES__
+                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
+                    conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                    dependOnIngestionJobKeysForStarting, dependOnSuccess, 
+                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    /* responseBody, */ responseBodyTasksRoot);
+				#else
                 localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
                     conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, dependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     /* responseBody, */ responseBodyTasksRoot);
+				#endif
             }
         }
         else
@@ -1963,19 +2075,35 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 {
 					int localDependOnSuccess = -1;
 
+					#ifdef __POSTGRES__
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                        conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                        dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                        /* responseBody, */ responseBodyTasksRoot);
+					#else
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
                         conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                         /* responseBody, */ responseBodyTasksRoot);
+					#endif
                 }
                 else
                 {
+					#ifdef __POSTGRES__
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
+                        conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                        dependOnIngestionJobKeysForStarting, dependOnSuccess,
+                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                        /* responseBody, */ responseBodyTasksRoot);
+					#else
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
                         conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysForStarting, dependOnSuccess,
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                         /* responseBody, */ responseBodyTasksRoot);
+					#endif
                 }
             }
             else
@@ -1984,19 +2112,35 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 
                 if (taskType == "GroupOfTasks")
                 {
+					#ifdef __POSTGRES__
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                        conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                        lastDependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                        /* responseBody, */ responseBodyTasksRoot);
+					#else
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
                         conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         lastDependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                         /* responseBody, */ responseBodyTasksRoot);
+					#endif
                 }
                 else
                 {
+					#ifdef __POSTGRES__
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
+                        conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                        lastDependOnIngestionJobKeysForStarting, localDependOnSuccess,
+                        dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                        /* responseBody, */ responseBodyTasksRoot);
+					#else
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
                         conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                         lastDependOnIngestionJobKeysForStarting, localDependOnSuccess,
                         dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                         /* responseBody, */ responseBodyTasksRoot);
+					#endif
                 }
             }
             
@@ -2193,6 +2337,15 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 	//		if the dependent job will fail and the dependency is OnSuccess or viceversa,
 	//		the GroupOfTasks will not be executed
 	vector<int64_t> waitForGlobalIngestionJobKeys;
+	#ifdef __POSTGRES__
+	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn, trans,
+		workspace->_workspaceKey, ingestionRootKey, groupOfTaskLabel, taskMetadata,
+		MMSEngineDBFacade::toIngestionType(type), processingStartingFrom,
+		referencesOutputPresent ? newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput
+			: newDependOnIngestionJobKeysOverallInputBecauseOfTasks,
+			dependOnSuccess,
+			waitForGlobalIngestionJobKeys);
+	#else
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
 		workspace->_workspaceKey, ingestionRootKey, groupOfTaskLabel, taskMetadata,
 		MMSEngineDBFacade::toIngestionType(type), processingStartingFrom,
@@ -2200,6 +2353,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 			: newDependOnIngestionJobKeysOverallInputBecauseOfTasks,
 			dependOnSuccess,
 			waitForGlobalIngestionJobKeys);
+	#endif
 	field = "ingestionJobKey";
 	groupOfTasksRoot[field] = localDependOnIngestionJobKeyExecution;
 
@@ -2208,9 +2362,15 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		int64_t parentGroupOfTasksIngestionJobKey = localDependOnIngestionJobKeyExecution;
 		for (int64_t childIngestionJobKey: newDependOnIngestionJobKeysOverallInputBecauseOfTasks)
 		{
+			#ifdef __POSTGRES__
+			_mmsEngineDBFacade->updateIngestionJobParentGroupOfTasks(
+					conn, trans, childIngestionJobKey,
+					parentGroupOfTasksIngestionJobKey);
+			#else
 			_mmsEngineDBFacade->updateIngestionJobParentGroupOfTasks(
 					conn, childIngestionJobKey,
 					parentGroupOfTasksIngestionJobKey);
+			#endif
 		}
 	}
 
@@ -2305,6 +2465,15 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		localDependOnIngestionJobKeysForStarting.begin(),
 		localDependOnIngestionJobKeysForStarting.end());
 
+	#ifdef __POSTGRES__
+    ingestionEvents(conn, trans, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, 
+		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysForStarting,
+
+        dependOnIngestionJobKeysOverallInputOnError,
+
+		referencesOutputIngestionJobKeys,
+		mapLabelAndIngestionJobKey, /* responseBody, */ responseBodyTasksRoot);
+	#else
     ingestionEvents(conn, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, 
 		localDependOnIngestionJobKeysForStarting, localDependOnIngestionJobKeysForStarting,
 
@@ -2312,10 +2481,22 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
 		referencesOutputIngestionJobKeys,
 		mapLabelAndIngestionJobKey, /* responseBody, */ responseBodyTasksRoot);
+	#endif
 
     return localDependOnIngestionJobKeysForStarting;
 }
 
+#ifdef __POSTGRES__
+void API::ingestionEvents(shared_ptr<PostgresConnection> conn, work& trans,
+		int64_t userKey, string apiKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+        Json::Value& taskOrGroupOfTasksRoot, 
+        vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
+        vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
+        vector<int64_t>& referencesOutputIngestionJobKeys,
+        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
+        /* string& responseBody, */ Json::Value& responseBodyTasksRoot)
+#else
 void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -2325,6 +2506,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         vector<int64_t>& referencesOutputIngestionJobKeys,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         /* string& responseBody, */ Json::Value& responseBodyTasksRoot)
+#endif
 {
 
     string field = "onSuccess";
@@ -2361,11 +2543,19 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = 1;
+			#ifdef __POSTGRES__
+            localIngestionJobKeys = ingestionGroupOfTasks(conn, trans, userKey, apiKey, workspace, ingestionRootKey,
+                    taskRoot, 
+                    dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    /* responseBody, */ responseBodyTasksRoot);
+			#else
             localIngestionJobKeys = ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     /* responseBody, */ responseBodyTasksRoot);
+			#endif
         }
         else
         {
@@ -2388,11 +2578,19 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 			}
 			*/
             int localDependOnSuccess = 1;
+			#ifdef __POSTGRES__
+            localIngestionJobKeys = ingestionSingleTask(conn, trans, userKey, apiKey, workspace,
+				ingestionRootKey, taskRoot, 
+				dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+				/* responseBody, */ responseBodyTasksRoot);            
+			#else
             localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace,
 				ingestionRootKey, taskRoot, 
 				dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
 				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot);            
+			#endif
         }
 
 		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
@@ -2406,9 +2604,15 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 			{
 				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
 				{
+					#ifdef __POSTGRES__
+					_mmsEngineDBFacade->addIngestionJobDependency (
+						conn, trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
+						referenceOutputDependency);
+					#else
 					_mmsEngineDBFacade->addIngestionJobDependency (
 						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
 						referenceOutputDependency);
+					#endif
 				}
 			}
 		}
@@ -2448,12 +2652,21 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = 0;
+			#ifdef __POSTGRES__
+            localIngestionJobKeys = ingestionGroupOfTasks(conn, trans, userKey, apiKey, workspace, ingestionRootKey,
+                    taskRoot, 
+                    dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+					// dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
+                    /* responseBody, */ responseBodyTasksRoot);
+			#else
             localIngestionJobKeys = ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
 					// dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
                     /* responseBody, */ responseBodyTasksRoot);
+			#endif
         }
         else
         {
@@ -2476,11 +2689,19 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 			}
 			*/
             int localDependOnSuccess = 0;
+			#ifdef __POSTGRES__
+            localIngestionJobKeys = ingestionSingleTask(conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                    dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+					// dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
+                    /* responseBody, */ responseBodyTasksRoot);
+			#else
             localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
 					// dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
                     /* responseBody, */ responseBodyTasksRoot);
+			#endif
         }
 
 		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
@@ -2494,9 +2715,15 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 			{
 				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
 				{
+					#ifdef __POSTGRES__
+					_mmsEngineDBFacade->addIngestionJobDependency (
+						conn, trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
+						referenceOutputDependency);
+					#else
 					_mmsEngineDBFacade->addIngestionJobDependency (
 						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
 						referenceOutputDependency);
+					#endif
 				}
 			}
 		}
@@ -2533,19 +2760,34 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         if (taskType == "GroupOfTasks")
         {
             int localDependOnSuccess = -1;
+			#ifdef __POSTGRES__
+            localIngestionJobKeys = ingestionGroupOfTasks(conn, trans, userKey, apiKey, workspace, ingestionRootKey,
+                    taskRoot, 
+                    dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    /* responseBody, */ responseBodyTasksRoot);
+			#else
             localIngestionJobKeys = ingestionGroupOfTasks(conn, userKey, apiKey, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     /* responseBody, */ responseBodyTasksRoot);
+			#endif
         }
         else
         {
             int localDependOnSuccess = -1;
+			#ifdef __POSTGRES__
+            localIngestionJobKeys = ingestionSingleTask(conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
+                    dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
+                    dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+                    /* responseBody, */ responseBodyTasksRoot);            
+			#else
             localIngestionJobKeys = ingestionSingleTask(conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysForStarting, localDependOnSuccess, 
                     dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
                     /* responseBody, */ responseBodyTasksRoot);            
+			#endif
         }
 
 		// to understand the reason I'm adding these dependencies, look at the comment marked as '2019-10-01'
@@ -2559,9 +2801,15 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 			{
 				for (int64_t localReferenceOutputIngestionJobKey: referencesOutputIngestionJobKeys)
 				{
+					#ifdef __POSTGRES__
+					_mmsEngineDBFacade->addIngestionJobDependency (
+						conn, trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey,
+						orderNumber, referenceOutputDependency);
+					#else
 					_mmsEngineDBFacade->addIngestionJobDependency (
 						conn, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey,
 						orderNumber, referenceOutputDependency);
+					#endif
 				}
 			}
 		}

@@ -120,11 +120,11 @@ fi
 
 if [ "$env" == "test" ]
 then
-	hostname=mms-gui-test.catramms-cloud.com
+	hostname=mms-webapi-test.catramms-cloud.com
 else
-	hostname=mms-gui.catramms-cloud.com
+	hostname=mms-webapi.catramms-cloud.com
 fi
 
 
-curl "https://$hostname/catramms/rest/api/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&cdn77ChannelConfigurationLabel=$cdn77ChannelConfigurationLabel&monitoringFrameIncreasingEnabled=false&autoRenew=false&startRecording=$startTime&stopRecording=$endTime"
+curl "https://$hostname/webapi-v1/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&cdn77ChannelConfigurationLabel=$cdn77ChannelConfigurationLabel&monitoringFrameIncreasingEnabled=false&autoRenew=false&startRecording=$startTime&stopRecording=$endTime"
 

@@ -933,12 +933,13 @@ firewall-rules()
 		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
 		#read internalNetwork
 		internalNetwork=10.0.0.0/16
-		ufw allow from $internalNetwork to any port 8088        #mms-api
-		ufw allow from $internalNetwork to any port 8089        #mms-gui
-		ufw allow from $internalNetwork to any port 8090        #mms-binary
-		ufw allow from $internalNetwork to any port 8091        #mms-delivery
-		ufw allow from $internalNetwork to any port 8092        #mms-delivery-path
-		ufw allow from $internalNetwork to any port 8093        #mms-delivery-f
+		ufw allow from $internalNetwork to any port 8086		#mms-webapi
+		ufw allow from $internalNetwork to any port 8088		#mms-api
+		ufw allow from $internalNetwork to any port 8089		#mms-gui
+		ufw allow from $internalNetwork to any port 8090		#mms-binary
+		ufw allow from $internalNetwork to any port 8091		#mms-delivery
+		ufw allow from $internalNetwork to any port 8092		#mms-delivery-path
+		ufw allow from $internalNetwork to any port 8093		#mms-delivery-f
 	elif [ "$moduleType" == "engine" ]; then
 		# -> mysql/postgres
 		#ufw allow 3306

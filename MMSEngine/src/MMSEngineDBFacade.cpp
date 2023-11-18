@@ -277,8 +277,8 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
     _logger->info(__FILEREF__ + "createTablesIfNeeded...");
     createTablesIfNeeded();
-    _logger->info(__FILEREF__ + "createTablesIfNeeded_Postgres...");
-    createTablesIfNeeded_Postgres();
+    // _logger->info(__FILEREF__ + "createTablesIfNeeded_Postgres...");
+    // createTablesIfNeeded_Postgres();
 }
 
 MMSEngineDBFacade::~MMSEngineDBFacade() 

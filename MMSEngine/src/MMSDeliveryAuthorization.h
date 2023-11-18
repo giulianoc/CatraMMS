@@ -14,6 +14,9 @@
 #ifndef MMSDeliveryAuthorization_h
 #define MMSDeliveryAuthorization_h
 
+#ifndef SPDLOG_ACTIVE_LEVEL
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#endif
 #include "spdlog/spdlog.h"
 #include "MMSStorage.h"
 // #include <fstream>

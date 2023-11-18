@@ -7,7 +7,8 @@ then
 	echo "usage $0 moduleType_1 [parameter_1] [moduleType_2 [parameter_2]] [moduleType_3 [parameter_3]]" >> $debugFilename
 	echo "	examples:" >> $debugFilename
 	echo "	$0 engine" >> $debugFilename
-	echo "	$0 api <healthCheckURL>" >> $debugFilename
+	echo "	$0 api <healthCheckURL" >> $debugFilename
+	echo "	$0 webapi <healthCheckURL" >> $debugFilename
 	echo "	$0 delivery" >> $debugFilename
 	echo "	$0 encoder <healthCheckURL>" >> $debugFilename
 	echo "	$0 externalEncoder <healthCheckURL>" >> $debugFilename
@@ -67,23 +68,43 @@ do
 			postgres_check
 
 			echo "" >> $debugFilename
-			mms_engine_service_running
+			serviceName=engine
+			processName=mmsEngineService
+			mms_service_running_by_processName $serviceName $processName
 			;;
 		"api")
 			echo "" >> $debugFilename
-			nginx_api_error
+			nginx_error api
 
 			echo "" >> $debugFilename
+			serviceName=api
 			healthCheckURL=$2
-			shift
-			mms_api_service_running $healthCheckURL
+			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
 
 			echo "" >> $debugFilename
 			mms_api_timing_check_service
+
+			shift
+
+			;;
+		"webapi")
+			echo "" >> $debugFilename
+			nginx_error webapi
+
+			echo "" >> $debugFilename
+			serviceName=webapi
+			healthCheckURL=$2
+			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
+
+			#echo "" >> $debugFilename
+			mms_webservices_timing_check_service catraMMSWEBServices catraMMSWEBServices
+
+			shift
+
 			;;
 		"gui")
 			echo "" >> $debugFilename
-			nginx_gui_error
+			nginx_error gui
 
 			;;
 		"delivery")
@@ -91,10 +112,16 @@ do
 			mount_error
 
 			echo "" >> $debugFilename
-			nginx_binary_error
+			nginx_error binary
 
 			echo "" >> $debugFilename
-			nginx_delivery_error
+			nginx_error delivery
+
+			echo "" >> $debugFilename
+			nginx_error delivery-f
+
+			echo "" >> $debugFilename
+			nginx_error delivery-path
 
 			;;
 		"encoder" | "externalEncoder")
@@ -105,12 +132,12 @@ do
 			fi
 
 			echo "" >> $debugFilename
-			nginx_encoder_error
+			nginx_error encoder
 
 			echo "" >> $debugFilename
+			serviceName=encoder
 			healthCheckURL=$2
-			shift
-			mms_encoder_service_running $healthCheckURL
+			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
 
 			echo "" >> $debugFilename
 			ffmpeg_filter_detect blackdetect
@@ -124,15 +151,29 @@ do
 			echo "" >> $debugFilename
 			ffmpeg_filter_detect silencedetect
 
+			shift
+
 			;;
 		"integration")
 			echo "" >> $debugFilename
-			nginx_integration_error
+			nginx_error cibortv
 
 			echo "" >> $debugFilename
+			nginx_error cibortv-epg
+
+			echo "" >> $debugFilename
+			nginx_error cibortv-apk
+
+			echo "" >> $debugFilename
+			serviceName=cibortv
 			healthCheckURL=$2
+			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
+
+			echo "" >> $debugFilename
+			mms_webservices_timing_check_service cibortv cibortv
+			mms_webservices_timing_check_service cibortv license
+
 			shift
-			cibortv_service_running $healthCheckURL
 
 			;;
         *) echo "$1 is not an option" >> $debugFilename

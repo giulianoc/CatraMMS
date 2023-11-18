@@ -24,6 +24,7 @@ SET (CONFs
 	nginx.conf
 	catramms.nginx
 	catrammsAPIServer.nginx
+	catrammsWEBAPIServer.nginx
 	catrammsGUIServer.nginx
 	catrammsDeliveryServer.nginx
 	catrammsDelivery-pathServer.nginx

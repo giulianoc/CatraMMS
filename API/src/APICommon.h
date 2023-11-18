@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include "fcgi_stdio.h"
 #include <unordered_map>
+#ifndef SPDLOG_ACTIVE_LEVEL
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#endif
 #include "spdlog/spdlog.h"
 #include "json/json.h"
 #include "MMSEngineDBFacade.h"

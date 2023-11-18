@@ -20,7 +20,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 		return statisticRoot;
 	}
 
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
@@ -35,7 +35,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 		string sqlStatement = fmt::format(
 			"insert into MMS_RequestStatistic(workspaceKey, ipAddress, userId, physicalPathKey, "
 			"confStreamKey, title, requestTimestamp) values ("
-			"{}, {}, {}, {}, {}, {}, current_timestamp) returning requestStatisticKey",
+			"{}, {}, {}, {}, {}, {}, now() at time zone 'utc') returning requestStatisticKey",
 			workspaceKey,
 			(ipAddress == "" ? "null" : trans.quote(ipAddress)),
 			trans.quote(userId),
@@ -78,8 +78,8 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 					{
 						sqlStatement = fmt::format(
 							"WITH rows AS (update MMS_RequestStatistic "
-							"set upToNextRequestInSeconds = EXTRACT(EPOCH FROM (current_timestamp - requestTimestamp)) "
-							"where requestStatisticKey = {} returning 1) SELECT count(*) FROM rows;",
+							"set upToNextRequestInSeconds = EXTRACT(EPOCH FROM (now() at time zone 'utc' - requestTimestamp)) "
+							"where requestStatisticKey = {} returning 1) SELECT count(*) FROM rows",
 							previoudRequestStatisticKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();

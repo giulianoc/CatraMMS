@@ -888,13 +888,16 @@ void API::addUpdateEncodingProfilesSet(
         
         Json::Value encodingProfilesSetRoot = JSONUtils::toJson(-1, -1, requestBody);
 
-        string responseBody;    
-        shared_ptr<MySQLConnection> conn;
+        string responseBody;
+		#ifdef __POSTGRES__
+        shared_ptr<PostgresConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
+		work trans{*(conn->_sqlConnection)};
+		#else
+        shared_ptr<MySQLConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
+		#endif
 
         try
-        {            
-            conn = _mmsEngineDBFacade->beginIngestionJobs();
-
+        {
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
         
@@ -910,8 +913,13 @@ void API::addUpdateEncodingProfilesSet(
             string label = JSONUtils::asString(encodingProfilesSetRoot, field, "");
 
 			bool removeEncodingProfilesIfPresent = true;
-			int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSetIfNotAlreadyPresent(conn,
-				workspace->_workspaceKey, contentType, label, removeEncodingProfilesIfPresent);
+			#ifdef __POSTGRES__
+			int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSetIfNotAlreadyPresent(
+				&trans, conn, workspace->_workspaceKey, contentType, label, removeEncodingProfilesIfPresent);
+			#else
+			int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSetIfNotAlreadyPresent(
+				conn, workspace->_workspaceKey, contentType, label, removeEncodingProfilesIfPresent);
+			#endif
 
 			field = "Profiles";
 			Json::Value profilesRoot = encodingProfilesSetRoot[field];
@@ -919,10 +927,16 @@ void API::addUpdateEncodingProfilesSet(
             for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
             {
                 string profileLabel = JSONUtils::asString(profilesRoot[profileIndex]);
-                
-                int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
-                        conn, workspace->_workspaceKey, profileLabel,
-                        contentType, encodingProfilesSetKey);
+
+				#ifdef __POSTGRES__
+				int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
+					&trans, conn, workspace->_workspaceKey, profileLabel,
+					contentType, encodingProfilesSetKey);
+				#else
+				int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
+					conn, workspace->_workspaceKey, profileLabel,
+					contentType, encodingProfilesSetKey);
+				#endif
 
                 if (responseBody != "")
                     responseBody += string(", ");
@@ -935,7 +949,11 @@ void API::addUpdateEncodingProfilesSet(
             }
 
             bool commit = true;
+			#ifdef __POSTGRES__
+            _mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			#else
             _mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
+			#endif
             
             string beginOfResponseBody = string("{ ")
                 + "\"encodingProfilesSet\": { "
@@ -949,7 +967,11 @@ void API::addUpdateEncodingProfilesSet(
         catch(runtime_error& e)
         {
             bool commit = false;
+			#ifdef __POSTGRES__
+            _mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			#else
             _mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
+			#endif
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
@@ -960,7 +982,11 @@ void API::addUpdateEncodingProfilesSet(
         catch(exception& e)
         {
             bool commit = false;
+			#ifdef __POSTGRES__
+            _mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			#else
             _mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
+			#endif
 
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()

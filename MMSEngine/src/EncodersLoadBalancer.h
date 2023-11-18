@@ -17,6 +17,9 @@
 #include <string>
 #include <map>
 #include <vector>
+#ifndef SPDLOG_ACTIVE_LEVEL
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#endif
 #include "spdlog/spdlog.h"
 #include "json/json.h"
 #include "Workspace.h"

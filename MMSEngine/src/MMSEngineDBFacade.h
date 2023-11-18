@@ -18,6 +18,9 @@
 #include <memory>
 #include <vector>
 #include <filesystem>
+#ifndef SPDLOG_ACTIVE_LEVEL
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#endif
 #include "spdlog/spdlog.h"
 #include "Workspace.h"
 #include "json/json.h"
@@ -1306,11 +1309,28 @@ public:
 	tuple<int64_t, int64_t, string> getEncodingJobDetailsByIngestionJobKey(
 		int64_t ingestionJobKey, bool fromMaster);
 
+	#ifdef __POSTGRES__
+    int64_t addEncodingProfilesSetIfNotAlreadyPresent (
+        transaction_base* trans, shared_ptr<PostgresConnection> conn, int64_t workspaceKey,
+        MMSEngineDBFacade::ContentType contentType, 
+        string label, bool removeEncodingProfilesIfPresent);
+	#else
     int64_t addEncodingProfilesSetIfNotAlreadyPresent (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 
         string label, bool removeEncodingProfilesIfPresent);
+	#endif
 
+	#ifdef __POSTGRES__
+	int64_t addEncodingProfile(
+		nontransaction& trans, shared_ptr<PostgresConnection> conn,
+		int64_t workspaceKey,
+		string label,
+		MMSEngineDBFacade::ContentType contentType, 
+		DeliveryTechnology deliveryTechnology,
+		string jsonProfile,
+		int64_t encodingProfilesSetKey);
+	#else
     int64_t addEncodingProfile(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
@@ -1320,6 +1340,7 @@ public:
         string jsonProfile,
         int64_t encodingProfilesSetKey  // -1 if it is not associated to any Set
     );
+	#endif
 
     int64_t addEncodingProfile(
         int64_t workspaceKey,
@@ -1331,12 +1352,21 @@ public:
     void removeEncodingProfile(
         int64_t workspaceKey, int64_t encodingProfileKey);
 
+	#ifdef __POSTGRES__
+	int64_t addEncodingProfileIntoSetIfNotAlreadyPresent(
+		transaction_base* trans, shared_ptr<PostgresConnection> conn,
+		int64_t workspaceKey,
+		string label,
+		MMSEngineDBFacade::ContentType contentType, 
+		int64_t encodingProfilesSetKey);
+	#else
     int64_t addEncodingProfileIntoSetIfNotAlreadyPresent(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
         string label,
         MMSEngineDBFacade::ContentType contentType, 
         int64_t encodingProfilesSetKey);
+	#endif
 
     void removeEncodingProfilesSet(
         int64_t workspaceKey, int64_t encodingProfilesSetKey);
@@ -1349,8 +1379,14 @@ public:
 	int getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
 			int64_t ingestionJobKey, bool fromMaster);
 
+	#ifdef __POSTGRES__
+	int getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
+		shared_ptr<PostgresConnection> conn, nontransaction& trans,
+		int64_t ingestionJobKey);
+	#else
 	int getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
 			shared_ptr<MySQLConnection> conn, int64_t ingestionJobKey);
+	#endif
 
     void getIngestionsToBeManaged(
         vector<tuple<int64_t, string, shared_ptr<Workspace>,string, string, IngestionType,
@@ -1372,13 +1408,33 @@ public:
 	// 	string>>& runningLiveRecordersDetails
 	// );
 
+	#ifdef __POSTGRES__
+    shared_ptr<PostgresConnection> beginIngestionJobs ();
+	#else
     shared_ptr<MySQLConnection> beginIngestionJobs ();
+	#endif
     
+	#ifdef __POSTGRES__
+	int64_t addIngestionRoot (
+		shared_ptr<PostgresConnection> conn, work& trans,
+		int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel,
+		string metaDataContent);
+	#else
     int64_t addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
     	int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel,
 		string metaDataContent);
+	#endif
 
+	#ifdef __POSTGRES__
+	void addIngestionJobDependency (
+		shared_ptr<PostgresConnection> conn, work& trans,
+		int64_t ingestionJobKey,
+		int dependOnSuccess,
+		int64_t dependOnIngestionJobKey,
+		int orderNumber,
+		bool referenceOutputDependency);
+	#else
 	void addIngestionJobDependency (                                                           
         shared_ptr<MySQLConnection> conn,
         int64_t ingestionJobKey,
@@ -1386,11 +1442,21 @@ public:
         int64_t dependOnIngestionJobKey,
         int orderNumber,
 		bool referenceOutputDependency);
+	#endif
 
 	void changeIngestionJobDependency (
 		int64_t previousDependOnIngestionJobKey,
 		int64_t newDependOnIngestionJobKey);
 
+	#ifdef __POSTGRES__
+	int64_t addIngestionJob (
+		shared_ptr<PostgresConnection> conn, work& trans, int64_t workspaceKey,
+		int64_t ingestionRootKey, string label, string metadataContent,
+		MMSEngineDBFacade::IngestionType ingestionType, 
+		string processingStartingFrom,
+		vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
+		vector<int64_t> waitForGlobalIngestionJobKeys);
+	#else
     int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
     	int64_t workspaceKey, int64_t ingestionRootKey, 
         string label, string metadataContent,
@@ -1399,6 +1465,7 @@ public:
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
 		vector<int64_t> waitForGlobalIngestionJobKeys
     );
+	#endif
 
 	void getIngestionJobsKeyByGlobalLabel (
 		int64_t workspaceKey, string globalIngestionLabel,
@@ -1409,15 +1476,29 @@ public:
         int64_t ingestionJobKey,
         string metadataContent);
 
+	#ifdef __POSTGRES__
+	void updateIngestionJobMetadataContent (
+		shared_ptr<PostgresConnection>, nontransaction& trans,
+		int64_t ingestionJobKey,
+		string metadataContent);
+	#else
     void updateIngestionJobMetadataContent (
         shared_ptr<MySQLConnection> conn,
         int64_t ingestionJobKey,
         string metadataContent);
+	#endif
 
+	#ifdef __POSTGRES__
+	void updateIngestionJobParentGroupOfTasks(
+		shared_ptr<PostgresConnection> conn, work& trans,
+		int64_t ingestionJobKey,
+		int64_t parentGroupOfTasksIngestionJobKey);
+	#else
 	void updateIngestionJobParentGroupOfTasks(
 		shared_ptr<MySQLConnection> conn,
 		int64_t ingestionJobKey,
 		int64_t parentGroupOfTasksIngestionJobKey);
+	#endif
 
 	void updateIngestionJob_LiveRecorder (
 		int64_t workspaceKey,
@@ -1434,16 +1515,16 @@ public:
 		bool fromMaster,
 		vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>>& groupOfTasksChildrenStatus);
 
+	#ifdef __POSTGRES__
+	void endIngestionJobs (
+		shared_ptr<PostgresConnection> conn, work& trans, bool commit,
+		int64_t ingestionRootKey, string processedMetadataContent);
+	#else
     shared_ptr<MySQLConnection> endIngestionJobs (
         shared_ptr<MySQLConnection> conn, bool commit,
 		int64_t ingestionRootKey, string processedMetadataContent);
+	#endif
 
-    /*
-    void updateIngestionJob (
-        int64_t ingestionJobKey,
-        string processorMMS);
-    */
-    
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
@@ -1454,25 +1535,6 @@ public:
 		int64_t ingestionJobKey,
 		string errorMessage);
 
-    /*
-    void updateIngestionJob (
-        int64_t ingestionJobKey,
-        IngestionStatus newIngestionStatus,
-        int64_t mediaItemKey,
-        int64_t physicalPathKey,
-        string errorMessage,
-        string processorMMS);
-    */
-    
-    /*
-    void updateIngestionJob (
-        int64_t ingestionJobKey,
-        IngestionType ingestionType,
-        IngestionStatus newIngestionStatus,
-        string errorMessage,
-        string processorMMS);
-    */
-    
     bool updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
         double downloadingPercentage);
@@ -2736,6 +2798,21 @@ private:
 
 	bool			_statisticsEnabled;
 
+
+	#ifdef __POSTGRES__
+	string getPostgresArray (vector<string>& arrayElements, transaction_base* trans);
+	string getPostgresArray (Json::Value arrayRoot, transaction_base* trans);
+	#endif
+
+	#ifdef __POSTGRES__
+	Json::Value getStreamList (
+		nontransaction& trans, shared_ptr<PostgresConnection> conn,
+		int64_t workspaceKey, int64_t liveURLKey,
+		int start, int rows,
+		string label, bool labelLike, string url, string sourceType, string type,
+		string name, string region, string country,
+		string labelOrder);
+	#else
 	Json::Value getStreamList (
 		shared_ptr<MySQLConnection> conn,
 		int64_t workspaceKey, int64_t liveURLKey,
@@ -2743,7 +2820,20 @@ private:
 		string label, bool labelLike, string url, string sourceType, string type,
 		string name, string region, string country,
 		string labelOrder);
+	#endif
 
+	#ifdef __POSTGRES__
+	string createAPIKeyForActiveDirectoryUser(
+		shared_ptr<PostgresConnection> conn,
+		transaction_base* trans,
+		int64_t userKey,
+		string userEmailAddress,
+		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder,
+		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue);
+	#else
 	string createAPIKeyForActiveDirectoryUser(
 		shared_ptr<MySQLConnection> conn,
 		int64_t userKey,
@@ -2753,12 +2843,32 @@ private:
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		bool applicationRecorder,
 		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue);
+	#endif
 
+	#ifdef __POSTGRES__
+		void addWorkspaceForAdminUsers(
+			shared_ptr<PostgresConnection> conn, transaction_base* trans,
+			int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
+		);
+	#else
 		void addWorkspaceForAdminUsers(
 			shared_ptr<MySQLConnection> conn,
 			int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 		);
+	#endif
 
+	#ifdef __POSTGRES__
+	string createCode(
+		shared_ptr<PostgresConnection> conn,
+		transaction_base* trans,
+		int64_t workspaceKey,
+		int64_t userKey, string userEmail,
+		CodeType codeType,
+		bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder);
+	#else
 	string createCode(
 		shared_ptr<MySQLConnection> conn,
 		int64_t workspaceKey,
@@ -2768,7 +2878,17 @@ private:
 		bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		bool applicationRecorder);
+	#endif
 
+	#ifdef __POSTGRES__
+	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
+		int64_t ingestionJobKey,
+		int64_t workspaceKey,
+		IngestionStatus ingestionStatus,
+		IngestionType ingestionType,
+		shared_ptr<PostgresConnection> conn, transaction_base* trans
+		);
+	#else
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
 		int64_t ingestionJobKey,
 		int64_t workspaceKey,
@@ -2776,19 +2896,30 @@ private:
 		IngestionType ingestionType,
 		shared_ptr<MySQLConnection> conn
 		);
+	#endif
 
+	#ifdef __POSTGRES__
+	void addIngestionJobOutput(
+		shared_ptr<PostgresConnection>, transaction_base* trans,
+		int64_t ingestionJobKey,
+		int64_t mediaItemKey,
+		int64_t physicalPathKey,
+		int64_t sourceIngestionJobKey);
+	#else
 	void addIngestionJobOutput(
 		shared_ptr<MySQLConnection> conn,
 		int64_t ingestionJobKey,
 		int64_t mediaItemKey,
 		int64_t physicalPathKey,
-		int64_t sourceIngestionJobKey
-	);
+		int64_t sourceIngestionJobKey);
+	#endif
 
 	int getIngestionTypePriority(MMSEngineDBFacade::IngestionType);
 
 	int getEncodingTypePriority(MMSEngineDBFacade::EncodingType);
 
+	#ifdef __POSTGRES__
+	#else
 	pair<shared_ptr<sql::ResultSet>, int64_t> getMediaItemsList_withoutTagsCheck (
 		shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey, int64_t mediaItemKey,
@@ -2822,14 +2953,51 @@ private:
         string orderBy,
 		string jsonOrderBy,
 		bool admin);
+	#endif
 
+	#ifdef __POSTGRES__
+    void updateIngestionJob (
+        shared_ptr<PostgresConnection> conn, transaction_base* trans,
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        string errorMessage,
+        string processorMMS = "noToBeUpdated");
+	#else
     void updateIngestionJob (
         shared_ptr<MySQLConnection> conn,
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage,
         string processorMMS = "noToBeUpdated");
+	#endif
 
+	#ifdef __POSTGRES__
+    pair<int64_t,string> addWorkspace(
+        shared_ptr<PostgresConnection> conn,
+		work& trans,
+        int64_t userKey,
+        bool admin,
+		bool createRemoveWorkspace,
+        bool ingestWorkflow,
+        bool createProfiles,
+        bool deliveryAuthorization,
+        bool shareWorkspace,
+        bool editMedia,
+		bool editConfiguration,
+		bool killEncoding,
+		bool cancelIngestionJob,
+		bool editEncodersPool,
+		bool applicationRecorder,
+        string workspaceName,
+        WorkspaceType workspaceType,
+        string deliveryURL,
+        EncodingPriority maxEncodingPriority,
+        EncodingPeriod encodingPeriod,
+        long maxIngestionsNumber,
+        long maxStorageInMB,
+        string languageCode,
+        chrono::system_clock::time_point userExpirationDate);
+	#else
     pair<int64_t,string> addWorkspace(
         shared_ptr<MySQLConnection> conn,
         int64_t userKey,
@@ -2854,16 +3022,29 @@ private:
         long maxStorageInMB,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
+	#endif
 
+	#ifdef __POSTGRES__
+	void manageExternalUniqueName(
+		shared_ptr<PostgresConnection> conn,
+		transaction_base* trans,
+		int64_t workspaceKey,
+		int64_t mediaItemKey,
+		bool allowUniqueNameOverride,
+		string uniqueName);
+	#else
 	void manageExternalUniqueName(
 		shared_ptr<MySQLConnection> conn,
 		int64_t workspaceKey,
 		int64_t mediaItemKey,
 		bool allowUniqueNameOverride,
 		string uniqueName);
+	#endif
 
+	#ifdef __POSTGRES__
     int64_t saveVariantContentMetadata(
-        shared_ptr<MySQLConnection> conn,
+        shared_ptr<PostgresConnection> conn,
+		work& trans,
         
         int64_t workspaceKey,
 		int64_t ingestionJobKey,
@@ -2883,20 +3064,6 @@ private:
 		pair<int64_t, long>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
-		/*
-        int64_t durationInMilliSeconds,
-        long bitRate,
-        string videoCodecName,
-        string videoProfile,
-        int videoWidth,
-        int videoHeight,
-        string videoAvgFrameRate,
-        long videoBitRate,
-        string audioCodecName,
-        long audioSampleRate,
-        int audioChannels,
-        long audioBitRate,
-		*/
 
         // image
         int imageWidth,
@@ -2904,7 +3071,48 @@ private:
         string imageFormat,
         int imageQuality
     );
+	#else
+    int64_t saveVariantContentMetadata(
+		shared_ptr<MySQLConnection> conn,
+        
+        int64_t workspaceKey,
+		int64_t ingestionJobKey,
+        int64_t liveRecordingIngestionJobKey,
+        int64_t mediaItemKey,
+		bool externalReadOnlyStorage,
+		string externalDeliveryTechnology,
+		string externalDeliveryURL,
+        string encodedFileName,
+        string relativePath,
+        int mmsPartitionIndexUsed,
+        unsigned long long sizeInBytes,
+        int64_t encodingProfileKey,
+		int64_t physicalItemRetentionPeriodInMinutes,
+        
+        // video-audio
+		pair<int64_t, long>& mediaInfoDetails,
+		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
+		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
+        // image
+        int imageWidth,
+        int imageHeight,
+        string imageFormat,
+        int imageQuality
+    );
+	#endif
+
+	#ifdef __POSTGRES__
+	int64_t addUpdateWorkflowAsLibrary(
+		shared_ptr<PostgresConnection> conn,
+		nontransaction& trans,
+		int64_t userKey,
+		int64_t workspaceKey,
+		string label,
+		int64_t thumbnailMediaItemKey,
+		string jsonWorkflow,
+		bool admin);
+	#else
 	int64_t addUpdateWorkflowAsLibrary(
 		shared_ptr<MySQLConnection> conn,
 		int64_t userKey,
@@ -2913,54 +3121,123 @@ private:
 		int64_t thumbnailMediaItemKey,
 		string jsonWorkflow,
 		bool admin);
+	#endif
 
+	#ifdef __POSTGRES__
+	void addCrossReference (
+        shared_ptr<PostgresConnection> conn, transaction_base* trans,
+		int64_t ingestionJobKey,
+		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
+		int64_t targetMediaItemKey, Json::Value crossReferenceParametersRoot);
+	#else
 	void addCrossReference (
         shared_ptr<MySQLConnection> conn,
 		int64_t ingestionJobKey,
 		int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
 		int64_t targetMediaItemKey, Json::Value crossReferenceParametersRoot);
+	#endif
 
+	#ifdef __POSTGRES__
+	Json::Value getIngestionJobRoot(
+		shared_ptr<Workspace> workspace,
+		row& row,
+		bool dependencyInfo,		// added for performance issue
+		bool ingestionJobOutputs,	// added because output could be thousands of entries
+		shared_ptr<PostgresConnection> conn, nontransaction& trans);
+	#else
     Json::Value getIngestionJobRoot(
         shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
 		bool dependencyInfo,
 		bool ingestionJobOutputs,
         shared_ptr<MySQLConnection> conn);
+	#endif
 
+	#ifdef __POSTGRES__
+	void manageIngestionJobStatusUpdate (
+		int64_t ingestionJobKey,
+		IngestionStatus newIngestionStatus,
+		bool updateIngestionRootStatus,
+		shared_ptr<PostgresConnection> conn, transaction_base* trans);
+	#else
     void manageIngestionJobStatusUpdate (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
 		bool updateIngestionRootStatus,
         shared_ptr<MySQLConnection> conn);
+	#endif
 
+	#ifdef __POSTGRES__
+    pair<int64_t,int64_t> getWorkspaceUsage(
+        shared_ptr<PostgresConnection> conn,
+		nontransaction& trans,
+        int64_t workspaceKey);
+	#else
     pair<int64_t,int64_t> getWorkspaceUsage(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey);
+	#endif
 
+	#ifdef __POSTGRES__
+	Json::Value getWorkspaceDetailsRoot (
+		shared_ptr<PostgresConnection> conn,
+		nontransaction& trans,
+		row& row,
+		bool userAPIKeyInfo);
+	#else
 	Json::Value getWorkspaceDetailsRoot (
 		shared_ptr<MySQLConnection> conn,
 		shared_ptr<sql::ResultSet> resultSet,
-		bool userAPIKeyInfo
-		// bool encoders
-		);
+		bool userAPIKeyInfo);
+	#endif
 
+	#ifdef __POSTGRES__
+	void addAssociationWorkspaceEncoder(
+		int64_t workspaceKey, int64_t encoderKey,
+		shared_ptr<PostgresConnection> conn, nontransaction& trans);
+	#else
 	void addAssociationWorkspaceEncoder(
 		int64_t workspaceKey, int64_t encoderKey,
 		shared_ptr<MySQLConnection> conn);
+	#endif
 
+	#ifdef __POSTGRES__
+	Json::Value getEncoderRoot (
+		bool admin,
+		bool runningInfo,
+		row& row);
+	#else
 	Json::Value getEncoderRoot (
 		bool admin,
 		bool runningInfo,
 		shared_ptr<sql::ResultSet> resultSet);
+	#endif
 
     void createTablesIfNeeded();
-    void createTablesIfNeeded_Postgres();
 
     bool isRealDBError(string exceptionMessage);
 
     bool isJsonTypeSupported(shared_ptr<sql::Statement> statement);
-    
+
+	#ifdef __POSTGRES__
+	#else
+	void addTags(
+		shared_ptr<MySQLConnection> conn,
+		int64_t mediaItemKey,
+		Json::Value tagsRoot);
+	#endif
+
+	#ifdef __POSTGRES__
+	#else
+	void removeTags(
+		shared_ptr<MySQLConnection> conn,
+		int64_t mediaItemKey);
+	#endif
+
+	#ifdef __POSTGRES__
+	#else
     int64_t getLastInsertId(shared_ptr<MySQLConnection> conn);
+	#endif
 
     /*
     int64_t addTerritory (
@@ -3014,15 +3291,6 @@ private:
     {
         return ((int) 0x8);
     }
-
-	void addTags(
-		shared_ptr<MySQLConnection> conn,
-		int64_t mediaItemKey,
-		Json::Value tagsRoot);
-
-	void removeTags(
-		shared_ptr<MySQLConnection> conn,
-		int64_t mediaItemKey);
 
 	pair<long,string> getLastYouTubeURLDetails(
 		shared_ptr<Workspace> workspace, int64_t ingestionKey, int64_t confKey);

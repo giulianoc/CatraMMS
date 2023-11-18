@@ -370,6 +370,16 @@ shared_ptr<spdlog::logger>	_logger;
 			vector<int64_t>& dependOnIngestionJobKeysOverallInput,
 			unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey);
 
+	#ifdef __POSTGRES__
+    vector<int64_t> ingestionSingleTask(shared_ptr<PostgresConnection> conn, work& trans,
+			int64_t userKey, string apiKey,
+            shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+            Json::Value& taskRoot, 
+            vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
+            vector<int64_t> dependOnIngestionJobKeysOverallInput,
+            unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
+            /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+	#else
     vector<int64_t> ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -378,7 +388,18 @@ shared_ptr<spdlog::logger>	_logger;
             vector<int64_t> dependOnIngestionJobKeysOverallInput,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+	#endif
         
+	#ifdef __POSTGRES__
+	vector<int64_t> ingestionGroupOfTasks(shared_ptr<PostgresConnection> conn,
+		work& trans, int64_t userKey, string apiKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+        Json::Value& groupOfTasksRoot, 
+        vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
+        vector<int64_t> dependOnIngestionJobKeysOverallInput,
+        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
+		/* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+	#else
 	vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -387,7 +408,19 @@ shared_ptr<spdlog::logger>	_logger;
         vector<int64_t> dependOnIngestionJobKeysOverallInput,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
 		/* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+	#endif
 
+	#ifdef __POSTGRES__
+    void ingestionEvents(shared_ptr<PostgresConnection> conn, work& trans,
+			int64_t userKey, string apiKey,
+            shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+            Json::Value& taskOrGroupOfTasksRoot, 
+            vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
+            vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
+            vector<int64_t>& referencesOutputIngestionJobKeys,
+            unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
+            /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+	#else
     void ingestionEvents(shared_ptr<MySQLConnection> conn,
 			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
@@ -397,6 +430,7 @@ shared_ptr<spdlog::logger>	_logger;
             vector<int64_t>& referencesOutputIngestionJobKeys,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+	#endif
 
     void uploadedBinary(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
