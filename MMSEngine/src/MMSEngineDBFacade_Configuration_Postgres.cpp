@@ -4190,7 +4190,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 				"modulation, polarization, symbolRate, bandwidthInHz, "
 				"country, deliverySystem "
 				") values ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "
-				"{}, {}, {}, {}, {}, {}, {}, {}, {}) returning confKey returning confKey",
+				"{}, {}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
 				trans.quote(type),
 				serviceId == -1 ? "null" : to_string(serviceId),
 				networkId == -1 ? "null" : to_string(networkId),
@@ -9578,7 +9578,8 @@ int64_t MMSEngineDBFacade::addFTPConf(
     {
 		{
 			string sqlStatement = fmt::format(
-				"insert into MMS_Conf_FTP(workspaceKey, label, server, port, userName, password, remoteDirectory) values ("
+				"insert into MMS_Conf_FTP(workspaceKey, label, server, port, userName, password, "
+				"remoteDirectory) values ("
 				"{}, {}, {}, {}, {}, {}, {}) returning confKey",
 				workspaceKey, trans.quote(label), trans.quote(server),
 				port, trans.quote(userName), trans.quote(password), trans.quote(remoteDirectory));

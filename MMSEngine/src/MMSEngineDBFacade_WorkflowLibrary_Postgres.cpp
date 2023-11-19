@@ -161,8 +161,9 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 				}
 
                 string sqlStatement = fmt::format(
-                    "WITH rows AS (update MMS_WorkflowLibrary set lastUpdateUserKey = ?, thumbnailMediaItemKey = ?, jsonWorkflow = ? "
-					"where workflowLibraryKey = ? returning 1) select count(*) from rows",
+                    "WITH rows AS (update MMS_WorkflowLibrary set lastUpdateUserKey = {}, "
+					"thumbnailMediaItemKey = {}, jsonWorkflow = {} "
+					"where workflowLibraryKey = {} returning 1) select count(*) from rows",
 					userKey == -1 ? "null" : to_string(userKey),
 					thumbnailMediaItemKey == -1 ? "null" : to_string(thumbnailMediaItemKey),
 					trans.quote(jsonWorkflow), workflowLibraryKey);
@@ -180,9 +181,9 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
             {
                 string sqlStatement = fmt::format( 
 					"insert into MMS_WorkflowLibrary ("
-					"workflowLibraryKey, workspaceKey, creatorUserKey, lastUpdateUserKey, "
+					"workspaceKey, creatorUserKey, lastUpdateUserKey, "
 					"label, thumbnailMediaItemKey, jsonWorkflow) values ("
-					"NULL, ?, ?, ?, ?, ?, ?) returning workflowLibraryKey",
+					"{}, {}, {}, {}, {}, {}) returning workflowLibraryKey",
 					workspaceKey == -1 ? "null" : to_string(workspaceKey),
 					workspaceKey == -1 ? "null" : to_string(userKey),
 					userKey == -1 ? "null" : to_string(userKey),

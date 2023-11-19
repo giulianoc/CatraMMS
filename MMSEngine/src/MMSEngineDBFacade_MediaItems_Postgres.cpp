@@ -4290,11 +4290,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
+                "insert into MMS_MediaItem (workspaceKey, contentProviderKey, title, ingester, userData, " 
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
 				"startPublishing, endPublishing, "
 				"retentionInMinutes, tags, markedAsRemoved, processorMMSForRetention) values ("
-                                           "NULL,         {},           {},                 {},     {},      {}, "
+                                           "{},           {},                 {},     {},      {}, "
 				"{},               {},              NOW() at time zone 'utc', {}, "
                 "to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
                 "{},                 {},   false,           NULL)",
@@ -5208,10 +5208,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					+ ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
 					);
             string sqlStatement = fmt::format( 
-                "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
+                "insert into MMS_PhysicalPath(mediaItemKey, drm, externalReadOnlyStorage, "
 				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
 				"durationInMilliSeconds, bitRate, deliveryInfo, creationDate, retentionInMinutes) values ("
-                "NULL, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', {})",
+                "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', {})",
 				mediaItemKey, drm, externalReadOnlyStorage, trans.quote(encodedFileName),
 				trans.quote(relativePath), mmsPartitionIndexUsed, sizeInBytes,
 				encodingProfileKey == -1 ? "null" : to_string(encodingProfileKey),
@@ -5248,10 +5248,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					videoWidth, videoHeight, videoAvgFrameRate, videoBitRate) = videoTrack;
 
                 string sqlStatement = fmt::format( 
-                    "insert into MMS_VideoTrack (videoTrackKey, physicalPathKey, "
+                    "insert into MMS_VideoTrack (physicalPathKey, "
 					"trackIndex, durationInMilliSeconds, width, height, avgFrameRate, "
 					"codecName, bitRate, profile) values ("
-                    "NULL, {}, {}, {}, {}, {}, {}, {}, {}, {})",
+                    "{}, {}, {}, {}, {}, {}, {}, {}, {})",
 					physicalPathKey,
 					videoTrackIndex == -1 ? "null" : to_string(videoTrackIndex),
 					videoDurationInMilliSeconds == -1 ? "null" : to_string(videoDurationInMilliSeconds),
@@ -5288,9 +5288,9 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					audioChannels, audioBitRate, language) = audioTrack;
 
                 string sqlStatement = fmt::format( 
-                    "insert into MMS_AudioTrack (audioTrackKey, physicalPathKey, "
+                    "insert into MMS_AudioTrack (physicalPathKey, "
 					"trackIndex, durationInMilliSeconds, codecName, bitRate, sampleRate, channels, language) values ("
-                    "NULL, {}, {}, {}, {}, {}, {}, {}, {})",
+                    "{}, {}, {}, {}, {}, {}, {}, {})",
 					physicalPathKey,
 					audioTrackIndex == -1 ? "null" : to_string(audioTrackIndex),
 					audioDurationInMilliSeconds == -1 ? "null" : to_string(audioDurationInMilliSeconds),

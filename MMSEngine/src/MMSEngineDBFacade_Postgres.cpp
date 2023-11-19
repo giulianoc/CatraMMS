@@ -162,6 +162,8 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 		);
 	}
 
+	#ifdef __POSTGRES__
+	#else
 	{
 		string masterDbServer = JSONUtils::asString(configuration["database"]["master"], "server", "");
 		_logger->info(__FILEREF__ + "Configuration item"
@@ -219,6 +221,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 		_slaveConnectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
 			slaveDbPoolSize, _mySQLSlaveConnectionFactory);
 	}
+	#endif
 	{
 		string masterDbServer = JSONUtils::asString(configuration["postgres"]["master"], "server", "");
 		_logger->info(__FILEREF__ + "Configuration item"
@@ -319,11 +322,9 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 		 	 where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey
 		 	 and ij.status not like 'End_%' and ej.status like 'End_%';
 		 */
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
 
+		#ifdef __POSTGRES__
+		#else
         {
 			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Locks"
 					+ ", processorMMS: " + processorMMS
@@ -342,6 +343,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
+		#endif
 
 		// 2022-09-27: next procedure should be already covered by retentionOfIngestionData,
 		//		anyway, we will leave it here
@@ -1424,9 +1426,9 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 				contentKey = physicalPathKey;
 			}
             string sqlStatement = fmt::format( 
-                "insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, "
+                "insert into MMS_DeliveryAuthorization(userKey, clientIPAddress, "
 				"contentType, contentKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
-                "                                      NULL,                     ?,       ?, "
+                "                                      ?,       ?, "
 				"?,           ?,          ?,           ?,            0,                    ?) "
 				"returning deliveryAuthorizationKey",
 				userKey, clientIPAddress == "" ? "null" : trans.quote(clientIPAddress),

@@ -2747,10 +2747,13 @@ private:
     shared_ptr<spdlog::logger>		_logger;
 	Json::Value						_configuration;
 
+	#ifdef __POSTGRES__
+	#else
 	shared_ptr<MySQLConnectionFactory>				_mySQLMasterConnectionFactory;
 	shared_ptr<DBConnectionPool<MySQLConnection>>	_masterConnectionPool;
 	shared_ptr<MySQLConnectionFactory>				_mySQLSlaveConnectionFactory;
 	shared_ptr<DBConnectionPool<MySQLConnection>>	_slaveConnectionPool;
+	#endif
 
 	shared_ptr<PostgresConnectionFactory>				_postgresMasterConnectionFactory;
 	shared_ptr<DBConnectionPool<PostgresConnection>>	_masterPostgresConnectionPool;

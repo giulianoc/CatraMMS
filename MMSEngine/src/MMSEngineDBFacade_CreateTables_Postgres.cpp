@@ -135,6 +135,47 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		retentionOfStatisticData();
 
 		{
+			string sqlStatement =
+				"create table if not exists MMS_Workspace ("
+					"workspaceKey			bigserial,"
+					"creationDate			timestamp without time zone default (now() at time zone 'utc'),"
+					"name					text NOT NULL,"
+					"directoryName			text NOT NULL,"
+					"workspaceType			smallint NOT NULL,"
+					"deliveryURL			text NULL,"
+					"enabled				boolean NOT NULL,"
+					"maxEncodingPriority	text NOT NULL,"
+					"encodingPeriod			text NOT NULL,"
+					"maxIngestionsNumber	smallint NOT NULL,"
+					"maxStorageInMB			smallint NOT NULL,"
+					"languageCode			text NOT NULL,"
+					"constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_Workspace_idx on MMS_Workspace (directoryName)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_YouTube ("
 					"confKey					bigserial,"
@@ -337,7 +378,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"rtmpURL					text NOT NULL,"
                     "playURL					text NOT NULL,"
                     "type						text NOT NULL,"
-                    "outputIndex				smallindex NULL,"
+                    "outputIndex				smallint NULL,"
                     "reservedByIngestionJobKey	bigint NULL,"
                     "constraint MMS_Conf_AWSChannel_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_AWSChannel_FK foreign key (workspaceKey) "
@@ -540,51 +581,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"partitionPathName		text NOT NULL,"
 					"currentFreeSizeInBytes	bigint NOT NULL,"
 					"freeSpaceToLeaveInMB	bigint NOT NULL,"
-					"lastUpdateFreeSize		timestamp without time zone default now() at time zone 'utc',"
+					"lastUpdateFreeSize		timestamp without time zone default (now() at time zone 'utc'),"
 					"awsCloudFrontHostName	text NULL,"
 					"enabled				boolean NOT NULL,"
 					"constraint MMS_PartitionInfo_PK PRIMARY KEY (partitionKey)) ";
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-		}
-
-		{
-			string sqlStatement =
-				"create table if not exists MMS_Workspace ("
-					"workspaceKey			bigserial,"
-					"creationDate			timestamp without time zone default now() at time zone 'utc',"
-					"name					text NOT NULL,"
-					"directoryName			text NOT NULL,"
-					"workspaceType			smallint NOT NULL,"
-					"deliveryURL			text NULL,"
-					"enabled				boolean NOT NULL,"
-					"maxEncodingPriority	text NOT NULL,"
-					"encodingPeriod			text NOT NULL,"
-					"maxIngestionsNumber	smallint NOT NULL,"
-					"maxStorageInMB			smallint UNSIGNED NOT NULL,"
-					"languageCode			text NOT NULL,"
-					"constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-		}
-
-		{
-			string sqlStatement =
-				"create unique index MMS_Workspace_idx on MMS_Workspace (directoryName)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -604,11 +604,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "eMailAddress			text NULL,"
                     "password				text NOT NULL,"
                     "country				text NULL,"
-                    "creationDate			timestamp without time zone default now() at time zone 'utc',"
+                    "creationDate			timestamp without time zone default (now() at time zone 'utc'),"
                     "expirationDate			timestamp without time zone NOT NULL,"
                     "lastSuccessfulLogin	timestamp without time zone NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "
-                    "UNIQUE KEY emailAddress (eMailAddress))";
+                    "UNIQUE (eMailAddress))";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -660,7 +660,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "isDefault			boolean NOT NULL,"
                     // same in MMS_Code
                     "permissions		jsonb NOT NULL,"
-                    "creationDate		timestamp without time zone default now() at time zone 'utc',"
+                    "creationDate		timestamp without time zone default (now() at time zone 'utc'),"
                     "expirationDate		timestamp without time zone NOT NULL,"
                     "constraint MMS_APIKey_PK PRIMARY KEY (apiKey), "
                     "constraint MMS_APIKey_FK foreign key (userKey) "
@@ -680,7 +680,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-				"create unique index MMS_APIKey_idx on MMS_APIKey (userKey, workspaceKey)";
+				"create unique index if not exists MMS_APIKey_idx on MMS_APIKey (userKey, workspaceKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -702,7 +702,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "type							text NOT NULL,"
                     // same in MMS_APIKey
                     "permissions					jsonb NOT NULL,"
-                    "creationDate					timestamp without time zone default now() at time zone 'utc',"
+                    "creationDate					timestamp without time zone default (now() at time zone 'utc'),"
                     "constraint MMS_Code_PK PRIMARY KEY (code),"
                     "constraint MMS_Code_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade, "
@@ -724,7 +724,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_ResetPasswordToken ("
 					"token				text NOT NULL,"
 					"userKey			bigint NOT NULL,"
-					"creationDate		timestamp without time zone default now() at time zone 'utc',"
+					"creationDate		timestamp without time zone default (now() at time zone 'utc'),"
                     "constraint MMS_ResetPasswordToken_PK PRIMARY KEY (token),"
                     "constraint MMS_ResetPasswordToken_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade) ";
@@ -899,8 +899,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						{
 							string sqlStatement = fmt::format(
 								"insert into MMS_EncodingProfile ("
-								"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
-								"NULL, NULL, {}, {}, {}, {}) "
+								"workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
+								"NULL, {}, {}, {}, {}) "
 								"ON CONFLICT (workspaceKey, contentType, label) DO "
 								"update set deliveryTechnology = EXCLUDED.deliveryTechnology, "
 								"jsonProfile = EXCLUDED.jsonProfile ",
@@ -1010,7 +1010,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-				"create index MMS_Encoder_idx on MMS_Encoder (publicServerName)";
+				"create index if not exists MMS_Encoder_idx on MMS_Encoder (publicServerName)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1046,7 +1046,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_EncodersPool ("
-                    "encodersPoolKey			bigint NOT NULL AUTO_INCREMENT,"
+                    "encodersPoolKey			bigserial,"
                     "workspaceKey				bigint NOT NULL,"
                     "label						text NULL,"
                     "lastEncoderIndexUsed		smallint NOT NULL,"
@@ -1097,7 +1097,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "metaDataContent			text NOT NULL,"
                     "processedMetaDataContent	text NULL,"
                     "ingestionDate              timestamp without time zone NOT NULL,"
-                    "lastUpdate                 timestamp without time zone default now() at time zone 'utc',"
+                    "lastUpdate                 timestamp without time zone default (now() at time zone 'utc'),"
                     "status           			text NOT NULL,"
                     "constraint MMS_IngestionRoot_PK PRIMARY KEY (ingestionRootKey), "
                     "constraint MMS_IngestionRoot_FK foreign key (workspaceKey) "
@@ -1117,7 +1117,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionRoot_idx on MMS_IngestionRoot (workspaceKey, label)";
+                "create index if not exists MMS_IngestionRoot_idx on MMS_IngestionRoot (workspaceKey, label)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1131,7 +1131,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionRoot_idx2 on MMS_IngestionRoot (workspaceKey, ingestionDate)";
+                "create index if not exists MMS_IngestionRoot_idx2 on MMS_IngestionRoot (workspaceKey, ingestionDate)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1150,7 +1150,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionRootKey           bigint NOT NULL,"
                     "parentGroupOfTasksIngestionJobKey	bigint NULL,"
                     "label						text NULL,"
-                    "metaDataContent            text NOT NULL,"
+                    "metaDataContent            jsonb NOT NULL,"
                     "ingestionType              text NOT NULL,"
                     "processingStartingFrom		timestamp without time zone NOT NULL,"
                     "priority					smallint NOT NULL,"
@@ -1162,11 +1162,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "processorMMS               text NULL,"
                     "status           			text NOT NULL,"
                     "errorMessage               text NULL,"
-					"scheduleStart_virtual		timestamp without time zone generated always as (to_timestamp(metaDataContent -> 'schedule' ->> 'start', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"')) stored NULL,"
+					"scheduleStart_virtual		timestamp without time zone NULL,"
 					// added because the channels view was slow
 					"configurationLabel_virtual	text generated always as (metaDataContent ->> 'configurationLabel') stored NULL,"
-					"recordingCode_virtual	bigint generated always as (metaDataContent ->> 'recordingCode') stored NULL,"
-					"broadcastIngestionJobKey_virtual	bigint generated always as (metaDataContent -> 'internalMMS' -> 'broadcaster' ->> 'broadcastIngestionJobKey') stored NULL,"
+					"recordingCode_virtual	bigint generated always as ((metaDataContent ->> 'recordingCode')::bigint) stored NULL,"
+					"broadcastIngestionJobKey_virtual	bigint generated always as ((metaDataContent -> 'internalMMS' -> 'broadcaster' ->> 'broadcastIngestionJobKey')::bigint) stored NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
                         "references MMS_IngestionRoot (ingestionRootKey) on delete cascade) ";
@@ -1180,10 +1180,32 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
-
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx on MMS_IngestionJob (processorMMS, ingestionType, status)";
+				"CREATE OR REPLACE FUNCTION MMS_IngestionJob_fillVirtual() RETURNS trigger AS $fillVirtual$ "
+				"BEGIN "
+					"case when NEW.metaDataContent -> 'schedule' ->> 'start' is null then "
+						"NEW.scheduleStart_virtual=null; "
+					"else "
+						"NEW.scheduleStart_virtual=to_timestamp(NEW.metaDataContent -> 'schedule' ->> 'start', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'); "
+					"end case; "
+					"return NEW; "
+				"END; "
+			"$fillVirtual$ LANGUAGE plpgsql";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+		{
+			string sqlStatement =
+				"CREATE OR REPLACE TRIGGER MMS_IngestionJob_fillVirtual BEFORE INSERT OR UPDATE OF metaDataContent ON MMS_IngestionJob "
+				"FOR EACH ROW EXECUTE PROCEDURE MMS_IngestionJob_fillVirtual()";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1197,7 +1219,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx2 on MMS_IngestionJob (parentGroupOfTasksIngestionJobKey)";
+                "create index if not exists MMS_IngestionJob_idx on MMS_IngestionJob (processorMMS, ingestionType, status)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1211,7 +1233,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx3 on MMS_IngestionJob (ingestionType)";
+                "create index if not exists MMS_IngestionJob_idx2 on MMS_IngestionJob (parentGroupOfTasksIngestionJobKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1225,7 +1247,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx4 on MMS_IngestionJob (configurationLabel_virtual)";
+                "create index if not exists MMS_IngestionJob_idx3 on MMS_IngestionJob (ingestionType)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1239,7 +1261,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx5 on MMS_IngestionJob (priority)";
+                "create index if not exists MMS_IngestionJob_idx4 on MMS_IngestionJob (configurationLabel_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1253,7 +1275,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx6 on MMS_IngestionJob (processingStartingFrom)";
+                "create index if not exists MMS_IngestionJob_idx5 on MMS_IngestionJob (priority)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1267,7 +1289,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx8 on MMS_IngestionJob (recordingCode_virtual)";
+                "create index if not exists MMS_IngestionJob_idx6 on MMS_IngestionJob (processingStartingFrom)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1281,7 +1303,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx9 on MMS_IngestionJob (broadcastIngestionJobKey_virtual)";
+                "create index if not exists MMS_IngestionJob_idx8 on MMS_IngestionJob (recordingCode_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1295,7 +1317,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx10 on MMS_IngestionJob (status)";
+                "create index if not exists MMS_IngestionJob_idx9 on MMS_IngestionJob (broadcastIngestionJobKey_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1309,7 +1331,21 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJob_idx11 on MMS_IngestionJob (label)";
+                "create index if not exists MMS_IngestionJob_idx10 on MMS_IngestionJob (status)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+                "create index if not exists MMS_IngestionJob_idx11 on MMS_IngestionJob (label)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1330,7 +1366,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "dependOnIngestionJobKey		bigint NULL,"
                     "orderNumber					smallint NOT NULL,"
                     "referenceOutputDependency		smallint NOT NULL,"
-                    "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobDependencyKey), "
+                    "constraint MMS_IngestionJobDependency_PK PRIMARY KEY (ingestionJobDependencyKey), "
                     "constraint MMS_IngestionJobDependency_FK foreign key (ingestionJobKey) "
                         "references MMS_IngestionJob (ingestionJobKey) on delete cascade, "	   	        				
                     "constraint MMS_IngestionJobDependency_FK2 foreign key (dependOnIngestionJobKey) "
@@ -1348,7 +1384,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_IngestionJobDependency_idx on MMS_IngestionJobDependency (ingestionJobKey)";
+                "create index if not exists MMS_IngestionJobDependency_idx on MMS_IngestionJobDependency (ingestionJobKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1482,9 +1518,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					// This is automatically set to false when overrideUniqueName is applied
 					"markedAsRemoved		boolean NOT NULL,"
                     "processorMMSForRetention	text NULL,"
-					"recordingCode_virtual	bigint generated always as (userData -> 'mmsData' -> 'liveRecordingChunk' ->> 'recordingCode') stored NULL,"
-					"utcStartTimeInMilliSecs_virtual	bigint generated always as (userData -> 'mmsData' ->> 'utcStartTimeInMilliSecs') stored NULL,"
-					"utcEndTimeInMilliSecs_virtual	bigint generated always as (userData -> 'mmsData' ->> 'utcEndTimeInMilliSecs') stored NULL,"
+					"recordingCode_virtual	bigint generated always as ((userData -> 'mmsData' -> 'liveRecordingChunk' ->> 'recordingCode')::bigint) stored NULL,"
+					"utcStartTimeInMilliSecs_virtual	bigint generated always as ((userData -> 'mmsData' ->> 'utcStartTimeInMilliSecs')::bigint) stored NULL,"
+					"utcEndTimeInMilliSecs_virtual	bigint generated always as ((userData -> 'mmsData' ->> 'utcEndTimeInMilliSecs')::bigint) stored NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
@@ -1503,7 +1539,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_MediaItem_idx2 on MMS_MediaItem (contentType, ingestionDate)";
+                "create index if not exists MMS_MediaItem_idx2 on MMS_MediaItem (contentType, ingestionDate)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1517,7 +1553,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_MediaItem_idx3 on MMS_MediaItem (contentType, startPublishing, endPublishing)";
+                "create index if not exists MMS_MediaItem_idx3 on MMS_MediaItem (contentType, startPublishing, endPublishing)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1531,7 +1567,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_MediaItem_idx4 on MMS_MediaItem (contentType, title)";
+                "create index if not exists MMS_MediaItem_idx4 on MMS_MediaItem (contentType, title)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1545,7 +1581,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_MediaItem_idx5 on MMS_MediaItem (recordingCode_virtual)";
+                "create index if not exists MMS_MediaItem_idx5 on MMS_MediaItem (recordingCode_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1559,7 +1595,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_MediaItem_idx6 on MMS_MediaItem (utcStartTimeInMilliSecs_virtual)";
+                "create index if not exists MMS_MediaItem_idx6 on MMS_MediaItem (utcStartTimeInMilliSecs_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1573,7 +1609,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_MediaItem_idx7 on MMS_MediaItem (utcEndTimeInMilliSecs_virtual)";
+                "create index if not exists MMS_MediaItem_idx7 on MMS_MediaItem (utcEndTimeInMilliSecs_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1588,7 +1624,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_ExternalUniqueName ("
-                    "workspaceKey			bingint NOT NULL,"
+                    "workspaceKey			bigint NOT NULL,"
                     "uniqueName      		text NOT NULL,"
                     "mediaItemKey  			bigint NOT NULL,"
                     "constraint MMS_ExternalUniqueName_PK PRIMARY KEY (workspaceKey, uniqueName), "
@@ -1609,7 +1645,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_ExternalUniqueName_idx on MMS_ExternalUniqueName (workspaceKey, mediaItemKey)";
+                "create index if not exists MMS_ExternalUniqueName_idx on MMS_ExternalUniqueName (workspaceKey, mediaItemKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1637,7 +1673,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "bitRate            		smallint NULL,"
                     "deliveryInfo				jsonb,"
                     "isAlias					boolean NOT NULL DEFAULT false,"
-                    "creationDate				timestamp without time zone default now() at time zone 'utc',"
+                    "creationDate				timestamp without time zone default (now() at time zone 'utc'),"
 					"retentionInMinutes			bigint NULL,"
                     "constraint MMS_PhysicalPath_PK PRIMARY KEY (physicalPathKey), "
                     "constraint MMS_PhysicalPath_FK foreign key (mediaItemKey) "
@@ -1659,7 +1695,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_PhysicalPath_idx2 on MMS_PhysicalPath (mediaItemKey, physicalPathKey, encodingProfileKey, partitionNumber)";
+                "create index if not exists MMS_PhysicalPath_idx2 on MMS_PhysicalPath (mediaItemKey, physicalPathKey, encodingProfileKey, partitionNumber)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1673,7 +1709,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_PhysicalPath_idx3 on MMS_PhysicalPath (relativePath, fileName)";
+                "create index if not exists MMS_PhysicalPath_idx3 on MMS_PhysicalPath (relativePath, fileName)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1810,20 +1846,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionJobKey			bigint NOT NULL,"
                     "type                       text NOT NULL,"
                     "typePriority				smallint NOT NULL,"
-					"parameters					text NOT NULL,"
+					"parameters					jsonb NOT NULL,"
                     "encodingPriority			smallint NOT NULL,"
-                    "encodingJobStart			timestamp without time zone NOT NULL DEFAULT now() at time zone 'utc',"
+                    "encodingJobStart			timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),"
                     "encodingJobEnd             timestamp without time zone NULL,"
                     "encodingProgress           smallint NULL,"
                     "status           			text NOT NULL,"
                     "processorMMS               text NULL,"
                     "encoderKey					bigint NULL,"
-                    "encodingPid				integer UNSIGNED NULL,"
+                    "encodingPid				integer NULL,"
                     "stagingEncodedAssetPathName text NULL,"
                     "failuresNumber           	smallint NOT NULL,"
 					"isKilled					boolean NULL,"
-					"creationDate				timestamp without time zone DEFAULT now() at time zone 'utc',"
-					"utcScheduleStart_virtual	bigint generated always as (parameters ->> 'utcScheduleStart') stored NULL,"
+					"creationDate				timestamp without time zone DEFAULT (now() at time zone 'utc'),"
+					"utcScheduleStart_virtual	bigint generated always as ((parameters ->> 'utcScheduleStart')::bigint) stored NULL,"
                     "constraint MMS_EncodingJob_PK PRIMARY KEY (encodingJobKey), "
                     "constraint MMS_EncodingJob_FK foreign key (ingestionJobKey) "
                         "references MMS_IngestionJob (ingestionJobKey) on delete cascade) ";
@@ -1840,7 +1876,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_EncodingJob_idx1 on MMS_EncodingJob (status, processorMMS, failuresNumber, encodingJobStart)";
+                "create index if not exists MMS_EncodingJob_idx1 on MMS_EncodingJob (status, processorMMS, failuresNumber, encodingJobStart)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1854,7 +1890,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_EncodingJob_idx2 on MMS_EncodingJob (utcScheduleStart_virtual)";
+                "create index if not exists MMS_EncodingJob_idx2 on MMS_EncodingJob (utcScheduleStart_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1868,7 +1904,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, encodingPriority)";
+                "create index if not exists MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, encodingPriority)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1894,7 +1930,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ttlInSeconds               smallint NOT NULL,"
                     "currentRetriesNumber       smallint NOT NULL,"
                     "maxRetries                 smallint NOT NULL,"
-                    "authorizationTimestamp		timestamp without time zone default now() at time zone 'utc',"
+                    "authorizationTimestamp		timestamp without time zone default (now() at time zone 'utc'),"
                     "constraint MMS_DeliveryAuthorization_PK PRIMARY KEY (deliveryAuthorizationKey), "
                     "constraint MMS_DeliveryAuthorization_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade) ";

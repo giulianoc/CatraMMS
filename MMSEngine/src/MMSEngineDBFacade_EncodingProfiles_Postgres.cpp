@@ -49,8 +49,8 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent (
             else
             {
 				string sqlStatement = fmt::format( 
-                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, workspaceKey, contentType, label) values ("
-                    "NULL, {}, {}, {}) returning encodingProfilesSetKey",
+                    "insert into MMS_EncodingProfilesSet (workspaceKey, contentType, label) values ("
+                    "{}, {}, {}) returning encodingProfilesSetKey",
 					workspaceKey, trans->quote(toString(contentType)), trans->quote(label));
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				encodingProfilesSetKey = trans->exec1(sqlStatement)[0].as<int64_t>();
@@ -233,8 +233,8 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             {
 				string sqlStatement = fmt::format( 
                     "insert into MMS_EncodingProfile ("
-                    "encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
-                    "NULL, {}, {}, {}, {}, {}) returning encodingProfileKey",
+                    "workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
+                    "{}, {}, {}, {}, {}) returning encodingProfileKey",
 					workspaceKey, trans.quote(label), trans.quote(toString(contentType)),
 					trans.quote(toString(deliveryTechnology)), trans.quote(jsonProfile));
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();

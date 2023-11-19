@@ -309,9 +309,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                         tmDateTime. tm_sec);
             }
             string sqlStatement = fmt::format(
-                "insert into MMS_User (userKey, name, eMailAddress, password, country, "
+                "insert into MMS_User (name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "NULL, {}, {}, {}, {}, NOW() at time zone 'utc', to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
+                "{}, {}, {}, {}, NOW() at time zone 'utc', to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"NULL) returning userKey",
 				trans.quote(trimUserName), trans.quote(userEmailAddress),
 				trans.quote(userPassword), trans.quote(userCountry),
@@ -504,9 +504,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                         tmDateTime. tm_sec);
             }
             string sqlStatement = fmt::format( 
-                "insert into MMS_User (userKey, name, eMailAddress, password, country, "
+                "insert into MMS_User (name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "NULL, {}, {}, {}, {}, NOW() at time zone 'utc', "
+                "{}, {}, {}, {}, NOW() at time zone 'utc', "
 				"to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), NULL) returning userKey",
 				trans.quote(trimUserName), trans.quote(userEmailAddress),
 				trans.quote(userPassword), trans.quote(userCountry),
@@ -1030,9 +1030,9 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                         tmDateTime. tm_sec);
             }
             string sqlStatement = fmt::format( 
-                "insert into MMS_User (userKey, name, eMailAddress, password, country, "
+                "insert into MMS_User (name, eMailAddress, password, country, "
 				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "NULL, {}, {}, {}, {}, NOW() at time zone 'utc', to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
+                "{}, {}, {}, {}, NOW() at time zone 'utc', to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"NULL) returning userKey",
 				trans.quote(userName), trans.quote(userEmailAddress),
 				trans.quote(userPassword), trans.quote(userCountry),
@@ -1413,10 +1413,10 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
             
             string sqlStatement = fmt::format( 
                     "insert into MMS_Workspace ("
-                    "workspaceKey, creationDate, name, directoryName, workspaceType, "
+                    "creationDate, name, directoryName, workspaceType, "
 					"deliveryURL, enabled, maxEncodingPriority, encodingPeriod, "
 					"maxIngestionsNumber, maxStorageInMB, languageCode) values ("
-                    "NULL,         NOW() at time zone 'utc',         {},    {},             {}, "
+                    "NOW() at time zone 'utc',         {},    {},             {}, "
 					"{},           {},         {},                   {}, "
 					"{},                   {},              {}) returning workspaceKey",
 					trans.quote(workspaceName), trans.quote(workspaceDirectoryName),
@@ -1515,8 +1515,8 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
         {
             string sqlStatement = fmt::format( 
-                "insert into MMS_ContentProvider (contentProviderKey, workspaceKey, name) "
-				"values (NULL, {}, {}) returning contentProviderKey",
+                "insert into MMS_ContentProvider (workspaceKey, name) "
+				"values ({}, {}) returning contentProviderKey",
 				workspaceKey, trans.quote(_defaultContentProviderName));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			contentProviderKey = trans.exec1(sqlStatement)[0].as<int64_t>();

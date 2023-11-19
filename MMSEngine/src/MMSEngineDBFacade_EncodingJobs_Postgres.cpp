@@ -3599,10 +3599,10 @@ void MMSEngineDBFacade::addEncodingJob (
             }
 
             string sqlStatement = fmt::format( 
-				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
+				"insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, "
 				"processorMMS, encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},              {},   {},           {}, "
+                                            "{},              {},   {},           {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL,             {}, "
 				"NULL,         NULL,       NULL,        0,				NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -3798,10 +3798,10 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},  {},		   {}, "
+                                            "{},               {},  {},		   {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 				"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -3979,10 +3979,10 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {},          {}, "
+                                            "{},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 				"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -4189,10 +4189,10 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {},          {}, "
+                                            "{},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 				"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -4361,11 +4361,11 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, "
 				"parameters, encodingPriority, encodingJobStart, encodingJobEnd, "
 				"encodingProgress, status, processorMMS, encoderKey, "
 				"encodingPid, failuresNumber, creationDate) values ("
-				"                            NULL,           {},               {},    {}, "
+				                            "{},               {},    {}, "
 				"{},          {},              NOW() at time zone 'utc', NULL, "
 				"NULL,             {},      NULL,         NULL, "
 				"NULL,        0,			  NOW() at time zone 'utc')",
@@ -4510,10 +4510,10 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {},          {}, "
+                                            "{},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 				"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -4649,10 +4649,10 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {},          {}, "
+                                            "{},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 				"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -4902,10 +4902,10 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
 				string sqlStatement = fmt::format( 
-					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+					"insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-												"NULL,           {},               {},    {},			  {},          {}, "
+												"{},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 					"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -5066,10 +5066,10 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
 				string sqlStatement = fmt::format( 
-					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+					"insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-												"NULL,           {},               {},    {},			  {},          {}, "
+												"{},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 					"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -5223,10 +5223,10 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 
 			{
 				string sqlStatement = fmt::format( 
-					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+					"insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-												"NULL,           {},               {},    {},			  {},          {}, "
+												"{},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 					"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -5374,10 +5374,10 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
 				string sqlStatement = fmt::format( 
-					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+					"insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-												"NULL,           {},               {},    {},			  {},          {}, "
+												"{},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 					"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -5519,10 +5519,10 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
 				string sqlStatement = fmt::format( 
-					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+					"insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-												"NULL,           {},               {},    {},			  {},          {}, "
+												"{},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 					"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -5706,10 +5706,10 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {},          {}, "
+                                            "{},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 				"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -5862,10 +5862,10 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
             }
 
             string sqlStatement = fmt::format( 
-				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+				"insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {},          {}, "
+                                            "{},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 				"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -6074,10 +6074,10 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {},          {}, "
+                                            "{},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
 				"NULL,       NULL,        0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -6301,10 +6301,10 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, "
 				"status, processorMMS, encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {}, "
+                                            "{},               {},    {},			  {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL, "
 				"{},      NULL,         NULL,       NULL,        0,			    NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
@@ -6497,10 +6497,10 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
             }
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
+                "insert into MMS_EncodingJob(ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, "
 				"status, processorMMS, encoderKey, encodingPid, failuresNumber, creationDate) values ("
-                                            "NULL,           {},               {},    {},			  {}, "
+                                            "{},               {},    {},			  {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL, "
 				"{},      NULL,         NULL,       NULL,        0,				NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType),
