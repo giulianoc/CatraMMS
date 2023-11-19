@@ -146,8 +146,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"enabled				boolean NOT NULL,"
 					"maxEncodingPriority	text NOT NULL,"
 					"encodingPeriod			text NOT NULL,"
-					"maxIngestionsNumber	smallint NOT NULL,"
-					"maxStorageInMB			smallint NOT NULL,"
+					"maxIngestionsNumber	integer NOT NULL,"
+					"maxStorageInMB			integer NOT NULL,"
 					"languageCode			text NOT NULL,"
 					"constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -336,8 +336,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"teletextPid				smallint NULL,"
 					"modulation					text NULL,"
                     "polarization				text NULL,"
-					"symbolRate					smallint NULL,"
-					"bandwidthInHz				smallint NULL,"
+					"symbolRate					integer NULL,"
+					"bandwidthInHz				integer NULL,"
                     "country					text NULL,"
                     "deliverySystem				text NULL,"
                     "constraint MMS_Conf_SourceTVStream_PK PRIMARY KEY (confKey), "
@@ -494,7 +494,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey               bigint NOT NULL,"
                     "label                      text NOT NULL,"
                     "server						text NOT NULL,"
-                    "port						smallint NOT NULL,"
+                    "port						integer NOT NULL,"
                     "userName					text NOT NULL,"
                     "password					text NOT NULL,"
                     "remoteDirectory			text NOT NULL,"
@@ -748,7 +748,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "currentDirLevel3		smallint NOT NULL,"
                     "startDateTime			timestamp without time zone NOT NULL,"
                     "endDateTime			timestamp without time zone NOT NULL,"
-                    "currentIngestionsNumber	smallint NOT NULL,"
+                    "currentIngestionsNumber	integer NOT NULL,"
                     "constraint MMS_WorkspaceMoreInfo_PK PRIMARY KEY (workspaceKey), "
                     "constraint MMS_WorkspaceMoreInfo_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade) ";
@@ -899,8 +899,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						{
 							string sqlStatement = fmt::format(
 								"insert into MMS_EncodingProfile ("
-								"workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
-								"NULL, {}, {}, {}, {}) "
+								"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
+								"DEFAULT, NULL, {}, {}, {}, {}) "
 								"ON CONFLICT (workspaceKey, contentType, label) DO "
 								"update set deliveryTechnology = EXCLUDED.deliveryTechnology, "
 								"jsonProfile = EXCLUDED.jsonProfile ",
@@ -994,7 +994,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "protocol				text NOT NULL,"
                     "publicServerName		text NOT NULL,"
                     "internalServerName		text NOT NULL,"
-                    "port					smallint NOT NULL,"
+                    "port					integer NOT NULL,"
                     "constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
                     "UNIQUE (label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1094,7 +1094,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "userKey    				bigint NOT NULL,"
                     "type                       text NOT NULL,"
                     "label                      text NULL,"
-                    "metaDataContent			text NOT NULL,"
+                    "metaDataContent			jsonb NOT NULL,"
                     "processedMetaDataContent	text NULL,"
                     "ingestionDate              timestamp without time zone NOT NULL,"
                     "lastUpdate                 timestamp without time zone default (now() at time zone 'utc'),"
@@ -1165,7 +1165,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"scheduleStart_virtual		timestamp without time zone NULL,"
 					// added because the channels view was slow
 					"configurationLabel_virtual	text generated always as (metaDataContent ->> 'configurationLabel') stored NULL,"
-					"recordingCode_virtual	bigint generated always as ((metaDataContent ->> 'recordingCode')::bigint) stored NULL,"
+					"recordingCode_virtual		bigint generated always as ((metaDataContent ->> 'recordingCode')::bigint) stored NULL,"
 					"broadcastIngestionJobKey_virtual	bigint generated always as ((metaDataContent -> 'internalMMS' -> 'broadcaster' ->> 'broadcastIngestionJobKey')::bigint) stored NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
@@ -1800,7 +1800,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "durationInMilliSeconds		bigint NULL,"
                     "codecName          		text NULL,"
                     "bitRate             		smallint NULL,"
-                    "sampleRate                 smallint NULL,"
+                    "sampleRate                 integer NULL,"
                     "channels             		smallint NULL,"
                     "language					text NULL,"
                     "constraint MMS_AudioTrack_PK PRIMARY KEY (audioTrackKey), "
@@ -1927,7 +1927,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					// contentKey: physicalPathKey or liveURLConfKey
                     "contentKey					bigint NOT NULL,"
                     "deliveryURI    			text NOT NULL,"
-                    "ttlInSeconds               smallint NOT NULL,"
+                    "ttlInSeconds               integer NOT NULL,"
                     "currentRetriesNumber       smallint NOT NULL,"
                     "maxRetries                 smallint NOT NULL,"
                     "authorizationTimestamp		timestamp without time zone default (now() at time zone 'utc'),"

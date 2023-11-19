@@ -788,9 +788,9 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
     {
 		{
 			string sqlStatement = fmt::format( 
-				"insert into MMS_IngestionRoot (workspaceKey, userKey, type, label, "
+				"insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, userKey, type, label, "
 				"metaDataContent, ingestionDate, lastUpdate, status) "
-				"values (                       {},            {},       {},    {}, "
+				"values (                       DEFAULT,          {},            {},       {},    {}, "
 				"{},               NOW() at time zone 'utc',         NOW() at time zone 'utc',      {}) returning ingestionRootKey",
 				workspaceKey, userKey, trans.quote(rootType), trans.quote(rootLabel),
 				trans.quote(metaDataContent), trans.quote(toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted)));
@@ -907,13 +907,13 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             {
                 string sqlStatement = fmt::format( 
-                    "insert into MMS_IngestionJob (ingestionRootKey, label, "
+                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, "
 					"metaDataContent, ingestionType, priority, "
 					"processingStartingFrom, "
 					"startProcessing, endProcessing, downloadingProgress, "
 					"uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) "
 					"values ("
-                                                  "{},                {}, "
+                                                  "DEFAULT,          {},                {}, "
 					"{},               {},             {}, "
 					"to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
 					"NULL,            NULL,         NULL, "
@@ -1171,10 +1171,10 @@ void MMSEngineDBFacade::addIngestionJobDependency (
 
         {
 			string sqlStatement = fmt::format( 
-				"insert into MMS_IngestionJobDependency ("
+				"insert into MMS_IngestionJobDependency (ingestionJobDependencyKey,"
 				"ingestionJobKey, dependOnSuccess, dependOnIngestionJobKey, "
 				"orderNumber, referenceOutputDependency) values ("
-				"{}, {}, {}, {}, {})",
+				"DEFAULT, {}, {}, {}, {}, {})",
 				ingestionJobKey, dependOnSuccess,
 				dependOnIngestionJobKey == -1 ? "null" : to_string(dependOnIngestionJobKey),
 				localOrderNumber, referenceOutputDependency ? 1 : 0);

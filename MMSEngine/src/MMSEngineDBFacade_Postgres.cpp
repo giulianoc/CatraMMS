@@ -1426,10 +1426,10 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 				contentKey = physicalPathKey;
 			}
             string sqlStatement = fmt::format( 
-                "insert into MMS_DeliveryAuthorization(userKey, clientIPAddress, "
+                "insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, "
 				"contentType, contentKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
-                "                                      ?,       ?, "
-				"?,           ?,          ?,           ?,            0,                    ?) "
+                "                                      DEFAULT,                  {},       {}, "
+				"{},           {},          {},           {},            0,                    {}) "
 				"returning deliveryAuthorizationKey",
 				userKey, clientIPAddress == "" ? "null" : trans.quote(clientIPAddress),
 				trans.quote(contentType), contentKey, trans.quote(deliveryURI), ttlInSeconds, maxRetries);
