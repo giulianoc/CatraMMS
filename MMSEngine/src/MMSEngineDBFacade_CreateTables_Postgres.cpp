@@ -919,6 +919,17 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							);
 						}
                     }
+					catch(sql_error const &e)
+                    {
+						SPDLOG_ERROR("listing directory failed, SQL exception"
+							", query: {}"
+							", exceptionMessage: {}"
+							", conn: {}",
+							e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+						);
+
+                        throw e;
+                    }
                     catch(runtime_error& e)
                     {
                         string errorMessage = __FILEREF__ + "listing directory failed"
