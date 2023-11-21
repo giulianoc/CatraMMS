@@ -3904,7 +3904,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             sqlWhere += fmt::format("and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
 				trans.quote(startIngestionDate));
 		if (endIngestionDate != "")
-            sqlWhere += fmt::format("and ir.ingestionDate y= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+            sqlWhere += fmt::format("and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
 				trans.quote(endIngestionDate));
 		if (startScheduleDate != "")
             sqlWhere += fmt::format("and ij.scheduleStart_virtual >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
@@ -3929,7 +3929,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         Json::Value responseRoot;
         {
             string sqlStatement = fmt::format( 
-                "select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij ",
+                "select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij {}",
                 sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             field = "numFound";
@@ -4249,7 +4249,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 						"to_char(encodingJobStart, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobStart, "
 						"to_char(encodingJobEnd, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobEnd, "
 						"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob "
-						"where ingestionJobKey = ? ",
+						"where ingestionJobKey = {} ",
 						ingestionJobKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.exec(sqlStatement);
