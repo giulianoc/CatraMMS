@@ -1094,8 +1094,9 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod (
 				);
             string sqlStatement = fmt::format( 
                 "WITH rows AS (update MMS_EncodingJob set encodingJobStart = NOW() at time zone 'utc', "
-				"parameters = jsonb_set(parameters, '{{utcScheduleStart}}', jsonb '{}'), "
-				"parameters = jsonb_set(parameters, '{{utcScheduleEnd}}', jsonb '{}') "
+				"parameters = jsonb_set("
+					"jsonb_set(parameters, '{{utcScheduleStart}}', jsonb '{}'), "
+				"'{{utcScheduleEnd}}', jsonb '{}') "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				utcRecordingPeriodStart, utcRecordingPeriodEnd, encodingJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -2433,8 +2434,9 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL (
 			string path_rtmpUrl = fmt::format("{{outputsRoot,{},rtmpUrl}}", outputIndex);
             string sqlStatement = fmt::format(
                 "WITH rows AS (update MMS_EncodingJob set "
-				"parameters = jsonb_set(parameters, {}, jsonb {}), "
-				"parameters = jsonb_set(parameters, {}, jsonb {}) "
+				"parameters = jsonb_set("
+					"jsonb_set(parameters, {}, jsonb {}), "
+				"{}, jsonb {}) "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				trans.quote(path_playUrl), trans.quote("\"" + playURL + "\""),
 				trans.quote(path_rtmpUrl), trans.quote("\"" + rtmpURL + "\""),
@@ -2596,23 +2598,34 @@ void MMSEngineDBFacade::updateOutputHLSDetails (
 			string path_otherOutputOptions = fmt::format("{{outputsRoot,{},otherOutputOptions}}", outputIndex);
             string sqlStatement = fmt::format( 
 				"WITH rows AS (update MMS_EncodingJob set "
-				"parameters = jsonb_set(parameters, {}, jsonb {}), ",
+				"parameters = ",
+				trans.quote(path_deliveryCode), trans.quote(to_string(deliveryCode))
+			);
+			sqlStatement += "jsonb_set(";
+			sqlStatement += "jsonb_set(";
+			sqlStatement += "jsonb_set(";
+			if (playlistEntriesNumber != -1)
+				sqlStatement += "jsonb_set(";
+			if (segmentDurationInSeconds != -1)
+				sqlStatement += "jsonb_set(";
+            sqlStatement += fmt::format( 
+				"jsonb_set(parameters, {}, jsonb {}), ",
 				trans.quote(path_deliveryCode), trans.quote(to_string(deliveryCode))
 			);
 			if (segmentDurationInSeconds != -1)
 				sqlStatement += fmt::format(
-					"parameters = jsonb_set(parameters, {}, jsonb {}), ",
+					"{}, jsonb {}), ",
 					trans.quote(path_segmentDuration), trans.quote(to_string(segmentDurationInSeconds))
 				);
 			if (playlistEntriesNumber != -1)
 				sqlStatement += fmt::format(
-					"parameters = jsonb_set(parameters, {}, jsonb {}), ",
+					"{}, jsonb {}), ",
 					trans.quote(path_playlistEntries), trans.quote(to_string(playlistEntriesNumber))
 				);
 			sqlStatement += fmt::format(
-				"parameters = jsonb_set(parameters, {}, jsonb {}), "
-				"parameters = jsonb_set(parameters, {}, jsonb {}), "
-				"parameters = jsonb_set(parameters, {}, jsonb {}) "
+				"{}, jsonb {}), "
+				"{}, jsonb {}), "
+				"{}, jsonb {}) "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				trans.quote(path_manifestDirectoryPath), trans.quote("\"" + manifestDirectoryPath + "\""),
 				trans.quote(path_manifestFileName), trans.quote("\"" + manifestFileName + "\""),

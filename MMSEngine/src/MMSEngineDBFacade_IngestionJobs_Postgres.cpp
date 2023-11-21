@@ -4979,6 +4979,37 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 				setSQL += fmt::format("label = {}", trans.quote(newIngestionJobLabel));
 			}
 
+			if (channelLabelModified
+				|| recordingPeriodStartModified
+				|| recordingPeriodEndModified
+				|| (recordingVirtualVODModified && newRecordingVirtualVOD)
+			)
+			{
+				if (setSQL != "")
+					setSQL += ", ";
+
+				setSQL += "metaDataContent = ";
+				if (recordingPeriodStartModified)
+					setSQL += "jsonb_set(";
+				if (recordingPeriodEndModified)
+					setSQL += "jsonb_set(";
+				if (recordingVirtualVODModified && newRecordingVirtualVOD)
+					setSQL += "jsonb_set(";
+				if (channelLabelModified)
+					setSQL += fmt::format("jsonb_set(metaDataContent, {{configurationLabel}}, jsonb {})",
+						trans.quote("\"" + newChannelLabel + "\""));
+				if (recordingVirtualVODModified && newRecordingVirtualVOD)
+					setSQL += fmt::format(", '{{liveRecorderVirtualVOD}}', json '{}')",
+						trans.quote("\"" + newRecordingPeriodStart + "\""));
+				if (recordingPeriodEndModified)
+					setSQL += fmt::format(", {{schedule,end}}, jsonb {})",
+						trans.quote("\"" + newRecordingPeriodEnd + "\""));
+				if (recordingPeriodStartModified)
+					setSQL += fmt::format(", {{schedule,start}}, jsonb {})",
+						trans.quote("\"" + newRecordingPeriodStart + "\""));
+			}
+
+			/*
 			if (channelLabelModified)
 			{
 				if (setSQL != "")
@@ -5012,6 +5043,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 				else
 					setSQL += "metaDataContent = metaDataContent - 'liveRecorderVirtualVOD'";
 			}
+			*/
 
 			setSQL = "set " + setSQL + " ";
 
@@ -5028,6 +5060,40 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder (
 				sqlStatement, conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
+			/*
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+						+ ", workspaceKey: " + to_string(workspaceKey)
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", newTitle: " + newTitle
+						+ ", newUserData: " + newUserData
+						+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", sqlStatement: " + sqlStatement
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+			*/
+			if (recordingVirtualVODModified && !newRecordingVirtualVOD)
+			{
+				string sqlStatement = fmt::format( 
+					"WITH rows AS (update MMS_IngestionJob "
+					"set metaDataContent = metaDataContent - 'liveRecorderVirtualVOD' "
+					"where ingestionJobKey = {} returning 1) select count(*) from rows",
+					ingestionJobKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
+			}
 			/*
             if (rowsUpdated != 1)
             {
