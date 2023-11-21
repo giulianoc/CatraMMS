@@ -2056,6 +2056,13 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 					usersToBeRemoved.push_back(make_tuple(userKey, name, eMailAddress));
 				}
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
         {
@@ -2764,6 +2771,13 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 
                 workspacesRoot.append(workspaceDetailRoot);                        
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
         
 		field = "workspaces";
@@ -3818,7 +3832,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
             string sqlStatement = fmt::format( 
                 "select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = {} "
-				"and externalReadOnlyStorage = 0",
+				"and externalReadOnlyStorage = false",
 				workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);

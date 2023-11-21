@@ -30,6 +30,8 @@ SET (SCRIPTs
 	nginx.sh
 	tomcat.sh
 	setupALL.sh
+	micro-service-deploy.sh
+	micro-service.sh
 	mmsStatusALL.sh
 	mmsStartALL.sh
 	mmsStopALL.sh

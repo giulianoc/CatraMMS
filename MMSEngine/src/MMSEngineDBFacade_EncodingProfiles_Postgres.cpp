@@ -837,6 +837,13 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                 
                 encodingProfilesSetsRoot.append(encodingProfilesSetRoot);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
         field = "encodingProfilesSets";
@@ -1041,6 +1048,13 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 
                 encodingProfilesRoot.append(encodingProfileRoot);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
         field = "encodingProfiles";
@@ -1177,9 +1191,14 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
-            {
                 encodingProfilesSetKeys.push_back(row["encodingProfileKey"].as<int64_t>());
-            }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
         
 		trans.commit();
@@ -1300,9 +1319,14 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
-            {
                 encodingProfilesSetKeys.push_back(row["encodingProfileKey"].as<int64_t>());
-            }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
         
 		trans.commit();

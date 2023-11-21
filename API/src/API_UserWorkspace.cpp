@@ -2607,7 +2607,7 @@ void API::updateWorkspace(
             throw runtime_error(errorMessage);
         }
 
-		string field = "isEnabled";
+		string field = "enabled";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
 			enabledChanged = true;

@@ -26,7 +26,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// lasciamo solamente la partizione su requestTimestamp
 			string sqlStatement =
 				"create table if not exists MMS_RequestStatistic ("
-					"requestStatisticKey		bigserial, "
+					"requestStatisticKey		bigint GENERATED ALWAYS AS IDENTITY, "
 					"workspaceKey				bigint not null, "
 					"ipAddress					text null, "
 					"userId						text not null, "
@@ -137,7 +137,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
 				"create table if not exists MMS_Workspace ("
-					"workspaceKey			bigserial,"
+					"workspaceKey			bigint GENERATED ALWAYS AS IDENTITY,"
 					"creationDate			timestamp without time zone default (now() at time zone 'utc'),"
 					"name					text NOT NULL,"
 					"directoryName			text NOT NULL,"
@@ -178,7 +178,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_YouTube ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"workspaceKey				bigint not null,"
 					"label						text NOT NULL,"
 					"tokenType					text NOT NULL,"
@@ -203,7 +203,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_Facebook ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"workspaceKey				bigint not null,"
 					"label						text NOT NULL,"
 					"modificationDate			timestamp without time zone NOT NULL,"
@@ -226,7 +226,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_Twitch ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"workspaceKey				bigint NOT NULL,"
 					"label						text NOT NULL,"
 					"modificationDate			timestamp without time zone NOT NULL,"
@@ -249,7 +249,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_Tiktok ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"workspaceKey				bigint NOT NULL,"
 					"label						text NOT NULL,"
 					"modificationDate			timestamp without time zone NOT NULL,"
@@ -272,7 +272,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_Stream ("
-				"confKey					bigserial,"
+				"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 				"workspaceKey				bigint NOT NULL,"
 				"label						text NOT NULL,"
 				// IP_PULL, IP_PUSH, CaptureLive, TV
@@ -320,7 +320,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_SourceTVStream ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"type						text NOT NULL,"
 					"serviceId					smallint NULL,"
 					"networkId					smallint NULL,"
@@ -371,7 +371,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// type: SHARED or DEDICATED
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_AWSChannel ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"workspaceKey				bigint NOT NULL,"
 					"label						text NOT NULL,"
 					"channelId					text NOT NULL,"
@@ -400,7 +400,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// type: SHARED or DEDICATED
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_CDN77Channel ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"workspaceKey				bigint NOT NULL,"
 					"label						text NOT NULL,"
 					"rtmpURL					text NOT NULL,"
@@ -430,7 +430,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// type: SHARED or DEDICATED
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_RTMPChannel ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"workspaceKey				bigint NOT NULL,"
 					"label						text NOT NULL,"
 					"rtmpURL					text NOT NULL,"
@@ -461,7 +461,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// type: SHARED or DEDICATED
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_HLSChannel ("
-					"confKey					bigserial,"
+					"confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 					"workspaceKey				bigint NOT NULL,"
 					"label						text NOT NULL,"
 					"deliveryCode				integer NOT NULL,"
@@ -490,7 +490,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             string sqlStatement = 
                 "create table if not exists MMS_Conf_FTP ("
-                    "confKey                    bigserial,"
+                    "confKey                    bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey               bigint NOT NULL,"
                     "label                      text NOT NULL,"
                     "server						text NOT NULL,"
@@ -516,7 +516,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             string sqlStatement = 
                 "create table if not exists MMS_Conf_EMail ("
-                    "confKey                    bigserial,"
+                    "confKey                    bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey               bigint NOT NULL,"
                     "label                      text NOT NULL,"
                     "addresses					text NOT NULL,"
@@ -599,7 +599,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_User ("
-                    "userKey				bigserial,"
+                    "userKey				bigint GENERATED ALWAYS AS IDENTITY,"
                     "name					text NULL,"
                     "eMailAddress			text NULL,"
                     "password				text NOT NULL,"
@@ -623,7 +623,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_LoginStatistics ("
-                    "loginStatisticsKey		bigserial,"
+                    "loginStatisticsKey		bigint GENERATED ALWAYS AS IDENTITY,"
                     "userKey				bigint NOT NULL,"
                     "ip						text NULL,"
                     "continent				text NULL,"
@@ -766,7 +766,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_ContentProvider ("
-                    "contentProviderKey		bigserial,"
+                    "contentProviderKey		bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey			bigint NOT NULL,"
                     "name					text NOT NULL,"
                     "constraint MMS_ContentProvider_PK PRIMARY KEY (contentProviderKey), "
@@ -787,7 +787,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_EncodingProfile ("
-                    "encodingProfileKey  	bigserial,"
+                    "encodingProfileKey  	bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey  			bigint NULL,"
                     "label					text NOT NULL,"
                     "contentType			text NOT NULL,"
@@ -955,7 +955,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_EncodingProfilesSet ("
-                    "encodingProfilesSetKey  	bigserial,"
+                    "encodingProfilesSetKey  	bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey  				bigint NOT NULL,"
                     "contentType				text NOT NULL,"
                     "label						text NOT NULL,"
@@ -998,7 +998,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_Encoder ("
-                    "encoderKey				bigserial,"
+                    "encoderKey				bigint GENERATED ALWAYS AS IDENTITY,"
                     "label					text NOT NULL,"
 					"external				boolean NOT NULL,"
 					"enabled				boolean NOT NULL,"
@@ -1057,7 +1057,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_EncodersPool ("
-                    "encodersPoolKey			bigserial,"
+                    "encodersPoolKey			bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey				bigint NOT NULL,"
                     "label						text NULL,"
                     "lastEncoderIndexUsed		smallint NOT NULL,"
@@ -1100,7 +1100,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_IngestionRoot ("
-                    "ingestionRootKey           bigserial,"
+                    "ingestionRootKey           bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey               bigint NOT NULL,"
                     "userKey    				bigint NOT NULL,"
                     "type                       text NOT NULL,"
@@ -1157,7 +1157,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_IngestionJob ("
-                    "ingestionJobKey  			bigserial,"
+                    "ingestionJobKey  			bigint GENERATED ALWAYS AS IDENTITY,"
                     "ingestionRootKey           bigint NOT NULL,"
                     "parentGroupOfTasksIngestionJobKey	bigint NULL,"
                     "label						text NULL,"
@@ -1371,7 +1371,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_IngestionJobDependency ("
-                    "ingestionJobDependencyKey  	bigserial,"
+                    "ingestionJobDependencyKey  	bigint GENERATED ALWAYS AS IDENTITY,"
                     "ingestionJobKey				bigint NOT NULL,"
                     "dependOnSuccess				smallint NOT NULL,"
                     "dependOnIngestionJobKey		bigint NULL,"
@@ -1410,7 +1410,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_WorkflowLibrary ("
-                    "workflowLibraryKey		bigserial,"
+                    "workflowLibraryKey		bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey  			bigint NULL,"
 					// if userKey is NULL, it means
 					//	- it was loaded by mmsEngine when it started
@@ -1511,7 +1511,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_MediaItem ("
-                    "mediaItemKey           bigserial,"
+                    "mediaItemKey           bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey           bigint NOT NULL,"
                     "contentProviderKey     bigint NOT NULL,"
                     "title                  text NOT NULL,"
@@ -1671,7 +1671,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_PhysicalPath ("
-                    "physicalPathKey  			bigserial,"
+                    "physicalPathKey  			bigint GENERATED ALWAYS AS IDENTITY,"
                     "mediaItemKey				bigint NOT NULL,"
                     "drm	             		smallint NOT NULL,"
                     "externalReadOnlyStorage	boolean NOT NULL DEFAULT false,"
@@ -1778,7 +1778,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_VideoTrack ("
-                    "videoTrackKey				bigserial,"
+                    "videoTrackKey				bigint GENERATED ALWAYS AS IDENTITY,"
                     "physicalPathKey			bigint NOT NULL,"
                     "trackIndex					smallint NULL,"
                     "durationInMilliSeconds		bigint NULL,"
@@ -1805,7 +1805,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_AudioTrack ("
-                    "audioTrackKey				bigserial,"
+                    "audioTrackKey				bigint GENERATED ALWAYS AS IDENTITY,"
                     "physicalPathKey			bigint NOT NULL,"
                     "trackIndex					smallint NULL,"
                     "durationInMilliSeconds		bigint NULL,"
@@ -1853,7 +1853,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_EncodingJob ("
-                    "encodingJobKey  			bigserial,"
+                    "encodingJobKey  			bigint GENERATED ALWAYS AS IDENTITY,"
                     "ingestionJobKey			bigint NOT NULL,"
                     "type                       text NOT NULL,"
                     "typePriority				smallint NOT NULL,"
@@ -1930,7 +1930,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_DeliveryAuthorization ("
-                    "deliveryAuthorizationKey	bigserial,"
+                    "deliveryAuthorizationKey	bigint GENERATED ALWAYS AS IDENTITY,"
                     "userKey    				bigint NOT NULL,"
                     "clientIPAddress			text NULL,"
 					// contentType: vod or live

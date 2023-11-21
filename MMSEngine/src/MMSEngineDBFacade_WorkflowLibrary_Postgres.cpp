@@ -460,6 +460,13 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 
                 workflowsRoot.append(workflowLibraryRoot);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
         field = "workflowsLibrary";

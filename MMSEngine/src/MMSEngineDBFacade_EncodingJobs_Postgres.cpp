@@ -439,6 +439,13 @@ void MMSEngineDBFacade::getEncodingJobs(
 					+ ", encodingType: " + encodingType
 				);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
 		if (encodingItems.size() < maxEncodingsNumber)
@@ -3297,6 +3304,13 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
                 encodingJobsRoot.append(encodingJobRoot);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
         
         field = "encodingJobs";
@@ -3430,6 +3444,13 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 						totalRowsUpdated++;
 					}
 				}
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
 
 				toBeExecutedAgain = false;
 			}

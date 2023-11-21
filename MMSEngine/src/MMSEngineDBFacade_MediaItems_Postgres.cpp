@@ -123,6 +123,13 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                     );
                 }
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
 		_logger->info(__FILEREF__
@@ -232,6 +239,13 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                     );
                 }
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
 		_logger->info(__FILEREF__
@@ -1158,29 +1172,26 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			);
 		}
 
-		result res;
-        {
-			string orderByCondition;
-			if (orderBy == "" && jsonOrderBy == "")
-				orderByCondition = " ";
-			else if (orderBy == "" && jsonOrderBy != "")
-				orderByCondition = "order by " + jsonOrderBy + " ";
-			else if (orderBy != "" && jsonOrderBy == "")
-				orderByCondition = "order by " + orderBy + " ";
-			else // if (orderBy != "" && jsonOrderBy != "")
-				orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
+		string orderByCondition;
+		if (orderBy == "" && jsonOrderBy == "")
+			orderByCondition = " ";
+		else if (orderBy == "" && jsonOrderBy != "")
+			orderByCondition = "order by " + jsonOrderBy + " ";
+		else if (orderBy != "" && jsonOrderBy == "")
+			orderByCondition = "order by " + orderBy + " ";
+		else // if (orderBy != "" && jsonOrderBy != "")
+			orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 
-          	string sqlStatement = fmt::format( 
-           		"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
-				"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
-				"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startPublishing, "
-				"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endPublishing, "
-           		"mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {} "
-           		"limit {} offset {}",
-           		sqlWhere, orderByCondition, rows, start);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			res = trans.exec(sqlStatement);
-		}
+         	string sqlStatement = fmt::format( 
+          		"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
+			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startPublishing, "
+			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endPublishing, "
+          		"mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {} "
+          		"limit {} offset {}",
+          		sqlWhere, orderByCondition, rows, start);
+		chrono::system_clock::time_point startSql = chrono::system_clock::now();
+		result res = trans.exec(sqlStatement);
 
         Json::Value responseRoot;
         {
@@ -1823,13 +1834,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                 mediaItemsRoot.append(mediaItemRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@ - mediaItems"
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", start: " + to_string(start)
-				+ ", rows: " + to_string(rows)
-				+ ", res.size: " + to_string(res.size())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSqlResultSet).count()) + "@"
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
 
@@ -2406,6 +2416,13 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
 					selectedFileFormatWithEncodingProfile = localFileFormat;
 				}
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
 
 			if (maxSizeInBytesWithoutEncodingProfile == -1 && maxSizeInBytesWithEncodingProfile == -1)
             {
@@ -3034,6 +3051,13 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				mediaItemsDetails.insert(mediaItemsDetails.begin(),
 					mediaItemKeyPhysicalPathKeyAndContentType);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
 		trans.commit();
@@ -3589,6 +3613,13 @@ void MMSEngineDBFacade::getVideoDetails(
 				videoTracks.push_back(make_tuple(videoTrackKey, trackIndex, durationInMilliSeconds, width, height,
 					avgFrameRate, codecName, bitRate, profile));
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
         {
@@ -3625,6 +3656,13 @@ void MMSEngineDBFacade::getVideoDetails(
 
 				audioTracks.push_back(make_tuple(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate, codecName, sampleRate, channels, language));
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
 		trans.commit();
@@ -5866,6 +5904,13 @@ Json::Value MMSEngineDBFacade::getTagsList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
                 tagsRoot.append(static_cast<string>(row["tagName"].as<string>()));
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
         field = "tags";

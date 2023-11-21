@@ -941,6 +941,13 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 
 				encoderWorkspacesAssociatedRoot.append(encoderWorkspaceAssociatedRoot);
 			}
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
 		trans.commit();
@@ -1216,6 +1223,13 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 
 				encodersRoot.append(encoderRoot);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
         field = "encoders";
@@ -1776,6 +1790,13 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 
                 encodersPoolsRoot.append(encodersPoolRoot);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
         field = "encodersPool";
@@ -2106,6 +2127,13 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(
 
 						savedEncoderKeys.push_back(encoderKey);
 					}
+					SPDLOG_INFO("SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					);
 				}
 
 				// all the new encoderKey that are not present in savedEncoderKeys have to be added

@@ -292,34 +292,12 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						);
 					}
 				}
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", sqlStatement: " + sqlStatement
-					+ ", IngestionStatus::Start_TaskQueued: "
-						+ MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued)
-					+ ", IngestionStatus::SourceDownloadingInProgress: "
-						+ MMSEngineDBFacade::toString(IngestionStatus::
-							SourceDownloadingInProgress)
-					+ ", IngestionStatus::SourceMovingInProgress: "
-						+ MMSEngineDBFacade::toString(IngestionStatus::
-							SourceMovingInProgress)
-					+ ", IngestionStatus::SourceCopingInProgress: "
-						+ MMSEngineDBFacade::toString(IngestionStatus::
-							SourceCopingInProgress)
-					+ ", IngestionStatus::SourceUploadingInProgress: "
-						+ MMSEngineDBFacade::toString(IngestionStatus::
-							SourceUploadingInProgress)
-					+ ", _doNotManageIngestionsOlderThanDays: "
-						+ to_string(_doNotManageIngestionsOlderThanDays)
-					+ ", timeBeforeToPrepareResourcesInMinutes: "
-						+ to_string(timeBeforeToPrepareResourcesInMinutes)
-					+ ", mysqlRowCount: " + to_string(mysqlRowCount)
-					+ ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex)
-					+ ", onlyTasksNotInvolvingMMSEngineThreads: "
-						+ to_string(onlyTasksNotInvolvingMMSEngineThreads)
-					+ ", res.size: " + to_string(res.size())
-					+ ", elapsed (millisecs): @" + to_string(
-						chrono::duration_cast<chrono::milliseconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 
 				_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
@@ -611,12 +589,12 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus>
 					);
 			}
 		}
-		_logger->info(__FILEREF__ + "@SQL statistics@"
-			+ ", sqlStatement: " + sqlStatement
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", res.size: " + to_string(res.size())
-			+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-				chrono::system_clock::now() - startSql).count()) + "@"
+		SPDLOG_INFO("SQL statement"
+			", sqlStatement: @{}@"
+			", getConnectionId: @{}@"
+			", elapsed (millisecs): @{}@",
+			sqlStatement, conn->getConnectionId(),
+			chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 		);
                     
 		if (!atLeastOneDependencyRowFound)
@@ -1051,13 +1029,12 @@ void MMSEngineDBFacade::getIngestionJobsKeyByGlobalLabel (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
 				ingestionJobsKey.push_back(row["ingestionJobKey"].as<int64_t>());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", sqlStatement: " + sqlStatement
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", globalIngestionLabel: " + globalIngestionLabel
-				+ ", res.size: " + to_string(res.size())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
 
@@ -1571,12 +1548,12 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
 
                 groupOfTasksChildrenStatus.push_back(groupOfTasksChildStatus);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", sqlStatement: " + sqlStatement
-				+ ", groupOfTasksIngestionJobKey: " + to_string(groupOfTasksIngestionJobKey)
-				+ ", res.size: " + to_string(res.size())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
 
@@ -2155,14 +2132,14 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                             ingestionJobKeysToFindDependencies +=
 								(", " + to_string(row["ingestionJobKey"].as<int64_t>()));
                     }
-					_logger->info(__FILEREF__ + "@SQL statistics@"
-						+ ", sqlStatement: " + sqlStatement
-						+ ", dependOnSuccess: " + to_string(dependOnSuccess)
-						+ ", res.size: " + to_string(res.size())
-						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
+					SPDLOG_INFO("SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 					);
-                    
+
 					// _logger->info(__FILEREF__ + "select result"
 					// 	+ ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
 					// 	+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
@@ -2286,12 +2263,12 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                             failureStatesCount++;
                     }
                 }
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", sqlStatement: " + sqlStatement
-					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
-					+ ", res.size: " + to_string(res.size())
-					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
             }
 
@@ -3550,13 +3527,12 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
 				ingestionTookKeysByMediaItemKey.push_back(row["ingestionRootKey"].as<int64_t>());
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", sqlStatement: " + sqlStatement
-				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-				+ ", mediaItemKey: " + to_string(mediaItemKey)
-				+ ", res.size: " + to_string(res.size())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
 
@@ -3703,18 +3679,12 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
                 workflowsRoot.append(workflowRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", sqlStatement: " + sqlStatement
-				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-				+ ", ingestionRootKey: " + to_string(ingestionRootKey)
-				+ ", startIngestionDate: " + startIngestionDate
-				+ ", endIngestionDate: " + endIngestionDate
-				+ ", label: " + "%" + label + "%"
-				+ ", rows: " + to_string(rows)
-				+ ", start: " + to_string(start)
-				+ ", res.size: " + to_string(res.size())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
         
@@ -3997,22 +3967,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 
                 ingestionJobsRoot.append(ingestionJobRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", sqlStatement: " + sqlStatement
-				+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", label: " + "%" + label + "%"
-				+ ", labelLike: " + to_string(labelLike)
-				+ ", startIngestionDate: " + startIngestionDate
-				+ ", endIngestionDate: " + endIngestionDate
-				+ ", startScheduleDate: " + startScheduleDate
-				+ ", ingestionType: " + ingestionType
-				+ ", configurationLabel: " + configurationLabel
-				+ ", rows: " + to_string(rows)
-				+ ", start: " + to_string(start)
-				+ ", res.size: " + to_string(res.size())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
         
@@ -4176,12 +4136,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
                 mediaItemsRoot.append(mediaItemRoot);
             }
-			_logger->info(__FILEREF__ + "@SQL statistics@"
-				+ ", sqlStatement: " + sqlStatement
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", res.size: " + to_string(res.size())
-				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-					chrono::system_clock::now() - startSql).count()) + "@"
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
         field = "mediaItems";
@@ -4881,6 +4841,13 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 						totalRowsUpdated++;
 					}
 				}
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
 
 				toBeExecutedAgain = false;
 			}
@@ -5276,6 +5243,13 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 							totalRowsUpdated++;
 						}
 					}
+					SPDLOG_INFO("SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					);
 
 					toBeExecutedAgain = false;
 				}
@@ -5356,6 +5330,13 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 							errorMessage);
 						totalRowsUpdated++;
 					}
+					SPDLOG_INFO("SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					);
 
 					toBeExecutedAgain = false;
 				}

@@ -1321,6 +1321,13 @@ void MMSEngineDBFacade::getAllStorageDetails(
                 
                 allStorageDetails.push_back(storageDetails);
             }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
         }
 
 		trans.commit();

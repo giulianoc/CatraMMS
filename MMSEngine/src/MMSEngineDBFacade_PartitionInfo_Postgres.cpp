@@ -557,6 +557,13 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
 
 				partitionsInfo.push_back(make_pair(partitionKey, currentFreeSizeInBytes));
 			}
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
 		}
 
 		trans.commit();
