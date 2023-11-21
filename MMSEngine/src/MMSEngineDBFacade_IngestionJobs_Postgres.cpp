@@ -1800,14 +1800,14 @@ void MMSEngineDBFacade::updateIngestionJob (
 				if (processorMMS != "noToBeUpdated")
 				{
 					if (processorMMS == "")
-						processorMMSUpdate = fmt::format("processorMMS = null, ");
+						processorMMSUpdate = fmt::format(", processorMMS = null, ");
 					else
-						processorMMSUpdate = fmt::format("processorMMS = {}, ", trans->quote(processorMMS));
+						processorMMSUpdate = fmt::format(", processorMMS = {}, ", trans->quote(processorMMS));
 				}
 
 				if (errorMessageForSQL == "")
 					sqlStatement = fmt::format( 
-						"WITH rows AS (update MMS_IngestionJob set status = {}, "
+						"WITH rows AS (update MMS_IngestionJob set status = {} "
 						"{} "
 						"where ingestionJobKey = {} returning 1) select count(*) from rows",
 						trans->quote(toString(newIngestionStatus)), processorMMSUpdate, ingestionJobKey
@@ -1815,7 +1815,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 				else
 					sqlStatement = fmt::format( 
 						"WITH rows AS (update MMS_IngestionJob set status = {}, "
-						"errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20), "
+						"errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20) "
 						"{} "
 						"where ingestionJobKey = {} returning 1) select count(*) from rows",
 						trans->quote(toString(newIngestionStatus)), trans->quote(errorMessageForSQL),
@@ -3050,7 +3050,8 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 				ingestionType = toIngestionType(res[0]["ingestionType"].as<string>());
 				ingestionStatus = toIngestionStatus(res[0]["status"].as<string>());
                 metaDataContent = res[0]["metaDataContent"].as<string>();
-                errorMessage = res[0]["errorMessage"].as<string>();
+				if (!res[0]["errorMessage"].is_null())
+					errorMessage = res[0]["errorMessage"].as<string>();
             }
 			else
             {

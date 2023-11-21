@@ -2404,7 +2404,7 @@ tuple<int64_t, bool, string, string, string, int>
 			if (encodersPoolLabel == "")
 				sqlStatement = fmt::format( 
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
-					"where workspaceKey = ? "
+					"where workspaceKey = {} "
 					"and label is null for update", workspaceKey);
 			else
 				sqlStatement = fmt::format(

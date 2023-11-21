@@ -248,7 +248,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 			string sqlStatement;
 			if (workspaceKey == -1)
 				sqlStatement = fmt::format(
-					"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
+					"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
 					"and workspaceKey is null returning 1) select count(*) from rows",
 					workflowLibraryKey);
 			else
@@ -257,13 +257,13 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 				// for this reason the condition on creatorUserKey has to be removed
 				if (admin)
 					sqlStatement = fmt::format( 
-						"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
-						"and workspaceKey = ? returning 1) select count(*) from rows",
+						"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
+						"and workspaceKey = {} returning 1) select count(*) from rows",
 						workflowLibraryKey, workspaceKey);
 				else
 					sqlStatement = fmt::format(
-						"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = ? "
-						"and creatorUserKey = ? and workspaceKey = ? returning 1) select count(*) from rows",
+						"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
+						"and creatorUserKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
 						workspaceKey, userKey, workspaceKey);
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

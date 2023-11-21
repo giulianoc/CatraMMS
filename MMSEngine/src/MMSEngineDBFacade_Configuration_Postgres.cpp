@@ -472,7 +472,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             youTubeConfListRoot[field] = requestParametersRoot;
         }
         
-        string sqlWhere = fmt::format("where workspaceKey = ? ", workspaceKey);
+        string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
         
         Json::Value responseRoot;
         {
