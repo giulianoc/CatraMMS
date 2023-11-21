@@ -2768,7 +2768,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 				sqlStatement = fmt::format( 
 					"WITH rows AS (update MMS_IngestionJob set sourceBinaryTransferred = {}, "
 					"uploadingProgress = 100 "
-					"where ingestionJobKey = ? returning 1) select count(*) from rows",
+					"where ingestionJobKey = {} returning 1) select count(*) from rows",
 					sourceBinaryTransferred, ingestionJobKey);
 			else
 				sqlStatement = fmt::format( 
