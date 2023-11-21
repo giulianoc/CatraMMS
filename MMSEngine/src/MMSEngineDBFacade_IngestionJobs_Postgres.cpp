@@ -4677,7 +4677,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber (
                 "WITH rows AS (update MMS_WorkspaceMoreInfo set currentIngestionsNumber = 0, "
                 "startDateTime = to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"endDateTime = to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS') "
-                "where workspaceKey = ? returning 1) select count(*) from rows",
+                "where workspaceKey = {} returning 1) select count(*) from rows",
 				trans.quote(newPeriodUtcStartDateTime), trans.quote(newPeriodUtcEndDateTime), workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
