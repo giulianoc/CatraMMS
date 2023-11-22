@@ -3605,6 +3605,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 				"limit {} offset {}",
 				sqlWhere, asc ? "asc" : "desc", rows, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			chrono::milliseconds internalSqlDuration (0);
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
@@ -3666,12 +3667,14 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
                         ingestionJobsRoot.append(ingestionJobRoot);
                     }
+					chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+                        chrono::system_clock::now() - startSql);
+					internalSqlDuration += sqlDuration;
 					_logger->info(__FILEREF__ + "@SQL statistics@"
 						+ ", sqlStatement: " + sqlStatement
 						+ ", currentIngestionRootKey: " + to_string(currentIngestionRootKey)
 						+ ", res.size: " + to_string(res.size())
-						+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-							chrono::system_clock::now() - startSql).count()) + "@"
+						+ ", elapsed (millisecs): @" + to_string(sqlDuration.count()) + "@"
 					);
                 }
 
@@ -3685,7 +3688,8 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				chrono::duration_cast<chrono::milliseconds>(
+					(chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 			);
         }
         

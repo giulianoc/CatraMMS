@@ -71,6 +71,10 @@ do
 			serviceName=engine
 			processName=mmsEngineService
 			mms_service_running_by_processName $serviceName $processName
+
+			echo "" >> $debugFilename
+			serviceName=engine
+			mms_sql_timing_check_service $serviceName
 			;;
 		"api")
 			echo "" >> $debugFilename
@@ -83,6 +87,10 @@ do
 
 			echo "" >> $debugFilename
 			mms_api_timing_check_service
+
+			echo "" >> $debugFilename
+			serviceName=api
+			mms_sql_timing_check_service $serviceName
 
 			shift
 

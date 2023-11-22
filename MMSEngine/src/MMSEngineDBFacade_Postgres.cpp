@@ -633,11 +633,6 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
         int currentDirLevel2;
         int currentDirLevel3;
 
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
         {
             string sqlStatement = fmt::format( 
                 "select currentDirLevel1, currentDirLevel2, currentDirLevel3 from MMS_WorkspaceMoreInfo where workspaceKey = {}",
@@ -764,11 +759,6 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
     try
     {
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
         int64_t workspaceKey;
         bool externalReadOnlyStorage;
         int64_t encodingProfileKey;
@@ -966,11 +956,6 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
     try
     {
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 
         int64_t workspaceKey = -1;
@@ -1241,11 +1226,6 @@ void MMSEngineDBFacade::getAllStorageDetails(
 
     try
     {
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
         int64_t workspaceKey;
 		int64_t encodingProfileKey;
         int mmsPartitionNumber;
@@ -1414,11 +1394,6 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 
     try
     {
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        
         {
 			string contentType;
 			int64_t contentKey;
@@ -1531,11 +1506,6 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
 
     try
     {
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-    
         {
             string sqlStatement = fmt::format(
                 "select deliveryURI, currentRetriesNumber, maxRetries, "
@@ -1702,11 +1672,6 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 
     try
     {
-        conn = connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
         {
 			// Once authorization is expired, we will still take it for 1 day
 			int retention = 3600 * 24;
@@ -1874,11 +1839,6 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 			);
 			today_yyyy_mm_dd = strDateTime;
 		}
-
-		conn = connectionPool->borrow();	
-		_logger->debug(__FILEREF__ + "DB connection borrow"
-			+ ", getConnectionId: " + to_string(conn->getConnectionId())
-		);
 
         {
             string sqlStatement = fmt::format(
