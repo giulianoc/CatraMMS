@@ -4178,7 +4178,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             if (row["uploadingProgress"].is_null())
                 ingestionJobRoot[field] = Json::nullValue;
             else
-                ingestionJobRoot[field] = row["uploadingProgress"].as<int64_t>();
+                ingestionJobRoot[field] = (int) row["uploadingProgress"].as<float>();
         }
 
         field = "ingestionRootKey";
