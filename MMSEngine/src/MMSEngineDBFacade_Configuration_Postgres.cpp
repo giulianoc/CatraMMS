@@ -5974,12 +5974,13 @@ tuple<string, string, string, bool>
 				// In questo scenario è importante che questo metodo ritorni le informazioni
 				// della riga con ingestionJobKey inizializzato.
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
+				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
 				sqlStatement = fmt::format(
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
 					"from MMS_Conf_AWSChannel " 
 					"where workspaceKey = {} and type = 'SHARED' "
 					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {})) "
-					"order by reservedByIngestionJobKey desc limit 1 for update",
+					"order by reservedByIngestionJobKey asc limit 1 for update",
 					workspaceKey, outputIndex, ingestionJobKey);
 			}
 			else
@@ -7057,12 +7058,13 @@ tuple<string, string, string, string, string, bool>
 				// In questo scenario è importante che questo metodo ritorni le informazioni
 				// della riga con ingestionJobKey inizializzato.
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
+				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
 				sqlStatement = fmt::format(
 					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel " 
 					"where workspaceKey = {} and type = 'SHARED' "
-					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {}))"
-					"order by reservedByIngestionJobKey desc limit 1 for update",
+					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {})) "
+					"order by reservedByIngestionJobKey asc limit 1 for update",
 					workspaceKey, outputIndex, ingestionJobKey);
 			}
 			else
@@ -8169,12 +8171,13 @@ tuple<string, string, string, string, string, string, bool>
 				// In questo scenario è importante che questo metodo ritorni le informazioni
 				// della riga con ingestionJobKey inizializzato.
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
+				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
 				sqlStatement = fmt::format(
 					"select confKey, label, rtmpURL, streamName, userName, password, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel " 
 					"where workspaceKey = {} and type = 'SHARED' "
-					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {}))"
-					"order by reservedByIngestionJobKey desc limit 1 for update",
+					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {})) "
+					"order by reservedByIngestionJobKey asc limit 1 for update",
 					workspaceKey, outputIndex, ingestionJobKey);
 			}
 			else
@@ -9253,7 +9256,7 @@ tuple<string, int64_t, int, int, bool>
 			// 2023-02-16: In caso di ripartenza di mmsEngine, in caso di richiesta
 			// già attiva, deve ritornare le stesse info associate a ingestionJobKey
 			string sqlStatement;
-			if (label == "")
+			if (label == "")	// type is SHARED
 			{
 				// In caso di ripartenza di mmsEngine, nella tabella avremo già la riga con
 				// l'ingestionJobKey e, questo metodo, deve ritornare le info di quella riga.
@@ -9262,12 +9265,13 @@ tuple<string, int64_t, int, int, bool>
 				// In questo scenario è importante che questo metodo ritorni le informazioni
 				// della riga con ingestionJobKey inizializzato.
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
+				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
 				sqlStatement = fmt::format(
 					"select confKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, "
 					"reservedByIngestionJobKey from MMS_Conf_HLSChannel " 
 					"where workspaceKey = {} and type = 'SHARED' "
-					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {}))"
-					"order by reservedByIngestionJobKey desc limit 1 for update",
+					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {})) "
+					"order by reservedByIngestionJobKey asc limit 1 for update",
 					workspaceKey, outputIndex, ingestionJobKey);
 			}
 			else

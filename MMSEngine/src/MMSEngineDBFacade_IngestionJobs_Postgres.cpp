@@ -1800,9 +1800,9 @@ void MMSEngineDBFacade::updateIngestionJob (
 				if (processorMMS != "noToBeUpdated")
 				{
 					if (processorMMS == "")
-						processorMMSUpdate = fmt::format(", processorMMS = null, ");
+						processorMMSUpdate = fmt::format(", processorMMS = null ");
 					else
-						processorMMSUpdate = fmt::format(", processorMMS = {}, ", trans->quote(processorMMS));
+						processorMMSUpdate = fmt::format(", processorMMS = {} ", trans->quote(processorMMS));
 				}
 
 				if (errorMessageForSQL == "")

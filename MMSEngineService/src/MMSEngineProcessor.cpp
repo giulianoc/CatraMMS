@@ -12934,7 +12934,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 			catch (MediaItemKeyNotFound e)
 			{
-				_logger->error(__FILEREF__ + "No associated VirtualVODImage to the Workspace"
+				_logger->warn(__FILEREF__ + "No associated VirtualVODImage to the Workspace"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", _liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel
 					+ ", exception: " + e.what()

@@ -2589,24 +2589,23 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 			);
 			if (!empty(res))
             {
-                IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(res[0]["status"].as<string>());
                 MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
-
-                string userData;
-                if (!res[0]["userData"].is_null())
-                    userData = res[0]["userData"].as<string>();
 
                 string title;
                 if (!res[0]["title"].is_null())
                     title = res[0]["title"].as<string>();
                 
+                string userData;
+                if (!res[0]["userData"].is_null())
+                    userData = res[0]["userData"].as<string>();
+
+                int64_t ingestionJobKey = res[0]["ingestionJobKey"].as<int64_t>();
+
                 string ingestionDate;
                 if (!res[0]["ingestionDate"].is_null())
                     ingestionDate = res[0]["ingestionDate"].as<string>();
-                
-                int64_t ingestionJobKey = res[0]["ingestionJobKey"].as<int64_t>();
 
-                int64_t willBeRemovedInSeconds = res[0]["willBeRemovedInSeconds"].as<int64_t>();
+                int64_t willBeRemovedInSeconds = res[0]["willBeRemovedInSeconds"].as<float>();
 
                 contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 					make_tuple(contentType, title, userData, ingestionDate, willBeRemovedInSeconds, ingestionJobKey);
@@ -4232,21 +4231,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             {
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
 				if ((parametersRoot[field]).type() == Json::stringValue)
-				{
 					userData = JSONUtils::asString(parametersRoot, field, "");
-
-					// _logger->error(__FILEREF__ + "STRING AAAAAAAAAAA"
-					// 	+ ", userData: " + userData
-					// );
-				}
 				else
-				{
 					userData = JSONUtils::toString(parametersRoot[field]);
-
-					// _logger->error(__FILEREF__ + "NO STRING AAAAAAAAAAA"
-					// 	+ ", userData: " + userData
-					// );
-				}
             }
 
             field = "deliveryFileName";
@@ -4284,7 +4271,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
                 	gmtime_r (&utcTime, &tmDateTime);
 
-                    sprintf (strUtcDateTime, "%04d-%02d-%02d\"T\"%02d:%02d:%02d\"Z\"",
+                    sprintf (strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
                             tmDateTime. tm_year + 1900,
                             tmDateTime. tm_mon + 1,
                             tmDateTime. tm_mday,
@@ -4306,7 +4293,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
                 	gmtime_r (&utcTime, &tmDateTime);
 
-                    sprintf (strUtcDateTime, "%04d-%02d-%02d\"T\"%02d:%02d:%02d\"Z\"",
+                    sprintf (strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
                             tmDateTime. tm_year + 1900,
                             tmDateTime. tm_mon + 1,
                             tmDateTime. tm_mday,
@@ -4335,7 +4322,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                                            "DEFAULT,      {},           {},                 {},     {},      {}, "
 				"{},               {},              NOW() at time zone 'utc', {}, "
                 "to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
-                "{},                 {},   false,           NULL)",
+                "{},                 {},   false,           NULL) returning mediaItemKey",
 				workspace->_workspaceKey, contentProviderKey, trans.quote(title),
 				ingester == "" ? "null" : trans.quote(ingester),
 				userData == "" ? "null" : trans.quote(userData),
@@ -4345,7 +4332,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				tags
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			mediaItemKey = trans.exec1(sqlStatement)[0].as<int>();
+			mediaItemKey = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -4536,7 +4523,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				);
 				if (!empty(res))
                 {
-                IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(res[0]["status"].as<string>());
                     currentDirLevel1 = res[0]["currentDirLevel1"].as<int>();
                     currentDirLevel2 = res[0]["currentDirLevel2"].as<int>();
                     currentDirLevel3 = res[0]["currentDirLevel3"].as<int>();
@@ -4904,7 +4890,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					"values ({}, {}, {})", workspaceKey, mediaItemKey, trans->quote(uniqueName)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans->exec1(sqlStatement)[0].as<int>();
+				trans->exec0(sqlStatement);
 				SPDLOG_INFO("SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
@@ -5249,7 +5235,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
                 "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
 				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
 				"durationInMilliSeconds, bitRate, deliveryInfo, creationDate, retentionInMinutes) values ("
-                "DEFAULT, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', {})",
+                "DEFAULT, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', {}) returning physicalPathKey",
 				mediaItemKey, drm, externalReadOnlyStorage, trans.quote(encodedFileName),
 				trans.quote(relativePath), mmsPartitionIndexUsed, sizeInBytes,
 				encodingProfileKey == -1 ? "null" : to_string(encodingProfileKey),
@@ -5259,7 +5245,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				physicalItemRetentionPeriodInMinutes == -1 ? "null" : to_string(physicalItemRetentionPeriodInMinutes)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			physicalPathKey = trans.exec1(sqlStatement)[0].as<int>();
+			physicalPathKey = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -5301,7 +5287,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					videoProfile == "" ? "null" : trans.quote(videoProfile)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.exec1(sqlStatement)[0].as<int>();
+				trans.exec0(sqlStatement);
 				SPDLOG_INFO("SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
@@ -5339,7 +5325,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					language == "" ? "null" : trans.quote(language)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.exec1(sqlStatement)[0].as<int>();
+				trans.exec0(sqlStatement);
 				SPDLOG_INFO("SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
@@ -5358,7 +5344,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				physicalPathKey, imageWidth, imageHeight, trans.quote(imageFormat), imageQuality
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec1(sqlStatement)[0].as<int>();
+			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -5544,7 +5530,7 @@ void MMSEngineDBFacade::addCrossReference (
 					sourceMediaItemKey, trans->quote(toString(crossReferenceType)), targetMediaItemKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans->exec1(sqlStatement)[0].as<int>();
+			trans->exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
