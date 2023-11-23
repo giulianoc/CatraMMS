@@ -77,11 +77,11 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it != _runningThreads.end())
 		{
-			_logger->error("aaa threadsStatistic: thread already added");
 			SPDLOG_ERROR("threadsStatistic: thread already added"
-				", threadId: {}", sThreadId);
-
-			logRunningThreads(true);
+				", input threadId: {}"
+				", input threadName: {}"
+				", threadName in map: {}"
+				, sThreadId, threadData._threadName, (it->second)._threadName);
 
 			return;
 		}
@@ -116,12 +116,10 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 			SPDLOG_ERROR("threadsStatistic: thread not found"
 				", threadId: {}", sThreadId);
 
-			logRunningThreads(true);
-
 			return;
 		}
 
-		ThreadData threadData = (*it).second;
+		ThreadData threadData = it->second;
 		_runningThreads.erase(it);
 
 		SPDLOG_INFO("threadsStatistic"
@@ -181,7 +179,7 @@ void ThreadsStatistic::logRunningThreads(bool asError)
 				threadData._threadName,
 				chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - threadData._startThread).count()
-				);
+			);
 		}
 		if (asError)
 			SPDLOG_ERROR("threadsStatistic, running threads: {}", message);

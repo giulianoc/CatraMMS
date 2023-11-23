@@ -6011,7 +6011,41 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 		localAssetIngestionEvent.getIngestionJobKey()
 	);
 
-	_logger->info(__FILEREF__ + "handleLocalAssetIngestionEventThread"
+	try
+	{
+		handleLocalAssetIngestionEvent(processorsThreadsNumber, localAssetIngestionEvent);
+	}
+    catch(runtime_error& e)
+    {
+        _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+			+ ", localAssetIngestionEvent.getMetadataContent(): " + localAssetIngestionEvent.getMetadataContent()
+			+ ", exception: " + e.what()
+        );
+
+        // throw e;
+		return;	// return because it is a thread
+    }
+    catch(exception& e)
+    {
+        _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
+			+ ", exception: " + e.what()
+		);
+
+        // throw e;
+		return;	// return because it is a thread
+    }
+}
+
+void MMSEngineProcessor::handleLocalAssetIngestionEvent(
+		shared_ptr<long> processorsThreadsNumber,
+    LocalAssetIngestionEvent localAssetIngestionEvent)
+{
+
+	_logger->info(__FILEREF__ + "handleLocalAssetIngestionEvent"
 		+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		+ ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 		+ ", ingestionSourceFileName: " + localAssetIngestionEvent.getIngestionSourceFileName()
@@ -6076,8 +6110,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
     catch(exception& e)
     {
@@ -6121,8 +6154,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
 
 	fs::path binaryPathName;
@@ -6146,9 +6178,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			{
 				// .mp4 is used in
 				// 1. downloadMediaSourceFileThread (when the m3u8-streaming is downloaded in a .mp4 file
-				// 2. here, handleLocalAssetIngestionEventThread (when the IngestionRepository file name
+				// 2. here, handleLocalAssetIngestionEvent (when the IngestionRepository file name
 				//		is built "consistent" with the above step no. 1)
-				// 3. handleLocalAssetIngestionEventThread (when the MMS file name is generated)
+				// 3. handleLocalAssetIngestionEvent (when the MMS file name is generated)
 				binaryPathName = workspaceIngestionBinaryPathName + ".mp4";
 			}
 			else if (fileFormat == "m3u8-tar.gz")
@@ -6282,8 +6314,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
     catch(exception& e)
     {
@@ -6327,8 +6358,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
 
 	_logger->info(__FILEREF__ + "binaryPathName"
@@ -6422,8 +6452,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
     catch(exception& e)
     {
@@ -6497,8 +6526,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
 
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
@@ -6622,8 +6650,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
     catch(exception& e)
     {
@@ -6697,8 +6724,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
 
     try
@@ -6780,8 +6806,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
     catch(exception& e)
     {
@@ -6855,8 +6880,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
 
 	string mediaSourceFileName;
@@ -6873,9 +6897,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				mediaSourceFileName = localAssetIngestionEvent.getIngestionSourceFileName();
 				// .mp4 is used in
 				// 1. downloadMediaSourceFileThread (when the m3u8-streaming is downloaded in a .mp4 file
-				// 2. handleLocalAssetIngestionEventThread (when the IngestionRepository file name
+				// 2. handleLocalAssetIngestionEvent (when the IngestionRepository file name
 				//		is built "consistent" with the above step no. 1)
-				// 3. here, handleLocalAssetIngestionEventThread (when the MMS file name is generated)
+				// 3. here, handleLocalAssetIngestionEvent (when the MMS file name is generated)
 				if (mediaFileFormat == "m3u8-streaming")
 					mediaSourceFileName += ".mp4";
 				else if (mediaFileFormat == "m3u8-tar.gz")
@@ -6997,8 +7021,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
 	}
 	catch(exception& e)
 	{
@@ -7067,8 +7090,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 			}
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
 	}
 
 	string m3u8FileName;
@@ -7198,8 +7220,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-			// throw e;
-			return;	// return because it is a thread
+			throw e;
         }
         catch(exception& e)
         {
@@ -7269,8 +7290,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-			// throw e;
-			return;	// return because it is a thread
+			throw e;
         }        
 	}
 
@@ -7427,8 +7447,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-			// throw e;
-			return;	// return because it is a thread
+			throw e;
         }
         catch(exception& e)
         {
@@ -7497,8 +7516,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-			// throw e;
-			return;	// return because it is a thread
+			throw e;
         }        
     }
     else if (validator.isImageFileFormat(mediaFileFormat))
@@ -7594,9 +7612,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-            // throw runtime_error(e.what());
+            throw runtime_error(e.what());
 			// throw e;
-			return;	// return because it is a thread
         }
         catch( Magick::Warning &e )
         {
@@ -7666,9 +7683,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-            // throw runtime_error(e.what());
+            throw runtime_error(e.what());
 			// throw e;
-			return;	// return because it is a thread
         }
         catch( Magick::ErrorFileOpen &e ) 
         { 
@@ -7738,9 +7754,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-            // throw runtime_error(e.what());
+            throw runtime_error(e.what());
 			// throw e;
-			return;	// return because it is a thread
         }
         catch (Magick::Error &e)
         { 
@@ -7810,9 +7825,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-            // throw runtime_error(e.what());
+            throw runtime_error(e.what());
 			// throw e;
-			return;	// return because it is a thread
         }
         catch(exception& e)
         {
@@ -7881,9 +7895,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 					);
 			}
 
-            // throw e;
-			// throw e;
-			return;	// return because it is a thread
+			throw e;
         }
     }
     else
@@ -7956,8 +7968,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw runtime_error(errorMessage);
-		return;	// return because it is a thread
+        throw runtime_error(errorMessage);
     }
 
     // int64_t mediaItemKey;
@@ -8304,8 +8315,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+		throw runtime_error(e.what());
     }
     catch(MediaItemKeyNotFound& e)	// getMediaItemDetailsByIngestionJobKey failure
     {
@@ -8386,8 +8396,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+		throw runtime_error(e.what());
     }
     catch(runtime_error& e)
     {
@@ -8466,8 +8475,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
     catch(exception& e)
     {
@@ -8545,8 +8553,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 				);
 		}
 
-        // throw e;
-		return;	// return because it is a thread
+        throw e;
     }
 }
 
@@ -9666,7 +9673,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 						localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
-						handleLocalAssetIngestionEventThread (
+						handleLocalAssetIngestionEvent (
 							processorsThreadsNumber, *localAssetIngestionEvent);
 						/*
 						shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
@@ -11825,7 +11832,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 						localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
 
-						handleLocalAssetIngestionEventThread (
+						handleLocalAssetIngestionEvent (
 							processorsThreadsNumber, *localAssetIngestionEvent);
 					}
 					catch(runtime_error& e)
@@ -18226,7 +18233,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread (
 
                     try
                     {
-                        handleLocalAssetIngestionEventThread (
+                        handleLocalAssetIngestionEvent(
 							processorsThreadsNumber, *localAssetIngestionEvent);
                     }
                     catch(runtime_error& e)
@@ -24291,9 +24298,9 @@ RESUMING FILE TRANSFERS
 	// 2: m3u8 by streaming (it will be saved as .mp4)
 		// .mp4 is used in
 		// 1. downloadMediaSourceFileThread (when the m3u8-streaming is downloaded in a .mp4 file
-		// 2. handleLocalAssetIngestionEventThread (when the IngestionRepository file name
+		// 2. handleLocalAssetIngestionEvent (when the IngestionRepository file name
 		//		is built "consistent" with the above step no. 1)
-		// 3. here, handleLocalAssetIngestionEventThread (when the MMS file name is generated)
+		// 3. here, handleLocalAssetIngestionEvent (when the MMS file name is generated)
 	if (localM3u8TarGzOrM3u8Streaming == 1)
 		destBinaryPathName = destBinaryPathName + ".tar.gz";
 	else if (localM3u8TarGzOrM3u8Streaming == 2)

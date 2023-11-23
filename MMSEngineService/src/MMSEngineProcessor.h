@@ -182,6 +182,9 @@ private:
     void handleLocalAssetIngestionEventThread (
 		shared_ptr<long> processorsThreadsNumber,
         LocalAssetIngestionEvent localAssetIngestionEvent);
+    void handleLocalAssetIngestionEvent(
+		shared_ptr<long> processorsThreadsNumber,
+        LocalAssetIngestionEvent localAssetIngestionEvent);
 
     void handleMultiLocalAssetIngestionEventThread (
 		shared_ptr<long> processorsThreadsNumber,

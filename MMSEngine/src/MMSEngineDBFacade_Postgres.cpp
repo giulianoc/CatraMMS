@@ -1143,13 +1143,13 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
     catch(MediaItemKeyNotFound& e)
     {        
 		if (warningIfMissing)
-			SPDLOG_WARN("SQL exception"
+			SPDLOG_WARN("MediaItemKeyNotFound, SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
 		else
-			SPDLOG_ERROR("SQL exception"
+			SPDLOG_ERROR("MediaItemKeyNotFound, SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
