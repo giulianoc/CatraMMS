@@ -58,10 +58,10 @@ ThreadsStatistic::ThreadStatistic::~ThreadStatistic()
 }
 
 ThreadsStatistic::ThreadsStatistic(
-	// shared_ptr<spdlog::logger> logger
+	shared_ptr<spdlog::logger> logger
 )
 {
-	// _logger = logger;
+	_logger = logger;
 }
 
 void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
@@ -77,6 +77,7 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it != _runningThreads.end())
 		{
+			_logger->error("aaa threadsStatistic: thread already added");
 			SPDLOG_ERROR("threadsStatistic: thread already added"
 				", threadId: {}", sThreadId);
 
