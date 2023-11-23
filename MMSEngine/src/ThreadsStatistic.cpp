@@ -67,15 +67,15 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 {
 	try
 	{
+		stringstream ss;
+		ss << threadId;
+		string sThreadId = ss.str();
+
 		lock_guard<mutex> locker(_runningThreadsMutex);
 
-		map<thread::id, ThreadData>::iterator it = _runningThreads.find(threadId);
+		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it != _runningThreads.end())
 		{
-			stringstream ss;
-			ss << threadId;
-			string sThreadId = ss.str();
-
 			string message = __FILEREF__ + "threadsStatistic: thread already added"
 				+ ", threadId: " + sThreadId
 			;
@@ -84,7 +84,7 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 			return;
 		}
 
-		_runningThreads.insert(make_pair(threadId, threadData));
+		_runningThreads.insert(make_pair(sThreadId, threadData));
 	}
 	catch(runtime_error& e)
 	{
@@ -104,15 +104,15 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 {
 	try
 	{
+		stringstream ss;
+		ss << threadId;
+		string sThreadId = ss.str();
+
 		lock_guard<mutex> locker(_runningThreadsMutex);
 
-		map<thread::id, ThreadData>::iterator it = _runningThreads.find(threadId);
+		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it == _runningThreads.end())
 		{
-			stringstream ss;
-			ss << threadId;
-			string sThreadId = ss.str();
-
 			string message = __FILEREF__ + "threadsStatistic: thread not found"
 				+ ", threadId: " + sThreadId
 			;
@@ -158,14 +158,15 @@ void ThreadsStatistic::logRunningThreads()
 		string message = to_string(_runningThreads.size()) + ". ";
 		bool firstThreadData = true;
 		int threadCounter = 1;
-		for (map<thread::id, ThreadData>::iterator it = _runningThreads.begin();
+		for (map<string, ThreadData>::iterator it = _runningThreads.begin();
 			it != _runningThreads.end(); it++)
 		{
-			stringstream ss;
-			ss << (*it).first;
-			string sThreadId = ss.str();
+			string sThreadId = it->first;
+			// stringstream ss;
+			// ss << (*it).first;
+			// string sThreadId = ss.str();
 
-			ThreadData threadData = (*it).second;
+			ThreadData threadData = it->second;
 
 			if (!firstThreadData)
 			{

@@ -56,7 +56,7 @@ class ThreadsStatistic {
 
 	private:
 		mutex							_runningThreadsMutex;
-		map<thread::id, ThreadData>		_runningThreads;
+		map<string, ThreadData>			_runningThreads;
 		shared_ptr<spdlog::logger>		_logger;
 };
 
