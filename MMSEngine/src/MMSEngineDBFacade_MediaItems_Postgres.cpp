@@ -46,6 +46,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				"limit {} offset {}",	// for update"; see comment marked as 2021-09-23
 				maxEntriesNumber, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			chrono::milliseconds internalSqlDuration (0);
 			result res = trans.exec(sqlStatement);
             noMoreRowsReturned = true;
             start += maxEntriesNumber;
@@ -76,12 +77,14 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 							trans.quote(processorMMS), mediaItemKey);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+							chrono::system_clock::now() - startSql);
+						internalSqlDuration += sqlDuration;
 						SPDLOG_INFO("SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(),
-							chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+							sqlStatement, conn->getConnectionId(), sqlDuration.count()
 						);
                         if (rowsUpdated != 1)
                         {
@@ -128,7 +131,8 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				chrono::duration_cast<chrono::milliseconds>(
+					(chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 			);
         }
 

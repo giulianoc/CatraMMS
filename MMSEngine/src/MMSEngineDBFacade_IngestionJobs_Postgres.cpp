@@ -174,6 +174,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					timeBeforeToPrepareResourcesInMinutes,
 					mysqlRowCount, _getIngestionJobsCurrentIndex);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				chrono::milliseconds internalSqlDuration (0);
 				result res = trans.exec(sqlStatement);
 				if (res.size() < mysqlRowCount)
 					moreRows = false;
@@ -211,12 +212,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 							ingestionRootKey);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						result res = trans.exec(sqlStatement);
+						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+							chrono::system_clock::now() - startSql);
+						internalSqlDuration += sqlDuration;
 						SPDLOG_INFO("SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(),
-							chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+							sqlStatement, conn->getConnectionId(), sqlDuration.count()
 						);
 						if (!empty(res))
 						{
@@ -235,14 +238,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 							throw runtime_error(errorMessage);                    
 						}
-						_logger->info(__FILEREF__ + "@SQL statistics@"
-							+ ", sqlStatement: " + sqlStatement
-							+ ", ingestionRootKey: " + to_string(ingestionRootKey)
-							+ ", res.size: " + to_string(res.size())
-							+ ", elapsed (millisecs): @" + to_string(
-								chrono::duration_cast<chrono::milliseconds>(
-								chrono::system_clock::now() - startSql).count()) + "@"
-						);
 					}
 
 					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> 
@@ -297,7 +292,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
 					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					chrono::duration_cast<chrono::milliseconds>(
+						(chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 				);
 
 				_logger->info(__FILEREF__ + "getIngestionsToBeManaged"
@@ -3947,10 +3943,10 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
-        
+
         Json::Value ingestionJobsRoot(Json::arrayValue);
-        {            
-            string sqlStatement = fmt::format( 
+        {
+            string sqlStatement = fmt::format(
                 "select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
 				"ij.ingestionType, ij.metaDataContent, ij.processorMMS, "
 				"to_char(ij.processingStartingFrom, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as processingStartingFrom, "
@@ -3963,12 +3959,15 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 "order by newStartProcessing {}, newEndProcessing "
                 "limit {} offset {}", sqlWhere, asc ? "asc" : "desc", rows, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			chrono::milliseconds internalSqlDuration (0);
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value ingestionJobRoot = getIngestionJobRoot(
-                        workspace, row,
-						dependencyInfo, ingestionJobOutputs, conn, trans);
+				Json::Value ingestionJobRoot = getIngestionJobRoot(
+					workspace, row,
+					dependencyInfo, ingestionJobOutputs, conn, trans);
+				internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
+                       chrono::system_clock::now() - startSql);
 
                 ingestionJobsRoot.append(ingestionJobRoot);
             }
@@ -3977,7 +3976,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				chrono::duration_cast<chrono::milliseconds>(
+					(chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 			);
         }
         

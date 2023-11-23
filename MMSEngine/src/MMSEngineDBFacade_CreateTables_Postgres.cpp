@@ -1256,19 +1256,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
-		{
-			string sqlStatement =
-                "create index if not exists MMS_IngestionJob_idx3 on MMS_IngestionJob (ingestionType)";
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-		}
+		// MMS_IngestionJob_idx3 sostituito da MMS_IngestionJob_idx13
 
 		{
 			string sqlStatement =
@@ -1369,8 +1357,39 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			// usato da: select status from MMS_IngestionJob where ingestionRootKey = 491421
 			string sqlStatement =
                 "create index if not exists MMS_IngestionJob_idx12 on MMS_IngestionJob (ingestionRootKey)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			// viene usato dalla select di getIngestionJobsStatus
+			string sqlStatement =
+                "create index if not exists MMS_IngestionJob_idx13 on MMS_IngestionJob (ingestionType, configurationLabel_virtual)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			// viene usato dalla select di getIngestionsToBeManaged
+			string sqlStatement =
+                "create index if not exists MMS_IngestionJob_idx14 on MMS_IngestionJob (processorMMS, status, sourceBinaryTransferred, processingStartingFrom, scheduleStart_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1409,7 +1428,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index if not exists MMS_IngestionJobDependency_idx on MMS_IngestionJobDependency (ingestionJobKey)";
+                "create index if not exists MMS_IngestionJobDependency_idx1 on MMS_IngestionJobDependency (ingestionJobKey, orderNumber)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
