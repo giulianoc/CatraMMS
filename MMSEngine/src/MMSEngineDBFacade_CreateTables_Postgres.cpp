@@ -1562,6 +1562,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					// This is automatically set to false when overrideUniqueName is applied
 					"markedAsRemoved		boolean NOT NULL,"
                     "processorMMSForRetention	text NULL,"
+					"liveRecordingChunk_virtual	boolean generated always as (userData -> 'mmsData' -> 'liveRecordingChunk' is not null) stored NOT NULL,"
 					"recordingCode_virtual	bigint generated always as ((userData -> 'mmsData' -> 'liveRecordingChunk' ->> 'recordingCode')::bigint) stored NULL,"
 					"utcStartTimeInMilliSecs_virtual	bigint generated always as ((userData -> 'mmsData' ->> 'utcStartTimeInMilliSecs')::bigint) stored NULL,"
 					"utcEndTimeInMilliSecs_virtual	bigint generated always as ((userData -> 'mmsData' ->> 'utcEndTimeInMilliSecs')::bigint) stored NULL,"
@@ -1654,6 +1655,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create index if not exists MMS_MediaItem_idx7 on MMS_MediaItem (utcEndTimeInMilliSecs_virtual)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+                "create index if not exists MMS_MediaItem_idx8 on MMS_MediaItem (workspaceKey, contentType, liveRecordingChunk_virtual, ingestionDate)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"

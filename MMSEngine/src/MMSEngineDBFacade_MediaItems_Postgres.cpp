@@ -1107,9 +1107,9 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         if (contentTypePresent && contentType == ContentType::Video && liveRecordingChunk != -1)
 		{
 			if (liveRecordingChunk == 0)
-				sqlWhere += ("and userData -> 'mmsData' ->> 'liveRecordingChunk' is null ");
+				sqlWhere += ("and liveRecordingChunk_virtual = false ");
 			else if (liveRecordingChunk == 1)
-				sqlWhere += ("and userData -> 'mmsData' ->> 'liveRecordingChunk' is not null ");
+				sqlWhere += ("and liveRecordingChunk_virtual = true ");
 				// sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 		}
 		if (recordingCode != -1)
@@ -1186,14 +1186,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		else // if (orderBy != "" && jsonOrderBy != "")
 			orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 
-         	string sqlStatement = fmt::format( 
-          		"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+		string sqlStatement = fmt::format( 
+			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
 			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
 			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startPublishing, "
 			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endPublishing, "
-          		"mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {} "
-          		"limit {} offset {}",
-          		sqlWhere, orderByCondition, rows, start);
+			"mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {} "
+			"limit {} offset {}",
+			sqlWhere, orderByCondition, rows, start);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		result res = trans.exec(sqlStatement);
 
