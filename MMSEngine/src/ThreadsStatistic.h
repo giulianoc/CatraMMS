@@ -47,7 +47,7 @@ class ThreadsStatistic {
 	};
 
 	public:
-		ThreadsStatistic(shared_ptr<spdlog::logger> logger);
+		ThreadsStatistic(); // shared_ptr<spdlog::logger> logger);
 
 		void addThread(thread::id threadId, ThreadData threadData);
 		void removeThread(thread::id threadId);

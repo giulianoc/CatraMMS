@@ -1206,6 +1206,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
 			chrono::system_clock::time_point startSqlResultSet = chrono::system_clock::now();
+			chrono::milliseconds internalSqlDuration (0);
 			for (auto row: res)
             {
                 Json::Value mediaItemRoot;
@@ -1330,12 +1331,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							contentProviderKey);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						result res = trans.exec(sqlStatement);
+						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+							chrono::system_clock::now() - startSql);
+						internalSqlDuration += sqlDuration;
 						SPDLOG_INFO("SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(),
-							chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+							sqlStatement, conn->getConnectionId(), sqlDuration.count()
 						);
 						if (!empty(res))
 						{
@@ -1364,12 +1367,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							workspaceKey, localMediaItemKey);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						result res = trans.exec(sqlStatement);
+						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+							chrono::system_clock::now() - startSql);
+						internalSqlDuration += sqlDuration;
 						SPDLOG_INFO("SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(),
-							chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+							sqlStatement, conn->getConnectionId(), sqlDuration.count()
 						);
 						if (!empty(res))
 						{
@@ -1426,6 +1431,15 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 								mediaItemReferencesRoot.append(crossReferenceRoot);
 							}
+							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+								chrono::system_clock::now() - startSql);
+							internalSqlDuration += sqlDuration;
+							SPDLOG_INFO("SQL statement"
+								", sqlStatement: @{}@"
+								", getConnectionId: @{}@"
+								", elapsed (millisecs): @{}@",
+								sqlStatement, conn->getConnectionId(), sqlDuration.count()
+							);
 						}
                     
 						{
@@ -1462,6 +1476,15 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 								mediaItemReferencesRoot.append(crossReferenceRoot);
 							}
+							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+								chrono::system_clock::now() - startSql);
+							internalSqlDuration += sqlDuration;
+							SPDLOG_INFO("SQL statement"
+								", sqlStatement: @{}@"
+								", getConnectionId: @{}@"
+								", elapsed (millisecs): @{}@",
+								sqlStatement, conn->getConnectionId(), sqlDuration.count()
+							);
 						}
 
 						field = "crossReferences";
@@ -1831,6 +1854,15 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                         mediaItemProfilesRoot.append(profileRoot);
                     }
+					chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+                        chrono::system_clock::now() - startSql);
+					internalSqlDuration += sqlDuration;
+					SPDLOG_INFO("SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, conn->getConnectionId(), sqlDuration.count()
+					);
                     
                     field = "physicalPaths";
                     mediaItemRoot[field] = mediaItemProfilesRoot;
@@ -1843,7 +1875,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				chrono::duration_cast<chrono::milliseconds>(
+					(chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 			);
         }
 

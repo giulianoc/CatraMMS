@@ -258,7 +258,7 @@ int main (int iArgc, char *pArgv [])
 	}
 
 	shared_ptr<ThreadsStatistic>	mmsThreadsStatistic =
-		make_shared<ThreadsStatistic>(logger);
+		make_shared<ThreadsStatistic>(); // logger);
 
 	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
 		make_shared<MMSDeliveryAuthorization>(configuration,

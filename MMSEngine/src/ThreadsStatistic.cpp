@@ -58,9 +58,10 @@ ThreadsStatistic::ThreadStatistic::~ThreadStatistic()
 }
 
 ThreadsStatistic::ThreadsStatistic(
-	shared_ptr<spdlog::logger> logger)
+	// shared_ptr<spdlog::logger> logger
+)
 {
-	_logger = logger;
+	// _logger = logger;
 }
 
 void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
@@ -76,10 +77,10 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it != _runningThreads.end())
 		{
-			string message = __FILEREF__ + "threadsStatistic: thread already added"
-				+ ", threadId: " + sThreadId
-			;
-			_logger->error(message);
+			SPDLOG_ERROR("threadsStatistic: thread already added"
+				", threadId: {}", sThreadId);
+
+			logRunningThreads();
 
 			return;
 		}
@@ -88,15 +89,13 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 	}
 	catch(runtime_error& e)
 	{
-		_logger->error(__FILEREF__ + "threadsStatistic addThread failed"
-			+ ", exception: " + e.what()
-		);
+		SPDLOG_ERROR("threadsStatistic addThread failed"
+			", exception: {}", e.what());
 	}
 	catch(exception& e)
 	{
-		_logger->error(__FILEREF__ + "threadsStatistic addThread failed"
-			+ ", exception: " + e.what()
-		);
+		SPDLOG_ERROR("threadsStatistic addThread failed"
+			", exception: {}", e.what());
 	}
 }
 
@@ -113,10 +112,10 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it == _runningThreads.end())
 		{
-			string message = __FILEREF__ + "threadsStatistic: thread not found"
-				+ ", threadId: " + sThreadId
-			;
-			_logger->error(message);
+			SPDLOG_ERROR("threadsStatistic: thread not found"
+				", threadId: {}", sThreadId);
+
+			logRunningThreads();
 
 			return;
 		}
@@ -124,28 +123,26 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 		ThreadData threadData = (*it).second;
 		_runningThreads.erase(it);
 
-		string message = __FILEREF__ + "threadsStatistic"
-			+ ", threadName: " + threadData._threadName
-			+ ", processorIdentifier: " + to_string(threadData._processorIdentifier)
-			+ ", currentThreadsNumber: " + to_string(threadData._currentThreadsNumber)
-			+ ", ingestionJobKey: " + to_string(threadData._ingestionJobKey)
-			+ ", @MMS statistics@ - threadDuration (secs): @"
-				+ to_string(chrono::duration_cast<chrono::seconds>(
-				chrono::system_clock::now() - threadData._startThread).count()) + "@"
-		;
-		_logger->info(message);
+		SPDLOG_INFO("threadsStatistic"
+			", threadName: {}"
+			", processorIdentifier: {}"
+			", currentThreadsNumber: {}"
+			", ingestionJobKey: {}"
+			", @MMS statistics@ - threadDuration (secs): @{}@",
+			threadData._threadName, threadData._processorIdentifier, threadData._currentThreadsNumber,
+			threadData._ingestionJobKey, chrono::duration_cast<chrono::seconds>(
+				chrono::system_clock::now() - threadData._startThread).count()
+		);
 	}
 	catch(runtime_error& e)
 	{
-		_logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
-			+ ", exception: " + e.what()
-		);
+		SPDLOG_ERROR("threadsStatistic removeThread failed"
+			", exception: {}", e.what());
 	}
 	catch(exception& e)
 	{
-		_logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
-			+ ", exception: " + e.what()
-		);
+		SPDLOG_ERROR("threadsStatistic removeThread failed"
+			", exception: ", e.what());
 	}
 }
 
@@ -175,18 +172,17 @@ void ThreadsStatistic::logRunningThreads()
 				firstThreadData = false;
 			}
 
-			message += (
+			message += fmt::format(
 				// to_string(threadCounter++) + "-"
-				to_string(threadData._currentThreadsNumber) +  ". "
-				+ sThreadId + "-"
-				+ threadData._threadName +  "-"
-				+ to_string(chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - threadData._startThread).count())
-				)
-			;
+				"{}. {}-{}-{}",
+				threadData._currentThreadsNumber,
+				sThreadId,
+				threadData._threadName,
+				chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - threadData._startThread).count()
+				);
 		}
-		_logger->info(__FILEREF__ + "threadsStatistic, running threads: "
-			+ message);
+		SPDLOG_INFO("threadsStatistic, running threads: {}", message);
 	}
 	catch(runtime_error& e)
 	{
