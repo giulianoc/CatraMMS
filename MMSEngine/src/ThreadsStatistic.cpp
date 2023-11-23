@@ -80,7 +80,7 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 			SPDLOG_ERROR("threadsStatistic: thread already added"
 				", threadId: {}", sThreadId);
 
-			logRunningThreads();
+			logRunningThreads(true);
 
 			return;
 		}
@@ -115,7 +115,7 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 			SPDLOG_ERROR("threadsStatistic: thread not found"
 				", threadId: {}", sThreadId);
 
-			logRunningThreads();
+			logRunningThreads(true);
 
 			return;
 		}
@@ -146,7 +146,7 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 	}
 }
 
-void ThreadsStatistic::logRunningThreads()
+void ThreadsStatistic::logRunningThreads(bool asError)
 {
 	try
 	{
@@ -182,7 +182,10 @@ void ThreadsStatistic::logRunningThreads()
 					chrono::system_clock::now() - threadData._startThread).count()
 				);
 		}
-		SPDLOG_INFO("threadsStatistic, running threads: {}", message);
+		if (asError)
+			SPDLOG_ERROR("threadsStatistic, running threads: {}", message);
+		else
+			SPDLOG_INFO("threadsStatistic, running threads: {}", message);
 	}
 	catch(runtime_error& e)
 	{

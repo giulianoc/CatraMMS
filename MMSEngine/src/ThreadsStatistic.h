@@ -52,7 +52,7 @@ class ThreadsStatistic {
 		void addThread(thread::id threadId, ThreadData threadData);
 		void removeThread(thread::id threadId);
 
-		void logRunningThreads();
+		void logRunningThreads(bool asError = false);
 
 	private:
 		mutex							_runningThreadsMutex;
