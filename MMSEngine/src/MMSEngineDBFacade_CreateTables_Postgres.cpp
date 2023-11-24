@@ -340,8 +340,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"bandwidthInHz				integer NULL,"
                     "country					text NULL,"
                     "deliverySystem				text NULL,"
-                    "constraint MMS_Conf_SourceTVStream_PK PRIMARY KEY (confKey), "
-                    "UNIQUE (serviceId, name, lnb, frequency, videoPid, audioPids)) ";
+                    "constraint MMS_Conf_SourceTVStream_PK PRIMARY KEY (confKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -352,6 +351,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
+
+		/* da abilitare quando avremo postgres 15
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_Conf_SourceTVStream_idx "
+				"on MMS_Conf_SourceTVStream (serviceId, name, lnb, frequency, videoPid, audioPids) NULLS NOT DISTINCT";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+		*/
 
         {
 			string sqlStatement =
@@ -383,8 +399,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_Conf_AWSChannel_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_AWSChannel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, label), "
-                    "UNIQUE (outputIndex, reservedByIngestionJobKey)) ";
+                    "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -395,6 +410,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
+
+		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_Conf_AWSChannel_idx "
+				"on MMS_Conf_AWSChannel (outputIndex, reservedByIngestionJobKey) "
+				"where outputIndex is not null and reservedByIngestionJobKey is not null";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
 
 		{
 			// type: SHARED or DEDICATED
@@ -413,8 +445,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_Conf_CDN77Channel_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_CDN77Channel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, label), "
-                    "UNIQUE (outputIndex, reservedByIngestionJobKey)) ";
+                    "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -425,6 +456,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
+
+		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_Conf_CDN77Channel_idx "
+				"on MMS_Conf_CDN77Channel (outputIndex, reservedByIngestionJobKey) "
+				"where outputIndex is not null and reservedByIngestionJobKey is not null";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
 
 		{
 			// type: SHARED or DEDICATED
@@ -444,8 +492,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_Conf_RTMPChannel_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_RTMPChannel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, label), "
-                    "UNIQUE (outputIndex, reservedByIngestionJobKey)) ";
+                    "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -456,6 +503,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
+
+		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_Conf_RTMPChannel_idx "
+				"on MMS_Conf_RTMPChannel (outputIndex, reservedByIngestionJobKey) "
+				"where outputIndex is not null and reservedByIngestionJobKey is not null";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
 
 		{
 			// type: SHARED or DEDICATED
@@ -474,8 +538,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_Conf_HLSChannel_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label), "
-                    "UNIQUE (workspaceKey, deliveryCode), "
-                    "UNIQUE (outputIndex, reservedByIngestionJobKey)) ";
+                    "UNIQUE (workspaceKey, deliveryCode)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -486,6 +549,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }
+
+		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_Conf_HLSChannel_idx "
+				"on MMS_Conf_HLSChannel (outputIndex, reservedByIngestionJobKey) "
+				"where outputIndex is not null and reservedByIngestionJobKey is not null";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
 
         {
             string sqlStatement = 
@@ -807,7 +887,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
-		// a partire da postgres v. 15 MMS_EncodingProfile_idx e MMS_EncodingProfile_idx2 possono essere
+		// a partire da postgres 15 MMS_EncodingProfile_idx e MMS_EncodingProfile_idx2 possono essere
 		// sostituiti da un solo indice con l'opzione "NULLS NOT DISTINCT"
 		{
 			string sqlStatement =
@@ -1140,8 +1220,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "lastEncoderIndexUsed		smallint NOT NULL,"
                     "constraint MMS_EncodersPool_PK PRIMARY KEY (encodersPoolKey),"
                     "constraint MMS_EncodersPool_FK foreign key (workspaceKey) "
-                        "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, label)) ";
+                        "references MMS_Workspace (workspaceKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_EncodersPool_idx "
+				"on MMS_EncodersPool (workspaceKey, label) where label is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1522,7 +1617,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_WorkflowLibrary ("
                     "workflowLibraryKey		bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey  			bigint NULL,"
-					// if userKey is NULL, it means
+					// if creatorUserKey is NULL, it means
 					//	- it was loaded by mmsEngine when it started
 					//	- belong to MMS scope (workspaceKey is NULL)
 					"creatorUserKey			bigint NULL,"
@@ -1534,8 +1629,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_WorkflowLibrary_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
 					"constraint MMS_WorkflowLibrary_FK2 foreign key (creatorUserKey) "
-						"references MMS_User (userKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, label)) ";
+						"references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1546,6 +1640,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
+
+		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_WorkflowLibrary_idx "
+				"on MMS_WorkflowLibrary (workspaceKey, label) "
+				"where workspaceKey is not null and label is not null";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
         try
         {
             {
@@ -1816,8 +1928,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                         "references MMS_MediaItem (mediaItemKey) on delete cascade, "
                     "constraint MMS_PhysicalPath_FK2 foreign key (encodingProfileKey) "
                         "references MMS_EncodingProfile (encodingProfileKey), "
-                    "UNIQUE (mediaItemKey, relativePath, fileName, isAlias), "
-                    "UNIQUE (mediaItemKey, encodingProfileKey)) ";	// it is not possible to have the same content using the same encoding profile key
+                    "UNIQUE (mediaItemKey, relativePath, fileName, isAlias)) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
+		{
+			// it is not possible to have the same content using the same encoding profile key
+			string sqlStatement =
+				"create unique index if not exists MMS_PhysicalPath_idx "
+				"on MMS_PhysicalPath (mediaItemKey, encodingProfileKey) "
+				"where encodingProfileKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
