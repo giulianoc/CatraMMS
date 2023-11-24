@@ -948,7 +948,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								"insert into MMS_EncodingProfile ("
 								"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
 								"DEFAULT,            NULL,         {},    {},          {},                 {}) "
-								"ON CONFLICT (workspaceKey, contentType, label) DO "
+								"ON CONFLICT (COALESCE(workspaceKey, 0), contentType, label) DO "
 								"update set deliveryTechnology = EXCLUDED.deliveryTechnology, "
 								"jsonProfile = EXCLUDED.jsonProfile ",
 								trans.quote(label), trans.quote(MMSEngineDBFacade::toString(contentType)),
