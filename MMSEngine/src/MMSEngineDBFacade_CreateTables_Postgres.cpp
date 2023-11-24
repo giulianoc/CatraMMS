@@ -413,7 +413,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_AWSChannel_idx "
 				"on MMS_Conf_AWSChannel (outputIndex, reservedByIngestionJobKey) "
-				"NULLS NOT DISTINCT";
+				"where outputIndex is not null and reservedByIngestionJobKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -458,7 +458,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_CDN77Channel_idx "
 				"on MMS_Conf_CDN77Channel (outputIndex, reservedByIngestionJobKey) "
-				"NULLS NOT DISTINCT";
+				"where outputIndex is not null and reservedByIngestionJobKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -504,7 +504,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_RTMPChannel_idx "
 				"on MMS_Conf_RTMPChannel (outputIndex, reservedByIngestionJobKey) "
-				"NULLS NOT DISTINCT";
+				"where outputIndex is not null and reservedByIngestionJobKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -549,7 +549,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_HLSChannel_idx "
 				"on MMS_Conf_HLSChannel (outputIndex, reservedByIngestionJobKey) "
-				"NULLS NOT DISTINCT";
+				"where outputIndex is not null and reservedByIngestionJobKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
