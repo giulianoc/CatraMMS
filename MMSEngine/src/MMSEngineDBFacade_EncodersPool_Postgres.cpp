@@ -1767,8 +1767,9 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 							{
 								bool admin = false;
 								bool runningInfo = false;
+								auto row1 = res[0];
 								Json::Value encoderRoot = getEncoderRoot (
-									admin, runningInfo, row);
+									admin, runningInfo, row1);
 
 								encodersRoot.append(encoderRoot);
 							}

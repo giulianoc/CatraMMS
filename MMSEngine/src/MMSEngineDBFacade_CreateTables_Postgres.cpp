@@ -954,6 +954,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
+				"create unique index if not exists MMS_EncodingProfile_idx on MMS_EncodingProfile (workspaceKey, contentType)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
                 "create table if not exists MMS_EncodingProfilesSet ("
                     "encodingProfilesSetKey  	bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey  				bigint NOT NULL,"
@@ -1825,6 +1839,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
+                "create index if not exists MMS_CrossReference_idx on MMS_CrossReference (targetMediaItemKey, sourceMediaItemKey)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
                 "create table if not exists MMS_VideoTrack ("
                     "videoTrackKey				bigint GENERATED ALWAYS AS IDENTITY,"
                     "physicalPathKey			bigint NOT NULL,"
@@ -1839,6 +1867,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_VideoTrack_PK PRIMARY KEY (videoTrackKey), "
                     "constraint MMS_VideoTrack_FK foreign key (physicalPathKey) "
                         "references MMS_PhysicalPath (physicalPathKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+                "create index if not exists MMS_VideoTrack_idx on MMS_VideoTrack (physicalPathKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1878,6 +1920,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
+                "create index if not exists MMS_AudioTrack_idx on MMS_AudioTrack (physicalPathKey)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
                 "create table if not exists MMS_ImageItemProfile ("
                     "physicalPathKey			bigint NOT NULL,"
                     "width				smallint NOT NULL,"
@@ -1887,6 +1943,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_ImageItemProfile_PK PRIMARY KEY (physicalPathKey), "
                     "constraint MMS_ImageItemProfile_FK foreign key (physicalPathKey) "
                         "references MMS_PhysicalPath (physicalPathKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+                "create index if not exists MMS_ImageItemProfile_idx on MMS_ImageItemProfile (physicalPathKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1964,6 +2034,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create index if not exists MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, encodingPriority)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+                "create index if not exists MMS_EncodingJob_idx4 on MMS_EncodingJob (ingestionJobKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"

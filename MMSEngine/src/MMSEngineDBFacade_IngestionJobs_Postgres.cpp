@@ -4354,13 +4354,6 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 					field = "encodingJob";
 					ingestionJobRoot[field] = encodingJobRoot;
 				}
-				_logger->info(__FILEREF__ + "@SQL statistics@"
-					+ ", sqlStatement: " + sqlStatement
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", res.size: " + to_string(res.size())
-					+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
-						chrono::system_clock::now() - startSql).count()) + "@"
-				);
         }
     }
 	catch(sql_error const &e)

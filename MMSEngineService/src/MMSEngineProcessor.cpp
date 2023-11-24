@@ -6013,6 +6013,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread (
 
 	try
 	{
+		// 2023-11-23: inizialmente handleLocalAssetIngestionEvent era inclusa in
+		// handleLocalAssetIngestionEventThread.
+		// Poi le funzioni sono state divise perche handleLocalAssetIngestionEvent viene chiamata da diversi
+		// threads e quindi non poteva istanziare ThreadStatistic in quanto si sarebbe utilizzato
+		// lo stesso threadId per due istanze di ThreadStatistic e avremmo avuto errore quando,
+		// all'interno di ThreadStatistic, si sarebbe cercato di inserire il threadId nella mappa
 		handleLocalAssetIngestionEvent(processorsThreadsNumber, localAssetIngestionEvent);
 	}
     catch(runtime_error& e)
