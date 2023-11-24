@@ -944,19 +944,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						);
 
 						{
-							string sqlStatement = fmt::format(
-								"insert into MMS_EncodingProfile ("
-								"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
-								"DEFAULT,            NULL,         {},    {},          {},                 {}) "
-								"ON CONFLICT (COALESCE(workspaceKey, 0), contentType, label) DO "
-								"update set deliveryTechnology = EXCLUDED.deliveryTechnology, "
-								"jsonProfile = EXCLUDED.jsonProfile ",
-								trans.quote(label), trans.quote(MMSEngineDBFacade::toString(contentType)),
-								trans.quote(toString(deliveryTechnology)),
-								trans.quote(jsonProfile)
-							);
+							string sqlStatement = fmt::format( 
+								"select count(*) from MMS_EncodingProfile "
+								"where workspaceKey is null and contentType = {} and label = {}",
+								trans.quote(toString(contentType)), trans.quote(label));
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							trans.exec0(sqlStatement);
+							int count = trans.exec1(sqlStatement)[0].as<int>();
 							SPDLOG_INFO("SQL statement"
 								", sqlStatement: @{}@"
 								", getConnectionId: @{}@"
@@ -964,6 +957,43 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								sqlStatement, conn->getConnectionId(),
 								chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 							);
+							if (count == 0)
+							{
+								string sqlStatement = fmt::format(
+									"insert into MMS_EncodingProfile ("
+									"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
+									"DEFAULT,            NULL,         {},    {},          {},                 {}) ",
+									trans.quote(label), trans.quote(MMSEngineDBFacade::toString(contentType)),
+									trans.quote(toString(deliveryTechnology)),
+									trans.quote(jsonProfile)
+								);
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
+								trans.exec0(sqlStatement);
+								SPDLOG_INFO("SQL statement"
+									", sqlStatement: @{}@"
+									", getConnectionId: @{}@"
+									", elapsed (millisecs): @{}@",
+									sqlStatement, conn->getConnectionId(),
+									chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+								);
+							}
+							else
+							{
+								string sqlStatement = fmt::format(
+									"update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} ",
+									trans.quote(toString(deliveryTechnology)),
+									trans.quote(jsonProfile)
+								);
+								chrono::system_clock::time_point startSql = chrono::system_clock::now();
+								trans.exec0(sqlStatement);
+								SPDLOG_INFO("SQL statement"
+									", sqlStatement: @{}@"
+									", getConnectionId: @{}@"
+									", elapsed (millisecs): @{}@",
+									sqlStatement, conn->getConnectionId(),
+									chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+								);
+							}
 						}
                     }
 					catch(sql_error const &e)
