@@ -1935,7 +1935,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create unique index if not exists MMS_PhysicalPath_idx "
 				"on MMS_PhysicalPath (mediaItemKey, encodingProfileKey) "
-				"NULLS NOT DISTINCT";
+				"where encodingProfileKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
