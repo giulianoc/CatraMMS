@@ -900,7 +900,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							string sqlStatement = fmt::format(
 								"insert into MMS_EncodingProfile ("
 								"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
-								"DEFAULT, NULL, {}, {}, {}, {}) "
+								"DEFAULT,            NULL,         {},    {},          {},                 {}) "
 								"ON CONFLICT (workspaceKey, contentType, label) DO "
 								"update set deliveryTechnology = EXCLUDED.deliveryTechnology, "
 								"jsonProfile = EXCLUDED.jsonProfile ",
