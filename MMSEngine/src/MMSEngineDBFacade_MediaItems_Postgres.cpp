@@ -4066,7 +4066,6 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 			);
 			if (!empty(res))
             {
-                IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(res[0]["status"].as<string>());
                 width = res[0]["width"].as<int>();
                 height = res[0]["height"].as<int>();
                 format = res[0]["format"].as<string>();
