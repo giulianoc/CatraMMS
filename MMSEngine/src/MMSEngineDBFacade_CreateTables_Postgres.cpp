@@ -352,7 +352,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
         }
 
-		/* da abilitare quando avremo postgres 15
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_SourceTVStream_idx "
@@ -367,7 +366,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
-		*/
 
         {
 			string sqlStatement =
@@ -411,12 +409,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
         }
 
-		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_AWSChannel_idx "
 				"on MMS_Conf_AWSChannel (outputIndex, reservedByIngestionJobKey) "
-				"where outputIndex is not null and reservedByIngestionJobKey is not null";
+				"NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -457,12 +454,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
         }
 
-		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_CDN77Channel_idx "
 				"on MMS_Conf_CDN77Channel (outputIndex, reservedByIngestionJobKey) "
-				"where outputIndex is not null and reservedByIngestionJobKey is not null";
+				"NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -504,12 +500,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
         }
 
-		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_RTMPChannel_idx "
 				"on MMS_Conf_RTMPChannel (outputIndex, reservedByIngestionJobKey) "
-				"where outputIndex is not null and reservedByIngestionJobKey is not null";
+				"NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -550,12 +545,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
         }
 
-		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_HLSChannel_idx "
 				"on MMS_Conf_HLSChannel (outputIndex, reservedByIngestionJobKey) "
-				"where outputIndex is not null and reservedByIngestionJobKey is not null";
+				"NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -887,26 +881,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
-		// a partire da postgres 15 MMS_EncodingProfile_idx e MMS_EncodingProfile_idx2 possono essere
-		// sostituiti da un solo indice con l'opzione "NULLS NOT DISTINCT"
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_EncodingProfile_idx "
-				"on MMS_EncodingProfile (workspaceKey, contentType, label) where workspaceKey is not null";
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-		}
-		{
-			string sqlStatement =
-				"create unique index if not exists MMS_EncodingProfile_idx2 "
-				"on MMS_EncodingProfile (contentType, label) where workspaceKey is null";
+				"on MMS_EncodingProfile (workspaceKey, contentType, label) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1246,11 +1224,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
-		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_EncodersPool_idx "
-				"on MMS_EncodersPool (workspaceKey, label) where label is not null";
+				"on MMS_EncodersPool (workspaceKey, label) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1655,12 +1632,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
-		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_WorkflowLibrary_idx "
 				"on MMS_WorkflowLibrary (workspaceKey, label) "
-				"where workspaceKey is not null and label is not null";
+				"NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1954,13 +1930,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
-		// con postgres 15 useremo l'opzione NULLS NOT DISTINCT
 		{
 			// it is not possible to have the same content using the same encoding profile key
 			string sqlStatement =
 				"create unique index if not exists MMS_PhysicalPath_idx "
 				"on MMS_PhysicalPath (mediaItemKey, encodingProfileKey) "
-				"where encodingProfileKey is not null";
+				"NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
