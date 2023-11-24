@@ -792,11 +792,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "label					text NOT NULL,"
                     "contentType			text NOT NULL,"
                     "deliveryTechnology		text NOT NULL,"
-                    "jsonProfile    		text NOT NULL,"
-                    "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
-                    "constraint MMS_EncodingProfile_FK foreign key (workspaceKey) "
-                        "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, contentType, label)) ";
+					"jsonProfile    		text NOT NULL,"
+					"constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
+					"constraint MMS_EncodingProfile_FK foreign key (workspaceKey) "
+						"references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -807,6 +806,54 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
+
+		// a partire da postgres v. 15 MMS_EncodingProfile_idx e MMS_EncodingProfile_idx2 possono essere
+		// sostituiti da un solo indice con l'opzione "NULLS NOT DISTINCT"
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_EncodingProfile_idx "
+				"on MMS_EncodingProfile (workspaceKey, contentType, label) where workspaceKey is not null";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_EncodingProfile_idx2 "
+				"on MMS_EncodingProfile (contentType, label) where workspaceKey is null";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		/* 2023-11-24: questo indice non lo capisco
+		{
+			string sqlStatement =
+				"create unique index if not exists MMS_EncodingProfile_idx on MMS_EncodingProfile (workspaceKey, contentType)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+		*/
+
         {
 			string predefinedProfilesDirectoryPath[3] = {
 				_predefinedVideoProfilesDirectoryPath,
@@ -951,20 +998,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 }
             }
         }
-
-		{
-			string sqlStatement =
-				"create unique index if not exists MMS_EncodingProfile_idx on MMS_EncodingProfile (workspaceKey, contentType)";
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-		}
 
 		{
 			string sqlStatement =
