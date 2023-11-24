@@ -1024,12 +1024,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						);
 
 						{
+							int64_t encodingProfileKey = -1;
 							string sqlStatement = fmt::format( 
-								"select count(*) from MMS_EncodingProfile "
+								"select encodingProfileKey from MMS_EncodingProfile "
 								"where workspaceKey is null and contentType = {} and label = {}",
 								trans.quote(toString(contentType)), trans.quote(label));
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int count = trans.exec1(sqlStatement)[0].as<int>();
+							result res = trans.exec(sqlStatement);
 							SPDLOG_INFO("SQL statement"
 								", sqlStatement: @{}@"
 								", getConnectionId: @{}@"
@@ -1037,18 +1038,18 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								sqlStatement, conn->getConnectionId(),
 								chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 							);
-							if (count == 0)
+							if (!empty(res))
 							{
+								encodingProfileKey	= res[0]["encodingProfileKey"].as<int64_t>();
+
 								string sqlStatement = fmt::format(
-									"insert into MMS_EncodingProfile ("
-									"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
-									"DEFAULT,            NULL,         {},    {},          {},                 {}) ",
-									trans.quote(label), trans.quote(MMSEngineDBFacade::toString(contentType)),
+									"WITH rows AS (update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
+									"where encodingProfileKey = {} returning 1) select count(*) from rows",
 									trans.quote(toString(deliveryTechnology)),
-									trans.quote(jsonProfile)
+									trans.quote(jsonProfile), encodingProfileKey
 								);
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-								trans.exec0(sqlStatement);
+								int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 								SPDLOG_INFO("SQL statement"
 									", sqlStatement: @{}@"
 									", getConnectionId: @{}@"
@@ -1056,11 +1057,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 									sqlStatement, conn->getConnectionId(),
 									chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 								);
+								if (rowsUpdated != 1)
+								{
+									string errorMessage = __FILEREF__ + "no update was done"
+										+ ", rowsUpdated: " + to_string(rowsUpdated)
+										+ ", sqlStatement: " + sqlStatement
+									;
+									_logger->error(errorMessage);
+
+									throw runtime_error(errorMessage);                    
+								}
 							}
 							else
 							{
 								string sqlStatement = fmt::format(
-									"update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} ",
+									"insert into MMS_EncodingProfile ("
+									"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
+									"DEFAULT,            NULL,         {},    {},          {},                 {}) ",
+									trans.quote(label), trans.quote(MMSEngineDBFacade::toString(contentType)),
 									trans.quote(toString(deliveryTechnology)),
 									trans.quote(jsonProfile)
 								);

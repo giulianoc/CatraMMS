@@ -216,11 +216,11 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				encodingProfileKey     = res[0]["encodingProfileKey"].as<int64_t>();
                 
 				string sqlStatement = fmt::format( 
-                    "update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
-					"where encodingProfileKey = {}",
+                    "WITH rows AS (update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
+					"where encodingProfileKey = {} returning 1) select count(*) from rows",
 					trans.quote(toString(deliveryTechnology)), trans.quote(jsonProfile), encodingProfileKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.exec0(sqlStatement);
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 				SPDLOG_INFO("SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
@@ -228,6 +228,16 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					sqlStatement, conn->getConnectionId(),
 					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", sqlStatement: " + sqlStatement
+					;
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);                    
+				}
             }
             else
             {
@@ -248,8 +258,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				);
             }
         }
-        
-              
+
         if (encodingProfilesSetKey != -1)
         {
             {
