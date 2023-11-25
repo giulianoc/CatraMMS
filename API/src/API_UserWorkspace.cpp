@@ -1088,6 +1088,7 @@ void API::workspaceList(
 			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin);
 
             string responseBody = JSONUtils::toString(workspaceListRoot);
+			SPDLOG_INFO("workspaceDetailRoot: {}", responseBody);
 
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);

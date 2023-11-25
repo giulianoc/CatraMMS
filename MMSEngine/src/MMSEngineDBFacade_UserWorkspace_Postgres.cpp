@@ -3046,7 +3046,6 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 		field = "maxStorageInMB";
 		workspaceDetailRoot[field] = row["maxStorageInMB"].as<int>();
 
-		SPDLOG_INFO("workspaceDetailRoot: {}", JSONUtils::toString(workspaceDetailRoot));
 		{
 			int64_t workSpaceUsageInBytes;
 
