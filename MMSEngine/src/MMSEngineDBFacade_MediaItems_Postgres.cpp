@@ -1075,18 +1075,18 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
         string sqlWhere;
 		sqlWhere = fmt::format("where mi.workspaceKey = {} and mi.markedAsRemoved = false ", workspaceKey);
-        if (mediaItemKey != -1)
+        if (newMediaItemKey != -1)
 		{
 			if (otherMediaItemsKey.size() > 0)
 			{
 				sqlWhere += ("and mi.mediaItemKey in (");
-				sqlWhere += to_string(mediaItemKey);
+				sqlWhere += to_string(newMediaItemKey);
 				for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
 					sqlWhere += (", " + to_string(otherMediaItemsKey[mediaItemIndex]));
 				sqlWhere += ") ";
 			}
 			else
-				sqlWhere += fmt::format("and mi.mediaItemKey = {} ", mediaItemKey);
+				sqlWhere += fmt::format("and mi.mediaItemKey = {} ", newMediaItemKey);
 		}
         if (contentTypePresent)
             sqlWhere += fmt::format("and mi.contentType = {} ", trans.quote(toString(contentType)));
