@@ -1556,7 +1556,8 @@ string MMSEngineDBFacade::getEncodersPoolDetails (int64_t encodersPoolKey)
 				throw runtime_error(errorMessage);
 			}
 
-			label = res[0]["label"].as<string>();
+			if (!res[0]["label"].is_null())
+				label = res[0]["label"].as<string>();
         }
 
 		trans.commit();
