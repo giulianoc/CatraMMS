@@ -7107,7 +7107,8 @@ tuple<string, string, string, string, string, bool>
 			reservedRtmpURL = res[0]["rtmpURL"].as<string>();
 			reservedResourceURL = res[0]["resourceURL"].as<string>();
 			reservedFilePath = res[0]["filePath"].as<string>();
-			reservedSecureToken = res[0]["secureToken"].as<string>();
+			if (!res[0]["secureToken"].is_null())
+				reservedSecureToken = res[0]["secureToken"].as<string>();
 			if (!res[0]["reservedByIngestionJobKey"].is_null())
 				reservedByIngestionJobKey = res[0]["reservedByIngestionJobKey"].as<int64_t>();
 		}
