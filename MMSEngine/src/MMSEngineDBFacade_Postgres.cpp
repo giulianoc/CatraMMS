@@ -1687,9 +1687,10 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 				try
 				{
 					string sqlStatement = fmt::format( 
-						"WITH rows AS (delete from MMS_DeliveryAuthorization "
-						"where (authorizationTimestamp + INTERVAL '1 second' * (ttlInSeconds + {})) < NOW() at time zone 'utc' "
-						"limit {} returning 1) select count(*) from rows",
+						"WITH rows AS (delete from MMS_DeliveryAuthorization where deliveryAuthorizationKey in "
+						"(select deliveryAuthorizationKey from MMS_DeliveryAuthorization "
+						"where (authorizationTimestamp + INTERVAL '1 second' * (ttlInSeconds + {})) < NOW() at time zone 'utc' limit {}) "
+						" returning 1) select count(*) from rows",
 					retention, maxToBeRemoved);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
