@@ -1745,6 +1745,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"recordingCode_virtual	bigint generated always as ((userData -> 'mmsData' -> 'liveRecordingChunk' ->> 'recordingCode')::bigint) stored NULL,"
 					"utcStartTimeInMilliSecs_virtual	bigint generated always as ((userData -> 'mmsData' ->> 'utcStartTimeInMilliSecs')::bigint) stored NULL,"
 					"utcEndTimeInMilliSecs_virtual	bigint generated always as ((userData -> 'mmsData' ->> 'utcEndTimeInMilliSecs')::bigint) stored NULL,"
+					"willBeRemovedAt_virtual timestamp without time zone generated always as (ingestionDate + INTERVAL '1 minute' * retentionInMinutes) stored NOT NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
@@ -1848,6 +1849,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create index if not exists MMS_MediaItem_idx8 on MMS_MediaItem (workspaceKey, contentType, liveRecordingChunk_virtual, ingestionDate)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+                "create index if not exists MMS_MediaItem_idx9 on MMS_MediaItem (willBeRemovedAt_virtual, processorMMSForRetention)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"

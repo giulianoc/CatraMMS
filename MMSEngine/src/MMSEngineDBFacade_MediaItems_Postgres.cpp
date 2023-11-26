@@ -41,7 +41,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				"select workspaceKey, mediaItemKey, ingestionJobKey, retentionInMinutes, title, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate "
 				"from MMS_MediaItem where "
-				"ingestionDate + INTERVAL '1 minute' * retentionInMinutes < NOW() at time zone 'utc' "
+				"willBeRemovedAt_virtual < NOW() at time zone 'utc' "
 				"and processorMMSForRetention is null "
 				"limit {} offset {}",	// for update"; see comment marked as 2021-09-23
 				maxEntriesNumber, start);
@@ -160,7 +160,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				// PhysicalPathKey expired
 				"and mi.ingestionDate + INTERVAL '1 minute' * p.retentionInMinutes < NOW() at time zone 'utc' "
 				// MediaItemKey not expired
-				"and mi.ingestionDate + INTERVAL '1 minute' * mi.retentionInMinutes > NOW() at time zone 'utc' "
+				"and mi.willBeRemovedAt_virtual > NOW() at time zone 'utc' "
 				"and processorMMSForRetention is null "
 				"limit {} offset {}",	// for update"; see comment marked as 2021-09-23
 				maxEntriesNumber, start);
@@ -1191,6 +1191,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
 			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startPublishing, "
 			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endPublishing, "
+			"to_char(mi.willBeRemovedAt_virtual, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as willBeRemovedAt, "
 			"mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {} "
 			"limit {} offset {}",
 			sqlWhere, orderByCondition, rows, start);
@@ -1280,6 +1281,13 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				{
 					field = "endPublishing";
 					mediaItemRoot[field] = row["endPublishing"].as<string>();
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "willBeRemovedAt"))
+				{
+					field = "willBeRemovedAt";
+					mediaItemRoot[field] = row["willBeRemovedAt"].as<string>();
 				}
 
 				ContentType contentType = MMSEngineDBFacade::toContentType(
@@ -2612,7 +2620,7 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
             string sqlStatement = fmt::format( 
                 "select contentType, title, userData, ingestionJobKey, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
-				"EXTRACT(EPOCH FROM (ingestionDate + INTERVAL '1 minute' * retentionInMinutes - NOW() at time zone 'utc')) as willBeRemovedInSeconds "
+				"EXTRACT(EPOCH FROM (willBeRemovedAt_virtual - NOW() at time zone 'utc')) as willBeRemovedInSeconds "
 				"from MMS_MediaItem where workspaceKey = {} and mediaItemKey = {}",
 				workspaceKey, mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
