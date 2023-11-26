@@ -62,10 +62,14 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
                 string title = row["title"].as<string>();
                 
                 // check if there is still an ingestion depending on the ingestionJobKey
+				chrono::system_clock::time_point startMethod = chrono::system_clock::now();
                 bool ingestionDependingOnMediaItemKey = false;
 				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, trans, ingestionJobKey)
 						> 0)
 					ingestionDependingOnMediaItemKey = true;
+				chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+					chrono::system_clock::now() - startMethod);
+				internalSqlDuration += sqlDuration;
 
                 if (!ingestionDependingOnMediaItemKey)
                 {

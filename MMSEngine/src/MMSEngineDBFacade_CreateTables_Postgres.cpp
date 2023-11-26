@@ -1605,6 +1605,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
+                "create index if not exists MMS_IngestionJobDependency_idx2 on MMS_IngestionJobDependency (dependOnIngestionJobKey)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
                 "create table if not exists MMS_WorkflowLibrary ("
                     "workflowLibraryKey		bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey  			bigint NULL,"
@@ -1862,7 +1876,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index if not exists MMS_MediaItem_idx9 on MMS_MediaItem (willBeRemovedAt_virtual, processorMMSForRetention)";
+                "create index if not exists MMS_MediaItem_idx9 on MMS_MediaItem (willBeRemovedAt_virtual, processorMMSForRetention) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
