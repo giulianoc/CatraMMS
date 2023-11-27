@@ -1622,8 +1622,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							MMSEngineDBFacade::ContentType contentType;
 							MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 
+							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
                             tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
                                 encodingProfileDetails = getEncodingProfileDetailsByKey(workspaceKey, encodingProfileKey);
+							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
+								chrono::system_clock::now() - startMethod);
 
                             tie(label, contentType, deliveryTechnology, ignore) = encodingProfileDetails;
 
@@ -1651,8 +1654,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
 							vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
+							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
 							getVideoDetails(localMediaItemKey, physicalPathKey, fromMaster,
 								videoTracks, audioTracks);
+							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
+								chrono::system_clock::now() - startMethod);
                             _logger->info(__FILEREF__ + "getVideoDetails"
                                 + ", mediaItemKey: " + to_string(localMediaItemKey)
                                 + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -1768,7 +1774,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         {
 							vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
+							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
 							getAudioDetails(localMediaItemKey, physicalPathKey, fromMaster, audioTracks);
+							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
+								chrono::system_clock::now() - startMethod);
 
 							{
 								Json::Value audioTracksRoot(Json::arrayValue);
@@ -1828,12 +1837,13 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                             string format;
                             int quality;
 
-                            tuple<int,int,string,int>
-                                imageDetails = getImageDetails(localMediaItemKey, physicalPathKey,
-									fromMaster);
+							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
+                            tuple<int,int,string,int> imageDetails = getImageDetails(localMediaItemKey,
+								physicalPathKey, fromMaster);
+							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
+								chrono::system_clock::now() - startMethod);
 
-                            tie(width, height, format, quality) 
-                                    = imageDetails;
+                            tie(width, height, format, quality) = imageDetails;
 
                             Json::Value imageDetailsRoot;
 
