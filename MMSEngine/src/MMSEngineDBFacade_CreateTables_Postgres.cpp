@@ -839,27 +839,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create table if not exists MMS_ContentProvider ("
-                    "contentProviderKey		bigint GENERATED ALWAYS AS IDENTITY,"
-                    "workspaceKey			bigint NOT NULL,"
-                    "name					text NOT NULL,"
-                    "constraint MMS_ContentProvider_PK PRIMARY KEY (contentProviderKey), "
-                    "constraint MMS_ContentProvider_FK foreign key (workspaceKey) "
-                        "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, name))" ;
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-		}
-
-		{
-			string sqlStatement =
                 "create table if not exists MMS_EncodingProfile ("
                     "encodingProfileKey  	bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey  			bigint NULL,"
@@ -1739,7 +1718,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_MediaItem ("
                     "mediaItemKey           bigint GENERATED ALWAYS AS IDENTITY,"
                     "workspaceKey           bigint NOT NULL,"
-                    "contentProviderKey     bigint NOT NULL,"
                     "title                  text NOT NULL,"
                     "ingester               text NULL,"
                     "userData               jsonb,"
@@ -1762,9 +1740,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"willBeRemovedAt_virtual timestamp without time zone generated always as (ingestionDate + INTERVAL '1 minute' * retentionInMinutes) stored NOT NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
-                        "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "constraint MMS_MediaItem_FK2 foreign key (contentProviderKey) "
-                        "references MMS_ContentProvider (contentProviderKey) on delete cascade) ";
+                        "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"

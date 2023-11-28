@@ -1191,7 +1191,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 
 		string sqlStatement = fmt::format( 
-			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, "
 			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
 			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startPublishing, "
 			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endPublishing, "
@@ -1330,43 +1330,6 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                    
 					field = "tags";
 					mediaItemRoot[field] = mediaItemTagsRoot;
-				}
-
-				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "providerName"))
-				{
-					int64_t contentProviderKey = row["contentProviderKey"].as<int64_t>();
-                
-					{
-						string sqlStatement = fmt::format( 
-							"select name from MMS_ContentProvider where contentProviderKey = {}",
-							contentProviderKey);
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						result res = trans.exec(sqlStatement);
-						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
-							chrono::system_clock::now() - startSql);
-						internalSqlDuration += sqlDuration;
-						SPDLOG_INFO("SQL statement"
-							", sqlStatement: @{}@"
-							", getConnectionId: @{}@"
-							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(), sqlDuration.count()
-						);
-						if (!empty(res))
-						{
-							field = "providerName";
-							mediaItemRoot[field] = res[0]["name"].as<string>();
-						}
-						else
-						{
-							string errorMessage = string("content provider does not exist")
-								+ ", contentProviderKey: " + to_string(contentProviderKey)
-							;
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
 				}
 
 				if (responseFields == Json::nullValue
@@ -4234,40 +4197,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 	string title = "";
     try
     {
-        _logger->info(__FILEREF__ + "Retrieving contentProviderKey");
-        int64_t contentProviderKey;
-        {
-            string contentProviderName;
-            
-			contentProviderName = JSONUtils::asString(parametersRoot, "contentProviderName", _defaultContentProviderName);
-
-            string sqlStatement = fmt::format( 
-                "select contentProviderKey from MMS_ContentProvider where workspaceKey = {} and name = {}",
-				workspace->_workspaceKey, trans.quote(contentProviderName));
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (!empty(res))
-                contentProviderKey = res[0]["contentProviderKey"].as<int64_t>();
-            else
-            {
-                string errorMessage = __FILEREF__ + "ContentProvider is not present"
-                    + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                    + ", contentProviderName: " + contentProviderName
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }            
-        }
-
         _logger->info(__FILEREF__ + "Insert into MMS_MediaItem");
         int64_t mediaItemKey;
         {
@@ -4373,15 +4302,15 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
+                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, " 
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
 				"startPublishing, endPublishing, "
 				"retentionInMinutes, tags, markedAsRemoved, processorMMSForRetention) values ("
-                                           "DEFAULT,      {},           {},                 {},     {},      {}, "
+                                           "DEFAULT,      {},           {},     {},      {}, "
 				"{},               {},              NOW() at time zone 'utc', {}, "
                 "to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
                 "{},                 {},   false,           NULL) returning mediaItemKey",
-				workspace->_workspaceKey, contentProviderKey, trans.quote(title),
+				workspace->_workspaceKey, trans.quote(title),
 				ingester == "" ? "null" : trans.quote(ingester),
 				userData == "" ? "null" : trans.quote(userData),
 				deliveryFileName == "" ? "null" : trans.quote(deliveryFileName),

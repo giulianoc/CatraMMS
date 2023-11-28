@@ -266,7 +266,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
     int64_t         workspaceKey;
     int64_t         userKey;
     string          userRegistrationCode;
-    int64_t         contentProviderKey;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -666,7 +665,6 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 {
     int64_t         workspaceKey;
     string          confirmationCode;
-    int64_t         contentProviderKey;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1402,7 +1400,6 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 {
     int64_t         workspaceKey;
     string          confirmationCode;
-    int64_t         contentProviderKey;
 	Json::Value		workspaceRoot;
     
     try
@@ -1504,22 +1501,6 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 				workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec1(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-        }
-
-        {
-            string sqlStatement = fmt::format( 
-                "insert into MMS_ContentProvider (workspaceKey, name) "
-				"values ({}, {}) returning contentProviderKey",
-				workspaceKey, trans.quote(_defaultContentProviderName));
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			contentProviderKey = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"

@@ -146,9 +146,6 @@
 		// optional
 		"FileSizeInBytes": null,
 
-		// optional
-		"contentProviderName": "default",
-
 		// optional: it specifies the filename without extension used by MMS when the content is delivered
 		"deliveryFileName": "myFileName"
 	}

@@ -32,8 +32,6 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _logger			= logger;
 	_configuration	= configuration;
 
-	_defaultContentProviderName     = "default";
-
     _dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt(configuration["database"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", database->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)

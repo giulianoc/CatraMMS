@@ -97,9 +97,6 @@
 		// optional
 		"tags": [ "tag 1", "tag 2" ],
 
-		// optional
-		"contentProviderName": "default",
-
 		// optional: it specifies the filename without extension used by MMS when the content is delivered
 		"deliveryFileName": "myFileName",
 

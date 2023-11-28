@@ -2760,7 +2760,10 @@ private:
 	shared_ptr<PostgresConnectionFactory>				_postgresSlaveConnectionFactory;
 	shared_ptr<DBConnectionPool<PostgresConnection>>	_slavePostgresConnectionPool;
 
+	#ifdef __POSTGRES__
+	#else
     string                          _defaultContentProviderName;
+	#endif
     // string                          _defaultTerritoryName;
     int								_ingestionJobsSelectPageSize;
     int                             _maxEncodingFailures;
