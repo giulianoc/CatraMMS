@@ -664,13 +664,12 @@ tuple<string, int, int64_t, string, string> MMSStorage::getVODDeliveryURI(
     }
     catch(MediaItemKeyNotFound& e)
     {
-        string errorMessage = string("getDeliveryURI failed")
-            + ", mediaItemKey: " + to_string(mediaItemKey)
-            + ", encodingProfileKey: " + to_string(encodingProfileKey)
-			+ ", e.what(): " + e.what()
-        ;
-        
-        _logger->error(__FILEREF__ + errorMessage);
+		// warn perchè già loggato come error in MMSEngineDBFacade_Postgres.cpp
+		SPDLOG_WARN("getDeliveryURI failed"
+			", mediaItemKey: {}"
+			", encodingProfileKey: {}"
+			", e.what(): {}",
+			mediaItemKey, encodingProfileKey, e.what());
         
         throw e;
     }

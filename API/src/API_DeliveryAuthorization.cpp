@@ -434,7 +434,7 @@ void API::createBulkOfDeliveryAuthorization(
 					}
 					catch (MediaItemKeyNotFound& e)
 					{
-						SPDLOG_ERROR("createDeliveryAuthorization failed"
+						SPDLOG_WARN("createDeliveryAuthorization failed"
 							", mediaItemKey: {}"
 							", encodingProfileKey: {}"
 							", e.what(): {}",

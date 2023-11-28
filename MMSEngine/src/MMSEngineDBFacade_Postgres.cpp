@@ -1002,16 +1002,14 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 
 			if (physicalPathKey == -1)
             {
-                string errorMessage = __FILEREF__
-					+ "MediaItemKey/EncodingProfileKey are not present"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", encodingProfileKey: " + to_string(encodingProfileKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-				if (warningIfMissing)
-					_logger->warn(errorMessage);
-				else
-					_logger->error(errorMessage);
+				// warn perchè già loggato come errore nel catch sotto
+                string errorMessage = fmt::format(
+					"MediaItemKey/EncodingProfileKey are not present"
+                    ", mediaItemKey: {}"
+                    ", encodingProfileKey: {}"
+                    ", sqlStatement: {}",
+					mediaItemKey, encodingProfileKey, sqlStatement);
+				SPDLOG_WARN(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);                    
 			}
