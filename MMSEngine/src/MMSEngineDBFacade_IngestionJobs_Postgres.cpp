@@ -157,11 +157,12 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						tasksNotInvolvingMMSEngineThreadsList);
 				}
 				sqlStatement += fmt::format(
-					"and (ij.status = {} "
-					"or (ij.status in ({}, {}, {}, {}) and ij.sourceBinaryTransferred = true)) "
+					// "and (ij.status = {} "
+					// "or (ij.status in ({}, {}, {}, {}) and ij.sourceBinaryTransferred = true)) "
+					"and toBeManaged_virtual "
 					"and ij.processingStartingFrom <= NOW() at time zone 'utc' "
 					"and NOW() at time zone 'utc' <= ij.processingStartingFrom + INTERVAL '{} days' "
-					"and scheduleStart_virtual > (NOW() at time zone 'utc' - INTERVAL '{} minutes') "
+					"and scheduleStart_virtual < (NOW() at time zone 'utc' + INTERVAL '{} minutes') "
 					"order by ij.priority asc, ij.processingStartingFrom asc "
 					"limit {} offset {} for update skip locked",
 					trans.quote(toString(IngestionStatus::Start_TaskQueued)),
