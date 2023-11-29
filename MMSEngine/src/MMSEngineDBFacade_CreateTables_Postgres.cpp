@@ -1601,7 +1601,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index if not exists MMS_IngestionJobDependency_idx2 on MMS_IngestionJobDependency (dependOnIngestionJobKey)";
+                "create index if not exists MMS_IngestionJobDependency_idx2 on MMS_IngestionJobDependency (dependOnIngestionJobKey, dependOnSuccess)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"

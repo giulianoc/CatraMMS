@@ -708,7 +708,7 @@ mms_sql_timing_check_service()
 			duration=$6;	\
 			label=$7;	\
 			if (label == "getIngestionsToBeManaged")
-				maxSQLDuration = 200;
+				maxSQLDuration = 300;
 			if (duration > maxSQLDuration)	\
 				warningMessage=warningMessage""datetime" - "sqlStatement" - "duration"\n";	\
 		}	\
