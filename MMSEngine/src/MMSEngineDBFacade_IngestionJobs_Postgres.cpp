@@ -161,7 +161,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					"or (ij.status in ({}, {}, {}, {}) and ij.sourceBinaryTransferred = true)) "
 					"and ij.processingStartingFrom <= NOW() at time zone 'utc' "
 					"and NOW() at time zone 'utc' <= ij.processingStartingFrom + INTERVAL '{} days' "
-					"and extract(epoch from (scheduleStart_virtual - (NOW() at time zone 'utc' + INTERVAL '{} minutes'))) < 0 "
+					"and scheduleStart_virtual > (NOW() at time zone 'utc' - INTERVAL '{} minutes') "
 					"order by ij.priority asc, ij.processingStartingFrom asc "
 					"limit {} offset {} for update skip locked",
 					trans.quote(toString(IngestionStatus::Start_TaskQueued)),

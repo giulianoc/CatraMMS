@@ -1339,7 +1339,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"CREATE OR REPLACE FUNCTION MMS_IngestionJob_fillVirtual() RETURNS trigger AS $fillVirtual$ "
 				"BEGIN "
 					"case when NEW.metaDataContent -> 'schedule' ->> 'start' is null then "
-						"NEW.scheduleStart_virtual='-infinity'; "
+						"NEW.scheduleStart_virtual='infinity'; "
 					"else "
 						"NEW.scheduleStart_virtual=to_timestamp(NEW.metaDataContent -> 'schedule' ->> 'start', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'); "
 					"end case; "
