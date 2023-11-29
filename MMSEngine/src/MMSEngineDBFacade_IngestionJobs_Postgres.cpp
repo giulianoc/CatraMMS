@@ -165,11 +165,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					"and scheduleStart_virtual < (NOW() at time zone 'utc' + INTERVAL '{} minutes') "
 					"order by ij.priority asc, ij.processingStartingFrom asc "
 					"limit {} offset {} for update skip locked",
-					trans.quote(toString(IngestionStatus::Start_TaskQueued)),
-					trans.quote(toString(IngestionStatus::SourceDownloadingInProgress)),
-					trans.quote(toString(IngestionStatus::SourceMovingInProgress)),
-					trans.quote(toString(IngestionStatus::SourceCopingInProgress)),
-					trans.quote(toString(IngestionStatus::SourceUploadingInProgress)),
+					// trans.quote(toString(IngestionStatus::Start_TaskQueued)),
+					// trans.quote(toString(IngestionStatus::SourceDownloadingInProgress)),
+					// trans.quote(toString(IngestionStatus::SourceMovingInProgress)),
+					// trans.quote(toString(IngestionStatus::SourceCopingInProgress)),
+					// trans.quote(toString(IngestionStatus::SourceUploadingInProgress)),
 					_doNotManageIngestionsOlderThanDays,
 					timeBeforeToPrepareResourcesInMinutes,
 					mysqlRowCount, _getIngestionJobsCurrentIndex);
