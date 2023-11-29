@@ -1315,11 +1315,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "processorMMS               text NULL,"
                     "status           			text NOT NULL,"
                     "errorMessage               text NULL,"
-					"scheduleStart_virtual		timestamp without time zone NULL,"
+					"scheduleStart_virtual		timestamp without time zone not NULL,"
 					// added because the channels view was slow
 					"configurationLabel_virtual	text generated always as (metaDataContent ->> 'configurationLabel') stored NULL,"
 					"recordingCode_virtual		bigint generated always as ((metaDataContent ->> 'recordingCode')::bigint) stored NULL,"
 					"broadcastIngestionJobKey_virtual	bigint generated always as ((metaDataContent -> 'internalMMS' -> 'broadcaster' ->> 'broadcastIngestionJobKey')::bigint) stored NULL,"
+					"toBeManaged_virtual		boolean generated always as (status = 'Start_TaskQueued' or (status in ('SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', 'SourceUploadingInProgress') and sourceBinaryTransferred = true)) stored not null,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
                         "references MMS_IngestionRoot (ingestionRootKey) on delete cascade) ";
@@ -1338,7 +1339,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"CREATE OR REPLACE FUNCTION MMS_IngestionJob_fillVirtual() RETURNS trigger AS $fillVirtual$ "
 				"BEGIN "
 					"case when NEW.metaDataContent -> 'schedule' ->> 'start' is null then "
-						"NEW.scheduleStart_virtual=null; "
+						"NEW.scheduleStart_virtual='-infinity'; "
 					"else "
 						"NEW.scheduleStart_virtual=to_timestamp(NEW.metaDataContent -> 'schedule' ->> 'start', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'); "
 					"end case; "
@@ -1416,7 +1417,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create index if not exists MMS_IngestionJob_idx5 on MMS_IngestionJob (priority)";
+                "create index if not exists MMS_IngestionJob_idx5 on MMS_IngestionJob (priority, processingStartingFrom)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -1532,6 +1533,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// viene usato dalla select di getIngestionsToBeManaged
 			string sqlStatement =
                 "create index if not exists MMS_IngestionJob_idx14 on MMS_IngestionJob (processorMMS, status, sourceBinaryTransferred, processingStartingFrom, scheduleStart_virtual)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			// viene usato dalla select di getIngestionsToBeManaged
+			string sqlStatement =
+                "create index if not exists MMS_IngestionJob_idx15 on MMS_IngestionJob(priority, "
+				"processingstartingfrom, toBeManaged_virtual, processorMMS) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
