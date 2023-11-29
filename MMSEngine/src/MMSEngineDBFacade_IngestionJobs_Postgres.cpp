@@ -290,7 +290,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				SPDLOG_INFO("SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
-					", elapsed (millisecs): @{}@",
+					", elapsed (millisecs): @{}@getIngestionsToBeManaged@",
 					sqlStatement, conn->getConnectionId(),
 					chrono::duration_cast<chrono::milliseconds>(
 						(chrono::system_clock::now() - startSql) - internalSqlDuration).count()

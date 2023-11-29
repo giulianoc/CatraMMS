@@ -698,7 +698,22 @@ mms_sql_timing_check_service()
 	fi
 
 	maxSQLDuration=100
-	warningMessage=$(grep "statement, sqlStatement" $logFilePathName | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxSQLDuration=$maxSQLDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; } { datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2); newLastLogTimestampChecked=mktime(datespec); if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) { datetime=substr($0, 2, 23); sqlStatement=$2; duration=$6; if (duration > maxSQLDuration) warningMessage=warningMessage""datetime" - "sqlStatement" - "duration"\n"; } } END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
+	warningMessage=$(grep "statement, sqlStatement" $logFilePathName | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxSQLDuration=$maxSQLDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
+	{	\
+		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
+		newLastLogTimestampChecked=mktime(datespec);	\
+		if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) {	\
+			datetime=substr($0, 2, 23);	\
+			sqlStatement=$2;	\
+			duration=$6;	\
+			label=$7;	\
+			if (label == "getIngestionsToBeManaged")
+				maxSQLDuration = 200;
+			if (duration > maxSQLDuration)	\
+				warningMessage=warningMessage""datetime" - "sqlStatement" - "duration"\n";	\
+		}	\
+	}	\
+	END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
 
 	if [ "$warningMessage" = "" ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, mms sql ($serviceName) timing is fine" >> $debugFilename
