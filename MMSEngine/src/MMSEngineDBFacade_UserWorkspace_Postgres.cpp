@@ -97,6 +97,34 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -215,6 +243,34 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -412,6 +468,34 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -615,6 +699,34 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -765,6 +877,34 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -857,6 +997,34 @@ string MMSEngineDBFacade::createCode(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -965,6 +1133,16 @@ string MMSEngineDBFacade::createCode(
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
@@ -1111,6 +1289,34 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -1233,6 +1439,34 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -1361,6 +1595,16 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
@@ -1524,6 +1768,16 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
@@ -1784,6 +2038,34 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -1933,6 +2215,16 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
@@ -2130,6 +2422,34 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -2277,6 +2597,34 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -2493,6 +2841,34 @@ Json::Value MMSEngineDBFacade::login (
 
 			throw e;
 		}
+		catch(runtime_error& e)
+		{
+			SPDLOG_ERROR("runtime_error"
+				", exceptionMessage: {}"
+				", conn: {}",
+				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			);
+
+			try
+			{
+				trans.abort();
+			}
+			catch (exception& e)
+			{
+				SPDLOG_ERROR("abort failed"
+					", conn: {}",
+					(conn != nullptr ? conn->getConnectionId() : -1)
+				);
+			}
+			if (conn != nullptr)
+			{
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+
+			throw e;
+		}
 		catch(exception& e)
 		{
 			SPDLOG_ERROR("exception"
@@ -2617,6 +2993,34 @@ Json::Value MMSEngineDBFacade::login (
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 			}
+
+			// throw e;
+		}
+		catch(runtime_error& e)
+		{
+			SPDLOG_ERROR("runtime_error"
+				", exceptionMessage: {}"
+				", conn: {}",
+				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			);
+
+			try
+			{
+				trans.abort();
+			}
+			catch (exception& e)
+			{
+				SPDLOG_ERROR("abort failed"
+					", conn: {}",
+					(conn != nullptr ? conn->getConnectionId() : -1)
+				);
+			}
+			if (conn != nullptr)
+			{
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
 
 			// throw e;
 		}
@@ -2799,6 +3203,34 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -2959,6 +3391,34 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -3175,6 +3635,16 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
@@ -3546,6 +4016,34 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -3687,6 +4185,34 @@ Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -3765,6 +4291,34 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -3869,6 +4423,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
@@ -3989,6 +4553,34 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -4097,6 +4689,34 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -4353,6 +4973,34 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -4450,6 +5098,34 @@ string MMSEngineDBFacade::createResetPasswordToken(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -4602,6 +5278,34 @@ pair<string, string> MMSEngineDBFacade::resetPassword(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -4712,6 +5416,34 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}

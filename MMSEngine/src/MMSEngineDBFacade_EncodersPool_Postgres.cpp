@@ -82,6 +82,34 @@ int64_t MMSEngineDBFacade::addEncoder(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -267,6 +295,34 @@ void MMSEngineDBFacade::modifyEncoder(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -367,6 +423,34 @@ void MMSEngineDBFacade::removeEncoder(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -515,6 +599,34 @@ tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -593,6 +705,34 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -655,6 +795,16 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
@@ -751,6 +901,34 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -876,6 +1054,34 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -981,6 +1187,34 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -1270,6 +1504,34 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -1373,6 +1635,15 @@ Json::Value MMSEngineDBFacade::getEncoderRoot (
 			", query: {}"
 			", exceptionMessage: {}",
 			e.query(), e.what()
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}",
+			e.what()
 		);
 
 		throw e;
@@ -1591,6 +1862,34 @@ string MMSEngineDBFacade::getEncodersPoolDetails (int64_t encodersPoolKey)
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -1839,6 +2138,34 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -1981,6 +2308,34 @@ int64_t MMSEngineDBFacade::addEncodersPool(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -2239,6 +2594,34 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -2341,6 +2724,34 @@ void MMSEngineDBFacade::removeEncodersPool(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -2680,6 +3091,34 @@ tuple<int64_t, bool, string, string, string, int>
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -2825,6 +3264,34 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -2978,6 +3445,34 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}

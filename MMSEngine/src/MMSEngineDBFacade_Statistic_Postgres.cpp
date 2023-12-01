@@ -162,6 +162,34 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -394,6 +422,34 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
     {
 		SPDLOG_ERROR("exception"
@@ -622,6 +678,34 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -845,6 +929,34 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -1078,6 +1190,34 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -1305,6 +1445,34 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
@@ -1538,6 +1706,34 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 
 		throw e;
 	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
@@ -1763,6 +1959,34 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}

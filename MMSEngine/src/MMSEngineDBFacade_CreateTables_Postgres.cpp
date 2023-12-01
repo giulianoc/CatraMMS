@@ -1721,6 +1721,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 }
             }
         }
+        catch(runtime_error& e)
+        {
+			_logger->error(__FILEREF__ + "runtime_error"
+				+ ", e.what(): " + e.what()
+			);
+
+			throw e;
+		}    
         catch(exception& e)
         {
 			_logger->error(__FILEREF__ + "exception"
@@ -2320,6 +2328,34 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
 
 		throw e;
 	}
