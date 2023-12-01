@@ -643,6 +643,7 @@ mms_webservices_timing_check_service()
 			datetime=substr($0, 2, 23);	\
 			method=$2;	\
 			duration=$4;	\
+			otherInfo=$5;	\
 			maxDuration = maxAPIDuration;	\
 			// custom max duration
 			if (method == "startChannels"	\
@@ -653,7 +654,7 @@ mms_webservices_timing_check_service()
 			)	\
 				maxDuration = 150000;	\
 			if (duration > maxDuration)	\
-				warningMessage=warningMessage""datetime" - "method" - "duration"\n";	\
+				warningMessage=warningMessage""datetime" - "method" - "duration" - "otherInfo"\n";	\
 		}	\
 	}	\
 	END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')

@@ -413,7 +413,6 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
                 Json::Value workflowLibraryRoot;
 
                 field = "global";
-                int64_t userKey = row["userKey"].as<int64_t>();
 				if (row["workspaceKey"].is_null())
 					workflowLibraryRoot[field] = true;
 				else

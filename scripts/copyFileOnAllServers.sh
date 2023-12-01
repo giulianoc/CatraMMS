@@ -19,8 +19,8 @@ do
 done
 
 #cibortv-transcoder-4
-#echo "scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@151.66.211.27:$destDirectoryPathName"
-#scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@151.66.211.27:$destDirectoryPathName
+echo "scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@93.58.249.102:$destDirectoryPathName"
+scp -P 9255 -i ~/ssh-keys/cibortv-transcoder-4.pem $sourceFilePathName mms@93.58.249.102:$destDirectoryPathName
 
 #aruba-1 aruba-2 aruba-3
 for server in ru001940.arubabiz.net ru001941.arubabiz.net ru002148.arubabiz.net

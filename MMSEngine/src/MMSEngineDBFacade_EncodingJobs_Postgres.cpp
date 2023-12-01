@@ -1920,7 +1920,7 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber (
     {
         {
             string sqlStatement = fmt::format( 
-				"select case when isKilled is null then false else isKilled end as isKilled "
+				"select COALESCE(isKilled, false) as isKilled "
 				"from MMS_EncodingJob "
 				"where encodingJobKey = {}", encodingJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

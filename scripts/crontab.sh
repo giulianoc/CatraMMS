@@ -65,7 +65,8 @@ else
 
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$fiveDaysInMinutes
+			#deve essere consistente con $commandIndex -eq 12 (conserva i logs di nginx in directory per 10gg)
+			timeoutInMinutes=$tenDaysInMinutes
 		fi
 
 		commandToBeExecuted="find -L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -delete -print"
@@ -210,6 +211,7 @@ else
 
 		if [ "$timeoutInMinutes" == "" ]
 		then
+			#deve essere consistente con $commandIndex -eq 1 (retention dei file di logs per 10gg)
 			timeoutInMinutes=$tenDaysInMinutes
 		fi
 
