@@ -5988,7 +5988,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								// viene letto il timestamp dal nome del file
 								segmentFilePathName += "_%s.ts";
 								otherOutputOptions = "-hls_flags program_date_time -strftime 1 -hls_segment_filename "
-									+ segmentFilePathName + " -f hls";
+									+ segmentFilePathName; // + " -f hls";	viene già aggiunto in ffmpeg.cpp
 							}
 							else
 							{
@@ -6000,9 +6000,8 @@ bool EncoderVideoAudioProxy::liveRecorder()
 								//	Per questo motivo viene usato un semplice contatore _%04d
 								segmentFilePathName += "_%04d.ts";
 								otherOutputOptions = "-hls_flags program_date_time -hls_segment_filename "
-									+ segmentFilePathName + " -f hls";
+									+ segmentFilePathName; // + " -f hls";	viene già aggiunto in ffmpeg.cpp
 							}
-
 
 							outputRoot[field] = otherOutputOptions;
 						}

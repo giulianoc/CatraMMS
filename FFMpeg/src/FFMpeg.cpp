@@ -15424,14 +15424,6 @@ void FFMpeg::liveProxyOutput(
 			}
 		}
 
-		// map output
-		if (otherOutputOptions.find("-map") == string::npos
-			&& otherOutputOptionsBecauseOfMaxWidth != "")
-			FFMpegEncodingParameters::addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
-				ffmpegOutputArgumentList);
-		else
-			FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
-
 		// nel caso i due vettori siano vuoti, aggiungiamo un elemento ciascuno in modo da aggiungere
 		// i parametri di encoding senza specificare alcun map (scenario di default)
 		if (videoMaps.size() == 0)
@@ -15547,6 +15539,14 @@ void FFMpeg::liveProxyOutput(
 			ffmpegOutputArgumentList.push_back("-threads");
 			ffmpegOutputArgumentList.push_back("0");
 		}
+
+		// map output
+		if (otherOutputOptions.find("-map") == string::npos
+			&& otherOutputOptionsBecauseOfMaxWidth != "")
+			FFMpegEncodingParameters::addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
+				ffmpegOutputArgumentList);
+		else
+			FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
 
 		// output file
 		if (
@@ -15723,6 +15723,8 @@ void FFMpeg::liveProxyOutput(
 				ffmpegOutputArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
 			}
 			*/
+			ffmpegOutputArgumentList.push_back("-f");
+			ffmpegOutputArgumentList.push_back("hls");
 			ffmpegOutputArgumentList.push_back(manifestFilePathName);
 		}
 		else if (outputType == "UDP_Stream")
