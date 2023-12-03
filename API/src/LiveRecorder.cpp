@@ -431,7 +431,7 @@ void LiveRecorder::encodeContent(
 			+ ", streamSourceType: " + _liveRecording->_streamSourceType
 			+ ", liveURL: " + liveURL
 		);
-		_liveRecording->_ffmpeg->liveRecorder(
+		_liveRecording->_ffmpeg->liveRecorder2(
 			_liveRecording->_ingestionJobKey,
 			_encodingJobKey,
 			_liveRecording->_externalEncoder,
