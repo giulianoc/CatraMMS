@@ -699,7 +699,7 @@ private:
 		liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList);
 
-	void liveProxyOutput(int64_t ingestionJobKey, int64_t encodingJobKey,
+	void outputsRootToFfmpeg(int64_t ingestionJobKey, int64_t encodingJobKey,
 		bool externalEncoder,
 		string otherOutputOptionsBecauseOfMaxWidth,
 		Json::Value inputDrawTextDetailsRoot,
@@ -707,8 +707,6 @@ private:
 		// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
 		long streamingDurationInSeconds,
 		Json::Value outputsRoot,
-		vector<string> videoMaps,
-		vector<string> audioMaps,
 		vector<string>& ffmpegOutputArgumentList);
 
     string getLastPartOfFile(

@@ -14005,10 +14005,12 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		Json::Value outputRoot = outputsRoot[outputIndex];
 
 
+		string videoMap;
+		string audioMap;
 		string outputType;
 		string otherOutputOptions;
-		int videoTrackIndexToBeUsed = -1;
-		int audioTrackIndexToBeUsed = -1;
+		// int videoTrackIndexToBeUsed = -1;
+		// int audioTrackIndexToBeUsed = -1;
 		Json::Value filtersRoot = Json::nullValue;
 		int64_t encodingProfileKey = -1;
 		Json::Value encodingProfileDetailsRoot = Json::nullValue;
@@ -14025,18 +14027,23 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		Json::Value drawTextDetailsRoot = Json::nullValue;
 
 
-		string field = "outputType";
-		// outputType = JSONUtils::asString(outputRoot, field, "HLS");
+		string field = "videoMap";
+		videoMap = JSONUtils::asString(outputRoot, field, "default");
+
+		field = "audioMap";
+		audioMap = JSONUtils::asString(outputRoot, field, "default");
+
+		field = "outputType";
 		outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
 		field = "otherOutputOptions";
 		otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
 
-		field = "videoTrackIndexToBeUsed";
-		videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, field, -1);
+		// field = "videoTrackIndexToBeUsed";
+		// videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, field, -1);
 
-		field = "audioTrackIndexToBeUsed";
-		audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, field, -1);
+		// field = "audioTrackIndexToBeUsed";
+		// audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, field, -1);
 
 		field = "filters";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
@@ -14158,17 +14165,23 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 		Json::Value localOutputRoot;
 
+		field = "videoMap";
+		localOutputRoot[field] = videoMap;
+
+		field = "audioMap";
+		localOutputRoot[field] = audioMap;
+
 		field = "outputType";
 		localOutputRoot[field] = outputType;
 
 		field = "otherOutputOptions";
 		localOutputRoot[field] = otherOutputOptions;
 
-		field = "videoTrackIndexToBeUsed";
-		localOutputRoot[field] = videoTrackIndexToBeUsed;
+		// field = "videoTrackIndexToBeUsed";
+		// localOutputRoot[field] = videoTrackIndexToBeUsed;
 
-		field = "audioTrackIndexToBeUsed";
-		localOutputRoot[field] = audioTrackIndexToBeUsed;
+		// field = "audioTrackIndexToBeUsed";
+		// localOutputRoot[field] = audioTrackIndexToBeUsed;
 
 		field = "filters";
 		localOutputRoot[field] = filtersRoot;

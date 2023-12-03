@@ -12492,19 +12492,16 @@ void FFMpeg::liveRecorder2(
 			ffmpegArgumentList.push_back(segmentListPathName);
 		}
 
-		_logger->info(__FILEREF__ + "liveProxyOutput..."                                                  
+		_logger->info(__FILEREF__ + "outputsRootToFfmpeg..."                                                  
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)                                          
 			+ ", encodingJobKey: " + to_string(encodingJobKey)                                            
 			+ ", outputsRoot.size: " + to_string(outputsRoot.size())                                      
 		);                                                                                                
-		vector<string> videoMaps;                                                                         
-		vector<string> audioMaps;                                                                         
-		liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,                                 
+		outputsRootToFfmpeg(ingestionJobKey, encodingJobKey, externalEncoder,                                 
 			"",	// otherOutputOptionsBecauseOfMaxWidth,                                                          
 			Json::nullValue, // inputDrawTextDetailsRoot,                                                                     
 			-1,	// streamingDurationInSeconds,                                                                   
 			outputsRoot,                                                                                  
-			videoMaps, audioMaps,                                                                         
 			ffmpegArgumentList);                                                                    
 
 		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
@@ -13330,20 +13327,17 @@ void FFMpeg::liveProxy2(
 		vector<string> ffmpegOutputArgumentList;
 		try
 		{
-			_logger->info(__FILEREF__ + "liveProxyOutput..."
+			_logger->info(__FILEREF__ + "outputsRootToFfmpeg..."
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", outputsRoot.size: " + to_string(outputsRoot.size())
 			);
-			vector<string> videoMaps;
-			vector<string> audioMaps;
-			liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,
+			outputsRootToFfmpeg(ingestionJobKey, encodingJobKey, externalEncoder,
 				otherOutputOptionsBecauseOfMaxWidth,
 				inputDrawTextDetailsRoot,
 				// inputVideoTracks, inputAudioTracks,
 				streamingDurationInSeconds,
 				outputsRoot,
-				videoMaps, audioMaps,
 				ffmpegOutputArgumentList);
 
 			{
@@ -15162,7 +15156,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 		inputDrawTextDetailsRoot);	// , videoTracks, audioTracks);
 }
 
-void FFMpeg::liveProxyOutput(
+void FFMpeg::outputsRootToFfmpeg(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	bool externalEncoder,
 	string otherOutputOptionsBecauseOfMaxWidth,
@@ -15172,6 +15166,7 @@ void FFMpeg::liveProxyOutput(
 	long streamingDurationInSeconds,
 	Json::Value outputsRoot,
 
+	/*
 	// vengono usati i due vector seguenti nel caso abbiamo una lista di maps (video and audio)
 	// a cui applicare i parametri di encoding
 	// Esempio nel caso del liveGrid abbiamo qualcosa tipo:
@@ -15182,11 +15177,12 @@ void FFMpeg::liveProxyOutput(
 	// ...
 	vector<string> videoMaps,
 	vector<string> audioMaps,
+	*/
 
 	vector<string>& ffmpegOutputArgumentList)
 {
 
-	_logger->info(__FILEREF__ + "Received liveProxyOutput"
+	_logger->info(__FILEREF__ + "Received outputsRootToFfmpeg"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", outputsRoot: " + JSONUtils::toString(outputsRoot)
@@ -15222,7 +15218,7 @@ void FFMpeg::liveProxyOutput(
 				of.flush();
 			}
 
-			_logger->info(__FILEREF__ + "liveProxyOutput (inputRoot): added text into a temporary file"
+			_logger->info(__FILEREF__ + "outputsRootToFfmpeg (inputRoot): added text into a temporary file"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", textTemporaryFileName: " + textTemporaryFileName
@@ -15248,6 +15244,9 @@ void FFMpeg::liveProxyOutput(
 
 		string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
+		string inputVideoMap = JSONUtils::asString(outputRoot, "inputVideoMap", "");
+		string inputAudioMap = JSONUtils::asString(outputRoot, "inputAudioMap", "");
+
 		Json::Value filtersRoot = Json::nullValue;
 		if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
 			filtersRoot = outputRoot["filters"];
@@ -15257,9 +15256,6 @@ void FFMpeg::liveProxyOutput(
 			encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 
 		string otherOutputOptions = JSONUtils::asString(outputRoot, "otherOutputOptions", "");
-
-		int videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
-		int audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
 
 		string encodingProfileContentType = JSONUtils::asString(outputRoot, "encodingProfileContentType", "Video");
 		bool isVideo = encodingProfileContentType == "Video" ? true : false;
@@ -15302,19 +15298,6 @@ void FFMpeg::liveProxyOutput(
 				streamingDurationInSeconds);
 			*/
 		}
-
-		/*
-		int fadeDuration = JSONUtils::asInt(outputRoot, "fadeDuration", -1);
-		string ffmpegFadeFilter;
-		if (fadeDuration > 0 && streamingDurationInSeconds >= fadeDuration)
-		{
-			// fade=type=in:duration=3,fade=type=out:duration=3:start_time=27
-			ffmpegFadeFilter =
-				string("fade=type=in:duration=") + to_string(fadeDuration)
-				+ ",fade=type=out:duration=" + to_string(fadeDuration)
-				+ ":start_time=" + to_string(streamingDurationInSeconds - fadeDuration);
-		}
-		*/
 
 		string httpStreamingFileFormat;    
 		string ffmpegHttpStreamingParameter = "";
@@ -15424,13 +15407,6 @@ void FFMpeg::liveProxyOutput(
 			}
 		}
 
-		// nel caso i due vettori siano vuoti, aggiungiamo un elemento ciascuno in modo da aggiungere
-		// i parametri di encoding senza specificare alcun map (scenario di default)
-		if (videoMaps.size() == 0)
-			videoMaps.push_back("");
-		if (audioMaps.size() == 0)
-			audioMaps.push_back("");
-
 		tuple<string, string, string> allFilters = addFilters(
 			filtersRoot, ffmpegVideoResolutionParameter,
 			ffmpegDrawTextFilter, streamingDurationInSeconds);
@@ -15442,18 +15418,25 @@ void FFMpeg::liveProxyOutput(
 		bool threadsParameterToBeAdded = false;
 
 		// video (parametri di encoding)
+		if (inputVideoMap != "" && inputVideoMap != "default")
+		{
+			ffmpegOutputArgumentList.push_back("-map");
+			if (inputVideoMap == "all video tracks")
+				ffmpegOutputArgumentList.push_back("0:v");
+			else if (inputVideoMap == "first video track")
+				ffmpegOutputArgumentList.push_back("0:v:0");
+			else if (inputVideoMap == "second video track")
+				ffmpegOutputArgumentList.push_back("0:v:1");
+			else if (inputVideoMap == "third video track")
+				ffmpegOutputArgumentList.push_back("0:v:2");
+			else
+				ffmpegOutputArgumentList.push_back(inputVideoMap);
+		}
 		if (encodingProfileDetailsRoot != Json::nullValue)
 		{
 			threadsParameterToBeAdded = true;
 
-			for(string videoMap: videoMaps)
 			{
-				if (videoMap != "")
-				{
-					ffmpegOutputArgumentList.push_back("-map");
-					ffmpegOutputArgumentList.push_back(videoMap);
-				}
-
 				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegOutputArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegVideoProfileParameter, ffmpegOutputArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegVideoBitRateParameter, ffmpegOutputArgumentList);
@@ -15492,18 +15475,25 @@ void FFMpeg::liveProxyOutput(
 		}
 
 		// audio (parametri di encoding)
+		if (inputAudioMap != "" && inputAudioMap != "default")
+		{
+			ffmpegOutputArgumentList.push_back("-map");
+			if (inputAudioMap == "all audio tracks")
+				ffmpegOutputArgumentList.push_back("0:a");
+			else if (inputAudioMap == "first audio track")
+				ffmpegOutputArgumentList.push_back("0:a:0");
+			else if (inputAudioMap == "second audio track")
+				ffmpegOutputArgumentList.push_back("0:a:1");
+			else if (inputAudioMap == "third audio track")
+				ffmpegOutputArgumentList.push_back("0:a:2");
+			else
+				ffmpegOutputArgumentList.push_back(inputAudioMap);
+		}
 		if (encodingProfileDetailsRoot != Json::nullValue)
 		{
 			threadsParameterToBeAdded = true;
 
-			for(string audioMap: audioMaps)
 			{
-				if (audioMap != "")
-				{
-					ffmpegOutputArgumentList.push_back("-map");
-					ffmpegOutputArgumentList.push_back(audioMap);
-				}
-
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioCodecParameter, ffmpegOutputArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegOutputArgumentList);
 				FFMpegEncodingParameters::addToArguments(ffmpegAudioOtherParameters, ffmpegOutputArgumentList);
@@ -15849,15 +15839,12 @@ void FFMpeg::liveGrid(
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", outputsRoot.size: " + to_string(outputsRoot.size())
 			);
-			vector<string> videoMaps;
-			vector<string> audioMaps;
-			liveProxyOutput(ingestionJobKey, encodingJobKey, externalEncoder,
+			outputsRootToFfmpeg(ingestionJobKey, encodingJobKey, externalEncoder,
 				"", // otherOutputOptionsBecauseOfMaxWidth,
 				Json::nullValue, // inputDrawTextDetailsRoot,
 				// inputVideoTracks, inputAudioTracks,
 				-1, // streamingDurationInSeconds,
 				outputsRoot,
-				videoMaps, audioMaps,
 				ffmpegOutputArgumentList);
 
 			{
@@ -16470,7 +16457,7 @@ void FFMpeg::liveGrid(
 				}
 
 				string videoManifestLine = "#EXT-X-STREAM-INF:PROGRAM-ID=1";
-// TO DO: recuperare videoBitRateInKbps da liveProxyOutput
+// TO DO: recuperare videoBitRateInKbps da outputsRootToFfmpeg
 int videoBitRateInKbps = -1;
 				if (videoBitRateInKbps != -1)
 					videoManifestLine += (",BANDWIDTH=" + to_string(videoBitRateInKbps * 1000));
