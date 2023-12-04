@@ -12703,61 +12703,32 @@ void FFMpeg::liveRecorder2(
 				+ to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
         );
 
-		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+		try
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			outputsRootToFfmpeg_clean(ingestionJobKey, encodingJobKey, outputsRoot, externalEncoder);
+		}
+		catch(runtime_error& e)
+		{
+			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+			// throw e;
+		}
+		catch(exception& e)
+		{
+			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			// if (outputType == "HLS" || outputType == "DASH")
-			if (outputType == "HLS_Channel")
-			{
-				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-
-				if (externalEncoder)
-					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
-
-				if (manifestDirectoryPath != "")
-				{
-					if (fs::exists(manifestDirectoryPath))
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "removeDirectory"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-							);
-							fs::remove_all(manifestDirectoryPath);
-						}
-						catch(runtime_error& e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-						catch(exception& e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-					}
-				}
-			}
-    	}
+			// throw e;
+		}
 
 		// if (segmenterType == "streamSegmenter" || segmenterType == "hlsSegmenter")
 		{
@@ -12913,59 +12884,32 @@ void FFMpeg::liveRecorder2(
 			+ ", segmentListPathName: " + segmentListPathName);
 		fs::remove_all(segmentListPathName);
 
-		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+		try
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			outputsRootToFfmpeg_clean(ingestionJobKey, encodingJobKey, outputsRoot, externalEncoder);
+		}
+		catch(runtime_error& e)
+		{
+			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+			// throw e;
+		}
+		catch(exception& e)
+		{
+			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			// if (outputType == "HLS" || outputType == "DASH")
-			if (outputType == "HLS_Channel")
-			{
-				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-
-				if (externalEncoder)
-					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
-
-				if (manifestDirectoryPath != "")
-				{
-					if (fs::exists(manifestDirectoryPath))
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "removeDirectory"
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-							);
-							fs::remove_all(manifestDirectoryPath);
-						}
-						catch(runtime_error& e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-						catch(exception& e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-					}
-				}
-			}
-    	}
+			// throw e;
+		}
 
 		// if (segmenterType == "streamSegmenter" || segmenterType == "hlsSegmenter")
 		{
@@ -13535,86 +13479,31 @@ void FFMpeg::liveProxy2(
 				endlessPlaylistListPathName = "";
 			}
 
-			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			try
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				outputsRootToFfmpeg_clean(ingestionJobKey, encodingJobKey, outputsRoot, externalEncoder);
+			}
+			catch(runtime_error& e)
+			{
+				string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				// throw e;
+			}
+			catch(exception& e)
+			{
+				string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-				// if (outputType == "HLS" || outputType == "DASH")
-				if (outputType == "HLS_Channel")
-				{
-					string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-
-					if (externalEncoder)
-						removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
-
-					if (manifestDirectoryPath != "")
-					{
-						if (fs::exists(manifestDirectoryPath))
-						{
-							try
-							{
-								_logger->info(__FILEREF__ + "removeDirectory"
-									+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								);
-								fs::remove_all(manifestDirectoryPath);
-							}
-							catch(runtime_error& e)
-							{
-								string errorMessage = __FILEREF__ + "remove directory failed"
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(encodingJobKey)
-									+ ", currentInputIndex: " + to_string(currentInputIndex)
-									+ ", currentNumberOfRepeatingSameInput: "
-										+ to_string(currentNumberOfRepeatingSameInput)
-									+ ", manifestDirectoryPath: " + manifestDirectoryPath
-									+ ", e.what(): " + e.what()
-								;
-								_logger->error(errorMessage);
-
-								// throw e;
-							}
-							catch(exception& e)
-							{
-								string errorMessage = __FILEREF__ + "remove directory failed"
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(encodingJobKey)
-									+ ", currentInputIndex: " + to_string(currentInputIndex)
-									+ ", currentNumberOfRepeatingSameInput: "
-										+ to_string(currentNumberOfRepeatingSameInput)
-									+ ", manifestDirectoryPath: " + manifestDirectoryPath
-									+ ", e.what(): " + e.what()
-								;
-								_logger->error(errorMessage);
-
-								// throw e;
-							}
-						}
-					}
-				}
-
-				if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
-				{
-					string textTemporaryFileName;
-					{
-						textTemporaryFileName =
-							_ffmpegTempDir + "/"
-							+ to_string(ingestionJobKey)
-							+ "_"
-							+ to_string(encodingJobKey)
-							+ "_"
-							+ to_string(outputIndex)
-							+ ".overlayText";
-					}
-
-					if (fs::exists(textTemporaryFileName))
-					{
-						_logger->info(__FILEREF__ + "Remove"
-							+ ", textTemporaryFileName: " + textTemporaryFileName);
-						fs::remove_all(textTemporaryFileName);
-					}
-				}
+				// throw e;
 			}
 
 			if (streamingDurationInSeconds != -1 &&
@@ -13761,86 +13650,31 @@ void FFMpeg::liveProxy2(
 				endlessPlaylistListPathName = "";
 			}
 
-			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			try
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				outputsRootToFfmpeg_clean(ingestionJobKey, encodingJobKey, outputsRoot, externalEncoder);
+			}
+			catch(runtime_error& e)
+			{
+				string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				// throw e;
+			}
+			catch(exception& e)
+			{
+				string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
 
-				// if (outputType == "HLS" || outputType == "DASH")
-				if (outputType == "HLS_Channel")
-				{
-					string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-
-					if (externalEncoder)
-						removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
-
-					if (manifestDirectoryPath != "")
-					{
-						if (fs::exists(manifestDirectoryPath))
-						{
-							try
-							{
-								_logger->info(__FILEREF__ + "removeDirectory"
-									+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								);
-								fs::remove_all(manifestDirectoryPath);
-							}
-							catch(runtime_error& e)
-							{
-								string errorMessage = __FILEREF__ + "remove directory failed"
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(encodingJobKey)
-									+ ", currentInputIndex: " + to_string(currentInputIndex)
-									+ ", currentNumberOfRepeatingSameInput: "
-										+ to_string(currentNumberOfRepeatingSameInput)
-									+ ", manifestDirectoryPath: " + manifestDirectoryPath
-									+ ", e.what(): " + e.what()
-								;
-								_logger->error(errorMessage);
-
-								// throw e;
-							}
-							catch(exception& e)
-							{
-								string errorMessage = __FILEREF__ + "remove directory failed"
-									+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-									+ ", encodingJobKey: " + to_string(encodingJobKey)
-									+ ", currentInputIndex: " + to_string(currentInputIndex)
-									+ ", currentNumberOfRepeatingSameInput: "
-										+ to_string(currentNumberOfRepeatingSameInput)
-									+ ", manifestDirectoryPath: " + manifestDirectoryPath
-									+ ", e.what(): " + e.what()
-								;
-								_logger->error(errorMessage);
-
-								// throw e;
-							}
-						}
-					}
-				}
-
-				if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
-				{
-					string textTemporaryFileName;
-					{
-						textTemporaryFileName =
-							_ffmpegTempDir + "/"
-							+ to_string(ingestionJobKey)
-							+ "_"
-							+ to_string(encodingJobKey)
-							+ "_"
-							+ to_string(outputIndex)
-							+ ".overlayText";
-					}
-
-					if (fs::exists(textTemporaryFileName))
-					{
-						_logger->info(__FILEREF__ + "Remove"
-							+ ", textTemporaryFileName: " + textTemporaryFileName);
-						fs::remove_all(textTemporaryFileName);
-					}
-				}
+				// throw e;
 			}
 
 			// next code will decide to throw an exception or not (we are in an error scenario) 
@@ -15156,6 +14990,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 		inputDrawTextDetailsRoot);	// , videoTracks, audioTracks);
 }
 
+// il metodo outputsRootToFfmpeg_clean pulisce eventuali directory/files creati da outputsRootToFfmpeg
 void FFMpeg::outputsRootToFfmpeg(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	bool externalEncoder,
@@ -15656,7 +15491,7 @@ void FFMpeg::outputsRootToFfmpeg(
 					fs::perm_options::replace);
 			}
 
-			if (externalEncoder)
+			if (externalEncoder && manifestDirectoryPath != "")
 				addToIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
 
 			// if (outputType == "HLS")
@@ -15773,6 +15608,91 @@ void FFMpeg::outputsRootToFfmpeg(
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
+		}
+	}
+}
+
+void FFMpeg::outputsRootToFfmpeg_clean(
+	int64_t ingestionJobKey, int64_t encodingJobKey,
+	Json::Value outputsRoot,
+	bool externalEncoder)
+{
+
+	for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+	{
+		Json::Value outputRoot = outputsRoot[outputIndex];
+
+		string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+
+		// if (outputType == "HLS" || outputType == "DASH")
+		if (outputType == "HLS_Channel")
+		{
+			string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+
+			if (externalEncoder && manifestDirectoryPath != "")
+				removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
+
+			if (manifestDirectoryPath != "")
+			{
+				if (fs::exists(manifestDirectoryPath))
+				{
+					try
+					{
+						_logger->info(__FILEREF__ + "removeDirectory"
+							+ ", manifestDirectoryPath: " + manifestDirectoryPath
+						);
+						fs::remove_all(manifestDirectoryPath);
+					}
+					catch(runtime_error& e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", outputIndex: " + to_string(outputIndex)
+							+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						throw e;
+					}
+					catch(exception& e)
+					{
+						string errorMessage = __FILEREF__ + "remove directory failed"
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", outputIndex: " + to_string(outputIndex)
+							+ ", manifestDirectoryPath: " + manifestDirectoryPath
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(errorMessage);
+
+						throw e;
+					}
+				}
+			}
+		}
+
+		if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
+		{
+			string textTemporaryFileName;
+			{
+				textTemporaryFileName =
+					_ffmpegTempDir + "/"
+					+ to_string(ingestionJobKey)
+					+ "_"
+					+ to_string(encodingJobKey)
+					+ "_"
+					+ to_string(outputIndex)
+					+ ".overlayText";
+			}
+
+			if (fs::exists(textTemporaryFileName))
+			{
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", textTemporaryFileName: " + textTemporaryFileName);
+				fs::remove_all(textTemporaryFileName);
+			}
 		}
 	}
 }
@@ -16524,80 +16444,31 @@ int videoBitRateInKbps = -1;
 			+ ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
 		);
 
-		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+		try
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			outputsRootToFfmpeg_clean(ingestionJobKey, encodingJobKey, outputsRoot, externalEncoder);
+		}
+		catch(runtime_error& e)
+		{
+			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+			// throw e;
+		}
+		catch(exception& e)
+		{
+			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			// if (outputType == "HLS" || outputType == "DASH")
-			if (outputType == "HLS_Channel")
-			{
-				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-
-				if (externalEncoder)
-					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
-
-				if (manifestDirectoryPath != "")
-				{
-					if (fs::exists(manifestDirectoryPath))
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "removeDirectory"
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-							);
-							fs::remove_all(manifestDirectoryPath);
-						}
-						catch(runtime_error& e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-						catch(exception& e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-					}
-				}
-			}
-
-			if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
-			{
-				string textTemporaryFileName;
-				{
-					textTemporaryFileName =
-						_ffmpegTempDir + "/"
-						+ to_string(ingestionJobKey)
-						+ "_"
-						+ to_string(encodingJobKey)
-						+ "_"
-						+ to_string(outputIndex)
-						+ ".overlayText";
-				}
-
-				if (fs::exists(textTemporaryFileName))
-				{
-					_logger->info(__FILEREF__ + "Remove"
-						+ ", textTemporaryFileName: " + textTemporaryFileName);
-					fs::remove_all(textTemporaryFileName);
-				}
-			}
+			// throw e;
 		}
     }
     catch(runtime_error& e)
@@ -16673,80 +16544,31 @@ int videoBitRateInKbps = -1;
         fs::remove_all(_outputFfmpegPathFileName, exceptionInCaseOfError);
 		*/
 
-		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+		try
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			outputsRootToFfmpeg_clean(ingestionJobKey, encodingJobKey, outputsRoot, externalEncoder);
+		}
+		catch(runtime_error& e)
+		{
+			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+			// throw e;
+		}
+		catch(exception& e)
+		{
+			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed"
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", e.what(): " + e.what()
+			;
+			_logger->error(errorMessage);
 
-			// if (outputType == "HLS" || outputType == "DASH")
-			if (outputType == "HLS_Channel")
-			{
-				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-
-				if (externalEncoder)
-					removeFromIncrontab(ingestionJobKey, encodingJobKey, manifestDirectoryPath);
-
-				if (manifestDirectoryPath != "")
-				{
-					if (fs::exists(manifestDirectoryPath))
-					{
-						try
-						{
-							_logger->info(__FILEREF__ + "removeDirectory"
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-							);
-							fs::remove_all(manifestDirectoryPath);
-						}
-						catch(runtime_error& e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-						catch(exception& e)
-						{
-							string errorMessage = __FILEREF__ + "remove directory failed"
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(encodingJobKey)
-								+ ", manifestDirectoryPath: " + manifestDirectoryPath
-								+ ", e.what(): " + e.what()
-							;
-							_logger->error(errorMessage);
-
-							// throw e;
-						}
-					}
-				}
-			}
-
-			if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
-			{
-				string textTemporaryFileName;
-				{
-					textTemporaryFileName =
-						_ffmpegTempDir + "/"
-						+ to_string(ingestionJobKey)
-						+ "_"
-						+ to_string(encodingJobKey)
-						+ "_"
-						+ to_string(outputIndex)
-						+ ".overlayText";
-				}
-
-				if (fs::exists(textTemporaryFileName))
-				{
-					_logger->info(__FILEREF__ + "Remove"
-						+ ", textTemporaryFileName: " + textTemporaryFileName);
-					fs::remove_all(textTemporaryFileName);
-				}
-			}
+			// throw e;
 		}
 
 		if (iReturnedStatus == 9)	// 9 means: SIGKILL

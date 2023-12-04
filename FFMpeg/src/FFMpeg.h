@@ -708,6 +708,10 @@ private:
 		long streamingDurationInSeconds,
 		Json::Value outputsRoot,
 		vector<string>& ffmpegOutputArgumentList);
+	void outputsRootToFfmpeg_clean(
+		int64_t ingestionJobKey, int64_t encodingJobKey,
+		Json::Value outputsRoot,
+		bool externalEncoder);
 
     string getLastPartOfFile(
         string pathFileName, int lastCharsToBeRead);
