@@ -15242,6 +15242,20 @@ void FFMpeg::outputsRootToFfmpeg(
 			}
 		}
 
+		// se abbiamo overlay, necessariamente serve un profilo di encoding
+		if (ffmpegDrawTextFilter != "" && encodingProfileDetailsRoot == Json::nullValue)
+		{
+			string errorMessage = fmt::format("text-overlay requires an encoding profile"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", outputIndex: {}",
+				ingestionJobKey, encodingJobKey, outputIndex
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		tuple<string, string, string> allFilters = addFilters(
 			filtersRoot, ffmpegVideoResolutionParameter,
 			ffmpegDrawTextFilter, streamingDurationInSeconds);
@@ -15365,14 +15379,6 @@ void FFMpeg::outputsRootToFfmpeg(
 			ffmpegOutputArgumentList.push_back("0");
 		}
 
-		// map output
-		if (otherOutputOptions.find("-map") == string::npos
-			&& otherOutputOptionsBecauseOfMaxWidth != "")
-			FFMpegEncodingParameters::addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
-				ffmpegOutputArgumentList);
-		else
-			FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
-
 		// output file
 		if (
 			outputType == "CDN_AWS"
@@ -15391,6 +15397,16 @@ void FFMpeg::outputsRootToFfmpeg(
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
+			}
+
+			// otherOutputOptions
+			{
+				if (otherOutputOptions.find("-map") == string::npos
+					&& otherOutputOptionsBecauseOfMaxWidth != "")
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
+						ffmpegOutputArgumentList);
+				else
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
 			}
 
 			// 2023-01-14
@@ -15548,6 +15564,22 @@ void FFMpeg::outputsRootToFfmpeg(
 				ffmpegOutputArgumentList.push_back("chunk-stream$RepresentationID$-$Number%01d$.$ext$");
 			}
 			*/
+
+			// otherOutputOptions
+			// 2023-12-06: ho dovuto spostare otherOutputOptions qui perchè, nel caso del monitorHLS del LiveRecording,
+			// viene aggiunto "-hls_flags program_date_time", per avere #EXT-X-PROGRAM-DATE-TIME: nell'm3u8 e,
+			// se aggiunto prima, non funziona (EXT-X-PROGRAM-DATE-TIME non viene aggiunto nell'm3u8).
+			// EXT-X-PROGRAM-DATE-TIME è importante per avere i campi utcEndTimeInMilliSecs e utcStartTimeInMilliSecs
+			// inizializzati correttamente nello userData del media item virtual VOD generato
+			{
+				if (otherOutputOptions.find("-map") == string::npos
+					&& otherOutputOptionsBecauseOfMaxWidth != "")
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
+						ffmpegOutputArgumentList);
+				else
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
+			}
+
 			ffmpegOutputArgumentList.push_back("-f");
 			ffmpegOutputArgumentList.push_back("hls");
 			ffmpegOutputArgumentList.push_back(manifestFilePathName);
@@ -15568,12 +15600,32 @@ void FFMpeg::outputsRootToFfmpeg(
 				throw runtime_error(errorMessage);
 			}
 
+			// otherOutputOptions
+			{
+				if (otherOutputOptions.find("-map") == string::npos
+					&& otherOutputOptionsBecauseOfMaxWidth != "")
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
+						ffmpegOutputArgumentList);
+				else
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
+			}
+
 			ffmpegOutputArgumentList.push_back("-f");
 			ffmpegOutputArgumentList.push_back("mpegts");
 			ffmpegOutputArgumentList.push_back(udpUrl);
 		}
 		else if (outputType == "NONE")
 		{
+			// otherOutputOptions
+			{
+				if (otherOutputOptions.find("-map") == string::npos
+					&& otherOutputOptionsBecauseOfMaxWidth != "")
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions + otherOutputOptionsBecauseOfMaxWidth,
+						ffmpegOutputArgumentList);
+				else
+					FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
+			}
+
 			tuple<string, string, string> allFilters = addFilters(
 				filtersRoot, "", "", -1);
 
