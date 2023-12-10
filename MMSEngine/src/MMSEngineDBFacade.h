@@ -2244,6 +2244,8 @@ public:
     string getTwitchUserAccessTokenByConfigurationLabel(
         int64_t workspaceKey, string twitchConfigurationLabel);
 
+    Json::Value getCostsConfList (int64_t workspaceKey);
+
     int64_t addTiktokConf(
         int64_t workspaceKey,
         string label,

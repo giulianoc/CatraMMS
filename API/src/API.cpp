@@ -1959,6 +1959,11 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         twitchConfList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
+    else if (method == "costsConfList")
+    {
+        costsConfList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
     else if (method == "addStream")
     {
         if (!admin && !editConfiguration)

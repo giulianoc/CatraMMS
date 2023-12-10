@@ -626,6 +626,11 @@ shared_ptr<spdlog::logger>	_logger;
         FCGX_Request& request,
         shared_ptr<Workspace> workspace, unordered_map<string, string> queryParameters);
 
+	void costsConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+		FCGX_Request& request,
+		shared_ptr<Workspace> workspace, unordered_map<string, string> queryParameters);
+
     void addTiktokConf(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,

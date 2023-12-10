@@ -2212,6 +2212,193 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(
     return twitchRefreshToken;
 }
 
+Json::Value MMSEngineDBFacade::getCostsConfList (
+	int64_t workspaceKey
+)
+{
+	string      lastSQLCommand;
+	Json::Value costsConfListRoot;
+
+	shared_ptr<MySQLConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<MySQLConnection>> connectionPool = _slaveConnectionPool;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getCostsConfList"
+            + ", workspaceKey: " + to_string(workspaceKey)
+        );
+        
+        conn = connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+			{
+				field = "workspaceKey";
+				requestParametersRoot[field] = workspaceKey;
+			}
+
+            field = "requestParameters";
+            costConfListRoot[field] = requestParametersRoot;
+        }
+        
+		string sqlWhere = string ("where workspaceKey = ? ");
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_Conf_Cost ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            if (!resultSet->next())
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            field = "numFound";
+            responseRoot[field] = resultSet->getInt64(1);
+        }
+
+        Json::Value costsRoot(Json::arrayValue);
+        {                    
+            lastSQLCommand =
+                string ("select confKey, type, quantity, ")
+				+ "DATE_FORMAT(convert_tz(orderTimestamp, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as orderTimestamp, "
+				+ "DATE_FORMAT(convert_tz(expiration, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expiration "
+                + "from MMS_Conf_Cost "
+                + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+			_logger->info(__FILEREF__ + "@SQL statistics@"
+				+ ", lastSQLCommand: " + lastSQLCommand
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
+				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
+					chrono::system_clock::now() - startSql).count()) + "@"
+			);
+            while (resultSet->next())
+            {
+                Json::Value costConfRoot;
+
+                field = "confKey";
+                costConfRoot[field] = resultSet->getInt64("confKey");
+
+                field = "type";
+                costConfRoot[field] = static_cast<string>(resultSet->getString("type"));
+
+                field = "quantity";
+                costConfRoot[field] = resultSet->getInt("quantity");
+
+				field = "orderTimestamp";
+				costConfRoot[field] = static_cast<string>(resultSet->getString("orderTimestamp"));
+
+				field = "expiration";
+				costConfRoot[field] = static_cast<string>(resultSet->getString("expiration"));
+
+                costsRoot.append(costConfRoot);
+            }
+        }
+
+        field = "costsConf";
+        responseRoot[field] = costsRoot;
+
+        field = "response";
+        costConfListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+    catch(sql::SQLException& se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw se;
+    }    
+    catch(runtime_error& e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    catch(exception& e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            connectionPool->unborrow(conn);
+			conn = nullptr;
+        }
+
+        throw e;
+    } 
+    
+    return costsConfListRoot;
+}
+
 int64_t MMSEngineDBFacade::addTiktokConf(
     int64_t workspaceKey,
     string label,

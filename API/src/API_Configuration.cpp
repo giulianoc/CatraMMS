@@ -1421,6 +1421,59 @@ void API::twitchConfList(
     }
 }
 
+void API::costsConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters)
+{
+    string api = "costsConfList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        {
+			Json::Value costsConfListRoot = _mmsEngineDBFacade->getCostsConfList(
+				workspace->_workspaceKey);
+
+			string responseBody = JSONUtils::toString(costsConfListRoot);
+
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
+        }
+    }
+    catch(runtime_error& e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception& e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
 void API::addTiktokConf(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,

@@ -2303,6 +2303,30 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		{
+			string sqlStatement = 
+				"create table if not exists MMS_Conf_Cost ("
+					"confKey				bigint GENERATED ALWAYS AS IDENTITY,"
+					"workspaceKey			bigint not null,"
+					"type					text NOT NULL,"
+					"quantity				smallint NOT NULL,"
+					"orderTimestamp			timestamp without time zone not null,"
+					"expiration				timestamp without time zone not null,"
+					"constraint MMS_Conf_Cost_PK PRIMARY KEY (confKey), "
+					"constraint MMS_Conf_Cost_FK foreign key (workspaceKey) "
+						"references MMS_Workspace (workspaceKey) on delete cascade) "
+			;
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
 		trans.commit();
         connectionPool->unborrow(conn);
 		conn = nullptr;
