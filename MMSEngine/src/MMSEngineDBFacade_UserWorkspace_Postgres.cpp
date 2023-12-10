@@ -4912,7 +4912,10 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("creditCard_cardNumber = {}", trans.quote(creditCard_cardNumber));
+				if (creditCard_cardNumber == "")
+					setSQL += "creditCard_cardNumber = null";
+				else
+					setSQL += fmt::format("creditCard_cardNumber = {}", trans.quote(creditCard_cardNumber));
 				oneParameterPresent = true;
 			}
 
@@ -4920,7 +4923,10 @@ Json::Value MMSEngineDBFacade::updateUser (
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("creditCard_nameOnCard = {}", trans.quote(creditCard_nameOnCard));
+				if (creditCard_nameOnCard == "")
+					setSQL += "creditCard_nameOnCard = null";
+				else
+					setSQL += fmt::format("creditCard_nameOnCard = {}", trans.quote(creditCard_nameOnCard));
 				oneParameterPresent = true;
 			}
 
@@ -4946,7 +4952,10 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("creditCard_expiryDate = {}", trans.quote(creditCard_expiryDate));
+				if (creditCard_expiryDate == "")
+					setSQL += "creditCard_nameOnCard = null";
+				else
+					setSQL += fmt::format("creditCard_expiryDate = {}", trans.quote(creditCard_nameOnCard));
 				oneParameterPresent = true;
 			}
 
@@ -4975,7 +4984,10 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("creditCard_securityCode = {}", trans.quote(creditCard_securityCode));
+				if (creditCard_securityCode == "")
+					setSQL += "creditCard_securityCode = null";
+				else
+					setSQL += fmt::format("creditCard_securityCode = {}", trans.quote(creditCard_securityCode));
 				oneParameterPresent = true;
 			}
 

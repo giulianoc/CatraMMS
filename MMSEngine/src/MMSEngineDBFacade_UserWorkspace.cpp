@@ -5746,13 +5746,33 @@ Json::Value MMSEngineDBFacade::updateUser (
 			if (admin && expirationDateChanged)
 				preparedStatement->setString(queryParameterIndex++, expirationDate);
 			if (creditCard_cardNumberChanged)
-				preparedStatement->setString(queryParameterIndex++, creditCard_cardNumberChanged);
+			{
+				if (creditCard_cardNumber == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, creditCard_cardNumber);
+			}
 			if (creditCard_nameOnCardChanged)
-				preparedStatement->setString(queryParameterIndex++, creditCard_nameOnCardChanged);
+			{
+				if (creditCard_nameOnCard == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, creditCard_nameOnCard);
+			}
 			if (creditCard_expiryDateChanged)
-				preparedStatement->setString(queryParameterIndex++, creditCard_expiryDateChanged);
-			if (creditCard_securityCode)
-				preparedStatement->setString(queryParameterIndex++, creditCard_securityCode);
+			{
+				if (creditCard_expiryDate == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, creditCard_expiryDate);
+			}
+			if (creditCard_securityCodeChanged)
+			{
+				if (creditCard_securityCode == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, creditCard_securityCode);
+			}
 			preparedStatement->setInt64(queryParameterIndex++, userKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
