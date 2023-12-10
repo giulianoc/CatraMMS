@@ -4953,9 +4953,9 @@ Json::Value MMSEngineDBFacade::updateUser (
 				if (oneParameterPresent)
 					setSQL += (", ");
 				if (creditCard_expiryDate == "")
-					setSQL += "creditCard_nameOnCard = null";
+					setSQL += "creditCard_expiryDate = null";
 				else
-					setSQL += fmt::format("creditCard_expiryDate = {}", trans.quote(creditCard_nameOnCard));
+					setSQL += fmt::format("creditCard_expiryDate = {}", trans.quote(creditCard_expiryDate));
 				oneParameterPresent = true;
 			}
 
