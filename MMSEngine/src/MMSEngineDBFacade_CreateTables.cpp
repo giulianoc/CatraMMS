@@ -381,6 +381,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "creationDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "expirationDate			DATETIME NOT NULL,"
                     "lastSuccessfulLogin	DATETIME NULL,"
+                    "creditCard_cardNumber	VARCHAR (16) NULL,"
+                    "creditCard_nameOnCard	VARCHAR (128) NULL,"
+                    "creditCard_expiryDate	VARCHAR (7) NULL,"
+                    "creditCard_securityCode	VARCHAR (3) NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "
                     "UNIQUE KEY emailAddress (eMailAddress))"
                     "ENGINE=InnoDB";

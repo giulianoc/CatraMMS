@@ -3471,7 +3471,8 @@ Json::Value MMSEngineDBFacade::login (
 				lastSQLCommand = 
 					"select userKey, name, country, "
 					"DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
-					"DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
+					"DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
+					"creditCard_cardNumber, creditCard_nameOnCard, creditCard_expiryDate, creditCard_securityCode "
 					"from MMS_User where eMailAddress = ? and password = ? and expirationDate > NOW()";
 				shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 				int queryParameterIndex = 1;
@@ -3509,6 +3510,30 @@ Json::Value MMSEngineDBFacade::login (
 
 					field = "expirationDate";
 					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
+
+					field = "creditCard_cardNumber";
+					if (resultSet->isNull("creditCard_cardNumber"))
+						loginDetailsRoot[field] = Json::nullValue;
+					else
+						loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creditCard_cardNumber"));
+
+					field = "creditCard_nameOnCard";
+					if (resultSet->isNull("creditCard_nameOnCard"))
+						loginDetailsRoot[field] = Json::nullValue;
+					else
+						loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creditCard_nameOnCard"));
+                
+					field = "creditCard_expiryDate";
+					if (resultSet->isNull("creditCard_expiryDate"))
+						loginDetailsRoot[field] = Json::nullValue;
+					else
+						loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creditCard_expiryDate"));
+                
+					field = "creditCard_securityCode";
+					if (resultSet->isNull("creditCard_securityCode"))
+						loginDetailsRoot[field] = Json::nullValue;
+					else
+						loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creditCard_securityCode"));
 
 					/*
 					{
@@ -5491,7 +5516,11 @@ Json::Value MMSEngineDBFacade::updateUser (
         bool emailChanged, string email, 
         bool countryChanged, string country,
         bool expirationDateChanged, string expirationDate,
-		bool passwordChanged, string newPassword, string oldPassword)
+		bool passwordChanged, string newPassword, string oldPassword,
+		bool creditCard_cardNumberChanged, string creditCard_cardNumber,
+		bool creditCard_nameOnCardChanged, string creditCard_nameOnCard,
+		bool creditCard_expiryDateChanged, string creditCard_expiryDate,
+		bool creditCard_securityCodeChanged, string creditCard_securityCode);
 {
     Json::Value     loginDetailsRoot;
     string          lastSQLCommand;
@@ -5602,6 +5631,104 @@ Json::Value MMSEngineDBFacade::updateUser (
 				oneParameterPresent = true;
 			}
 
+			if (creditCard_cardNumberChanged)
+			{
+				if (creditCard_cardNumber != "")
+				{
+					if (creditCard_cardNumber.size() != 16)
+					{
+						string errorMessage = fmt::format(
+							"Wrong card number format: {}", creditCard_cardNumber);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					for(char card: creditCard_cardNumber)
+					{
+						if (!isdigit(card))
+						{
+							string errorMessage = fmt::format(
+								"Wrong card number format: {}", creditCard_cardNumber);
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+				}
+
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("creditCard_cardNumber = ?");
+				oneParameterPresent = true;
+			}
+
+			if (creditCard_nameOnCardChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("creditCard_nameOnCard = ?");
+				oneParameterPresent = true;
+			}
+
+			if (creditCard_expiryDateChanged)
+			{
+				// yyyy-MM
+				if (creditCard_expiryDate.size() != 7
+					|| !isdigit(creditCard_expiryDate[0])
+					|| !isdigit(creditCard_expiryDate[1])
+					|| !isdigit(creditCard_expiryDate[2])
+					|| !isdigit(creditCard_expiryDate[3])
+					|| creditCard_expiryDate[4] != '-'
+					|| !isdigit(creditCard_expiryDate[5])
+					|| !isdigit(creditCard_expiryDate[6])
+				)
+				{
+					string errorMessage = fmt::format(
+						"Wrong card expiry date format: {}", creditCard_expiryDate);
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("creditCard_expiryDate = ?");
+				oneParameterPresent = true;
+			}
+
+			if (creditCard_securityCode)
+			{
+				if (creditCard_securityCode != "")
+				{
+					if (creditCard_securityCode.size() != 3)
+					{
+						string errorMessage = fmt::format(
+							"Wrong card security code format: {}", creditCard_securityCode);
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					for(char card: creditCard_securityCode)
+					{
+						if (!isdigit(card))
+						{
+							string errorMessage = fmt::format(
+								"Wrong card security code format: {}", creditCard_securityCode);
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+				}
+
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("creditCard_securityCode = ?");
+				oneParameterPresent = true;
+			}
+
 			lastSQLCommand = 
 				string("update MMS_User ") + setSQL + " "
 				"where userKey = ?";
@@ -5618,6 +5745,14 @@ Json::Value MMSEngineDBFacade::updateUser (
 				preparedStatement->setString(queryParameterIndex++, country);
 			if (admin && expirationDateChanged)
 				preparedStatement->setString(queryParameterIndex++, expirationDate);
+			if (creditCard_cardNumberChanged)
+				preparedStatement->setString(queryParameterIndex++, creditCard_cardNumberChanged);
+			if (creditCard_nameOnCardChanged)
+				preparedStatement->setString(queryParameterIndex++, creditCard_nameOnCardChanged);
+			if (creditCard_expiryDateChanged)
+				preparedStatement->setString(queryParameterIndex++, creditCard_expiryDateChanged);
+			if (creditCard_securityCode)
+				preparedStatement->setString(queryParameterIndex++, creditCard_securityCode);
 			preparedStatement->setInt64(queryParameterIndex++, userKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -5656,7 +5791,8 @@ Json::Value MMSEngineDBFacade::updateUser (
             lastSQLCommand = 
                 "select DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
                 "DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
-				"userKey, name, eMailAddress, country "
+				"userKey, name, eMailAddress, country, "
+				"creditCard_cardNumber, creditCard_nameOnCard, creditCard_expiryDate, creditCard_securityCode "
                 "from MMS_User where userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -5700,6 +5836,30 @@ Json::Value MMSEngineDBFacade::updateUser (
                 
 				field = "ldapEnabled";
 				loginDetailsRoot[field] = ldapEnabled;
+
+				field = "creditCard_cardNumber";
+				if (resultSet->isNull("creditCard_cardNumber"))
+					loginDetailsRoot[field] = Json::nullValue;
+				else
+					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creditCard_cardNumber"));
+
+				field = "creditCard_nameOnCard";
+				if (resultSet->isNull("creditCard_nameOnCard"))
+					loginDetailsRoot[field] = Json::nullValue;
+				else
+					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creditCard_nameOnCard"));
+               
+				field = "creditCard_expiryDate";
+				if (resultSet->isNull("creditCard_expiryDate"))
+					loginDetailsRoot[field] = Json::nullValue;
+				else
+					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creditCard_expiryDate"));
+               
+				field = "creditCard_securityCode";
+				if (resultSet->isNull("creditCard_securityCode"))
+					loginDetailsRoot[field] = Json::nullValue;
+				else
+					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creditCard_securityCode"));
             }
             else
             {

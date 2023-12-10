@@ -2056,6 +2056,14 @@ void API::updateUser(
 		bool passwordChanged;
         string newPassword;
         string oldPassword;
+		string creditCard_cardNumber;
+		bool creditCard_cardNumberChanged;
+		string creditCard_nameOnCard;
+		bool creditCard_nameOnCardChanged;
+		string creditCard_expiryDate;
+		bool creditCard_expiryDateChanged;
+		string creditCard_securityCode;
+		bool creditCard_securityCodeChanged;
 
         Json::Value metadataRoot;
         try
@@ -2079,6 +2087,10 @@ void API::updateUser(
 		countryChanged = false;
 		expirationDateChanged = false;
 		passwordChanged = false;
+		creditCard_cardNumberChanged = false;
+		creditCard_nameOnCardChanged = false;
+		creditCard_expiryDateChanged = false;
+		creditCard_securityCodeChanged = false;
 		if(!_ldapEnabled)
         {
 			string field = "name";
@@ -2119,6 +2131,35 @@ void API::updateUser(
 				newPassword = JSONUtils::asString(metadataRoot, "newPassword", "");
 				oldPassword = JSONUtils::asString(metadataRoot, "oldPassword", "");
 			}
+
+			field = "creditCard_cardNumber";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				creditCard_cardNumber = JSONUtils::asString(metadataRoot, field, "");
+				creditCard_cardNumberChanged = true;
+			}
+
+			field = "creditCard_nameOnCard";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				creditCard_nameOnCard = JSONUtils::asString(metadataRoot, field, "");
+				creditCard_nameOnCardChanged = true;
+			}
+
+			field = "creditCard_expiryDate";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				creditCard_expiryDate = JSONUtils::asString(metadataRoot, field, "");
+				creditCard_expiryDateChanged = true;
+			}
+
+			field = "creditCard_securityCode";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				creditCard_securityCode = JSONUtils::asString(metadataRoot, field, "");
+				creditCard_securityCodeChanged = true;
+			}
+
         }
 		else
         {
@@ -2146,7 +2187,11 @@ void API::updateUser(
 				emailChanged, email,
 				countryChanged, country,
 				expirationDateChanged, expirationUtcDate,
-				passwordChanged, newPassword, oldPassword);
+				passwordChanged, newPassword, oldPassword,
+				creditCard_cardNumberChanged, creditCard_cardNumber,
+				creditCard_nameOnCardChanged, creditCard_nameOnCard,
+				creditCard_expiryDateChanged, creditCard_expiryDate,
+				creditCard_securityCodeChanged, creditCard_securityCode);
 
             _logger->info(__FILEREF__ + "User updated"
                 + ", userKey: " + to_string(userKey)
