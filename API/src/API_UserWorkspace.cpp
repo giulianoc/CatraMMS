@@ -106,6 +106,7 @@ void API::registerUser(
 			MMSEngineDBFacade::EncodingPeriod encodingPeriod;
 			int maxIngestionsNumber;
 			int maxStorageInMB;
+			int dedicatedEncoders;
 
             string workspaceName = JSONUtils::asString(metadataRoot, "workspaceName", "");
 			if (workspaceName == "")
@@ -122,6 +123,7 @@ void API::registerUser(
 			maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
 
 			maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
+			dedicatedEncoders = 0;
 
 			try
 			{
@@ -144,6 +146,7 @@ void API::registerUser(
 						encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
 						maxIngestionsNumber,            // long maxIngestionsNumber,
 						maxStorageInMB,                 // long maxStorageInMB,
+						dedicatedEncoders,
 						"",                             // string languageCode,
 						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
 					);
@@ -455,6 +458,7 @@ void API::createWorkspace(
         MMSEngineDBFacade::EncodingPeriod encodingPeriod;
         int maxIngestionsNumber;
         int maxStorageInMB;
+		int dedicatedEncoders;
 
 
         auto workspaceNameIt = queryParameters.find("workspaceName");
@@ -482,6 +486,7 @@ void API::createWorkspace(
         maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
 
         maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
+		dedicatedEncoders = 0;
 
 		int64_t workspaceKey;
 		string confirmationCode;
@@ -501,6 +506,7 @@ void API::createWorkspace(
 					encodingPeriod,
 					maxIngestionsNumber,
 					maxStorageInMB,
+					dedicatedEncoders,
 					"",						// string languageCode,
 					admin,
 					chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
@@ -2621,6 +2627,7 @@ void API::updateWorkspace(
         string newEncodingPeriod; bool encodingPeriodChanged = false;
         int64_t newMaxIngestionsNumber; bool maxIngestionsNumberChanged = false;
         int64_t newMaxStorageInMB; bool maxStorageInMBChanged = false;
+        int64_t newDedicatedEncoders; bool dedicatedEncodersChanged = false;
         string newLanguageCode; bool languageCodeChanged = false;
         string newExpirationUtcDate; bool expirationDateChanged = false;
         bool newCreateRemoveWorkspace;
@@ -2692,6 +2699,13 @@ void API::updateWorkspace(
 		{
 			maxStorageInMBChanged = true;
 			newMaxStorageInMB = JSONUtils::asInt64(metadataRoot, field, 0);
+		}
+
+		field = "dedicatedEncoders";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			dedicatedEncodersChanged = true;
+			newDedicatedEncoders = JSONUtils::asInt64(metadataRoot, field, 0);
 		}
 
 		field = "languageCode";
@@ -2793,6 +2807,7 @@ void API::updateWorkspace(
 				encodingPeriodChanged, newEncodingPeriod,
 				maxIngestionsNumberChanged, newMaxIngestionsNumber,
 				maxStorageInMBChanged, newMaxStorageInMB,
+				dedicatedEncodersChanged, newDedicatedEncoders,
 				languageCodeChanged, newLanguageCode,
 				expirationDateChanged, newExpirationUtcDate,
 				newCreateRemoveWorkspace,

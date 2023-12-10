@@ -1186,6 +1186,7 @@ public:
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
+        long dedicatedEncoders,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
     
@@ -1206,6 +1207,7 @@ public:
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
+        long dedicatedEncoders,
         string languageCode,
 		bool admin,
         chrono::system_clock::time_point userExpirationDate);
@@ -1261,6 +1263,7 @@ public:
 		bool encodingPeriodChanged, string newEncodingPeriod,
 		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber,
 		bool maxStorageInMBChanged, int64_t newMaxStorageInMB,
+		bool dedicatedEncodersChanged, int64_t newDedicatedEncoders,
 		bool languageCodeChanged, string newLanguageCode,
 		bool expirationDateChanged, string newExpirationDate,
 		bool newCreateRemoveWorkspace,
@@ -2244,8 +2247,6 @@ public:
     string getTwitchUserAccessTokenByConfigurationLabel(
         int64_t workspaceKey, string twitchConfigurationLabel);
 
-    Json::Value getCostsConfList (int64_t workspaceKey);
-
     int64_t addTiktokConf(
         int64_t workspaceKey,
         string label,
@@ -3023,6 +3024,7 @@ private:
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
+        long dedicatedEncoders,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
 	#else
@@ -3048,6 +3050,7 @@ private:
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
+        long dedicatedEncoders,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
 	#endif

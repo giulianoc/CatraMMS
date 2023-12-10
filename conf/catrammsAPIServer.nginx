@@ -310,20 +310,6 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/?$ /api?version=$1&method=hlsChannelConfList last;
 		}
 
-#costs
-#		if ($request_method = POST) {
-#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/?$ /api?version=$1&method=addTwitchConf last;
-#		}
-#		if ($request_method = PUT) {
-#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/([0-9]+)/?$ /api?version=$1&method=modifyTwitchConf&confKey=$2 last;
-#		}
-#		if ($request_method = DELETE) {
-#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/([0-9]+)/?$ /api?version=$1&method=removeTwitchConf&confKey=$2 last;
-#		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/costs/?$ /api?version=$1&method=costsConfList last;
-		}
-
 #RequestStatistics
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/?$ /api?version=$1&method=addRequestStatistic last;

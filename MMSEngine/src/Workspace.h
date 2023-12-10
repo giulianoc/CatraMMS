@@ -11,13 +11,14 @@ struct Workspace
 {
     using TerritoriesHashMap = unordered_map<long,string>;
 
-    long long               _workspaceKey;
-    string                  _name;
-    string                  _directoryName;
-    unsigned long           _maxStorageInMB;
-    int                     _maxEncodingPriority;
+    long long				_workspaceKey;
+    string					_name;
+    string					_directoryName;
+    unsigned long			_maxStorageInMB;
+    unsigned long			_dedicatedEncoders;
+    int						_maxEncodingPriority;
 
-    TerritoriesHashMap      _territories;
+    TerritoriesHashMap		_territories;
 };
 
 #endif

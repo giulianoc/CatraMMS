@@ -331,7 +331,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "maxEncodingPriority            VARCHAR (32) NOT NULL,"
                     "encodingPeriod                 VARCHAR (64) NOT NULL,"
                     "maxIngestionsNumber            INT NOT NULL,"
-                    "maxStorageInMB                 INT UNSIGNED NOT NULL,"
+					"maxStorageInMB					INT UNSIGNED NOT NULL,"
+					"dedicatedEncoders				INT UNSIGNED NOT NULL default 0,"
                     "languageCode                   VARCHAR (16) NOT NULL,"
                     "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) "
                     "ENGINE=InnoDB";
