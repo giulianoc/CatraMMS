@@ -21,11 +21,11 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
     try
     {
 		string sqlStatement = fmt::format(
-			"select w.workspaceKey, w.name, w.directoryName, w.maxStorageInMB, w.maxEncodingPriority "
+			"select w.workspaceKey, w.name, w.directoryName, w.maxStorageInMB, w.maxEncodingPriority, "
 			"wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
-			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
+			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3 "
 			"from MMS_Workspace w, MMS_WorkspaceCost wc "
 			"where w.workspaceKey = wc.workspaceKey and w.workspaceKey = {}",
 			workspaceKey);
