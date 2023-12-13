@@ -178,7 +178,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
 				"create table if not exists MMS_WorkspaceCost ("
-					"workspaceKey			bigint GENERATED ALWAYS AS IDENTITY,"
+                    "workspaceKey  			bigint NOT NULL,"
 					"maxStorageInGB			integer NOT NULL,"
 					"currentCostForStorage	integer not null default 0,"
 					"dedicatedEncoder_power_1	integer not null default 0,"
@@ -187,7 +187,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"currentCostForDedicatedEncoder_power_2	integer not null default 0,"
 					"dedicatedEncoder_power_3	integer not null default 0,"
 					"currentCostForDedicatedEncoder_power_3	integer not null default 0,"
-					"constraint MMS_WorkspaceCost_PK PRIMARY KEY (workspaceKey)) ";
+					"constraint MMS_WorkspaceCost_PK PRIMARY KEY (workspaceKey), "
+                    "constraint MMS_WorkspaceCost_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
