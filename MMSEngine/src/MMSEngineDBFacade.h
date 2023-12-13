@@ -1161,7 +1161,7 @@ public:
 
     shared_ptr<Workspace> getWorkspace(string workspaceName);
 
-	Json::Value getWorkspaceList(int64_t userKey, bool admin);
+	Json::Value getWorkspaceList(int64_t userKey, bool admin, bool costDetails);
 
 	Json::Value getLoginWorkspace(int64_t userKey, bool fromMaster);
 
@@ -1186,7 +1186,6 @@ public:
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
-        long dedicatedEncoders,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
     
@@ -1207,7 +1206,6 @@ public:
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
-        long dedicatedEncoders,
         string languageCode,
 		bool admin,
         chrono::system_clock::time_point userExpirationDate);
@@ -1254,6 +1252,15 @@ public:
     pair<int64_t,int64_t> getWorkspaceUsage(
         int64_t workspaceKey);
 
+	#ifdef __POSTGRES__
+	Json::Value getWorkspaceCost(
+		shared_ptr<PostgresConnection> conn,
+		nontransaction& trans,
+		int64_t workspaceKey);
+	#else
+	#endif
+
+	#ifdef __POSTGRES__
 	Json::Value updateWorkspaceDetails (
 		int64_t userKey,
 		int64_t workspaceKey,
@@ -1277,6 +1284,30 @@ public:
 		bool newCancelIngestionJob,
 		bool newEditEncodersPool,
 		bool newApplicationRecorder);
+	#else
+	Json::Value updateWorkspaceDetails (
+		int64_t userKey,
+		int64_t workspaceKey,
+		bool enabledChanged, bool newEnabled,
+		bool nameChanged, string newName,
+		bool maxEncodingPriorityChanged, string newMaxEncodingPriority,
+		bool encodingPeriodChanged, string newEncodingPeriod,
+		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber,
+		bool maxStorageInMBChanged, int64_t newMaxStorageInMB,
+		bool languageCodeChanged, string newLanguageCode,
+		bool expirationDateChanged, string newExpirationDate,
+		bool newCreateRemoveWorkspace,
+		bool newIngestWorkflow,
+		bool newCreateProfiles,
+		bool newDeliveryAuthorization,
+		bool newShareWorkspace,
+		bool newEditMedia,
+		bool newEditConfiguration,
+		bool newKillEncoding,
+		bool newCancelIngestionJob,
+		bool newEditEncodersPool,
+		bool newApplicationRecorder);
+	#endif
 
 	Json::Value setWorkspaceAsDefault (
 		int64_t userKey,
@@ -3000,8 +3031,7 @@ private:
         string processorMMS = "noToBeUpdated");
 	#endif
 
-	#ifdef __POSTGRES__
-    pair<int64_t,string> addWorkspace(
+	pair<int64_t,string> addWorkspace(
         shared_ptr<PostgresConnection> conn,
 		work& trans,
         int64_t userKey,
@@ -3024,36 +3054,8 @@ private:
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
-        long dedicatedEncoders,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
-	#else
-    pair<int64_t,string> addWorkspace(
-        shared_ptr<MySQLConnection> conn,
-        int64_t userKey,
-        bool admin,
-		bool createRemoveWorkspace,
-        bool ingestWorkflow,
-        bool createProfiles,
-        bool deliveryAuthorization,
-        bool shareWorkspace,
-        bool editMedia,
-		bool editConfiguration,
-		bool killEncoding,
-		bool cancelIngestionJob,
-		bool editEncodersPool,
-		bool applicationRecorder,
-        string workspaceName,
-        WorkspaceType workspaceType,
-        string deliveryURL,
-        EncodingPriority maxEncodingPriority,
-        EncodingPeriod encodingPeriod,
-        long maxIngestionsNumber,
-        long maxStorageInMB,
-        long dedicatedEncoders,
-        string languageCode,
-        chrono::system_clock::time_point userExpirationDate);
-	#endif
 
 	#ifdef __POSTGRES__
 	void manageExternalUniqueName(
@@ -3214,7 +3216,7 @@ private:
 		shared_ptr<PostgresConnection> conn,
 		nontransaction& trans,
 		row& row,
-		bool userAPIKeyInfo);
+		bool userAPIKeyInfo, bool costDetails);
 	#else
 	Json::Value getWorkspaceDetailsRoot (
 		shared_ptr<MySQLConnection> conn,

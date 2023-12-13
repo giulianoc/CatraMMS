@@ -106,7 +106,6 @@ void API::registerUser(
 			MMSEngineDBFacade::EncodingPeriod encodingPeriod;
 			int maxIngestionsNumber;
 			int maxStorageInMB;
-			int dedicatedEncoders;
 
             string workspaceName = JSONUtils::asString(metadataRoot, "workspaceName", "");
 			if (workspaceName == "")
@@ -123,7 +122,6 @@ void API::registerUser(
 			maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
 
 			maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
-			dedicatedEncoders = 0;
 
 			try
 			{
@@ -133,6 +131,7 @@ void API::registerUser(
 					+ ", email: " + email
 				);
 
+				#ifdef __POSTGRES__
 				tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode
 					= _mmsEngineDBFacade->registerUserAndAddWorkspace(
 						name, 
@@ -146,10 +145,27 @@ void API::registerUser(
 						encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
 						maxIngestionsNumber,            // long maxIngestionsNumber,
 						maxStorageInMB,                 // long maxStorageInMB,
-						dedicatedEncoders,
 						"",                             // string languageCode,
 						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
 					);
+				#else
+				tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode
+					= _mmsEngineDBFacade->registerUserAndAddWorkspace(
+						name, 
+						email, 
+						password,
+						country, 
+						workspaceName,
+						MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
+						"",                             // string deliveryURL,
+						encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+						encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
+						maxIngestionsNumber,            // long maxIngestionsNumber,
+						maxStorageInMB,                 // long maxStorageInMB,
+						"",                             // string languageCode,
+						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
+					);
+				#endif
 
 				workspaceKey = get<0>(workspaceKeyUserKeyAndConfirmationCode);
 				userKey = get<1>(workspaceKeyUserKeyAndConfirmationCode);
@@ -458,7 +474,6 @@ void API::createWorkspace(
         MMSEngineDBFacade::EncodingPeriod encodingPeriod;
         int maxIngestionsNumber;
         int maxStorageInMB;
-		int dedicatedEncoders;
 
 
         auto workspaceNameIt = queryParameters.find("workspaceName");
@@ -486,7 +501,6 @@ void API::createWorkspace(
         maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
 
         maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
-		dedicatedEncoders = 0;
 
 		int64_t workspaceKey;
 		string confirmationCode;
@@ -496,6 +510,7 @@ void API::createWorkspace(
                 + ", workspaceName: " + workspaceName
             );
 
+			#ifdef __POSTGRES__
 			pair<int64_t,string> workspaceKeyAndConfirmationCode =
 				_mmsEngineDBFacade->createWorkspace(
 					userKey,
@@ -506,11 +521,26 @@ void API::createWorkspace(
 					encodingPeriod,
 					maxIngestionsNumber,
 					maxStorageInMB,
-					dedicatedEncoders,
 					"",						// string languageCode,
 					admin,
 					chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 				);
+			#else
+			pair<int64_t,string> workspaceKeyAndConfirmationCode =
+				_mmsEngineDBFacade->createWorkspace(
+					userKey,
+					workspaceName,
+					MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
+					"",						// string deliveryURL,
+					encodingPriority,
+					encodingPeriod,
+					maxIngestionsNumber,
+					maxStorageInMB,
+					"",						// string languageCode,
+					admin,
+					chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+				);
+			#endif
 
             _logger->info(__FILEREF__ + "Created a new Workspace for the User"
                 + ", workspaceName: " + workspaceName
@@ -1059,39 +1089,13 @@ void API::workspaceList(
 
     try
     {
-		/*
-        int start = 0;
-        auto startIt = queryParameters.find("start");
-        if (startIt != queryParameters.end() && startIt->second != "")
-        {
-            start = stoll(startIt->second);
-        }
-
-        int rows = 10;
-        auto rowsIt = queryParameters.find("rows");
-        if (rowsIt != queryParameters.end() && rowsIt->second != "")
-        {
-            rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
-
-				// rows = _maxPageSize;
-
-				string errorMessage = __FILEREF__ + "rows parameter too big"
-					+ ", rows: " + to_string(rows)
-					+ ", _maxPageSize: " + to_string(_maxPageSize)
-				;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-        }
-		*/
+        bool costDetails = false;
+        auto costDetailsIt = queryParameters.find("costDetails");
+        if (costDetailsIt != queryParameters.end() && costDetailsIt->second == "true")
+			costDetails = true;
 
         {
-			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin);
+			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin, costDetails);
 
             string responseBody = JSONUtils::toString(workspaceListRoot);
 
@@ -2798,6 +2802,7 @@ void API::updateWorkspace(
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
 
+			#ifdef __POSTGRES__
 			Json::Value workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
 				userKey,
 				workspace->_workspaceKey,
@@ -2821,6 +2826,30 @@ void API::updateWorkspace(
 				newCancelIngestionJob,
 				newEditEncodersPool,
 				newApplicationRecorder);
+			#else
+			Json::Value workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
+				userKey,
+				workspace->_workspaceKey,
+				enabledChanged, newEnabled,
+				nameChanged, newName,
+				maxEncodingPriorityChanged, newMaxEncodingPriority,
+				encodingPeriodChanged, newEncodingPeriod,
+				maxIngestionsNumberChanged, newMaxIngestionsNumber,
+				maxStorageInMBChanged, newMaxStorageInMB,
+				languageCodeChanged, newLanguageCode,
+				expirationDateChanged, newExpirationUtcDate,
+				newCreateRemoveWorkspace,
+				newIngestWorkflow,
+				newCreateProfiles,
+				newDeliveryAuthorization,
+				newShareWorkspace,
+				newEditMedia,
+				newEditConfiguration,
+				newKillEncoding,
+				newCancelIngestionJob,
+				newEditEncodersPool,
+				newApplicationRecorder);
+			#endif
 
             _logger->info(__FILEREF__ + "WorkspaceDetails updated"
                 + ", userKey: " + to_string(userKey)

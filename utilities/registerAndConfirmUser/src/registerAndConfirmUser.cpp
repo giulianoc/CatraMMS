@@ -44,7 +44,6 @@ int main (int iArgc, char *pArgv [])
 	MMSEngineDBFacade::EncodingPeriod encodingPeriod = MMSEngineDBFacade::EncodingPeriod::Daily;
 	int maxIngestionsNumber = 10000;
 	int maxStorageInMB = 1000;
-	int dedicatedEncoders = 0;
 
 	tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode;
 	int64_t userKey;
@@ -75,7 +74,6 @@ int main (int iArgc, char *pArgv [])
 				encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
 				maxIngestionsNumber,            // long maxIngestionsNumber,
 				maxStorageInMB,                 // long maxStorageInMB,
-				dedicatedEncoders,
 				"",                             // string languageCode,
 				chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
 		);

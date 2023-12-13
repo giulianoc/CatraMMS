@@ -21,8 +21,13 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
     try
     {
 		string sqlStatement = fmt::format(
-			"select workspaceKey, name, directoryName, maxStorageInMB, dedicatedEncoders, maxEncodingPriority "
-			"from MMS_Workspace where workspaceKey = {}",
+			"select w.workspaceKey, w.name, w.directoryName, w.maxStorageInMB, w.maxEncodingPriority "
+			"wc.maxStorageInGB, wc.currentCostForStorage, "
+			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
+			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
+			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
+			"from MMS_Workspace w, MMS_WorkspaceCost wc "
+			"where w.workspaceKey = wc.workspaceKey and w.workspaceKey = {}",
 			workspaceKey);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		result res = trans.exec(sqlStatement);
@@ -42,8 +47,16 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			workspace->_name = res[0]["name"].as<string>();
 			workspace->_directoryName = res[0]["directoryName"].as<string>();
 			workspace->_maxStorageInMB = res[0]["maxStorageInMB"].as<int>();
-			workspace->_dedicatedEncoders = res[0]["dedicatedEncoders"].as<int>();
 			workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
+
+			workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
+			workspace->_currentCostForStorage = res[0]["currentCostForStorage"].as<int>();
+			workspace->_dedicatedEncoder_power_1 = res[0]["dedicatedEncoder_power_1"].as<int>();
+			workspace->_currentCostForDedicatedEncoder_power_1 = res[0]["currentCostForDedicatedEncoder_power_1"].as<int>();
+			workspace->_dedicatedEncoder_power_2 = res[0]["dedicatedEncoder_power_2"].as<int>();
+			workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
+			workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
+			workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
 
 			// getTerritories(workspace);
 		}
@@ -170,8 +183,13 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     try
     {
 		string sqlStatement = fmt::format(
-			"select workspaceKey, name, directoryName, maxStorageInMB, dedicatedEncoders, maxEncodingPriority "
-			"from MMS_Workspace where name = {}",
+			"select w.workspaceKey, w.name, w.directoryName, w.maxStorageInMB, w.maxEncodingPriority "
+			"wc.maxStorageInGB, wc.currentCostForStorage, "
+			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
+			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
+			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
+			"from MMS_Workspace w, MMS_WorkspaceCost wc "
+			"where w.workspaceKey = wc.workspaceKey and w.name = {}",
 			trans.quote(workspaceName));
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		result res = trans.exec(sqlStatement);
@@ -191,9 +209,17 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			workspace->_name = res[0]["name"].as<string>();
 			workspace->_directoryName = res[0]["directoryName"].as<string>();
 			workspace->_maxStorageInMB = res[0]["maxStorageInMB"].as<int>();
-			workspace->_dedicatedEncoders = res[0]["dedicatedEncoders"].as<int>();
 			workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(
 				res[0]["maxEncodingPriority"].as<string>()));
+
+			workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
+			workspace->_currentCostForStorage = res[0]["currentCostForStorage"].as<int>();
+			workspace->_dedicatedEncoder_power_1 = res[0]["dedicatedEncoder_power_1"].as<int>();
+			workspace->_currentCostForDedicatedEncoder_power_1 = res[0]["currentCostForDedicatedEncoder_power_1"].as<int>();
+			workspace->_dedicatedEncoder_power_2 = res[0]["dedicatedEncoder_power_2"].as<int>();
+			workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
+			workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
+			workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
 
 			// getTerritories(workspace);
 		}
@@ -317,7 +343,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
     EncodingPeriod encodingPeriod,
     long maxIngestionsNumber,
     long maxStorageInMB,
-    long dedicatedEncoders,
     string languageCode,
     chrono::system_clock::time_point userExpirationLocalDate
 )
@@ -435,7 +460,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                     encodingPeriod,
                     maxIngestionsNumber,
                     maxStorageInMB,
-                    dedicatedEncoders,
                     languageCode,
                     userExpirationLocalDate);
 
@@ -774,7 +798,6 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
     EncodingPeriod encodingPeriod,
     long maxIngestionsNumber,
     long maxStorageInMB,
-    long dedicatedEncoders,
     string languageCode,
 	bool admin,
     chrono::system_clock::time_point userExpirationLocalDate
@@ -843,7 +866,6 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                     encodingPeriod,
                     maxIngestionsNumber,
                     maxStorageInMB,
-                    dedicatedEncoders,
                     languageCode,
                     userExpirationLocalDate);
             
@@ -1644,7 +1666,6 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
-        long dedicatedEncoders,
         string languageCode,
         chrono::system_clock::time_point userExpirationLocalDate
 )
@@ -1658,21 +1679,21 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         {
             bool enabled = false;
 			string workspaceDirectoryName = "tempName";
-            
-            string sqlStatement = fmt::format( 
-                    "insert into MMS_Workspace ("
-                    "creationDate, name, directoryName, workspaceType, "
-					"deliveryURL, enabled, maxEncodingPriority, encodingPeriod, "
-					"maxIngestionsNumber, maxStorageInMB, dedicatedEncoders, languageCode) values ("
-                    "NOW() at time zone 'utc',         {},    {},             {}, "
-					"{},           {},         {},                   {}, "
-					"{},                   {},            {},                {}) returning workspaceKey",
-					trans.quote(workspaceName), trans.quote(workspaceDirectoryName),
-					static_cast<int>(workspaceType),
-					deliveryURL == "" ? "null" : trans.quote(deliveryURL),
-					enabled, trans.quote(toString(maxEncodingPriority)),
-					trans.quote(toString(encodingPeriod)), maxIngestionsNumber, maxStorageInMB,
-					dedicatedEncoders, trans.quote(languageCode));
+
+			string sqlStatement = fmt::format( 
+				"insert into MMS_Workspace ("
+				"creationDate, name, directoryName, workspaceType, "
+				"deliveryURL, enabled, maxEncodingPriority, encodingPeriod, "
+				"maxIngestionsNumber, maxStorageInMB, languageCode) values ("
+				"NOW() at time zone 'utc',         {},    {},             {}, "
+				"{},           {},         {},                   {}, "
+				"{},                   {},            {}) returning workspaceKey",
+				trans.quote(workspaceName), trans.quote(workspaceDirectoryName),
+				static_cast<int>(workspaceType),
+				deliveryURL == "" ? "null" : trans.quote(deliveryURL),
+				enabled, trans.quote(toString(maxEncodingPriority)),
+				trans.quote(toString(encodingPeriod)), maxIngestionsNumber, maxStorageInMB,
+				trans.quote(languageCode));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			workspaceKey = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO("SQL statement"
@@ -1710,6 +1731,30 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 				throw runtime_error(errorMessage);                    
 			}
 		}
+
+		{
+			string sqlStatement = fmt::format(
+				"insert into MMS_WorkspaceCost ("
+					"workspaceKey, maxStorageInGB, currentCostForStorage, "
+					"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
+					"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
+					"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3, "
+					") values ("
+					"{},           {},             0, "
+					"0,                        0, "
+					"0,                        0, "
+					"0,                        0, ",
+					workspaceKey, maxStorageInMB / 1000);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			workspaceKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+        }
 
 		confirmationCode = MMSEngineDBFacade::createCode(
 			conn,
@@ -3087,7 +3132,7 @@ Json::Value MMSEngineDBFacade::login (
 }
 
 Json::Value MMSEngineDBFacade::getWorkspaceList (
-    int64_t userKey, bool admin)
+	int64_t userKey, bool admin, bool costDetails)
 {
 	Json::Value workspaceListRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -3100,8 +3145,8 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		string field;
 		{
 			Json::Value requestParametersRoot;
@@ -3155,7 +3200,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			if (admin)
 				sqlStatement = fmt::format( 
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -3167,7 +3212,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			else
 				sqlStatement = fmt::format( 
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -3183,7 +3228,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			for (auto row: res)
             {
                 Json::Value workspaceDetailRoot = getWorkspaceDetailsRoot (
-					conn, trans, row, userAPIKeyInfo);
+					conn, trans, row, userAPIKeyInfo, costDetails);
 
                 workspacesRoot.append(workspaceDetailRoot);                        
             }
@@ -3318,7 +3363,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 			// if NOT admin returns only the one having isEnabled = 1
 			string sqlStatement = fmt::format( 
 				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, "
+				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 				"w.languageCode, "
 				"a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
@@ -3341,17 +3386,18 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			bool userAPIKeyInfo = true;
+			bool costDetails = false;
 			if (!empty(res))
             {
 				auto row = res[0];
                 loginWorkspaceRoot = getWorkspaceDetailsRoot (
-					conn, trans, row, userAPIKeyInfo);
+					conn, trans, row, userAPIKeyInfo, costDetails);
             }
 			else
 			{
 				string sqlStatement = fmt::format( 
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, w.languageCode, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -3373,11 +3419,12 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 				bool userAPIKeyInfo = true;
+				bool costDetails = false;
 				if (!empty(res))
 				{
 					auto row = res[0];
 					loginWorkspaceRoot = getWorkspaceDetailsRoot (
-						conn, trans, row, userAPIKeyInfo);
+						conn, trans, row, userAPIKeyInfo, costDetails);
 				}
 				else
 				{
@@ -3488,7 +3535,8 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 	shared_ptr<PostgresConnection> conn,
 	nontransaction& trans,
 	row& row,
-	bool userAPIKeyInfo
+	bool userAPIKeyInfo,
+	bool costDetails
 	)
 {
     Json::Value     workspaceDetailRoot;
@@ -3518,8 +3566,11 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 		field = "maxStorageInMB";
 		workspaceDetailRoot[field] = row["maxStorageInMB"].as<int>();
 
-		field = "dedicatedEncoders";
-		workspaceDetailRoot[field] = row["dedicatedEncoders"].as<int>();
+		if (costDetails)
+		{
+			field = "cost";
+			workspaceDetailRoot[field] = getWorkspaceCost(conn, trans, workspaceKey);
+		}
 
 		{
 			int64_t workSpaceUsageInBytes;
@@ -4020,11 +4071,12 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			bool userAPIKeyInfo = true;
+			bool costDetails = false;
 			if (!empty(res))
             {
 				auto row = res[0];
 				workspaceDetailRoot = getWorkspaceDetailsRoot (
-					conn, trans, row, userAPIKeyInfo);
+					conn, trans, row, userAPIKeyInfo, costDetails);
             }
         }
 
@@ -4395,6 +4447,86 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 	}
     
     return workspaceUsage;
+}
+
+Json::Value MMSEngineDBFacade::getWorkspaceCost(
+	shared_ptr<PostgresConnection> conn,
+	nontransaction& trans,
+	int64_t workspaceKey)
+{
+	Json::Value workspaceCost;
+
+    try
+    {
+		{
+			string sqlStatement = fmt::format( 
+				"select maxStorageInGB, currentCostForStorage, "
+				"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
+				"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
+				"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3 "
+				"from MMS_WorkspaceCost_PK "
+                "where workspaceKey = {} ",
+				workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (empty(res))
+			{
+				string errorMessage = fmt::format("no workspace cost found"
+					", workspaceKey: {}", workspaceKey);
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			workspaceCost["maxStorageInGB"] = res[0]["maxStorageInGB"].as<int>();
+			workspaceCost["currentCostForStorage"] = res[0]["currentCostForStorage"].as<int>();
+			workspaceCost["dedicatedEncoder_power_1"] = res[0]["dedicatedEncoder_power_1"].as<int>();
+			workspaceCost["currentCostForDedicatedEncoder_power_1"] = res[0]["currentCostForDedicatedEncoder_power_1"].as<int>();
+			workspaceCost["dedicatedEncoder_power_2"] = res[0]["dedicatedEncoder_power_2"].as<int>();
+			workspaceCost["currentCostForDedicatedEncoder_power_2"] = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
+			workspaceCost["dedicatedEncoder_power_3"] = res[0]["dedicatedEncoder_power_3"].as<int>();
+			workspaceCost["currentCostForDedicatedEncoder_power_3"] = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
+        }
+    }
+	catch(sql_error const &e)
+	{
+		SPDLOG_ERROR("SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(exception& e)
+	{
+		SPDLOG_ERROR("exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+    
+    return workspaceCost;
 }
 
 pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(

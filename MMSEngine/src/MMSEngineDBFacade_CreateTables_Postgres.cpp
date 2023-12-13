@@ -147,8 +147,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"maxEncodingPriority	text NOT NULL,"
 					"encodingPeriod			text NOT NULL,"
 					"maxIngestionsNumber	integer NOT NULL,"
-					"maxStorageInMB			integer NOT NULL,"
-					"dedicatedEncoders		integer NOT NULL default 0,"
+					"maxStorageInMB			integer NOT NULL,"	// da eliminare perchè gestito da MMS_WorkspaceCost
 					"languageCode			text NOT NULL,"
 					"constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -165,6 +164,30 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_Workspace_idx on MMS_Workspace (directoryName)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+				"create table if not exists MMS_WorkspaceCost ("
+					"workspaceKey			bigint GENERATED ALWAYS AS IDENTITY,"
+					"maxStorageInGB			integer NOT NULL,"
+					"currentCostForStorage	integer not null default 0,"
+					"dedicatedEncoder_power_1	integer not null default 0,"
+					"currentCostForDedicatedEncoder_power_1	integer not null default 0,"
+					"dedicatedEncoder_power_2	integer not null default 0,"
+					"currentCostForDedicatedEncoder_power_2	integer not null default 0,"
+					"dedicatedEncoder_power_3	integer not null default 0,"
+					"currentCostForDedicatedEncoder_power_3	integer not null default 0,"
+					"constraint MMS_WorkspaceCost_PK PRIMARY KEY (workspaceKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"

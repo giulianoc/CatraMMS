@@ -21,7 +21,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		);
 
 		lastSQLCommand =
-			"select workspaceKey, name, directoryName, maxStorageInMB, dedicatedEncoders, maxEncodingPriority "
+			"select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority "
 			"from MMS_Workspace where workspaceKey = ?";
 		shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 		int queryParameterIndex = 1;
@@ -44,7 +44,6 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			workspace->_name = resultSet->getString("name");
 			workspace->_directoryName = resultSet->getString("directoryName");
 			workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
-			workspace->_dedicatedEncoders = resultSet->getInt("dedicatedEncoders");
 			workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(
 						resultSet->getString("maxEncodingPriority")));
 
@@ -150,7 +149,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 		);
 
 		lastSQLCommand =
-			"select workspaceKey, name, directoryName, maxStorageInMB, dedicatedEncoders, maxEncodingPriority "
+			"select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority "
 			"from MMS_Workspace where name = ?";
 		shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 		int queryParameterIndex = 1;
@@ -173,7 +172,6 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			workspace->_name = resultSet->getString("name");
 			workspace->_directoryName = resultSet->getString("directoryName");
 			workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
-			workspace->_dedicatedEncoders = resultSet->getInt("dedicatedEncoders");
 			workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(
 						resultSet->getString("maxEncodingPriority")));
 
@@ -276,7 +274,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
     EncodingPeriod encodingPeriod,
     long maxIngestionsNumber,
     long maxStorageInMB,
-    long dedicatedEncoders,
     string languageCode,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -417,7 +414,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                     encodingPeriod,
                     maxIngestionsNumber,
                     maxStorageInMB,
-					dedicatedEncoders,
                     languageCode,
                     userExpirationDate);
 
@@ -986,7 +982,6 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
     EncodingPeriod encodingPeriod,
     long maxIngestionsNumber,
     long maxStorageInMB,
-    long dedicatedEncoders,
     string languageCode,
 	bool admin,
     chrono::system_clock::time_point userExpirationDate
@@ -995,9 +990,9 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
     int64_t         workspaceKey;
     string          confirmationCode;
     int64_t         contentProviderKey;
-    
+
     string      lastSQLCommand;
-    
+
     shared_ptr<MySQLConnection> conn = nullptr;
     bool autoCommit = true;
 
@@ -1066,7 +1061,6 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                     encodingPeriod,
                     maxIngestionsNumber,
                     maxStorageInMB,
-                    dedicatedEncoders,
                     languageCode,
                     userExpirationDate);
             
@@ -2054,7 +2048,6 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
         long maxStorageInMB,
-        long dedicatedEncoders,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate
 )
@@ -2076,10 +2069,10 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
                     "insert into MMS_Workspace ("
                     "workspaceKey, creationDate, name, directoryName, workspaceType, "
 					"deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, "
-					"maxIngestionsNumber, maxStorageInMB, dedicatedEncoders, languageCode) values ("
+					"maxIngestionsNumber, maxStorageInMB, languageCode) values ("
                     "NULL,         NOW(),         ?,    ?,             ?, "
 					"?,           ?,         ?,                   ?, "
-					"?,                   ?,              ?,                 ?)";
+					"?,                   ?,              ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -2098,7 +2091,6 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
             preparedStatement->setString(queryParameterIndex++, toString(encodingPeriod));
             preparedStatement->setInt(queryParameterIndex++, maxIngestionsNumber);
             preparedStatement->setInt(queryParameterIndex++, maxStorageInMB);
-            preparedStatement->setInt(queryParameterIndex++, dedicatedEncoders);
             preparedStatement->setString(queryParameterIndex++, languageCode);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -2115,7 +2107,6 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 				+ ", encodingPeriod: " + toString(encodingPeriod)
 				+ ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
 				+ ", maxStorageInMB: " + to_string(maxStorageInMB)
-				+ ", dedicatedEncoders: " + to_string(dedicatedEncoders)
 				+ ", languageCode: " + languageCode
 				+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"
@@ -3893,7 +3884,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			if (admin)
 				lastSQLCommand = 
 					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
 					"a.permissions, "
@@ -3904,7 +3895,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			else
 				lastSQLCommand = 
 					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
 					"a.permissions, "
@@ -4037,7 +4028,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 			// if NOT admin returns only the one having isEnabled = 1
 			lastSQLCommand = 
 				"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
-				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, "
+				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 				"w.languageCode, "
 				"a.apiKey, a.isOwner, a.isDefault, "
 				"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
@@ -4074,7 +4065,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 			{
 				lastSQLCommand = 
 					"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, w.languageCode, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
 					"a.permissions, "
@@ -4221,9 +4212,6 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 
 		field = "maxStorageInMB";
 		workspaceDetailRoot[field] = resultSet->getInt("maxStorageInMB");
-
-		field = "dedicatedEncoders";
-		workspaceDetailRoot[field] = resultSet->getInt("dedicatedEncoders");
 
 		{
 			int64_t workSpaceUsageInBytes;
@@ -4414,7 +4402,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 	bool encodingPeriodChanged, string newEncodingPeriod,
 	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber,
 	bool maxStorageInMBChanged, int64_t newMaxStorageInMB,
-	bool dedicatedEncodersChanged, int64_t newDedicatedEncoders,
 	bool languageCodeChanged, string newLanguageCode,
 	bool expirationDateChanged, string newExpirationDate,
 	bool newCreateRemoveWorkspace,
@@ -4543,14 +4530,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				oneParameterPresent = true;
 			}
 
-			if (dedicatedEncodersChanged)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += ("dedicatedEncoders = ?");
-				oneParameterPresent = true;
-			}
-
 			if (oneParameterPresent)
 			{
 				lastSQLCommand = 
@@ -4571,8 +4550,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 						newMaxIngestionsNumber);
 				if (maxStorageInMBChanged)
 					preparedStatement->setInt64(queryParameterIndex++, newMaxStorageInMB);
-				if (dedicatedEncodersChanged)
-					preparedStatement->setInt64(queryParameterIndex++, newDedicatedEncoders);
 				preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -4584,7 +4561,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 					+ ", newEncodingPeriod: " + newEncodingPeriod
 					+ ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
 					+ ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
-					+ ", newDedicatedEncoders: " + to_string(newDedicatedEncoders)
 					+ ", workspaceKey: " + to_string(workspaceKey)
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", elapsed (secs): @"
@@ -4600,7 +4576,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                         + ", newEncodingPeriod: " + newEncodingPeriod
                         + ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
                         + ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
-                        + ", newDedicatedEncoders: " + to_string(newDedicatedEncoders)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
 					;
@@ -4765,7 +4740,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         {
 			lastSQLCommand = 
 				"select w.workspaceKey, w.isEnabled, w.name, w.maxEncodingPriority, "
-				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, "
+				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 				"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 				"DATE_FORMAT(convert_tz(a.expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
 				"a.permissions, "
@@ -5545,7 +5520,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 		bool creditCard_cardNumberChanged, string creditCard_cardNumber,
 		bool creditCard_nameOnCardChanged, string creditCard_nameOnCard,
 		bool creditCard_expiryDateChanged, string creditCard_expiryDate,
-		bool creditCard_securityCodeChanged, string creditCard_securityCode);
+		bool creditCard_securityCodeChanged, string creditCard_securityCode)
 {
     Json::Value     loginDetailsRoot;
     string          lastSQLCommand;
@@ -5722,7 +5697,7 @@ Json::Value MMSEngineDBFacade::updateUser (
 				oneParameterPresent = true;
 			}
 
-			if (creditCard_securityCode)
+			if (creditCard_securityCodeChanged)
 			{
 				if (creditCard_securityCode != "")
 				{
