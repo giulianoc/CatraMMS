@@ -4464,7 +4464,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceCost(
 				"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
 				"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
 				"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3 "
-				"from MMS_WorkspaceCost_PK "
+				"from MMS_WorkspaceCost "
                 "where workspaceKey = {} ",
 				workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
