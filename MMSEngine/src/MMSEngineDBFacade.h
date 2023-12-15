@@ -1314,7 +1314,7 @@ public:
 		int64_t workspaceKey,
 		int64_t workspaceKeyToBeSetAsDefault);
 
-	#ifdef __POSTGRES__
+	// #ifdef __POSTGRES__
     Json::Value updateUser (
 		bool admin,
 		bool ldapEnabled,
@@ -1323,11 +1323,8 @@ public:
         bool emailChanged, string email, 
         bool countryChanged, string country,
 		bool expirationDateChanged, string expirationDate,
-		bool passwordChanged, string newPassword, string oldPassword,
-		bool creditCard_cardNumberChanged, string creditCard_cardNumber,
-		bool creditCard_nameOnCardChanged, string creditCard_nameOnCard,
-		bool creditCard_expiryDateChanged, string creditCard_expiryDate,
-		bool creditCard_securityCodeChanged, string creditCard_securityCode);
+		bool passwordChanged, string newPassword, string oldPassword);
+/*
 	#else
     Json::Value updateUser (
 		bool admin,
@@ -1337,12 +1334,9 @@ public:
         bool emailChanged, string email, 
         bool countryChanged, string country,
 		bool expirationDateChanged, string expirationDate,
-		bool passwordChanged, string newPassword, string oldPassword,
-		bool creditCard_cardNumberChanged, string creditCard_cardNumber,
-		bool creditCard_nameOnCardChanged, string creditCard_nameOnCard,
-		bool creditCard_expiryDateChanged, string creditCard_expiryDate,
-		bool creditCard_securityCodeChanged, string creditCard_securityCode);
+		bool passwordChanged, string newPassword, string oldPassword);
 	#endif
+*/
 
 	string createResetPasswordToken(
 		int64_t userKey);

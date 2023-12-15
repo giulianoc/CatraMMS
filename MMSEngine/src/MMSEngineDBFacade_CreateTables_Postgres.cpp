@@ -707,10 +707,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "creationDate			timestamp without time zone default (now() at time zone 'utc'),"
                     "expirationDate			timestamp without time zone NOT NULL,"
                     "lastSuccessfulLogin	timestamp without time zone NULL,"
-                    "creditCard_cardNumber	text NULL,"
-                    "creditCard_nameOnCard	text NULL,"
-                    "creditCard_expiryDate	text NULL,"
-                    "creditCard_securityCode	text NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "
                     "UNIQUE (eMailAddress))";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
