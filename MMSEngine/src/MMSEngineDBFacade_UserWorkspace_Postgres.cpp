@@ -2751,7 +2751,7 @@ Json::Value MMSEngineDBFacade::login (
 		{
 			{
 				string sqlStatement = fmt::format( 
-					"select userKey, name, country, insolvemt, "
+					"select userKey, name, country, insolvent, "
 					"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 					"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate "
 					"from MMS_User where eMailAddress = {} and password = {} "
