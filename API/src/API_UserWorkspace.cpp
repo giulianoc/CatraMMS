@@ -2600,9 +2600,18 @@ void API::updateWorkspace(
         string newEncodingPeriod; bool encodingPeriodChanged = false;
         int64_t newMaxIngestionsNumber; bool maxIngestionsNumberChanged = false;
         int64_t newMaxStorageInMB; bool maxStorageInMBChanged = false;
-        int64_t newDedicatedEncoders; bool dedicatedEncodersChanged = false;
         string newLanguageCode; bool languageCodeChanged = false;
         string newExpirationUtcDate; bool expirationDateChanged = false;
+
+		bool maxStorageInGBChanged = false; int64_t maxStorageInGB;
+		bool currentCostForStorageChanged = false; int64_t currentCostForStorage;
+		bool dedicatedEncoder_power_1Changed = false; int64_t dedicatedEncoder_power_1;
+		bool currentCostForDedicatedEncoder_power_1Changed = false; int64_t currentCostForDedicatedEncoder_power_1;
+		bool dedicatedEncoder_power_2Changed = false; int64_t dedicatedEncoder_power_2;
+		bool currentCostForDedicatedEncoder_power_2Changed = false; int64_t currentCostForDedicatedEncoder_power_2;
+		bool dedicatedEncoder_power_3Changed = false; int64_t dedicatedEncoder_power_3;
+		bool currentCostForDedicatedEncoder_power_3Changed = false; int64_t currentCostForDedicatedEncoder_power_3;
+
         bool newCreateRemoveWorkspace;
         bool newIngestWorkflow;
         bool newCreateProfiles;
@@ -2674,18 +2683,67 @@ void API::updateWorkspace(
 			newMaxStorageInMB = JSONUtils::asInt64(metadataRoot, field, 0);
 		}
 
-		field = "dedicatedEncoders";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
-		{
-			dedicatedEncodersChanged = true;
-			newDedicatedEncoders = JSONUtils::asInt64(metadataRoot, field, 0);
-		}
-
 		field = "languageCode";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
 			languageCodeChanged = true;
 			newLanguageCode = JSONUtils::asString(metadataRoot, field, "");
+		}
+
+		field = "maxStorageInGB";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			maxStorageInGBChanged = true;
+			maxStorageInGB = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
+		field = "currentCostForStorage";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			currentCostForStorageChanged = true;
+			currentCostForStorage = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
+		field = "dedicatedEncoder_power_1";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			dedicatedEncoder_power_1Changed = true;
+			dedicatedEncoder_power_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
+		field = "currentCostForDedicatedEncoder_power_1";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			currentCostForDedicatedEncoder_power_1Changed = true;
+			currentCostForDedicatedEncoder_power_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
+		field = "dedicatedEncoder_power_2";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			dedicatedEncoder_power_2Changed = true;
+			dedicatedEncoder_power_2 = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
+		field = "currentCostForDedicatedEncoder_power_2";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			currentCostForDedicatedEncoder_power_2Changed = true;
+			currentCostForDedicatedEncoder_power_2 = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
+		field = "dedicatedEncoder_power_3";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			dedicatedEncoder_power_3Changed = true;
+			dedicatedEncoder_power_3 = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
+		field = "currentCostForDedicatedEncoder_power_3";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			currentCostForDedicatedEncoder_power_3Changed = true;
+			currentCostForDedicatedEncoder_power_3 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "userAPIKey";
@@ -2781,9 +2839,18 @@ void API::updateWorkspace(
 				encodingPeriodChanged, newEncodingPeriod,
 				maxIngestionsNumberChanged, newMaxIngestionsNumber,
 				maxStorageInMBChanged, newMaxStorageInMB,
-				dedicatedEncodersChanged, newDedicatedEncoders,
 				languageCodeChanged, newLanguageCode,
 				expirationDateChanged, newExpirationUtcDate,
+
+				maxStorageInGBChanged, maxStorageInGB,
+				currentCostForStorageChanged, currentCostForStorage,
+				dedicatedEncoder_power_1Changed, dedicatedEncoder_power_1,
+				currentCostForDedicatedEncoder_power_1Changed, currentCostForDedicatedEncoder_power_1,
+				dedicatedEncoder_power_2Changed, dedicatedEncoder_power_2,
+				currentCostForDedicatedEncoder_power_2Changed, currentCostForDedicatedEncoder_power_2,
+				dedicatedEncoder_power_3Changed, dedicatedEncoder_power_3,
+				currentCostForDedicatedEncoder_power_3Changed, currentCostForDedicatedEncoder_power_3,
+
 				newCreateRemoveWorkspace,
 				newIngestWorkflow,
 				newCreateProfiles,

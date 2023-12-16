@@ -3735,9 +3735,18 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 	bool encodingPeriodChanged, string newEncodingPeriod,
 	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber,
 	bool maxStorageInMBChanged, int64_t newMaxStorageInMB,
-	bool dedicatedEncodersChanged, int64_t newDedicatedEncoders,
 	bool languageCodeChanged, string newLanguageCode,
 	bool expirationDateChanged, string newExpirationUtcDate,
+
+	bool maxStorageInGBChanged, int64_t maxStorageInGB,
+	bool currentCostForStorageChanged, int64_t currentCostForStorage,
+	bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1,
+	bool currentCostForDedicatedEncoder_power_1Changed, int64_t currentCostForDedicatedEncoder_power_1,
+	bool dedicatedEncoder_power_2Changed, int64_t dedicatedEncoder_power_2,
+	bool currentCostForDedicatedEncoder_power_2Changed, int64_t currentCostForDedicatedEncoder_power_2,
+	bool dedicatedEncoder_power_3Changed, int64_t dedicatedEncoder_power_3,
+	bool currentCostForDedicatedEncoder_power_3Changed, int64_t currentCostForDedicatedEncoder_power_3,
+
 	bool newCreateRemoveWorkspace,
 	bool newIngestWorkflow,
 	bool newCreateProfiles,
@@ -3856,14 +3865,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				oneParameterPresent = true;
 			}
 
-			if (dedicatedEncodersChanged)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += fmt::format("dedicatedEncoders = {}", newDedicatedEncoders);
-				oneParameterPresent = true;
-			}
-
 			if (oneParameterPresent)
 			{
 				string sqlStatement = fmt::format( 
@@ -3888,7 +3889,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                         + ", newEncodingPeriod: " + newEncodingPeriod
                         + ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
                         + ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
-                        + ", newDedicatedEncoders: " + to_string(newDedicatedEncoders)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", sqlStatement: " + sqlStatement
 					;
@@ -3983,6 +3983,105 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         }
 
         {
+			string setSQL = "set ";
+			bool oneParameterPresent = false;
+
+			if (maxStorageInGBChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("maxStorageInGB = {}", maxStorageInGB);
+				oneParameterPresent = true;
+			}
+
+			if (currentCostForStorageChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("currentCostForStorage = {}", currentCostForStorage);
+				oneParameterPresent = true;
+			}
+
+			if (dedicatedEncoder_power_1Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("dedicatedEncoder_power_1 = {}", dedicatedEncoder_power_1);
+				oneParameterPresent = true;
+			}
+
+			if (currentCostForDedicatedEncoder_power_1Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("currentCostForDedicatedEncoder_power_1 = {}", currentCostForDedicatedEncoder_power_1);
+				oneParameterPresent = true;
+			}
+
+			if (dedicatedEncoder_power_2Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("dedicatedEncoder_power_2 = {}", dedicatedEncoder_power_2);
+				oneParameterPresent = true;
+			}
+
+			if (currentCostForDedicatedEncoder_power_2Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("currentCostForDedicatedEncoder_power_2 = {}", currentCostForDedicatedEncoder_power_2);
+				oneParameterPresent = true;
+			}
+
+			if (dedicatedEncoder_power_3Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("dedicatedEncoder_power_3 = {}", dedicatedEncoder_power_3);
+				oneParameterPresent = true;
+			}
+
+			if (currentCostForDedicatedEncoder_power_3Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("currentCostForDedicatedEncoder_power_3 = {}", currentCostForDedicatedEncoder_power_3);
+				oneParameterPresent = true;
+			}
+
+			if (oneParameterPresent)
+			{
+				string sqlStatement = fmt::format( 
+					"WITH rows AS (update MMS_WorkspaceCost {} "
+					"where workspaceKey = {} returning 1) select count(*) from rows",
+					setSQL, workspaceKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done"
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", newName: " + newName
+                        + ", newLanguageCode: " + newLanguageCode
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", sqlStatement: " + sqlStatement
+					;
+					_logger->warn(errorMessage);
+
+					// throw runtime_error(errorMessage);
+				}
+			}
+        }
+
+        {
 			Json::Value permissionsRoot;
 			permissionsRoot["admin"] = admin;
 			permissionsRoot["createRemoveWorkspace"] = newCreateRemoveWorkspace;
@@ -4030,7 +4129,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         {
 			string sqlStatement = fmt::format( 
 				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.dedicatedEncoders, "
+				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
 				"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
