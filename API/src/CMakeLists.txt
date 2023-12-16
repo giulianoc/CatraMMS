@@ -35,6 +35,7 @@ SET (SOURCES_API
 	API_MediaItem.cpp
 	API_WorkflowLibrary.cpp
 	API_UserWorkspace.cpp
+	API_Invoice.cpp
 	API_Configuration.cpp
 	API_EncodersPool.cpp
 	API_Statistic.cpp

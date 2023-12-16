@@ -1351,6 +1351,28 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 		workspaceList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, userKey, workspace, queryParameters, admin);
     }
+    else if (method == "addInvoice")
+    {
+        if (!admin)
+        {
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        addInvoice(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, queryParameters, requestBody);
+    }
+    else if (method == "invoiceList")
+    {
+		invoiceList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, queryParameters, admin);
+    }
     else if (method == "confirmRegistration")
     {
         confirmRegistration(sThreadId, requestIdentifier, responseBodyCompressed,

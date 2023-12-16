@@ -2061,6 +2061,8 @@ void API::updateUser(
 		bool emailChanged;
         string country;
 		bool countryChanged;
+        bool insolvent;
+		bool insolventChanged;
         string expirationUtcDate;
 		bool expirationDateChanged;
 		bool passwordChanged;
@@ -2087,6 +2089,7 @@ void API::updateUser(
 		nameChanged = false;
 		emailChanged = false;
 		countryChanged = false;
+		insolventChanged = false;
 		expirationDateChanged = false;
 		passwordChanged = false;
 		if(!_ldapEnabled)
@@ -2110,6 +2113,16 @@ void API::updateUser(
 			{
 				country = JSONUtils::asString(metadataRoot, field, "");
 				countryChanged = true;
+			}
+
+			if (admin)
+			{
+				field = "insolvent";
+				if (JSONUtils::isMetadataPresent(metadataRoot, field))
+				{
+					insolvent = JSONUtils::asBool(metadataRoot, field, false);
+					insolventChanged = true;
+				}
 			}
 
 			if (admin)
@@ -2155,6 +2168,7 @@ void API::updateUser(
 				nameChanged, name,
 				emailChanged, email,
 				countryChanged, country,
+				insolventChanged, insolvent,
 				expirationDateChanged, expirationUtcDate,
 				passwordChanged, newPassword, oldPassword);
 

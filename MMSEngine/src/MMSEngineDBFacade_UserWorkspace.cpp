@@ -322,8 +322,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			// This method is called only in case of MMS user (no ldapEnabled)
             lastSQLCommand = 
                 "insert into MMS_User (userKey, name, eMailAddress, password, country, "
-				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "NULL, ?, ?, ?, ?, NOW(), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
+				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
+                "NULL, ?, ?, ?, ?, NOW(), 0, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -662,8 +662,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 			// This method is called only in case of MMS user (no ldapEnabled)
             lastSQLCommand = 
                 "insert into MMS_User (userKey, name, eMailAddress, password, country, "
-				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "NULL, ?, ?, ?, ?, NOW(), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
+				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
+                "NULL, ?, ?, ?, ?, NOW(), 0, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1513,8 +1513,8 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
 
             lastSQLCommand = 
                 "insert into MMS_User (userKey, name, eMailAddress, password, country, "
-				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "NULL, ?, ?, ?, ?, NOW(), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
+				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
+                "NULL, ?, ?, ?, ?, NOW(), 0, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), NULL)";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 					conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3469,7 +3469,7 @@ Json::Value MMSEngineDBFacade::login (
 
 			{
 				lastSQLCommand = 
-					"select userKey, name, country, "
+					"select userKey, name, country, insolvent, "
 					"DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
 					"DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
 					"from MMS_User where eMailAddress = ? and password = ? and expirationDate > NOW()";
@@ -3503,6 +3503,9 @@ Json::Value MMSEngineDBFacade::login (
 
 					field = "country";
 					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("country"));
+
+					field = "insolvent";
+					loginDetailsRoot[field] = resultSet->getInt("insolvent") == 1 ? true : false;
 
 					field = "creationDate";
 					loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
@@ -5490,6 +5493,7 @@ Json::Value MMSEngineDBFacade::updateUser (
         bool nameChanged, string name,
         bool emailChanged, string email, 
         bool countryChanged, string country,
+        bool insolventChanged, bool insolvent,
         bool expirationDateChanged, string expirationDate,
 		bool passwordChanged, string newPassword, string oldPassword)
 {
@@ -5594,6 +5598,15 @@ Json::Value MMSEngineDBFacade::updateUser (
 				setSQL += ("country = ?");
 				oneParameterPresent = true;
 			}
+
+			if (admin && insolventChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += ("insolvent = ?");
+				oneParameterPresent = true;
+			}
+
 			if (admin && expirationDateChanged)
 			{
 				if (oneParameterPresent)
@@ -5616,6 +5629,8 @@ Json::Value MMSEngineDBFacade::updateUser (
 				preparedStatement->setString(queryParameterIndex++, email);
 			if (countryChanged)
 				preparedStatement->setString(queryParameterIndex++, country);
+			if (admin && insolventChanged)
+				preparedStatement->setInt(queryParameterIndex++, insolvent ? 1 : 0);
 			if (admin && expirationDateChanged)
 				preparedStatement->setString(queryParameterIndex++, expirationDate);
 			preparedStatement->setInt64(queryParameterIndex++, userKey);
@@ -5656,7 +5671,7 @@ Json::Value MMSEngineDBFacade::updateUser (
             lastSQLCommand = 
                 "select DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
                 "DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate, "
-				"userKey, name, eMailAddress, country "
+				"userKey, name, eMailAddress, country, insolvent "
                 "from MMS_User where userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -5698,6 +5713,9 @@ Json::Value MMSEngineDBFacade::updateUser (
 				loginDetailsRoot[field] = static_cast<string>(
 					resultSet->getString("country"));
                 
+				field = "insolvent";
+				loginDetailsRoot[field] = resultSet->getInt("insolvent") == 1 ? true : false;
+
 				field = "ldapEnabled";
 				loginDetailsRoot[field] = ldapEnabled;
             }

@@ -32,6 +32,7 @@ SET (SOURCES
 	MMSEngineDBFacade_EncodingJobs_Postgres.cpp
 	MMSEngineDBFacade_EncodingProfiles_Postgres.cpp
 	MMSEngineDBFacade_IngestionJobs_Postgres.cpp
+	MMSEngineDBFacade_Invoice_Postgres.cpp
 	MMSEngineDBFacade_MediaItems_Postgres.cpp
 	MMSEngineDBFacade_PartitionInfo_Postgres.cpp
 	MMSEngineDBFacade_Statistic_Postgres.cpp

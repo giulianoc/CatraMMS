@@ -236,6 +236,16 @@ shared_ptr<spdlog::logger>	_logger;
         FCGX_Request& request,
         string requestBody);
 
+	void addInvoice(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+		FCGX_Request& request, unordered_map<string, string> queryParameters,
+		string requestBody);
+
+	void invoiceList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+		FCGX_Request& request, int64_t userKey,
+		unordered_map<string, string> queryParameters, bool admin);
+
 	void mmsSupport(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
         FCGX_Request& request,

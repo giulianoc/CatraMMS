@@ -393,8 +393,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             }
             string sqlStatement = fmt::format(
                 "insert into MMS_User (name, eMailAddress, password, country, "
-				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "{}, {}, {}, {}, NOW() at time zone 'utc', to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
+				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
+                "{}, {}, {}, {}, NOW() at time zone 'utc', false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"NULL) returning userKey",
 				trans.quote(trimUserName), trans.quote(userEmailAddress),
 				trans.quote(userPassword), trans.quote(userCountry),
@@ -616,9 +616,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
             }
             string sqlStatement = fmt::format( 
                 "insert into MMS_User (name, eMailAddress, password, country, "
-				"creationDate, expirationDate, lastSuccessfulLogin) values ("
+				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
                 "{}, {}, {}, {}, NOW() at time zone 'utc', "
-				"to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), NULL) returning userKey",
+				"false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), NULL) returning userKey",
 				trans.quote(trimUserName), trans.quote(userEmailAddress),
 				trans.quote(userPassword), trans.quote(userCountry),
 				trans.quote(strExpirationUtcDate));
@@ -1235,8 +1235,8 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
             }
             string sqlStatement = fmt::format( 
                 "insert into MMS_User (name, eMailAddress, password, country, "
-				"creationDate, expirationDate, lastSuccessfulLogin) values ("
-                "{}, {}, {}, {}, NOW() at time zone 'utc', to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
+				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
+                "{}, {}, {}, {}, NOW() at time zone 'utc', false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"NULL) returning userKey",
 				trans.quote(userName), trans.quote(userEmailAddress),
 				trans.quote(userPassword), trans.quote(userCountry),
@@ -2751,7 +2751,7 @@ Json::Value MMSEngineDBFacade::login (
 		{
 			{
 				string sqlStatement = fmt::format( 
-					"select userKey, name, country, "
+					"select userKey, name, country, insolvemt, "
 					"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 					"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate "
 					"from MMS_User where eMailAddress = {} and password = {} "
@@ -2784,6 +2784,9 @@ Json::Value MMSEngineDBFacade::login (
 
 					field = "creationDate";
 					loginDetailsRoot[field] = res[0]["creationDate"].as<string>();
+
+					field = "insolvent";
+					loginDetailsRoot[field] = res[0]["insolvent"].as<bool>();
 
 					field = "expirationDate";
 					loginDetailsRoot[field] = res[0]["expirationDate"].as<string>();
@@ -4912,6 +4915,7 @@ Json::Value MMSEngineDBFacade::updateUser (
         bool nameChanged, string name,
         bool emailChanged, string email, 
         bool countryChanged, string country,
+        bool insolventChanged, bool insolvent,
         bool expirationDateChanged, string expirationUtcDate,
 		bool passwordChanged, string newPassword, string oldPassword)
 {
@@ -5003,6 +5007,15 @@ Json::Value MMSEngineDBFacade::updateUser (
 				setSQL += fmt::format("country = {}", trans.quote(country));
 				oneParameterPresent = true;
 			}
+
+			if (admin && insolventChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("insolvent = {}", insolvent);
+				oneParameterPresent = true;
+			}
+
 			if (admin && expirationDateChanged)
 			{
 				if (oneParameterPresent)
@@ -5046,7 +5059,7 @@ Json::Value MMSEngineDBFacade::updateUser (
                 "select "
 				"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 				"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
-				"userKey, name, eMailAddress, country "
+				"userKey, name, eMailAddress, country, insolvent "
                 "from MMS_User where userKey = {}",
 				userKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -5078,6 +5091,9 @@ Json::Value MMSEngineDBFacade::updateUser (
 				field = "country";
 				loginDetailsRoot[field] = res[0]["country"].as<string>();
                 
+				field = "insolvent";
+				loginDetailsRoot[field] = res[0]["insolvent"].as<bool>();
+
 				field = "ldapEnabled";
 				loginDetailsRoot[field] = ldapEnabled;
             }

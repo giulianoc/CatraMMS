@@ -705,6 +705,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "password				text NOT NULL,"
                     "country				text NULL,"
                     "creationDate			timestamp without time zone default (now() at time zone 'utc'),"
+					"insolvent				boolean NOT NULL,"
                     "expirationDate			timestamp without time zone NOT NULL,"
                     "lastSuccessfulLogin	timestamp without time zone NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "
@@ -738,6 +739,31 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "successfulLogin		timestamp without time zone NULL,"
                     "constraint MMS_LoginStatistics_PK PRIMARY KEY (loginStatisticsKey), "
                     "constraint MMS_LoginStatistics_FK foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+                "create table if not exists MMS_Invoice ("
+                    "invoiceKey				bigint GENERATED ALWAYS AS IDENTITY,"
+                    "userKey				bigint NOT NULL,"
+                    "creationDate			timestamp without time zone default (now() at time zone 'utc'),"
+                    "description			text NOT NULL,"
+                    "amount					int NOT NULL,"
+                    "expirationDate			timestamp without time zone NOT NULL,"
+                    "paid					boolean NOT NULL,"
+                    "paymentDate			timestamp without time zone NULL,"
+                    "constraint MMS_Invoice_PK PRIMARY KEY (invoiceKey), "
+                    "constraint MMS_Invoice_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);

@@ -40,6 +40,14 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/?$ /api?version=$1&method=updateUser last;
 		}
 
+#invoice
+		if ($request_method = POST) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/invoice/?$ /api?version=$1&method=addInvoice last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/invoice/?$ /api?version=$1&method=invoiceList last;
+		}
+
 #Workspace
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=createWorkspace last;

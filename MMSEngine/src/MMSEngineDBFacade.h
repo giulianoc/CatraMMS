@@ -1165,6 +1165,17 @@ public:
 
 	Json::Value getLoginWorkspace(int64_t userKey, bool fromMaster);
 
+	Json::Value addInvoice(
+		int64_t userKey,
+		string description,
+		int amount,
+		string expirationDate);
+
+	Json::Value getInvoicesList (
+		int64_t userKey,
+		bool admin,
+		int start, int rows);
+
 	string createCode(
 		int64_t workspaceKey,
 		int64_t userKey, string userEmail,
@@ -1314,7 +1325,6 @@ public:
 		int64_t workspaceKey,
 		int64_t workspaceKeyToBeSetAsDefault);
 
-	// #ifdef __POSTGRES__
     Json::Value updateUser (
 		bool admin,
 		bool ldapEnabled,
@@ -1322,21 +1332,9 @@ public:
         bool nameChanged, string name, 
         bool emailChanged, string email, 
         bool countryChanged, string country,
+        bool insolventChanged, bool insolvent,
 		bool expirationDateChanged, string expirationDate,
 		bool passwordChanged, string newPassword, string oldPassword);
-/*
-	#else
-    Json::Value updateUser (
-		bool admin,
-		bool ldapEnabled,
-        int64_t userKey,
-        bool nameChanged, string name, 
-        bool emailChanged, string email, 
-        bool countryChanged, string country,
-		bool expirationDateChanged, string expirationDate,
-		bool passwordChanged, string newPassword, string oldPassword);
-	#endif
-*/
 
 	string createResetPasswordToken(
 		int64_t userKey);
