@@ -705,7 +705,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "password				text NOT NULL,"
                     "country				text NULL,"
                     "creationDate			timestamp without time zone default (now() at time zone 'utc'),"
-					"insolvent				boolean NOT NULL,"
+					"insolvent				boolean NOT NULL default false,"
                     "expirationDate			timestamp without time zone NOT NULL,"
                     "lastSuccessfulLogin	timestamp without time zone NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "

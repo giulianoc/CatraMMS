@@ -1165,7 +1165,7 @@ public:
 
 	Json::Value getLoginWorkspace(int64_t userKey, bool fromMaster);
 
-	Json::Value addInvoice(
+	int64_t addInvoice(
 		int64_t userKey,
 		string description,
 		int amount,
