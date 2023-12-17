@@ -187,8 +187,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"currentCostForDedicatedEncoder_power_2	integer not null default 0,"
 					"dedicatedEncoder_power_3	integer not null default 0,"
 					"currentCostForDedicatedEncoder_power_3	integer not null default 0,"
-					"support24x7			boolean not null default false,"
-					"currentCostForSupport24x7	integer not null default 0,"
+					"support_type_1			boolean not null default false,"
+					"currentCostForSupport_type_1	integer not null default 0,"
 					"constraint MMS_WorkspaceCost_PK PRIMARY KEY (workspaceKey), "
                     "constraint MMS_WorkspaceCost_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade) ";

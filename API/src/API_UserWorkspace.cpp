@@ -2611,8 +2611,8 @@ void API::updateWorkspace(
 		bool currentCostForDedicatedEncoder_power_2Changed = false; int64_t currentCostForDedicatedEncoder_power_2;
 		bool dedicatedEncoder_power_3Changed = false; int64_t dedicatedEncoder_power_3;
 		bool currentCostForDedicatedEncoder_power_3Changed = false; int64_t currentCostForDedicatedEncoder_power_3;
-		bool support24x7Changed = false; bool support24x7;
-		bool currentCostForSupport24x7Changed = false; int64_t currentCostForSupport24x7;
+		bool support_type_1Changed = false; bool support_type_1;
+		bool currentCostForSupport_type_1Changed = false; int64_t currentCostForSupport_type_1;
 
         bool newCreateRemoveWorkspace;
         bool newIngestWorkflow;
@@ -2748,18 +2748,18 @@ void API::updateWorkspace(
 			currentCostForDedicatedEncoder_power_3 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
-		field = "support24x7";
+		field = "support_type_1";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
-			support24x7Changed = true;
-			support24x7 = JSONUtils::asBool(metadataRoot, field, false);
+			support_type_1Changed = true;
+			support_type_1 = JSONUtils::asBool(metadataRoot, field, false);
 		}
 
-		field = "currentCostForSupport24x7";
+		field = "currentCostForSupport_type_1";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
-			currentCostForSupport24x7Changed = true;
-			currentCostForSupport24x7 = JSONUtils::asInt64(metadataRoot, field, -1);
+			currentCostForSupport_type_1Changed = true;
+			currentCostForSupport_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "userAPIKey";
@@ -2866,8 +2866,8 @@ void API::updateWorkspace(
 				currentCostForDedicatedEncoder_power_2Changed, currentCostForDedicatedEncoder_power_2,
 				dedicatedEncoder_power_3Changed, dedicatedEncoder_power_3,
 				currentCostForDedicatedEncoder_power_3Changed, currentCostForDedicatedEncoder_power_3,
-				support24x7Changed, support24x7,
-				currentCostForSupport24x7Changed, currentCostForSupport24x7,
+				support_type_1Changed, support_type_1,
+				currentCostForSupport_type_1Changed, currentCostForSupport_type_1,
 
 				newCreateRemoveWorkspace,
 				newIngestWorkflow,
