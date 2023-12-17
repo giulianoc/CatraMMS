@@ -1292,6 +1292,8 @@ public:
 		bool currentCostForDedicatedEncoder_power_2Changed, int64_t currentCostForDedicatedEncoder_power_2,
 		bool dedicatedEncoder_power_3Changed, int64_t dedicatedEncoder_power_3,
 		bool currentCostForDedicatedEncoder_power_3Changed, int64_t currentCostForDedicatedEncoder_power_3,
+		bool support24x7Changed, bool support24x7,
+		bool currentCostForSupport24x7Changed, int64_t currentCostForSupport24x7,
 
 		bool newCreateRemoveWorkspace,
 		bool newIngestWorkflow,

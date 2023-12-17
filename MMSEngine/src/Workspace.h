@@ -25,6 +25,8 @@ struct Workspace
 	unsigned long			_currentCostForDedicatedEncoder_power_2;
 	unsigned long			_dedicatedEncoder_power_3;
 	unsigned long			_currentCostForDedicatedEncoder_power_3;
+	bool					_support24x7;
+	unsigned long			_currentCostForSupport24x7;
 
     TerritoriesHashMap		_territories;
 };

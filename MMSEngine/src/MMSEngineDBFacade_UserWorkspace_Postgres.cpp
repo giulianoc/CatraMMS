@@ -25,7 +25,8 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			"wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
-			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3 "
+			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
+			"wc.support24x7, wc.currentCostForSupport24x7 "
 			"from MMS_Workspace w, MMS_WorkspaceCost wc "
 			"where w.workspaceKey = wc.workspaceKey and w.workspaceKey = {}",
 			workspaceKey);
@@ -57,6 +58,8 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
 			workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
 			workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
+			workspace->_support24x7 = res[0]["support24x7"].as<bool>();
+			workspace->_currentCostForSupport24x7 = res[0]["currentCostForSupport24x7"].as<int>();
 
 			// getTerritories(workspace);
 		}
@@ -188,6 +191,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
 			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
+			"wc.support24x7, wc.currentCostForSupport24x7 "
 			"from MMS_Workspace w, MMS_WorkspaceCost wc "
 			"where w.workspaceKey = wc.workspaceKey and w.name = {}",
 			trans.quote(workspaceName));
@@ -220,6 +224,8 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
 			workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
 			workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
+			workspace->_support24x7 = res[0]["support24x7"].as<bool>();
+			workspace->_currentCostForSupport24x7 = res[0]["currentCostForSupport24x7"].as<int>();
 
 			// getTerritories(workspace);
 		}
@@ -1739,11 +1745,13 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 					"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
 					"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
 					"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3, "
+					"support24x7, currentCostForSupport24x7 "
 					") values ("
 					"{},           {},             0, "
 					"0,                        0, "
 					"0,                        0, "
-					"0,                        0, ",
+					"0,                        0, "
+					"false,       0 ",
 					workspaceKey, maxStorageInMB / 1000);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			workspaceKey = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -3746,6 +3754,8 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 	bool currentCostForDedicatedEncoder_power_2Changed, int64_t currentCostForDedicatedEncoder_power_2,
 	bool dedicatedEncoder_power_3Changed, int64_t dedicatedEncoder_power_3,
 	bool currentCostForDedicatedEncoder_power_3Changed, int64_t currentCostForDedicatedEncoder_power_3,
+	bool support24x7Changed, bool support24x7,
+	bool currentCostForSupport24x7Changed, int64_t currentCostForSupport24x7,
 
 	bool newCreateRemoveWorkspace,
 	bool newIngestWorkflow,
@@ -4050,6 +4060,22 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				oneParameterPresent = true;
 			}
 
+			if (support24x7Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("support24x7 = {}", support24x7);
+				oneParameterPresent = true;
+			}
+
+			if (currentCostForSupport24x7Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("currentCostForSupport24x7 = {}", currentCostForSupport24x7);
+				oneParameterPresent = true;
+			}
+
 			if (oneParameterPresent)
 			{
 				string sqlStatement = fmt::format( 
@@ -4060,9 +4086,10 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 				SPDLOG_INFO("SQL statement"
 					", sqlStatement: @{}@"
+					", rowsUpdated: {}"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
+					sqlStatement, rowsUpdated, conn->getConnectionId(),
 					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 				if (rowsUpdated != 1)
@@ -4541,7 +4568,8 @@ Json::Value MMSEngineDBFacade::getWorkspaceCost(
 				"select maxStorageInGB, currentCostForStorage, "
 				"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
 				"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
-				"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3 "
+				"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3, "
+				"support24x7, currentCostForSupport24x7 "
 				"from MMS_WorkspaceCost "
                 "where workspaceKey = {} ",
 				workspaceKey);
@@ -4571,6 +4599,8 @@ Json::Value MMSEngineDBFacade::getWorkspaceCost(
 			workspaceCost["currentCostForDedicatedEncoder_power_2"] = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
 			workspaceCost["dedicatedEncoder_power_3"] = res[0]["dedicatedEncoder_power_3"].as<int>();
 			workspaceCost["currentCostForDedicatedEncoder_power_3"] = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
+			workspaceCost["support24x7"] = res[0]["support24x7"].as<bool>();
+			workspaceCost["currentCostForSupport24x7"] = res[0]["currentCostForSupport24x7"].as<int>();
         }
     }
 	catch(sql_error const &e)
