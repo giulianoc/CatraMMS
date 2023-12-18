@@ -12755,8 +12755,12 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 		}
 		else if (streamSourceType == "IP_PUSH")
 		{
-			liveURL = pushProtocol + "://" + pushServerName
-				+ ":" + to_string(pushServerPort) + pushUri;
+			if (pushProtocol == "srt")
+				liveURL = pushProtocol + "://" + pushServerName
+					+ ":" + to_string(pushServerPort) + "?mode=listener";
+			else
+				liveURL = pushProtocol + "://" + pushServerName
+					+ ":" + to_string(pushServerPort) + pushUri;
 		}
 		else if (streamSourceType == "TV")
 		{

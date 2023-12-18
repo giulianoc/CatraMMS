@@ -14346,6 +14346,11 @@ tuple<long, string, string, int, int64_t, Json::Value
 					else
 						url += "&overrun_nonfatal=1&fifo_size=50000000";
 				}
+				else if (
+					url.find("srt://") != string::npos
+				)
+				{
+				}
 				else
 				{
 					_logger->error(__FILEREF__ + "listen/timeout not managed yet for the current protocol"
