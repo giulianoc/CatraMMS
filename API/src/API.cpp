@@ -327,6 +327,18 @@ _logger = spdlog::default_logger();
 		", mms->guiPort: {}", _guiPort
 	);
 
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_maxMillisecondsToWait", 60000);
+	SPDLOG_INFO("Configuration item"
+		", storage->_waitingNFSSync_maxMillisecondsToWait: {}", _waitingNFSSync_maxMillisecondsToWait
+	);
+	_waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(configuration["storage"],
+		"waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
+	SPDLOG_INFO("Configuration item"
+		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",
+		_waitingNFSSync_milliSecondsWaitingBetweenChecks
+	);
+
     _fileUploadProgressData     = fileUploadProgressData;
     _fileUploadProgressThreadShutdown       = false;
 }

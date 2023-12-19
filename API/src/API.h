@@ -153,6 +153,9 @@ shared_ptr<spdlog::logger>	_logger;
     string				_guiHostname;
     int					_guiPort;
 
+	int					_waitingNFSSync_maxMillisecondsToWait;
+	int					_waitingNFSSync_milliSecondsWaitingBetweenChecks;
+
     FileUploadProgressData*     _fileUploadProgressData;
     
 

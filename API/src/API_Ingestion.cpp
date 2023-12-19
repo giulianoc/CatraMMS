@@ -3054,23 +3054,33 @@ void API::uploadedBinary(
 					+ ", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes)
 				);
 
-                if (contentRangeStart != destBinaryPathNameSizeInBytes)
-                {
-                    string errorMessage = string("Content-Range. This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
+				// waiting in case of nfs delay
+				chrono::system_clock::time_point end = chrono::system_clock::now()
+					+ chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait);
+				while (contentRangeStart != destBinaryPathNameSizeInBytes && chrono::system_clock::now() < end)
+				{
+					this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
+
+					destBinaryPathNameSizeInBytes = fs::file_size(destBinaryPathName);
+				}
+
+				if (contentRangeStart != destBinaryPathNameSizeInBytes)
+				{
+					string errorMessage = string("Content-Range. This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", contentRangeStart: " + to_string(contentRangeStart)
+						+ ", contentRangeStart: " + to_string(contentRangeStart)
 						+ ", contentRangeEnd: " + to_string(contentRangeEnd)
 						+ ", contentRangeSize: " + to_string(contentRangeSize)
 						+ ", segmentedContent: " + to_string(segmentedContent)
 						+ ", destBinaryPathName: " + destBinaryPathName
 						+ ", sourceBinaryPathFile: " + sourceBinaryPathFile
-                        + ", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes)
-                        + ", destBinaryPathNameSizeInBytes (expected): " + to_string(destBinaryPathNameSizeInBytes)
-                    ;
-                    _logger->error(__FILEREF__ + errorMessage);
+						+ ", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes)
+						+ ", destBinaryPathNameSizeInBytes (expected): " + to_string(destBinaryPathNameSizeInBytes)
+					;
+					_logger->error(__FILEREF__ + errorMessage);
 
-                    throw runtime_error(errorMessage);            
-                }
+					throw runtime_error(errorMessage);            
+				}
 
                 try
                 {
