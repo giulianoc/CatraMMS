@@ -7,6 +7,7 @@
     "type": "Add-Content",
     "parameters": {
       "title": "${title}",
+	  "tags": ["${tag}"],
       "allowUniqueNameOverride": false,
       "fileFormat": "${fileFormat}",
       "ingester": "${ingester}",

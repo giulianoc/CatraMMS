@@ -2,17 +2,17 @@
 mmsUserKey=$1
 mmsAPIKey=$2
 title=$3
-ingester=$4
-retention=$5
-binaryFilePathName=$6
-
+tag=$4
+ingester=$5
+retention=$6
+binaryFilePathName=$7
 #i.e. if IngestionNumber 2/171 was interrupted, continueFromIndex has to be 2
-continueFromIndex=$7
+continueFromIndex=$8
 
-if [ $# -lt 6 -o $# -gt 7 ]; then
-	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <ingester> <retention> <binaryFilePathName> [<continueFromIndex>]"
+if [ $# -lt 7 -o $# -gt 8 ]; then
+	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <tag> <ingester> <retention> <binaryFilePathName> [<continueFromIndex>]"
 
-	echo "The current parameters number is: $#, it shall be 6 or 7"
+	echo "The current parameters number is: $#, it shall be 7 or 8"
 	paramIndex=1
 	for param in "$@"
 	do
@@ -21,7 +21,7 @@ if [ $# -lt 6 -o $# -gt 7 ]; then
 	done
 
 	exit 1
-elif [ $# -eq 6 ]; then
+elif [ $# -eq 7 ]; then
 	continueFromIndex=""
 fi
 
@@ -34,8 +34,8 @@ if [ "$continueFromIndex" = "" ]; then
 	extension="${filename##*.}"
 	fileFormat=$extension
 
-	#echo "./helper/ingestionWorkflow.sh $mmsUserKey \"$mmsAPIKey\" \"$title\" \"$ingester\" $retention $fileFormat"
-	ingestionJobKey=$(./helper/ingestionWorkflow.sh $mmsUserKey "$mmsAPIKey" "$title" "$ingester" $retention $fileFormat)
+	#echo "./helper/ingestionWorkflow.sh $mmsUserKey \"$mmsAPIKey\" \"$title\" \"$tag\" \"$ingester\" $retention $fileFormat"
+	ingestionJobKey=$(./helper/ingestionWorkflow.sh $mmsUserKey "$mmsAPIKey" "$title" "$tag" "$ingester" $retention $fileFormat)
 
 	if [ "$ingestionJobKey" = "" ]; then
 		echo "ingestionWorkflow.sh failed"

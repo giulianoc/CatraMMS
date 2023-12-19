@@ -1,6 +1,6 @@
 
-if [ $# -lt 4 -o $# -gt 6 ]; then
-	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <ingester> [<retention> <fileFormat>]"
+if [ $# -lt 5 -o $# -gt 7 ]; then
+	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <tag> <ingester> [<retention> <fileFormat>]"
 
 	exit 1
 fi
@@ -10,14 +10,15 @@ mmsAPIHostName=mms-api.catramms-cloud.com
 mmsUserKey=$1
 mmsAPIKey=$2
 title=$3
-ingester=$4
-if [ $# -gt 4 ]; then
-	retention=$5
+tag=$4
+ingester=$5
+if [ $# -gt 5 ]; then
+	retention=$6
 else
 	retention="3d"
 fi
-if [ $# -gt 5 ]; then
-	fileFormat=$6
+if [ $# -gt 6 ]; then
+	fileFormat=$7
 else
 	fileFormat="mp4"
 fi
@@ -30,7 +31,7 @@ then
     exit
 fi
 
-sed "s/\${title}/$title/g" ./helper/ingestionWorkflow.json | sed "s/\${ingester}/$ingester/g" | sed "s/\${retention}/$retention/g" | sed "s/\${fileFormat}/$fileFormat/g" > ./helper/ingestionWorkflow.json.new
+sed "s/\${title}/$title/g" ./helper/ingestionWorkflow.json | sed "s/\${tag}/$tag/g" | sed "s/\${ingester}/$ingester/g" | sed "s/\${retention}/$retention/g" | sed "s/\${fileFormat}/$fileFormat/g" > ./helper/ingestionWorkflow.json.new
 
 curl -o ./helper/ingestionWorkflowResult.json -k -s -X POST -u $mmsUserKey:$mmsAPIKey -d @./helper/ingestionWorkflow.json.new -H "Content-Type: application/json" https://$mmsAPIHostName/catramms/1.0.1/workflow
 

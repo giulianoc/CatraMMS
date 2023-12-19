@@ -909,6 +909,8 @@ firewall-rules()
 
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
+		#connection srt from public
+		ufw allow 30000:31000/udp
 	elif [ "$moduleType" == "externalEncoder" ]; then
 		#external encoder (aws api 1, 2, aws engine 1, 2
 		ufw allow from 63.35.35.24 to any port 8088		# api 1
@@ -927,6 +929,8 @@ firewall-rules()
 
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
+		#connection srt from public
+		ufw allow 30000:31000/udp
 	elif [ "$moduleType" == "api" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""

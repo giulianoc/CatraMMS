@@ -2863,8 +2863,8 @@ private:
 
 
 	#ifdef __POSTGRES__
-	string getPostgresArray (vector<string>& arrayElements, transaction_base* trans);
-	string getPostgresArray (Json::Value arrayRoot, transaction_base* trans);
+	string getPostgresArray (vector<string>& arrayElements, bool emptyElementToBeRemoved, transaction_base* trans);
+	string getPostgresArray (Json::Value arrayRoot, bool emptyElementToBeRemoved, transaction_base* trans);
 	#endif
 
 	#ifdef __POSTGRES__

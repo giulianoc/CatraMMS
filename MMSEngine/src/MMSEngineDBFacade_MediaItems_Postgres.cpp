@@ -585,7 +585,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += fmt::format("tags = {}", getPostgresArray(tagsRoot, &trans));
+				setSQL += fmt::format("tags = {}", getPostgresArray(tagsRoot, true, &trans));
 			}
 
 			setSQL = "set " + setSQL + " ";
@@ -1275,12 +1275,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		if (tagsIn.size() > 0)
 		{
 			// &&: Gli array si sovrappongono, cioè hanno qualche elemento in comune?
-			sqlWhere += fmt::format("and mi.tags && {} = true ", getPostgresArray(tagsIn, &trans));
+			sqlWhere += fmt::format("and mi.tags && {} = true ", getPostgresArray(tagsIn, true, &trans));
 		}
 		if (tagsNotIn.size() > 0)
 		{
 			// &&: Gli array si sovrappongono, cioè hanno qualche elemento in comune?
-			sqlWhere += fmt::format("and mi.tags && {} = false ", getPostgresArray(tagsNotIn, &trans));
+			sqlWhere += fmt::format("and mi.tags && {} = false ", getPostgresArray(tagsNotIn, true, &trans));
 		}
 
 		if (jsonCondition != "")
@@ -4756,7 +4756,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				string field = "tags";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					tagsRoot = parametersRoot[field];
-				tags = getPostgresArray(tagsRoot, &trans);
+				tags = getPostgresArray(tagsRoot, true, &trans);
 			}
 
             string sqlStatement = fmt::format( 

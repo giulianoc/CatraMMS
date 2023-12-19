@@ -2270,11 +2270,13 @@ MMSEngineDBFacade::DeliveryTechnology MMSEngineDBFacade::fileFormatToDeliveryTec
 }
 
 string MMSEngineDBFacade::getPostgresArray (
-	vector<string>& arrayElements, transaction_base* trans)
+	vector<string>& arrayElements, bool emptyElementToBeRemoved, transaction_base* trans)
 {
 	string postgresArray;
 	for (string element: arrayElements)
 	{
+		if (emptyElementToBeRemoved && element == "")
+			continue;
 		if (postgresArray == "")
 			postgresArray = trans->quote(element);
 		else
@@ -2289,12 +2291,15 @@ string MMSEngineDBFacade::getPostgresArray (
 }
 
 string MMSEngineDBFacade::getPostgresArray (
-	Json::Value arrayRoot, transaction_base* trans)
+	Json::Value arrayRoot, bool emptyElementToBeRemoved, transaction_base* trans)
 {
 	string postgresArray;
 	for (int index = 0; index < arrayRoot.size(); index++)
 	{
 		string element = JSONUtils::asString(arrayRoot[index]);
+
+		if (emptyElementToBeRemoved && element == "")
+			continue;
 
 		if (postgresArray == "")
 			postgresArray = trans->quote(element);
