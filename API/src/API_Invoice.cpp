@@ -103,11 +103,17 @@ void API::addInvoice(
         string sResponse;
         try
         {
+			#ifdef __POSTGRES__
 			int64_t invoiceKey = _mmsEngineDBFacade->addInvoice(
 				userKey, description, amount, expirationDate);
+			#else
+			#endif
 
 			Json::Value response;
+			#ifdef __POSTGRES__
 			response["invoiceKey"] = invoiceKey;
+			#else
+			#endif
 
 			sResponse = JSONUtils::toString(response);
 		}
@@ -205,10 +211,14 @@ void API::invoiceList(
 		}
 
         {
+			#ifdef __POSTGRES__
 			Json::Value invoiceListRoot = _mmsEngineDBFacade->getInvoicesList(
 				userKey, admin, start, rows); 
 
-            string responseBody = JSONUtils::toString(invoiceListRoot);
+			string responseBody = JSONUtils::toString(invoiceListRoot);
+			#else
+			string responseBody;
+			#endif
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);

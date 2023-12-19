@@ -372,6 +372,40 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
+                "create table if not exists MMS_WorkspaceCost ("
+                    "workspaceKey					BIGINT UNSIGNED NOT NULL,"
+					"maxStorageInGB					INT UNSIGNED NOT NULL,"
+					"currentCostForStorage			int not null default 0,"
+					"dedicatedEncoder_power_1		int not null default 0,"
+					"currentCostForDedicatedEncoder_power_1	int not null default 0,"
+					"dedicatedEncoder_power_2	int not null default 0,"
+					"currentCostForDedicatedEncoder_power_2	int not null default 0,"
+					"dedicatedEncoder_power_3	int not null default 0,"
+					"currentCostForDedicatedEncoder_power_3	int not null default 0,"
+					"support_type_1			TINYINT not null default 0,"
+					"currentCostForSupport_type_1	int not null default 0,"
+					"constraint MMS_WorkspaceCost_PK PRIMARY KEY (workspaceKey), "
+                    "constraint MMS_WorkspaceCost_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException& se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            lastSQLCommand = 
                 "create table if not exists MMS_User ("
                     "userKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "name					VARCHAR (128) NULL,"

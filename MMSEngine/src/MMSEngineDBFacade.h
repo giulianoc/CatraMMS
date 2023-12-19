@@ -3034,6 +3034,7 @@ private:
         string processorMMS = "noToBeUpdated");
 	#endif
 
+	#ifdef __POSTGRES__
 	pair<int64_t,string> addWorkspace(
         shared_ptr<PostgresConnection> conn,
 		work& trans,
@@ -3059,6 +3060,32 @@ private:
         long maxStorageInMB,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
+	#else
+	pair<int64_t,string> addWorkspace(
+        shared_ptr<MySQLConnection> conn,
+        int64_t userKey,
+        bool admin,
+		bool createRemoveWorkspace,
+        bool ingestWorkflow,
+        bool createProfiles,
+        bool deliveryAuthorization,
+        bool shareWorkspace,
+        bool editMedia,
+		bool editConfiguration,
+		bool killEncoding,
+		bool cancelIngestionJob,
+		bool editEncodersPool,
+		bool applicationRecorder,
+        string workspaceName,
+        WorkspaceType workspaceType,
+        string deliveryURL,
+        EncodingPriority maxEncodingPriority,
+        EncodingPeriod encodingPeriod,
+        long maxIngestionsNumber,
+        long maxStorageInMB,
+        string languageCode,
+        chrono::system_clock::time_point userExpirationDate);
+	#endif
 
 	#ifdef __POSTGRES__
 	void manageExternalUniqueName(

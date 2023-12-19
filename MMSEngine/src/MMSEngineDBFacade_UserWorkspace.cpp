@@ -3781,7 +3781,7 @@ Json::Value MMSEngineDBFacade::login (
 }
 
 Json::Value MMSEngineDBFacade::getWorkspaceList (
-    int64_t userKey, bool admin)
+    int64_t userKey, bool admin, bool costDetails)
 {
 	Json::Value workspaceListRoot;
     string          lastSQLCommand;
