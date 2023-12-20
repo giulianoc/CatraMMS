@@ -24112,48 +24112,6 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
     {
         (curlDownloadData->mediaSourceFileStream).close();
 
-        /*
-        string localPathFileName = curlDownloadData->workspaceIngestionBinaryPathName
-                // + ".new"
-                ;
-        if (curlDownloadData->currentChunkNumber >= 2)
-        {
-            try
-            {
-                bool removeSrcFileAfterConcat = true;
-
-                logger->info(__FILEREF__ + "Concat file"
-                    + ", localPathFileName: " + localPathFileName
-                    + ", curlDownloadData->workspaceIngestionBinaryPathName: " + curlDownloadData->workspaceIngestionBinaryPathName
-                    + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
-                );
-
-                FileIO::concatFile(curlDownloadData->workspaceIngestionBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
-            }
-            catch(runtime_error& e)
-            {
-                string errorMessage = string("Error to concat file")
-                    + ", localPathFileName: " + localPathFileName
-                    + ", curlDownloadData->workspaceIngestionBinaryPathName: " + curlDownloadData->workspaceIngestionBinaryPathName
-                        + ", e.what(): " + e.what()
-                ;
-                logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);            
-            }
-            catch(exception& e)
-            {
-                string errorMessage = string("Error to concat file")
-                    + ", localPathFileName: " + localPathFileName
-                    + ", curlDownloadData->workspaceIngestionBinaryPathName: " + curlDownloadData->workspaceIngestionBinaryPathName
-                ;
-                logger->error(__FILEREF__ + errorMessage);
-
-                throw runtime_error(errorMessage);            
-            }
-        }
-         */
-        // (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::out | ios::trunc);
         (curlDownloadData->mediaSourceFileStream).open(curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::app);
         curlDownloadData->currentChunkNumber += 1;
 
@@ -24162,17 +24120,19 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 			", curlDownloadData -> destBinaryPathName: {}"
              ", curlDownloadData->currentChunkNumber: {}"
              ", curlDownloadData->currentTotalSize: {}"
-             ", curlDownloadData->maxChunkFileSize: {}",
+             ", curlDownloadData->maxChunkFileSize: {}"
+			", tellp: {}",
 			curlDownloadData -> ingestionJobKey, curlDownloadData -> destBinaryPathName,
 			curlDownloadData->currentChunkNumber, curlDownloadData->currentTotalSize,
-			curlDownloadData->maxChunkFileSize
+			curlDownloadData->maxChunkFileSize, (curlDownloadData->mediaSourceFileStream).tellp()
         );
     }
     
     curlDownloadData->mediaSourceFileStream.write(ptr, size * nmemb);
     curlDownloadData->currentTotalSize += (size * nmemb);
 
-	SPDLOG_INFO("curlDownloadCallback"
+	// debug perchè avremmo tantissimi log con elapsed 0
+	SPDLOG_DEBUG("curlDownloadCallback"
 		", ingestionJobKey: {}"
 		", bytes written: {}"
 		", elapsed (millisecs): {}",
@@ -24443,6 +24403,7 @@ RESUMING FILE TRANSFERS
 				if (attemptIndex == 0)
 				{
 					CurlDownloadData curlDownloadData;
+					curlDownloadData.ingestionJobKey = ingestionJobKey;
 					curlDownloadData.currentChunkNumber = 0;
 					curlDownloadData.currentTotalSize = 0;
 					curlDownloadData.destBinaryPathName   = destBinaryPathName;
@@ -24515,12 +24476,23 @@ RESUMING FILE TRANSFERS
 					}
 
 					CurlDownloadData curlDownloadData;
+					curlDownloadData.ingestionJobKey = ingestionJobKey;
 					curlDownloadData.destBinaryPathName   = destBinaryPathName;
 					curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
 
 					curlDownloadData.currentChunkNumber = fileSize % curlDownloadData.maxChunkFileSize;
 					// fileSize = curlDownloadData.currentChunkNumber * curlDownloadData.maxChunkFileSize;
 					curlDownloadData.currentTotalSize = fileSize;
+
+					SPDLOG_INFO("Coming from a download failure, trying to Resume"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", destBinaryPathName: {}"
+						", curlDownloadData.currentTotalSize/fileSize: {}"
+						", curlDownloadData.currentChunkNumber: {}",
+						_processorIdentifier, ingestionJobKey, destBinaryPathName, fileSize,
+						curlDownloadData.currentChunkNumber
+					);
 
 					curlpp::Cleanup cleaner;
 					curlpp::Easy request;
@@ -26658,12 +26630,14 @@ int MMSEngineProcessor::progressDownloadCallback(
 			", _processorIdentifier: {}"
             ", ingestionJobKey: {}"
             ", downloadingPercentage: {}"
+            ", lastPercentageUpdated: {}"
+            ", downloadingStoppedByUser: {}"
             ", dltotal: {}"
             ", dlnow: {}"
             ", ultotal: {}"
             ", ulnow: {}",
-			_processorIdentifier, ingestionJobKey, downloadingPercentage,
-			dltotal, dlnow, ultotal, ulnow
+			_processorIdentifier, ingestionJobKey, downloadingPercentage, lastPercentageUpdated,
+			downloadingStoppedByUser, dltotal, dlnow, ultotal, ulnow
         );
         
         lastTimeProgressUpdate = now;
