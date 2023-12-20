@@ -24388,6 +24388,7 @@ RESUMING FILE TRANSFERS
 		for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !downloadingCompleted; attemptIndex++)
 		{
 			bool downloadingStoppedByUser = false;
+			double lastPercentageUpdated = -1.0;
         
 			try 
 			{
@@ -24444,7 +24445,6 @@ RESUMING FILE TRANSFERS
 					}
 
 					chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
-					double lastPercentageUpdated = -1.0;
 					curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
                         ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
@@ -24522,7 +24522,6 @@ RESUMING FILE TRANSFERS
 					}
 
 					chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
-					double lastPercentageUpdated = -1.0;
 					curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
                         ingestionJobKey, lastTimeProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
@@ -24657,9 +24656,10 @@ RESUMING FILE TRANSFERS
 					", ingestionJobKey: {}"
 					", localSourceReferenceURL: {}"
 					", downloadingStoppedByUser: {}"
+					", lastPercentageUpdated: {}"
 					", exception: {}",
 					_processorIdentifier, ingestionJobKey, localSourceReferenceURL,
-					downloadingStoppedByUser, e.what()
+					downloadingStoppedByUser, lastPercentageUpdated, e.what()
 				);
 
 				if (downloadingStoppedByUser)
