@@ -33,9 +33,9 @@ SET(CMAKE_CXX_FLAGS "-std=c++20")
 #this is to generate a compilation database (for the YCM vim plugin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-#ADD_DEFINITIONS(-D__POSTGRES__)
-##next serve per una condizione in MMSEngine/src/CMakeLists.txt
-#SET(__POSTGRES__ "1")
+ADD_DEFINITIONS(-D__POSTGRES__)
+#next serve per una condizione in MMSEngine/src/CMakeLists.txt
+SET(__POSTGRES__ "1")
 
 
 set(CMAKE_BUILD_TYPE Debug)
