@@ -24387,8 +24387,14 @@ RESUMING FILE TRANSFERS
 	{
 		for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !downloadingCompleted; attemptIndex++)
 		{
+			// 2023-12-20: questa variabile viene inizializzata a true nel metodo progressDownloadCallback
+			//	nel caso l'utente cancelli il download. Ci sono due problemi:
+			//	1. l'utente non puo cancellare il download perchè attualmente la GUI permette il kill/cancel
+			//		in caso di encodingJob e, nel Download, non abbiamo alcun encodingJob
+			//	2. anche se questa variabile viene passata come 'reference' nel metodo progressDownloadCallback
+			//		il suo valore modificato non ritorna qui, per cui la gestione di downloadingStoppedByUser = true
+			//		nella eccezione sotto non funziona
 			bool downloadingStoppedByUser = false;
-			double lastPercentageUpdated = -1.0;
         
 			try 
 			{
@@ -24429,7 +24435,8 @@ RESUMING FILE TRANSFERS
 					request.setOpt(curlDownloadCallbackFunction);
 					request.setOpt(curlDownloadDataData);
 
-					// Setting the URL to retrive.
+					// localSourceReferenceURL: ftp://user:password@host:port/path
+					// nel caso in cui 'password' contenga '@', questo deve essere encodato con %40
 					request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
 					string httpsPrefix("https");
 					if (localSourceReferenceURL.size() >= httpsPrefix.size()
@@ -24445,6 +24452,7 @@ RESUMING FILE TRANSFERS
 					}
 
 					chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+					double lastPercentageUpdated = -1.0;
 					curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
                         ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
@@ -24522,6 +24530,7 @@ RESUMING FILE TRANSFERS
 					}
 
 					chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
+					double lastPercentageUpdated = -1.0;
 					curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
                         ingestionJobKey, lastTimeProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
@@ -24656,10 +24665,9 @@ RESUMING FILE TRANSFERS
 					", ingestionJobKey: {}"
 					", localSourceReferenceURL: {}"
 					", downloadingStoppedByUser: {}"
-					", lastPercentageUpdated: {}"
 					", exception: {}",
 					_processorIdentifier, ingestionJobKey, localSourceReferenceURL,
-					downloadingStoppedByUser, lastPercentageUpdated, e.what()
+					downloadingStoppedByUser, e.what()
 				);
 
 				if (downloadingStoppedByUser)
