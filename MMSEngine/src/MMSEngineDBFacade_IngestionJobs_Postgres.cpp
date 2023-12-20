@@ -2778,7 +2778,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
         double downloadingPercentage)
 {
-    bool        toBeCancelled = false;
+    bool        canceledByUser = false;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2840,7 +2840,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
                 IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(res[0]["status"].as<string>());
                 
                 if (ingestionStatus == IngestionStatus::End_CanceledByUser)
-                    toBeCancelled = true;
+                    canceledByUser = true;
             }
             else
             {
@@ -2949,7 +2949,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
 		throw e;
 	}
     
-    return toBeCancelled;
+    return canceledByUser;
 }
 
 bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (

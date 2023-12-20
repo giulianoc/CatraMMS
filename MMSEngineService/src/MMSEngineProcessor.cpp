@@ -24084,6 +24084,8 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 
 size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
     MMSEngineProcessor::CurlDownloadData* curlDownloadData = (MMSEngineProcessor::CurlDownloadData*) f;
     
     auto logger = spdlog::get("mmsEngineService");
@@ -24094,11 +24096,15 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
                 curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::trunc);
         curlDownloadData->currentChunkNumber += 1;
         
-        logger->info(__FILEREF__ + "Opening binary file"
-             + ", curlDownloadData -> destBinaryPathName: " + curlDownloadData -> destBinaryPathName
-             + ", curlDownloadData->currentChunkNumber: " + to_string(curlDownloadData->currentChunkNumber)
-             + ", curlDownloadData->currentTotalSize: " + to_string(curlDownloadData->currentTotalSize)
-             + ", curlDownloadData->maxChunkFileSize: " + to_string(curlDownloadData->maxChunkFileSize)
+        SPDLOG_INFO("Opening binary file"
+			", curlDownloadData -> ingestionJobKey: {}"
+			", curlDownloadData -> destBinaryPathName: {}"
+             ", curlDownloadData->currentChunkNumber: {}"
+             ", curlDownloadData->currentTotalSize: {}"
+             ", curlDownloadData->maxChunkFileSize: {}",
+			curlDownloadData -> ingestionJobKey, curlDownloadData -> destBinaryPathName,
+			curlDownloadData->currentChunkNumber, curlDownloadData->currentTotalSize,
+			curlDownloadData->maxChunkFileSize
         );
     }
     else if (curlDownloadData->currentTotalSize >= 
@@ -24151,19 +24157,30 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
         (curlDownloadData->mediaSourceFileStream).open(curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::app);
         curlDownloadData->currentChunkNumber += 1;
 
-        logger->info(__FILEREF__ + "Opening binary file"
-             + ", curlDownloadData->destBinaryPathName: " + curlDownloadData->destBinaryPathName
-             + ", curlDownloadData->currentChunkNumber: " + to_string(curlDownloadData->currentChunkNumber)
-             + ", curlDownloadData->currentTotalSize: " + to_string(curlDownloadData->currentTotalSize)
-             + ", curlDownloadData->maxChunkFileSize: " + to_string(curlDownloadData->maxChunkFileSize)
+        SPDLOG_INFO("Opening binary file"
+			", curlDownloadData -> ingestionJobKey: {}"
+			", curlDownloadData -> destBinaryPathName: {}"
+             ", curlDownloadData->currentChunkNumber: {}"
+             ", curlDownloadData->currentTotalSize: {}"
+             ", curlDownloadData->maxChunkFileSize: {}",
+			curlDownloadData -> ingestionJobKey, curlDownloadData -> destBinaryPathName,
+			curlDownloadData->currentChunkNumber, curlDownloadData->currentTotalSize,
+			curlDownloadData->maxChunkFileSize
         );
     }
     
     curlDownloadData->mediaSourceFileStream.write(ptr, size * nmemb);
     curlDownloadData->currentTotalSize += (size * nmemb);
-    
 
-    return size * nmemb;        
+	SPDLOG_INFO("curlDownloadCallback"
+		", ingestionJobKey: {}"
+		", bytes written: {}"
+		", elapsed (millisecs): {}",
+		curlDownloadData -> ingestionJobKey, size * nmemb,
+		chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - start).count()
+	);
+
+    return size * nmemb;
 };
 
 void MMSEngineProcessor::downloadMediaSourceFileThread(
@@ -24418,6 +24435,7 @@ RESUMING FILE TRANSFERS
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", localSourceReferenceURL: " + localSourceReferenceURL
+					+ ", destBinaryPathName: " + destBinaryPathName
 					+ ", attempt: " + to_string(attemptIndex + 1)
 					+ ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
 				);
@@ -24593,11 +24611,14 @@ RESUMING FILE TRANSFERS
 			}
 			catch (curlpp::LogicError & e) 
 			{
-				_logger->error(__FILEREF__ + "Download failed (LogicError)"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", localSourceReferenceURL: " + localSourceReferenceURL 
-					+ ", exception: " + e.what()
+				SPDLOG_ERROR("Download failed (LogicError)"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", localSourceReferenceURL: {}"
+					", downloadingStoppedByUser: {}"
+					", exception: {}",
+					_processorIdentifier, ingestionJobKey, localSourceReferenceURL,
+					downloadingStoppedByUser, e.what()
 				);
 
 				if (downloadingStoppedByUser)
@@ -24659,11 +24680,14 @@ RESUMING FILE TRANSFERS
 			}
 			catch (curlpp::RuntimeError & e) 
 			{
-				_logger->error(__FILEREF__ + "Download failed (RuntimeError)"
-					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey) 
-					+ ", localSourceReferenceURL: " + localSourceReferenceURL 
-					+ ", exception: " + e.what()
+				SPDLOG_ERROR("Download failed (RuntimeError)"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", localSourceReferenceURL: {}"
+					", downloadingStoppedByUser: {}"
+					", exception: {}",
+					_processorIdentifier, ingestionJobKey, localSourceReferenceURL,
+					downloadingStoppedByUser, e.what()
 				);
 
 				if (downloadingStoppedByUser)
@@ -26630,25 +26654,28 @@ int MMSEngineProcessor::progressDownloadCallback(
         // this is to have one decimal in the percentage
         double downloadingPercentage = ((double) ((int) (progress * 10))) / 10;
 
-        _logger->info(__FILEREF__ + "Download still running"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", downloadingPercentage: " + to_string(downloadingPercentage)
-            + ", dltotal: " + to_string(dltotal)
-            + ", dlnow: " + to_string(dlnow)
-            + ", ultotal: " + to_string(ultotal)
-            + ", ulnow: " + to_string(ulnow)
+        SPDLOG_INFO("Download still running"
+			", _processorIdentifier: {}"
+            ", ingestionJobKey: {}"
+            ", downloadingPercentage: {}"
+            ", dltotal: {}"
+            ", dlnow: {}"
+            ", ultotal: {}"
+            ", ulnow: {}",
+			_processorIdentifier, ingestionJobKey, downloadingPercentage,
+			dltotal, dlnow, ultotal, ulnow
         );
         
         lastTimeProgressUpdate = now;
 
         if (lastPercentageUpdated != downloadingPercentage)
         {
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", downloadingPercentage: " + to_string(downloadingPercentage)
-            );                            
+            SPDLOG_INFO("Update IngestionJob"
+                ", _processorIdentifier: {}"
+                ", ingestionJobKey: {}"
+                ", downloadingPercentage: {}",
+				_processorIdentifier, ingestionJobKey, downloadingPercentage
+            );
             downloadingStoppedByUser = _mmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
                 ingestionJobKey, downloadingPercentage);
 
@@ -26656,7 +26683,17 @@ int MMSEngineProcessor::progressDownloadCallback(
         }
 
         if (downloadingStoppedByUser)
+		{
+            SPDLOG_INFO("Download canceled by user"
+                ", _processorIdentifier: {}"
+                ", ingestionJobKey: {}"
+                ", downloadingPercentage: {}"
+                ", downloadingStoppedByUser: {}",
+				_processorIdentifier, ingestionJobKey, downloadingPercentage, downloadingStoppedByUser
+            );
+
             return 1;   // stop downloading
+		}
     }
 
     return 0;

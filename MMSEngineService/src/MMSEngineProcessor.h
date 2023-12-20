@@ -30,11 +30,12 @@ class MMSEngineProcessor
 {
 public:
     struct CurlDownloadData {
-        int         currentChunkNumber;
-        string      destBinaryPathName;
-        ofstream    mediaSourceFileStream;
-        size_t      currentTotalSize;
-        size_t      maxChunkFileSize;
+        int64_t		ingestionJobKey;
+        int			currentChunkNumber;
+        string		destBinaryPathName;
+        ofstream	mediaSourceFileStream;
+        size_t		currentTotalSize;
+        size_t		maxChunkFileSize;
     };
     
     struct CurlUploadFacebookData {
