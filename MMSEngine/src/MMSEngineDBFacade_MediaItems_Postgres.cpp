@@ -4694,7 +4694,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 			Json::Value metadataRoot;
 			tie(ignore, ignore, metadataRoot) = mediaInfoDetails;
-			metadata = JSONUtils::toString(metadataRoot);
+			if (metadataRoot != Json::nullValue)
+				metadata = JSONUtils::toString(metadataRoot);
 
             field = "deliveryFileName";
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
