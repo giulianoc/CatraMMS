@@ -5514,7 +5514,7 @@ void FFMpeg::silentAudio(
     }
 }
 
-pair<int64_t, long> FFMpeg::getMediaInfo(
+tuple<int64_t, long, Json::Value> FFMpeg::getMediaInfo(
 	int64_t ingestionJobKey,
 	bool isMMSAssetPathName,	// false means it is a URL
 	int timeoutInSeconds,		// used only in case of URL
@@ -5721,6 +5721,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
 
 	int64_t durationInMilliSeconds = -1;
 	long bitRate = -1;
+	Json::Value metadataRoot = Json::nullValue;
 
     try
     {
@@ -6266,6 +6267,20 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
             bitRate = atoll(bit_rate.c_str());
         }
 
+		// 2023-12-21: tags contiene possibili metadati all'interno del file
+		//	Ad esempio, nel caso di file mxf ricevuti da RCS, recuperiamo il timecode (es: 09:59:00:00)
+		//	Questo campo è importante perchè, separatamente, RCS ci da i CuePoints
+		//		"CuePoints1":"10:00:00:00 / 10:19:00:10 / 10:20:00:00 / 10:39:32:13 / 10:41:00:00 / 10:53:10:06”
+		//	Sottraendo dai CuePoints il timecode otteniamo i punti dove tagliare il file mxf per togliere
+		//	lo "sporco". Per cui i tagli saranno:
+		//	- da (10:00:00:00 - 09:59:00:00) a (10:19:00:10 - 09:59:00:00) 
+		//	- da (10:20:00:00 - 09:59:00:00) a (10:39:32:13 - 09:59:00:00) 
+		//	- da (10:41:00:00 - 09:59:00:00) a (10:53:10:06 - 09:59:00:00) 
+		//	e poi bisogna concatenare i tre tagli ottenuti
+        field = "tags";
+        if (JSONUtils::isMetadataPresent(formatRoot, field))
+			metadataRoot = formatRoot[field];
+
         _logger->info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", detailsPathFileName: " + detailsPathFileName);
@@ -6342,7 +6357,7 @@ pair<int64_t, long> FFMpeg::getMediaInfo(
     );
 	*/
 
-	return make_pair(durationInMilliSeconds, bitRate);
+	return make_tuple(durationInMilliSeconds, bitRate, metadataRoot);
 }
 
 string FFMpeg::getNearestKeyFrameTime(

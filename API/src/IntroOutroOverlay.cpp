@@ -502,14 +502,14 @@ void IntroOutroOverlay::encodeContent(
 							{
 								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-								pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								tuple<int64_t, long, Json::Value> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
 									true,	// isMMSAssetPathName
 									-1,		// timeoutInSeconds,		// used only in case of URL
 									currentFile,
 									videoTracks,
 									audioTracks);
-								tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+								tie(currentFileDurationInMilliSeconds, ignore, ignore) = mediaInfo;
 							}
 							string introPathName = stagingBasePath + "/" + "destChunk"
 								+ "_" + currentCounter + "." + destFileFormat;
@@ -549,14 +549,14 @@ void IntroOutroOverlay::encodeContent(
 							{
 								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-								pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								tuple<int64_t, long, Json::Value> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
 									true,	// isMMSAssetPathName
 									-1,		// timeoutInSeconds,		// used only in case of URL
 									currentFile,
 									videoTracks,
 									audioTracks);
-								tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+								tie(currentFileDurationInMilliSeconds, ignore, ignore) = mediaInfo;
 							}
 							string outroPathName = stagingBasePath + "/" + "destChunk"
 								+ "_" + currentCounter + "." + destFileFormat;
@@ -598,14 +598,14 @@ void IntroOutroOverlay::encodeContent(
 							{
 								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-								pair<int64_t, long> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								tuple<int64_t, long, Json::Value> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
 									true,	// isMMSAssetPathName
 									-1,		// timeoutInSeconds,		// used only in case of URL
 									currentFile,
 									videoTracks,
 									audioTracks);
-								tie(currentFileDurationInMilliSeconds, ignore) = mediaInfo;
+								tie(currentFileDurationInMilliSeconds, ignore, ignore) = mediaInfo;
 							}
 							string encodedPathName = stagingBasePath + "/" + "destChunk"
 								+ "_" + currentCounter + "." + destFileFormat;

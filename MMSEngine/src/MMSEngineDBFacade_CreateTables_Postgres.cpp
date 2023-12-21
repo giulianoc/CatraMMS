@@ -1800,6 +1800,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "title                  text NOT NULL,"
                     "ingester               text NULL,"
                     "userData               jsonb,"
+                    "metadata				jsonb,"
                     "deliveryFileName       text NULL,"
                     "ingestionJobKey        bigint NOT NULL,"
                     "ingestionDate          timestamp without time zone NOT NULL,"

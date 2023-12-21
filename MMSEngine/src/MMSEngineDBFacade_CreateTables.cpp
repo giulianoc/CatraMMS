@@ -1749,6 +1749,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "title                  VARCHAR (256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,"
                     "ingester               VARCHAR (128) NULL,"
                     "userData               " + userDataDefinition + ","
+                    "metadata               " + userDataDefinition + ","
                     "deliveryFileName       VARCHAR (128) NULL,"
                     "ingestionJobKey        BIGINT UNSIGNED NOT NULL,"
                     "ingestionDate          DATETIME NOT NULL,"

@@ -246,7 +246,7 @@ public:
 	bool forbiddenErrorInOutputLog();
 	bool isFrameIncreasing(int maxMilliSecondsToWait);
 
-	pair<int64_t, long> getMediaInfo(int64_t ingestionJobKey,
+	tuple<int64_t, long, Json::Value> getMediaInfo(int64_t ingestionJobKey,
 		bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);

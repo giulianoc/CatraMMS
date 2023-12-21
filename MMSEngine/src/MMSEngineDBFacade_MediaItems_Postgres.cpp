@@ -1313,7 +1313,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 
 		string sqlStatement = fmt::format( 
-			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, "
+			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.metadata, "
 			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
 			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startPublishing, "
 			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endPublishing, "
@@ -1387,6 +1387,16 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						mediaItemRoot[field] = Json::nullValue;
 					else
 						mediaItemRoot[field] = row["userData"].as<string>();
+				}
+
+				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "metadata"))
+				{
+					field = "metadata";
+					if (row["metadata"].is_null())
+						mediaItemRoot[field] = Json::nullValue;
+					else
+						mediaItemRoot[field] = row["metadata"].as<string>();
 				}
 
 				if (responseFields == Json::nullValue
@@ -4630,7 +4640,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         unsigned long sizeInBytes,
 
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -4660,6 +4670,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string ingester = "";
             string userData = "";
+            string metadata = "";
             string deliveryFileName = "";
             string sContentType;
             int64_t retentionInMinutes = _contentRetentionInMinutesDefaultValue;
@@ -4680,6 +4691,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				else
 					userData = JSONUtils::toString(parametersRoot[field]);
             }
+
+			Json::Value metadataRoot;
+			tie(ignore, ignore, metadataRoot) = mediaInfoDetails;
+			metadata = JSONUtils::toString(metadataRoot);
 
             field = "deliveryFileName";
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
@@ -4760,17 +4775,18 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, " 
+                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, metadata, " 
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
 				"startPublishing, endPublishing, "
 				"retentionInMinutes, tags, markedAsRemoved, processorMMSForRetention) values ("
-                                           "DEFAULT,      {},           {},     {},      {}, "
+                                           "DEFAULT,      {},           {},     {},      {},       {}, "
 				"{},               {},              NOW() at time zone 'utc', {}, "
                 "to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
                 "{},                 {},   false,           NULL) returning mediaItemKey",
 				workspace->_workspaceKey, trans.quote(title),
 				ingester == "" ? "null" : trans.quote(ingester),
 				userData == "" ? "null" : trans.quote(userData),
+				metadata == "" ? "null" : trans.quote(metadata),
 				deliveryFileName == "" ? "null" : trans.quote(deliveryFileName),
 				ingestionJobKey, trans.quote(toString(contentType)),
 				trans.quote(startPublishing), trans.quote(endPublishing), retentionInMinutes,
@@ -5505,7 +5521,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -5668,7 +5684,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -5729,7 +5745,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int64_t durationInMilliSeconds;
         long bitRate;
 
-		tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
+		tie(durationInMilliSeconds, bitRate, ignore) = mediaInfoDetails;
 
         {
             int drm = 0;

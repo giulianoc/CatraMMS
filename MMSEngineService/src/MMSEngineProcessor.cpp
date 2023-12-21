@@ -7302,7 +7302,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
     MMSEngineDBFacade::ContentType contentType;
 
-	pair<int64_t, long> mediaInfoDetails;
+	tuple<int64_t, long, Json::Value> mediaInfoDetails;
 	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 
@@ -7329,7 +7329,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 			int64_t durationInMilliSeconds = -1;
 			long bitRate = -1;
-			tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
+			tie(durationInMilliSeconds, bitRate, ignore) = mediaInfoDetails;
 
 			_logger->info(__FILEREF__ + "ffmpeg.getMediaInfo"
 				+ ", mmsAssetPathName: " + mmsAssetPathName
@@ -11181,7 +11181,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						throw e;
 					}
 
-					pair<int64_t, long> mediaInfoDetails;
+					tuple<int64_t, long, Json::Value> mediaInfoDetails;
 					vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 					vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 
@@ -19415,7 +19415,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 		);
 		if (maxDurationInSeconds != 0.0)
 		{
-			pair<int64_t, long> mediaInfoDetails;
+			tuple<int64_t, long, Json::Value> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			int64_t durationInMilliSeconds;
@@ -19435,7 +19435,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 			//tie(durationInMilliSeconds, ignore,
 			//	ignore, ignore, ignore, ignore, ignore, ignore,
 			//	ignore, ignore, ignore, ignore) = mediaInfo;
-			tie(durationInMilliSeconds, ignore) = mediaInfoDetails;
+			tie(durationInMilliSeconds, ignore, ignore) = mediaInfoDetails;
 
 			_logger->info(__FILEREF__ + "duration check"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -22546,7 +22546,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			);
 			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = false;
-			pair<int64_t, long> mediaInfoDetails;
+			tuple<int64_t, long, Json::Value> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>>
 				videoTracks;
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;

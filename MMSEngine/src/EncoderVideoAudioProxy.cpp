@@ -1651,7 +1651,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 			if (stagingEncodedAssetPathName == "")
 				continue;
 
-			pair<int64_t, long> mediaInfoDetails;
+			tuple<int64_t, long, Json::Value> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			/*
@@ -2539,7 +2539,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 	else if (fileFormatLowerCase == "dash")
 		manifestFileName += ".mpd";
 
-	pair<int64_t, long> mediaInfoDetails;
+	tuple<int64_t, long, Json::Value> mediaInfoDetails;
 	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 

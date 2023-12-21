@@ -2127,7 +2127,7 @@ public:
         unsigned long sizeInBytes,
         
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -2154,7 +2154,7 @@ public:
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 		/*
@@ -3124,7 +3124,7 @@ private:
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -3153,7 +3153,7 @@ private:
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 

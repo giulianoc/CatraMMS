@@ -1443,6 +1443,17 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
+					|| JSONUtils::isMetadataPresent(responseFields, "metadata"))
+				{
+					field = "metadata";
+					if (resultSet->isNull("metadata"))
+						mediaItemRoot[field] = Json::nullValue;
+					else
+						mediaItemRoot[field] = static_cast<string>(
+							resultSet->getString("metadata"));
+				}
+
+				if (responseFields == Json::nullValue
 					|| JSONUtils::isMetadataPresent(responseFields, "ingestionDate"))
 				{
 					field = "ingestionDate";
@@ -2533,7 +2544,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			}
 
           	lastSQLCommand = 
-           		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+           		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.metadata, mi.contentProviderKey, "
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
@@ -2901,7 +2912,7 @@ pair<shared_ptr<sql::ResultSet>, int64_t> MMSEngineDBFacade::getMediaItemsList_w
 			}
 
           	lastSQLCommand = 
-           		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+           		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.metadata, mi.contentProviderKey, "
            			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
            			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
            			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
@@ -5270,7 +5281,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         unsigned long sizeInBytes,
 
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -5354,6 +5365,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string ingester = "";
             string userData = "";
+            string metadata = "";
             string deliveryFileName = "";
             string sContentType;
             int64_t retentionInMinutes = _contentRetentionInMinutesDefaultValue;
@@ -5386,6 +5398,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					// );
 				}
             }
+
+			Json::Value metadataRoot;
+			tie(ignore, ignore, metadataRoot) = mediaInfoDetails;
+			metadata = JSONUtils::toString(metadataRoot);
 
             field = "deliveryFileName";
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
@@ -5459,10 +5475,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             }
             
             lastSQLCommand = 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
+                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, "
+				"userData, metadata, "
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, "
 				"retentionInMinutes, markedAsRemoved, processorMMSForRetention) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
+                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "?, 0, NULL)";
@@ -5480,6 +5497,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, userData);
+            if (metadata == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, metadata);
             if (deliveryFileName == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -5499,6 +5520,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				+ ", title: " + title
 				+ ", ingester: " + ingester
 				+ ", userData: " + userData
+				+ ", metadata: " + metadata
 				+ ", deliveryFileName: " + deliveryFileName
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
@@ -6639,7 +6661,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -6908,7 +6930,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		pair<int64_t, long>& mediaInfoDetails,
+		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -6975,7 +6997,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int64_t durationInMilliSeconds;
         long bitRate;
 
-		tie(durationInMilliSeconds, bitRate) = mediaInfoDetails;
+		tie(durationInMilliSeconds, bitRate, ignore) = mediaInfoDetails;
 
         {
             int drm = 0;
