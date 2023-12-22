@@ -4016,7 +4016,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 		*_status = EncodingJobStatus::Running;
 	}
 
-	_localEncodingProgress = 0;
+	_localEncodingProgress = 0.0;
 
 	if (_faceRecognitionNumber.use_count() > _maxFaceRecognitionNumber)
 	{
@@ -6682,12 +6682,15 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 							double encodingProgress;
 
 							if (utcNow < utcRecordingPeriodStart)
-								encodingProgress = 0;
+								encodingProgress = 0.0;
 							else if (utcRecordingPeriodStart < utcNow && utcNow < utcRecordingPeriodEnd)
-								encodingProgress = ((utcNow - utcRecordingPeriodStart) * 100) /
-									(utcRecordingPeriodEnd - utcRecordingPeriodStart);
+							{
+								double elapsed = utcNow - utcRecordingPeriodStart;
+								double recordingPeriod = utcRecordingPeriodEnd - utcRecordingPeriodStart;
+								encodingProgress = (elapsed * 100) / recordingPeriod;
+							}
 							else
-								encodingProgress = 100;
+								encodingProgress = 100.0;
 
 							_logger->info(__FILEREF__ + "updateEncodingJobProgress"
 								+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -8333,7 +8336,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 				try
 				{
-					double encodingProgress = -1;
+					double encodingProgress = -1.0;
 
 					_logger->info(__FILEREF__ + "updateEncodingJobProgress"
 						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -8667,14 +8670,15 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							double encodingProgress;
 
 							if (utcNow < utcProxyPeriodStart)
-								encodingProgress = 0;
-							else if (utcProxyPeriodStart < utcNow
-									&& utcNow < utcProxyPeriodEnd)      
-								encodingProgress =
-									((utcNow - utcProxyPeriodStart) * 100) /
-									(utcProxyPeriodEnd - utcProxyPeriodStart);
+								encodingProgress = 0.0;
+							else if (utcProxyPeriodStart < utcNow && utcNow < utcProxyPeriodEnd)      
+							{
+								double elapsed = utcNow - utcProxyPeriodStart;
+								double proxyPeriod = utcProxyPeriodEnd - utcProxyPeriodStart;
+								encodingProgress = (elapsed * 100) / proxyPeriod;
+							}
 							else
-								encodingProgress = 100;
+								encodingProgress = 100.0;
 
 							try
 							{
@@ -9385,7 +9389,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int>
 			urlNotFound = JSONUtils::asBool(encodeStatusResponse, field, false);
 
 			field = "encodingProgress";
-			encodingProgress = JSONUtils::asDouble(encodeStatusResponse, field, 0);
+			encodingProgress = JSONUtils::asDouble(encodeStatusResponse, field, 0.0);
 
 			field = "pid";
 			pid = JSONUtils::asInt(encodeStatusResponse, field, -1);
@@ -9948,7 +9952,7 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 			string encodingErrorMessage;
 			bool urlForbidden = false;
 			bool urlNotFound = false;
-			double encodingProgress = 0;
+			double encodingProgress = 0.0;
 			int encodingPid;
 
 			tuple<bool, bool, bool, string, bool, bool, double, int> encodingStatus =

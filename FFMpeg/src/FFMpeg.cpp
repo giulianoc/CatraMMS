@@ -17026,7 +17026,7 @@ double FFMpeg::getEncodingProgress()
 		{
 			// it's a live
 
-			return -1;
+			return -1.0;
 		}
 
         if (!fs::exists(_outputFfmpegPathFileName.c_str()))

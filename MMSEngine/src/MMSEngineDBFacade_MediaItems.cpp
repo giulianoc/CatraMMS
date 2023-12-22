@@ -6988,6 +6988,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
         int64_t durationInMilliSeconds;
         long bitRate;
 		Json::Value metaDataRoot;
+		string metaData;
 
 		tie(durationInMilliSeconds, bitRate, metaDataRoot) = mediaInfoDetails;
 		if (metaDataRoot != Json::nullValue)
