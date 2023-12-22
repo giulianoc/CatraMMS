@@ -4659,7 +4659,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 if (resultSetEncodingJob->isNull("encodingProgress"))
                     encodingJobRoot[field] = Json::nullValue;
                 else
-                    encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingProgress");
+                    encodingJobRoot[field] = resultSetEncodingJob->getFloat("encodingProgress");
 
                 field = "start";
                 if (encodingStatus == EncodingStatus::ToBeProcessed)
