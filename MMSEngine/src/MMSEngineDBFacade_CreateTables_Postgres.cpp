@@ -2245,7 +2245,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingPriority			smallint NOT NULL,"
                     "encodingJobStart			timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),"
                     "encodingJobEnd             timestamp without time zone NULL,"
-                    "encodingProgress           smallint NULL,"
+                    "encodingProgress			numeric(4,1) NULL,"
                     "status           			text NOT NULL,"
                     "processorMMS               text NULL,"
                     "encoderKey					bigint NULL,"

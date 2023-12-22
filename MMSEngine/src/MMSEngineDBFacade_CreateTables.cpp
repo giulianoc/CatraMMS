@@ -2903,7 +2903,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingPriority			TINYINT NOT NULL,"
                     "encodingJobStart			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
                     "encodingJobEnd             DATETIME NULL,"
-                    "encodingProgress           INT NULL,"
+                    "encodingProgress			DECIMAL(4,1) NULL,"
                     "status           			VARCHAR (64) NOT NULL,"
                     "processorMMS               VARCHAR (128) NULL,"
                     "encoderKey					BIGINT UNSIGNED NULL,"
