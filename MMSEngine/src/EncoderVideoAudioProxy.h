@@ -184,7 +184,7 @@ private:
     #endif
 
 	// used only in case of face recognition/identification video generation
-	int						_localEncodingProgress;
+	double					_localEncodingProgress;
 
     string					_computerVisionCascadePath;
     double					_computerVisionDefaultScale;
@@ -242,7 +242,7 @@ private:
 
     void processCutFrameAccurate();    
 
-    tuple<bool, bool, bool, string, bool, bool, int, int> getEncodingStatus();
+    tuple<bool, bool, bool, string, bool, bool, double, int> getEncodingStatus();
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,

@@ -2738,7 +2738,7 @@ void MMSEngineDBFacade::forceCancelEncodingJob(
 
 void MMSEngineDBFacade::updateEncodingJobProgress (
         int64_t encodingJobKey,
-        int encodingPercentage)
+        double encodingPercentage)
 {
     
     string      lastSQLCommand;
@@ -2765,7 +2765,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
                 "update MMS_EncodingJob set encodingProgress = ? where encodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, encodingPercentage);
+            preparedStatement->setDouble(queryParameterIndex++, encodingPercentage);
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

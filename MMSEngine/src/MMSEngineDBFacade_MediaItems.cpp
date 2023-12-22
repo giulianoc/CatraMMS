@@ -5399,11 +5399,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
             }
 
-			Json::Value metadataRoot;
-			tie(ignore, ignore, metadataRoot) = mediaInfoDetails;
-			if (metadataRoot != Json::nullValue)
-				metadata = JSONUtils::toString(metadataRoot);
-
             field = "deliveryFileName";
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
 
@@ -5477,10 +5472,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, "
-				"userData, metadata, "
+				"userData, "
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, "
 				"retentionInMinutes, markedAsRemoved, processorMMSForRetention) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
+                "NULL, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "?, 0, NULL)";
@@ -5498,10 +5493,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, userData);
-            if (metadata == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, metadata);
             if (deliveryFileName == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -5521,7 +5512,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				+ ", title: " + title
 				+ ", ingester: " + ingester
 				+ ", userData: " + userData
-				+ ", metadata: " + metadata
 				+ ", deliveryFileName: " + deliveryFileName
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
@@ -6997,8 +6987,11 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
         int64_t durationInMilliSeconds;
         long bitRate;
+		Json::Value metaDataRoot;
 
-		tie(durationInMilliSeconds, bitRate, ignore) = mediaInfoDetails;
+		tie(durationInMilliSeconds, bitRate, metaDataRoot) = mediaInfoDetails;
+		if (metaDataRoot != Json::nullValue)
+			metaData = JSONUtils::toString(metaDataRoot);
 
         {
             int drm = 0;
@@ -7014,7 +7007,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
             lastSQLCommand = 
                 "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
 				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
-				"durationInMilliSeconds, bitRate, deliveryInfo, creationDate, retentionInMinutes) values ("
+				"durationInMilliSeconds, bitRate, deliveryInfo, metaData, creationDate, retentionInMinutes) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
@@ -7043,6 +7036,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, deliveryInfo);
+            if (metaData == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, metaData);
 			if (physicalItemRetentionPeriodInMinutes == -1)
 				preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 			else
@@ -7063,6 +7060,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 				+ ", bitRate: " + to_string(bitRate)
 				+ ", deliveryInfo: " + deliveryInfo
+				+ ", metaData: " + metaData
 				+ ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
 				+ ", elapsed (millisecs): @" + to_string(chrono::duration_cast<chrono::milliseconds>(
 					chrono::system_clock::now() - startSql).count()) + "@"

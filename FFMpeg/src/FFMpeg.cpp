@@ -17010,9 +17010,9 @@ void FFMpeg::streamingToFile(
     fs::remove_all(_outputFfmpegPathFileName);    
 }
 
-int FFMpeg::getEncodingProgress()
+double FFMpeg::getEncodingProgress()
 {
-    int encodingPercentage = 0;
+    double encodingPercentage = 0.0;
 
     try
     {
@@ -17116,7 +17116,7 @@ int FFMpeg::getEncodingProgress()
                 
                 encodingPercentage = 100 * currentTimeInMilliSeconds / (_currentDurationInMilliSeconds * (_twoPasses ? 2 : 1));
 
-				if (encodingPercentage > 100 || encodingPercentage < 0)
+				if (encodingPercentage > 100.0 || encodingPercentage < 0.0)
 				{
 					_logger->error(__FILEREF__ + "Encoding progress too big"
 						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
@@ -17132,7 +17132,10 @@ int FFMpeg::getEncodingProgress()
 						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
 					);
 
-					encodingPercentage		= 0;
+					if (encodingPercentage > 100.0)
+						encodingPercentage		= 100.0;
+					else // if (encodingPercentage < 0.0)
+						encodingPercentage		= 0.0;
 				}
 				else
 				{

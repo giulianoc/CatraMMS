@@ -1088,7 +1088,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot[field] = true;
 
 			field = "encodingProgress";
-			responseBodyRoot[field] = 100;
+			responseBodyRoot[field] = 100.0;
 
 			responseBody = JSONUtils::toString(responseBodyRoot);
         }
@@ -1126,13 +1126,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot[field] = true;
 
 				field = "encodingProgress";
-				responseBodyRoot[field] = 100;
+				responseBodyRoot[field] = 100.0;
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
 			else if (encodingFound)
 			{
-				int encodingProgress = -2;
+				double encodingProgress = -2.0;
 				try
 				{
 					chrono::system_clock::time_point startEncodingProgress = chrono::system_clock::now();
@@ -1201,10 +1201,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot[field] = encodingCompleted;
 
 				field = "encodingProgress";
-				if (encodingProgress == -2)
+				if (encodingProgress == -2.0)
 				{
 					if (selectedEncoding->_available && !encodingCompleted)	// non dovrebbe accadere mai
-						responseBodyRoot[field] = 100;
+						responseBodyRoot[field] = 100.0;
 					else
 						responseBodyRoot[field] = Json::nullValue;
 				}

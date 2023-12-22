@@ -1,4 +1,5 @@
 
+#include <regex>
 #include "JSONUtils.h"
 #include "PersistenceLock.h"
 #include "MMSEngineDBFacade.h"
@@ -1839,7 +1840,7 @@ void MMSEngineDBFacade::forceCancelEncodingJob(
 
 void MMSEngineDBFacade::updateEncodingJobProgress (
         int64_t encodingJobKey,
-        int encodingPercentage)
+        double encodingPercentage)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -4151,7 +4152,7 @@ void MMSEngineDBFacade::addEncodingJob (
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
+				regex_replace(sqlStatement, regex("\n"), " "), conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
         }

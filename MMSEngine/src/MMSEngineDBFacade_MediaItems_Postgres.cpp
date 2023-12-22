@@ -1313,7 +1313,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 
 		string sqlStatement = fmt::format( 
-			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.metadata, "
+			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, "
 			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
 			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startPublishing, "
 			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endPublishing, "
@@ -1387,16 +1387,6 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						mediaItemRoot[field] = Json::nullValue;
 					else
 						mediaItemRoot[field] = row["userData"].as<string>();
-				}
-
-				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "metadata"))
-				{
-					field = "metadata";
-					if (row["metadata"].is_null())
-						mediaItemRoot[field] = Json::nullValue;
-					else
-						mediaItemRoot[field] = row["metadata"].as<string>();
 				}
 
 				if (responseFields == Json::nullValue
@@ -1613,7 +1603,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         "select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage, "
 						"deliveryInfo ->> 'externalDeliveryTechnology' as externalDeliveryTechnology, "
 						"deliveryInfo ->> 'externalDeliveryURL' as externalDeliveryURL, "
-						"fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, retentionInMinutes, "
+						"metaData, fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, retentionInMinutes, "
 						"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
                         "from MMS_PhysicalPath where mediaItemKey = {}",
 						localMediaItemKey);
@@ -1654,6 +1644,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							else
 								profileRoot[field] = fileExtension;
 						}
+
+						field = "metaData";
+						if (row["metaData"].is_null())
+							profileRoot[field] = Json::nullValue;
+						else
+							profileRoot[field] = row["metaData"].as<string>();
 
 						if (admin)
 						{
@@ -4670,7 +4666,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string ingester = "";
             string userData = "";
-            string metadata = "";
             string deliveryFileName = "";
             string sContentType;
             int64_t retentionInMinutes = _contentRetentionInMinutesDefaultValue;
@@ -4691,11 +4686,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				else
 					userData = JSONUtils::toString(parametersRoot[field]);
             }
-
-			Json::Value metadataRoot;
-			tie(ignore, ignore, metadataRoot) = mediaInfoDetails;
-			if (metadataRoot != Json::nullValue)
-				metadata = JSONUtils::toString(metadataRoot);
 
             field = "deliveryFileName";
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
@@ -4776,18 +4766,17 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 
             string sqlStatement = fmt::format( 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, metadata, " 
+                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, " 
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
 				"startPublishing, endPublishing, "
 				"retentionInMinutes, tags, markedAsRemoved, processorMMSForRetention) values ("
-                                           "DEFAULT,      {},           {},     {},      {},       {}, "
+                                           "DEFAULT,      {},           {},     {},      {}, "
 				"{},               {},              NOW() at time zone 'utc', {}, "
                 "to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
                 "{},                 {},   false,           NULL) returning mediaItemKey",
 				workspace->_workspaceKey, trans.quote(title),
 				ingester == "" ? "null" : trans.quote(ingester),
 				userData == "" ? "null" : trans.quote(userData),
-				metadata == "" ? "null" : trans.quote(metadata),
 				deliveryFileName == "" ? "null" : trans.quote(deliveryFileName),
 				ingestionJobKey, trans.quote(toString(contentType)),
 				trans.quote(startPublishing), trans.quote(endPublishing), retentionInMinutes,
@@ -5745,8 +5734,12 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
         int64_t durationInMilliSeconds;
         long bitRate;
+		Json::Value metaDataRoot;
+		string metaData;
 
-		tie(durationInMilliSeconds, bitRate, ignore) = mediaInfoDetails;
+		tie(durationInMilliSeconds, bitRate, metaDataRoot) = mediaInfoDetails;
+		if (metaDataRoot != Json::nullValue)
+			metaData = JSONUtils::toString(metaDataRoot);
 
         {
             int drm = 0;
@@ -5762,14 +5755,15 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
             string sqlStatement = fmt::format( 
                 "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
 				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
-				"durationInMilliSeconds, bitRate, deliveryInfo, creationDate, retentionInMinutes) values ("
-                "DEFAULT, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', {}) returning physicalPathKey",
+				"durationInMilliSeconds, bitRate, deliveryInfo, metaData, creationDate, retentionInMinutes) values ("
+                "DEFAULT, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', {}) returning physicalPathKey",
 				mediaItemKey, drm, externalReadOnlyStorage, trans.quote(encodedFileName),
 				trans.quote(relativePath), mmsPartitionIndexUsed, sizeInBytes,
 				encodingProfileKey == -1 ? "null" : to_string(encodingProfileKey),
 				durationInMilliSeconds == -1 ? "null" : to_string(durationInMilliSeconds),
 				bitRate == -1 ? "null" : to_string(bitRate),
 				deliveryInfo == "" ? "null" : trans.quote(deliveryInfo),
+				metaData == "" ? "null" : trans.quote(metaData),
 				physicalItemRetentionPeriodInMinutes == -1 ? "null" : to_string(physicalItemRetentionPeriodInMinutes)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

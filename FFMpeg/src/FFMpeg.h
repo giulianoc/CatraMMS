@@ -240,7 +240,7 @@ public:
 		int64_t ingestionJobKey,
 		pid_t* pChildPid);
 
-    int getEncodingProgress();
+    double getEncodingProgress();
 
 	bool nonMonotonousDTSInOutputLog();
 	bool forbiddenErrorInOutputLog();

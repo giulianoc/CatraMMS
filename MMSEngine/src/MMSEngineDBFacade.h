@@ -2074,7 +2074,7 @@ public:
     
     void updateEncodingJobProgress (
         int64_t encodingJobKey,
-        int encodingPercentage);
+        double encodingPercentage);
 
     void updateEncodingPid (
         int64_t encodingJobKey,

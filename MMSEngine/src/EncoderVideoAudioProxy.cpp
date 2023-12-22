@@ -6563,7 +6563,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
                 try
                 {
-					tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
+					tuple<bool, bool, bool, string, bool, bool, double, int> encodingStatus =
 						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
 						urlForbidden, urlNotFound, ignore, encodingPid) = encodingStatus;
@@ -6679,7 +6679,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 								utcNow = chrono::system_clock::to_time_t(now);
 							}
 
-							int encodingProgress;
+							double encodingProgress;
 
 							if (utcNow < utcRecordingPeriodStart)
 								encodingProgress = 0;
@@ -8333,7 +8333,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 				try
 				{
-					int encodingProgress = -1;
+					double encodingProgress = -1;
 
 					_logger->info(__FILEREF__ + "updateEncodingJobProgress"
 						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -8406,7 +8406,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 
 				try
 				{
-					tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
+					tuple<bool, bool, bool, string, bool, bool, double, int> encodingStatus =
 						getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 					tie(encodingFinished, killedByUser, completedWithError,
 						encodingErrorMessage,
@@ -8664,7 +8664,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 								utcNow = chrono::system_clock::to_time_t(now);
 							}
 
-							int encodingProgress;
+							double encodingProgress;
 
 							if (utcNow < utcProxyPeriodStart)
 								encodingProgress = 0;
@@ -9320,7 +9320,7 @@ void EncoderVideoAudioProxy::processLiveGrid(bool killedByUser)
     }
 }
 
-tuple<bool, bool, bool, string, bool, bool, int, int>
+tuple<bool, bool, bool, string, bool, bool, double, int>
 	EncoderVideoAudioProxy::getEncodingStatus()
 {
     bool encodingFinished;
@@ -9329,7 +9329,7 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 	string encoderErrorMessage;
 	bool urlNotFound;
 	bool urlForbidden;
-	int encodingProgress;
+	double encodingProgress;
 	int pid;
     
     string ffmpegEncoderURL;
@@ -9362,71 +9362,6 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 			+ ", response: " + regex_replace(JSONUtils::toString(encodeStatusResponse), regex("\n"), " ")
 		);
 
-		/*
-        list<string> header;
-
-        {
-            string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":"
-					+ _ffmpegEncoderPassword);
-            string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-            header.push_back(basicAuthorization);
-        }
-
-        curlpp::Cleanup cleaner;
-        curlpp::Easy request;
-
-        // Setting the URL to retrive.
-        request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
-
-		// timeout consistent with nginx configuration (fastcgi_read_timeout)
-		request.setOpt(new curlpp::options::Timeout(_ffmpegEncoderTimeoutInSeconds));
-
-        // if (_ffmpegEncoderProtocol == "https")
-		string httpsPrefix("https");
-		if (ffmpegEncoderURL.size() >= httpsPrefix.size()
-			&& 0 == ffmpegEncoderURL.compare(0, httpsPrefix.size(), httpsPrefix))
-        {
-            // disconnect if we can't validate server's cert
-            bool bSslVerifyPeer = false;
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-            request.setOpt(sslVerifyPeer);
-
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-            request.setOpt(sslVerifyHost);
-
-            // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
-        }
-
-        request.setOpt(new curlpp::options::HttpHeader(header));
-
-        request.setOpt(new curlpp::options::WriteStream(&response));
-
-        chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
-
-        _logger->info(__FILEREF__ + "getEncodingStatus"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-        );
-		responseInitialized = true;
-        request.perform();
-        chrono::system_clock::time_point endEncodingStatus = chrono::system_clock::now();
-
-        string sResponse = response.str();
-        // LF and CR create problems to the json parser...
-        while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-            sResponse.pop_back();
-
-        _logger->info(__FILEREF__ + "getEncodingStatus"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                // + ", sResponse: " + sResponse
-                + ", @MMS statistics@ - encodingDuration (secs): @" + to_string(
-					chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count()) + "@"
-        );
-		*/
-
         try
         {
             // Json::Value encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
@@ -9450,7 +9385,7 @@ tuple<bool, bool, bool, string, bool, bool, int, int>
 			urlNotFound = JSONUtils::asBool(encodeStatusResponse, field, false);
 
 			field = "encodingProgress";
-			encodingProgress = JSONUtils::asInt(encodeStatusResponse, field, 0);
+			encodingProgress = JSONUtils::asDouble(encodeStatusResponse, field, 0);
 
 			field = "pid";
 			pid = JSONUtils::asInt(encodeStatusResponse, field, -1);
@@ -10013,10 +9948,10 @@ bool EncoderVideoAudioProxy::waitingEncoding(
 			string encodingErrorMessage;
 			bool urlForbidden = false;
 			bool urlNotFound = false;
-			int encodingProgress = 0;
+			double encodingProgress = 0;
 			int encodingPid;
 
-			tuple<bool, bool, bool, string, bool, bool, int, int> encodingStatus =
+			tuple<bool, bool, bool, string, bool, bool, double, int> encodingStatus =
 				getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 			tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage,
 				urlForbidden, urlNotFound, encodingProgress, encodingPid) = encodingStatus;
