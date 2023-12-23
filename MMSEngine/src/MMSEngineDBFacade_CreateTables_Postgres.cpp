@@ -726,7 +726,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_LoginStatistic ("
-                    "loginStatisticsKey		bigint GENERATED ALWAYS AS IDENTITY,"
+                    "loginStatisticKey		bigint GENERATED ALWAYS AS IDENTITY,"
                     "userKey				bigint NOT NULL,"
                     "ip						text NULL,"
                     "continent				text NULL,"
@@ -738,7 +738,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "org					text NULL,"
                     "isp					text NULL,"
                     "timezoneGMTOffset		smallint NULL,"
-                    "successfulLogin		timestamp without time zone NULL,"
+                    "successfulLogin		timestamp without time zone NOT NULL,"
                     "constraint MMS_LoginStatistic_PK PRIMARY KEY (loginStatisticsKey), "
                     "constraint MMS_LoginStatistic_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade) ";
