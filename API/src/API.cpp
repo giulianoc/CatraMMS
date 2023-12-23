@@ -237,6 +237,12 @@ _logger = spdlog::default_logger();
 		_geoServiceURL = JSONUtils::asString(_configuration["mms"]["geoService"], "geoServiceURL", "");
 		_geoServiceTimeoutInSeconds = JSONUtils::asInt(_configuration["mms"]["geoService"], "geoServiceTimeoutInSeconds", 10);
 	}
+    SPDLOG_INFO("Configuration item"
+        ", mms->geoService->savingGEOUserInfo: {}"
+        ", mms->geoService->geoServiceURL: {}"
+        ", mms->geoService->geoServiceTimeoutInSeconds: {}",
+		_savingGEOUserInfo, _geoServiceURL, _geoServiceTimeoutInSeconds
+    );
 
 	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
