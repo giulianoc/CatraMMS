@@ -20,6 +20,11 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/support/?$ /api?version=$1&method=mmsSupport last;
 		}
 
+#LoginStatistics
+		if ($request_method = GET) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/login/?$ /api?version=$1&method=loginStatisticList last;
+		}
+
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/login/?$ /api?version=$1&method=login last;
 		}

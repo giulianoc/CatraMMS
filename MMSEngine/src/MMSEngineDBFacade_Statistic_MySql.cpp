@@ -2172,3 +2172,21 @@ void MMSEngineDBFacade::retentionOfStatisticData()
     }
 }
 
+Json::Value MMSEngineDBFacade::getLoginStatisticList (
+	string startStatisticDate, string endStatisticDate,
+	int start, int rows
+)
+{
+	SPDLOG_INFO("getLoginStatisticList"
+		", startStatisticDate: {}"
+		", endStatisticDate: {}"
+		", start: {}"
+		", rows: {}",
+		startStatisticDate, endStatisticDate, start, rows
+	);
+
+    Json::Value statisticsListRoot;
+    
+	return statisticsListRoot;
+}
+

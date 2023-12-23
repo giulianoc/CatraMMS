@@ -2659,6 +2659,9 @@ public:
 		bool totalNumFoundToBeCalculated,
 		int start, int rows);
 
+	Json::Value getLoginStatisticList (
+		string startDate, string endDate, int start, int rows);
+
 	void setLock(LockType lockType, int waitingTimeoutInSecondsIfLocked,
 			string owner, string label,
 			int milliSecondsToSleepWaitingLock = 500,

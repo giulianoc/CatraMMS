@@ -725,7 +725,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement =
-                "create table if not exists MMS_LoginStatistics ("
+                "create table if not exists MMS_LoginStatistic ("
                     "loginStatisticsKey		bigint GENERATED ALWAYS AS IDENTITY,"
                     "userKey				bigint NOT NULL,"
                     "ip						text NULL,"
@@ -739,8 +739,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "isp					text NULL,"
                     "timezoneGMTOffset		smallint NULL,"
                     "successfulLogin		timestamp without time zone NULL,"
-                    "constraint MMS_LoginStatistics_PK PRIMARY KEY (loginStatisticsKey), "
-                    "constraint MMS_LoginStatistics_FK foreign key (userKey) "
+                    "constraint MMS_LoginStatistic_PK PRIMARY KEY (loginStatisticsKey), "
+                    "constraint MMS_LoginStatistic_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);

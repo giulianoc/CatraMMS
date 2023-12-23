@@ -2018,3 +2018,283 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 	}
 }
 
+Json::Value MMSEngineDBFacade::getLoginStatisticList (
+	string startStatisticDate, string endStatisticDate,
+	int start, int rows
+)
+{
+	SPDLOG_INFO("getLoginStatisticList"
+		", startStatisticDate: {}"
+		", endStatisticDate: {}"
+		", start: {}"
+		", rows: {}",
+		startStatisticDate, endStatisticDate, start, rows
+	);
+
+    Json::Value statisticsListRoot;
+    
+    shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	nontransaction trans{*(conn->_sqlConnection)};
+
+    try
+    {
+        string field;
+        
+        {
+            Json::Value requestParametersRoot;
+
+			if (startStatisticDate != "")
+            {
+                field = "startStatisticDate";
+                requestParametersRoot[field] = startStatisticDate;
+            }
+
+			if (endStatisticDate != "")
+            {
+                field = "endStatisticDate";
+                requestParametersRoot[field] = endStatisticDate;
+            }
+
+			{
+				field = "start";
+				requestParametersRoot[field] = start;
+			}
+            
+			{
+				field = "rows";
+				requestParametersRoot[field] = rows;
+			}
+
+            field = "requestParameters";
+            statisticsListRoot[field] = requestParametersRoot;
+        }
+        
+		string sqlWhere = "where s.userKey = u.userKey ";
+		if (startStatisticDate != "")
+			sqlWhere += fmt::format("and s.requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+		if (endStatisticDate != "")
+			sqlWhere += fmt::format("and s.requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+
+        Json::Value responseRoot;
+        {
+            string sqlStatement = 
+				fmt::format("select count(*) from MMS_LoginStatistic s, MMS_User u {}", sqlWhere);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+
+            field = "numFound";
+            responseRoot[field] = count;
+        }
+
+        Json::Value statisticsRoot(Json::arrayValue);
+        {
+			string sqlStatement = fmt::format(
+                "select u.name as userName, s.loginStatisticsKey, s.userKey, s.ip, s.continent, s.continentCode, s.country, s.countryCode, "
+				"s.region, s.city, s.org, s.isp, s.timezoneGMTOffset, "
+				"to_char(s.successfulLogin, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as successfulLogin "
+				"from MMS_LoginStatistic s, MMS_User u {}"
+				"order by s.successfulLogin desc "
+				"limit {} offset {}",
+				sqlWhere, rows, start);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			for (auto row: res)
+            {
+                Json::Value statisticRoot;
+
+                field = "loginStatisticsKey";
+				statisticRoot[field] = row["loginStatisticsKey"].as<int64_t>();
+
+                field = "userKey";
+                statisticRoot[field] = row["userKey"].as<int64_t>();
+
+				field = "userName";
+				statisticRoot[field] = row["userName"].as<string>();
+
+				field = "ip";
+				if (row["ip"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["ip"].as<string>();
+
+				field = "continent";
+				if (row["continent"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["continent"].as<string>();
+
+				field = "continentCode";
+				if (row["continentCode"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["continentCode"].as<string>();
+
+				field = "country";
+				if (row["country"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["country"].as<string>();
+
+				field = "countryCode";
+				if (row["countryCode"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["countryCode"].as<string>();
+
+				field = "region";
+				if (row["region"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["region"].as<string>();
+
+				field = "city";
+				if (row["city"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["city"].as<string>();
+
+				field = "org";
+				if (row["org"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["org"].as<string>();
+
+				field = "isp";
+				if (row["isp"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["isp"].as<string>();
+
+				field = "timezoneGMTOffset";
+				if (row["isp"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["timezoneGMTOffset"].as<int>();
+
+                field = "successfulLogin";
+				if (row["successfulLogin"].is_null())
+					statisticRoot[field] = Json::nullValue;
+				else
+					statisticRoot[field] = row["successfulLogin"].as<string>();
+
+                statisticsRoot.append(statisticRoot);
+            }
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+        field = "loginStatistics";
+        responseRoot[field] = statisticsRoot;
+
+        field = "response";
+        statisticsListRoot[field] = responseRoot;
+
+		trans.commit();
+        connectionPool->unborrow(conn);
+		conn = nullptr;
+    }
+	catch(sql_error const &e)
+    {
+		SPDLOG_ERROR("SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)                                              
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
+	catch(exception& e)
+    {
+		SPDLOG_ERROR("exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)                                              
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+
+    return statisticsListRoot;
+}
+

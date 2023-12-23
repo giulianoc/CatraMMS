@@ -1076,3 +1076,111 @@ void API::requestStatisticPerHourList(
     }
 }
 
+void API::loginStatisticList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters)
+{
+    string api = "loginStatisticList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
+		{
+			start = stoll(startIt->second);
+		}
+
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = __FILEREF__ + "rows parameter too big"
+					+ ", rows: " + to_string(rows)
+					+ ", _maxPageSize: " + to_string(_maxPageSize)
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'startStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		startStatisticDate = startStatisticDateIt->second;
+
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+        {
+            string errorMessage = string("'endStatisticDate' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+		endStatisticDate = endStatisticDateIt->second;
+
+        {
+			Json::Value statisticsListRoot = _mmsEngineDBFacade->getLoginStatisticList(
+				startStatisticDate, endStatisticDate, start, rows); 
+
+            string responseBody = JSONUtils::toString(statisticsListRoot);
+
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);
+		}
+    }
+    catch(runtime_error& e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception& e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+

@@ -5657,7 +5657,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
     {
 		{
 			string sqlStatement = fmt::format( 
-				"insert into MMS_LoginStatistics (userKey, ip, continent, continentCode, "
+				"insert into MMS_LoginStatistic (userKey, ip, continent, continentCode, "
 				"country, countryCode, region, city, org, isp, timezoneGMTOffset, successfulLogin) values ("
 				                             "{},       {},  {},         {}, "
 			    "{},       {},           {},      {},    {},   {},   {},          NOW() at time zone 'utc') "

@@ -913,6 +913,12 @@ shared_ptr<spdlog::logger>	_logger;
 		shared_ptr<Workspace> workspace,                                      
 		unordered_map<string, string> queryParameters);
 
+	void loginStatisticList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+		FCGX_Request& request,                   
+		shared_ptr<Workspace> workspace,                                      
+		unordered_map<string, string> queryParameters);
+
     void parseContentRange(string contentRange,
         long long& contentRangeStart,
         long long& contentRangeEnd,

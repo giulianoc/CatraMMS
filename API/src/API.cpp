@@ -2441,6 +2441,23 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         emailConfList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace);
     }
+    else if (method == "loginStatisticList")
+    {
+        if (!admin)
+        {
+			string errorMessage = fmt::format("APIKey does not have the permission"
+				", admin: {}", admin
+			);
+            SPDLOG_ERROR(errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		loginStatisticList(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
     else if (method == "addRequestStatistic")
     {
         if (!admin)

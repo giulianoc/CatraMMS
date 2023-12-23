@@ -437,7 +437,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create table if not exists MMS_LoginStatistics ("
+                "create table if not exists MMS_LoginStatistic ("
                     "loginStatisticsKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "userKey				BIGINT UNSIGNED NOT NULL,"
                     "ip						VARCHAR (128) NULL,"
@@ -451,8 +451,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "isp					VARCHAR (128) NULL,"
                     "timezoneGMTOffset		INT NULL,"
                     "successfulLogin		DATETIME NULL,"
-                    "constraint MMS_LoginStatistics_PK PRIMARY KEY (loginStatisticsKey), "
-                    "constraint MMS_LoginStatistics_FK foreign key (userKey) "
+                    "constraint MMS_LoginStatistic_PK PRIMARY KEY (loginStatisticsKey), "
+                    "constraint MMS_LoginStatistic_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
