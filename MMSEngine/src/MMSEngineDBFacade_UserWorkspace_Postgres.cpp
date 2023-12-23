@@ -5642,7 +5642,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 	string region, string city, string org, string isp, int timezoneGMTOffset
 )
 {
-	int64_t loginStatisticsKey;
+	int64_t loginStatisticKey;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -5661,7 +5661,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 				"country, countryCode, region, city, org, isp, timezoneGMTOffset, successfulLogin) values ("
 				                             "{},       {},  {},         {}, "
 			    "{},       {},           {},      {},    {},   {},   {},          NOW() at time zone 'utc') "
-				"returning loginStatisticsKey",
+				"returning loginStatisticKey",
 				userKey,
 				ip == "" ? "null" : trans.quote(ip),
 				continent == "" ? "null" : trans.quote(continent),
@@ -5674,7 +5674,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 				isp == "" ? "null" : trans.quote(isp),
 				timezoneGMTOffset == -1 ? "null" : to_string(timezoneGMTOffset));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			loginStatisticsKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			loginStatisticKey = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -5772,6 +5772,6 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 		throw e;
 	}
 
-	return loginStatisticsKey;
+	return loginStatisticKey;
 }
 
