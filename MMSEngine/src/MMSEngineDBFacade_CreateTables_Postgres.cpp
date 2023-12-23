@@ -739,7 +739,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "isp					text NULL,"
                     "timezoneGMTOffset		smallint NULL,"
                     "successfulLogin		timestamp without time zone NOT NULL,"
-                    "constraint MMS_LoginStatistic_PK PRIMARY KEY (loginStatisticsKey), "
+                    "constraint MMS_LoginStatistic_PK PRIMARY KEY (loginStatisticKey), "
                     "constraint MMS_LoginStatistic_FK foreign key (userKey) "
                         "references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
