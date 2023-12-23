@@ -2078,9 +2078,9 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
         
 		string sqlWhere = "where s.userKey = u.userKey ";
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and s.requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += fmt::format("and s.successfulLogin >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and s.requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += fmt::format("and s.successfulLogin <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 
         Json::Value responseRoot;
         {
