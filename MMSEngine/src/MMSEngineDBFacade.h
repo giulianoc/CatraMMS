@@ -1729,7 +1729,7 @@ public:
         int64_t mediaItemKey, ContentType contentType,
         string encodingProfileLabel, bool warningIfMissing, bool fromMaster);
 
-	tuple<int64_t, int, string, string, int64_t, bool, int64_t> getSourcePhysicalPath(
+	tuple<int64_t, int, string, string, uint64_t, bool, int64_t> getSourcePhysicalPath(
 		int64_t mediaItemKey, bool warningIfMissing, bool fromMaster);
 
     tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t> getMediaItemKeyDetails(
@@ -1779,10 +1779,10 @@ public:
 		getEncodingProfileDetailsByKey( int64_t workspaceKey, int64_t encodingProfileKey);
 
     tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string,
-		string, string, int64_t, bool> getStorageDetails(int64_t physicalPathKey, bool fromMaster);
+		string, string, uint64_t, bool> getStorageDetails(int64_t physicalPathKey, bool fromMaster);
 
     tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string,
-		string, string, int64_t, bool> getStorageDetails(int64_t mediaItemKey,
+		string, string, uint64_t, bool> getStorageDetails(int64_t mediaItemKey,
         int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
 
     void getAllStorageDetails(int64_t mediaItemKey, bool fromMaster,
@@ -2762,11 +2762,11 @@ public:
 		int64_t freeSpaceToLeaveInMB);
 
 	pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(
-		int64_t ullFSEntrySizeInBytes);
+		uint64_t ullFSEntrySizeInBytes);
 
 	fs::path getPartitionPathName(int partitionKey);
 
-	uint64_t updatePartitionBecauseOfDeletion(int partitionKey, int64_t ullFSEntrySizeInBytes);
+	uint64_t updatePartitionBecauseOfDeletion(int partitionKey, uint64_t ullFSEntrySizeInBytes);
 
 	void getPartitionsInfo(vector<pair<int, uint64_t>>& partitionsInfo);
 

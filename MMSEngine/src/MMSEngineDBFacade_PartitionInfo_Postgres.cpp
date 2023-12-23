@@ -42,14 +42,16 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 				string partitionPathName = res[0]["partitionPathName"].as<string>();
 				uint64_t savedCurrentFreeSizeInBytes = res[0]["currentFreeSizeInBytes"].as<uint64_t>();
 
-				_logger->info(__FILEREF__
-					+ "Difference between estimate and calculate CurrentFreeSizeInBytes"
-					+ ", partitionKey: " + to_string(partitionKey)
-					+ ", partitionPathName: " + partitionPathName
-					+ ", savedCurrentFreeSizeInBytes: " + to_string(savedCurrentFreeSizeInBytes)
-					+ ", calculated currentFreeSizeInBytes: " + to_string(currentFreeSizeInBytes)
-					+ ", difference (saved - calculated): "
-						+ to_string(savedCurrentFreeSizeInBytes - currentFreeSizeInBytes)
+				SPDLOG_INFO(
+					"Difference between estimate and calculate CurrentFreeSizeInBytes"
+					", partitionKey: {}"
+					", partitionPathName: {}"
+					", savedCurrentFreeSizeInBytes: {}"
+					", calculated currentFreeSizeInBytes: {}"
+					", difference (saved - calculated): {}",
+					partitionKey, partitionPathName,
+					savedCurrentFreeSizeInBytes, currentFreeSizeInBytes,
+					savedCurrentFreeSizeInBytes - currentFreeSizeInBytes
 				);
 
 				string sqlStatement = fmt::format(
@@ -178,7 +180,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 }
 
 pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
-	int64_t ullFSEntrySizeInBytes
+	uint64_t fsEntrySizeInBytes
 )
 {
 	int			partitionToBeUsed;
@@ -200,7 +202,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 				"select partitionKey, currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where (currentFreeSizeInBytes / 1000) - (freeSpaceToLeaveInMB * 1000) > {} / 1000 "
 				"and enabled = true "
-				"for update", ullFSEntrySizeInBytes);
+				"for update", fsEntrySizeInBytes);
 				// "order by partitionKey asc limit 1 for update";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
@@ -215,7 +217,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 			if (res.size() == 0)
 			{
 				string errorMessage = string("No more space in MMS Partitions")
-					+ ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+					+ ", fsEntrySizeInBytes: " + to_string(fsEntrySizeInBytes)
 				;
 				_logger->error(__FILEREF__ + errorMessage);
 
@@ -245,14 +247,16 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 			}
 		}
 
-		currentFreeSizeInBytes -= ullFSEntrySizeInBytes;
+		uint64_t newCurrentFreeSizeInBytes = currentFreeSizeInBytes - fsEntrySizeInBytes;
+		SPDLOG_INFO("TEST currentFreeSizeInBytes: {}, fsEntrySizeInBytes: {}, newCurrentFreeSizeInBytes: {}",
+			currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
 
 		{
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_PartitionInfo set currentFreeSizeInBytes = {}, "
 				"lastUpdateFreeSize = NOW() at time zone 'utc' "
 				"where partitionKey = {} returning 1) select count(*) from rows",
-				currentFreeSizeInBytes, partitionToBeUsed);
+				newCurrentFreeSizeInBytes, partitionToBeUsed);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 			SPDLOG_INFO("SQL statement"
@@ -267,6 +271,8 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return make_pair(partitionToBeUsed, newCurrentFreeSizeInBytes);
 	}
 	catch(sql_error const &e)
 	{
@@ -351,15 +357,12 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 
 		throw e;
 	}
-
-	return make_pair(partitionToBeUsed, currentFreeSizeInBytes);
 }
 
 uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 	int partitionKey,
-	int64_t ullFSEntrySizeInBytes)
+	uint64_t fsEntrySizeInBytes)
 {
-	uint64_t		newCurrentFreeSizeInBytes;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -372,6 +375,8 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 
 	try
 	{
+		uint64_t		currentFreeSizeInBytes;
+
         {
 			string sqlStatement = fmt::format( 
 				"select currentFreeSizeInBytes from MMS_PartitionInfo "
@@ -387,7 +392,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-				newCurrentFreeSizeInBytes = res[0]["currentFreeSizeInBytes"].as<uint64_t>();
+				currentFreeSizeInBytes = res[0]["currentFreeSizeInBytes"].as<uint64_t>();
 			else
 			{
 				string errorMessage = string("Partition not found")
@@ -399,7 +404,9 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 			}
 		}
 
-		newCurrentFreeSizeInBytes += ullFSEntrySizeInBytes;
+		uint64_t newCurrentFreeSizeInBytes = currentFreeSizeInBytes + fsEntrySizeInBytes;
+		SPDLOG_INFO("TEST currentFreeSizeInBytes: {}, fsEntrySizeInBytes: {}, newCurrentFreeSizeInBytes: {}",
+			currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
 
 		{
 			string sqlStatement = fmt::format(
@@ -420,6 +427,8 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return newCurrentFreeSizeInBytes;
 	}
 	catch(sql_error const &e)
 	{
@@ -504,8 +513,6 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 
 		throw e;
 	}
-
-	return newCurrentFreeSizeInBytes;
 }
 
 fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)

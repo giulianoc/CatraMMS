@@ -791,7 +791,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
 }
 
 tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
-	string, string, string, string, int64_t, bool>
+	string, string, string, string, uint64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t physicalPathKey,
 		bool fromMaster
@@ -819,7 +819,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         int mmsPartitionNumber;
         string relativePath;
         string fileName;
-        int64_t sizeInBytes;
+        uint64_t sizeInBytes;
         string deliveryFileName;
         string title;
 		ContentType contentType;
@@ -855,7 +855,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
                 mmsPartitionNumber = res[0]["partitionNumber"].as<int>();
                 relativePath = res[0]["relativePath"].as<string>();
                 fileName = res[0]["fileName"].as<string>();
-                sizeInBytes = res[0]["sizeInBytes"].as<int64_t>();
+                sizeInBytes = res[0]["sizeInBytes"].as<uint64_t>();
             }
             else
             {
@@ -1013,7 +1013,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 }
 
 tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
-	string, string, string, string, int64_t, bool>
+	string, string, string, string, uint64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t mediaItemKey,
 		// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)
@@ -1046,7 +1046,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         bool externalReadOnlyStorage;
         string relativePath;
         string fileName;
-        int64_t sizeInBytes;
+        uint64_t sizeInBytes;
         string deliveryFileName;
         string title;
 		ContentType contentType;
@@ -1081,7 +1081,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
                 mmsPartitionNumber = res[0]["partitionNumber"].as<int>();
                 relativePath = res[0]["relativePath"].as<string>();
                 fileName = res[0]["fileName"].as<string>();
-                sizeInBytes = res[0]["sizeInBytes"].as<int64_t>();
+                sizeInBytes = res[0]["sizeInBytes"].as<uint64_t>();
             }
 
 			if (physicalPathKey == -1)

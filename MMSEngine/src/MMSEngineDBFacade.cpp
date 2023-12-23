@@ -771,7 +771,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
 }
 
 tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
-	string, string, string, string, int64_t, bool>
+	string, string, string, string, uint64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t physicalPathKey,
 		bool fromMaster
@@ -801,7 +801,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         int mmsPartitionNumber;
         string relativePath;
         string fileName;
-        int64_t sizeInBytes;
+        uint64_t sizeInBytes;
         string deliveryFileName;
         string title;
 		ContentType contentType;
@@ -841,7 +841,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
-                sizeInBytes = resultSet->getInt64("sizeInBytes");
+                sizeInBytes = resultSet->getUint64("sizeInBytes");
             }
             else
             {
@@ -982,7 +982,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 }
 
 tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>,
-	string, string, string, string, int64_t, bool>
+	string, string, string, string, uint64_t, bool>
 	MMSEngineDBFacade::getStorageDetails(
 		int64_t mediaItemKey,
 		// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)
@@ -1017,7 +1017,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         bool externalReadOnlyStorage;
         string relativePath;
         string fileName;
-        int64_t sizeInBytes;
+        uint64_t sizeInBytes;
         string deliveryFileName;
         string title;
 		ContentType contentType;
@@ -1058,7 +1058,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
-                sizeInBytes = resultSet->getInt64("sizeInBytes");
+                sizeInBytes = resultSet->getUint64("sizeInBytes");
             }
 
 			if (physicalPathKey == -1)
@@ -1119,7 +1119,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
         }
 		else
 		{
-			tuple<int64_t, int, string, string, int64_t, bool, int64_t> sourcePhysicalPathDetails =
+			tuple<int64_t, int, string, string, uint64_t, bool, int64_t> sourcePhysicalPathDetails =
 				getSourcePhysicalPath(mediaItemKey, warningIfMissing, fromMaster);
 			tie(physicalPathKey, mmsPartitionNumber, relativePath,
 					fileName, sizeInBytes, externalReadOnlyStorage, ignore) = sourcePhysicalPathDetails;

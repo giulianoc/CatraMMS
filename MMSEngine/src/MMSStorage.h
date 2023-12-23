@@ -205,7 +205,7 @@ private:
 		int mmsPartitionNumber,
 		string workspaceDirectoryName,
 		string relativePath,
-		int64_t sizeInBytes);
+		uint64_t sizeInBytes);
 
 } ;
 

@@ -1118,7 +1118,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         );
         
         tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int,shared_ptr<Workspace>,
-			string,string, string,string,int64_t, bool> storageDetails =
+			string,string, string,string, uint64_t, bool> storageDetails =
             _mmsEngineDBFacade->getStorageDetails(physicalPathKey, true /*fromMaster*/);
 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -1128,7 +1128,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         string fileName;
         string deliveryFileName;
         string title;
-        int64_t sizeInBytes;
+        uint64_t sizeInBytes;
 		bool externalReadOnlyStorage;
 
         tie(ignore, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, 
@@ -1219,7 +1219,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
             string relativePath;
             string fileName;
 			bool externalReadOnlyStorage;
-			int64_t sizeInBytes;
+			uint64_t sizeInBytes;
 
             tie(deliveryTechnology, mmsPartitionNumber, workspaceDirectoryName, relativePath,
 					fileName, sizeInBytes, externalReadOnlyStorage) = storageDetails;
@@ -1276,7 +1276,7 @@ void MMSStorage::removePhysicalPathFile(
 	int partitionKey,
 	string workspaceDirectoryName,
 	string relativePath,
-	int64_t sizeInBytes
+	uint64_t sizeInBytes
 )
 {
     try
@@ -1820,7 +1820,7 @@ void MMSStorage::deleteWorkspace(
 
 			if (fs::is_directory(workspacePathName))
 			{
-				int64_t directorySizeInBytes = 0;
+				uint64_t directorySizeInBytes = 0;
 
 				// recursive_directory_iterator, by default, does not follow sym links
 				for (fs::directory_entry const& entry: fs::recursive_directory_iterator(workspacePathName))

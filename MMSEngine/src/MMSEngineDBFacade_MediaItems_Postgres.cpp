@@ -2150,7 +2150,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         }
 		else
 		{
-			tuple<int64_t, int, string, string, int64_t, bool, int64_t> sourcePhysicalPathDetails =
+			tuple<int64_t, int, string, string, uint64_t, bool, int64_t> sourcePhysicalPathDetails =
 				getSourcePhysicalPath(referenceMediaItemKey, warningIfMissing, fromMaster);
 			tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore) = sourcePhysicalPathDetails;
 		}
@@ -2495,7 +2495,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::getSourcePhysicalPath(
+tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::getSourcePhysicalPath(
     int64_t mediaItemKey, bool warningIfMissing, bool fromMaster
 )
 {
@@ -2530,14 +2530,14 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
         string fileNameWithEncodingProfile;
         string fileNameWithoutEncodingProfile;
 
-        int64_t sizeInBytesWithEncodingProfile;
-        int64_t sizeInBytesWithoutEncodingProfile;
+        uint64_t sizeInBytesWithEncodingProfile;
+        uint64_t sizeInBytesWithoutEncodingProfile;
 
         int64_t durationInMilliSecondsWithEncodingProfile = 0;
         int64_t durationInMilliSecondsWithoutEncodingProfile = 0;
 
-		int64_t maxSizeInBytesWithEncodingProfile = -1;
-		int64_t maxSizeInBytesWithoutEncodingProfile = -1;
+		uint64_t maxSizeInBytesWithEncodingProfile = -1;
+		uint64_t maxSizeInBytesWithoutEncodingProfile = -1;
 
         {
 			// 2023-01-23: l'ultima modifica fatta permette di inserire 'source content' specificando
@@ -2561,7 +2561,7 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
 			string selectedFileFormatWithoutEncodingProfile;
 			for (auto row: res)
             {
-				int64_t localSizeInBytes = row["sizeInBytes"].as<int64_t>();
+				uint64_t localSizeInBytes = row["sizeInBytes"].as<uint64_t>();
 
 				string localFileName = row["fileName"].as<string>();
 				string localFileFormat;
@@ -2601,7 +2601,7 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
 					mmsPartitionNumberWithoutEncodingProfile = row["partitionNumber"].as<int>();
 					relativePathWithoutEncodingProfile = row["relativePath"].as<string>();
 					fileNameWithoutEncodingProfile = row["fileName"].as<string>();
-					sizeInBytesWithoutEncodingProfile = row["sizeInBytes"].as<int64_t>();
+					sizeInBytesWithoutEncodingProfile = row["sizeInBytes"].as<uint64_t>();
 					if (!row["durationInMilliSeconds"].is_null())
 						durationInMilliSecondsWithoutEncodingProfile = row["durationInMilliSeconds"].as<int64_t>();
 
@@ -2641,7 +2641,7 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
 					mmsPartitionNumberWithEncodingProfile = row["partitionNumber"].as<int>();
 					relativePathWithEncodingProfile = row["relativePath"].as<string>();
 					fileNameWithEncodingProfile = row["fileName"].as<string>();
-					sizeInBytesWithEncodingProfile = row["sizeInBytes"].as<int64_t>();
+					sizeInBytesWithEncodingProfile = row["sizeInBytes"].as<uint64_t>();
 					if (!row["durationInMilliSeconds"].is_null())
 						durationInMilliSecondsWithEncodingProfile = row["durationInMilliSeconds"].as<int64_t>();
 
