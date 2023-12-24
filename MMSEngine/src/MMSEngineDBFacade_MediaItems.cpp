@@ -3041,7 +3041,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         }
 		else
 		{
-			tuple<int64_t, int, string, string, int64_t, bool, int64_t> sourcePhysicalPathDetails =
+			tuple<int64_t, int, string, string, uint64_t, bool, int64_t> sourcePhysicalPathDetails =
 				getSourcePhysicalPath(referenceMediaItemKey, warningIfMissing, fromMaster);
 			tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore) = sourcePhysicalPathDetails;
 		}
@@ -3339,7 +3339,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::getSourcePhysicalPath(
+tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::getSourcePhysicalPath(
     int64_t mediaItemKey, bool warningIfMissing, bool fromMaster
 )
 {
@@ -3375,14 +3375,14 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
         string fileNameWithEncodingProfile;
         string fileNameWithoutEncodingProfile;
 
-        int64_t sizeInBytesWithEncodingProfile;
-        int64_t sizeInBytesWithoutEncodingProfile;
+        uint64_t sizeInBytesWithEncodingProfile;
+        uint64_t sizeInBytesWithoutEncodingProfile;
 
         int64_t durationInMilliSecondsWithEncodingProfile = 0;
         int64_t durationInMilliSecondsWithoutEncodingProfile = 0;
 
-		int64_t maxSizeInBytesWithEncodingProfile = -1;
-		int64_t maxSizeInBytesWithoutEncodingProfile = -1;
+		uint64_t maxSizeInBytesWithEncodingProfile = -1;
+		uint64_t maxSizeInBytesWithoutEncodingProfile = -1;
 
         {
 			// 2023-01-23: l'ultima modifica fatta permette di inserire 'source content' specificando
@@ -3418,7 +3418,7 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
 			);
             while (resultSet->next())
             {
-				int64_t localSizeInBytes = resultSet->getInt64("sizeInBytes");
+				uint64_t localSizeInBytes = resultSet->getUInt64("sizeInBytes");
 
 				string localFileName = resultSet->getString("fileName");
 				string localFileFormat;
@@ -3458,7 +3458,7 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
 					mmsPartitionNumberWithoutEncodingProfile = resultSet->getInt("partitionNumber");
 					relativePathWithoutEncodingProfile = resultSet->getString("relativePath");
 					fileNameWithoutEncodingProfile = resultSet->getString("fileName");
-					sizeInBytesWithoutEncodingProfile = resultSet->getInt64("sizeInBytes");
+					sizeInBytesWithoutEncodingProfile = resultSet->getUInt64("sizeInBytes");
 					if (!resultSet->isNull("durationInMilliSeconds"))
 						durationInMilliSecondsWithoutEncodingProfile = resultSet->getInt64("durationInMilliSeconds");
 
@@ -3498,7 +3498,7 @@ tuple<int64_t, int, string, string, int64_t, bool, int64_t> MMSEngineDBFacade::g
 					mmsPartitionNumberWithEncodingProfile = resultSet->getInt("partitionNumber");
 					relativePathWithEncodingProfile = resultSet->getString("relativePath");
 					fileNameWithEncodingProfile = resultSet->getString("fileName");
-					sizeInBytesWithEncodingProfile = resultSet->getInt64("sizeInBytes");
+					sizeInBytesWithEncodingProfile = resultSet->getUInt64("sizeInBytes");
 					if (!resultSet->isNull("durationInMilliSeconds"))
 						durationInMilliSecondsWithEncodingProfile = resultSet->getInt64("durationInMilliSeconds");
 

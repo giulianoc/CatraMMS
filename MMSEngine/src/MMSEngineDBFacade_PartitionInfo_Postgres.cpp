@@ -248,8 +248,8 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 		}
 
 		uint64_t newCurrentFreeSizeInBytes = currentFreeSizeInBytes - fsEntrySizeInBytes;
-		SPDLOG_INFO("TEST currentFreeSizeInBytes: {}, fsEntrySizeInBytes: {}, newCurrentFreeSizeInBytes: {}",
-			currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
+		// SPDLOG_INFO("TEST currentFreeSizeInBytes: {}, fsEntrySizeInBytes: {}, newCurrentFreeSizeInBytes: {}",
+		// 	currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
 
 		{
 			string sqlStatement = fmt::format(
@@ -405,8 +405,8 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 		}
 
 		uint64_t newCurrentFreeSizeInBytes = currentFreeSizeInBytes + fsEntrySizeInBytes;
-		SPDLOG_INFO("TEST currentFreeSizeInBytes: {}, fsEntrySizeInBytes: {}, newCurrentFreeSizeInBytes: {}",
-			currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
+		// SPDLOG_INFO("TEST currentFreeSizeInBytes: {}, fsEntrySizeInBytes: {}, newCurrentFreeSizeInBytes: {}",
+		// 	currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
 
 		{
 			string sqlStatement = fmt::format(

@@ -302,7 +302,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 }
 
 pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
-	int64_t ullFSEntrySizeInBytes
+	uint64_t ullFSEntrySizeInBytes
 )
 {
 	string		lastSQLCommand;
@@ -612,7 +612,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 
 uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 	int partitionKey,
-	int64_t ullFSEntrySizeInBytes)
+	uint64_t ullFSEntrySizeInBytes)
 {
 	string		lastSQLCommand;
 	uint64_t		newCurrentFreeSizeInBytes;

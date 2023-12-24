@@ -841,7 +841,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
-                sizeInBytes = resultSet->getUint64("sizeInBytes");
+                sizeInBytes = resultSet->getUInt64("sizeInBytes");
             }
             else
             {
@@ -1058,7 +1058,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
-                sizeInBytes = resultSet->getUint64("sizeInBytes");
+                sizeInBytes = resultSet->getUInt64("sizeInBytes");
             }
 
 			if (physicalPathKey == -1)
