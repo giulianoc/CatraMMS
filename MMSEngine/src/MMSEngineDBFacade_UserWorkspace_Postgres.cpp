@@ -1143,7 +1143,7 @@ string MMSEngineDBFacade::createCode(
 					userEmail == "" ? "null" : trans->quote(userEmail),
 					trans->quote(toString(codeType)), trans->quote(permissions));
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans->exec1(sqlStatement);
+				trans->exec0(sqlStatement);
 				SPDLOG_INFO("SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
@@ -1764,6 +1764,8 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 			);
         }
 
+int aaa = 0;
+SPDLOG_ERROR("aaa: {}", aaa++);
 		confirmationCode = MMSEngineDBFacade::createCode(
 			conn,
 			&trans,
@@ -1774,6 +1776,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 			shareWorkspace, editMedia,
 			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 			applicationRecorder);
+SPDLOG_ERROR("aaa: {}", aaa++);
 
         {
             string sqlStatement = fmt::format( 
