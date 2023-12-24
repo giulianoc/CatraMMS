@@ -1609,7 +1609,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				trans->quote(apiKey), userKey, workspaceKey, isOwner, isDefault,
 				trans->quote(permissions), trans->quote(strExpirationUtcDate));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans->exec1(sqlStatement);
+			trans->exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -1764,8 +1764,6 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 			);
         }
 
-int aaa = 0;
-SPDLOG_ERROR("aaa: {}", aaa++);
 		confirmationCode = MMSEngineDBFacade::createCode(
 			conn,
 			&trans,
@@ -1776,7 +1774,6 @@ SPDLOG_ERROR("aaa: {}", aaa++);
 			shareWorkspace, editMedia,
 			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 			applicationRecorder);
-SPDLOG_ERROR("aaa: {}", aaa++);
 
         {
             string sqlStatement = fmt::format( 
@@ -1786,7 +1783,7 @@ SPDLOG_ERROR("aaa: {}", aaa++);
                     "{}, 0, 0, 0, NOW() at time zone 'utc', NOW() at time zone 'utc', 0)",
 					workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec1(sqlStatement);
+			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -1807,7 +1804,7 @@ SPDLOG_ERROR("aaa: {}", aaa++);
 				"values ({}, NULL, 0)",
 				workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec1(sqlStatement);
+			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -2054,7 +2051,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 				trans.quote(apiKey), userKey, workspaceKey, isOwner, isDefault,
 				trans.quote(permissions), trans.quote(strExpirationUtcDate));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec1(sqlStatement);
+			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -2261,7 +2258,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 				trans->quote(apiKey), userKey, workspaceKey, isOwner, isDefault,
 				trans->quote(permissions), trans->quote(strExpirationUtcDate));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans->exec1(sqlStatement);
+			trans->exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -5359,7 +5356,7 @@ string MMSEngineDBFacade::createResetPasswordToken(
 				"values ({}, {}, NOW() at time zone 'utc')",
 				trans.quote(resetPasswordToken), userKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec1(sqlStatement);
+			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
