@@ -1753,6 +1753,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 					"0,                        0, "
 					"false,          0) ",
 					workspaceKey, maxStorageInMB / 1000);
+SPDLOG_ERROR("sqlStatement: {}", sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			workspaceKey = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO("SQL statement"
