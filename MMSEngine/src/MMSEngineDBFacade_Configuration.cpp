@@ -513,7 +513,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
 }
 
 Json::Value MMSEngineDBFacade::getYouTubeConfList (
-        int64_t workspaceKey
+        int64_t workspaceKey, string label
 )
 {
     string      lastSQLCommand;
@@ -546,10 +546,18 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             
             field = "requestParameters";
             youTubeConfListRoot[field] = requestParametersRoot;
+
+            if (label != "")
+			{
+				field = "label";
+				requestParametersRoot[field] = label;
+			}
         }
         
         string sqlWhere = string ("where workspaceKey = ? ");
-        
+        if (label != "")
+			sqlWhere += ("and LOWER(label) = LOWER(?) ");
+
         Json::Value responseRoot;
         {
             lastSQLCommand = 
@@ -560,6 +568,8 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (label != "")
+				preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"
@@ -593,6 +603,8 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (label != "")
+				preparedStatement->setString(queryParameterIndex++, label);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 			_logger->info(__FILEREF__ + "@SQL statistics@"

@@ -521,7 +521,7 @@ void MMSEngineDBFacade::removeYouTubeConf(
 }
 
 Json::Value MMSEngineDBFacade::getYouTubeConfList (
-        int64_t workspaceKey
+	int64_t workspaceKey, string label
 )
 {
     Json::Value youTubeConfListRoot;
@@ -554,9 +554,17 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
             
             field = "requestParameters";
             youTubeConfListRoot[field] = requestParametersRoot;
+
+			if (label != "")
+			{
+				field = "label";
+				youTubeConfListRoot[field] = label;
+			}
         }
         
         string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+        if (label != "")
+			sqlWhere += fmt::format("and LOWER(label) = LOWER({}) ", trans.quote(label));
         
         Json::Value responseRoot;
         {

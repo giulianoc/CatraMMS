@@ -2234,7 +2234,7 @@ public:
         int64_t confKey);
 
     Json::Value getYouTubeConfList (
-        int64_t workspaceKey);
+        int64_t workspaceKey, string label);
 
     tuple<string, string, string> getYouTubeDetailsByConfigurationLabel(
         int64_t workspaceKey, string youTubeConfigurationLabel);
