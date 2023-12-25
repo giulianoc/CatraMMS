@@ -32,23 +32,6 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _logger			= logger;
 	_configuration	= configuration;
 
-    _dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt(configuration["database"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
-    );
-
-    _ingestionWorkflowRetentionInDays = JSONUtils::asInt(configuration["database"], "ingestionWorkflowRetentionInDays", 30);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
-    );
-    _statisticRetentionInMonths = JSONUtils::asInt(configuration["database"], "statisticRetentionInMonths", 12);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->statisticRetentionInMonths: " + to_string(_statisticRetentionInMonths)
-    );
-    _statisticsEnabled = JSONUtils::asBool(configuration["database"], "statisticsEnabled", true);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", database->statisticsEnabled: " + to_string(_statisticsEnabled)
-    );
     _doNotManageIngestionsOlderThanDays = JSONUtils::asInt(configuration["mms"], "doNotManageIngestionsOlderThanDays", 7);
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
@@ -160,66 +143,23 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 		);
 	}
 
-	#ifdef __POSTGRES__
-	#else
-	{
-		string masterDbServer = JSONUtils::asString(configuration["database"]["master"], "server", "");
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->master->server: " + masterDbServer
-		);
-		string slaveDbServer = JSONUtils::asString(configuration["database"]["slave"], "server", "");
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->slave->server: " + slaveDbServer
-		);
-		string defaultCharacterSet = JSONUtils::asString(configuration["database"], "defaultCharacterSet", "");
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->defaultCharacterSet: " + defaultCharacterSet
-		);
-		string masterDbUsername = JSONUtils::asString(configuration["database"]["master"], "userName", "");
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->master->userName: " + masterDbUsername
-		);
-		string slaveDbUsername = JSONUtils::asString(configuration["database"]["slave"], "userName", "");
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->slave->userName: " + slaveDbUsername
-		);
-		string dbPassword;
-		{
-			string encryptedPassword = JSONUtils::asString(configuration["database"], "password", "");
-			dbPassword = Encrypt::opensslDecrypt(encryptedPassword);        
-			// dbPassword = encryptedPassword;
-		}    
-		string dbName = JSONUtils::asString(configuration["database"], "dbName", "");
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->dbName: " + dbName
-		);
-		string selectTestingConnection = JSONUtils::asString(configuration["database"], "selectTestingConnection", "");
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", database->selectTestingConnection: " + selectTestingConnection
-		);
+    _dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt(configuration["postgres"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", postgres->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
+    );
+    _ingestionWorkflowRetentionInDays = JSONUtils::asInt(configuration["postgres"], "ingestionWorkflowRetentionInDays", 30);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", postgres->ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
+    );
+    _statisticRetentionInMonths = JSONUtils::asInt(configuration["postgres"], "statisticRetentionInMonths", 12);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", postgres->statisticRetentionInMonths: " + to_string(_statisticRetentionInMonths)
+    );
+    _statisticsEnabled = JSONUtils::asBool(configuration["postgres"], "statisticsEnabled", true);
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", postgres->statisticsEnabled: " + to_string(_statisticsEnabled)
+    );
 
-		_logger->info(__FILEREF__ + "Creating MySQLConnectionFactory...");
-		bool reconnect = true;
-		_mySQLMasterConnectionFactory = 
-			make_shared<MySQLConnectionFactory>(masterDbServer, masterDbUsername, dbPassword, dbName,
-				reconnect, defaultCharacterSet, selectTestingConnection);
-		_mySQLSlaveConnectionFactory = 
-			make_shared<MySQLConnectionFactory>(slaveDbServer, slaveDbUsername, dbPassword, dbName,
-				reconnect, defaultCharacterSet, selectTestingConnection);
-
-		// 2018-04-05: without an open stream the first connection fails
-		// 2018-05-22: It seems the problem is when the stdout of the spdlog is true!!!
-		//      Stdout of the spdlog is now false and I commented the ofstream statement
-		// ofstream aaa("/tmp/a.txt");
-		_logger->info(__FILEREF__ + "Creating MasterDBConnectionPool...");
-		_masterConnectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
-			masterDbPoolSize, _mySQLMasterConnectionFactory);
-
-		_logger->info(__FILEREF__ + "Creating SlaveDBConnectionPool...");
-		_slaveConnectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
-			slaveDbPoolSize, _mySQLSlaveConnectionFactory);
-	}
-	#endif
 	{
 		string masterDbServer = JSONUtils::asString(configuration["postgres"]["master"], "server", "");
 		_logger->info(__FILEREF__ + "Configuration item"
@@ -320,28 +260,6 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 		 	 where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey
 		 	 and ij.status not like 'End_%' and ej.status like 'End_%';
 		 */
-
-		#ifdef __POSTGRES__
-		#else
-        {
-			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. Locks"
-					+ ", processorMMS: " + processorMMS
-					);
-            string sqlStatement = fmt::format(
-				"WITH rows AS (update MMS_Lock set active = 0 where owner = {} "
-				"returning 1) select count(*) from rows",
-				trans.quote(processorMMS));
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-        }
-		#endif
 
 		// 2022-09-27: next procedure should be already covered by retentionOfIngestionData,
 		//		anyway, we will leave it here
@@ -2169,73 +2087,6 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 		throw e;
 	}
 }
-
-#ifdef __POSTGRES__
-#else
-int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
-{
-    int64_t		lastInsertId;
-	string lastSQLCommand;
-
-    try
-    {
-        lastSQLCommand = 
-            "select LAST_INSERT_ID()";
-        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-		chrono::system_clock::time_point startSql = chrono::system_clock::now();
-        shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-		_logger->info(__FILEREF__ + "@SQL statistics@"
-			+ ", lastSQLCommand: " + lastSQLCommand
-			+ ", resultSet->rowsCount: " + to_string(resultSet->rowsCount())
-			+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-				chrono::system_clock::now() - startSql).count()) + "@"
-		);
-
-        if (resultSet->next())
-        {
-            lastInsertId = resultSet->getInt64(1);
-        }
-        else
-        {
-            string error ("select LAST_INSERT_ID failed");
-            
-            _logger->error(error);
-            
-            throw runtime_error(error);
-        }
-    }
-    catch(sql::SQLException& se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw se;
-    }
-    catch(runtime_error& e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }
-    catch(exception& e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }
-    
-    return lastInsertId;
-}
-#endif
 
 MMSEngineDBFacade::DeliveryTechnology MMSEngineDBFacade::fileFormatToDeliveryTechnology(string fileFormat)
 {

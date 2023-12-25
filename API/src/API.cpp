@@ -88,9 +88,9 @@ _logger = spdlog::default_logger();
         _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
     }
 
-	_maxPageSize = JSONUtils::asInt(configuration["database"], "maxPageSize", 5);
+	_maxPageSize = JSONUtils::asInt(configuration["postgres"], "maxPageSize", 5);
 	logger->info(__FILEREF__ + "Configuration item"
-		+ ", database->maxPageSize: " + to_string(_maxPageSize)
+		+ ", postgres->maxPageSize: " + to_string(_maxPageSize)
 	);
 
     string encodingPeriod =  JSONUtils::asString(_configuration["api"]["workspaceDefaults"], "encodingPeriod", "daily");

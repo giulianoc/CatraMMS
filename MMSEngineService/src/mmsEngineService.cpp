@@ -189,6 +189,16 @@ int main (int iArgc, char *pArgv [])
     signal(SIGABRT, signalHandler);
     // signal(SIGBUS, signalHandler);
 
+	#ifdef __POSTGRES__
+	size_t masterDbPoolSize = JSONUtils::asInt(configuration["postgres"]["master"], "enginePoolSize", 5);
+	logger->info(__FILEREF__ + "Configuration item"
+		+ ", postgres->master->enginePoolSize: " + to_string(masterDbPoolSize)
+	);
+	size_t slaveDbPoolSize = JSONUtils::asInt(configuration["postgres"]["slave"], "enginePoolSize", 5);
+	logger->info(__FILEREF__ + "Configuration item"
+		+ ", postgres->slave->enginePoolSize: " + to_string(slaveDbPoolSize)
+	);
+	#else
 	size_t masterDbPoolSize = JSONUtils::asInt(configuration["database"]["master"], "enginePoolSize", 5);
 	logger->info(__FILEREF__ + "Configuration item"
 		+ ", database->master->enginePoolSize: " + to_string(masterDbPoolSize)
@@ -197,6 +207,7 @@ int main (int iArgc, char *pArgv [])
 	logger->info(__FILEREF__ + "Configuration item"
 		+ ", database->slave->enginePoolSize: " + to_string(slaveDbPoolSize)
 	);
+	#endif
 	logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
 	);
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
