@@ -6998,7 +6998,9 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
                 "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
 				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
 				"durationInMilliSeconds, bitRate, deliveryInfo, metaData, creationDate, retentionInMinutes) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
+                                             "NULL,            ?,            ?,   ?, "
+				"?,        ?,            ?,               ?,           ?, "
+				"?,                      ?,       ?,            ?,        NOW(),        ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (
 				conn->_sqlConnection->prepareStatement(lastSQLCommand));
