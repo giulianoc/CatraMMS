@@ -23841,7 +23841,9 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
         string ftpPrefix ("ftp://");
         string ftpsPrefix ("ftps://");
         string movePrefix("move://");   // move:///dir1/dir2/.../file
+		string mvPrefix("mv://");
         string copyPrefix("copy://");
+        string cpPrefix("cp://");
         string externalStoragePrefix("externalStorage://");
         if ((mediaSourceURL.size() >= httpPrefix.size()
 					&& 0 == mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix))
@@ -23855,13 +23857,21 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress;
         }
-        else if (mediaSourceURL.size() >= movePrefix.size()
+        else if (
+				(mediaSourceURL.size() >= movePrefix.size()
 				&& 0 == mediaSourceURL.compare(0, movePrefix.size(), movePrefix))
+				|| (mediaSourceURL.size() >= mvPrefix.size()
+				&& 0 == mediaSourceURL.compare(0, mvPrefix.size(), mvPrefix))
+		)
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress;            
         }
-        else if (mediaSourceURL.size() >= copyPrefix.size()
+        else if (
+				(mediaSourceURL.size() >= copyPrefix.size()
 				&& 0 == mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix))
+				|| (mediaSourceURL.size() >= cpPrefix.size()
+				&& 0 == mediaSourceURL.compare(0, cpPrefix.size(), cpPrefix))
+		)
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress;
         }
@@ -26295,7 +26305,11 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 			destBinaryPathName = destBinaryPathName + ".tar.gz";
 
         string movePrefix("move://");
-        if (!(sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix)))
+        string mvPrefix("mv://");
+        if (
+			!(sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix))
+			&& !(sourceReferenceURL.size() >= mvPrefix.size() && 0 == sourceReferenceURL.compare(0, mvPrefix.size(), mvPrefix))
+		)
         {
             string errorMessage = string("sourceReferenceURL is not a move reference")
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26307,8 +26321,12 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
             
             throw runtime_error(errorMessage);
         }
-        string sourcePathName = sourceReferenceURL.substr(movePrefix.length());
-                
+        string sourcePathName;
+        if (sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix))
+			sourcePathName = sourceReferenceURL.substr(movePrefix.length());
+		else
+			sourcePathName = sourceReferenceURL.substr(mvPrefix.length());
+
         _logger->info(__FILEREF__ + "Moving"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -26470,7 +26488,11 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 			destBinaryPathName = destBinaryPathName + ".tar.gz";
 
         string copyPrefix("copy://");
-        if (!(sourceReferenceURL.size() >= copyPrefix.size() && 0 == sourceReferenceURL.compare(0, copyPrefix.size(), copyPrefix)))
+        string cpPrefix("cp://");
+        if (
+			!(sourceReferenceURL.size() >= copyPrefix.size() && 0 == sourceReferenceURL.compare(0, copyPrefix.size(), copyPrefix))
+			&& !(sourceReferenceURL.size() >= cpPrefix.size() && 0 == sourceReferenceURL.compare(0, cpPrefix.size(), cpPrefix))
+		)
         {
             string errorMessage = string("sourceReferenceURL is not a copy reference")
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -26482,7 +26504,11 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
             
             throw runtime_error(errorMessage);
         }
-        string sourcePathName = sourceReferenceURL.substr(copyPrefix.length());
+        string sourcePathName;
+		if (sourceReferenceURL.size() >= copyPrefix.size() && 0 == sourceReferenceURL.compare(0, copyPrefix.size(), copyPrefix))
+			sourcePathName = sourceReferenceURL.substr(copyPrefix.length());
+		else
+			sourcePathName = sourceReferenceURL.substr(cpPrefix.length());
 
         _logger->info(__FILEREF__ + "Coping"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
