@@ -2103,7 +2103,8 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
         Json::Value statisticsRoot(Json::arrayValue);
         {
 			string sqlStatement = fmt::format(
-                "select u.name as userName, s.loginStatisticKey, s.userKey, s.ip, s.continent, s.continentCode, s.country, s.countryCode, "
+                "select u.name as userName, u.eMailAddress as emailAddress, s.loginStatisticKey, "
+				"s.userKey, s.ip, s.continent, s.continentCode, s.country, s.countryCode, "
 				"s.region, s.city, s.org, s.isp, s.timezoneGMTOffset, "
 				"to_char(s.successfulLogin, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as successfulLogin "
 				"from MMS_LoginStatistic s, MMS_User u {}"
@@ -2124,6 +2125,9 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
 
 				field = "userName";
 				statisticRoot[field] = row["userName"].as<string>();
+
+				field = "emailAddress";
+				statisticRoot[field] = row["emailAddress"].as<string>();
 
 				field = "ip";
 				if (row["ip"].is_null())
