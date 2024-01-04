@@ -48,14 +48,21 @@
 		"cutType": "KeyFrameSeeking",
 
 		// mandatory
-		//	startTime format: [-][HH:]MM:SS[.m...] or [-]S+[.m...]
+		//	startTime format: [-][HH:]MM:SS[.m...] or [-]S+[.m...] or HH:MM:SS:FF
 		"startTime": "0.5",
 
 		// optional: endTime or MaxFramesNumber have to be present
-		//		In case endTime is negative, it means endTimeis changed doing
+		//		In case endTime is negative, it means endTime is changed doing
 		//			endTime = source duration - (-endTime)
-		//	endTime format: [-][HH:]MM:SS[.m...] or [-]S+[.m...]
+		//	endTime format: [-][HH:]MM:SS[.m...] or [-]S+[.m...] or HH:MM:SS:FF
 		"endTime": "3.5",
+
+		// optional: if present, it means the startTime and endTime are timing relative
+		//	to the timeCode metadata present in the source media content.
+		//	For example, if startTime is 10:00:00:00 and the timecode metadata in the source media is 08:00:00:00,
+		//	the cut will start at 02:00:00:00
+		//  This activity is often used in case of mxf media files
+		"timesRelativeToMetaDataField": "timecode",
 
 		// mandatory only in case cutType is KeyFrameSeekingInterval
 		//	This is the interval where to look for the key frame into the source file closest
@@ -64,12 +71,12 @@
         //		INTERVAL  ::= [START|+START_OFFSET][%[END|+END_OFFSET]]                                            
         //		INTERVALS ::= INTERVAL[,INTERVALS]                                                                 
         //		esempi:                                                                                            
-        //			Seek to time 10, read packets until 20 seconds after the found seek point, then seek to position 01:30 (1 minute and thirty seconds) and read packets until position 01:45.
-        //				 10%+20,01:30%01:45                                                                        
-        //			Read only 42 packets after seeking to position 01:23:                                              
-        //				 01:23%+#42                                                                                
-        //			Read only the first 20 seconds from the start:                                                     
-        //				 %+20                                                                                      
+        //			10%+20,01:30%01:45                                                                        
+        //				Seek to time 10, read packets until 20 seconds after the found seek point, then seek to position 01:30 (1 minute and thirty seconds) and read packets until position 01:45.
+        //			01:23%+#42                                                                                
+        //				Read only 42 packets after seeking to position 01:23:                                              
+        //			%+20                                                                                      
+        //				Read only the first 20 seconds from the start:                                                     
 		"startKeyFrameSeekingInterval": "543%+20",
 		"endKeyFrameSeekingInterval": "43%+20",
 

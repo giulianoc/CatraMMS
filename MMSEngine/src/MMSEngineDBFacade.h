@@ -1729,6 +1729,10 @@ public:
         int64_t mediaItemKey, ContentType contentType,
         string encodingProfileLabel, bool warningIfMissing, bool fromMaster);
 
+	string getPhysicalPathDetails(
+		int64_t physicalPathKey, bool warningIfMissing,
+		bool fromMaster);
+
 	tuple<int64_t, int, string, string, uint64_t, bool, int64_t> getSourcePhysicalPath(
 		int64_t mediaItemKey, bool warningIfMissing, bool fromMaster);
 

@@ -478,10 +478,9 @@ public:
 		int64_t ingestionJobKey,
 		string youTubeURL);
 
-	static bool isNumber(int64_t ingestionJobKey, string number,
-		shared_ptr<spdlog::logger> logger);
+	static bool isNumber(int64_t ingestionJobKey, string number);
 	static double timeToSeconds(int64_t ingestionJobKey, string time,
-		shared_ptr<spdlog::logger> logger);
+		int framesPerSecond = -1);
 	static string secondsToTime(int64_t ingestionJobKey, double dSeconds,
 		shared_ptr<spdlog::logger> logger);
 

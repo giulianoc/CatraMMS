@@ -3357,7 +3357,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 if (_processorsThreadsNumber.use_count() >
 									_processorThreads + maxAdditionalProcessorThreads)
                                 {
-                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage generateAndIngestCutMediaThread, activity is postponed"
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage manageCutMediaThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -3382,19 +3382,19 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else
                                 {
-									thread generateAndIngestCutMediaThread(
-										&MMSEngineProcessor::generateAndIngestCutMediaThread, this, 
+									thread manageCutMediaThread(
+										&MMSEngineProcessor::manageCutMediaThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
 										workspace, 
 										parametersRoot,
 										dependencies    // it cannot be passed as reference because it will change soon by the parent thread
 									);
-									generateAndIngestCutMediaThread.detach();
+									manageCutMediaThread.detach();
                                 }
                             }
                             catch(runtime_error& e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"
+                                _logger->error(__FILEREF__ + "manageCutMediaThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -3438,7 +3438,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception& e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"
+                                _logger->error(__FILEREF__ + "manageCutMediaThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -19643,7 +19643,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
     }
 }
 
-void MMSEngineProcessor::generateAndIngestCutMediaThread(
+void MMSEngineProcessor::manageCutMediaThread(
         shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
@@ -19654,14 +19654,14 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 {
 	ThreadsStatistic::ThreadStatistic threadStatistic(
 		_mmsThreadsStatistic,
-		"generateAndIngestCutMediaThread",
+		"manageCutMediaThread",
 		_processorIdentifier,
 		_processorsThreadsNumber.use_count(),
 		ingestionJobKey);
 
     try
     {
-		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread"
+		_logger->info(__FILEREF__ + "manageCutMediaThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -19724,6 +19724,85 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
             throw runtime_error(errorMessage);
         }
 
+		// abbiamo bisogno del source frame rate in un paio di casi sotto
+		string forcedAvgFrameRate;
+		int framesPerSecond = -1;
+		{
+			try
+			{
+				if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
+				{
+					vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
+					vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
+
+					_mmsEngineDBFacade->getVideoDetails(
+						sourceMediaItemKey, sourcePhysicalPathKey,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true,
+						videoTracks, audioTracks);
+					if (videoTracks.size() == 0)
+					{
+						string errorMessage = __FILEREF__ + "No video track are present"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						;
+
+						_logger->error(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack
+						= videoTracks[0];
+
+					tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore,
+						ignore, ignore) = videoTrack;
+
+					if (forcedAvgFrameRate != "")
+					{
+						// es: 25/1
+						size_t index = forcedAvgFrameRate.find("/");
+						if (index == string::npos)
+							framesPerSecond = stoi(forcedAvgFrameRate);
+						else
+						{
+							int frames = stoi(forcedAvgFrameRate.substr(0, index));
+							int seconds = stoi(forcedAvgFrameRate.substr(index + 1));
+							framesPerSecond = frames / seconds;
+						}
+					}
+				}
+			}
+			catch(runtime_error& e)
+			{
+				string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			catch(exception& e)
+			{
+				string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", e.what(): " + e.what()
+				;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		_logger->info(__FILEREF__ + "manageCutMediaThread frame rate"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", forcedAvgFrameRate" + forcedAvgFrameRate
+		);
+
 		// check start time / end time
 		int framesNumber = -1;
 		string startTime;
@@ -19777,8 +19856,59 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			field = "FixEndTimeIfOvercomeDuration";
 			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
 
-			double startTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime, _logger);
-			double endTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime, _logger);
+			double startTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime, framesPerSecond);
+			double endTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime, framesPerSecond);
+
+			field = "timesRelativeToMetaDataField";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string timesRelativeToMetaDataField = JSONUtils::asString(parametersRoot, field,
+					timesRelativeToMetaDataField);
+
+				string metaData;
+				{
+					bool warningIfMissing = false;
+
+					metaData = _mmsEngineDBFacade->getPhysicalPathDetails(
+						sourcePhysicalPathKey, warningIfMissing,
+						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+						true);
+				}
+
+				if (metaData == "")
+				{
+					string errorMessage = fmt::format(
+						"timesRelativeToMetaDataField cannot be applied because source media does not have metaData"
+						", ingestionJobKey: {}"
+						", sourcePhysicalPathKey: {}",
+						ingestionJobKey, sourcePhysicalPathKey);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				Json::Value metaDataRoot = JSONUtils::toJson(ingestionJobKey, -1, metaData);
+
+				string timeCode = JSONUtils::asString(metaDataRoot, timesRelativeToMetaDataField, "");
+				if (timeCode == "")
+				{
+					string errorMessage = fmt::format(
+						"timesRelativeToMetaDataField cannot be applied because source media has metaData but does not have the timecode"
+						", ingestionJobKey: {}"
+						", sourcePhysicalPathKey: {}"
+						", metaData: {}"
+						", timesRelativeToMetaDataField: {}",
+						ingestionJobKey, sourcePhysicalPathKey, metaData, timesRelativeToMetaDataField);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				double relativeTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, timeCode, framesPerSecond);
+
+				startTimeInSeconds -= relativeTimeInSeconds;
+				endTimeInSeconds -= relativeTimeInSeconds;
+			}
 
 			if (framesNumber == -1)
 			{
@@ -19834,40 +19964,38 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 
 				throw runtime_error(errorMessage);
 			}
-			else
+
+			if (framesNumber == -1)
 			{
-				if (framesNumber == -1)
+				if (sourceDurationInMilliSecs < endTimeInSeconds * 1000)
 				{
-					if (sourceDurationInMilliSecs < endTimeInSeconds * 1000)
+					if (fixEndTimeIfOvercomeDuration)
 					{
-						if (fixEndTimeIfOvercomeDuration)
-						{
-							endTime = to_string(sourceDurationInMilliSecs / 1000);
+						endTime = to_string(sourceDurationInMilliSecs / 1000);
 
-							_logger->info(__FILEREF__ + "endTimeInSeconds was changed to durationInMilliSeconds"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", fixEndTimeIfOvercomeDuration: " + to_string(fixEndTimeIfOvercomeDuration)
-								+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-								+ ", previousEndTimeInSeconds: " + to_string(endTimeInSeconds)
-								+ ", new endTimeInSeconds: " + endTime
-								+ ", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
-							);
-						}
-						else
-						{
-							string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds (input media)"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-								+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-								+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
-								+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
-								+ ", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
-							;
-							_logger->error(errorMessage);
+						_logger->info(__FILEREF__ + "endTimeInSeconds was changed to durationInMilliSeconds"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", fixEndTimeIfOvercomeDuration: " + to_string(fixEndTimeIfOvercomeDuration)
+							+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+							+ ", previousEndTimeInSeconds: " + to_string(endTimeInSeconds)
+							+ ", new endTimeInSeconds: " + endTime
+							+ ", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
+						);
+					}
+					else
+					{
+						string errorMessage = __FILEREF__ + "Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds (input media)"
+							+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+							+ ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+							+ ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+							+ ", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
+						;
+						_logger->error(errorMessage);
 
-							throw runtime_error(errorMessage);
-						}
+						throw runtime_error(errorMessage);
 					}
 				}
 			}
@@ -19920,9 +20048,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
 						{
 							newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
-							newUtcStartTimeInMilliSecs += ((int64_t) (FFMpeg::timeToSeconds(ingestionJobKey, startTime, _logger) * 1000));
+							newUtcStartTimeInMilliSecs += ((int64_t) (FFMpeg::timeToSeconds(ingestionJobKey, startTime) * 1000));
 							newUtcEndTimeInMilliSecs = utcStartTimeInMilliSecs
-								+ ((int64_t) (FFMpeg::timeToSeconds(ingestionJobKey, endTime, _logger) * 1000));
+								+ ((int64_t) (FFMpeg::timeToSeconds(ingestionJobKey, endTime) * 1000));
 						}
 					}
 				}
@@ -19932,7 +20060,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
         string field = "cutType";
 		string cutType = JSONUtils::asString(parametersRoot, field, "KeyFrameSeeking");
 
-		_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread new start/end"
+		_logger->info(__FILEREF__ + "manageCutMediaThread new start/end"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", cutType: " + cutType
@@ -19955,74 +20083,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 			field = "outputFileFormat";
 			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
-			_logger->info(__FILEREF__ + "1 generateAndIngestCutMediaThread new start/end"
+			_logger->info(__FILEREF__ + "1 manageCutMediaThread new start/end"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			);
-
-			// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
-			// force the cut file to have the same avgFrameRate of the source media
-			string forcedAvgFrameRate;
-			{
-				try
-				{
-					if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
-					{
-						vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
-						vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
-
-						_mmsEngineDBFacade->getVideoDetails(
-							sourceMediaItemKey, sourcePhysicalPathKey,
-							// 2022-12-18: MIK potrebbe essere stato appena aggiunto
-							true,
-							videoTracks, audioTracks);
-						if (videoTracks.size() == 0)
-						{
-							string errorMessage = __FILEREF__ + "No video track are present"
-								+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-							;
-
-							_logger->error(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-
-						tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack
-							= videoTracks[0];
-
-						tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore,
-							ignore, ignore) = videoTrack;
-					}
-				}
-				catch(runtime_error& e)
-				{
-					string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				catch(exception& e)
-				{
-					string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
-						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->error(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-
-			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread frame rate"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", forcedAvgFrameRate" + forcedAvgFrameRate
 			);
 
 			// this is a cut so destination file name shall have the same
@@ -20043,10 +20106,10 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				fileFormat = outputFileFormat;
 			}
 
-			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread file format"
+			_logger->info(__FILEREF__ + "manageCutMediaThread file format"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", fileFormatorcedAvgFrameRate" + fileFormat
+				+ ", fileFormat: " + fileFormat
 			);
 
 			if (newUtcStartTimeInMilliSecs != -1 && newUtcEndTimeInMilliSecs != -1)
@@ -20098,7 +20161,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				parametersRoot[field] = destUserDataRoot;
 			}
 
-			_logger->info(__FILEREF__ + "generateAndIngestCutMediaThread usr data management"
+			_logger->info(__FILEREF__ + "manageCutMediaThread usr data management"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			);
@@ -20142,8 +20205,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 				title,
 				imageOfVideoMediaItemKey,
 				cutOfVideoMediaItemKey, cutOfAudioMediaItemKey,
-				FFMpeg::timeToSeconds(ingestionJobKey, startTime, _logger),
-				FFMpeg::timeToSeconds(ingestionJobKey, endTime, _logger),
+				FFMpeg::timeToSeconds(ingestionJobKey, startTime),
+				FFMpeg::timeToSeconds(ingestionJobKey, endTime),
 				parametersRoot
 			);
 
@@ -20285,7 +20348,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
 	}
     catch(runtime_error& e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"
+        _logger->error(__FILEREF__ + "manageCutMediaThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -20327,7 +20390,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaThread(
     }
     catch(exception& e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestCutMediaThread failed"
+        _logger->error(__FILEREF__ + "manageCutMediaThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

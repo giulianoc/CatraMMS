@@ -8516,7 +8516,7 @@ void FFMpeg::cutWithoutEncoding(
 				startTimeToBeUsed = getNearestKeyFrameTime(
 					ingestionJobKey, sourcePhysicalPath,
 					startKeyFrameSeekingInterval,
-					timeToSeconds(ingestionJobKey, startTime, _logger));
+					timeToSeconds(ingestionJobKey, startTime));
 				if (startTimeToBeUsed == "")
 					startTimeToBeUsed = startTime;
 			}
@@ -8531,7 +8531,7 @@ void FFMpeg::cutWithoutEncoding(
 				endTimeToBeUsed = getNearestKeyFrameTime(
 					ingestionJobKey, sourcePhysicalPath,
 					endKeyFrameSeekingInterval,
-					timeToSeconds(ingestionJobKey, endTime, _logger));
+					timeToSeconds(ingestionJobKey, endTime));
 				if (endTimeToBeUsed == "")
 					endTimeToBeUsed = endTime;
 			}
@@ -8539,8 +8539,8 @@ void FFMpeg::cutWithoutEncoding(
 			{
 				// if you specify -ss before -i, -to will have the same effect as -t, i.e. it will act as a duration.
 				endTimeToBeUsed = to_string(
-					timeToSeconds(ingestionJobKey, endTime, _logger) -
-					timeToSeconds(ingestionJobKey, startTime, _logger));
+					timeToSeconds(ingestionJobKey, endTime) -
+					timeToSeconds(ingestionJobKey, startTime));
 			}
 			else
 			{
@@ -8689,7 +8689,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	setStatus(
 		ingestionJobKey,
 		encodingJobKey,
-		framesNumber == -1 ? ((timeToSeconds(ingestionJobKey, endTime, _logger) - timeToSeconds(ingestionJobKey, startTime, _logger)) * 1000) : -1,
+		framesNumber == -1 ? ((timeToSeconds(ingestionJobKey, endTime) - timeToSeconds(ingestionJobKey, startTime)) * 1000) : -1,
 		sourceVideoAssetPathName,
 		stagingEncodedAssetPathName
 	);
@@ -18906,8 +18906,7 @@ void FFMpeg::renameOutputFfmpegPathFileName(
 	}
 }
 
-bool FFMpeg::isNumber(int64_t ingestionJobKey, string number,
-	shared_ptr<spdlog::logger> logger)
+bool FFMpeg::isNumber(int64_t ingestionJobKey, string number)
 {
 	try
 	{
@@ -18921,19 +18920,21 @@ bool FFMpeg::isNumber(int64_t ingestionJobKey, string number,
 	}
 	catch(exception& e)
 	{
-		string errorMessage = string("isNumber failed")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", number: " + number
-			+ ", exception: " + e.what()
-		;
-		logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"isNumber failed"
+			", ingestionJobKey: {}"
+			", number: {}"
+			", exception: {}",
+			ingestionJobKey, number, e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 }
 
 double FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time,
-	shared_ptr<spdlog::logger> logger)
+	int framesPerSecond // serve solo nel caso siano presenti i frames nel formato
+)
 {
 	try
 	{
@@ -18941,75 +18942,128 @@ double FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time,
 		if (localTime == "")
 			return 0.0;
 
-		if (isNumber(ingestionJobKey, localTime, logger))
+		if (isNumber(ingestionJobKey, localTime))
 			return stod(localTime);
 
-		// format: [-][HH:]MM:SS[.m...]
+		// format: [-][HH:]MM:SS[.m...] or [-]HH:MM:SS:FF where FF is for frames
 
 		bool isNegative = false;
-		bool hourPresent = false;
-		int hours = 0;
-		int minutes = 0;
-		int seconds = 0;
-		int decimals = 0;    // microseconds???
-
-
 		if (localTime[0] == '-')
 			isNegative = true;
 
-		bool hoursPresent = std::count_if(localTime.begin(), localTime.end(), []( char c ){return c == ':';}) == 2;
-		bool decimalPresent = localTime.find(".") != string::npos;
-
-
-		stringstream ss(isNegative ? localTime.substr(1) : localTime);
-
-		char delim = ':';
-
-		if (hoursPresent)
+		int semiColonNumber = count_if(localTime.begin(), localTime.end(), []( char c ){return c == ':';});
+		if (semiColonNumber == 3)
 		{
+			// format HH:MM:SS:FF
+
+			int hours = 0;
+			int minutes = 0;
+			int seconds = 0;
+			int frames = 0;
+			double decimals = 0;
+
+			if (framesPerSecond == -1)
+			{
+				string errorMessage = fmt::format("framesPerSecond is mandatory to parse this format and is missing"
+					", ingestionJobKey: {}"
+					", time: {}"
+					", framesPerSecond: {}",
+					ingestionJobKey, time, framesPerSecond);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			stringstream ss(isNegative ? localTime.substr(1) : localTime);
+
+			char delim = ':';
+
 			string sHours;
 			getline(ss, sHours, delim); 
 			hours = stoi(sHours);
-		}
 
-		string sMinutes;
-		getline(ss, sMinutes, delim); 
-		minutes = stoi(sMinutes);
+			string sMinutes;
+			getline(ss, sMinutes, delim); 
+			minutes = stoi(sMinutes);
 
-		delim = '.';
-		string sSeconds;
-		getline(ss, sSeconds, delim); 
-		seconds = stoi(sSeconds);
+			string sSeconds;
+			getline(ss, sSeconds, delim); 
+			seconds = stoi(sSeconds);
 
-		if (decimalPresent)
-		{
-			string sDecimals;
-			getline(ss, sDecimals, delim); 
-			decimals = stoi(sDecimals);
-		}
+			// 1s : 25 frames = XX : 4 frames
+			string sFrames;
+			getline(ss, sFrames, delim); 
+			frames = stoi(sFrames);
+			decimals = frames / framesPerSecond;
 
-		double dSeconds;
-		if (decimals != 0)
-		{
-			sSeconds = to_string((hours * 3600) + (minutes * 60) + seconds) + "." + to_string(decimals);
-			dSeconds = stod(sSeconds);
+			double dSeconds = (hours * 3600) + (minutes * 60) + seconds + decimals;
+
+			if (isNegative)
+				dSeconds *= -1;
+
+			return dSeconds;
 		}
 		else
-			dSeconds = (hours * 3600) + (minutes * 60) + seconds;
+		{
+			bool hourPresent = false;
+			int hours = 0;
+			int minutes = 0;
+			int seconds = 0;
+			int decimals = 0;    // microseconds???
 
-		if (isNegative)
-			dSeconds *= -1;
+			bool hoursPresent = std::count_if(localTime.begin(), localTime.end(), []( char c ){return c == ':';}) == 2;
+			bool decimalPresent = localTime.find(".") != string::npos;
 
-		return dSeconds;
+			stringstream ss(isNegative ? localTime.substr(1) : localTime);
+
+			char delim = ':';
+
+			if (hoursPresent)
+			{
+				string sHours;
+				getline(ss, sHours, delim); 
+				hours = stoi(sHours);
+			}
+
+			string sMinutes;
+			getline(ss, sMinutes, delim); 
+			minutes = stoi(sMinutes);
+
+			delim = '.';
+			string sSeconds;
+			getline(ss, sSeconds, delim); 
+			seconds = stoi(sSeconds);
+
+			if (decimalPresent)
+			{
+				string sDecimals;
+				getline(ss, sDecimals, delim); 
+				decimals = stoi(sDecimals);
+			}
+
+			double dSeconds;
+			if (decimals != 0)
+			{
+				sSeconds = to_string((hours * 3600) + (minutes * 60) + seconds) + "." + to_string(decimals);
+				dSeconds = stod(sSeconds);
+			}
+			else
+				dSeconds = (hours * 3600) + (minutes * 60) + seconds;
+
+			if (isNegative)
+				dSeconds *= -1;
+
+			return dSeconds;
+		}
 	}
 	catch(exception& e)
 	{
-		string errorMessage = string("timeToSeconds failed")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", time: " + time
-			+ ", exception: " + e.what()
-		;
-		logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format("timeToSeconds failed"
+			", ingestionJobKey: {}"
+			", time: {}"
+			", exception: {}",
+			ingestionJobKey, time, e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
