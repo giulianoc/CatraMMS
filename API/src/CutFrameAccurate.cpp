@@ -167,13 +167,9 @@ void CutFrameAccurate::encodeContent(
 			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
-		// sourceFramesPerSeconds serve nel caso startTime/endTime hanno il formato con il numero di frames.
-		// In questo caso bisogna che questa info arrivi fin qui
-		int sourceFramesPerSeconds = -1;
 		_encoding->_ffmpeg->cutFrameAccurateWithEncoding(
 			_ingestionJobKey,
 			sourceAssetPathName,
-			sourceFramesPerSeconds,
 			_encodingJobKey,
 			encodingProfileDetailsRoot,
 			JSONUtils::asString(ingestedParametersRoot, "startTime", ""),

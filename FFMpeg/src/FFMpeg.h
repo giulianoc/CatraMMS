@@ -329,7 +329,6 @@ public:
 		int64_t ingestionJobKey,
 		string sourcePhysicalPath,
 		bool isVideo,
-		int sourceFramesPerSecond,
 		string cutType,	// KeyFrameSeeking (input seeking), FrameAccurateWithoutEncoding, KeyFrameSeekingInterval
 		string startKeyFramesSeekingInterval,
 		string endKeyFramesSeekingInterval,
@@ -344,7 +343,6 @@ public:
 		// no keyFrameSeeking needs reencoding otherwise the key frame is always used
 		// If you re-encode your video when you cut/trim, then you get a frame-accurate cut
 		// because FFmpeg will re-encode the video and start with an I-frame.
-		int sourceFramesPerSecond,
 		int64_t encodingJobKey,
 		Json::Value encodingProfileDetailsRoot,
 		string startTime,
@@ -481,10 +479,8 @@ public:
 		string youTubeURL);
 
 	static bool isNumber(int64_t ingestionJobKey, string number);
-	static double timeToSeconds(int64_t ingestionJobKey, string time,
-		int framesPerSecond);
-	static string secondsToTime(int64_t ingestionJobKey, double dSeconds,
-		shared_ptr<spdlog::logger> logger);
+	static double timeToSeconds(int64_t ingestionJobKey, string time);
+	static string secondsToTime(int64_t ingestionJobKey, double dSeconds);
 
 private:
 	enum class APIName {

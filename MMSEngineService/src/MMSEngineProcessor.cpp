@@ -19484,7 +19484,6 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 
 				ffmpeg.cutWithoutEncoding(ingestionJobKey, concatenatedMediaPathName, 
 					concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-					-1, // sourceFramesPerSecond
 					cutType,
 					"", // startKeyFramesSeekingInterval,
 					"", // endKeyFramesSeekingInterval,
@@ -19857,8 +19856,45 @@ void MMSEngineProcessor::manageCutMediaThread(
 			field = "FixEndTimeIfOvercomeDuration";
 			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
 
-			double startTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime, framesPerSecond);
-			double endTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime, framesPerSecond);
+			// startTime/endTime potrebbero avere anche il formato HH:MM:SS:FF.
+			// Questo formato è stato utile per il cut di file mxf ma non è supportato
+			// da ffmpeg (il formato supportati da ffmpeg sono quelli gestiti da FFMpeg::timeToSeconds)
+			// Per cui qui riconduciamo il formato HH:MM:SS:FF a quello gestito
+			// da ffmpeg HH:MM:SS.<decimi di secondo>.
+			{
+				if (count_if(startTime.begin(), startTime.end(), []( char c ){return c == ':';}) == 3)
+				{
+					int framesIndex = startTime.find_last_of(":");
+					double frames = stoi(startTime.substr(framesIndex + 1));
+
+					// se ad esempio sono 4 frames su 25 frames al secondo
+					//	la parte decimale del secondo richiesta dal formato ffmpeg sarà 16,
+					//	cioè: (4/25)*100
+
+					int decimals = (frames / ((double) framesPerSecond)) * 100;
+					string newStartTime = startTime.substr(0, framesIndex) + "." + to_string(decimals);
+					SPDLOG_INFO("conversion from HH:MM:SS:FF ({}) to ffmeg format: {}",
+						startTime, newStartTime);
+					startTime = newStartTime;
+				}
+				if (count_if(endTime.begin(), endTime.end(), []( char c ){return c == ':';}) == 3)
+				{
+					int framesIndex = endTime.find_last_of(":");
+					double frames = stoi(endTime.substr(framesIndex + 1));
+
+					// se ad esempio sono 4 frames su 25 frames al secondo
+					//	la parte decimale del secondo richiesta dal formato ffmpeg sarà 16,
+					//	cioè: (4/25)*100
+
+					int decimals = (frames / ((double) framesPerSecond)) * 100;
+					string newEndTime = endTime.substr(0, framesIndex) + "." + to_string(decimals);
+					SPDLOG_INFO("conversion from HH:MM:SS:FF ({}) to ffmeg format: {}",
+						endTime, newEndTime);
+					endTime = newEndTime;
+				}
+			}
+			double startTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime);
+			double endTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime);
 
 			field = "timesRelativeToMetaDataField";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -19905,10 +19941,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 
-				double relativeTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, timeCode, framesPerSecond);
+				double relativeTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, timeCode);
 
 				startTimeInSeconds -= relativeTimeInSeconds;
+				startTime = FFMpeg::secondsToTime(ingestionJobKey, startTimeInSeconds);
+
 				endTimeInSeconds -= relativeTimeInSeconds;
+				endTime = FFMpeg::secondsToTime(ingestionJobKey, endTimeInSeconds);
 			}
 
 			if (framesNumber == -1)
@@ -20050,9 +20089,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 						{
 							newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
 							newUtcStartTimeInMilliSecs += ((int64_t) (FFMpeg::timeToSeconds(
-								ingestionJobKey, startTime, framesPerSecond) * 1000));
+								ingestionJobKey, startTime) * 1000));
 							newUtcEndTimeInMilliSecs = utcStartTimeInMilliSecs + ((int64_t) (
-								FFMpeg::timeToSeconds(ingestionJobKey, endTime, framesPerSecond) * 1000));
+								FFMpeg::timeToSeconds(ingestionJobKey, endTime) * 1000));
 						}
 					}
 				}
@@ -20181,7 +20220,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			FFMpeg ffmpeg (_configuration, _logger);
 			ffmpeg.cutWithoutEncoding(ingestionJobKey, sourceAssetPathName, 
 				referenceContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-				framesPerSecond, cutType,
+				cutType,
 				"", // startKeyFramesSeekingInterval,
 				"", // endKeyFramesSeekingInterval,
 				startTime, endTime, framesNumber,
@@ -20207,8 +20246,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 				title,
 				imageOfVideoMediaItemKey,
 				cutOfVideoMediaItemKey, cutOfAudioMediaItemKey,
-				FFMpeg::timeToSeconds(ingestionJobKey, startTime, framesPerSecond),
-				FFMpeg::timeToSeconds(ingestionJobKey, endTime, framesPerSecond),
+				FFMpeg::timeToSeconds(ingestionJobKey, startTime),
+				FFMpeg::timeToSeconds(ingestionJobKey, endTime),
 				parametersRoot
 			);
 
