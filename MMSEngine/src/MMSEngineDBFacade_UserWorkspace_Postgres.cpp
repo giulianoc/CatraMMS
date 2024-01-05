@@ -3371,7 +3371,9 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			bool userAPIKeyInfo = true;
-			bool costDetails = false;
+			// 2024-01-05: Siamo in fase di login, probabilmente costDetails non servono ma li ho aggiunti
+			//	perchè invece serve il campo maxStorageInGB. Serve alla GUI per mostrare lo storage
+			bool costDetails = true;
 			if (!empty(res))
             {
 				auto row = res[0];
