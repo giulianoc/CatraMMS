@@ -2063,9 +2063,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
                 "create table if not exists MMS_IngestionJobOutput ("
-                    "ingestionJobKey			bigint NOT NULL,"
+                    "ingestionJobKey		bigint NOT NULL,"
                     "mediaItemKey			bigint NOT NULL,"
-                    "physicalPathKey  			bigint NOT NULL,"
+                    "physicalPathKey  		bigint NOT NULL,"
+                    "position				int NOT NULL,"
                     "UNIQUE (ingestionJobKey, mediaItemKey, physicalPathKey), "
                     "constraint MMS_IngestionJobOutput_FK foreign key (ingestionJobKey) "
                         "references MMS_IngestionJob (ingestionJobKey) on delete cascade) ";

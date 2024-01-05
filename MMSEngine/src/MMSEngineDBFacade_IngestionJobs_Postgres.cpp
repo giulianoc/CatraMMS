@@ -3771,11 +3771,44 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 {
 	try
 	{
+		/*
+			Il campo position è stato aggiunto perchè è importante mantenere l'ordine in cui addIngestionJobOutput
+			viene chiamato. L'esempio che mi ha portato ad aggiungere il campo position è il seguente:
+			in un workflow abbiamo un GroupOfTasks che esegue 3 tagli in parallelo. L'output del GroupOfTasks
+			va in input ad un Concat che concatena i 3 tagli.
+			Nel mio caso il concat non concatenava i tre tagli nel giusto ordine che è quello indicato
+			dall'ordine dei Tasks del GroupOfTasks.
+
+			Anche nel caso di un Recorder Task, il campo position non crea problemi perchè addIngestionJobOutput
+			viene chiamato ad ogni Chunk inserito
+		*/
+		int newPosition = 0;
+		{
+            string sqlStatement = fmt::format(
+				"select max(position) as newPosition from MMS_IngestionJobOutput where ingestionJobKey = {}",
+				ingestionJobKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans->exec(sqlStatement);
+			if (!empty(res))
+			{
+				if (!res[0]["newPosition"].is_null())
+					newPosition = res[0]["newPosition"].as<int>() + 1;
+			}
+
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+        }
+
 		{
 			string sqlStatement = fmt::format( 
-				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
-				"{}, {}, {})",
-				ingestionJobKey, mediaItemKey, physicalPathKey);
+				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey, position) values ("
+				"{}, {}, {}, {})",
+				ingestionJobKey, mediaItemKey, physicalPathKey, newPosition);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans->exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -3789,10 +3822,32 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 
 		if (sourceIngestionJobKey != -1)
 		{
+			newPosition = 0;
+			{
+				string sqlStatement = fmt::format(
+					"select max(position) as newPosition from MMS_IngestionJobOutput where ingestionJobKey = {}",
+					sourceIngestionJobKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				result res = trans->exec(sqlStatement);
+				if (!empty(res))
+				{
+					if (!res[0]["newPosition"].is_null())
+						newPosition = res[0]["newPosition"].as<int>() + 1;
+				}
+
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
+			}
+
 			string sqlStatement = fmt::format( 
-				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
-				"{}, {}, {})",
-				sourceIngestionJobKey, mediaItemKey, physicalPathKey);
+				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey, position) values ("
+				"{}, {}, {}, {})",
+				sourceIngestionJobKey, mediaItemKey, physicalPathKey, newPosition);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans->exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
@@ -4717,7 +4772,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         {
             string sqlStatement = fmt::format( 
                 "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput "
-				"where ingestionJobKey = {} order by mediaItemKey",
+				"where ingestionJobKey = {} order by position",
 				ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
