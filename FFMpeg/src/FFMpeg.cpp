@@ -8350,11 +8350,12 @@ void FFMpeg::cutWithoutEncoding(
 	int64_t ingestionJobKey,
 	string sourcePhysicalPath,
 	bool isVideo,
+	int sourceFramesPerSecond,
 	string cutType,	// KeyFrameSeeking, FrameAccurateWithoutEncoding, KeyFrameSeekingInterval
 	string startKeyFrameSeekingInterval,
 	string endKeyFrameSeekingInterval,
-	string startTime, // [-][HH:]MM:SS[.m...] or [-]S+[.m...]
-	string endTime, // [-][HH:]MM:SS[.m...] or [-]S+[.m...]
+	string startTime, // [-][HH:]MM:SS[.m...] or [-]S+[.m...] or HH:MM:SS:FF
+	string endTime, // [-][HH:]MM:SS[.m...] or [-]S+[.m...] or HH:MM:SS:FF
 	int framesNumber,
 	string cutMediaPathName)
 {
@@ -8516,7 +8517,7 @@ void FFMpeg::cutWithoutEncoding(
 				startTimeToBeUsed = getNearestKeyFrameTime(
 					ingestionJobKey, sourcePhysicalPath,
 					startKeyFrameSeekingInterval,
-					timeToSeconds(ingestionJobKey, startTime));
+					timeToSeconds(ingestionJobKey, startTime, sourceFramesPerSecond));
 				if (startTimeToBeUsed == "")
 					startTimeToBeUsed = startTime;
 			}
@@ -8531,7 +8532,7 @@ void FFMpeg::cutWithoutEncoding(
 				endTimeToBeUsed = getNearestKeyFrameTime(
 					ingestionJobKey, sourcePhysicalPath,
 					endKeyFrameSeekingInterval,
-					timeToSeconds(ingestionJobKey, endTime));
+					timeToSeconds(ingestionJobKey, endTime, sourceFramesPerSecond));
 				if (endTimeToBeUsed == "")
 					endTimeToBeUsed = endTime;
 			}
@@ -8539,8 +8540,8 @@ void FFMpeg::cutWithoutEncoding(
 			{
 				// if you specify -ss before -i, -to will have the same effect as -t, i.e. it will act as a duration.
 				endTimeToBeUsed = to_string(
-					timeToSeconds(ingestionJobKey, endTime) -
-					timeToSeconds(ingestionJobKey, startTime));
+					timeToSeconds(ingestionJobKey, endTime, sourceFramesPerSecond) -
+					timeToSeconds(ingestionJobKey, startTime, sourceFramesPerSecond));
 			}
 			else
 			{
@@ -8675,6 +8676,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	// because FFmpeg will re-encode the video and start with an I-frame.
 	// There is an option to encode only a little part of the video,
 	// see https://stackoverflow.com/questions/63548027/cut-a-video-in-between-key-frames-without-re-encoding-the-full-video-using-ffpme
+	int sourceFramesPerSecond,
 	int64_t encodingJobKey,
 	Json::Value encodingProfileDetailsRoot,
 	string startTime,
@@ -8689,7 +8691,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	setStatus(
 		ingestionJobKey,
 		encodingJobKey,
-		framesNumber == -1 ? ((timeToSeconds(ingestionJobKey, endTime) - timeToSeconds(ingestionJobKey, startTime)) * 1000) : -1,
+		framesNumber == -1 ? ((timeToSeconds(ingestionJobKey, endTime, sourceFramesPerSecond) - timeToSeconds(ingestionJobKey, startTime, sourceFramesPerSecond)) * 1000) : -1,
 		sourceVideoAssetPathName,
 		stagingEncodedAssetPathName
 	);

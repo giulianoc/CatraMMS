@@ -19484,6 +19484,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 
 				ffmpeg.cutWithoutEncoding(ingestionJobKey, concatenatedMediaPathName, 
 					concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
+					-1, // sourceFramesPerSecond
 					cutType,
 					"", // startKeyFramesSeekingInterval,
 					"", // endKeyFramesSeekingInterval,
@@ -20048,9 +20049,10 @@ void MMSEngineProcessor::manageCutMediaThread(
 						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
 						{
 							newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
-							newUtcStartTimeInMilliSecs += ((int64_t) (FFMpeg::timeToSeconds(ingestionJobKey, startTime) * 1000));
-							newUtcEndTimeInMilliSecs = utcStartTimeInMilliSecs
-								+ ((int64_t) (FFMpeg::timeToSeconds(ingestionJobKey, endTime) * 1000));
+							newUtcStartTimeInMilliSecs += ((int64_t) (FFMpeg::timeToSeconds(
+								ingestionJobKey, startTime, framesPerSecond) * 1000));
+							newUtcEndTimeInMilliSecs = utcStartTimeInMilliSecs + ((int64_t) (
+								FFMpeg::timeToSeconds(ingestionJobKey, endTime, framesPerSecond) * 1000));
 						}
 					}
 				}
@@ -20161,7 +20163,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				parametersRoot[field] = destUserDataRoot;
 			}
 
-			_logger->info(__FILEREF__ + "manageCutMediaThread usr data management"
+			_logger->info(__FILEREF__ + "manageCutMediaThread user data management"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			);
@@ -20179,7 +20181,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			FFMpeg ffmpeg (_configuration, _logger);
 			ffmpeg.cutWithoutEncoding(ingestionJobKey, sourceAssetPathName, 
 				referenceContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-				cutType,
+				framesPerSecond, cutType,
 				"", // startKeyFramesSeekingInterval,
 				"", // endKeyFramesSeekingInterval,
 				startTime, endTime, framesNumber,
@@ -20205,8 +20207,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 				title,
 				imageOfVideoMediaItemKey,
 				cutOfVideoMediaItemKey, cutOfAudioMediaItemKey,
-				FFMpeg::timeToSeconds(ingestionJobKey, startTime),
-				FFMpeg::timeToSeconds(ingestionJobKey, endTime),
+				FFMpeg::timeToSeconds(ingestionJobKey, startTime, framesPerSecond),
+				FFMpeg::timeToSeconds(ingestionJobKey, endTime, framesPerSecond),
 				parametersRoot
 			);
 
