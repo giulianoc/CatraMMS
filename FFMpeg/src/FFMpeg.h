@@ -479,8 +479,9 @@ public:
 		string youTubeURL);
 
 	static bool isNumber(int64_t ingestionJobKey, string number);
-	static double timeToSeconds(int64_t ingestionJobKey, string time);
+	static pair<double, long> timeToSeconds(int64_t ingestionJobKey, string time);
 	static string secondsToTime(int64_t ingestionJobKey, double dSeconds);
+	static string centsOfSecondsToTime(int64_t ingestionJobKey, long centsOfSeconds);
 
 private:
 	enum class APIName {

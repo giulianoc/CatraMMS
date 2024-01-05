@@ -19893,8 +19893,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 					endTime = newEndTime;
 				}
 			}
-			double startTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime);
-			double endTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime);
+			double startTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime).first;
+			double endTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime).first;
 
 			field = "timesRelativeToMetaDataField";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -19941,31 +19941,33 @@ void MMSEngineProcessor::manageCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 
-				double relativeTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, timeCode);
+				long startTimeInCentsOfSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime).second;
+				long endTimeInCentsOfSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime).second;
+				long relativeTimeInCentsOfSeconds = FFMpeg::timeToSeconds(ingestionJobKey, timeCode).second;
 
-				double newStartTimeInSeconds = startTimeInSeconds - relativeTimeInSeconds;
-				string newStartTime = FFMpeg::secondsToTime(ingestionJobKey, newStartTimeInSeconds);
+				long newStartTimeInCentsOfSeconds = startTimeInCentsOfSeconds - relativeTimeInCentsOfSeconds;
+				string newStartTime = FFMpeg::centsOfSecondsToTime(ingestionJobKey, newStartTimeInCentsOfSeconds);
 
-				double newEndTimeInSeconds = endTimeInSeconds - relativeTimeInSeconds;
-				string newEndTime = FFMpeg::secondsToTime(ingestionJobKey, newEndTimeInSeconds);
+				long newEndTimeInCentsOfSeconds = endTimeInCentsOfSeconds - relativeTimeInCentsOfSeconds;
+				string newEndTime = FFMpeg::centsOfSecondsToTime(ingestionJobKey, newEndTimeInCentsOfSeconds);
 
 				SPDLOG_INFO("correction because of timesRelativeToMetaDataField"
 					", timeCode: {}"
-					", relativeTimeInSeconds: {}"
+					", relativeTimeInCentsOfSeconds: {}"
+					", startTimeInCentsOfSeconds: {}"
 					", startTime: {}"
-					", startTimeInSeconds: {}"
 					", newStartTime: {}"
+					", endTimeInCentsOfSeconds: {}"
 					", endTime: {}"
-					", endTimeInSeconds: {}"
 					", newEndTime: {}",
-					timeCode, relativeTimeInSeconds, startTime, startTimeInSeconds, newStartTime,
-					endTime, endTimeInSeconds, newEndTime
+					timeCode, relativeTimeInCentsOfSeconds, startTimeInCentsOfSeconds, startTime,
+					newStartTime, endTimeInCentsOfSeconds, endTime, newEndTime
 				);
 
-				startTimeInSeconds = newStartTimeInSeconds;
+				startTimeInSeconds = newStartTimeInCentsOfSeconds / 100;
 				startTime = newStartTime;
 
-				endTimeInSeconds = newEndTimeInSeconds;
+				endTimeInSeconds = newEndTimeInCentsOfSeconds / 100;
 				endTime = newEndTime;
 			}
 
@@ -20108,9 +20110,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 						{
 							newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
 							newUtcStartTimeInMilliSecs += ((int64_t) (FFMpeg::timeToSeconds(
-								ingestionJobKey, startTime) * 1000));
+								ingestionJobKey, startTime).second * 10));
 							newUtcEndTimeInMilliSecs = utcStartTimeInMilliSecs + ((int64_t) (
-								FFMpeg::timeToSeconds(ingestionJobKey, endTime) * 1000));
+								FFMpeg::timeToSeconds(ingestionJobKey, endTime).second * 10));
 						}
 					}
 				}
@@ -20265,8 +20267,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 				title,
 				imageOfVideoMediaItemKey,
 				cutOfVideoMediaItemKey, cutOfAudioMediaItemKey,
-				FFMpeg::timeToSeconds(ingestionJobKey, startTime),
-				FFMpeg::timeToSeconds(ingestionJobKey, endTime),
+				FFMpeg::timeToSeconds(ingestionJobKey, startTime).first,
+				FFMpeg::timeToSeconds(ingestionJobKey, endTime).first,
 				parametersRoot
 			);
 

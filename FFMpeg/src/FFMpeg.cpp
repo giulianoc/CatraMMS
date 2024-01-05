@@ -8516,7 +8516,7 @@ void FFMpeg::cutWithoutEncoding(
 				startTimeToBeUsed = getNearestKeyFrameTime(
 					ingestionJobKey, sourcePhysicalPath,
 					startKeyFrameSeekingInterval,
-					timeToSeconds(ingestionJobKey, startTime));
+					timeToSeconds(ingestionJobKey, startTime).first);
 				if (startTimeToBeUsed == "")
 					startTimeToBeUsed = startTime;
 			}
@@ -8531,7 +8531,7 @@ void FFMpeg::cutWithoutEncoding(
 				endTimeToBeUsed = getNearestKeyFrameTime(
 					ingestionJobKey, sourcePhysicalPath,
 					endKeyFrameSeekingInterval,
-					timeToSeconds(ingestionJobKey, endTime));
+					timeToSeconds(ingestionJobKey, endTime).first);
 				if (endTimeToBeUsed == "")
 					endTimeToBeUsed = endTime;
 			}
@@ -8539,8 +8539,8 @@ void FFMpeg::cutWithoutEncoding(
 			{
 				// if you specify -ss before -i, -to will have the same effect as -t, i.e. it will act as a duration.
 				endTimeToBeUsed = to_string(
-					timeToSeconds(ingestionJobKey, endTime) -
-					timeToSeconds(ingestionJobKey, startTime));
+					timeToSeconds(ingestionJobKey, endTime).first -
+					timeToSeconds(ingestionJobKey, startTime).first);
 			}
 			else
 			{
@@ -8689,7 +8689,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	setStatus(
 		ingestionJobKey,
 		encodingJobKey,
-		framesNumber == -1 ? ((timeToSeconds(ingestionJobKey, endTime) - timeToSeconds(ingestionJobKey, startTime)) * 1000) : -1,
+		framesNumber == -1 ? ((timeToSeconds(ingestionJobKey, endTime).first - timeToSeconds(ingestionJobKey, startTime).first) * 1000) : -1,
 		sourceVideoAssetPathName,
 		stagingEncodedAssetPathName
 	);
@@ -18932,16 +18932,18 @@ bool FFMpeg::isNumber(int64_t ingestionJobKey, string number)
 	}
 }
 
-double FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time)
+// ritorna: secondi (double), centesimi (long). Es: 5.27 e 527. I centesimi sono piu precisi perchè evitano
+//	i troncamenti di un double
+pair<double, long> FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time)
 {
 	try
 	{
 		string localTime = StringUtils::trimTabToo(time);
 		if (localTime == "")
-			return 0.0;
+			return make_pair(0.0, 0);
 
 		if (isNumber(ingestionJobKey, localTime))
-			return stod(localTime);
+			return make_pair(stod(localTime), stod(localTime) * 100);
 
 		// format: [-][HH:]MM:SS[.m...] 
 
@@ -18954,7 +18956,7 @@ double FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time)
 		int hours = 0;
 		int minutes = 0;
 		int seconds = 0;
-		int decimals = 0;    // decimi di secondo
+		int decimals = 0;    // centesimi di secondo
 
 		bool hoursPresent = std::count_if(localTime.begin(), localTime.end(), []( char c ){return c == ':';}) == 2;
 		bool decimalPresent = localTime.find(".") != string::npos;
@@ -18987,18 +18989,27 @@ double FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time)
 		}
 
 		double dSeconds;
+		long centsOfSeconds;
 		if (decimals != 0)
 		{
 			sSeconds = to_string((hours * 3600) + (minutes * 60) + seconds) + "." + to_string(decimals);
 			dSeconds = stod(sSeconds);
+
+			centsOfSeconds = ((hours * 3600) + (minutes * 60) + seconds) * 100 + decimals;
 		}
 		else
+		{
 			dSeconds = (hours * 3600) + (minutes * 60) + seconds;
+			centsOfSeconds = ((hours * 3600) + (minutes * 60) + seconds) * 100;
+		}
 
 		if (isNegative)
+		{
 			dSeconds *= -1;
+			centsOfSeconds *= -1;
+		}
 
-		return dSeconds;
+		return make_pair(dSeconds, centsOfSeconds);
 	}
 	catch(exception& e)
 	{
@@ -19056,6 +19067,42 @@ string FFMpeg::secondsToTime(int64_t ingestionJobKey, double dSeconds)
 			", ingestionJobKey: {}"
 			", dSeconds: {}"
 			", exception: {}", ingestionJobKey, dSeconds, e.what());
+		SPDLOG_ERROR(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+string FFMpeg::centsOfSecondsToTime(int64_t ingestionJobKey, long centsOfSeconds)
+{
+	try
+	{
+		long localCentsOfSeconds = centsOfSeconds;
+
+		int hours = localCentsOfSeconds / 360000;
+		localCentsOfSeconds -= (hours * 360000);
+
+		int minutes = localCentsOfSeconds / 6000;
+		localCentsOfSeconds -= (minutes * 6000);
+
+		int seconds = localCentsOfSeconds / 100;
+		localCentsOfSeconds -= (seconds * 100);
+
+		string time;
+		{
+			char buffer[64];
+			sprintf(buffer, "%02d:%02d:%02d.%02ld", hours, minutes, seconds, localCentsOfSeconds);
+			time = buffer;
+		}
+
+		return time;
+	}
+	catch(exception& e)
+	{
+		string errorMessage = fmt::format("centsOfSecondsToTime failed"
+			", ingestionJobKey: {}"
+			", centsOfSeconds: {}"
+			", exception: {}", ingestionJobKey, centsOfSeconds, e.what());
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
