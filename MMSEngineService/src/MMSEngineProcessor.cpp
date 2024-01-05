@@ -19950,12 +19950,16 @@ void MMSEngineProcessor::manageCutMediaThread(
 				string newEndTime = FFMpeg::secondsToTime(ingestionJobKey, newEndTimeInSeconds);
 
 				SPDLOG_INFO("correction because of timesRelativeToMetaDataField"
+					", timeCode: {}"
 					", relativeTimeInSeconds: {}"
 					", startTime: {}"
+					", startTimeInSeconds: {}"
 					", newStartTime: {}"
 					", endTime: {}"
+					", endTimeInSeconds: {}"
 					", newEndTime: {}",
-					relativeTimeInSeconds, startTime, newStartTime, endTime, newEndTime
+					timeCode, relativeTimeInSeconds, startTime, startTimeInSeconds, newStartTime,
+					endTime, endTimeInSeconds, newEndTime
 				);
 
 				startTimeInSeconds = newStartTimeInSeconds;

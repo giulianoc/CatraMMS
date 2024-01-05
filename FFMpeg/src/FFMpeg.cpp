@@ -19036,10 +19036,15 @@ string FFMpeg::secondsToTime(int64_t ingestionJobKey, double dSeconds)
 			// dLocalSeconds dovrebbe essere 0.12345
 			if (dLocalSeconds > 0.0)
 			{
+				// poichè siamo interessati ai decimi di secondo
+				int decimals = dLocalSeconds * 100;
+				time += ("." + to_string(decimals));
+				/*
 				string decimals = to_string(dLocalSeconds);
 				size_t decimalPoint = decimals.find(".");
 				if (decimalPoint != string::npos)
 					time += decimals.substr(decimalPoint);
+				*/
 			}
 		}
 
