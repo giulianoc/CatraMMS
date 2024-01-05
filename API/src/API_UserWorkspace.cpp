@@ -2599,7 +2599,6 @@ void API::updateWorkspace(
         string newMaxEncodingPriority; bool maxEncodingPriorityChanged = false;
         string newEncodingPeriod; bool encodingPeriodChanged = false;
         int64_t newMaxIngestionsNumber; bool maxIngestionsNumberChanged = false;
-        int64_t newMaxStorageInMB; bool maxStorageInMBChanged = false;
         string newLanguageCode; bool languageCodeChanged = false;
         string newExpirationUtcDate; bool expirationDateChanged = false;
 
@@ -2676,13 +2675,6 @@ void API::updateWorkspace(
 		{
 			maxIngestionsNumberChanged = true;
 			newMaxIngestionsNumber = JSONUtils::asInt64(metadataRoot, field, 0);
-		}
-
-		field = "maxStorageInMB";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
-		{
-			maxStorageInMBChanged = true;
-			newMaxStorageInMB = JSONUtils::asInt64(metadataRoot, field, 0);
 		}
 
 		field = "languageCode";
@@ -2854,7 +2846,6 @@ void API::updateWorkspace(
 				maxEncodingPriorityChanged, newMaxEncodingPriority,
 				encodingPeriodChanged, newEncodingPeriod,
 				maxIngestionsNumberChanged, newMaxIngestionsNumber,
-				maxStorageInMBChanged, newMaxStorageInMB,
 				languageCodeChanged, newLanguageCode,
 				expirationDateChanged, newExpirationUtcDate,
 
@@ -2881,6 +2872,8 @@ void API::updateWorkspace(
 				newEditEncodersPool,
 				newApplicationRecorder);
 			#else
+			bool maxStorageInMBChanged = false;
+			int64_t newMaxStorageInMB = 0;
 			Json::Value workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
 				userKey,
 				workspace->_workspaceKey,

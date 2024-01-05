@@ -147,7 +147,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"maxEncodingPriority	text NOT NULL,"
 					"encodingPeriod			text NOT NULL,"
 					"maxIngestionsNumber	integer NOT NULL,"
-					"maxStorageInMB			integer NOT NULL,"	// da eliminare perchè gestito da MMS_WorkspaceCost
 					"languageCode			text NOT NULL,"
 					"constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

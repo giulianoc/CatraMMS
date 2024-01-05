@@ -43,7 +43,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			workspace->_workspaceKey = resultSet->getInt("workspaceKey");
 			workspace->_name = resultSet->getString("name");
 			workspace->_directoryName = resultSet->getString("directoryName");
-			workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
+			workspace->_maxStorageInGB = resultSet->getInt("maxStorageInMB") / 1000;
 			workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(
 						resultSet->getString("maxEncodingPriority")));
 
@@ -171,7 +171,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			workspace->_workspaceKey = resultSet->getInt("workspaceKey");
 			workspace->_name = resultSet->getString("name");
 			workspace->_directoryName = resultSet->getString("directoryName");
-			workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
+			workspace->_maxStorageInGB = resultSet->getInt("maxStorageInMB") / 1000;
 			workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(
 						resultSet->getString("maxEncodingPriority")));
 

@@ -3328,6 +3328,14 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
+string MMSEngineDBFacade::getPhysicalPathDetails(
+	int64_t physicalPathKey, bool warningIfMissing,
+	bool fromMaster
+)
+{
+    return "";
+}
+
 tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::getSourcePhysicalPath(
     int64_t mediaItemKey, bool warningIfMissing, bool fromMaster
 )

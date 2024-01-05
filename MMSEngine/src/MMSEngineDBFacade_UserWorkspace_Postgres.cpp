@@ -21,7 +21,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
     try
     {
 		string sqlStatement = fmt::format(
-			"select w.workspaceKey, w.name, w.directoryName, w.maxStorageInMB, w.maxEncodingPriority, "
+			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, "
 			"wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
@@ -47,7 +47,6 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			workspace->_workspaceKey = res[0]["workspaceKey"].as<int64_t>();
 			workspace->_name = res[0]["name"].as<string>();
 			workspace->_directoryName = res[0]["directoryName"].as<string>();
-			workspace->_maxStorageInMB = res[0]["maxStorageInMB"].as<int>();
 			workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
 
 			workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
@@ -186,7 +185,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     try
     {
 		string sqlStatement = fmt::format(
-			"select w.workspaceKey, w.name, w.directoryName, w.maxStorageInMB, w.maxEncodingPriority "
+			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority "
 			"wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
@@ -212,7 +211,6 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			workspace->_workspaceKey = res[0]["workspaceKey"].as<int64_t>();
 			workspace->_name = res[0]["name"].as<string>();
 			workspace->_directoryName = res[0]["directoryName"].as<string>();
-			workspace->_maxStorageInMB = res[0]["maxStorageInMB"].as<int>();
 			workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(
 				res[0]["maxEncodingPriority"].as<string>()));
 
@@ -1690,15 +1688,15 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 				"insert into MMS_Workspace ("
 				"creationDate, name, directoryName, workspaceType, "
 				"deliveryURL, enabled, maxEncodingPriority, encodingPeriod, "
-				"maxIngestionsNumber, maxStorageInMB, languageCode) values ("
+				"maxIngestionsNumber, languageCode) values ("
 				"NOW() at time zone 'utc',         {},    {},             {}, "
 				"{},           {},         {},                   {}, "
-				"{},                   {},            {}) returning workspaceKey",
+				"{},                  {}) returning workspaceKey",
 				trans.quote(workspaceName), trans.quote(workspaceDirectoryName),
 				static_cast<int>(workspaceType),
 				deliveryURL == "" ? "null" : trans.quote(deliveryURL),
 				enabled, trans.quote(toString(maxEncodingPriority)),
-				trans.quote(toString(encodingPeriod)), maxIngestionsNumber, maxStorageInMB,
+				trans.quote(toString(encodingPeriod)), maxIngestionsNumber,
 				trans.quote(languageCode));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			workspaceKey = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -3187,7 +3185,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			if (admin)
 				sqlStatement = fmt::format( 
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
+					"w.encodingPeriod, w.maxIngestionsNumber, "
 					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -3199,7 +3197,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			else
 				sqlStatement = fmt::format( 
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
+					"w.encodingPeriod, w.maxIngestionsNumber, "
 					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -3350,7 +3348,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 			// if NOT admin returns only the one having isEnabled = 1
 			string sqlStatement = fmt::format( 
 				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
+				"w.encodingPeriod, w.maxIngestionsNumber, "
 				"w.languageCode, "
 				"a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
@@ -3384,7 +3382,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 			{
 				string sqlStatement = fmt::format( 
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, w.languageCode, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -3549,9 +3547,6 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 
 		field = "maxIngestionsNumber";
 		workspaceDetailRoot[field] = row["maxIngestionsNumber"].as<int>();
-
-		field = "maxStorageInMB";
-		workspaceDetailRoot[field] = row["maxStorageInMB"].as<int>();
 
 		if (costDetails)
 		{
@@ -3742,7 +3737,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 	bool maxEncodingPriorityChanged, string newMaxEncodingPriority,
 	bool encodingPeriodChanged, string newEncodingPeriod,
 	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber,
-	bool maxStorageInMBChanged, int64_t newMaxStorageInMB,
 	bool languageCodeChanged, string newLanguageCode,
 	bool expirationDateChanged, string newExpirationUtcDate,
 
@@ -3867,14 +3861,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				oneParameterPresent = true;
 			}
 
-			if (maxStorageInMBChanged)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += fmt::format("maxStorageInMB = {}", newMaxStorageInMB);
-				oneParameterPresent = true;
-			}
-
 			if (oneParameterPresent)
 			{
 				string sqlStatement = fmt::format( 
@@ -3898,7 +3884,6 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
                         + ", newMaxEncodingPriority: " + newMaxEncodingPriority
                         + ", newEncodingPeriod: " + newEncodingPeriod
                         + ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
-                        + ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", sqlStatement: " + sqlStatement
 					;
@@ -3992,6 +3977,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 			}
         }
 
+		// 2024-01-05: questi cambiamenti possono essere fatti da chiunque tramite la pagina dei costi
         {
 			string setSQL = "set ";
 			bool oneParameterPresent = false;
@@ -4156,7 +4142,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         {
 			string sqlStatement = fmt::format( 
 				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-				"w.encodingPeriod, w.maxIngestionsNumber, w.maxStorageInMB, "
+				"w.encodingPeriod, w.maxIngestionsNumber, "
 				"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
@@ -4673,7 +4659,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
         
         {
             string sqlStatement = fmt::format(
-                "select maxStorageInMB from MMS_Workspace where workspaceKey = {}",
+                "select maxStorageInGB from MMS_WorkspaceCost where workspaceKey = {}",
 				workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
@@ -4685,7 +4671,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-                maxStorageInMB = res[0]["maxStorageInMB"].as<int>();
+                maxStorageInMB = res[0]["maxStorageInGB"].as<int>() * 1000;
             else
             {
                 string errorMessage = __FILEREF__ + "Workspace is not present/configured"

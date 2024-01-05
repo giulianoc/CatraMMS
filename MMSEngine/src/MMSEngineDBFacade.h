@@ -1280,7 +1280,6 @@ public:
 		bool maxEncodingPriorityChanged, string newMaxEncodingPriority,
 		bool encodingPeriodChanged, string newEncodingPeriod,
 		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber,
-		bool maxStorageInMBChanged, int64_t newMaxStorageInMB,
 		bool languageCodeChanged, string newLanguageCode,
 		bool expirationDateChanged, string newExpirationDate,
 
