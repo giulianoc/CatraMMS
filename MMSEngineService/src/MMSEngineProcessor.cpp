@@ -3211,7 +3211,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 if (_processorsThreadsNumber.use_count() >
 										_processorThreads + maxAdditionalProcessorThreads)
                                 {
-                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage generateAndIngestConcatenationThread, activity is postponed"
+                                    _logger->warn(__FILEREF__ + "Not enough available threads to manage manageConcatThread, activity is postponed"
                                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", _processorsThreadsNumber.use_count(): "
@@ -3238,8 +3238,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else
                                 {
-                                    thread generateAndIngestConcatenationThread(
-										&MMSEngineProcessor::generateAndIngestConcatenationThread, this, 
+                                    thread manageConcatThread(
+										&MMSEngineProcessor::manageConcatThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
 										workspace, 
 										parametersRoot,
@@ -3248,12 +3248,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										// by the parent thread
 										dependencies
 									);
-									generateAndIngestConcatenationThread.detach();
+									manageConcatThread.detach();
                                 }
                             }
                             catch(runtime_error& e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestConcatenationThread failed"
+                                _logger->error(__FILEREF__ + "manageConcatThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -3297,7 +3297,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception& e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestConcatenationThread failed"
+                                _logger->error(__FILEREF__ + "manageConcatThread failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -19027,7 +19027,7 @@ void MMSEngineProcessor::manageSlideShowTask(
     }
 }
 
-void MMSEngineProcessor::generateAndIngestConcatenationThread(
+void MMSEngineProcessor::manageConcatThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -19037,14 +19037,14 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 {
 	ThreadsStatistic::ThreadStatistic threadStatistic(
 		_mmsThreadsStatistic,
-		"generateAndIngestConcatenationThread",
+		"manageConcatThread",
 		_processorIdentifier,
 		_processorsThreadsNumber.use_count(),
 		ingestionJobKey);
 
     try
     {
-		_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
+		_logger->info(__FILEREF__ + "manageConcatThread"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -19084,7 +19084,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError)
 				= keyAndDependencyType;
 
-			_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
+			_logger->info(__FILEREF__ + "manageConcatThread"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", key: " + to_string(key)
@@ -19253,7 +19253,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
             }
 		}
 
-		_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread, retrying time code"
+		_logger->info(__FILEREF__ + "manageConcatThread, retrying time code"
 			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", utcStartTimeInMilliSecs: " + to_string(utcStartTimeInMilliSecs)
@@ -19295,7 +19295,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
 				{
 					string json = JSONUtils::toString(parametersRoot);
 
-					_logger->info(__FILEREF__ + "generateAndIngestConcatenationThread"
+					_logger->info(__FILEREF__ + "manageConcatThread"
 						+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", parametersRoot: " + json
@@ -19562,7 +19562,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
     }
     catch(runtime_error& e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestConcatenationThread failed"
+        _logger->error(__FILEREF__ + "manageConcatThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -19603,7 +19603,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationThread(
     }
     catch(exception& e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestConcatenationThread failed"
+        _logger->error(__FILEREF__ + "manageConcatThread failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

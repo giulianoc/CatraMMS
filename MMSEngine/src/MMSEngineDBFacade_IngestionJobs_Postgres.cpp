@@ -3772,15 +3772,13 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 	try
 	{
 		/*
+			2024-01-05:
 			Il campo position è stato aggiunto perchè è importante mantenere l'ordine in cui addIngestionJobOutput
 			viene chiamato. L'esempio che mi ha portato ad aggiungere il campo position è il seguente:
 			in un workflow abbiamo un GroupOfTasks che esegue 3 tagli in parallelo. L'output del GroupOfTasks
 			va in input ad un Concat che concatena i 3 tagli.
 			Nel mio caso il concat non concatenava i tre tagli nel giusto ordine che è quello indicato
 			dall'ordine dei Tasks del GroupOfTasks.
-
-			Anche nel caso di un Recorder Task, il campo position non crea problemi perchè addIngestionJobOutput
-			viene chiamato ad ogni Chunk inserito
 		*/
 		int newPosition = 0;
 		{

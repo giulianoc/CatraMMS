@@ -3484,7 +3484,11 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 					orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') desc ";
 			}
 			else
-				orderBy = "order by ijo.mediaItemKey desc ";
+			{
+				// vedi commento aggiunto con label 2024-01-05 in MMSEngineDBFacade_IngestionJobs_Postgres.cpp
+				// orderBy = "order by ijo.mediaItemKey desc ";
+				orderBy = "order by ijo.position asc ";
+			}
 
 			string sqlStatement = fmt::format(
 				"select ijo.mediaItemKey, ijo.physicalPathKey "
