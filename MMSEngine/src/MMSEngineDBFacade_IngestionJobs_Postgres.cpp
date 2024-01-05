@@ -4771,7 +4771,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 		if(ingestionJobOutputs)
         {
             string sqlStatement = fmt::format( 
-                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput "
+                "select mediaItemKey, physicalPathKey, position from MMS_IngestionJobOutput "
 				"where ingestionJobKey = {} order by position",
 				ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -4787,6 +4787,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 field = "physicalPathKey";
                 int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
                 mediaItemRoot[field] = physicalPathKey;
+
+                field = "position";
+                mediaItemRoot[field] = row["position"].as<int>();
 
                 mediaItemsRoot.append(mediaItemRoot);
             }
