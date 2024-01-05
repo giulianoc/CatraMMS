@@ -3405,8 +3405,6 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 					sqlStatement, conn->getConnectionId(),
 					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
-				bool userAPIKeyInfo = true;
-				bool costDetails = false;
 				if (!empty(res))
 				{
 					auto row = res[0];
