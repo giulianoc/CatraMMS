@@ -3479,9 +3479,9 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				string segmenterType = "hlsSegmenter";
 				// string segmenterType = "streamSegmenter";
 				if (segmenterType == "hlsSegmenter")
-					orderBy = "order by mi.utcStartTimeInMilliSecs_virtual desc ";
+					orderBy = "order by mi.utcStartTimeInMilliSecs_virtual asc ";
 				else
-					orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') desc ";
+					orderBy = "order by JSON_EXTRACT(mi.userData, '$.mmsData.utcChunkStartTime') asc ";
 			}
 			else
 			{
@@ -3551,7 +3551,9 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 
 				tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType 
 					= make_tuple(mediaItemKey, physicalPathKey, contentType);
-				mediaItemsDetails.insert(mediaItemsDetails.begin(),
+				// 2024-01-05: sostituito mediaItemsDetails.begin() con mediaItemsDetails.end() per rispottare
+				//	l'ordine del campo position di ingestionJobOutput
+				mediaItemsDetails.insert(mediaItemsDetails.end(),
 					mediaItemKeyPhysicalPathKeyAndContentType);
             }
 			SPDLOG_INFO("SQL statement"
