@@ -19943,11 +19943,26 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				double relativeTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, timeCode);
 
-				startTimeInSeconds -= relativeTimeInSeconds;
-				startTime = FFMpeg::secondsToTime(ingestionJobKey, startTimeInSeconds);
+				double newStartTimeInSeconds = startTimeInSeconds - relativeTimeInSeconds;
+				string newStartTime = FFMpeg::secondsToTime(ingestionJobKey, newStartTimeInSeconds);
 
-				endTimeInSeconds -= relativeTimeInSeconds;
-				endTime = FFMpeg::secondsToTime(ingestionJobKey, endTimeInSeconds);
+				double newEndTimeInSeconds = endTimeInSeconds - relativeTimeInSeconds;
+				string newEndTime = FFMpeg::secondsToTime(ingestionJobKey, newEndTimeInSeconds);
+
+				SPDLOG_INFO("correction because of timesRelativeToMetaDataField"
+					", relativeTimeInSeconds: {}"
+					", startTime: {}"
+					", newStartTime: {}"
+					", endTime: {}"
+					", newEndTime: {}",
+					relativeTimeInSeconds, startTime, newStartTime, endTime, newEndTime
+				);
+
+				startTimeInSeconds = newStartTimeInSeconds;
+				startTime = newStartTime;
+
+				endTimeInSeconds = newEndTimeInSeconds;
+				endTime = newEndTime;
 			}
 
 			if (framesNumber == -1)
@@ -20285,6 +20300,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 		}
 		else
 		{
+			// FrameAccurateWithEncoding
+
 			MMSEngineDBFacade::EncodingPriority encodingPriority;
 			string field = "encodingPriority";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
