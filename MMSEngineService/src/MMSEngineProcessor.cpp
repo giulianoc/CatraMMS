@@ -19940,6 +19940,21 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					throw runtime_error(errorMessage);
 				}
+				if (count_if(timeCode.begin(), timeCode.end(), []( char c ){return c == ':';}) == 3)
+				{
+					int framesIndex = timeCode.find_last_of(":");
+					double frames = stoi(timeCode.substr(framesIndex + 1));
+
+					// se ad esempio sono 4 frames su 25 frames al secondo
+					//	la parte decimale del secondo richiesta dal formato ffmpeg sarà 16,
+					//	cioè: (4/25)*100
+
+					int decimals = (frames / ((double) framesPerSecond)) * 100;
+					string newTimeCode = timeCode.substr(0, framesIndex) + "." + to_string(decimals);
+					SPDLOG_INFO("conversion from HH:MM:SS:FF ({}) to ffmeg format: {}",
+						timeCode, newTimeCode);
+					timeCode = newTimeCode;
+				}
 
 				long startTimeInCentsOfSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime).second;
 				long endTimeInCentsOfSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime).second;
