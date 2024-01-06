@@ -19873,8 +19873,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					int decimals = (frames / ((double) framesPerSecond)) * 100;
 					string newStartTime = startTime.substr(0, framesIndex) + "." + to_string(decimals);
-					SPDLOG_INFO("conversion from HH:MM:SS:FF ({}) to ffmeg format: {}",
-						startTime, newStartTime);
+					SPDLOG_INFO("conversion from HH:MM:SS:FF to ffmeg format"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", startTime: {}"
+						", newStartTime: {}",
+						_processorIdentifier, ingestionJobKey, startTime, newStartTime);
 					startTime = newStartTime;
 				}
 				if (count_if(endTime.begin(), endTime.end(), []( char c ){return c == ':';}) == 3)
@@ -19888,8 +19892,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					int decimals = (frames / ((double) framesPerSecond)) * 100;
 					string newEndTime = endTime.substr(0, framesIndex) + "." + to_string(decimals);
-					SPDLOG_INFO("conversion from HH:MM:SS:FF ({}) to ffmeg format: {}",
-						endTime, newEndTime);
+					SPDLOG_INFO("conversion from HH:MM:SS:FF to ffmeg format"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", endTime: {}"
+						", newEndTime: {}",
+						_processorIdentifier, ingestionJobKey, endTime, newEndTime);
 					endTime = newEndTime;
 				}
 			}
@@ -19951,8 +19959,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					int decimals = (frames / ((double) framesPerSecond)) * 100;
 					string newTimeCode = timeCode.substr(0, framesIndex) + "." + to_string(decimals);
-					SPDLOG_INFO("conversion from HH:MM:SS:FF ({}) to ffmeg format: {}",
-						timeCode, newTimeCode);
+					SPDLOG_INFO("conversion from HH:MM:SS:FF to ffmeg format"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", timeCode: {}"
+						", newTimeCode: {}",
+						_processorIdentifier, ingestionJobKey, timeCode, newTimeCode);
 					timeCode = newTimeCode;
 				}
 
@@ -19967,6 +19979,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 				string newEndTime = FFMpeg::centsOfSecondsToTime(ingestionJobKey, newEndTimeInCentsOfSeconds);
 
 				SPDLOG_INFO("correction because of timesRelativeToMetaDataField"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
 					", timeCode: {}"
 					", relativeTimeInCentsOfSeconds: {}"
 					", startTimeInCentsOfSeconds: {}"
@@ -19975,7 +19989,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 					", endTimeInCentsOfSeconds: {}"
 					", endTime: {}"
 					", newEndTime: {}",
-					timeCode, relativeTimeInCentsOfSeconds, startTimeInCentsOfSeconds, startTime,
+					_processorIdentifier, ingestionJobKey, timeCode, relativeTimeInCentsOfSeconds,
+					startTimeInCentsOfSeconds, startTime,
 					newStartTime, endTimeInCentsOfSeconds, endTime, newEndTime
 				);
 
