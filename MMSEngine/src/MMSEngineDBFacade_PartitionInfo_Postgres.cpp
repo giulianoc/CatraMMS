@@ -405,8 +405,18 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 		}
 
 		uint64_t newCurrentFreeSizeInBytes = currentFreeSizeInBytes + fsEntrySizeInBytes;
-		// SPDLOG_INFO("TEST currentFreeSizeInBytes: {}, fsEntrySizeInBytes: {}, newCurrentFreeSizeInBytes: {}",
-		// 	currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
+		// 2024-01-06: sembra che la somma ritorni un valore inferiore a currentFreeSizeInBytes
+		SPDLOG_INFO("updatePartitionBecauseOfDeletion"
+			", currentFreeSizeInBytes: {}"
+			", fsEntrySizeInBytes: {}"
+			", newCurrentFreeSizeInBytes: {}",
+			currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
+		if (newCurrentFreeSizeInBytes < currentFreeSizeInBytes)
+		{
+			SPDLOG_WARN("stranoooo, vedi messaggio precedente");
+
+			newCurrentFreeSizeInBytes = currentFreeSizeInBytes;
+		}
 
 		{
 			string sqlStatement = fmt::format(
