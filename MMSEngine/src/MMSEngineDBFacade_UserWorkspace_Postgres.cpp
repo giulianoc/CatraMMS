@@ -1686,11 +1686,11 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 
 			string sqlStatement = fmt::format( 
 				"insert into MMS_Workspace ("
-				"creationDate, name, directoryName, workspaceType, "
+				"creationDate,              name, directoryName, workspaceType, "
 				"deliveryURL, enabled, maxEncodingPriority, encodingPeriod, "
 				"maxIngestionsNumber, languageCode) values ("
-				"NOW() at time zone 'utc',         {},    {},             {}, "
-				"{},           {},         {},                   {}, "
+				"NOW() at time zone 'utc',  {},   {},            {}, "
+				"{},          {},     {},                   {}, "
 				"{},                  {}) returning workspaceKey",
 				trans.quote(workspaceName), trans.quote(workspaceDirectoryName),
 				static_cast<int>(workspaceType),

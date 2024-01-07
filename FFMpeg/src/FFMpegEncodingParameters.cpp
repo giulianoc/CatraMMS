@@ -1860,14 +1860,15 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 						if (videoHeight == -1 && codec == "libx264")
 							videoHeight   = -2;     // h264 requires always a even width/height
 
+						// forceOriginalAspectRatio could be: decrease or increase
 						string forceOriginalAspectRatio;
-						field = "ForceOriginalAspectRatio";
+						field = "forceOriginalAspectRatio";
 						forceOriginalAspectRatio = JSONUtils::asString(bitRateInfo, field, "");
 
 						bool pad = false;
 						if (forceOriginalAspectRatio != "")
 						{
-							field = "Pad";
+							field = "pad";
 							pad = JSONUtils::asBool(bitRateInfo, field, false);
 						}
 

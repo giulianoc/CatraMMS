@@ -405,7 +405,10 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 		}
 
 		uint64_t newCurrentFreeSizeInBytes = currentFreeSizeInBytes + fsEntrySizeInBytes;
-		// 2024-01-06: sembra che la somma ritorni un valore inferiore a currentFreeSizeInBytes
+		// 2024-01-06: sembra che newCurrentFreeSizeInBytes ad un certo punto contiene un valore basso
+		//	Questo valore viene salvato nel DB e, essendo basso, la prossima ingestion in MMS che viene fatta,
+		//	indica che non abbiamo spazio nella partizione.
+		//	Per cercare di capire di piu, ho aggiunto di seguito un log ed un controllo!!!
 		SPDLOG_INFO("updatePartitionBecauseOfDeletion"
 			", currentFreeSizeInBytes: {}"
 			", fsEntrySizeInBytes: {}"
