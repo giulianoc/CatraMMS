@@ -79,6 +79,7 @@ int main (int iArgc, char *pArgv [])
 				userName,
 				userEmailAddress,
 				userCountry,
+				"",
 				createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 				shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,

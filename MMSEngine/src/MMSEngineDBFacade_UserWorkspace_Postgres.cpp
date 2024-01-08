@@ -340,6 +340,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
     string userEmailAddress,
     string userPassword,
     string userCountry,
+    string userTimezone,
     string workspaceName,
     WorkspaceType workspaceType,
     string deliveryURL,
@@ -378,6 +379,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			throw runtime_error(errorMessage);
 		}
 
+		if (!isTimezoneValid(userTimezone))
+			userTimezone = "CET";
+
         {
 			// This method is called only in case of MMS user (no ldapEnabled)
 			char        strExpirationUtcDate [64];
@@ -396,12 +400,12 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                         tmDateTime. tm_sec);
             }
             string sqlStatement = fmt::format(
-                "insert into MMS_User (name, eMailAddress, password, country, "
+                "insert into MMS_User (name, eMailAddress, password, country, timezone, "
 				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
-                "{}, {}, {}, {}, NOW() at time zone 'utc', false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
+                "{}, {}, {}, {}, {}, NOW() at time zone 'utc', false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"NULL) returning userKey",
 				trans.quote(trimUserName), trans.quote(userEmailAddress),
-				trans.quote(userPassword), trans.quote(userCountry),
+				trans.quote(userPassword), trans.quote(userCountry), trans.quote(userTimezone),
 				trans.quote(strExpirationUtcDate));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			userKey = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -570,6 +574,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
     string userEmailAddress,
     string userPassword,
     string userCountry,
+    string userTimezone,
     string shareWorkspaceCode,
     chrono::system_clock::time_point userExpirationLocalDate
 )
@@ -601,6 +606,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
 			throw runtime_error(errorMessage);
 		}
 
+		if (!isTimezoneValid(userTimezone))
+			userTimezone = "CET";
+
         {
 			// This method is called only in case of MMS user (no ldapEnabled)
 			char        strExpirationUtcDate [64];
@@ -619,12 +627,12 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
                         tmDateTime. tm_sec);
             }
             string sqlStatement = fmt::format( 
-                "insert into MMS_User (name, eMailAddress, password, country, "
+                "insert into MMS_User (name, eMailAddress, password, country, timezone, "
 				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
-                "{}, {}, {}, {}, NOW() at time zone 'utc', "
+                "{}, {}, {}, {}, {}, NOW() at time zone 'utc', "
 				"false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), NULL) returning userKey",
 				trans.quote(trimUserName), trans.quote(userEmailAddress),
-				trans.quote(userPassword), trans.quote(userCountry),
+				trans.quote(userPassword), trans.quote(userCountry), trans.quote(userTimezone),
 				trans.quote(strExpirationUtcDate));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			userKey = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -1196,6 +1204,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
     string userName,
     string userEmailAddress,
     string userCountry,
+    string userTimezone,
     bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia,
 	bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
@@ -1222,6 +1231,9 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
         {
 			string userPassword = "";
 
+			if (!isTimezoneValid(userTimezone))
+				userTimezone = "CET";
+
 			char        strExpirationUtcDate [64];
             {
                 tm          tmDateTime;
@@ -1238,12 +1250,12 @@ pair<int64_t,string> MMSEngineDBFacade::registerActiveDirectoryUser(
                         tmDateTime. tm_sec);
             }
             string sqlStatement = fmt::format( 
-                "insert into MMS_User (name, eMailAddress, password, country, "
+                "insert into MMS_User (name, eMailAddress, password, country, timezone, "
 				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
-                "{}, {}, {}, {}, NOW() at time zone 'utc', false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
+                "{}, {}, {}, {}, {}, NOW() at time zone 'utc', false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"NULL) returning userKey",
 				trans.quote(userName), trans.quote(userEmailAddress),
-				trans.quote(userPassword), trans.quote(userCountry),
+				trans.quote(userPassword), trans.quote(userCountry), trans.quote(userTimezone),
 				trans.quote(strExpirationUtcDate));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			userKey = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -2757,7 +2769,7 @@ Json::Value MMSEngineDBFacade::login (
 		{
 			{
 				string sqlStatement = fmt::format( 
-					"select userKey, name, country, insolvent, "
+					"select userKey, name, country, timezone, insolvent, "
 					"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 					"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate "
 					"from MMS_User where eMailAddress = {} and password = {} "
@@ -2787,6 +2799,9 @@ Json::Value MMSEngineDBFacade::login (
 
 					field = "country";
 					loginDetailsRoot[field] = res[0]["country"].as<string>();
+
+					field = "timezone";
+					loginDetailsRoot[field] = res[0]["timezone"].as<string>();
 
 					field = "creationDate";
 					loginDetailsRoot[field] = res[0]["creationDate"].as<string>();
@@ -5030,6 +5045,7 @@ Json::Value MMSEngineDBFacade::updateUser (
         bool nameChanged, string name,
         bool emailChanged, string email, 
         bool countryChanged, string country,
+        bool timezoneChanged, string timezone,
         bool insolventChanged, bool insolvent,
         bool expirationDateChanged, string expirationUtcDate,
 		bool passwordChanged, string newPassword, string oldPassword)
@@ -5123,6 +5139,17 @@ Json::Value MMSEngineDBFacade::updateUser (
 				oneParameterPresent = true;
 			}
 
+			if (timezoneChanged)
+			{
+				if (!isTimezoneValid(timezone))
+					timezone = "CET";
+
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("timezone = {}", trans.quote(timezone));
+				oneParameterPresent = true;
+			}
+
 			if (admin && insolventChanged)
 			{
 				if (oneParameterPresent)
@@ -5174,7 +5201,7 @@ Json::Value MMSEngineDBFacade::updateUser (
                 "select "
 				"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 				"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
-				"userKey, name, eMailAddress, country, insolvent "
+				"userKey, name, eMailAddress, country, timezone, insolvent "
                 "from MMS_User where userKey = {}",
 				userKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -5205,6 +5232,9 @@ Json::Value MMSEngineDBFacade::updateUser (
 
 				field = "country";
 				loginDetailsRoot[field] = res[0]["country"].as<string>();
+                
+				field = "timezone";
+				loginDetailsRoot[field] = res[0]["timezone"].as<string>();
                 
 				field = "insolvent";
 				loginDetailsRoot[field] = res[0]["insolvent"].as<bool>();
@@ -5759,5 +5789,1255 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 	}
 
 	return loginStatisticKey;
+}
+
+bool MMSEngineDBFacade::isTimezoneValid(string timezone)
+{
+    set<string> timezones = {
+		// (GMT-12:00)
+		"Etc/GMT+12",
+		// (GMT-11:00)
+		"Etc/GMT+11",
+		// (GMT-11:00)
+		"Pacific/Midway",
+		// (GMT-11:00)
+		"Pacific/Niue",
+		// (GMT-11:00)
+		"Pacific/Pago_Pago",
+		// (GMT-11:00)
+		"Pacific/Samoa",
+		// (GMT-11:00)
+		"US/Samoa",
+		// (GMT-10:00)
+		"America/Adak",
+		// (GMT-10:00)
+		"America/Atka",
+		// (GMT-10:00)
+		"Etc/GMT+10",
+		// (GMT-10:00)
+		"HST",
+		// (GMT-10:00)
+		"Pacific/Honolulu",
+		// (GMT-10:00)
+		"Pacific/Johnston",
+		// (GMT-10:00)
+		"Pacific/Rarotonga",
+		// (GMT-10:00)
+		"Pacific/Tahiti",
+		// (GMT-10:00)
+		"SystemV/HST10",
+		// (GMT-10:00)
+		"US/Aleutian",
+		// (GMT-10:00)
+		"US/Hawaii",
+		// (GMT-9:30)
+		"Pacific/Marquesas",
+		// (GMT-9:00)
+		"AST",
+		// (GMT-9:00)
+		"America/Anchorage",
+		// (GMT-9:00)
+		"America/Juneau",
+		// (GMT-9:00)
+		"America/Nome",
+		// (GMT-9:00)
+		"America/Sitka",
+		// (GMT-9:00)
+		"America/Yakutat",
+		// (GMT-9:00)
+		"Etc/GMT+9",
+		// (GMT-9:00)
+		"Pacific/Gambier",
+		// (GMT-9:00)
+		"SystemV/YST9",
+		// (GMT-9:00)
+		"SystemV/YST9YDT",
+		// (GMT-9:00)
+		"US/Alaska",
+		// (GMT-8:00)
+		"America/Dawson",
+		// (GMT-8:00)
+		"America/Ensenada",
+		// (GMT-8:00)
+		"America/Los_Angeles",
+		// (GMT-8:00)
+		"America/Metlakatla",
+		// (GMT-8:00)
+		"America/Santa_Isabel",
+		// (GMT-8:00)
+		"America/Tijuana",
+		// (GMT-8:00)
+		"America/Vancouver",
+		// (GMT-8:00)
+		"America/Whitehorse",
+		// (GMT-8:00)
+		"Canada/Pacific",
+		// (GMT-8:00)
+		"Canada/Yukon",
+		// (GMT-8:00)
+		"Etc/GMT+8",
+		// (GMT-8:00)
+		"Mexico/BajaNorte",
+		// (GMT-8:00)
+		"PST",
+		// (GMT-8:00)
+		"PST8PDT",
+		// (GMT-8:00)
+		"Pacific/Pitcairn",
+		// (GMT-8:00)
+		"SystemV/PST8",
+		// (GMT-8:00)
+		"SystemV/PST8PDT",
+		// (GMT-8:00)
+		"US/Pacific",
+		// (GMT-8:00)
+		"US/Pacific-New",
+		// (GMT-7:00)
+		"America/Boise",
+		// (GMT-7:00)
+		"America/Cambridge_Bay",
+		// (GMT-7:00)
+		"America/Chihuahua",
+		// (GMT-7:00)
+		"America/Creston",
+		// (GMT-7:00)
+		"America/Dawson_Creek",
+		// (GMT-7:00)
+		"America/Denver",
+		// (GMT-7:00)
+		"America/Edmonton",
+		// (GMT-7:00)
+		"America/Hermosillo",
+		// (GMT-7:00)
+		"America/Inuvik",
+		// (GMT-7:00)
+		"America/Mazatlan",
+		// (GMT-7:00)
+		"America/Ojinaga",
+		// (GMT-7:00)
+		"America/Phoenix",
+		// (GMT-7:00)
+		"America/Shiprock",
+		// (GMT-7:00)
+		"America/Yellowknife",
+		// (GMT-7:00)
+		"Canada/Mountain",
+		// (GMT-7:00)
+		"Etc/GMT+7",
+		// (GMT-7:00)
+		"MST",
+		// (GMT-7:00)
+		"MST7MDT",
+		// (GMT-7:00)
+		"Mexico/BajaSur",
+		// (GMT-7:00)
+		"Navajo",
+		// (GMT-7:00)
+		"PNT",
+		// (GMT-7:00)
+		"SystemV/MST7",
+		// (GMT-7:00)
+		"SystemV/MST7MDT",
+		// (GMT-7:00)
+		"US/Arizona",
+		// (GMT-7:00)
+		"US/Mountain",
+		// (GMT-6:00)
+		"America/Bahia_Banderas",
+		// (GMT-6:00)
+		"America/Belize",
+		// (GMT-6:00)
+		"America/Cancun",
+		// (GMT-6:00)
+		"America/Chicago",
+		// (GMT-6:00)
+		"America/Costa_Rica",
+		// (GMT-6:00)
+		"America/El_Salvador",
+		// (GMT-6:00)
+		"America/Guatemala",
+		// (GMT-6:00)
+		"America/Indiana/Knox",
+		// (GMT-6:00)
+		"America/Indiana/Tell_City",
+		// (GMT-6:00)
+		"America/Knox_IN",
+		// (GMT-6:00)
+		"America/Managua",
+		// (GMT-6:00)
+		"America/Matamoros",
+		// (GMT-6:00)
+		"America/Menominee",
+		// (GMT-6:00)
+		"America/Merida",
+		// (GMT-6:00)
+		"America/Mexico_City",
+		// (GMT-6:00)
+		"America/Monterrey",
+		// (GMT-6:00)
+		"America/North_Dakota/Beulah",
+		// (GMT-6:00)
+		"America/North_Dakota/Center",
+		// (GMT-6:00)
+		"America/North_Dakota/New_Salem",
+		// (GMT-6:00)
+		"America/Rainy_River",
+		// (GMT-6:00)
+		"America/Rankin_Inlet",
+		// (GMT-6:00)
+		"America/Regina",
+		// (GMT-6:00)
+		"America/Resolute",
+		// (GMT-6:00)
+		"America/Swift_Current",
+		// (GMT-6:00)
+		"America/Tegucigalpa",
+		// (GMT-6:00)
+		"America/Winnipeg",
+		// (GMT-6:00)
+		"CST",
+		// (GMT-6:00)
+		"CST6CDT",
+		// (GMT-6:00)
+		"Canada/Central",
+		// (GMT-6:00)
+		"Canada/East-Saskatchewan",
+		// (GMT-6:00)
+		"Canada/Saskatchewan",
+		// (GMT-6:00)
+		"Chile/EasterIsland",
+		// (GMT-6:00)
+		"Etc/GMT+6",
+		// (GMT-6:00)
+		"Mexico/General",
+		// (GMT-6:00)
+		"Pacific/Easter",
+		// (GMT-6:00)
+		"Pacific/Galapagos",
+		// (GMT-6:00)
+		"SystemV/CST6",
+		// (GMT-6:00)
+		"SystemV/CST6CDT",
+		// (GMT-6:00)
+		"US/Central",
+		// (GMT-6:00)
+		"US/Indiana-Starke",
+		// (GMT-5:00)
+		"America/Atikokan",
+		// (GMT-5:00)
+		"America/Bogota",
+		// (GMT-5:00)
+		"America/Cayman",
+		// (GMT-5:00)
+		"America/Coral_Harbour",
+		// (GMT-5:00)
+		"America/Detroit",
+		// (GMT-5:00)
+		"America/Eirunepe",
+		// (GMT-5:00)
+		"America/Fort_Wayne",
+		// (GMT-5:00)
+		"America/Grand_Turk",
+		// (GMT-5:00)
+		"America/Guayaquil",
+		// (GMT-5:00)
+		"America/Havana",
+		// (GMT-5:00)
+		"America/Indiana/Indianapolis",
+		// (GMT-5:00)
+		"America/Indiana/Marengo",
+		// (GMT-5:00)
+		"America/Indiana/Petersburg",
+		// (GMT-5:00)
+		"America/Indiana/Vevay",
+		// (GMT-5:00)
+		"America/Indiana/Vincennes",
+		// (GMT-5:00)
+		"America/Indiana/Winamac",
+		// (GMT-5:00)
+		"America/Indianapolis",
+		// (GMT-5:00)
+		"America/Iqaluit",
+		// (GMT-5:00)
+		"America/Jamaica",
+		// (GMT-5:00)
+		"America/Kentucky/Louisville",
+		// (GMT-5:00)
+		"America/Kentucky/Monticello",
+		// (GMT-5:00)
+		"America/Lima",
+		// (GMT-5:00)
+		"America/Louisville",
+		// (GMT-5:00)
+		"America/Montreal",
+		// (GMT-5:00)
+		"America/Nassau",
+		// (GMT-5:00)
+		"America/New_York",
+		// (GMT-5:00)
+		"America/Nipigon",
+		// (GMT-5:00)
+		"America/Panama",
+		// (GMT-5:00)
+		"America/Pangnirtung",
+		// (GMT-5:00)
+		"America/Port-au-Prince",
+		// (GMT-5:00)
+		"America/Porto_Acre",
+		// (GMT-5:00)
+		"America/Rio_Branco",
+		// (GMT-5:00)
+		"America/Thunder_Bay",
+		// (GMT-5:00)
+		"America/Toronto",
+		// (GMT-5:00)
+		"Brazil/Acre",
+		// (GMT-5:00)
+		"Canada/Eastern",
+		// (GMT-5:00)
+		"Cuba",
+		// (GMT-5:00)
+		"EST",
+		// (GMT-5:00)
+		"EST5EDT",
+		// (GMT-5:00)
+		"Etc/GMT+5",
+		// (GMT-5:00)
+		"IET",
+		// (GMT-5:00)
+		"Jamaica",
+		// (GMT-5:00)
+		"SystemV/EST5",
+		// (GMT-5:00)
+		"SystemV/EST5EDT",
+		// (GMT-5:00)
+		"US/East-Indiana",
+		// (GMT-5:00)
+		"US/Eastern",
+		// (GMT-5:00)
+		"US/Michigan",
+		// (GMT-4:30)
+		"America/Caracas",
+		// (GMT-4:00)
+		"America/Anguilla",
+		// (GMT-4:00)
+		"America/Antigua",
+		// (GMT-4:00)
+		"America/Aruba",
+		// (GMT-4:00)
+		"America/Asuncion",
+		// (GMT-4:00)
+		"America/Barbados",
+		// (GMT-4:00)
+		"America/Blanc-Sablon",
+		// (GMT-4:00)
+		"America/Boa_Vista",
+		// (GMT-4:00)
+		"America/Campo_Grande",
+		// (GMT-4:00)
+		"America/Cuiaba",
+		// (GMT-4:00)
+		"America/Curacao",
+		// (GMT-4:00)
+		"America/Dominica",
+		// (GMT-4:00)
+		"America/Glace_Bay",
+		// (GMT-4:00)
+		"America/Goose_Bay",
+		// (GMT-4:00)
+		"America/Grenada",
+		// (GMT-4:00)
+		"America/Guadeloupe",
+		// (GMT-4:00)
+		"America/Guyana",
+		// (GMT-4:00)
+		"America/Halifax",
+		// (GMT-4:00)
+		"America/Kralendijk",
+		// (GMT-4:00)
+		"America/La_Paz",
+		// (GMT-4:00)
+		"America/Lower_Princes",
+		// (GMT-4:00)
+		"America/Manaus",
+		// (GMT-4:00)
+		"America/Marigot",
+		// (GMT-4:00)
+		"America/Martinique",
+		// (GMT-4:00)
+		"America/Moncton",
+		// (GMT-4:00)
+		"America/Montserrat",
+		// (GMT-4:00)
+		"America/Port_of_Spain",
+		// (GMT-4:00)
+		"America/Porto_Velho",
+		// (GMT-4:00)
+		"America/Puerto_Rico",
+		// (GMT-4:00)
+		"America/Santiago",
+		// (GMT-4:00)
+		"America/Santo_Domingo",
+		// (GMT-4:00)
+		"America/St_Barthelemy",
+		// (GMT-4:00)
+		"America/St_Kitts",
+		// (GMT-4:00)
+		"America/St_Lucia",
+		// (GMT-4:00)
+		"America/St_Thomas",
+		// (GMT-4:00)
+		"America/St_Vincent",
+		// (GMT-4:00)
+		"America/Thule",
+		// (GMT-4:00)
+		"America/Tortola",
+		// (GMT-4:00)
+		"America/Virgin",
+		// (GMT-4:00)
+		"Antarctica/Palmer",
+		// (GMT-4:00)
+		"Atlantic/Bermuda",
+		// (GMT-4:00)
+		"Brazil/West",
+		// (GMT-4:00)
+		"Canada/Atlantic",
+		// (GMT-4:00)
+		"Chile/Continental",
+		// (GMT-4:00)
+		"Etc/GMT+4",
+		// (GMT-4:00)
+		"PRT",
+		// (GMT-4:00)
+		"SystemV/AST4",
+		// (GMT-4:00)
+		"SystemV/AST4ADT",
+		// (GMT-3:30)
+		"America/St_Johns",
+		// (GMT-3:30)
+		"CNT",
+		// (GMT-3:30)
+		"Canada/Newfoundland",
+		// (GMT-3:00)
+		"AGT",
+		// (GMT-3:00)
+		"America/Araguaina",
+		// (GMT-3:00)
+		"America/Argentina/Buenos_Aires",
+		// (GMT-3:00)
+		"America/Argentina/Catamarca",
+		// (GMT-3:00)
+		"America/Argentina/ComodRivadavia",
+		// (GMT-3:00)
+		"America/Argentina/Cordoba",
+		// (GMT-3:00)
+		"America/Argentina/Jujuy",
+		// (GMT-3:00)
+		"America/Argentina/La_Rioja",
+		// (GMT-3:00)
+		"America/Argentina/Mendoza",
+		// (GMT-3:00)
+		"America/Argentina/Rio_Gallegos",
+		// (GMT-3:00)
+		"America/Argentina/Salta",
+		// (GMT-3:00)
+		"America/Argentina/San_Juan",
+		// (GMT-3:00)
+		"America/Argentina/San_Luis",
+		// (GMT-3:00)
+		"America/Argentina/Tucuman",
+		// (GMT-3:00)
+		"America/Argentina/Ushuaia",
+		// (GMT-3:00)
+		"America/Bahia",
+		// (GMT-3:00)
+		"America/Belem",
+		// (GMT-3:00)
+		"America/Buenos_Aires",
+		// (GMT-3:00)
+		"America/Catamarca",
+		// (GMT-3:00)
+		"America/Cayenne",
+		// (GMT-3:00)
+		"America/Cordoba",
+		// (GMT-3:00)
+		"America/Fortaleza",
+		// (GMT-3:00)
+		"America/Godthab",
+		// (GMT-3:00)
+		"America/Jujuy",
+		// (GMT-3:00)
+		"America/Maceio",
+		// (GMT-3:00)
+		"America/Mendoza",
+		// (GMT-3:00)
+		"America/Miquelon",
+		// (GMT-3:00)
+		"America/Montevideo",
+		// (GMT-3:00)
+		"America/Paramaribo",
+		// (GMT-3:00)
+		"America/Recife",
+		// (GMT-3:00)
+		"America/Rosario",
+		// (GMT-3:00)
+		"America/Santarem",
+		// (GMT-3:00)
+		"America/Sao_Paulo",
+		// (GMT-3:00)
+		"Antarctica/Rothera",
+		// (GMT-3:00)
+		"Atlantic/Stanley",
+		// (GMT-3:00)
+		"BET",
+		// (GMT-3:00)
+		"Brazil/East",
+		// (GMT-3:00)
+		"Etc/GMT+3",
+		// (GMT-2:00)
+		"America/Noronha",
+		// (GMT-2:00)
+		"Atlantic/South_Georgia",
+		// (GMT-2:00)
+		"Brazil/DeNoronha",
+		// (GMT-2:00)
+		"Etc/GMT+2",
+		// (GMT-1:00)
+		"America/Scoresbysund",
+		// (GMT-1:00)
+		"Atlantic/Azores",
+		// (GMT-1:00)
+		"Atlantic/Cape_Verde",
+		// (GMT-1:00)
+		"Etc/GMT+1",
+		// (GMT0:00)
+		"Africa/Abidjan",
+		// (GMT0:00)
+		"Africa/Accra",
+		// (GMT0:00)
+		"Africa/Bamako",
+		// (GMT0:00)
+		"Africa/Banjul",
+		// (GMT0:00)
+		"Africa/Bissau",
+		// (GMT0:00)
+		"Africa/Casablanca",
+		// (GMT0:00)
+		"Africa/Conakry",
+		// (GMT0:00)
+		"Africa/Dakar",
+		// (GMT0:00)
+		"Africa/El_Aaiun",
+		// (GMT0:00)
+		"Africa/Freetown",
+		// (GMT0:00)
+		"Africa/Lome",
+		// (GMT0:00)
+		"Africa/Monrovia",
+		// (GMT0:00)
+		"Africa/Nouakchott",
+		// (GMT0:00)
+		"Africa/Ouagadougou",
+		// (GMT0:00)
+		"Africa/Sao_Tome",
+		// (GMT0:00)
+		"Africa/Timbuktu",
+		// (GMT0:00)
+		"America/Danmarkshavn",
+		// (GMT0:00)
+		"Antarctica/Troll",
+		// (GMT0:00)
+		"Atlantic/Canary",
+		// (GMT0:00)
+		"Atlantic/Faeroe",
+		// (GMT0:00)
+		"Atlantic/Faroe",
+		// (GMT0:00)
+		"Atlantic/Madeira",
+		// (GMT0:00)
+		"Atlantic/Reykjavik",
+		// (GMT0:00)
+		"Atlantic/St_Helena",
+		// (GMT0:00)
+		"Eire",
+		// (GMT0:00)
+		"Etc/GMT",
+		// (GMT0:00)
+		"Etc/GMT+0",
+		// (GMT0:00)
+		"Etc/GMT-0",
+		// (GMT0:00)
+		"Etc/GMT0",
+		// (GMT0:00)
+		"Etc/Greenwich",
+		// (GMT0:00)
+		"Etc/UCT",
+		// (GMT0:00)
+		"Etc/UTC",
+		// (GMT0:00)
+		"Etc/Universal",
+		// (GMT0:00)
+		"Etc/Zulu",
+		// (GMT0:00)
+		"Europe/Belfast",
+		// (GMT0:00)
+		"Europe/Dublin",
+		// (GMT0:00)
+		"Europe/Guernsey",
+		// (GMT0:00)
+		"Europe/Isle_of_Man",
+		// (GMT0:00)
+		"Europe/Jersey",
+		// (GMT0:00)
+		"Europe/Lisbon",
+		// (GMT0:00)
+		"Europe/London",
+		// (GMT0:00)
+		"GB",
+		// (GMT0:00)
+		"GB-Eire",
+		// (GMT0:00)
+		"GMT",
+		// (GMT0:00)
+		"GMT0",
+		// (GMT0:00)
+		"Greenwich",
+		// (GMT0:00)
+		"Iceland",
+		// (GMT0:00)
+		"Portugal",
+		// (GMT0:00)
+		"UCT",
+		// (GMT0:00)
+		"UTC",
+		// (GMT0:00)
+		"Universal",
+		// (GMT0:00)
+		"WET",
+		// (GMT0:00)
+		"Zulu",
+		// (GMT+1:00)
+		"Africa/Algiers",
+		// (GMT+1:00)
+		"Africa/Bangui",
+		// (GMT+1:00)
+		"Africa/Brazzaville",
+		// (GMT+1:00)
+		"Africa/Ceuta",
+		// (GMT+1:00)
+		"Africa/Douala",
+		// (GMT+1:00)
+		"Africa/Kinshasa",
+		// (GMT+1:00)
+		"Africa/Lagos",
+		// (GMT+1:00)
+		"Africa/Libreville",
+		// (GMT+1:00)
+		"Africa/Luanda",
+		// (GMT+1:00)
+		"Africa/Malabo",
+		// (GMT+1:00)
+		"Africa/Ndjamena",
+		// (GMT+1:00)
+		"Africa/Niamey",
+		// (GMT+1:00)
+		"Africa/Porto-Novo",
+		// (GMT+1:00)
+		"Africa/Tunis",
+		// (GMT+1:00)
+		"Africa/Windhoek",
+		// (GMT+1:00)
+		"Arctic/Longyearbyen",
+		// (GMT+1:00)
+		"Atlantic/Jan_Mayen",
+		// (GMT+1:00)
+		"CET",
+		// (GMT+1:00)
+		"ECT",
+		// (GMT+1:00)
+		"Etc/GMT-1",
+		// (GMT+1:00)
+		"Europe/Amsterdam",
+		// (GMT+1:00)
+		"Europe/Andorra",
+		// (GMT+1:00)
+		"Europe/Belgrade",
+		// (GMT+1:00)
+		"Europe/Berlin",
+		// (GMT+1:00)
+		"Europe/Bratislava",
+		// (GMT+1:00)
+		"Europe/Brussels",
+		// (GMT+1:00)
+		"Europe/Budapest",
+		// (GMT+1:00)
+		"Europe/Busingen",
+		// (GMT+1:00)
+		"Europe/Copenhagen",
+		// (GMT+1:00)
+		"Europe/Gibraltar",
+		// (GMT+1:00)
+		"Europe/Ljubljana",
+		// (GMT+1:00)
+		"Europe/Luxembourg",
+		// (GMT+1:00)
+		"Europe/Madrid",
+		// (GMT+1:00)
+		"Europe/Malta",
+		// (GMT+1:00)
+		"Europe/Monaco",
+		// (GMT+1:00)
+		"Europe/Oslo",
+		// (GMT+1:00)
+		"Europe/Paris",
+		// (GMT+1:00)
+		"Europe/Podgorica",
+		// (GMT+1:00)
+		"Europe/Prague",
+		// (GMT+1:00)
+		"Europe/Rome",
+		// (GMT+1:00)
+		"Europe/San_Marino",
+		// (GMT+1:00)
+		"Europe/Sarajevo",
+		// (GMT+1:00)
+		"Europe/Skopje",
+		// (GMT+1:00)
+		"Europe/Stockholm",
+		// (GMT+1:00)
+		"Europe/Tirane",
+		// (GMT+1:00)
+		"Europe/Vaduz",
+		// (GMT+1:00)
+		"Europe/Vatican",
+		// (GMT+1:00)
+		"Europe/Vienna",
+		// (GMT+1:00)
+		"Europe/Warsaw",
+		// (GMT+1:00)
+		"Europe/Zagreb",
+		// (GMT+1:00)
+		"Europe/Zurich",
+		// (GMT+1:00)
+		"MET",
+		// (GMT+1:00)
+		"Poland",
+		// (GMT+2:00)
+		"ART",
+		// (GMT+2:00)
+		"Africa/Blantyre",
+		// (GMT+2:00)
+		"Africa/Bujumbura",
+		// (GMT+2:00)
+		"Africa/Cairo",
+		// (GMT+2:00)
+		"Africa/Gaborone",
+		// (GMT+2:00)
+		"Africa/Harare",
+		// (GMT+2:00)
+		"Africa/Johannesburg",
+		// (GMT+2:00)
+		"Africa/Kigali",
+		// (GMT+2:00)
+		"Africa/Lubumbashi",
+		// (GMT+2:00)
+		"Africa/Lusaka",
+		// (GMT+2:00)
+		"Africa/Maputo",
+		// (GMT+2:00)
+		"Africa/Maseru",
+		// (GMT+2:00)
+		"Africa/Mbabane",
+		// (GMT+2:00)
+		"Africa/Tripoli",
+		// (GMT+2:00)
+		"Asia/Amman",
+		// (GMT+2:00)
+		"Asia/Beirut",
+		// (GMT+2:00)
+		"Asia/Damascus",
+		// (GMT+2:00)
+		"Asia/Gaza",
+		// (GMT+2:00)
+		"Asia/Hebron",
+		// (GMT+2:00)
+		"Asia/Istanbul",
+		// (GMT+2:00)
+		"Asia/Jerusalem",
+		// (GMT+2:00)
+		"Asia/Nicosia",
+		// (GMT+2:00)
+		"Asia/Tel_Aviv",
+		// (GMT+2:00)
+		"CAT",
+		// (GMT+2:00)
+		"EET",
+		// (GMT+2:00)
+		"Egypt",
+		// (GMT+2:00)
+		"Etc/GMT-2",
+		// (GMT+2:00)
+		"Europe/Athens",
+		// (GMT+2:00)
+		"Europe/Bucharest",
+		// (GMT+2:00)
+		"Europe/Chisinau",
+		// (GMT+2:00)
+		"Europe/Helsinki",
+		// (GMT+2:00)
+		"Europe/Istanbul",
+		// (GMT+2:00)
+		"Europe/Kiev",
+		// (GMT+2:00)
+		"Europe/Mariehamn",
+		// (GMT+2:00)
+		"Europe/Nicosia",
+		// (GMT+2:00)
+		"Europe/Riga",
+		// (GMT+2:00)
+		"Europe/Sofia",
+		// (GMT+2:00)
+		"Europe/Tallinn",
+		// (GMT+2:00)
+		"Europe/Tiraspol",
+		// (GMT+2:00)
+		"Europe/Uzhgorod",
+		// (GMT+2:00)
+		"Europe/Vilnius",
+		// (GMT+2:00)
+		"Europe/Zaporozhye",
+		// (GMT+2:00)
+		"Israel",
+		// (GMT+2:00)
+		"Libya",
+		// (GMT+2:00)
+		"Turkey",
+		// (GMT+3:00)
+		"Africa/Addis_Ababa",
+		// (GMT+3:00)
+		"Africa/Asmara",
+		// (GMT+3:00)
+		"Africa/Asmera",
+		// (GMT+3:00)
+		"Africa/Dar_es_Salaam",
+		// (GMT+3:00)
+		"Africa/Djibouti",
+		// (GMT+3:00)
+		"Africa/Juba",
+		// (GMT+3:00)
+		"Africa/Kampala",
+		// (GMT+3:00)
+		"Africa/Khartoum",
+		// (GMT+3:00)
+		"Africa/Mogadishu",
+		// (GMT+3:00)
+		"Africa/Nairobi",
+		// (GMT+3:00)
+		"Antarctica/Syowa",
+		// (GMT+3:00)
+		"Asia/Aden",
+		// (GMT+3:00)
+		"Asia/Baghdad",
+		// (GMT+3:00)
+		"Asia/Bahrain",
+		// (GMT+3:00)
+		"Asia/Kuwait",
+		// (GMT+3:00)
+		"Asia/Qatar",
+		// (GMT+3:00)
+		"Asia/Riyadh",
+		// (GMT+3:00)
+		"EAT",
+		// (GMT+3:00)
+		"Etc/GMT-3",
+		// (GMT+3:00)
+		"Europe/Kaliningrad",
+		// (GMT+3:00)
+		"Europe/Minsk",
+		// (GMT+3:00)
+		"Indian/Antananarivo",
+		// (GMT+3:00)
+		"Indian/Comoro",
+		// (GMT+3:00)
+		"Indian/Mayotte",
+		// (GMT+3:07)
+		"Asia/Riyadh87",
+		// (GMT+3:07)
+		"Asia/Riyadh88",
+		// (GMT+3:07)
+		"Asia/Riyadh89",
+		// (GMT+3:07)
+		"Mideast/Riyadh87",
+		// (GMT+3:07)
+		"Mideast/Riyadh88",
+		// (GMT+3:07)
+		"Mideast/Riyadh89",
+		// (GMT+3:30)
+		"Asia/Tehran",
+		// (GMT+3:30)
+		"Iran",
+		// (GMT+4:00)
+		"Asia/Baku",
+		// (GMT+4:00)
+		"Asia/Dubai",
+		// (GMT+4:00)
+		"Asia/Muscat",
+		// (GMT+4:00)
+		"Asia/Tbilisi",
+		// (GMT+4:00)
+		"Asia/Yerevan",
+		// (GMT+4:00)
+		"Etc/GMT-4",
+		// (GMT+4:00)
+		"Europe/Moscow",
+		// (GMT+4:00)
+		"Europe/Samara",
+		// (GMT+4:00)
+		"Europe/Simferopol",
+		// (GMT+4:00)
+		"Europe/Volgograd",
+		// (GMT+4:00)
+		"Indian/Mahe",
+		// (GMT+4:00)
+		"Indian/Mauritius",
+		// (GMT+4:00)
+		"Indian/Reunion",
+		// (GMT+4:00)
+		"NET",
+		// (GMT+4:00)
+		"W-SU",
+		// (GMT+4:30)
+		"Asia/Kabul",
+		// (GMT+5:00)
+		"Antarctica/Mawson",
+		// (GMT+5:00)
+		"Asia/Aqtau",
+		// (GMT+5:00)
+		"Asia/Aqtobe",
+		// (GMT+5:00)
+		"Asia/Ashgabat",
+		// (GMT+5:00)
+		"Asia/Ashkhabad",
+		// (GMT+5:00)
+		"Asia/Dushanbe",
+		// (GMT+5:00)
+		"Asia/Karachi",
+		// (GMT+5:00)
+		"Asia/Oral",
+		// (GMT+5:00)
+		"Asia/Samarkand",
+		// (GMT+5:00)
+		"Asia/Tashkent",
+		// (GMT+5:00)
+		"Etc/GMT-5",
+		// (GMT+5:00)
+		"Indian/Kerguelen",
+		// (GMT+5:00)
+		"Indian/Maldives",
+		// (GMT+5:00)
+		"PLT",
+		// (GMT+5:30)
+		"Asia/Calcutta",
+		// (GMT+5:30)
+		"Asia/Colombo",
+		// (GMT+5:30)
+		"Asia/Kolkata",
+		// (GMT+5:30)
+		"IST",
+		// (GMT+5:45)
+		"Asia/Kathmandu",
+		// (GMT+5:45)
+		"Asia/Katmandu",
+		// (GMT+6:00)
+		"Antarctica/Vostok",
+		// (GMT+6:00)
+		"Asia/Almaty",
+		// (GMT+6:00)
+		"Asia/Bishkek",
+		// (GMT+6:00)
+		"Asia/Dacca",
+		// (GMT+6:00)
+		"Asia/Dhaka",
+		// (GMT+6:00)
+		"Asia/Qyzylorda",
+		// (GMT+6:00)
+		"Asia/Thimbu",
+		// (GMT+6:00)
+		"Asia/Thimphu",
+		// (GMT+6:00)
+		"Asia/Yekaterinburg",
+		// (GMT+6:00)
+		"BST",
+		// (GMT+6:00)
+		"Etc/GMT-6",
+		// (GMT+6:00)
+		"Indian/Chagos",
+		// (GMT+6:30)
+		"Asia/Rangoon",
+		// (GMT+6:30)
+		"Indian/Cocos",
+		// (GMT+7:00)
+		"Antarctica/Davis",
+		// (GMT+7:00)
+		"Asia/Bangkok",
+		// (GMT+7:00)
+		"Asia/Ho_Chi_Minh",
+		// (GMT+7:00)
+		"Asia/Hovd",
+		// (GMT+7:00)
+		"Asia/Jakarta",
+		// (GMT+7:00)
+		"Asia/Novokuznetsk",
+		// (GMT+7:00)
+		"Asia/Novosibirsk",
+		// (GMT+7:00)
+		"Asia/Omsk",
+		// (GMT+7:00)
+		"Asia/Phnom_Penh",
+		// (GMT+7:00)
+		"Asia/Pontianak",
+		// (GMT+7:00)
+		"Asia/Saigon",
+		// (GMT+7:00)
+		"Asia/Vientiane",
+		// (GMT+7:00)
+		"Etc/GMT-7",
+		// (GMT+7:00)
+		"Indian/Christmas",
+		// (GMT+7:00)
+		"VST",
+		// (GMT+8:00)
+		"Antarctica/Casey",
+		// (GMT+8:00)
+		"Asia/Brunei",
+		// (GMT+8:00)
+		"Asia/Choibalsan",
+		// (GMT+8:00)
+		"Asia/Chongqing",
+		// (GMT+8:00)
+		"Asia/Chungking",
+		// (GMT+8:00)
+		"Asia/Harbin",
+		// (GMT+8:00)
+		"Asia/Hong_Kong",
+		// (GMT+8:00)
+		"Asia/Kashgar",
+		// (GMT+8:00)
+		"Asia/Krasnoyarsk",
+		// (GMT+8:00)
+		"Asia/Kuala_Lumpur",
+		// (GMT+8:00)
+		"Asia/Kuching",
+		// (GMT+8:00)
+		"Asia/Macao",
+		// (GMT+8:00)
+		"Asia/Macau",
+		// (GMT+8:00)
+		"Asia/Makassar",
+		// (GMT+8:00)
+		"Asia/Manila",
+		// (GMT+8:00)
+		"Asia/Shanghai",
+		// (GMT+8:00)
+		"Asia/Singapore",
+		// (GMT+8:00)
+		"Asia/Taipei",
+		// (GMT+8:00)
+		"Asia/Ujung_Pandang",
+		// (GMT+8:00)
+		"Asia/Ulaanbaatar",
+		// (GMT+8:00)
+		"Asia/Ulan_Bator",
+		// (GMT+8:00)
+		"Asia/Urumqi",
+		// (GMT+8:00)
+		"Australia/Perth",
+		// (GMT+8:00)
+		"Australia/West",
+		// (GMT+8:00)
+		"CTT",
+		// (GMT+8:00)
+		"Etc/GMT-8",
+		// (GMT+8:00)
+		"Hongkong",
+		// (GMT+8:00)
+		"PRC",
+		// (GMT+8:00)
+		"Singapore",
+		// (GMT+8:45)
+		"Australia/Eucla",
+		// (GMT+9:00)
+		"Asia/Dili",
+		// (GMT+9:00)
+		"Asia/Irkutsk",
+		// (GMT+9:00)
+		"Asia/Jayapura",
+		// (GMT+9:00)
+		"Asia/Pyongyang",
+		// (GMT+9:00)
+		"Asia/Seoul",
+		// (GMT+9:00)
+		"Asia/Tokyo",
+		// (GMT+9:00)
+		"Etc/GMT-9",
+		// (GMT+9:00)
+		"JST",
+		// (GMT+9:00)
+		"Japan",
+		// (GMT+9:00)
+		"Pacific/Palau",
+		// (GMT+9:00)
+		"ROK",
+		// (GMT+9:30)
+		"ACT",
+		// (GMT+9:30)
+		"Australia/Adelaide",
+		// (GMT+9:30)
+		"Australia/Broken_Hill",
+		// (GMT+9:30)
+		"Australia/Darwin",
+		// (GMT+9:30)
+		"Australia/North",
+		// (GMT+9:30)
+		"Australia/South",
+		// (GMT+9:30)
+		"Australia/Yancowinna",
+		// (GMT+10:00)
+		"AET",
+		// (GMT+10:00)
+		"Antarctica/DumontDUrville",
+		// (GMT+10:00)
+		"Asia/Khandyga",
+		// (GMT+10:00)
+		"Asia/Yakutsk",
+		// (GMT+10:00)
+		"Australia/ACT",
+		// (GMT+10:00)
+		"Australia/Brisbane",
+		// (GMT+10:00)
+		"Australia/Canberra",
+		// (GMT+10:00)
+		"Australia/Currie",
+		// (GMT+10:00)
+		"Australia/Hobart",
+		// (GMT+10:00)
+		"Australia/Lindeman",
+		// (GMT+10:00)
+		"Australia/Melbourne",
+		// (GMT+10:00)
+		"Australia/NSW",
+		// (GMT+10:00)
+		"Australia/Queensland",
+		// (GMT+10:00)
+		"Australia/Sydney",
+		// (GMT+10:00)
+		"Australia/Tasmania",
+		// (GMT+10:00)
+		"Australia/Victoria",
+		// (GMT+10:00)
+		"Etc/GMT-10",
+		// (GMT+10:00)
+		"Pacific/Chuuk",
+		// (GMT+10:00)
+		"Pacific/Guam",
+		// (GMT+10:00)
+		"Pacific/Port_Moresby",
+		// (GMT+10:00)
+		"Pacific/Saipan",
+		// (GMT+10:00)
+		"Pacific/Truk",
+		// (GMT+10:00)
+		"Pacific/Yap",
+		// (GMT+10:30)
+		"Australia/LHI",
+		// (GMT+10:30)
+		"Australia/Lord_Howe",
+		// (GMT+11:00)
+		"Antarctica/Macquarie",
+		// (GMT+11:00)
+		"Asia/Sakhalin",
+		// (GMT+11:00)
+		"Asia/Ust-Nera",
+		// (GMT+11:00)
+		"Asia/Vladivostok",
+		// (GMT+11:00)
+		"Etc/GMT-11",
+		// (GMT+11:00)
+		"Pacific/Efate",
+		// (GMT+11:00)
+		"Pacific/Guadalcanal",
+		// (GMT+11:00)
+		"Pacific/Kosrae",
+		// (GMT+11:00)
+		"Pacific/Noumea",
+		// (GMT+11:00)
+		"Pacific/Pohnpei",
+		// (GMT+11:00)
+		"Pacific/Ponape",
+		// (GMT+11:00)
+		"SST",
+		// (GMT+11:30)
+		"Pacific/Norfolk",
+		// (GMT+12:00)
+		"Antarctica/McMurdo",
+		// (GMT+12:00)
+		"Antarctica/South_Pole",
+		// (GMT+12:00)
+		"Asia/Anadyr",
+		// (GMT+12:00)
+		"Asia/Kamchatka",
+		// (GMT+12:00)
+		"Asia/Magadan",
+		// (GMT+12:00)
+		"Etc/GMT-12",
+		// (GMT+12:00)
+		"Kwajalein",
+		// (GMT+12:00)
+		"NST",
+		// (GMT+12:00)
+		"NZ",
+		// (GMT+12:00)
+		"Pacific/Auckland",
+		// (GMT+12:00)
+		"Pacific/Fiji",
+		// (GMT+12:00)
+		"Pacific/Funafuti",
+		// (GMT+12:00)
+		"Pacific/Kwajalein",
+		// (GMT+12:00)
+		"Pacific/Majuro",
+		// (GMT+12:00)
+		"Pacific/Nauru",
+		// (GMT+12:00)
+		"Pacific/Tarawa",
+		// (GMT+12:00)
+		"Pacific/Wake",
+		// (GMT+12:00)
+		"Pacific/Wallis",
+		// (GMT+12:45)
+		"NZ-CHAT",
+		// (GMT+12:45)
+		"Pacific/Chatham",
+		// (GMT+13:00)
+		"Etc/GMT-13",
+		// (GMT+13:00)
+		"MIT",
+		// (GMT+13:00)
+		"Pacific/Apia",
+		// (GMT+13:00)
+		"Pacific/Enderbury",
+		// (GMT+13:00)
+		"Pacific/Fakaofo",
+		// (GMT+13:00)
+		"Pacific/Tongatapu",
+		// (GMT+14:00)
+		"Etc/GMT-14",
+		// (GMT+14:00)
+		"Pacific/Kiritimati"
+    };
+
+	set<string>::iterator itr = timezones.find(timezone);
+    
+	return itr != timezones.end();
 }
 

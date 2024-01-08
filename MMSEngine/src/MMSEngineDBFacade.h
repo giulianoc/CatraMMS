@@ -1185,6 +1185,23 @@ public:
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
 		bool applicationRecorder);
 
+	#ifdef __POSTGRES__
+    tuple<int64_t,int64_t,string> registerUserAndAddWorkspace(
+        string userName,
+        string userEmailAddress,
+        string userPassword,
+        string userCountry,
+        string userTimezone,
+        string workspaceName,
+        WorkspaceType workspaceType,
+        string deliveryURL,
+        EncodingPriority maxEncodingPriority,
+        EncodingPeriod encodingPeriod,
+        long maxIngestionsNumber,
+        long maxStorageInMB,
+        string languageCode,
+        chrono::system_clock::time_point userExpirationDate);
+	#else
     tuple<int64_t,int64_t,string> registerUserAndAddWorkspace(
         string userName,
         string userEmailAddress,
@@ -1199,7 +1216,18 @@ public:
         long maxStorageInMB,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
+	#endif
     
+	#ifdef __POSTGRES__
+    tuple<int64_t,int64_t,string> registerUserAndShareWorkspace(
+        string userName,
+        string userEmailAddress,
+        string userPassword,
+        string userCountry,
+        string userTimezone,
+        string shareWorkspaceCode,
+        chrono::system_clock::time_point userExpirationDate);
+	#else
     tuple<int64_t,int64_t,string> registerUserAndShareWorkspace(
         string userName,
         string userEmailAddress,
@@ -1207,6 +1235,7 @@ public:
         string userCountry,
         string shareWorkspaceCode,
         chrono::system_clock::time_point userExpirationDate);
+	#endif
     
     pair<int64_t,string> createWorkspace(
         int64_t userKey,
@@ -1226,6 +1255,20 @@ public:
     tuple<string,string,string> confirmRegistration(
 		string confirmationCode, int expirationInDaysWorkspaceDefaultValue);
 
+	#ifdef __POSTGRES__
+	pair<int64_t,string> registerActiveDirectoryUser(
+		string userName,
+		string userEmailAddress,
+		string userCountry,
+		string userTimezone,
+		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
+		bool applicationRecorder,
+		string defaultWorkspaceKeys, int expirationInDaysWorkspaceDefaultValue,
+		chrono::system_clock::time_point userExpirationDate
+	);
+	#else
 	pair<int64_t,string> registerActiveDirectoryUser(
 		string userName,
 		string userEmailAddress,
@@ -1237,6 +1280,7 @@ public:
 		string defaultWorkspaceKeys, int expirationInDaysWorkspaceDefaultValue,
 		chrono::system_clock::time_point userExpirationDate
 	);
+	#endif
 
 	string createAPIKeyForActiveDirectoryUser(
 		int64_t userKey,
@@ -1335,6 +1379,19 @@ public:
 		int64_t workspaceKey,
 		int64_t workspaceKeyToBeSetAsDefault);
 
+	#ifdef __POSTGRES__
+    Json::Value updateUser (
+		bool admin,
+		bool ldapEnabled,
+        int64_t userKey,
+        bool nameChanged, string name, 
+        bool emailChanged, string email, 
+        bool countryChanged, string country,
+        bool timezoneChanged, string timezone,
+        bool insolventChanged, bool insolvent,
+		bool expirationDateChanged, string expirationDate,
+		bool passwordChanged, string newPassword, string oldPassword);
+	#else
     Json::Value updateUser (
 		bool admin,
 		bool ldapEnabled,
@@ -1345,6 +1402,7 @@ public:
         bool insolventChanged, bool insolvent,
 		bool expirationDateChanged, string expirationDate,
 		bool passwordChanged, string newPassword, string oldPassword);
+	#endif
 
 	string createResetPasswordToken(
 		int64_t userKey);
@@ -2871,6 +2929,7 @@ private:
 	#ifdef __POSTGRES__
 	string getPostgresArray (vector<string>& arrayElements, bool emptyElementToBeRemoved, transaction_base* trans);
 	string getPostgresArray (Json::Value arrayRoot, bool emptyElementToBeRemoved, transaction_base* trans);
+	bool isTimezoneValid(string timezone);
 	#endif
 
 	#ifdef __POSTGRES__

@@ -99,6 +99,7 @@ void API::registerUser(
 
 		string name = JSONUtils::asString(metadataRoot, "name", "");
 		string country = JSONUtils::asString(metadataRoot, "country", "");
+		string timezone = JSONUtils::asString(metadataRoot, "timezone", "CET");
 
 		if (shareWorkspaceCode == "")
 		{
@@ -138,6 +139,7 @@ void API::registerUser(
 						email, 
 						password,
 						country, 
+						timezone, 
 						workspaceName,
 						MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
 						"",                             // string deliveryURL,
@@ -306,6 +308,7 @@ void API::registerUser(
 						email, 
 						password,
 						country, 
+						timezone, 
 						shareWorkspaceCode,
 						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
 					);
@@ -1551,6 +1554,7 @@ void API::login(
 							userName,
 							email,
 							string(""),	// userCountry,
+							string("CET"),
 							createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
 							editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
 							applicationRecorder,
@@ -2061,6 +2065,8 @@ void API::updateUser(
 		bool emailChanged;
         string country;
 		bool countryChanged;
+        string timezone;
+		bool timezoneChanged;
         bool insolvent;
 		bool insolventChanged;
         string expirationUtcDate;
@@ -2089,6 +2095,7 @@ void API::updateUser(
 		nameChanged = false;
 		emailChanged = false;
 		countryChanged = false;
+		timezoneChanged = false;
 		insolventChanged = false;
 		expirationDateChanged = false;
 		passwordChanged = false;
@@ -2113,6 +2120,13 @@ void API::updateUser(
 			{
 				country = JSONUtils::asString(metadataRoot, field, "");
 				countryChanged = true;
+			}
+
+			field = "timezone";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				timezone = JSONUtils::asString(metadataRoot, field, "CET");
+				timezoneChanged = true;
 			}
 
 			if (admin)
@@ -2151,6 +2165,14 @@ void API::updateUser(
 				country = JSONUtils::asString(metadataRoot, field, "");
 				countryChanged = true;
 			}
+
+			field = "timezone";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				timezone = JSONUtils::asString(metadataRoot, field, "CET");
+				timezoneChanged = true;
+			}
+
         }
 
         try
@@ -2168,6 +2190,7 @@ void API::updateUser(
 				nameChanged, name,
 				emailChanged, email,
 				countryChanged, country,
+				timezoneChanged, timezone,
 				insolventChanged, insolvent,
 				expirationDateChanged, expirationUtcDate,
 				passwordChanged, newPassword, oldPassword);

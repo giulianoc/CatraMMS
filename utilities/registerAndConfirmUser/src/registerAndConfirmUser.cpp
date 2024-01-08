@@ -40,6 +40,7 @@ int main (int iArgc, char *pArgv [])
 	string password = pArgv[4];
 	string workspaceName = pArgv[5];
 	string country;
+	string timezone;
 	MMSEngineDBFacade::EncodingPriority encodingPriority = MMSEngineDBFacade::EncodingPriority::Low;
 	MMSEngineDBFacade::EncodingPeriod encodingPeriod = MMSEngineDBFacade::EncodingPeriod::Daily;
 	int maxIngestionsNumber = 10000;
@@ -67,6 +68,7 @@ int main (int iArgc, char *pArgv [])
 				email,
 				password,
 				country,
+				timezone,
 				workspaceName,
 				MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
 				"",                             // string deliveryURL,
