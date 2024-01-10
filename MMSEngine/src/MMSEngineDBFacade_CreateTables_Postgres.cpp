@@ -186,6 +186,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					"currentCostForDedicatedEncoder_power_2	integer not null default 0,"
 					"dedicatedEncoder_power_3	integer not null default 0,"
 					"currentCostForDedicatedEncoder_power_3	integer not null default 0,"
+					"CDN_type_1				integer not null default 0,"
+					"currentCostForCDN_type_1	integer not null default 0,"
 					"support_type_1			boolean not null default false,"
 					"currentCostForSupport_type_1	integer not null default 0,"
 					"constraint MMS_WorkspaceCost_PK PRIMARY KEY (workspaceKey), "

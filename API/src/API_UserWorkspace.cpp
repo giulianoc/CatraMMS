@@ -2633,6 +2633,8 @@ void API::updateWorkspace(
 		bool currentCostForDedicatedEncoder_power_2Changed = false; int64_t currentCostForDedicatedEncoder_power_2;
 		bool dedicatedEncoder_power_3Changed = false; int64_t dedicatedEncoder_power_3;
 		bool currentCostForDedicatedEncoder_power_3Changed = false; int64_t currentCostForDedicatedEncoder_power_3;
+		bool CDN_type_1Changed = false; int64_t CDN_type_1;
+		bool currentCostForCDN_type_1Changed = false; int64_t currentCostForCDN_type_1;
 		bool support_type_1Changed = false; bool support_type_1;
 		bool currentCostForSupport_type_1Changed = false; int64_t currentCostForSupport_type_1;
 
@@ -2763,6 +2765,20 @@ void API::updateWorkspace(
 			currentCostForDedicatedEncoder_power_3 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
+		field = "CDN_type_1";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			CDN_type_1Changed = true;
+			CDN_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
+		field = "currentCostForCDN_type_1";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			currentCostForCDN_type_1Changed = true;
+			currentCostForCDN_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+		}
+
 		field = "support_type_1";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
@@ -2880,6 +2896,8 @@ void API::updateWorkspace(
 				currentCostForDedicatedEncoder_power_2Changed, currentCostForDedicatedEncoder_power_2,
 				dedicatedEncoder_power_3Changed, dedicatedEncoder_power_3,
 				currentCostForDedicatedEncoder_power_3Changed, currentCostForDedicatedEncoder_power_3,
+				CDN_type_1Changed, CDN_type_1,
+				currentCostForCDN_type_1Changed, currentCostForCDN_type_1,
 				support_type_1Changed, support_type_1,
 				currentCostForSupport_type_1Changed, currentCostForSupport_type_1,
 

@@ -26,6 +26,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
 			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
+			"wc.CDN_type_1, wc.currentCostForCDN_type_1 "
 			"wc.support_type_1, wc.currentCostForSupport_type_1 "
 			"from MMS_Workspace w, MMS_WorkspaceCost wc "
 			"where w.workspaceKey = wc.workspaceKey and w.workspaceKey = {}",
@@ -57,6 +58,8 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
 			workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
 			workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
+			workspace->_CDN_type_1 = res[0]["CDN_type_1"].as<int>();
+			workspace->_currentCostForCDN_type_1 = res[0]["currentCostForCDN_type_1"].as<int>();
 			workspace->_support_type_1 = res[0]["support_type_1"].as<bool>();
 			workspace->_currentCostForSupport_type_1 = res[0]["currentCostForSupport_type_1"].as<int>();
 
@@ -190,6 +193,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
 			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
+			"wc.CDN_type_1, wc.currentCostForCDN_type_1 "
 			"wc.support_type_1, wc.currentCostForSupport_type_1 "
 			"from MMS_Workspace w, MMS_WorkspaceCost wc "
 			"where w.workspaceKey = wc.workspaceKey and w.name = {}",
@@ -222,6 +226,8 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
 			workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
 			workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
+			workspace->_CDN_type_1 = res[0]["CDN_type_1"].as<int>();
+			workspace->_currentCostForCDN_type_1 = res[0]["currentCostForCDN_type_1"].as<int>();
 			workspace->_support_type_1 = res[0]["support_type_1"].as<bool>();
 			workspace->_currentCostForSupport_type_1 = res[0]["currentCostForSupport_type_1"].as<int>();
 
@@ -1755,12 +1761,14 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 					"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
 					"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
 					"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3, "
+					"CDN_type_1, currentCostForCDN_type_1 "
 					"support_type_1, currentCostForSupport_type_1 "
 					") values ("
 					"{},           {},             0, "
 					"0,                        0, "
 					"0,                        0, "
 					"0,                        0, "
+					"0,          0, "
 					"false,          0) ",
 					workspaceKey, maxStorageInMB / 1000);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -3763,6 +3771,8 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 	bool currentCostForDedicatedEncoder_power_2Changed, int64_t currentCostForDedicatedEncoder_power_2,
 	bool dedicatedEncoder_power_3Changed, int64_t dedicatedEncoder_power_3,
 	bool currentCostForDedicatedEncoder_power_3Changed, int64_t currentCostForDedicatedEncoder_power_3,
+	bool CDN_type_1Changed, int64_t CDN_type_1,
+	bool currentCostForCDN_type_1Changed, int64_t currentCostForCDN_type_1,
 	bool support_type_1Changed, bool support_type_1,
 	bool currentCostForSupport_type_1Changed, int64_t currentCostForSupport_type_1,
 
@@ -4058,6 +4068,22 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += fmt::format("currentCostForDedicatedEncoder_power_3 = {}", currentCostForDedicatedEncoder_power_3);
+				oneParameterPresent = true;
+			}
+
+			if (CDN_type_1Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("CDN_type_1 = {}", CDN_type_1);
+				oneParameterPresent = true;
+			}
+
+			if (currentCostForCDN_type_1Changed)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("currentCostForCDN_type_1 = {}", currentCostForCDN_type_1);
 				oneParameterPresent = true;
 			}
 
@@ -4570,6 +4596,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceCost(
 				"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
 				"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
 				"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3, "
+				"CDN_type_1, currentCostForCDN_type_1 "
 				"support_type_1, currentCostForSupport_type_1 "
 				"from MMS_WorkspaceCost "
                 "where workspaceKey = {} ",
@@ -4600,6 +4627,8 @@ Json::Value MMSEngineDBFacade::getWorkspaceCost(
 			workspaceCost["currentCostForDedicatedEncoder_power_2"] = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
 			workspaceCost["dedicatedEncoder_power_3"] = res[0]["dedicatedEncoder_power_3"].as<int>();
 			workspaceCost["currentCostForDedicatedEncoder_power_3"] = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
+			workspaceCost["CDN_type_1"] = res[0]["CDN_type_1"].as<int>();
+			workspaceCost["currentCostForCDN_type_1"] = res[0]["currentCostForCDN_type_1"].as<int>();
 			workspaceCost["support_type_1"] = res[0]["support_type_1"].as<bool>();
 			workspaceCost["currentCostForSupport_type_1"] = res[0]["currentCostForSupport_type_1"].as<int>();
         }
