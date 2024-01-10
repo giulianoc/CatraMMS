@@ -26,7 +26,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
 			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
-			"wc.CDN_type_1, wc.currentCostForCDN_type_1 "
+			"wc.CDN_type_1, wc.currentCostForCDN_type_1, "
 			"wc.support_type_1, wc.currentCostForSupport_type_1 "
 			"from MMS_Workspace w, MMS_WorkspaceCost wc "
 			"where w.workspaceKey = wc.workspaceKey and w.workspaceKey = {}",
@@ -193,7 +193,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
 			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
-			"wc.CDN_type_1, wc.currentCostForCDN_type_1 "
+			"wc.CDN_type_1, wc.currentCostForCDN_type_1, "
 			"wc.support_type_1, wc.currentCostForSupport_type_1 "
 			"from MMS_Workspace w, MMS_WorkspaceCost wc "
 			"where w.workspaceKey = wc.workspaceKey and w.name = {}",
@@ -1761,7 +1761,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 					"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
 					"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
 					"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3, "
-					"CDN_type_1, currentCostForCDN_type_1 "
+					"CDN_type_1, currentCostForCDN_type_1, "
 					"support_type_1, currentCostForSupport_type_1 "
 					") values ("
 					"{},           {},             0, "
@@ -4596,7 +4596,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceCost(
 				"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
 				"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
 				"dedicatedEncoder_power_3, currentCostForDedicatedEncoder_power_3, "
-				"CDN_type_1, currentCostForCDN_type_1 "
+				"CDN_type_1, currentCostForCDN_type_1, "
 				"support_type_1, currentCostForSupport_type_1 "
 				"from MMS_WorkspaceCost "
                 "where workspaceKey = {} ",
