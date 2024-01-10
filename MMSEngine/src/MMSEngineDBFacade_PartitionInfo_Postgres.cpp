@@ -23,6 +23,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 
 	try
 	{
+SPDLOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
         {
 			string sqlStatement = fmt::format(
 				"select partitionPathName, currentFreeSizeInBytes from MMS_PartitionInfo "
@@ -41,6 +42,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
             {
 				string partitionPathName = res[0]["partitionPathName"].as<string>();
 				uint64_t savedCurrentFreeSizeInBytes = res[0]["currentFreeSizeInBytes"].as<uint64_t>();
+SPDLOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, savedCurrentFreeSizeInBytes: {}", savedCurrentFreeSizeInBytes);
 
 				SPDLOG_INFO(
 					"Difference between estimate and calculate CurrentFreeSizeInBytes"
@@ -59,6 +61,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 					"lastUpdateFreeSize = NOW() at time zone 'utc' "
 					"where partitionKey = {} returning 1) select count(*) from rows",
 					currentFreeSizeInBytes, partitionKey);
+SPDLOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 				SPDLOG_INFO("SQL statement"
@@ -78,6 +81,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 						"{}, {}, {}, {}, NOW() at time zone 'utc', true)",
 					partitionKey, trans.quote(partitionPathName), currentFreeSizeInBytes,
 					freeSpaceToLeaveInMB);
+SPDLOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				trans.exec0(sqlStatement);
 				SPDLOG_INFO("SQL statement"
@@ -238,6 +242,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
             {
 				partitionToBeUsed = res[partitionResultSetIndexToBeUsed]["partitionKey"].as<int>();
 				currentFreeSizeInBytes = res[partitionResultSetIndexToBeUsed]["currentFreeSizeInBytes"].as<uint64_t>();
+SPDLOG_INFO("mon currentFreeSizeInBytes. getPartitionToBeUsedAndUpdateFreeSpace, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 
 				_logger->info(__FILEREF__ + "Partition to be used"
 					+ ", partitionToBeUsed: " + to_string(partitionToBeUsed)
@@ -257,6 +262,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 				"lastUpdateFreeSize = NOW() at time zone 'utc' "
 				"where partitionKey = {} returning 1) select count(*) from rows",
 				newCurrentFreeSizeInBytes, partitionToBeUsed);
+SPDLOG_INFO("mon currentFreeSizeInBytes. getPartitionToBeUsedAndUpdateFreeSpace, newCurrentFreeSizeInBytes: {}", newCurrentFreeSizeInBytes);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 			SPDLOG_INFO("SQL statement"
@@ -402,6 +408,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 
 				throw runtime_error(errorMessage);
 			}
+SPDLOG_INFO("mon currentFreeSizeInBytes. updatePartitionBecauseOfDeletion, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 		}
 
 		uint64_t newCurrentFreeSizeInBytes = currentFreeSizeInBytes + fsEntrySizeInBytes;
@@ -414,18 +421,13 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(
 			", fsEntrySizeInBytes: {}"
 			", newCurrentFreeSizeInBytes: {}",
 			currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
-		if (newCurrentFreeSizeInBytes < currentFreeSizeInBytes)
-		{
-			SPDLOG_WARN("stranoooo, vedi messaggio precedente");
-
-			newCurrentFreeSizeInBytes = currentFreeSizeInBytes;
-		}
 
 		{
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_PartitionInfo set currentFreeSizeInBytes = {} "
 				"where partitionKey = {} returning 1) select count(*) from rows",
 				newCurrentFreeSizeInBytes, partitionKey);
+SPDLOG_INFO("mon currentFreeSizeInBytes. updatePartitionBecauseOfDeletion, newCurrentFreeSizeInBytes: {}", newCurrentFreeSizeInBytes);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 			SPDLOG_INFO("SQL statement"
@@ -686,6 +688,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>>& partition
             {
 				int partitionKey = row["partitionKey"].as<int>();
 				uint64_t currentFreeSizeInBytes = row["currentFreeSizeInBytes"].as<uint64_t>();
+SPDLOG_INFO("mon currentFreeSizeInBytes. getPartitionsInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 
 				partitionsInfo.push_back(make_pair(partitionKey, currentFreeSizeInBytes));
 			}

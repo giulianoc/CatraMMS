@@ -446,7 +446,7 @@ create-directory()
 			chown mms:mms /mnt/mmsRepository0000
 		fi
 
-		if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
+		if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]
 		then
 			if [[ ! -d "/mnt/MMSTranscoderWorkingAreaRepository" ]]
 			then
