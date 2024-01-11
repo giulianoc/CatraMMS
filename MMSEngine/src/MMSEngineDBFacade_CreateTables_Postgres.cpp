@@ -346,6 +346,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		{
+			string sqlStatement =
+				"create index if not exists MMS_Conf_Stream_idx on MMS_Conf_Stream (workspaceKey, type)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
         {
 			string sqlStatement = 
 				"create table if not exists MMS_Conf_SourceTVStream ("
