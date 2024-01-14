@@ -2081,6 +2081,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
     }    
 }
  
+/*
 void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
 	int64_t groupOfTasksIngestionJobKey,
 	bool fromMaster,
@@ -2203,6 +2204,7 @@ void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
         throw e;
     } 
 }
+*/
 
 void MMSEngineDBFacade::updateIngestionJob (
         int64_t ingestionJobKey,

@@ -1626,10 +1626,12 @@ public:
 		bool recordingVirtualVODModified, bool newRecordingVirtualVOD,
 		bool admin);
 
+	/*
 	void getGroupOfTasksChildrenStatus(
 		int64_t groupOfTasksIngestionJobKey,
 		bool fromMaster,
 		vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>>& groupOfTasksChildrenStatus);
+	*/
 
 	#ifdef __POSTGRES__
 	void endIngestionJobs (

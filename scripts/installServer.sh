@@ -456,42 +456,44 @@ create-directory()
 		fi
 	fi
 
-	read -n 1 -s -r -p "links..."
-	echo ""
+	if [ "$moduleType" != "integration" ]; then
+		read -n 1 -s -r -p "links..."
+		echo ""
 
-	if [[ ! -d "/mnt/mmsStorage" ]]
-	then
-		mkdir /mnt/mmsStorage
-		chown mms:mms /mnt/mmsStorage
-	fi
-	if [ ! -d "/mnt/mmsIngestionRepository" ];
-	then
-		mkdir /mnt/mmsIngestionRepository
-		chown mms:mms /mnt/mmsIngestionRepository
-	fi
-	if [ ! -d "/mnt/mmsStorage/MMSGUI" ];
-	then
-		mkdir /mnt/mmsStorage/MMSGUI
-	fi
-	if [ ! -d "/mnt/mmsStorage/MMSWorkingAreaRepository" ];
-	then
-		mkdir /mnt/mmsStorage/MMSWorkingAreaRepository
-	fi
-	if [ ! -d "/mnt/mmsStorage/MMSRepository-free" ];
-	then
-		mkdir /mnt/mmsStorage/MMSRepository-free
-	fi
-	if [ ! -d "/mnt/mmsStorage/MMSLive" ];
-	then
-		mkdir /mnt/mmsStorage/MMSLive
-	fi
-	if [ ! -d "/mnt/mmsStorage/dbDump" ];
-	then
-		mkdir /mnt/mmsStorage/dbDump
-	fi
-	if [ ! -d "/mnt/mmsStorage/commonConfiguration" ];
-	then
-		mkdir /mnt/mmsStorage/commonConfiguration
+		if [[ ! -d "/mnt/mmsStorage" ]]
+		then
+			mkdir /mnt/mmsStorage
+			chown mms:mms /mnt/mmsStorage
+		fi
+		if [ ! -d "/mnt/mmsIngestionRepository" ];
+		then
+			mkdir /mnt/mmsIngestionRepository
+			chown mms:mms /mnt/mmsIngestionRepository
+		fi
+		if [ ! -d "/mnt/mmsStorage/MMSGUI" ];
+		then
+			mkdir /mnt/mmsStorage/MMSGUI
+		fi
+		if [ ! -d "/mnt/mmsStorage/MMSWorkingAreaRepository" ];
+		then
+			mkdir /mnt/mmsStorage/MMSWorkingAreaRepository
+		fi
+		if [ ! -d "/mnt/mmsStorage/MMSRepository-free" ];
+		then
+			mkdir /mnt/mmsStorage/MMSRepository-free
+		fi
+		if [ ! -d "/mnt/mmsStorage/MMSLive" ];
+		then
+			mkdir /mnt/mmsStorage/MMSLive
+		fi
+		if [ ! -d "/mnt/mmsStorage/dbDump" ];
+		then
+			mkdir /mnt/mmsStorage/dbDump
+		fi
+		if [ ! -d "/mnt/mmsStorage/commonConfiguration" ];
+		then
+			mkdir /mnt/mmsStorage/commonConfiguration
+		fi
 	fi
 
 	if [ "$moduleType" == "externalEncoder" ]; then
