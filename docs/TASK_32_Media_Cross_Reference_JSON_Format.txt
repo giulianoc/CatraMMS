@@ -33,7 +33,7 @@
 		//		the dependencies have to be placed. 0 is same as Beginning
 		"dependenciesToBeAddedToReferencesAt": "End",
 
-		// mandatory. Possible values: ImageOfVideo, ImageOfAudio, FaceOfVideo, CutOfVideo, CutOfAudio
+		// mandatory. Possible values: ImageOfVideo, ImageOfAudio, PosterOfVideo, FaceOfVideo, CutOfVideo, CutOfAudio
 		"type": "imageOfVideo"
 
 		// mandatory only for CutOfVideo and CutOfAudio

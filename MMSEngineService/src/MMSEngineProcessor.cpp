@@ -22839,6 +22839,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
 		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
 			crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;
+		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfPoster)
+			crossReferenceType = MMSEngineDBFacade::CrossReferenceType::PosterOfVideo;
 
         MMSEngineDBFacade::ContentType firstContentType;
 		int64_t firstMediaItemKey;
@@ -22909,8 +22911,9 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 		}
 
 		if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::ImageOfVideo
-				|| crossReferenceType == MMSEngineDBFacade::CrossReferenceType::FaceOfVideo
-				)
+			|| crossReferenceType == MMSEngineDBFacade::CrossReferenceType::FaceOfVideo
+			|| crossReferenceType == MMSEngineDBFacade::CrossReferenceType::PosterOfVideo
+		)
 		{
 			Json::Value crossReferenceParametersRoot;
 

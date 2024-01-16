@@ -5571,6 +5571,15 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					field = "mediaItemKey";
 					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
 				}
+				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfPoster)
+				{
+					crossReferenceType = MMSEngineDBFacade::CrossReferenceType::PosterOfVideo;
+
+					targetMediaItemKey = mediaItemKey;
+
+					field = "mediaItemKey";
+					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				}
 				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
 				{
 					crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;

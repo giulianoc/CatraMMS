@@ -1094,7 +1094,9 @@ public:
 		AudioOfImage,	// will be converted to ImageOfAudio
         FaceOfVideo,
         CutOfVideo,
-        CutOfAudio
+        CutOfAudio,
+        PosterOfVideo,
+		VideoOfPoster	// will be converted to PosterOfVideo
     };
     static const char* toString(const CrossReferenceType& crossReferenceType)
     {
@@ -1114,6 +1116,10 @@ public:
                 return "CutOfVideo";
             case CrossReferenceType::CutOfAudio:
                 return "CutOfAudio";
+            case CrossReferenceType::PosterOfVideo:
+                return "PosterOfVideo";
+            case CrossReferenceType::VideoOfPoster:
+                return "VideoOfPoster";
             default:
             throw runtime_error(string("Wrong CrossReferenceType"));
         }
@@ -1139,12 +1145,16 @@ public:
             return CrossReferenceType::CutOfVideo;
 		else if (lowerCase == "cutofaudio")
             return CrossReferenceType::CutOfAudio;
+		else if (lowerCase == "posterofvideo")
+            return CrossReferenceType::PosterOfVideo;
+		else if (lowerCase == "videoofposter")
+            return CrossReferenceType::VideoOfPoster;
         else
             throw runtime_error(string("Wrong CrossReferenceType")
                     + ", crossReferenceType: " + crossReferenceType
                     );
     }
-    
+
 public:
     MMSEngineDBFacade(
         Json::Value configuration,
