@@ -22858,6 +22858,11 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
                 firstMediaItemKey = key;
+
+				// serve solo per verificare che il media item è del workspace di cui si hanno ii diritti di accesso
+				// Se mediaitem non appartiene al workspace avremo una eccezione (MediaItemKeyNotFound)
+				_mmsEngineDBFacade->getMediaItemKeyDetails(workspace->_workspaceKey, firstMediaItemKey,
+					false, false);
             }
             else
             {
@@ -22892,6 +22897,11 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
             if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
                 secondMediaItemKey = key;
+
+				// serve solo per verificare che il media item è del workspace di cui si hanno ii diritti di accesso
+				// Se mediaitem non appartiene al workspace avremo una eccezione (MediaItemKeyNotFound)
+				_mmsEngineDBFacade->getMediaItemKeyDetails(workspace->_workspaceKey, secondMediaItemKey,
+					false, false);
             }
             else
             {
