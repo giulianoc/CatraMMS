@@ -53,7 +53,10 @@ SPDLOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, savedCurrentFre
 					", difference (saved - calculated): {}",
 					partitionKey, partitionPathName,
 					savedCurrentFreeSizeInBytes, currentFreeSizeInBytes,
-					savedCurrentFreeSizeInBytes - currentFreeSizeInBytes
+					// la differenza potrebbe dare un valore negativo,
+					// per cui -94124 come uint64_t darebbe 18446744073709457492
+					// Per questo motivo ho fatto il cast a int64_t
+					(int64_t) (savedCurrentFreeSizeInBytes - currentFreeSizeInBytes)
 				);
 
 				string sqlStatement = fmt::format(
