@@ -1,0 +1,35 @@
+{
+	"label" : "MMS_HLS_H264_2500Kb_medium_1080p25_PAD_high422_AAC_160",
+	"fileFormat" : "hls",
+	"HLS" : 
+	{
+		"segmentDuration" : 10
+	},
+	"video" : 
+	{
+		"codec" : "libx264",
+		"profile" : "high422",
+		"frameRate": 25,
+		"twoPasses" : false,
+		"otherOutputParameters": "-pix_fmt yuv420p -preset medium -level 4.0 -crf 22",
+		"bitRates": [
+			{
+				"width" : 1920,
+				"height" : 1080,
+				"kBitRate" : 2500,
+				"forceOriginalAspectRatio": "decrease",
+				"pad": true
+			}
+		]
+	},
+	"audio" : 
+	{
+		"codec" : "aac",
+		"channelsNumber": 2,
+		"bitRates": [
+			{
+				"kBitRate" : 160
+			}
+		]
+	}
+}
