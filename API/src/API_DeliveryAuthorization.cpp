@@ -381,7 +381,7 @@ void API::createBulkOfDeliveryAuthorization(
 				// ed evita di farle ricalcolare se il lavoro è stato già fatto
 				map<string, string> deliveryURLAlreadyCreated;
 				for(Json::Value::iterator it=mediaItemKeyListRoot.begin();
-					it!=mediaItemKeyListRoot.end(); ++it)
+					it != mediaItemKeyListRoot.end(); ++it)
 				{
 					// Json::Value mediaItemKeyRoot = mediaItemKeyListRoot[mediaItemKeyIndex];
 					Json::Value mediaItemKeyRoot = *it;
@@ -406,8 +406,8 @@ void API::createBulkOfDeliveryAuthorization(
 					string requestKey = fmt::format("{}_{}_{}_{}_{}_{}",
 						mediaItemKey, encodingProfileKey, encodingProfileLabel,
 						deliveryType, filteredByStatistic, userId);
-					map<string, string>::const_iterator it = deliveryURLAlreadyCreated.find(requestKey);
-					if (it == deliveryURLAlreadyCreated.end())
+					map<string, string>::const_iterator searchIt = deliveryURLAlreadyCreated.find(requestKey);
+					if (searchIt == deliveryURLAlreadyCreated.end())
 					{
 						pair<string, string> deliveryAuthorizationDetails;
 						try
@@ -484,7 +484,7 @@ void API::createBulkOfDeliveryAuthorization(
 					else
 					{
 						field = "deliveryURL";
-						mediaItemKeyRoot[field] = *it;
+						mediaItemKeyRoot[field] = searchIt->second;
 					}
 
 					// mediaItemKeyListRoot[mediaItemKeyIndex] = mediaItemKeyRoot;
