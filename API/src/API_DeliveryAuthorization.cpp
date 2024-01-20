@@ -476,13 +476,6 @@ void API::createBulkOfDeliveryAuthorization(
 
 					// mediaItemKeyListRoot[mediaItemKeyIndex] = mediaItemKeyRoot;
 					*it = mediaItemKeyRoot;
-
-					SPDLOG_INFO("createDeliveryAuthorization"
-						", mediaItemKey: {}"
-						", encodingProfileKey: {}"
-						", deliveryURL: {}",
-						mediaItemKey, encodingProfileKey, deliveryURL
-					);
 				}
 
 				field = "mediaItemKeyList";
@@ -696,6 +689,11 @@ void API::createBulkOfDeliveryAuthorization(
 
 			{
 				string responseBody = JSONUtils::toString(deliveryAutorizationDetailsRoot);
+
+				SPDLOG_INFO("createDeliveryAuthorization"
+					", responseBody: {}",
+					responseBody
+				);
 
 				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 					request, "", api, 201, responseBody);
