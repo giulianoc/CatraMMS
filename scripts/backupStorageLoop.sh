@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debugFilename=/tmp/servicesStatus.log
+debugFilename=/tmp/backupStorage.log
 
 while [ 1 -eq 1 ]
 do
