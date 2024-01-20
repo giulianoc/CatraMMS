@@ -476,6 +476,13 @@ void API::createBulkOfDeliveryAuthorization(
 
 					// mediaItemKeyListRoot[mediaItemKeyIndex] = mediaItemKeyRoot;
 					*it = mediaItemKeyRoot;
+
+					SPDLOG_INFO("createDeliveryAuthorization"
+						", mediaItemKey: {}"
+						", encodingProfileKey: {}"
+						", deliveryURL: {}",
+						mediaItemKey, encodingProfileKey, deliveryURL
+					);
 				}
 
 				field = "mediaItemKeyList";
