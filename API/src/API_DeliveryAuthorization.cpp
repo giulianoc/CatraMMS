@@ -499,6 +499,12 @@ void API::createBulkOfDeliveryAuthorization(
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
 				Json::Value uniqueNameListRoot = deliveryAutorizationDetailsRoot[field];
+
+				// spesso molte entry contengono lo stesso input. Ad esempio, la pagina mediaItems della GUI,
+				// spesso richiede la stessa immagina (nel caso dei contenuti di una serie, le immagini
+				// sono tutte le stesse). Per questo motivo usiamo una mappa che conserva le deliveryURL
+				// ed evita di farle ricalcolare se il lavoro è stato già fatto
+				map<string, string> deliveryURLAlreadyCreated;
 				for (int uniqueNameIndex = 0; uniqueNameIndex < uniqueNameListRoot.size();
 					uniqueNameIndex++)
 				{
@@ -520,76 +526,90 @@ void API::createBulkOfDeliveryAuthorization(
 					field = "userId";
 					string userId = JSONUtils::asString(uniqueNameRoot, field, "");
 
-					pair<string, string> deliveryAuthorizationDetails;
-					try
+					string requestKey = fmt::format("{}_{}_{}_{}_{}_{}",
+						uniqueName, encodingProfileKey, encodingProfileLabel,
+						deliveryType, filteredByStatistic, userId);
+					map<string, string>::const_iterator searchIt = deliveryURLAlreadyCreated.find(requestKey);
+					if (searchIt == deliveryURLAlreadyCreated.end())
 					{
-						bool warningIfMissingMediaItemKey = true;
-						deliveryAuthorizationDetails =
-							_mmsDeliveryAuthorization->createDeliveryAuthorization(
-							userKey,
-							requestWorkspace,
-							clientIPAddress,
+						pair<string, string> deliveryAuthorizationDetails;
+						try
+						{
+							bool warningIfMissingMediaItemKey = true;
+							deliveryAuthorizationDetails =
+								_mmsDeliveryAuthorization->createDeliveryAuthorization(
+								userKey,
+								requestWorkspace,
+								clientIPAddress,
 
-							-1,	// mediaItemKey,
-							uniqueName,
-							encodingProfileKey,
-							encodingProfileLabel,
+								-1,	// mediaItemKey,
+								uniqueName,
+								encodingProfileKey,
+								encodingProfileLabel,
 
-							-1,	// physicalPathKey,
+								-1,	// physicalPathKey,
 
-							-1,	// ingestionJobKey,
-							-1,	// deliveryCode,
+								-1,	// ingestionJobKey,
+								-1,	// deliveryCode,
 
-							ttlInSeconds,
-							maxRetries,
-							save,
-							deliveryType,
-							warningIfMissingMediaItemKey,
-							filteredByStatistic,
-							userId
-						);
+								ttlInSeconds,
+								maxRetries,
+								save,
+								deliveryType,
+								warningIfMissingMediaItemKey,
+								filteredByStatistic,
+								userId
+							);
+						}
+						catch (MediaItemKeyNotFound& e)
+						{
+							SPDLOG_ERROR("createDeliveryAuthorization failed"
+								", uniqueName: {}"
+								", encodingProfileKey: {}"
+								", e.what(): {}",
+								uniqueName, encodingProfileKey, e.what()
+							);
+
+							continue;
+						}
+						catch (runtime_error& e)
+						{
+							SPDLOG_ERROR("createDeliveryAuthorization failed"
+								", uniqueName: {}"
+								", encodingProfileKey: {}"
+								", e.what(): {}",
+								uniqueName, encodingProfileKey, e.what()
+							);
+
+							continue;
+						}
+						catch (exception& e)
+						{
+							SPDLOG_ERROR("createDeliveryAuthorization failed"
+								", uniqueName: {}"
+								", encodingProfileKey: {}"
+								", e.what(): {}",
+								uniqueName, encodingProfileKey, e.what()
+							);
+
+							continue;
+						}
+
+						string deliveryURL;
+						string deliveryFileName;
+
+						tie(deliveryURL, deliveryFileName) = deliveryAuthorizationDetails;
+
+						field = "deliveryURL";
+						uniqueNameRoot[field] = deliveryURL;
+
+						deliveryURLAlreadyCreated.insert(make_pair(requestKey, deliveryURL));
 					}
-					catch (MediaItemKeyNotFound& e)
+					else
 					{
-						SPDLOG_ERROR("createDeliveryAuthorization failed"
-							", uniqueName: {}"
-							", encodingProfileKey: {}"
-							", e.what(): {}",
-							uniqueName, encodingProfileKey, e.what()
-						);
-
-						continue;
+						field = "deliveryURL";
+						uniqueNameRoot[field] = searchIt->second;
 					}
-					catch (runtime_error& e)
-					{
-						SPDLOG_ERROR("createDeliveryAuthorization failed"
-							", uniqueName: {}"
-							", encodingProfileKey: {}"
-							", e.what(): {}",
-							uniqueName, encodingProfileKey, e.what()
-						);
-
-						continue;
-					}
-					catch (exception& e)
-					{
-						SPDLOG_ERROR("createDeliveryAuthorization failed"
-							", uniqueName: {}"
-							", encodingProfileKey: {}"
-							", e.what(): {}",
-							uniqueName, encodingProfileKey, e.what()
-						);
-
-						continue;
-					}
-
-					string deliveryURL;
-					string deliveryFileName;
-
-					tie(deliveryURL, deliveryFileName) = deliveryAuthorizationDetails;
-
-					field = "deliveryURL";
-					uniqueNameRoot[field] = deliveryURL;
 
 					uniqueNameListRoot[uniqueNameIndex] = uniqueNameRoot;
 				}
@@ -703,10 +723,10 @@ void API::createBulkOfDeliveryAuthorization(
 			{
 				string responseBody = JSONUtils::toString(deliveryAutorizationDetailsRoot);
 
-				SPDLOG_INFO("createDeliveryAuthorization"
-					", responseBody: {}",
-					responseBody
-				);
+				// SPDLOG_INFO("createDeliveryAuthorization"
+				// 	", responseBody: {}",
+				// 	responseBody
+				// );
 
 				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 					request, "", api, 201, responseBody);
