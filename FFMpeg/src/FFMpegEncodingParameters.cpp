@@ -104,7 +104,7 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
     }
     catch(runtime_error& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: init failed"
+		_logger->error(__FILEREF__ + "FFMpeg: init failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -114,7 +114,7 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 	}
 	catch(exception& e)
 	{
-		_logger->error(__FILEREF__ + "ffmpeg: init failed"
+		_logger->error(__FILEREF__ + "FFMpeg: init failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -861,7 +861,7 @@ void FFMpegEncodingParameters::applyEncoding(
 	}
     catch(runtime_error& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: applyEncoding failed"
+		_logger->error(__FILEREF__ + "FFMpeg: applyEncoding failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -871,7 +871,7 @@ void FFMpegEncodingParameters::applyEncoding(
     }
     catch(exception& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: applyEncoding failed"
+		_logger->error(__FILEREF__ + "FFMpeg: applyEncoding failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -961,7 +961,7 @@ void FFMpegEncodingParameters::createManifestFile()
 	}
 	catch(runtime_error& e)
 	{
-		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
+		_logger->error(__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -971,7 +971,7 @@ void FFMpegEncodingParameters::createManifestFile()
     }
     catch(exception& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
+		_logger->error(__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -1374,7 +1374,7 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 	}
     catch(runtime_error& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: applyEncoding_audioGroup failed"
+		_logger->error(__FILEREF__ + "FFMpeg: applyEncoding_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -1384,7 +1384,7 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
     }
     catch(exception& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: applyEncoding_audioGroup failed"
+		_logger->error(__FILEREF__ + "FFMpeg: applyEncoding_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -1451,7 +1451,7 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 	}
     catch(runtime_error& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
+		_logger->error(__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -1461,7 +1461,7 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
     }
     catch(exception& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
+		_logger->error(__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -1495,7 +1495,7 @@ string FFMpegEncodingParameters::getManifestFileName()
 	}
     catch(runtime_error& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
+		_logger->error(__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -1505,7 +1505,7 @@ string FFMpegEncodingParameters::getManifestFileName()
     }
     catch(exception& e)
     {
-		_logger->error(__FILEREF__ + "ffmpeg: createManifestFile_audioGroup failed"
+		_logger->error(__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed"
 			+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			+ ", e.what(): " + e.what()
@@ -1559,7 +1559,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 		field = "fileFormat";
 		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+			string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
 				+ ", Field: " + field;
             logger->error(errorMessage);
 
@@ -1671,7 +1671,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 				field = "codec";
 				if (!JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+					string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
                         + ", Field: " + field;
 					logger->error(errorMessage);
 
@@ -1718,7 +1718,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 							"-profile:v " + profile + " "
 						;
 						/*
-						string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
+						string errorMessage = __FILEREF__ + "FFMpeg: codec is wrong"
                             + ", codec: " + codec;
 						logger->error(errorMessage);
 
@@ -1746,7 +1746,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 				field = "twoPasses";
 				if (!JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+					string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
                         + ", Field: " + field;
 					logger->error(errorMessage);
 
@@ -1815,7 +1815,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			field = "bitRates";
 			if (!JSONUtils::isMetadataPresent(videoRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+				string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
 					+ ", Field: " + field;
 				logger->error(errorMessage);
 
@@ -1837,7 +1837,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 						field = "width";
 						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 						{
-							string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+							string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
 								+ ", Field: " + field;
 							logger->error(errorMessage);
 
@@ -1850,7 +1850,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 						field = "height";
 						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 						{
-							string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+							string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
 								+ ", Field: " + field;
 							logger->error(errorMessage);
 
@@ -1895,7 +1895,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 						field = "kBitRate";
 						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 						{
-							string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+							string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
 								+ ", Field: " + field;
 							logger->error(errorMessage);
 
@@ -1954,7 +1954,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
         field = "audio";
         if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
         {
-            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+            string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
                     + ", Field: " + field;
             logger->error(errorMessage);
 
@@ -1968,7 +1968,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             field = "codec";
             if (!JSONUtils::isMetadataPresent(audioRoot, field))
             {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
                         + ", Field: " + field;
                 logger->error(errorMessage);
 
@@ -2040,7 +2040,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 		field = "bitRates";
 		if (!JSONUtils::isMetadataPresent(audioRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+			string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
 				+ ", Field: " + field;
 			logger->error(errorMessage);
 
@@ -2059,7 +2059,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 					field = "kBitRate";
 					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
+						string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null"
 							+ ", Field: " + field;
 						logger->error(errorMessage);
 
@@ -2124,7 +2124,7 @@ void FFMpegEncodingParameters::encodingFileFormatValidation(string fileFormat,
 		&& fileFormatLowerCase != "mxf"
 	)
     {
-        string errorMessage = __FILEREF__ + "ffmpeg: fileFormat is wrong"
+        string errorMessage = __FILEREF__ + "FFMpeg: fileFormat is wrong"
                 + ", fileFormatLowerCase: " + fileFormatLowerCase;
 
         logger->error(errorMessage);
@@ -2144,7 +2144,7 @@ void FFMpegEncodingParameters::encodingAudioCodecValidation(string codec,
             && codec != "pcm_s32le"
     )
     {
-        string errorMessage = __FILEREF__ + "ffmpeg: Audio codec is wrong"
+        string errorMessage = __FILEREF__ + "FFMpeg: Audio codec is wrong"
                 + ", codec: " + codec;
 
         logger->error(errorMessage);
@@ -2163,7 +2163,7 @@ void FFMpegEncodingParameters::encodingVideoProfileValidation(
 				&& profile != "high422"	// used in case of mxf
 			)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg: Profile is wrong"
+            string errorMessage = __FILEREF__ + "FFMpeg: Profile is wrong"
                     + ", codec: " + codec
                     + ", profile: " + profile;
 
@@ -2176,7 +2176,7 @@ void FFMpegEncodingParameters::encodingVideoProfileValidation(
     {
         if (profile != "best" && profile != "good")
         {
-            string errorMessage = __FILEREF__ + "ffmpeg: Profile is wrong"
+            string errorMessage = __FILEREF__ + "FFMpeg: Profile is wrong"
                     + ", codec: " + codec
                     + ", profile: " + profile;
 
@@ -2187,7 +2187,7 @@ void FFMpegEncodingParameters::encodingVideoProfileValidation(
     }
     else
     {
-        string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
+        string errorMessage = __FILEREF__ + "FFMpeg: codec is wrong"
                 + ", codec: " + codec;
 
         logger->error(errorMessage);
