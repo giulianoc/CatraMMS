@@ -1126,7 +1126,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         if (contentTypePresent)
             sqlWhere += fmt::format("and contentType = {} ", trans.quote(toString(contentType)));
         if (label != "")
-            sqlWhere += fmt::format("and label like {} ", trans.quote("%" + label + "%"));
+            sqlWhere += fmt::format("and lower(label) like lower({}) ", trans.quote("%" + label + "%"));
         
         Json::Value responseRoot;
         {
