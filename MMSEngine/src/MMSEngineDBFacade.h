@@ -140,6 +140,13 @@ struct YouTubeURLNotRetrieved: public exception {
     }; 
 };
 
+struct NoMoreSpaceInMMSPartition: public exception {
+    char const* what() const throw() 
+    {
+        return "No more space in MMS Partitions";
+    }; 
+};
+
 class MMSEngineDBFacade {
 
 public:
@@ -2836,8 +2843,13 @@ public:
 		uint64_t currentFreeSizeInBytes,
 		int64_t freeSpaceToLeaveInMB);
 
+	#ifdef __POSTGRES__
+	pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(
+		int64_t ingestionJobKey, uint64_t ullFSEntrySizeInBytes);
+	#else
 	pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(
 		uint64_t ullFSEntrySizeInBytes);
+	#endif
 
 	fs::path getPartitionPathName(int partitionKey);
 

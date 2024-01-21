@@ -1504,9 +1504,42 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		int partitionKey;
 		uint64_t newCurrentFreeSizeInBytes;
 
-		pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade
-			->getPartitionToBeUsedAndUpdateFreeSpace(ullFSEntrySizeInBytes);
-		tie(partitionKey, newCurrentFreeSizeInBytes) = partitionDetails;
+		try
+		{
+			#ifdef __POSTGRES__
+			pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade
+				->getPartitionToBeUsedAndUpdateFreeSpace(ingestionJobKey, ullFSEntrySizeInBytes);
+			#else
+			pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade
+				->getPartitionToBeUsedAndUpdateFreeSpace(ullFSEntrySizeInBytes);
+			#endif
+			tie(partitionKey, newCurrentFreeSizeInBytes) = partitionDetails;
+		}
+		catch(NoMoreSpaceInMMSPartition& e)
+		{
+			string errorMessage = fmt::format(
+				"getPartitionToBeUsedAndUpdateFreeSpace failed"
+				", ingestionJobKey: {}"
+				", ullFSEntrySizeInBytes: {}",
+				ingestionJobKey, ullFSEntrySizeInBytes
+			);
+			_logger->error(__FILEREF__ + errorMessage);
+
+			// 2024-01-21: A volte il campo del DB currentFreeSizeInBytes si "corrompe" ed assume un valore
+			// non corretto (molto piu basso). Per essere sicuri che non sia un falso errore di 'no more space', 
+			// settiamo il valore corretto di currentFreeSizeInBytes chiamando refreshPartitionsFreeSizes
+			// e riproviamo
+			refreshPartitionsFreeSizes();
+
+			#ifdef __POSTGRES__
+			pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade
+				->getPartitionToBeUsedAndUpdateFreeSpace(ingestionJobKey, ullFSEntrySizeInBytes);
+			#else
+			pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade
+				->getPartitionToBeUsedAndUpdateFreeSpace(ullFSEntrySizeInBytes);
+			#endif
+			tie(partitionKey, newCurrentFreeSizeInBytes) = partitionDetails;
+		}
 
 		_logger->info(__FILEREF__ + "getPartitionToBeUsedAndUpdateFreeSpace"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)

@@ -187,7 +187,7 @@ SPDLOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSize
 }
 
 pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
-	uint64_t fsEntrySizeInBytes
+	int64_t ingestionJobKey, uint64_t fsEntrySizeInBytes
 )
 {
 	int			partitionToBeUsed;
@@ -214,21 +214,25 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO("SQL statement"
+				", ingestionJobKey: {}"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
+				ingestionJobKey, sqlStatement, conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
 			if (res.size() == 0)
 			{
-				string errorMessage = string("No more space in MMS Partitions")
-					+ ", fsEntrySizeInBytes: " + to_string(fsEntrySizeInBytes)
-				;
+				string errorMessage = fmt::format(
+					"No more space in MMS Partitions"
+					", ingestionJobKey: {}"
+					", fsEntrySizeInBytes: {}",
+					ingestionJobKey, fsEntrySizeInBytes
+				);
 				_logger->error(__FILEREF__ + errorMessage);
 
-				throw runtime_error(errorMessage);
+				throw NoMoreSpaceInMMSPartition();
 			}
 
 			int partitionResultSetIndexToBeUsed;
@@ -247,10 +251,12 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(
 				currentFreeSizeInBytes = res[partitionResultSetIndexToBeUsed]["currentFreeSizeInBytes"].as<uint64_t>();
 SPDLOG_INFO("mon currentFreeSizeInBytes. getPartitionToBeUsedAndUpdateFreeSpace, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 
-				_logger->info(__FILEREF__ + "Partition to be used"
-					+ ", partitionToBeUsed: " + to_string(partitionToBeUsed)
-					+ ", res.size: " + to_string(res.size())
-					+ ", partitionResultSetIndexToBeUsed: " + to_string(partitionResultSetIndexToBeUsed)
+				SPDLOG_INFO("Partition to be used"
+					", ingestionJobKey: {}"
+					", partitionToBeUsed: {}"
+					", res.size: {}"
+					", partitionResultSetIndexToBeUsed: {}",
+					ingestionJobKey, partitionToBeUsed, res.size(), partitionResultSetIndexToBeUsed
 				);
 			}
 		}
@@ -269,10 +275,11 @@ SPDLOG_INFO("mon currentFreeSizeInBytes. getPartitionToBeUsedAndUpdateFreeSpace,
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 			SPDLOG_INFO("SQL statement"
+				", ingestionJobKey: {}"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
+				ingestionJobKey, sqlStatement, conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
@@ -286,10 +293,11 @@ SPDLOG_INFO("mon currentFreeSizeInBytes. getPartitionToBeUsedAndUpdateFreeSpace,
 	catch(sql_error const &e)
 	{
 		SPDLOG_ERROR("SQL exception"
+			", ingestionJobKey: {}"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			ingestionJobKey, e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		try
@@ -314,9 +322,10 @@ SPDLOG_INFO("mon currentFreeSizeInBytes. getPartitionToBeUsedAndUpdateFreeSpace,
 	catch(runtime_error& e)
 	{
 		SPDLOG_ERROR("runtime_error"
+			", ingestionJobKey: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			ingestionJobKey, e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		try
@@ -342,8 +351,9 @@ SPDLOG_INFO("mon currentFreeSizeInBytes. getPartitionToBeUsedAndUpdateFreeSpace,
 	catch(exception& e)
 	{
 		SPDLOG_ERROR("exception"
+			", ingestionJobKey: {}"
 			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
+			ingestionJobKey, (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		try
