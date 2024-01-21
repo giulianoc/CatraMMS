@@ -173,7 +173,6 @@ void OverlayTextOnVideo::encodeContent(
 
 		Json::Value drawTextDetailsRoot = metadataRoot["ingestedParametersRoot"]["drawTextDetails"];
 
-		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 		_encoding->_ffmpeg->overlayTextOnVideo(
 			sourceAssetPathName,
 			videoDurationInMilliSeconds,
@@ -186,7 +185,8 @@ void OverlayTextOnVideo::encodeContent(
 			_encodingJobKey,
 			_ingestionJobKey,
 			&(_encoding->_childPid));
-		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+
+		_encoding->_ffmpegTerminatedSuccessful = true;
 
         _logger->info(__FILEREF__ + "Encode content finished"
             + ", _ingestionJobKey: " + to_string(_ingestionJobKey)

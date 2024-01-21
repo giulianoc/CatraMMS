@@ -904,6 +904,8 @@ void IntroOutroOverlay::encodeContent(
 				&(_encoding->_childPid));
 		}
 
+		_encoding->_ffmpegTerminatedSuccessful = true;
+
         _logger->info(__FILEREF__ + "introOutroOverlay encoding content finished"
             + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingJobKey)

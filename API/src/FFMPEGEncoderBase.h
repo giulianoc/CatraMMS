@@ -28,6 +28,7 @@ class FFMPEGEncoderBase {
 			pid_t					_childPid;
 			int64_t					_encodingJobKey;
 			shared_ptr<FFMpeg>		_ffmpeg;
+			bool					_ffmpegTerminatedSuccessful;
 			string					_errorMessage;
 		};
 

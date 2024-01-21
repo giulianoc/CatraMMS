@@ -387,6 +387,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0;	// not running
 				selectedEncoding->_encodingJobKey = encodingJobKey;
+				selectedEncoding->_ffmpegTerminatedSuccessful = false;
 
 				_logger->info(__FILEREF__ + "Creating " + method + " thread"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1133,45 +1134,64 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			else if (encodingFound)
 			{
 				double encodingProgress = -2.0;
-				try
+				if (selectedEncoding->_ffmpegTerminatedSuccessful)
 				{
-					chrono::system_clock::time_point startEncodingProgress = chrono::system_clock::now();
+					// _ffmpegTerminatedSuccessful è stata introdotta perchè,
+					// soprattutto in caso di transcoder esterno, una volta che l'encoding è terminato,
+					// è necessario eseguire l'ingestion in MMS (PUSH). Questo spesso richiede parecchio tempo
+					// e la GUI mostra 0.0 come percentuale di encoding perchè ovviamente non abbiamo piu
+					// il file di log dell'encoding.
+					// Questo flag fa si che, in questo periodo di upload del contenuto in MMS (PUSH),
+					// la percentuale mostrata sia 100%
 
-					encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
+					// Il problema esiste anche per i transcoder interni che eseguono invece una move.
+					// Nel caso di file grandi, anche la move potrebbe richiedere parecchio tempo e,
+					// grazie a questa variabile, la GUI mostrera anche in questo caso 100%
 
-					chrono::system_clock::time_point endEncodingProgress = chrono::system_clock::now();
-					_logger->info(__FILEREF__ + "getEncodingProgress statistics"
+					encodingProgress = 100.0;
+				}
+				else
+				{
+					try
+					{
+						chrono::system_clock::time_point startEncodingProgress = chrono::system_clock::now();
+
+						encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
+
+						chrono::system_clock::time_point endEncodingProgress = chrono::system_clock::now();
+						_logger->info(__FILEREF__ + "getEncodingProgress statistics"
 							+ ", @MMS statistics@ - encodingProgress (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
 									endEncodingProgress - startEncodingProgress).count()) + "@"
 							);
-				}
-				catch(FFMpegEncodingStatusNotAvailable& e)
-				{
-					string errorMessage = string("_ffmpeg->getEncodingProgress failed")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-					;
-					_logger->info(__FILEREF__ + errorMessage);
+					}
+					catch(FFMpegEncodingStatusNotAvailable& e)
+					{
+						string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->info(__FILEREF__ + errorMessage);
 
-					// sendError(request, 500, errorMessage);
+						// sendError(request, 500, errorMessage);
 
-					// throw e;
-					// return;
-				}
-				catch(exception& e)
-				{
-					string errorMessage = string("_ffmpeg->getEncodingProgress failed")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", encodingJobKey: " + to_string(encodingJobKey)
-						+ ", e.what(): " + e.what()
-                    ;
-					_logger->error(__FILEREF__ + errorMessage);
+						// throw e;
+						// return;
+					}
+					catch(exception& e)
+					{
+						string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", e.what(): " + e.what()
+						;
+						_logger->error(__FILEREF__ + errorMessage);
 
-					// sendError(request, 500, errorMessage);
+						// sendError(request, 500, errorMessage);
 
-					// throw e;
-					// return;
+						// throw e;
+						// return;
+					}
 				}
 
 				Json::Value responseBodyRoot;

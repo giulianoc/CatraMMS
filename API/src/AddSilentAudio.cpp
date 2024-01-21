@@ -45,6 +45,8 @@ void AddSilentAudio::encodeContent(
 			string sourceAssetPathName;
 			string encodedStagingAssetPathName;
 
+			_encoding->_ffmpegTerminatedSuccessful = false;
+
 			if (externalEncoder)
 			{
 				sourceAssetPathName = JSONUtils::asString(sourceRoot, "sourceTranscoderStagingAssetPathName", "");
@@ -124,6 +126,8 @@ void AddSilentAudio::encodeContent(
 					_encodingJobKey,
 					_ingestionJobKey,
 					&(_encoding->_childPid));
+
+				_encoding->_ffmpegTerminatedSuccessful = true;
 
 				_logger->info(__FILEREF__ + "Encode content finished"
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)

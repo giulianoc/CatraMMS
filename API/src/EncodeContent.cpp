@@ -183,7 +183,6 @@ void EncodeContent::encodeContent(
             + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
         );
 
-		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         _encoding->_ffmpeg->encodeContent(
 			sourceAssetPathName,
 			durationInMilliSeconds,
@@ -198,7 +197,8 @@ void EncodeContent::encodeContent(
 			_ingestionJobKey,
 			&(_encoding->_childPid)
 		);
-		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+
+		_encoding->_ffmpegTerminatedSuccessful = true;
 
         _logger->info(__FILEREF__ + "encoded content"
             + ", _ingestionJobKey: " + to_string(_ingestionJobKey)

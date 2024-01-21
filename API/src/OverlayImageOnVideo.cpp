@@ -200,7 +200,6 @@ void OverlayImageOnVideo::encodeContent(
 			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
-		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
         _encoding->_ffmpeg->overlayImageOnVideo(
 			externalEncoder,
 			sourceVideoAssetPathName,
@@ -213,7 +212,8 @@ void OverlayImageOnVideo::encodeContent(
             _encodingJobKey,
             _ingestionJobKey,
 			&(_encoding->_childPid));
-		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+
+		_encoding->_ffmpegTerminatedSuccessful = true;
 
         _logger->info(__FILEREF__ + "overlayImageOnVideo finished"
             + ", _ingestionJobKey: " + to_string(_ingestionJobKey)

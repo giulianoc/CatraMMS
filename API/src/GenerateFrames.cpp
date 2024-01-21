@@ -161,6 +161,8 @@ void GenerateFrames::encodeContent(
 			&(_encoding->_childPid)
 		);
 
+		_encoding->_ffmpegTerminatedSuccessful = true;
+
 		if (externalEncoder)
 		{
 			vector<int64_t> addContentIngestionJobKeys;

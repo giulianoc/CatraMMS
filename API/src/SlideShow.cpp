@@ -269,6 +269,8 @@ void SlideShow::encodeContent(
 			imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
 			encodedStagingAssetPathName, &(_encoding->_childPid));
 
+		_encoding->_ffmpegTerminatedSuccessful = true;
+
         _logger->info(__FILEREF__ + "slideShow finished"
             + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
             + ", _encodingJobKey: " + to_string(_encodingJobKey)
