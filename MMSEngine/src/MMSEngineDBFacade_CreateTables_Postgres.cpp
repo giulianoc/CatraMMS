@@ -915,7 +915,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "label					text NOT NULL,"
                     "contentType			text NOT NULL,"
                     "deliveryTechnology		text NOT NULL,"
-					"jsonProfile    		text NOT NULL,"
+					"jsonProfile    		jsonb NOT NULL,"
 					"constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
 					"constraint MMS_EncodingProfile_FK foreign key (workspaceKey) "
 						"references MMS_Workspace (workspaceKey) on delete cascade) ";

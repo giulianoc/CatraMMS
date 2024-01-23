@@ -6671,6 +6671,14 @@ Json::Value MMSEngineDBFacade::getTagsList (
             tagsListRoot[field] = requestParametersRoot;
         }
 
+		string tagNameFilterLowerCase;
+		if (tagNameFilter != "")
+		{
+			tagNameFilterLowerCase.resize(tagNameFilter.size());
+			transform(tagNameFilter.begin(), tagNameFilter.end(), tagNameFilterLowerCase.begin(),
+				[](unsigned char c){return tolower(c); } );
+		}
+
         string sqlWhere;
 		sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
         if (contentTypePresent)
@@ -6687,7 +6695,8 @@ Json::Value MMSEngineDBFacade::getTagsList (
 				"select unnest(tags) as tagName from MMS_MediaItem {}) t ",
 				sqlWhere);
 			if (tagNameFilter != "")
-				sqlStatement += fmt::format("where tagName like {} ", trans.quote("%" + tagNameFilter + "%"));
+				sqlStatement += fmt::format("where lower(tagName) like {} ",
+					trans.quote("%" + tagNameFilterLowerCase + "%"));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
@@ -6707,7 +6716,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 				"select unnest(tags) as tagName from MMS_MediaItem {}) t ",
 				sqlWhere);
 			if (tagNameFilter != "")
-				sqlStatement += fmt::format("where tagName like {} ", trans.quote("%" + tagNameFilter + "%"));
+				sqlStatement += fmt::format("where lower(tagName) like {} ", trans.quote("%" + tagNameFilterLowerCase + "%"));
 			sqlStatement += fmt::format("order by tagName limit {} offset {}", rows, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
