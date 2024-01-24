@@ -62,19 +62,21 @@
 
 		// optional: only in case you have to add a CrossReference. For example, if you are ingesting an image,
 		//	it is possible to specify this image is for a specific Video
-		"crossReference": {
-			// mandatory. Possible values: ImageOfVideo (or VideoOfImage), ImageOfAudio (or AudioOfImage), FaceOfVideo, CutOfVideo, CutOfAudio
-			"type": "ImageOfVideo",
+		"crossReferences": [
+			{
+				// mandatory. Possible values: ImageOfVideo (or VideoOfImage), ImageOfAudio (or AudioOfImage), FaceOfVideo, CutOfVideo, CutOfAudio
+				"type": "ImageOfVideo",
 
-			// mandatory
-			"mediaItemKey": 222,
+				// mandatory
+				"mediaItemKey": 222,
 
-			// mandatory only for CutOfVideo and CutOfAudio
-			"parameters": {
-				"startTimeInSeconds": 12.123345,
-				"endTimeInSeconds": 12.123345
+				// mandatory only for CutOfVideo and CutOfAudio
+				"parameters": {
+					"startTimeInSeconds": 12.123345,
+					"endTimeInSeconds": 12.123345
+				}
 			}
-		},
+		],
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.

@@ -9478,49 +9478,56 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
     
 	if (faceOfVideoMediaItemKey != -1)
 	{
-		MMSEngineDBFacade::CrossReferenceType	crossReferenceType =
-			MMSEngineDBFacade::CrossReferenceType::FaceOfVideo;
+		Json::Value crossReferencesRoot(Json::arrayValue);
+		{
+			Json::Value crossReferenceRoot;
 
-		Json::Value crossReferenceRoot;
+			MMSEngineDBFacade::CrossReferenceType	crossReferenceType =
+				MMSEngineDBFacade::CrossReferenceType::FaceOfVideo;
 
-		field = "type";
-        crossReferenceRoot[field] =
-			MMSEngineDBFacade::toString(crossReferenceType);
+			field = "type";
+			crossReferenceRoot[field] = MMSEngineDBFacade::toString(crossReferenceType);
 
-		field = "mediaItemKey";
-        crossReferenceRoot[field] = faceOfVideoMediaItemKey;
+			field = "mediaItemKey";
+			crossReferenceRoot[field] = faceOfVideoMediaItemKey;
 
-		field = "crossReference";
-        parametersRoot[field] = crossReferenceRoot;
+			crossReferencesRoot.append(crossReferenceRoot);
+		}
+
+		field = "crossReferences";
+        parametersRoot[field] = crossReferencesRoot;
 	}
 	else if (cutOfVideoMediaItemKey != -1)
 	{
-		MMSEngineDBFacade::CrossReferenceType   crossReferenceType =
-		MMSEngineDBFacade::CrossReferenceType::CutOfVideo;
-
-		Json::Value crossReferenceRoot;
-
-		field = "type";
-		crossReferenceRoot[field] =
-			MMSEngineDBFacade::toString(crossReferenceType);
-
-		field = "mediaItemKey";
-		crossReferenceRoot[field] = cutOfVideoMediaItemKey;
-
-		Json::Value crossReferenceParametersRoot;
+		Json::Value crossReferencesRoot(Json::arrayValue);
 		{
-			field = "startTimeInSeconds";
-			crossReferenceParametersRoot[field] = startTimeInSeconds;
+			Json::Value crossReferenceRoot;
 
-			field = "EndTimeInSeconds";
-			crossReferenceParametersRoot[field] = endTimeInSeconds;
+			MMSEngineDBFacade::CrossReferenceType crossReferenceType = MMSEngineDBFacade::CrossReferenceType::CutOfVideo;
 
-			field = "parameters";
-			crossReferenceRoot[field] = crossReferenceParametersRoot;
+			field = "type";
+			crossReferenceRoot[field] = MMSEngineDBFacade::toString(crossReferenceType);
+
+			field = "mediaItemKey";
+			crossReferenceRoot[field] = cutOfVideoMediaItemKey;
+
+			Json::Value crossReferenceParametersRoot;
+			{
+				field = "startTimeInSeconds";
+				crossReferenceParametersRoot[field] = startTimeInSeconds;
+
+				field = "EndTimeInSeconds";
+				crossReferenceParametersRoot[field] = endTimeInSeconds;
+
+				field = "parameters";
+				crossReferenceRoot[field] = crossReferenceParametersRoot;
+			}
+
+			crossReferencesRoot.append(crossReferenceRoot);
 		}
 
-		field = "crossReference";
-		parametersRoot[field] = crossReferenceRoot;
+		field = "crossReferences";
+		parametersRoot[field] = crossReferencesRoot;
 	}
 
     string mediaMetadata;

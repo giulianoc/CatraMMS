@@ -3278,6 +3278,13 @@ private:
 	#endif
 
 	#ifdef __POSTGRES__
+	void manageCrossReferences(
+		shared_ptr<PostgresConnection> conn, transaction_base* trans,
+		int64_t ingestionJobKey,
+		int64_t mediaItemKey, Json::Value crossReferencesRoot);
+	#endif
+
+	#ifdef __POSTGRES__
 	void addCrossReference (
         shared_ptr<PostgresConnection> conn, transaction_base* trans,
 		int64_t ingestionJobKey,

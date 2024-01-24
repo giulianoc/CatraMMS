@@ -187,11 +187,11 @@ sql_slave_off()
 
 postgres_replication_check()
 {
-	isSlave=$(echo "select pg_is_in_recovery()" | psql -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+	isSlave=$(echo "select pg_is_in_recovery()" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
 	#true(t) indica slave, false(f) indica master
 	if [ "$isSlave" == "t" ]; then
 		#in case of slave
-		status=$(echo "SELECT status FROM pg_stat_wal_receiver" | psql -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+		status=$(echo "SELECT status FROM pg_stat_wal_receiver" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
 		if [ "$status" == "streaming" ]; then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication slave is working fine" >> $debugFilename
 
@@ -210,7 +210,7 @@ postgres_replication_check()
 		#in case of master
 		#in questo caso avremo una riga per ogni slave connesso. In caso di funzionamento corretto,
 		#il campo state di ogni riga deve essere 'streaming'
-		count=$(echo "SELECT count(*) FROM pg_stat_replication where state != 'streaming'" | psql -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+		count=$(echo "SELECT count(*) FROM pg_stat_replication where state != 'streaming'" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
 		if [ $count -eq 0 ]; then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication master is working fine" >> $debugFilename
 
@@ -261,7 +261,7 @@ sql_check()
 
 postgres_check()
 {
-	count=$(echo "select count(*) from MMS_TestConnection" | psql -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+	count=$(echo "select count(*) from MMS_TestConnection" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
 
 	#check if it is a number
 	regularExpression='^[0-9]+$'

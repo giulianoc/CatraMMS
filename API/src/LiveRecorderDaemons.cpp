@@ -3164,16 +3164,21 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 				tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
 				*/
 
-				Json::Value crossReferenceRoot;
+				Json::Value crossReferencesRoot(Json::arrayValue);
+				{
+					Json::Value crossReferenceRoot;
 
-				field = "type";
-				crossReferenceRoot[field] = "VideoOfImage";
+					field = "type";
+					crossReferenceRoot[field] = "VideoOfImage";
 
-				field = "mediaItemKey";
-				crossReferenceRoot[field] = liveRecorderVirtualVODImageMediaItemKey;
+					field = "mediaItemKey";
+					crossReferenceRoot[field] = liveRecorderVirtualVODImageMediaItemKey;
 
-				field = "crossReference";
-				addContentParametersRoot[field] = crossReferenceRoot;
+					crossReferencesRoot.append(crossReferenceRoot);
+				}
+
+				field = "crossReferences";
+				addContentParametersRoot[field] = crossReferencesRoot;
 			}
 			catch (MediaItemKeyNotFound e)
 			{

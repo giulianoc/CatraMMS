@@ -23203,78 +23203,88 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     
 	if (imageOfVideoMediaItemKey != -1)
 	{
-		MMSEngineDBFacade::CrossReferenceType   crossReferenceType =
-			MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
+		Json::Value crossReferencesRoot(Json::arrayValue);
+		{
+			Json::Value crossReferenceRoot;
 
-        Json::Value crossReferenceRoot;
+			MMSEngineDBFacade::CrossReferenceType crossReferenceType =
+				MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
 
-		field = "type";
-		crossReferenceRoot[field] =
-			MMSEngineDBFacade::toString(crossReferenceType);
+			field = "type";
+			crossReferenceRoot[field] = MMSEngineDBFacade::toString(crossReferenceType);
 
-		field = "mediaItemKey";
-		crossReferenceRoot[field] = imageOfVideoMediaItemKey;
+			field = "mediaItemKey";
+			crossReferenceRoot[field] = imageOfVideoMediaItemKey;
 
-		field = "crossReference";
-		parametersRoot[field] = crossReferenceRoot;
+			crossReferencesRoot.append(crossReferenceRoot);
+		}
+
+		field = "crossReferences";
+		parametersRoot[field] = crossReferencesRoot;
 	}
 	else if (cutOfVideoMediaItemKey != -1)
 	{
-		MMSEngineDBFacade::CrossReferenceType   crossReferenceType =
-			MMSEngineDBFacade::CrossReferenceType::CutOfVideo;
-
-        Json::Value crossReferenceRoot;
-
-		field = "type";
-		crossReferenceRoot[field] =
-			MMSEngineDBFacade::toString(crossReferenceType);
-
-		field = "mediaItemKey";
-		crossReferenceRoot[field] = cutOfVideoMediaItemKey;
-
-        Json::Value crossReferenceParametersRoot;
+		Json::Value crossReferencesRoot(Json::arrayValue);
 		{
-			field = "startTimeInSeconds";
-			crossReferenceParametersRoot[field] = startTimeInSeconds;
+			Json::Value crossReferenceRoot;
 
-			field = "endTimeInSeconds";
-			crossReferenceParametersRoot[field] = endTimeInSeconds;
+			MMSEngineDBFacade::CrossReferenceType crossReferenceType = MMSEngineDBFacade::CrossReferenceType::CutOfVideo;
 
-			field = "parameters";
-			crossReferenceRoot[field] = crossReferenceParametersRoot;
+			field = "type";
+			crossReferenceRoot[field] = MMSEngineDBFacade::toString(crossReferenceType);
+
+			field = "mediaItemKey";
+			crossReferenceRoot[field] = cutOfVideoMediaItemKey;
+
+			Json::Value crossReferenceParametersRoot;
+			{
+				field = "startTimeInSeconds";
+				crossReferenceParametersRoot[field] = startTimeInSeconds;
+
+				field = "endTimeInSeconds";
+				crossReferenceParametersRoot[field] = endTimeInSeconds;
+
+				field = "parameters";
+				crossReferenceRoot[field] = crossReferenceParametersRoot;
+			}
+
+			crossReferencesRoot.append(crossReferenceRoot);
 		}
 
-		field = "crossReference";
-		parametersRoot[field] = crossReferenceRoot;
+		field = "crossReferences";
+		parametersRoot[field] = crossReferencesRoot;
 	}
 	else if (cutOfAudioMediaItemKey != -1)
 	{
-		MMSEngineDBFacade::CrossReferenceType   crossReferenceType =
-			MMSEngineDBFacade::CrossReferenceType::CutOfAudio;
-
-        Json::Value crossReferenceRoot;
-
-		field = "type";
-		crossReferenceRoot[field] =
-			MMSEngineDBFacade::toString(crossReferenceType);
-
-		field = "mediaItemKey";
-		crossReferenceRoot[field] = cutOfAudioMediaItemKey;
-
-        Json::Value crossReferenceParametersRoot;
+		Json::Value crossReferencesRoot(Json::arrayValue);
 		{
-			field = "startTimeInSeconds";
-			crossReferenceParametersRoot[field] = startTimeInSeconds;
+			Json::Value crossReferenceRoot;
 
-			field = "endTimeInSeconds";
-			crossReferenceParametersRoot[field] = endTimeInSeconds;
+			MMSEngineDBFacade::CrossReferenceType crossReferenceType = MMSEngineDBFacade::CrossReferenceType::CutOfAudio;
 
-			field = "parameters";
-			crossReferenceRoot[field] = crossReferenceParametersRoot;
+			field = "type";
+			crossReferenceRoot[field] = MMSEngineDBFacade::toString(crossReferenceType);
+
+			field = "mediaItemKey";
+			crossReferenceRoot[field] = cutOfAudioMediaItemKey;
+
+			Json::Value crossReferenceParametersRoot;
+			{
+				field = "startTimeInSeconds";
+				crossReferenceParametersRoot[field] = startTimeInSeconds;
+
+				field = "endTimeInSeconds";
+				crossReferenceParametersRoot[field] = endTimeInSeconds;
+
+				field = "parameters";
+				crossReferenceRoot[field] = crossReferenceParametersRoot;
+			}
+	
+			crossReferencesRoot.append(crossReferenceRoot);
 		}
 
-		field = "crossReference";
-		parametersRoot[field] = crossReferenceRoot;
+		field = "crossReferences";
+		parametersRoot[field] = crossReferencesRoot;
 	}
 
     field = "title";

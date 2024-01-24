@@ -4999,63 +4999,13 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 		// cross references
 		{
-			string field = "crossReference";
+			string field = "crossReferences";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-                Json::Value crossReferenceRoot = parametersRoot[field];
+                Json::Value crossReferencesRoot = parametersRoot[field];
 
-				field = "type";
-				MMSEngineDBFacade::CrossReferenceType crossReferenceType =
-					MMSEngineDBFacade::toCrossReferenceType(JSONUtils::asString(crossReferenceRoot, field, ""));
-
-				int64_t sourceMediaItemKey;
-				int64_t targetMediaItemKey;
-
-				if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfImage)
-				{
-					crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
-
-					targetMediaItemKey = mediaItemKey;
-
-					field = "mediaItemKey";
-					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
-				}
-				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfPoster)
-				{
-					crossReferenceType = MMSEngineDBFacade::CrossReferenceType::PosterOfVideo;
-
-					targetMediaItemKey = mediaItemKey;
-
-					field = "mediaItemKey";
-					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
-				}
-				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
-				{
-					crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfAudio;
-
-					targetMediaItemKey = mediaItemKey;
-
-					field = "mediaItemKey";
-					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
-				}
-				else
-				{
-					sourceMediaItemKey = mediaItemKey;
-
-					field = "mediaItemKey";
-					targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
-				}
-
-                Json::Value crossReferenceParametersRoot;
-				field = "parameters";
-				if (JSONUtils::isMetadataPresent(crossReferenceRoot, field))
-				{
-					crossReferenceParametersRoot = crossReferenceRoot[field];
-				}
-
-				addCrossReference (conn, &trans, ingestionJobKey,
-						sourceMediaItemKey, crossReferenceType, targetMediaItemKey,
-						crossReferenceParametersRoot);
+				manageCrossReferences(conn, &trans, ingestionJobKey,
+					mediaItemKey, crossReferencesRoot);
 			}
 		}
 
@@ -6117,6 +6067,117 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 	}
     
     return physicalPathKey;
+}
+
+void MMSEngineDBFacade::manageCrossReferences(
+    shared_ptr<PostgresConnection> conn, transaction_base* trans,
+	int64_t ingestionJobKey,
+	int64_t mediaItemKey, Json::Value crossReferencesRoot)
+{
+	try
+	{
+		{
+			string sqlStatement = fmt::format( 
+				"WITH rows AS (delete from MMS_CrossReference "
+				"where sourceMediaItemKey = {} or targetMediaItemKey = {} "
+				"returning 1) select count(*) from rows",
+				mediaItemKey, mediaItemKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", rowsUpdated: {}"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, rowsUpdated, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+        }
+
+		for(int crossReferenceIndex = 0; crossReferenceIndex < crossReferencesRoot.size(); crossReferenceIndex++)
+		{
+			Json::Value crossReferenceRoot = crossReferencesRoot[crossReferenceIndex];
+
+			string field = "type";
+			CrossReferenceType crossReferenceType = toCrossReferenceType(JSONUtils::asString(crossReferenceRoot, field, ""));
+
+			int64_t sourceMediaItemKey;
+			int64_t targetMediaItemKey;
+
+			if (crossReferenceType == CrossReferenceType::VideoOfImage)
+			{
+				crossReferenceType = CrossReferenceType::ImageOfVideo;
+
+				targetMediaItemKey = mediaItemKey;
+
+				field = "mediaItemKey";
+				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+			}
+			else if (crossReferenceType == CrossReferenceType::VideoOfPoster)
+			{
+				crossReferenceType = CrossReferenceType::PosterOfVideo;
+
+				targetMediaItemKey = mediaItemKey;
+
+				field = "mediaItemKey";
+				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+			}
+			else if (crossReferenceType == CrossReferenceType::AudioOfImage)
+			{
+				crossReferenceType = CrossReferenceType::ImageOfAudio;
+
+				targetMediaItemKey = mediaItemKey;
+
+				field = "mediaItemKey";
+				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+			}
+			else
+			{
+				sourceMediaItemKey = mediaItemKey;
+
+				field = "mediaItemKey";
+				targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+			}
+
+			Json::Value crossReferenceParametersRoot;
+			field = "parameters";
+			if (JSONUtils::isMetadataPresent(crossReferenceRoot, field))
+				crossReferenceParametersRoot = crossReferenceRoot[field];
+
+			addCrossReference (conn, trans, ingestionJobKey,
+				sourceMediaItemKey, crossReferenceType, targetMediaItemKey, crossReferenceParametersRoot);
+		}
+	}
+	catch(sql_error const &e)
+	{
+		SPDLOG_ERROR("SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
+	catch(exception& e)
+	{
+		SPDLOG_ERROR("exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		throw e;
+	}
 }
 
 void MMSEngineDBFacade::addCrossReference (
