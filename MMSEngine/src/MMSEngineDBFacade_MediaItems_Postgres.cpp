@@ -6155,6 +6155,15 @@ void MMSEngineDBFacade::manageCrossReferences(
 				field = "mediaItemKey";
 				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
 			}
+			else if (crossReferenceType == CrossReferenceType::VideoOfFace)
+			{
+				crossReferenceType = CrossReferenceType::FaceOfVideo;
+
+				targetMediaItemKey = mediaItemKey;
+
+				field = "mediaItemKey";
+				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+			}
 			else if (crossReferenceType == CrossReferenceType::AudioOfImage)
 			{
 				crossReferenceType = CrossReferenceType::ImageOfAudio;

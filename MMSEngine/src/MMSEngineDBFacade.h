@@ -1100,6 +1100,7 @@ public:
         ImageOfAudio,
 		AudioOfImage,	// will be converted to ImageOfAudio
         FaceOfVideo,
+		VideoOfFace,	// will be converted to FaceOfVideo
         CutOfVideo,
         CutOfAudio,
         PosterOfVideo,
@@ -1119,6 +1120,8 @@ public:
                 return "AudioOfImage";
             case CrossReferenceType::FaceOfVideo:
                 return "FaceOfVideo";
+            case CrossReferenceType::VideoOfFace:
+                return "VideoOfFace";
             case CrossReferenceType::CutOfVideo:
                 return "CutOfVideo";
             case CrossReferenceType::CutOfAudio:
@@ -1148,6 +1151,8 @@ public:
             return CrossReferenceType::AudioOfImage;
 		else if (lowerCase == "faceofvideo")
             return CrossReferenceType::FaceOfVideo;
+		else if (lowerCase == "videoofface")
+            return CrossReferenceType::VideoOfFace;
 		else if (lowerCase == "cutofvideo")
             return CrossReferenceType::CutOfVideo;
 		else if (lowerCase == "cutofaudio")
