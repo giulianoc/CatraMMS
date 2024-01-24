@@ -537,6 +537,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 	bool retentionInMinutesModified, int64_t newRetentionInMinutes,
 	bool tagsModified, Json::Value tagsRoot,
 	bool uniqueNameModified, string newUniqueName,
+	Json::Value crossReferencesRoot,
 	bool admin
 	)
 {
@@ -641,6 +642,9 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 				newUniqueName
 			);
 		}
+
+		if (crossReferencesRoot != Json::nullValue)
+			manageCrossReferences(conn, &trans, -1, workspaceKey, mediaItemKey, crossReferencesRoot);
 
 		trans.commit();
 		connectionPool->unborrow(conn);
@@ -5005,7 +5009,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                 Json::Value crossReferencesRoot = parametersRoot[field];
 
 				manageCrossReferences(conn, &trans, ingestionJobKey,
-					mediaItemKey, crossReferencesRoot);
+					workspace->_workspaceKey, mediaItemKey, crossReferencesRoot);
 			}
 		}
 
@@ -6072,10 +6076,39 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 void MMSEngineDBFacade::manageCrossReferences(
     shared_ptr<PostgresConnection> conn, transaction_base* trans,
 	int64_t ingestionJobKey,
-	int64_t mediaItemKey, Json::Value crossReferencesRoot)
+	int64_t workspaceKey, int64_t mediaItemKey, Json::Value crossReferencesRoot)
 {
 	try
 	{
+		// make sure the mediaitemkey belong to the workspace
+		{
+			string sqlStatement = fmt::format( 
+				"select mediaItemKey from MMS_MediaItem "
+				"where workspaceKey = {} and mediaItemKey = {}",
+				workspaceKey, mediaItemKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans->exec(sqlStatement);
+			chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
+				chrono::system_clock::now() - startSql);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), sqlDuration.count()
+			);
+			if (empty(res))
+			{
+				string errorMessage = fmt::format("cross references cannot be updated because mediaItemKey does not belong to the workspace"
+					", workspaceKey: {}"
+					", mediaItemKey: {}",
+					workspaceKey, mediaItemKey
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);                    
+			}
+		}
+
 		{
 			string sqlStatement = fmt::format( 
 				"WITH rows AS (delete from MMS_CrossReference "

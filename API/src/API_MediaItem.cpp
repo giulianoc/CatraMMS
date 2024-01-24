@@ -76,6 +76,7 @@ void API::updateMediaItem(
 		Json::Value newTagsRoot;
 		bool uniqueNameModified = false;
 		string newUniqueName;
+		Json::Value crossReferencesRoot = Json::nullValue;
 
         {
 			string field = "title";
@@ -112,6 +113,10 @@ void API::updateMediaItem(
 				uniqueNameModified = true;
 				newUniqueName = JSONUtils::asString(metadataRoot, field, "");
 			}
+
+			field = "crossReferences";
+			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+				crossReferencesRoot = metadataRoot[field];
         }
 
         try
@@ -128,7 +133,7 @@ void API::updateMediaItem(
 				userDataModified, newUserData,
 				retentionInMinutesModified, newRetentionInMinutes,
 				tagsModified, newTagsRoot,
-				uniqueNameModified, newUniqueName,
+				uniqueNameModified, newUniqueName, crossReferencesRoot,
 				admin
 			);
 

@@ -1720,6 +1720,19 @@ public:
 		int64_t encoderKey, bool alsoEncodingJobsFromOtherWorkspaces,
         bool asc, string status, string types, bool fromMaster);
 
+	#ifdef __POSTGRES__
+	Json::Value updateMediaItem (
+		int64_t workspaceKey,
+		int64_t mediaItemKey,
+		bool titleModified, string newTitle,
+		bool userDataModified, string newUserData,
+		bool retentionInMinutesModified, int64_t newRetentionInMinutes,
+		bool tagsModified, Json::Value tagsRoot,
+		bool uniqueNameModified, string newUniqueName,
+		Json::Value crossReferencesRoot,
+		bool admin
+	);
+	#else
 	Json::Value updateMediaItem (
 		int64_t workspaceKey,
 		int64_t mediaItemKey,
@@ -1730,6 +1743,7 @@ public:
 		bool uniqueNameModified, string newUniqueName,
 		bool admin
 	);
+	#endif
 
 	Json::Value updatePhysicalPath (
 		int64_t workspaceKey,
@@ -3281,7 +3295,7 @@ private:
 	void manageCrossReferences(
 		shared_ptr<PostgresConnection> conn, transaction_base* trans,
 		int64_t ingestionJobKey,
-		int64_t mediaItemKey, Json::Value crossReferencesRoot);
+		int64_t workspaceKey, int64_t mediaItemKey, Json::Value crossReferencesRoot);
 	#endif
 
 	#ifdef __POSTGRES__
