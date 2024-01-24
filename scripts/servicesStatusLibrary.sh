@@ -708,10 +708,12 @@ mms_sql_timing_check_service()
 			sqlStatement=$2;	\
 			duration=$6;	\
 			label=$7;	\
-			if (label == "getIngestionsToBeManaged")
-				maxSQLDuration = 300;
+			if (label == "getIngestionsToBeManaged")	\
+				maxSQLDuration = 300;	\
+			else if (label == "getIngestionRootsStatus")	\
+				maxSQLDuration = 300;	\
 			if (duration > maxSQLDuration)	\
-				warningMessage=warningMessage""datetime" - "sqlStatement" - "duration"\n";	\
+				warningMessage=warningMessage""datetime" - "label" - "sqlStatement" - "duration"\n";	\
 		}	\
 	}	\
 	END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')

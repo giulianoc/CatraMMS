@@ -4275,7 +4275,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
+				", elapsed (millisecs): @{}@getIngestionRootsStatus@",
 				sqlStatement, conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>(
 					(chrono::system_clock::now() - startSql) - internalSqlDuration).count()

@@ -550,7 +550,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
-	nontransaction trans{*(conn->_sqlConnection)};
+	work trans{*(conn->_sqlConnection)};
 
     try
     {
