@@ -271,8 +271,12 @@ void FFMpegEncodingParameters::applyEncoding(
 								string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
 									"", -1);
 
-								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
-									ffmpegArgumentList);
+								if (videoFilters != "")
+									FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+										ffmpegArgumentList);
+								else
+									FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+										ffmpegArgumentList);
 							}
 						}
 
@@ -295,8 +299,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
-							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
-								ffmpegArgumentList);
+							if (audioFilters != "")
+								FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+									ffmpegArgumentList);
 						}
 
 						ffmpegArgumentList.push_back("-threads");
@@ -389,8 +394,12 @@ void FFMpegEncodingParameters::applyEncoding(
 								string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
 									"", -1);
 
-								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
-									ffmpegArgumentList);
+								if (videoFilters != "")
+									FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+										ffmpegArgumentList);
+								else
+									FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+										ffmpegArgumentList);
 							}
 						}
 
@@ -408,8 +417,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
-							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
-								ffmpegArgumentList);
+							if (audioFilters != "")
+								FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+									ffmpegArgumentList);
 						}
 
 						FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
@@ -511,8 +521,12 @@ void FFMpegEncodingParameters::applyEncoding(
 							string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
 								"", -1);
 
-							FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
-								ffmpegArgumentList);
+							if (videoFilters != "")
+								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+									ffmpegArgumentList);
+							else
+								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+									ffmpegArgumentList);
 						}
 					}
 					ffmpegArgumentList.push_back("-threads");
@@ -531,8 +545,9 @@ void FFMpegEncodingParameters::applyEncoding(
 					{
 						string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
-						FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
-							ffmpegArgumentList);
+						if (audioFilters != "")
+							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+								ffmpegArgumentList);
 					}
 
 					if (outputFileToBeAdded)
@@ -632,8 +647,12 @@ void FFMpegEncodingParameters::applyEncoding(
 								string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
 									"", -1);
 
-								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
-									ffmpegArgumentList);
+								if (videoFilters != "")
+									FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+										ffmpegArgumentList);
+								else
+									FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+										ffmpegArgumentList);
 							}
 						}
 						ffmpegArgumentList.push_back("-threads");
@@ -666,8 +685,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
-							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
-								ffmpegArgumentList);
+							if (audioFilters != "")
+								FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+									ffmpegArgumentList);
 						}
 
 						// 2020-08-21: changed from ffmpegFileFormatParameter to -f null
@@ -729,8 +749,12 @@ void FFMpegEncodingParameters::applyEncoding(
 								string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
 									"", -1);
 
-								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
-									ffmpegArgumentList);
+								if (videoFilters != "")
+									FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+										ffmpegArgumentList);
+								else
+									FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+										ffmpegArgumentList);
 							}
 						}
 						ffmpegArgumentList.push_back("-threads");
@@ -758,8 +782,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
-							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
-								ffmpegArgumentList);
+							if (audioFilters != "")
+								FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+									ffmpegArgumentList);
 						}
 
 						FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
@@ -834,8 +859,12 @@ void FFMpegEncodingParameters::applyEncoding(
 									string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
 										"", -1);
 
-									FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
-										ffmpegArgumentList);
+									if (videoFilters != "")
+										FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+											ffmpegArgumentList);
+									else
+										FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+											ffmpegArgumentList);
 								}
 							}
 							ffmpegArgumentList.push_back("-threads");
@@ -854,8 +883,9 @@ void FFMpegEncodingParameters::applyEncoding(
 							{
 								string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
-								FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
-									ffmpegArgumentList);
+								if (audioFilters != "")
+									FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+										ffmpegArgumentList);
 							}
 
 							if (outputFileToBeAdded)
@@ -921,8 +951,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
-							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
-								ffmpegArgumentList);
+							if (audioFilters != "")
+								FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+									ffmpegArgumentList);
 						}
 
 						if (outputFileToBeAdded)
@@ -964,8 +995,9 @@ void FFMpegEncodingParameters::applyEncoding(
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
-							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
-								ffmpegArgumentList);
+							if (audioFilters != "")
+								FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+									ffmpegArgumentList);
 						}
 
 						if (outputFileToBeAdded)
