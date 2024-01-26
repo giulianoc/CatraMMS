@@ -36,6 +36,7 @@ private:
     shared_ptr<spdlog::logger>  _logger;
 
 	string					_ffmpegTempDir;
+	string					_ffmpegTtfFontDir;
 	string					_multiTrackTemplateVariable;
 	string					_multiTrackTemplatePart;
 
@@ -88,6 +89,7 @@ public:
 		bool& twoPasses,	// out
 
 		string ffmpegTempDir,
+		string ffmpegTtfFontDir,
 		shared_ptr<spdlog::logger> logger);
     
     ~FFMpegEncodingParameters();
@@ -104,6 +106,8 @@ public:
 		bool outputFileToBeAdded,                                                                                 
 
 		bool videoResolutionToBeAdded,
+
+		Json::Value filtersRoot,
 
 		// out (in append)
 		vector<string>& ffmpegArgumentList

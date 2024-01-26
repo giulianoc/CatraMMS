@@ -21,10 +21,12 @@
 # with the authors.
 
 SET (SOURCES
+	FFMpegFilters.cpp
 	FFMpegEncodingParameters.cpp
 	FFMpeg.cpp
 )
 SET (HEADERS
+	FFMpegFilters.h
 	FFMpegEncodingParameters.h
 	FFMpeg.h
 )

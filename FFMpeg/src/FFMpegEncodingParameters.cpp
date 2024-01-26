@@ -11,6 +11,7 @@
  * Created on February 18, 2018, 1:27 AM
  */
 #include "FFMpegEncodingParameters.h"
+#include "FFMpegFilters.h"
 #include "JSONUtils.h"
 #include <regex>
 #include <fstream>
@@ -32,11 +33,13 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 	bool& twoPasses,	// out
 
 	string ffmpegTempDir,
+	string ffmpegTtfFontDir,
 	shared_ptr<spdlog::logger> logger) 
 {
     _logger             = logger;
 
-    _ffmpegTempDir = ffmpegTempDir;
+    _ffmpegTempDir		= ffmpegTempDir;
+	_ffmpegTtfFontDir	= ffmpegTtfFontDir;
 
 	_multiTrackTemplateVariable = "__HEIGHT__";
 	_multiTrackTemplatePart = _multiTrackTemplateVariable + "p";
@@ -149,6 +152,8 @@ void FFMpegEncodingParameters::applyEncoding(
 	// e quindi applyEncoding non la aggiunge
 	bool videoResolutionToBeAdded,
 
+	Json::Value filtersRoot,
+
 	// out (in append)
 	vector<string>& ffmpegArgumentList
 )
@@ -163,6 +168,8 @@ void FFMpegEncodingParameters::applyEncoding(
 			;
 			throw runtime_error(errorMessage);
 		}
+
+		FFMpegFilters ffmpegFilters(_ffmpegTtfFontDir);
 
 		if (_httpStreamingFileFormat != "")
 		{
@@ -255,8 +262,19 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 						if (videoResolutionToBeAdded)
-							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-								ffmpegArgumentList);
+						{
+							if (filtersRoot == Json::nullValue)
+								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+									ffmpegArgumentList);
+							else
+							{
+								string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
+									"", -1);
+
+								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+									ffmpegArgumentList);
+							}
+						}
 
 						// It should be useless to add the audio parameters in phase 1 but,
 						// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
@@ -273,6 +291,13 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+						if (filtersRoot != Json::nullValue)
+						{
+							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
+
+							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+								ffmpegArgumentList);
+						}
 
 						ffmpegArgumentList.push_back("-threads");
 						ffmpegArgumentList.push_back("0");
@@ -355,8 +380,19 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoMaxRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 						if (videoResolutionToBeAdded)
-							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-								ffmpegArgumentList);
+						{
+							if (filtersRoot == Json::nullValue)
+								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+									ffmpegArgumentList);
+							else
+							{
+								string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
+									"", -1);
+
+								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+									ffmpegArgumentList);
+							}
+						}
 
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
 						if (_audioBitRatesInfo.size() > videoIndex)
@@ -368,6 +404,13 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+						if (filtersRoot != Json::nullValue)
+						{
+							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
+
+							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+								ffmpegArgumentList);
+						}
 
 						FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
@@ -459,8 +502,19 @@ void FFMpegEncodingParameters::applyEncoding(
 					FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 					if (videoResolutionToBeAdded)
-						FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-							ffmpegArgumentList);
+					{
+						if (filtersRoot == Json::nullValue)
+							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+								ffmpegArgumentList);
+						else
+						{
+							string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
+								"", -1);
+
+							FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+								ffmpegArgumentList);
+						}
+					}
 					ffmpegArgumentList.push_back("-threads");
 					ffmpegArgumentList.push_back("0");
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
@@ -473,6 +527,13 @@ void FFMpegEncodingParameters::applyEncoding(
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+					if (filtersRoot != Json::nullValue)
+					{
+						string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
+
+						FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+							ffmpegArgumentList);
+					}
 
 					if (outputFileToBeAdded)
 					{
@@ -562,8 +623,19 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 						if (videoResolutionToBeAdded)
-							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-								ffmpegArgumentList);
+						{
+							if (filtersRoot == Json::nullValue)
+								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+									ffmpegArgumentList);
+							else
+							{
+								string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
+									"", -1);
+
+								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+									ffmpegArgumentList);
+							}
+						}
 						ffmpegArgumentList.push_back("-threads");
 						ffmpegArgumentList.push_back("0");
 						ffmpegArgumentList.push_back("-pass");
@@ -590,6 +662,13 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+						if (filtersRoot != Json::nullValue)
+						{
+							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
+
+							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+								ffmpegArgumentList);
+						}
 
 						// 2020-08-21: changed from ffmpegFileFormatParameter to -f null
 						// FFMpegEncodingParameters::addToArguments(ffmpegFileFormatParameter, ffmpegArgumentList);
@@ -641,8 +720,19 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 						if (videoResolutionToBeAdded)
-							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-								ffmpegArgumentList);
+						{
+							if (filtersRoot == Json::nullValue)
+								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+									ffmpegArgumentList);
+							else
+							{
+								string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
+									"", -1);
+
+								FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+									ffmpegArgumentList);
+							}
+						}
 						ffmpegArgumentList.push_back("-threads");
 						ffmpegArgumentList.push_back("0");
 						ffmpegArgumentList.push_back("-pass");
@@ -664,6 +754,13 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+						if (filtersRoot != Json::nullValue)
+						{
+							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
+
+							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+								ffmpegArgumentList);
+						}
 
 						FFMpegEncodingParameters::addToArguments(_ffmpegFileFormatParameter, ffmpegArgumentList);
 						if (_videoBitRatesInfo.size() > 1)
@@ -728,8 +825,19 @@ void FFMpegEncodingParameters::applyEncoding(
 							FFMpegEncodingParameters::addToArguments(_ffmpegVideoFrameRateParameter, ffmpegArgumentList);
 							FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 							if (videoResolutionToBeAdded)
-								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
-									ffmpegArgumentList);
+							{
+								if (filtersRoot == Json::nullValue)
+									FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
+										ffmpegArgumentList);
+								else
+								{
+									string videoFilters = ffmpegFilters.addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
+										"", -1);
+
+									FFMpegEncodingParameters::addToArguments(string("-filter:v ") + videoFilters,
+										ffmpegArgumentList);
+								}
+							}
 							ffmpegArgumentList.push_back("-threads");
 							ffmpegArgumentList.push_back("0");
 							FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
@@ -742,6 +850,13 @@ void FFMpegEncodingParameters::applyEncoding(
 							FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 							FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 							FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+							if (filtersRoot != Json::nullValue)
+							{
+								string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
+
+								FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+									ffmpegArgumentList);
+							}
 
 							if (outputFileToBeAdded)
 							{
@@ -802,6 +917,13 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+						if (filtersRoot != Json::nullValue)
+						{
+							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
+
+							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+								ffmpegArgumentList);
+						}
 
 						if (outputFileToBeAdded)
 						{
@@ -838,6 +960,13 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
+						if (filtersRoot != Json::nullValue)
+						{
+							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
+
+							FFMpegEncodingParameters::addToArguments(string("-filter:a ") + audioFilters,
+								ffmpegArgumentList);
+						}
 
 						if (outputFileToBeAdded)
 						{

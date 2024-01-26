@@ -236,7 +236,7 @@
 							"shortest": 1
 						}
 					]
-				}
+				},
 
 				// optional: this parameter is needed only in case the streaming has to be encoded before proxying
 				//    The encoding profile can be specified using EncodingProfileKey or EncodingProfileLabel.

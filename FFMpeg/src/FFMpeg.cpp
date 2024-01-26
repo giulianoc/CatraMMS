@@ -19,6 +19,7 @@
 #include "FFMpegEncodingParameters.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
+#include "FFMpegFilters.h"
 #include "FFMpeg.h"
 
 
@@ -93,6 +94,7 @@ void FFMpeg::encodeContent(
 	Json::Value videoTracksRoot,
 	Json::Value audioTracksRoot,
 	int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
+	Json::Value filtersRoot,
 	int64_t physicalPathKey,
 	int64_t encodingJobKey,
 	int64_t ingestionJobKey,
@@ -165,27 +167,6 @@ void FFMpeg::encodeContent(
 			}
 		}
 
-		/*
-        string httpStreamingFileFormat;    
-		string ffmpegHttpStreamingParameter = "";
-
-        string ffmpegFileFormatParameter = "";
-
-        string ffmpegVideoCodecParameter = "";
-        string ffmpegVideoProfileParameter = "";
-        string ffmpegVideoOtherParameters = "";
-        string ffmpegVideoFrameRateParameter = "";
-        string ffmpegVideoKeyFramesRateParameter = "";
-		vector<tuple<string, int, int, int, string, string, string>> videoBitRatesInfo;
-
-        string ffmpegAudioCodecParameter = "";
-        string ffmpegAudioOtherParameters = "";
-        string ffmpegAudioChannelsParameter = "";
-        string ffmpegAudioSampleRateParameter = "";
-		vector<string> audioBitRatesInfo;
-		*/
-
-
         // _currentDurationInMilliSeconds      = durationInMilliSeconds;
         // _currentMMSSourceAssetPathName      = mmsSourceAssetPathName;
         // _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
@@ -212,6 +193,7 @@ void FFMpeg::encodeContent(
 			_twoPasses,	// out
 
 			_ffmpegTempDir,
+			_ffmpegTtfFontDir,
 			_logger) ;
 
 		{
@@ -752,6 +734,7 @@ void FFMpeg::encodeContent(
 					0,	// 0: YES two passes, first step
 					true,	// outputFileToBeAdded
 					true,	// videoResolutionToBeAdded
+					filtersRoot,
 					ffmpegArgumentList	// out
 				);
 
@@ -861,6 +844,7 @@ void FFMpeg::encodeContent(
 					1,	// 1: YES two passes, second step
 					true,	// outputFileToBeAdded
 					true,	// videoResolutionToBeAdded
+					filtersRoot,
 					ffmpegArgumentList	// out
 				);
 
@@ -979,6 +963,7 @@ void FFMpeg::encodeContent(
 					-1,	// -1: NO two passes
 					true,	// outputFileToBeAdded
 					true,	// videoResolutionToBeAdded
+					filtersRoot,
 					ffmpegArgumentList	// out
 				);
 
@@ -1143,6 +1128,7 @@ void FFMpeg::encodeContent(
 					0,	// 1: YES two passes, first step
 					true,	// outputFileToBeAdded
 					true,	// videoResolutionToBeAdded
+					filtersRoot,
 					ffmpegArgumentList	// out
 				);
 
@@ -1252,6 +1238,7 @@ void FFMpeg::encodeContent(
 					1,	// 1: YES two passes, second step
 					true,	// outputFileToBeAdded
 					true,	// videoResolutionToBeAdded
+					filtersRoot,
 					ffmpegArgumentList	// out
 				);
 
@@ -1400,6 +1387,7 @@ void FFMpeg::encodeContent(
 					-1,	// -1: NO two passes
 					true,	// outputFileToBeAdded
 					true,	// videoResolutionToBeAdded
+					filtersRoot,
 					ffmpegArgumentList	// out
 				);
 
@@ -2336,7 +2324,9 @@ void FFMpeg::overlayTextOnVideo(
 				Json::Value filterRoot = drawTextDetailsRoot;
 				filterRoot["type"] = "drawtext";
 				filterRoot["textFilePathName"] = textTemporaryFileName;
-				ffmpegDrawTextFilter = getFilter(filterRoot, -1);
+
+				FFMpegFilters ffmpegFilters(_ffmpegTtfFontDir);
+				ffmpegDrawTextFilter = ffmpegFilters.getFilter(filterRoot, -1);
 			}
 			/*
 			string ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
@@ -3798,6 +3788,7 @@ void FFMpeg::introOutroOverlay(
 			_twoPasses, // out
 
 			_ffmpegTempDir,
+			_ffmpegTtfFontDir,
 			_logger);
 
 		/*
@@ -4053,6 +4044,7 @@ ffmpeg \
 					-1, // -1: NO two passes
 					true,   // outputFileToBeAdded
 					false,	// videoResolutionToBeAdded
+					Json::nullValue,
 					ffmpegArgumentList  // out
 				);
 
@@ -4350,6 +4342,7 @@ void FFMpeg::introOverlay(
 			_twoPasses, // out
 
 			_ffmpegTempDir,
+			_ffmpegTtfFontDir,
 			_logger);
 
 		{
@@ -4465,6 +4458,7 @@ ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/14/000/000/001/3450777
 					-1, // -1: NO two passes
 					true,   // outputFileToBeAdded
 					false,	// videoResolutionToBeAdded
+					Json::nullValue,
 					ffmpegArgumentList  // out
 				);
 
@@ -4762,6 +4756,7 @@ void FFMpeg::outroOverlay(
 			_twoPasses, // out
 
 			_ffmpegTempDir,
+			_ffmpegTtfFontDir,
 			_logger);
 
 		{
@@ -4873,6 +4868,7 @@ ffmpeg -y
 					-1, // -1: NO two passes
 					true,   // outputFileToBeAdded
 					false,	// videoResolutionToBeAdded
+					Json::nullValue,
 					ffmpegArgumentList  // out
 				);
 
@@ -5142,6 +5138,7 @@ void FFMpeg::silentAudio(
 			_twoPasses, // out
 
 			_ffmpegTempDir,
+			_ffmpegTtfFontDir,
 			_logger);
 
 		{
@@ -5224,6 +5221,7 @@ void FFMpeg::silentAudio(
 							-1, // -1: NO two passes
 							true,   // outputFileToBeAdded
 							true,	// videoResolutionToBeAdded
+							Json::nullValue,
 							ffmpegArgumentList  // out
 						);
 					}
@@ -5261,6 +5259,7 @@ void FFMpeg::silentAudio(
 							-1, // -1: NO two passes
 							true,   // outputFileToBeAdded
 							true,	// videoResolutionToBeAdded
+							Json::nullValue,
 							ffmpegArgumentList  // out
 						);
 					}
@@ -5298,6 +5297,7 @@ void FFMpeg::silentAudio(
 							-1, // -1: NO two passes
 							true,   // outputFileToBeAdded
 							true,	// videoResolutionToBeAdded
+							Json::nullValue,
 							ffmpegArgumentList  // out
 						);
 					}
@@ -7793,6 +7793,8 @@ void FFMpeg::generateFramesToIngest(
             localImageFileName = imageBaseFileName + ".jpg";
     }
 
+	FFMpegFilters ffmpegFilters(_ffmpegTtfFontDir);
+
     string videoFilterParameters;
     if (videoFilter == "PeriodicFrame")
     {
@@ -7802,7 +7804,8 @@ void FFMpeg::generateFramesToIngest(
 			filterRoot["type"] = "fps";
 			filterRoot["framesNumber"] = 1;
 			filterRoot["periodInSeconds"] = periodInSeconds;
-			filter = getFilter(filterRoot, -1);
+
+			filter = ffmpegFilters.getFilter(filterRoot, -1);
 		}
 
 		// videoFilterParameters = "-vf fps=1/" + to_string(periodInSeconds) + " ";
@@ -7817,7 +7820,7 @@ void FFMpeg::generateFramesToIngest(
 				Json::Value filterRoot;
 				filterRoot["type"] = "select";
 				filterRoot["frameType"] = "i-frame";
-				filter = getFilter(filterRoot, -1);
+				filter = ffmpegFilters.getFilter(filterRoot, -1);
 			}
 
 			// videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' ";
@@ -7831,7 +7834,7 @@ void FFMpeg::generateFramesToIngest(
 				filterRoot["type"] = "select";
 				filterRoot["frameType"] = "i-frame";
 				filterRoot["fpsMode"] = "vfr";
-				filter = getFilter(filterRoot, -1);
+				filter = ffmpegFilters.getFilter(filterRoot, -1);
 			}
 
 			// videoFilterParameters = "-vf select='eq(pict_type,PICT_TYPE_I)' -fps_mode vfr ";
@@ -10319,6 +10322,8 @@ void FFMpeg::liveRecorder(
 			int videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "videoTrackIndexToBeUsed", -1);
 			int audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, "audioTrackIndexToBeUsed", -1);
 
+			FFMpegFilters ffmpegFilters(_ffmpegTtfFontDir);
+
 			// if (outputType == "HLS" || outputType == "DASH")
 			if (outputType == "HLS_Channel")
 			{
@@ -10466,7 +10471,7 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				tuple<string, string, string> allFilters = addFilters(
+				tuple<string, string, string> allFilters = ffmpegFilters.addFilters(
 					filtersRoot, ffmpegVideoResolutionParameter,
 					"", -1);
 
@@ -10776,7 +10781,7 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				tuple<string, string, string> allFilters = addFilters(
+				tuple<string, string, string> allFilters = ffmpegFilters.addFilters(
 					filtersRoot, ffmpegVideoResolutionParameter,
 					"", -1);
 
@@ -11053,7 +11058,7 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				tuple<string, string, string> allFilters = addFilters(
+				tuple<string, string, string> allFilters = ffmpegFilters.addFilters(
 					filtersRoot, ffmpegVideoResolutionParameter,
 					"", -1);
 
@@ -11359,7 +11364,7 @@ void FFMpeg::liveRecorder(
 					}
 				}
 
-				tuple<string, string, string> allFilters = addFilters(
+				tuple<string, string, string> allFilters = ffmpegFilters.addFilters(
 					filtersRoot, ffmpegVideoResolutionParameter,
 					"", -1);
 
@@ -11427,7 +11432,7 @@ void FFMpeg::liveRecorder(
 			}
 			else if (outputType == "NONE")
 			{
-				tuple<string, string, string> allFilters = addFilters(
+				tuple<string, string, string> allFilters = ffmpegFilters.addFilters(
 					filtersRoot, "", "", -1);
 
 				string videoFilters;
@@ -15043,6 +15048,8 @@ void FFMpeg::outputsRootToFfmpeg(
 		+ ", outputsRoot: " + JSONUtils::toString(outputsRoot)
 	);
 
+	FFMpegFilters ffmpegFilters(_ffmpegTtfFontDir);
+
 	// 2023-01-01: 
 	//		In genere i parametri del 'draw text' vengono inizializzati all'interno di outputRoot.
 	//		Nel caso di un Broadcast (Live Channel), all'interno del json dell'encodingJob, inputsRoot
@@ -15082,7 +15089,7 @@ void FFMpeg::outputsRootToFfmpeg(
 			Json::Value filterRoot = inputDrawTextDetailsRoot;
 			filterRoot["type"] = "drawtext";
 			filterRoot["textFilePathName"] = textTemporaryFileName;
-			ffmpegDrawTextFilter = getFilter(filterRoot, streamingDurationInSeconds);
+			ffmpegDrawTextFilter = ffmpegFilters.getFilter(filterRoot, streamingDurationInSeconds);
 		}
 		/*
 		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
@@ -15142,7 +15149,7 @@ void FFMpeg::outputsRootToFfmpeg(
 				Json::Value filterRoot = drawTextDetailsRoot;
 				filterRoot["type"] = "drawtext";
 				filterRoot["textFilePathName"] = textTemporaryFileName;
-				ffmpegDrawTextFilter = getFilter(filterRoot, streamingDurationInSeconds);
+				ffmpegDrawTextFilter = ffmpegFilters.getFilter(filterRoot, streamingDurationInSeconds);
 			}
 			/*
 			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
@@ -15276,7 +15283,7 @@ void FFMpeg::outputsRootToFfmpeg(
 			throw runtime_error(errorMessage);
 		}
 
-		tuple<string, string, string> allFilters = addFilters(
+		tuple<string, string, string> allFilters = ffmpegFilters.addFilters(
 			filtersRoot, ffmpegVideoResolutionParameter,
 			ffmpegDrawTextFilter, streamingDurationInSeconds);
 		string videoFilters;
@@ -15646,7 +15653,7 @@ void FFMpeg::outputsRootToFfmpeg(
 					FFMpegEncodingParameters::addToArguments(otherOutputOptions, ffmpegOutputArgumentList);
 			}
 
-			tuple<string, string, string> allFilters = addFilters(
+			tuple<string, string, string> allFilters = ffmpegFilters.addFilters(
 				filtersRoot, "", "", -1);
 
 			string videoFilters;
@@ -18078,6 +18085,7 @@ void FFMpeg::setStatus(
 	_startFFMpegMethod = chrono::system_clock::now();
 }
 
+/*
 tuple<string, string, string> FFMpeg::addFilters(
 	Json::Value filtersRoot,
 	string ffmpegVideoResolutionParameter,
@@ -18147,7 +18155,9 @@ tuple<string, string, string> FFMpeg::addFilters(
 
 	return make_tuple(videoFilters, audioFilters, complexFilters);
 }
+*/
 
+/*
 string FFMpeg::getFilter(
 	Json::Value filterRoot,
 	int64_t streamingDurationInSeconds
@@ -18190,6 +18200,52 @@ string FFMpeg::getFilter(
 
 		filter = ("blackframe=amount=" + to_string(amount)
 			+ ":threshold=" + to_string(threshold));
+	}
+	else if (type == "crop")
+	{
+		// x,y 0,0 indica il punto in basso a sinistra del video
+		// in_h e in_w indicano input width and height
+		string out_w = JSONUtils::asString(filterRoot, "out_w", "in_w");
+		string out_h = JSONUtils::asString(filterRoot, "out_h", "in_h");
+		// La posizione orizzontale, nel video di input, del bordo sinistro del video di output
+		string x = JSONUtils::asString(filterRoot, "x", "(in_w-out_w)/2");
+		// La posizione verticale, nel video in input, del bordo superiore del video in output
+		string y = JSONUtils::asString(filterRoot, "y", "(in_h-out_h)/2");
+		bool keep_aspect = JSONUtils::asBool(filterRoot, "keep_aspect", false);
+		// Enable exact cropping. If enabled, subsampled videos will be cropped at exact width/height/x/y
+		// as specified and will not be rounded to nearest smaller value
+		bool exact = JSONUtils::asBool(filterRoot, "exact", false);
+
+		// crop=w=100:h=100:x=12:y=34
+		filter = fmt::format("crop=out_w={}:out_h={}:x={}:y={}:keep_aspect={}:exact={}",
+			out_w, out_h, x, y, keep_aspect, exact);
+	}
+	else if (type == "drawbox")
+	{
+		// x,y 0,0 indica il punto in basso a sinistra del video
+		// in_h e in_w indicano input width and height
+		string x = JSONUtils::asString(filterRoot, "x", "0");
+		string y = JSONUtils::asString(filterRoot, "y", "0");
+		string width = JSONUtils::asString(filterRoot, "width", "300");
+		string height = JSONUtils::asString(filterRoot, "height", "300");
+		string fontColor = JSONUtils::asString(filterRoot, "fontColor", "red");
+		int percentageOpacity = JSONUtils::asInt(filterRoot, "percentageOpacity", -1);
+		// thickness: il valore speciale di "fill" riempie il box
+		string thickness = JSONUtils::asString(filterRoot, "thickness", "3");
+
+		string opacity;
+		if (percentageOpacity != -1)
+		{
+			char cOpacity[64];
+
+			sprintf(cOpacity, "%.1f", ((float) percentageOpacity) / 100.0);
+
+			opacity = ("@" + string(cOpacity));
+		}
+
+		// drawbox=x=700:y=400:w=160:h=90:color=blue:t=5
+		filter = fmt::format("drawbox=x={}:y={}:w={}:h={}:color={}{}:t={}",
+			x, y, width, height, fontColor, opacity, thickness);
 	}
 	else if (type == "drawtext")
 	{
@@ -18285,16 +18341,14 @@ string FFMpeg::getFilter(
 				}
 			}
 
-			/*
-			* -vf "drawtext=fontfile='C\:\\Windows\\fonts\\Arial.ttf':
-			fontcolor=yellow:fontsize=45:x=100:y=65:
-			text='%{eif\:trunc((5447324-t)/86400)\:d\:2} days 
-			%{eif\:trunc(mod(((5447324-t)/3600),24))\:d\:2} hrs
-			%{eif\:trunc(mod(((5447324-t)/60),60))\:d\:2} m
-			%{eif\:trunc(mod(5447324-t\,60))\:d\:2} s'"
+			// -vf "drawtext=fontfile='C\:\\Windows\\fonts\\Arial.ttf':
+			// fontcolor=yellow:fontsize=45:x=100:y=65:
+			// text='%{eif\:trunc((5447324-t)/86400)\:d\:2} days 
+			// %{eif\:trunc(mod(((5447324-t)/3600),24))\:d\:2} hrs
+			// %{eif\:trunc(mod(((5447324-t)/60),60))\:d\:2} m
+			// %{eif\:trunc(mod(5447324-t\,60))\:d\:2} s'"
 
-			* 5447324 is the countdown duration expressed in seconds
-			*/
+			// 5447324 is the countdown duration expressed in seconds
 			string ffmpegTextPosition_X_InPixel;
 			if (textPosition_X_InPixel == "left")
 				ffmpegTextPosition_X_InPixel = 20;
@@ -18546,6 +18600,7 @@ string FFMpeg::getFilter(
 
 	return filter;
 }
+*/
 
 void FFMpeg::addToIncrontab(
 	int64_t ingestionJobKey,

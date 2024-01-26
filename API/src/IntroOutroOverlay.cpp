@@ -617,6 +617,7 @@ void IntroOutroOverlay::encodeContent(
 								true,
 								Json::nullValue, Json::nullValue,
 								-1, -1,
+								Json::nullValue,
 								-1, _encodingJobKey, _ingestionJobKey,
 								&(_encoding->_childPid));
 						}

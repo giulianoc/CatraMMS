@@ -113,6 +113,7 @@ public:
 		Json::Value videoTracksRoot,
 		Json::Value audioTracksRoot,
 		int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
+		Json::Value filtersRoot,
         int64_t physicalPathKey,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -676,6 +677,7 @@ private:
 		string stagingEncodedAssetPathName = ""
 	);
 
+	/*
 	tuple<string, string, string> addFilters(
 		Json::Value filtersRoot,
 		string ffmpegVideoResolutionParameter,
@@ -685,6 +687,7 @@ private:
 	string getFilter(
 		Json::Value filtersRoot,
 		int64_t streamingDurationInSeconds);
+	*/
 
 	int getNextLiveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
 		Json::Value* inputsRoot, mutex* inputsRootMutex,

@@ -52,6 +52,113 @@
 		//	specifies the audio track index to be used for the encoding (first track has index 0)
 		"AudioTrackIndex": -1
 
+		// optional
+		"filters": {
+			"video": [
+				{
+					"type": "blackdetect",
+					"black_min_duration": 2.0,
+					"pixel_black_th": 0.0
+				},
+				{
+					"type": "blackframe",
+					"amount": 98,
+					"threshold": 32
+				},
+				{
+					"type": "freezedetect",
+					"noiseInDb": -60,
+					"duration": 2
+				},
+				{
+					// mandatory
+					"type": "crop",
+					// optional.
+					// in_h e in_w are the input width and height
+					// The width of the output video.
+					// It defaults to in_w
+					"out_w": "in_w",
+					// optional
+					// The height of the output video.
+					// It defaults to in_h
+					"out_h": "in_h",
+					// optional
+					// x,y 0,0 specifies the pint below on the left of the video
+					// The horizontal position, in the input video, of the left edge of the output video.
+					// It defaults to (in_w-out_w)/2
+					"x": "100",
+					// optional
+					// The vertical position, in the input video, of the top edge of the output video.
+					// It defaults to (in_h-out_h)/2
+					"y": "100",
+					// optional
+					// If set to true will force the output display aspect ratio to be the same of the input,
+					// by changing the output sample aspect ratio. It defaults to false.
+					"keep_aspect": false,
+					// optional
+					// Enable exact cropping. If enabled, subsampled videos will be cropped at exact
+					// width/height/x/y as specified and will not be rounded to nearest smaller value.
+					// It defaults to false.
+					"exact": false
+				},
+				{
+					// mandatory
+					"type": "drawbox",
+					// optional
+					// The expressions which specify the top left corner coordinates of the box.
+					// It defaults to 0
+					// x,y 0,0 specifies the pint below on the left of the video
+					"x": "0",
+					// optional
+					// The expressions which specify the top left corner coordinates of the box.
+					// It defaults to 0
+					"y": "0",
+					// optional
+					// The expressions which specify the width of the box; if 0 they are interpreted
+					// as the input width. It defaults to 0.
+					"width": "300",
+					// optional
+					// The expressions which specify the height of the box; if 0 they are interpreted
+					// as the input height. It defaults to 0.
+					"height": "300",
+					// optional. Possible values: ...to be added
+					"fontColor": "red",
+					// optional
+					"percentageOpacity": 20,
+					// optional
+					// The expression which sets the thickness of the box edge. A value of fill
+					// will create a filled box. Default value is 3
+					"thickness": "fill"
+				}
+			],
+			"audio": [
+				{
+					"type": "silencedetect",
+					"noise": 0.0001
+				},
+				{
+					"type": "volume",
+					//	- 0.5: If we want our volume to be half of the input volume
+					//	- 1.5: 150% of current volume
+					//	- 10dB: increase the volume by 10dB
+					//	- -5dB: reduce the volume by 5dB
+					"factor": 5.0
+				}
+			],
+			"complex": [
+				{
+					"type": "blackframe",
+					"amount": 98,
+					"threshold": 32
+				},
+				{
+					"type": "blend",
+					"mode": "difference",
+					"shortest": 1
+				}
+			]
+		},
+
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:

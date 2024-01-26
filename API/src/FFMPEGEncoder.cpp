@@ -333,8 +333,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{
-				Json::Value metadataRoot = JSONUtils::toJson(
-					-1, encodingJobKey, requestBody);
+				Json::Value metadataRoot = JSONUtils::toJson(-1, encodingJobKey, requestBody);
 
 				bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
 
