@@ -115,11 +115,11 @@
 					"y": "0",
 					// optional
 					// The expressions which specify the width of the box; if 0 they are interpreted
-					// as the input width. It defaults to 0.
+					// as the input width (in_w). It defaults to 0.
 					"width": "300",
 					// optional
 					// The expressions which specify the height of the box; if 0 they are interpreted
-					// as the input height. It defaults to 0.
+					// as the input height (in_h). It defaults to 0.
 					"height": "300",
 					// optional. Possible values: ...to be added
 					"fontColor": "red",

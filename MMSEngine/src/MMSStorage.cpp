@@ -2087,12 +2087,29 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			+ ", sourcePathName: " + sourcePathName
 		);
 
+		// non possiamo eseguire il tar contenente la directory content direttamente
+		// in workspaceIngestionRepository perchè se lo stesso user ingesta due tar contemporaneamente,
+		// la directory content viene usata per entrambi i tar creando problemi
+		// Aggiungiamo quindi l'ingestionJobKey
+		string workIngestionDirectory = fmt::format("{}/{}",
+			workspaceIngestionRepository, ingestionJobKey);
+
+		_logger->info(__FILEREF__ + "Creating directory (if needed)"
+			+ ", workIngestionDirectory: " + workIngestionDirectory
+		);
+		fs::create_directories(workIngestionDirectory);
+		fs::permissions(workIngestionDirectory,
+			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
+			| fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec
+			| fs::perms::others_exec,
+			fs::perm_options::replace);
+
 		// tar into workspaceIngestion directory
 		//	source will be something like <ingestion key>_source
 		//	destination will be the original directory (that has to be the same name of the tar file name)
-		executeCommand =
-			"tar xfz " + tarBinaryPathName
-			+ " --directory " + workspaceIngestionRepository;
+		executeCommand = fmt::format(
+			"tar xfz {} --directory {}",
+			tarBinaryPathName, workIngestionDirectory);
 		_logger->info(__FILEREF__ + "Start tar command "
 			+ ", executeCommand: " + executeCommand
 		);
@@ -2166,7 +2183,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		// Example from /var/catramms/storage/IngestionRepository/users/1/9670725_liveRecorderVirtualVOD
 		//	to /var/catramms/storage/IngestionRepository/users/1/9676038_source
 		{
-			fs::path sourceDirectory = workspaceIngestionRepository;
+			fs::path sourceDirectory = workIngestionDirectory;
 			sourceDirectory /= sourceFileName;
 
 			fs::path destDirectory = workspaceIngestionRepository;
