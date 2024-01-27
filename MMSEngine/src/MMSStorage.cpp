@@ -2232,11 +2232,11 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			try
 			{
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
-				fs::remove_all(sourceDirectory);
+				fs::remove_all(workIngestionDirectory);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 				_logger->info(__FILEREF__ + "End removeDirectory"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", sourceDirectory: " + sourceDirectory.string()
+					+ ", workIngestionDirectory: " + workIngestionDirectory
 					+ ", @MMS REMOVE statistics@ - removeDuration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 				);
 			}
