@@ -37,6 +37,7 @@ SET (PROFILEs
 	MMS_MP4_H264_6000Kb_veryfast_720p25_high422_AAC_192.json
 	MMS_MP4_H264_2000Kb_medium_720p50_high422_AAC_92.json
 	MMS_MP4_H264_2000Kb_medium_720p25_Main_AAC_92.json
+	MMS_MP4_H264_2000Kb_medium_720p25_high422_AAC_92.json
 	MMS_MP4_H264_1500Kb_medium_720p25_Main_AAC_92.json
 	MMS_MP4_H264_1000Kb_medium_720p25_Main_AAC_92.json
 	MMS_MP4_H264_2500Kb_medium_720p25_high422_AAC_92.json
