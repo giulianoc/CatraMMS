@@ -7,7 +7,7 @@ if [ ! -f "$debugFilename" ]; then
 	echo "" > $debugFilename
 else
 	filesize=$(stat -c %s $debugFilename)
-	if [ $filesize -gt 10000000 ]
+	if [ $filesize -gt 50000000 ]
 	then
 		echo "" > $debugFilename
 	fi
@@ -698,7 +698,7 @@ mms_sql_timing_check_service()
 		return 1
 	fi
 
-	maxSQLDuration=100
+	maxSQLDuration=200
 	warningMessage=$(grep "statement, sqlStatement" $logFilePathName | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxSQLDuration=$maxSQLDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
 	{	\
 		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
@@ -709,11 +709,11 @@ mms_sql_timing_check_service()
 			duration=$6;	\
 			label=$7;	\
 			if (label == "getIngestionsToBeManaged")	\
-				maxSQLDuration = 300;	\
+				maxSQLDuration = 500;	\
 			else if (label == "getIngestionRootsStatus")	\
 				maxSQLDuration = 300;	\
 			if (duration > maxSQLDuration)	\
-				warningMessage=warningMessage""datetime" - "label" - "sqlStatement" - "duration"\n";	\
+				warningMessage=warningMessage""datetime" - "label" - "sqlStatement" - "duration"/"maxSQLDuration"\n";	\
 		}	\
 	}	\
 	END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')

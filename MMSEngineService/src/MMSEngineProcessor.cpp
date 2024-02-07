@@ -22711,6 +22711,14 @@ void MMSEngineProcessor::checkStreamingThread(
 			mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey,
 				isMMSAssetPathName, timeoutInSeconds, streamingUrl,
 				videoTracks, audioTracks);
+			SPDLOG_INFO("Called ffmpeg.getMediaInfo"
+				", _processorIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", streamingUrl: {}"
+				", videoTracks.size: {}"
+				", audioTracks.size: {}",
+				_processorIdentifier, ingestionJobKey, streamingUrl, videoTracks.size(), audioTracks.size()
+			);
 		}
 
         _logger->info(__FILEREF__ + "Update IngestionJob"

@@ -30,6 +30,7 @@ void FastCGIAPI::init(
 	Json::Value configuration,
 	mutex* fcgiAcceptMutex)
 {
+	_shutdown				= false;
 	_configuration			= configuration;
 	_fcgiAcceptMutex		= fcgiAcceptMutex;
 
@@ -73,8 +74,7 @@ int FastCGIAPI::operator()()
 	);
 	FCGX_InitRequest(&request, sock_fd, 0);
 
-	bool shutdown = false;    
-	while (!shutdown)
+	while (!_shutdown)
 	{
 		_requestIdentifier++;
 
@@ -93,6 +93,9 @@ int FastCGIAPI::operator()()
 				_requestIdentifier, sThreadId
 			);
 
+			if (_shutdown)
+				continue;
+
 			returnAcceptCode = FCGX_Accept_r(&request);
 		}
 		SPDLOG_DEBUG("FCGX_Accept_r"
@@ -104,7 +107,7 @@ int FastCGIAPI::operator()()
 
 		if (returnAcceptCode != 0)
 		{
-			shutdown = true;
+			_shutdown = true;
 
 			FCGX_Finish_r(&request);
 
@@ -402,12 +405,17 @@ int FastCGIAPI::operator()()
          // Note: the fcgi_streambuf destructor will auto flush
     }
 
-	SPDLOG_INFO("FastCGIAPI SHUTDOWN"
+	SPDLOG_INFO("FastCGIAPI shutdown"
 		", threadId: {}", sThreadId
 	);
 
 
     return 0;
+}
+
+void FastCGIAPI::stopFastcgi()
+{
+	_shutdown	= true;
 }
 
 bool FastCGIAPI::basicAuthenticationRequired(

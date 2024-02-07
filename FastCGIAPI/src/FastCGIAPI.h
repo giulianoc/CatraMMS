@@ -33,9 +33,12 @@ public:
     
     int operator()();
 
+	virtual void stopFastcgi();
+
     static Json::Value loadConfigurationFile(const char* configurationPathName);
     
 protected:
+	bool			_shutdown;
     Json::Value		_configuration;
 
     int64_t			_requestIdentifier;

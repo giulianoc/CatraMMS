@@ -337,15 +337,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
 
-				int intervalInSecondsBetweenEncodingAccept;
-				if (externalEncoder)
-					intervalInSecondsBetweenEncodingAccept = _intervalInSecondsBetweenEncodingAcceptForExternalEncoder;
-				else
-					intervalInSecondsBetweenEncodingAccept = _intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
+				// se si tratta di un encoder esterno, aspettiamo piu tempo in modo
+				// che la variabile cpuUsage si aggiorni prima di accettare una nuova richiesta
+				int intervalInSecondsBetweenEncodingAccept = externalEncoder
+					? _intervalInSecondsBetweenEncodingAcceptForExternalEncoder
+					: _intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
 
-				// lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the previous encoding request
-				// in order to give time to the cpuUsage variable to be correctly updated
 				chrono::system_clock::time_point now = chrono::system_clock::now();
 				int elapsedSecondsSinceLastEncodingAccepted = chrono::duration_cast<chrono::seconds>(
 					now - *_lastEncodingAcceptedTime).count();
