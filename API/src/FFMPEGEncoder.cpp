@@ -188,6 +188,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			string responseBody = JSONUtils::toString(responseBodyRoot);
 
+            SPDLOG_INFO ("status PRIMA LA SLEEP");
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, requestURI, requestMethod, 200, responseBody);
 			this_thread::sleep_for(chrono::seconds(15));
