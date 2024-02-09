@@ -34,6 +34,8 @@ void FastCGIAPI::init(
 	_configuration			= configuration;
 	_fcgiAcceptMutex		= fcgiAcceptMutex;
 
+	_fcgxFinishDone			= false;
+
 	{
 		struct utsname unUtsname;
 		if (uname (&unUtsname) != -1)
@@ -43,7 +45,7 @@ void FastCGIAPI::init(
 	_requestIdentifier = 0;
 
 	_maxAPIContentLength = JSONUtils::asInt64(_configuration["api"], "maxContentLength", 0);
-	SPDLOG_INFO("Configuration item"
+	SPDLOG_DEBUG("Configuration item"
 		", api->maxContentLength: {}", _maxAPIContentLength
 	);
 
@@ -67,7 +69,7 @@ int FastCGIAPI::operator()()
 	// The nginx process is configured to proxy the requests to 127.0.0.1:<port>
 	// specified by spawn-fcgi
 	int sock_fd = 0;
-	SPDLOG_INFO("FastCGIAPI::FCGX_OpenSocket"
+	SPDLOG_DEBUG("FastCGIAPI::FCGX_OpenSocket"
 		", threadId: {}"
 		", sock_fd: {}",
 		sThreadId, sock_fd
@@ -113,6 +115,8 @@ int FastCGIAPI::operator()()
 
 			continue;
 		}
+
+		_fcgxFinishDone = false;
 
 		SPDLOG_DEBUG("Request to be managed"
 			", _requestIdentifier: {}"
@@ -189,7 +193,8 @@ int FastCGIAPI::operator()()
 
             sendError(request, 500, e.what());
 
-            FCGX_Finish_r(&request);
+			if (!_fcgxFinishDone)
+				FCGX_Finish_r(&request);
             
             // throw runtime_error(errorMessage);
             continue;
@@ -201,7 +206,8 @@ int FastCGIAPI::operator()()
 
             sendError(request, 500, errorMessage);
 
-            FCGX_Finish_r(&request);
+			if (!_fcgxFinishDone)
+				FCGX_Finish_r(&request);
             
             // throw runtime_error(errorMessage);
             continue;
@@ -281,7 +287,8 @@ int FastCGIAPI::operator()()
 
                 sendError(request, 401, errorMessage);   // unauthorized
 
-                FCGX_Finish_r(&request);
+				if (!_fcgxFinishDone)
+					FCGX_Finish_r(&request);
 
                 //  throw runtime_error(errorMessage);
                 continue;
@@ -300,7 +307,8 @@ int FastCGIAPI::operator()()
 
                 sendError(request, 500, errorMessage);
 
-                FCGX_Finish_r(&request);
+				if (!_fcgxFinishDone)
+					FCGX_Finish_r(&request);
 
                 // throw runtime_error(errorMessage);
                 continue;
@@ -319,10 +327,11 @@ int FastCGIAPI::operator()()
 
                 sendError(request, 500, errorMessage);
 
-                FCGX_Finish_r(&request);
+				if (!_fcgxFinishDone)
+					FCGX_Finish_r(&request);
 
-                //  throw runtime_error(errorMessage);
-                continue;
+				//  throw runtime_error(errorMessage);
+				continue;
             }
         }
 
@@ -400,7 +409,8 @@ int FastCGIAPI::operator()()
             ", threadId: {}", _requestIdentifier, sThreadId
         );
 
-        FCGX_Finish_r(&request);
+		if (!_fcgxFinishDone)
+			FCGX_Finish_r(&request);
 
          // Note: the fcgi_streambuf destructor will auto flush
     }
@@ -596,8 +606,9 @@ void FastCGIAPI::sendSuccess(
 		// FCGX_PutStr(responseBody.data(), responseBody.size(), request.out);
 		FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 	}
-    
-//    cout << completeHttpResponse;
+
+	FCGX_Finish_r(&request);
+	_fcgxFinishDone = true;
 }
 
 void FastCGIAPI::sendRedirect(FCGX_Request& request, string locationURL)
@@ -615,7 +626,9 @@ void FastCGIAPI::sendRedirect(FCGX_Request& request, string locationURL)
     );
 
     FCGX_FPrintF(request.out, completeHttpResponse.c_str());
-    // cout << completeHttpResponse;
+
+	FCGX_Finish_r(&request);
+	_fcgxFinishDone = true;
 }
 
 void FastCGIAPI::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize)
@@ -634,6 +647,9 @@ void FastCGIAPI::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, un
     );
 
     FCGX_FPrintF(request.out, completeHttpResponse.c_str());
+
+	FCGX_Finish_r(&request);
+	_fcgxFinishDone = true;
 }
 
 void FastCGIAPI::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
@@ -710,6 +726,9 @@ void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string e
     );
 
     FCGX_FPrintF(request.out, completeHttpResponse.c_str());
+
+	FCGX_Finish_r(&request);
+	_fcgxFinishDone = true;
 }
 
 void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)

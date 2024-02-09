@@ -41,11 +41,12 @@ protected:
 	bool			_shutdown;
     Json::Value		_configuration;
 
-    int64_t			_requestIdentifier;
+	bool			_fcgxFinishDone;
+
+	int64_t			_requestIdentifier;
 	string			_hostName;
 	int64_t			_maxAPIContentLength;
-    mutex*			_fcgiAcceptMutex;
-
+	mutex*			_fcgiAcceptMutex;
 
     virtual void manageRequestAndResponse(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,

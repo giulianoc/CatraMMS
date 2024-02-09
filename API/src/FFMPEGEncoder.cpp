@@ -206,6 +206,36 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
+    else if (method == "statustwo")
+    {
+        try
+        {
+			Json::Value responseBodyRoot;
+			responseBodyRoot["statustwo"] = "Encoder up and running";
+
+			string responseBody = JSONUtils::toString(responseBodyRoot);
+
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, requestURI, requestMethod, 200, responseBody);
+
+			this_thread::sleep_for(chrono::seconds(15));
+            SPDLOG_INFO ("status DOPO LA SLEEP");
+        }
+        catch(exception& e)
+        {
+            _logger->error(__FILEREF__ + "status failed"
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
     else if (method == "info")
     {
         try

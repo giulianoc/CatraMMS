@@ -9,6 +9,9 @@
 		limit_req zone=mmsEncoderLimit burst=20;
 
 		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/statustwo/?$ /encoder?version=$1&method=statustwo last;
+		}
+		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/status/?$ /encoder?version=$1&method=status last;
 		}
 		if ($request_method = GET) {
