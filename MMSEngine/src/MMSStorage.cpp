@@ -2104,6 +2104,10 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			| fs::perms::others_exec,
 			fs::perm_options::replace);
 
+		// 2024-02-09: ogni tanto il comando tar fallisce istantaneamente con executeCommandStatus == 2,
+		//	forse non vede la directory appena creata? gli do uno sleep 
+		this_thread::sleep_for(chrono::milliseconds(5000));
+
 		// tar into workspaceIngestion directory
 		//	source will be something like <ingestion key>_source
 		//	destination will be the original directory (that has to be the same name of the tar file name)
@@ -2127,9 +2131,8 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 				+ ", executeCommandStatus: " + to_string(executeCommandStatus) 
 				+ ", executeCommand: " + executeCommand 
 			;
-
 			_logger->error(__FILEREF__ + errorMessage);
-          
+
 			throw runtime_error(errorMessage);
 		}
 
