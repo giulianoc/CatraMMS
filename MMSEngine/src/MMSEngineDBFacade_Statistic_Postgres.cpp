@@ -332,7 +332,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         {
 			string sqlStatement = fmt::format(
                 "select requestStatisticKey, ipAddress, userId, physicalPathKey, confStreamKey, title, "
-				"to_char(requestTimestamp, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as requestTimestamp "
+				"to_char(requestTimestamp, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedRequestTimestamp "
 				"from MMS_RequestStatistic {}"
 				"order by requestTimestamp asc "
 				"limit {} offset {}",
@@ -371,7 +371,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
                 statisticRoot[field] = row["title"].as<string>();
 
                 field = "requestTimestamp";
-				statisticRoot[field] = row["requestTimestamp"].as<string>();
+				statisticRoot[field] = row["formattedRequestTimestamp"].as<string>();
 
                 statisticsRoot.append(statisticRoot);
             }
@@ -2106,7 +2106,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
                 "select u.name as userName, u.eMailAddress as emailAddress, s.loginStatisticKey, "
 				"s.userKey, s.ip, s.continent, s.continentCode, s.country, s.countryCode, "
 				"s.region, s.city, s.org, s.isp, s.timezoneGMTOffset, "
-				"to_char(s.successfulLogin, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as successfulLogin "
+				"to_char(s.successfulLogin, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedSuccessfulLogin "
 				"from MMS_LoginStatistic s, MMS_User u {}"
 				"order by s.successfulLogin desc "
 				"limit {} offset {}",
@@ -2190,10 +2190,10 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
 					statisticRoot[field] = row["timezoneGMTOffset"].as<int>();
 
                 field = "successfulLogin";
-				if (row["successfulLogin"].is_null())
+				if (row["formattedSuccessfulLogin"].is_null())
 					statisticRoot[field] = Json::nullValue;
 				else
-					statisticRoot[field] = row["successfulLogin"].as<string>();
+					statisticRoot[field] = row["formattedSuccessfulLogin"].as<string>();
 
                 statisticsRoot.append(statisticRoot);
             }

@@ -1318,10 +1318,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 		string sqlStatement = fmt::format( 
 			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, "
-			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
-			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startPublishing, "
-			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endPublishing, "
-			"to_char(mi.willBeRemovedAt_virtual, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as willBeRemovedAt, "
+			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedIngestionDate, "
+			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedStartPublishing, "
+			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedEndPublishing, "
+			"to_char(mi.willBeRemovedAt_virtual, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedWillBeRemovedAt, "
 			"mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {} "
 			"limit {} offset {}",
 			sqlWhere, orderByCondition, rows, start);
@@ -1397,27 +1397,27 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					|| JSONUtils::isMetadataPresent(responseFields, "ingestionDate"))
 				{
 					field = "ingestionDate";
-					mediaItemRoot[field] = row["ingestionDate"].as<string>();
+					mediaItemRoot[field] = row["formattedIngestionDate"].as<string>();
 				}
 
 				if (responseFields == Json::nullValue
 					|| JSONUtils::isMetadataPresent(responseFields, "startPublishing"))
 				{
 					field = "startPublishing";
-					mediaItemRoot[field] = row["startPublishing"].as<string>();
+					mediaItemRoot[field] = row["formattedStartPublishing"].as<string>();
 				}
 				if (responseFields == Json::nullValue
 					|| JSONUtils::isMetadataPresent(responseFields, "endPublishing"))
 				{
 					field = "endPublishing";
-					mediaItemRoot[field] = row["endPublishing"].as<string>();
+					mediaItemRoot[field] = row["formattedEndPublishing"].as<string>();
 				}
 
 				if (responseFields == Json::nullValue
 					|| JSONUtils::isMetadataPresent(responseFields, "willBeRemovedAt"))
 				{
 					field = "willBeRemovedAt";
-					mediaItemRoot[field] = row["willBeRemovedAt"].as<string>();
+					mediaItemRoot[field] = row["formattedWillBeRemovedAt"].as<string>();
 				}
 
 				ContentType contentType = MMSEngineDBFacade::toContentType(

@@ -245,7 +245,7 @@ Json::Value MMSEngineDBFacade::getInvoicesList (
 				orderBy = "order by paid asc, creationDate desc";
 			string sqlStatement = fmt::format(
                 "select invoiceKey, userKey, description, amount, paid, paymentDate, "
-				"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as creationDate, "
+				"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedCreationDate, "
 				"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as expirationDate "
 				"from MMS_Invoice {} "
 				"{} "
@@ -264,7 +264,7 @@ Json::Value MMSEngineDBFacade::getInvoicesList (
 				invoiceRoot[field] = row["userKey"].as<int64_t>();
 
 				field = "creationDate";
-				invoiceRoot[field] = row["creationDate"].as<string>();
+				invoiceRoot[field] = row["formattedCreationDate"].as<string>();
 
 				field = "description";
 				invoiceRoot[field] = row["description"].as<string>();

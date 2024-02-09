@@ -4187,7 +4187,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         {
             string sqlStatement = fmt::format( 
                 "select ingestionRootKey, userKey, label, status, "
-				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
+				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedIngestionDate, "
 				"to_char(lastUpdate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as lastUpdate "
 				"from MMS_IngestionRoot {} "
 				"order by ingestionDate {} "
@@ -4226,7 +4226,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 workflowRoot[field] = row["status"].as<string>();
 
                 field = "ingestionDate";
-                workflowRoot[field] = row["ingestionDate"].as<string>();
+                workflowRoot[field] = row["formattedIngestionDate"].as<string>();
 
                 field = "lastUpdate";
                 workflowRoot[field] = row["lastUpdate"].as<string>();
