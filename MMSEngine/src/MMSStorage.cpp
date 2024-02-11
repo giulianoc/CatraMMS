@@ -1685,6 +1685,10 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName, _logger);
 			}
 
+			// 2024-02-11: è capitato (poche volte) che le size del source e della dest siano differenti
+			//	per pochi bytes e quindi il controllo sotto genera un errore
+			//	Per questo motivo metto un piccolo sleep prima di inizializzare ulDestFileSizeInBytes
+			this_thread::sleep_for(chrono::milliseconds(5000));
             unsigned long ulDestFileSizeInBytes = fs::file_size(mmsAssetPathName);
 
 			_logger->info(__FILEREF__ + "Move file statistics"
@@ -1713,7 +1717,6 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			}
         }
     }
-
 
     return mmsAssetPathName;
 }

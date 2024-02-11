@@ -677,6 +677,8 @@ install-mms-packages()
 	fi
 
 	#per evitare errori nginx: 24: Too many open files                                                        
+	#In caso di un systemctl service servirebbe indicare nel file del servizio LimitNOFILE=500000
+	#see https://access.redhat.com/solutions/1257953
 	echo "fs.file-max = 70000" >> /etc/sysctl.conf                                                            
 	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
 	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
