@@ -300,14 +300,13 @@ bool JSONUtils::asBool(Json::Value root, string field, bool defaultValue)
 Json::Value JSONUtils::toJson(int64_t ingestionJobKey, int64_t encodingJobKey, string json)
 {
 	Json::Value joValue;
-
+	Json::String errors;
 	try
 	{
 		if (json != "")
 		{
 			Json::CharReaderBuilder builder;
 			Json::CharReader* reader = builder.newCharReader();
-			string errors;
 
 			bool parsingSuccessful = reader->parse(json.c_str(),
 				json.c_str() + json.size(), 
@@ -333,6 +332,7 @@ Json::Value JSONUtils::toJson(int64_t ingestionJobKey, int64_t encodingJobKey, s
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", json: " + json
+			+ ", errors: " + errors
 		;
 
 		throw runtime_error(errorMessage);

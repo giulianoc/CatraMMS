@@ -320,7 +320,7 @@ Json::Value API::manageWorkflowVariables(string requestBody,
 		if (variablesValuesToBeUsedRoot == Json::nullValue)
 		{
 			_logger->info(__FILEREF__ + "manageWorkflowVariables"
-				+ ", sVariablesValuesToBeUsedRoot is null"
+				+ ", there are no variables"
 			);
 		}
 		else
