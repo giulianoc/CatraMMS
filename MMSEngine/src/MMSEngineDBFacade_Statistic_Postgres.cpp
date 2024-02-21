@@ -2912,7 +2912,7 @@ Json::Value MMSEngineDBFacade::getGEOInfo(string ip)
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
-			if (!empty(res))
+			if (empty(res))
 			{
 				SPDLOG_WARN("ip was not found"
 					", ip: {}", ip);
