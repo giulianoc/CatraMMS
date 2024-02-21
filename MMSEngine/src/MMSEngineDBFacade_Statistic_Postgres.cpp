@@ -673,7 +673,7 @@ SPDLOG_INFO("geoServiceURL: {}", geoServiceURL);
 				_geoServiceTimeoutInSeconds,
 				"",
 				"",
-				JSONUtils::asString(bodyRoot),
+				JSONUtils::toString(bodyRoot),
 				"application/json",
 				otherHeaders
 			);
