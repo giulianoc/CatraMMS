@@ -649,7 +649,6 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 	string fields = "status,message,query,continent,continentCode,country,countryCode,regionName,city,org,isp";
 	try
 	{
-SPDLOG_INFO("ips.size: {}", ips.size());
 		if (ips.size() > 1)
 		{
 			// https://pro.ip-api.com/batch?key=GvoGDQ05j7fyQmj

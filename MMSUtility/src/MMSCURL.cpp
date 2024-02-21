@@ -1449,9 +1449,12 @@ pair<string, string> MMSCURL::httpPostPutString(
 		bool responseInitialized = false;
 		try
 		{
+int aaa = 0;
+SPDLOG_INFO("AAAAA: {}", aaa++);
 			curlpp::Cleanup cleaner;
 			curlpp::Easy request;
 
+SPDLOG_INFO("AAAAA: {}", aaa++);
 			list<string> headers;
 			if (contentType != "")
 				headers.push_back(string("Content-Type: ") + contentType);
@@ -1466,8 +1469,10 @@ pair<string, string> MMSCURL::httpPostPutString(
 			}
 			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
 
+SPDLOG_INFO("AAAAA: {}", aaa++);
 			request.setOpt(new curlpp::options::Url(url));
 
+SPDLOG_INFO("AAAAA: {}", aaa++);
 			// timeout consistent with nginx configuration (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
 
