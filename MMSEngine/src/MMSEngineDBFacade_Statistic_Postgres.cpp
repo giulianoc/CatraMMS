@@ -433,7 +433,7 @@ void MMSEngineDBFacade::updateGEOInfo()
 			string sqlStatement = fmt::format( 
 				"select ip from MMS_GEOInfo "
 				"where lastGEOUpdate is null or "
-				"(lastTimeUsed > lastGEOUpdate and DATE_PART('day', lastTimeUsed - lastGEOUpdate) > {}",
+				"(lastTimeUsed > lastGEOUpdate and DATE_PART('day', lastTimeUsed - lastGEOUpdate) > {})",
 				_geoServiceMaxDaysBeforeUpdate);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);

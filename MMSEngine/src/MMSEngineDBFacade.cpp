@@ -146,27 +146,6 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         + ", mms->predefinedWorkflowLibraryDir: " + _predefinedWorkflowLibraryDirectoryPath
     );
 
-    _geoServiceEnabled = JSONUtils::asBool(configuration["mms"]["geoService"], "enabled", false);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->geoService->enabled: " + to_string(_geoServiceEnabled)
-    );
-    _geoServiceMaxDaysBeforeUpdate = JSONUtils::asLong(configuration["mms"]["geoService"], "maxDaysBeforeUpdate", 1);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->geoService->maxDaysBeforeUpdate: " + to_string(_geoServiceMaxDaysBeforeUpdate)
-    );
-    _geoServiceURL = JSONUtils::asString(configuration["mms"]["geoService"], "url", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-		+ ", mms->geoService->url: " + _geoServiceURL
-    );
-    _geoServiceKey = JSONUtils::asString(configuration["mms"]["geoService"], "key", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-		+ ", mms->geoService->key: " + _geoServiceKey
-    );
-    _geoServiceTimeoutInSeconds = JSONUtils::asLong(configuration["mms"]["geoService"], "timeoutInSeconds", 10);
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", mms->geoService->timeoutInSeconds: " + to_string(_geoServiceTimeoutInSeconds)
-    );
-
 	_getIngestionJobsCurrentIndex	= 0;
 	_getEncodingJobsCurrentIndex	= 0;
 
