@@ -2729,8 +2729,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
         {
 			string sqlStatement = fmt::format(
                 "select u.name as userName, u.eMailAddress as emailAddress, s.loginStatisticKey, "
-				"s.userKey, s.ip, s.continent, s.continentCode, s.country, s.countryCode, "
-				"s.region, s.city, s.org, s.isp, s.timezoneGMTOffset, "
+				"s.userKey, s.ip, "
 				"to_char(s.successfulLogin, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedSuccessfulLogin "
 				"from MMS_LoginStatistic s, MMS_User u {}"
 				"order by s.successfulLogin desc "
