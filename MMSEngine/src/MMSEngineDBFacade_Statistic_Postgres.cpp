@@ -717,7 +717,6 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 				otherHeaders
 			);
 
-SPDLOG_INFO("geoServiceResponseIp: {}", JSONUtils::toString(geoServiceResponseIp));
 			string status  = JSONUtils::asString(geoServiceResponseIp, "status", "");
 			if (status != "success")
 			{
