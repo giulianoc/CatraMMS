@@ -365,9 +365,9 @@ void MMSEngineDBFacade::saveGEOInfo(
 		{
 			string sqlStatement = fmt::format(
 				"insert into MMS_GEOInfo(ip, lastGEOUpdate, lastTimeUsed, continent, "
-				"continentCode, country, countryCode, region, city, org, isp, timezoneGMTOffset) values ("
+				"continentCode, country, countryCode, region, city, org, isp) values ("
 				                        "{}, null,          now() at time zone 'utc', null, "
-				"null,          null,    null,        null,   null, null, null, null) "
+				"null,          null,    null,        null,   null, null, null) "
 				"ON CONFLICT (ip) DO "
 				"update set lastTimeUsed = now() at time zone 'utc' ",
 				trans->quote(ipAddress)
