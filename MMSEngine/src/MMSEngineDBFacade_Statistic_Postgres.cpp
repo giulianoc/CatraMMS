@@ -665,6 +665,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			
 SPDLOG_INFO("geoServiceURL: {}, bodyRoot: {}", geoServiceURL, JSONUtils::toString(bodyRoot));
 			vector<string> otherHeaders;
+SPDLOG_INFO("geoServiceURL: {}", geoServiceURL);
 			Json::Value geoServiceResponseRoot = MMSCURL::httpPostStringAndGetJson(
 				_logger,
 				-1,
@@ -676,6 +677,7 @@ SPDLOG_INFO("geoServiceURL: {}, bodyRoot: {}", geoServiceURL, JSONUtils::toStrin
 				"application/json",
 				otherHeaders
 			);
+SPDLOG_INFO("geoServiceURL: {}", geoServiceURL);
 
 SPDLOG_INFO("geoServiceResponseRoot: {}", JSONUtils::toString(geoServiceResponseRoot));
 			for(int index = 0, length = geoServiceResponseRoot.size(); index < length; index++)
