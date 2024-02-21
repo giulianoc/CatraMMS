@@ -663,9 +663,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 				bodyRoot.append(ipRoot);
 			}
 			
-SPDLOG_INFO("geoServiceURL: {}, bodyRoot: {}", geoServiceURL, JSONUtils::toString(bodyRoot));
 			vector<string> otherHeaders;
-SPDLOG_INFO("geoServiceURL: {}", geoServiceURL);
 			Json::Value geoServiceResponseRoot = MMSCURL::httpPostStringAndGetJson(
 				_logger,
 				-1,
@@ -677,9 +675,7 @@ SPDLOG_INFO("geoServiceURL: {}", geoServiceURL);
 				"application/json",
 				otherHeaders
 			);
-SPDLOG_INFO("geoServiceURL: {}", geoServiceURL);
 
-SPDLOG_INFO("geoServiceResponseRoot: {}", JSONUtils::toString(geoServiceResponseRoot));
 			for(int index = 0, length = geoServiceResponseRoot.size(); index < length; index++)
 			{
 				Json::Value geoServiceResponseIpRoot = geoServiceResponseRoot[index];
@@ -725,6 +721,7 @@ SPDLOG_INFO("geoServiceResponseRoot: {}", JSONUtils::toString(geoServiceResponse
 				otherHeaders
 			);
 
+SPDLOG_INFO("geoServiceResponseIp: {}", JSONUtils::toString(geoServiceResponseIp));
 			string status  = JSONUtils::asString(geoServiceResponseIp, "status", "");
 			if (status != "success")
 			{
