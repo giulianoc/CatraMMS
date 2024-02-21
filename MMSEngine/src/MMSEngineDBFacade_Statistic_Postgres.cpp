@@ -468,7 +468,7 @@ void MMSEngineDBFacade::updateGEOInfo()
 								city == "" ? "null" : trans.quote(city),
 								org == "" ? "null" : trans.quote(org),
 								isp == "" ? "null" : trans.quote(isp),
-								query);
+								trans.quote(query));
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 							SPDLOG_INFO("SQL statement"
@@ -523,7 +523,7 @@ void MMSEngineDBFacade::updateGEOInfo()
 							city == "" ? "null" : trans.quote(city),
 							org == "" ? "null" : trans.quote(org),
 							isp == "" ? "null" : trans.quote(isp),
-							query);
+							trans.quote(query));
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
 						SPDLOG_INFO("SQL statement"
