@@ -231,18 +231,6 @@ _logger = spdlog::default_logger();
     SPDLOG_INFO("Configuration item"
         ", api->registerUserEnabled: {}", _registerUserEnabled
     );
-	_savingGEOUserInfo = JSONUtils::asBool(_configuration["mms"]["geoService"], "savingGEOUserInfo", false);
-	if (_savingGEOUserInfo)
-	{
-		_geoServiceURL = JSONUtils::asString(_configuration["mms"]["geoService"], "geoServiceURL", "");
-		_geoServiceTimeoutInSeconds = JSONUtils::asInt(_configuration["mms"]["geoService"], "geoServiceTimeoutInSeconds", 10);
-	}
-    SPDLOG_INFO("Configuration item"
-        ", mms->geoService->savingGEOUserInfo: {}"
-        ", mms->geoService->geoServiceURL: {}"
-        ", mms->geoService->geoServiceTimeoutInSeconds: {}",
-		_savingGEOUserInfo, _geoServiceURL, _geoServiceTimeoutInSeconds
-    );
 
 	/*
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();

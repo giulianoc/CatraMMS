@@ -745,19 +745,36 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "loginStatisticKey		bigint GENERATED ALWAYS AS IDENTITY,"
                     "userKey				bigint NOT NULL,"
                     "ip						text NULL,"
-                    "continent				text NULL,"
-                    "continentCode			text NULL,"
-                    "country				text NULL,"
-                    "countryCode			text NULL,"
-                    "region					text NULL,"
-                    "city					text NULL,"
-                    "org					text NULL,"
-                    "isp					text NULL,"
-                    "timezoneGMTOffset		smallint NULL,"
                     "successfulLogin		timestamp without time zone NOT NULL,"
                     "constraint MMS_LoginStatistic_PK PRIMARY KEY (loginStatisticKey), "
                     "constraint MMS_LoginStatistic_FK foreign key (userKey) "
-                        "references MMS_User (userKey) on delete cascade) ";
+						"references MMS_User (userKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+				"create table if not exists MMS_GEOInfo ("
+				"ip						text NULL,"
+				"lastGEOUpdate			timestamp without time zone NULL,"
+				"lastTimeUsed			timestamp without time zone default (now() at time zone 'utc'),"
+				"continent				text NULL,"
+				"continentCode			text NULL,"
+				"country				text NULL,"
+				"countryCode			text NULL,"
+				"region					text NULL,"
+				"city					text NULL,"
+				"org					text NULL,"
+				"isp					text NULL,"
+				"constraint MMS_GEOInfo_PK PRIMARY KEY (ip)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"

@@ -197,6 +197,8 @@ private:
 
     void handleDBDataRetentionEventThread ();
 
+    void handleGEOInfoEventThread ();
+
 	void handleCheckRefreshPartitionFreeSizeEventThread();
 
 	// void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);

@@ -14,6 +14,7 @@
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "ContentRetentionTimes.h"
 #include "DBDataRetentionTimes.h"
+#include "GEOInfoTimes.h"
 #include "ThreadsStatisticTimes.h"
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
@@ -390,6 +391,16 @@ int main (int iArgc, char *pArgv [])
             make_shared<DBDataRetentionTimes>(dbDataRetentionTimesSchedule, multiEventsSet, logger);
     dbDataRetentionTimes->start();
     scheduler.activeTimes(dbDataRetentionTimes);
+
+    string           geoInfoTimesSchedule =
+		JSONUtils::asString(configuration["scheduler"], "geoInfoTimesSchedule", "");
+    logger->info(__FILEREF__ + "Creating and Starting GEOInfoTimes"
+        + ", geoInfoTimesSchedule: " + geoInfoTimesSchedule
+	);
+    shared_ptr<GEOInfoTimes>     geoInfoTimes =
+            make_shared<GEOInfoTimes>(geoInfoTimesSchedule, multiEventsSet, logger);
+    geoInfoTimes->start();
+    scheduler.activeTimes(geoInfoTimes);
 
     string			checkRefreshPartitionFreeSizeTimesSchedule =
 		JSONUtils::asString(configuration["scheduler"], "checkRefreshPartitionFreeSizeTimesSchedule", "");

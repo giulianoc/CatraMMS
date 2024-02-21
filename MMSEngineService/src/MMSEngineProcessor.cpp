@@ -24,6 +24,7 @@
 #include "CheckEncodingTimes.h"
 #include "ContentRetentionTimes.h"
 #include "DBDataRetentionTimes.h"
+#include "GEOInfoTimes.h"
 #include "ThreadsStatisticTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 // #include "EMailSender.h"
@@ -817,6 +818,47 @@ void MMSEngineProcessor::operator ()()
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
                 _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT:"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+            }
+            break;
+            case MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT:	// 10
+            {
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+
+                try
+                {
+					/* 2019-07-10: this check was removed since this event happens once a day
+                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                    {
+                        // GEOInfo is a periodical event, we will wait the next one
+                        
+                        _logger->warn(__FILEREF__ + "Not enough available threads to manage handleGEOInfoEventThread, activity is postponed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                        );
+                    }
+                    else
+					*/
+                    {
+                        thread geoInfo(&MMSEngineProcessor::handleGEOInfoEventThread, this);
+                        geoInfo.detach();
+                    }
+                }
+                catch(exception& e)
+                {
+                    _logger->error(__FILEREF__ + "handleGEOInfoEventThread failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
+
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
             }
@@ -23938,6 +23980,86 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 				+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 			);
 		}
+	}
+}
+
+void MMSEngineProcessor::handleGEOInfoEventThread()
+{
+
+	ThreadsStatistic::ThreadStatistic threadStatistic(
+		_mmsThreadsStatistic,
+		"updateGEOInfo",
+		_processorIdentifier,
+		_processorsThreadsNumber.use_count(),
+		-1	// ingestionJobKey,
+	);
+
+	bool alreadyExecuted = true;
+
+	try
+	{
+		_logger->info(__FILEREF__ + "GEOInfo: oncePerDayExecution"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+		);
+
+		alreadyExecuted = _mmsEngineDBFacade->oncePerDayExecution(
+			MMSEngineDBFacade::OncePerDayType::GEOInfo);
+	}
+	catch(runtime_error& e)
+	{
+		_logger->error(__FILEREF__ + "GEOInfo failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+		);
+
+		// no throw since it is running in a detached thread
+		// throw e;
+	}
+	catch(exception& e)
+	{
+		_logger->error(__FILEREF__ + "GEOInfo failed"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", exception: " + e.what()
+		);
+
+		// no throw since it is running in a detached thread
+		// throw e;
+	}
+
+	if (!alreadyExecuted)
+    {
+		chrono::system_clock::time_point start = chrono::system_clock::now();
+
+		try
+		{
+			_mmsEngineDBFacade->updateGEOInfo();
+		}
+		catch(runtime_error& e)
+		{
+			_logger->error(__FILEREF__ + "GEOInfo: updateGEOInfo failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch(exception& e)
+		{
+			_logger->error(__FILEREF__ + "GEOInfo: updateGEOInfo failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+
+		chrono::system_clock::time_point end = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "GEOInfo: updateGEOInfo finished"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+		);
 	}
 }
 

@@ -220,7 +220,8 @@ public:
     }
 
     enum class OncePerDayType {
-		DBDataRetention						= 0
+		DBDataRetention				= 0,
+		GEOInfo						= 1
     };
     static const char* toString(const OncePerDayType& oncePerDayType)
     {
@@ -228,6 +229,8 @@ public:
         {
             case OncePerDayType::DBDataRetention:
                 return "DBDataRetention";
+            case OncePerDayType::GEOInfo:
+                return "GEOInfo";
             default:
                 throw runtime_error(string("Wrong OncePerDayType"));
         }
@@ -240,6 +243,8 @@ public:
 
         if (lowerCase == "dbdataretention")
             return OncePerDayType::DBDataRetention;
+        if (lowerCase == "geoinfo")
+            return OncePerDayType::GEOInfo;
         else
             throw runtime_error(string("Wrong OncePerDayType")
                     + ", current oncePerDayType: " + oncePerDayType
@@ -1321,10 +1326,22 @@ public:
 
     Json::Value login (string eMailAddress, string password);
 
-	int64_t saveLoginStatistics(
-		int userKey, string ip,
-		string continent, string continentCode, string country, string countryCode,
-		string region, string city, string org, string isp, int timezoneGMTOffset);
+	int64_t saveLoginStatistics(int userKey, string ip);
+
+	#ifdef __POSTGRES__
+		void saveGEOInfo(
+			string ipAddress,
+			transaction_base* trans,
+			shared_ptr<PostgresConnection> conn
+		);
+		Json::Value getGEOInfo (string ip);
+		void updateGEOInfo();
+		vector<tuple<string, string, string, string, string, string, string, string, string>>
+			getGEOInfo_ipAPI(vector<string>& ips);
+		vector<tuple<string, string, string, string, string, string, string, string, string>>
+			getGEOInfo_ipwhois(vector<string>& ips);
+	#else
+	#endif
 
     pair<int64_t,int64_t> getWorkspaceUsage(
         int64_t workspaceKey);
@@ -2969,6 +2986,12 @@ private:
 	int				_getEncodingJobsCurrentIndex;
 
 	bool			_statisticsEnabled;
+
+	bool			_geoServiceEnabled;
+    int				_geoServiceMaxDaysBeforeUpdate;
+    string			_geoServiceURL;
+    string			_geoServiceKey;
+    int				_geoServiceTimeoutInSeconds;
 
 
 	#ifdef __POSTGRES__

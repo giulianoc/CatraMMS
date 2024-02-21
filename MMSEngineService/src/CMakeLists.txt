@@ -28,6 +28,7 @@ SET (SOURCES
 	CheckRefreshPartitionFreeSizeTimes.cpp
 	ContentRetentionTimes.cpp
 	DBDataRetentionTimes.cpp
+	GEOInfoTimes.cpp
 	ThreadsStatisticTimes.cpp
 )
 
@@ -38,6 +39,7 @@ SET (HEADERS
 	CheckRefreshPartitionFreeSizeTimes.h
 	ContentRetentionTimes.h
 	DBDataRetentionTimes.h
+	GEOInfoTimes.h
 	ThreadsStatisticTimes.h
 )
 
