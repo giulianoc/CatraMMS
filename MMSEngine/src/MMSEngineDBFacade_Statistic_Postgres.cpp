@@ -468,7 +468,6 @@ void MMSEngineDBFacade::updateGEOInfo()
 								city == "" ? "null" : trans.quote(city),
 								org == "" ? "null" : trans.quote(org),
 								isp == "" ? "null" : trans.quote(isp),
-								trans.quote(org), trans.quote(isp),
 								query);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
@@ -479,13 +478,12 @@ void MMSEngineDBFacade::updateGEOInfo()
 								sqlStatement, conn->getConnectionId(),
 								chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 							);
-							if (rowsUpdated != ipsToBeUpdated.size())
+							if (rowsUpdated != 1)
 							{
-								SPDLOG_ERROR("Code update failed"
+								SPDLOG_ERROR("update failed"
 									", rowsUpdated: {}"
-									", ipsToBeUpdated.size: {}"
 									", sqlStatement: {}",
-									rowsUpdated, ipsToBeUpdated.size(), sqlStatement) ;
+									rowsUpdated, sqlStatement) ;
 							}
 						}
 					}
@@ -525,7 +523,6 @@ void MMSEngineDBFacade::updateGEOInfo()
 							city == "" ? "null" : trans.quote(city),
 							org == "" ? "null" : trans.quote(org),
 							isp == "" ? "null" : trans.quote(isp),
-							trans.quote(org), trans.quote(isp),
 							query);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
@@ -536,13 +533,12 @@ void MMSEngineDBFacade::updateGEOInfo()
 							sqlStatement, conn->getConnectionId(),
 							chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 						);
-						if (rowsUpdated != ipsToBeUpdated.size())
+						if (rowsUpdated != 1)
 						{
-							SPDLOG_ERROR("Code update failed"
+							SPDLOG_ERROR("update failed"
 								", rowsUpdated: {}"
-								", ipsToBeUpdated.size: {}"
 								", sqlStatement: {}",
-								rowsUpdated, ipsToBeUpdated.size(), sqlStatement) ;
+								rowsUpdated, sqlStatement) ;
 						}
 					}
 				}
@@ -692,9 +688,9 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 
 				string query = JSONUtils::asString(geoServiceResponseIpRoot, "query", "");
 				string continent = JSONUtils::asString(geoServiceResponseIpRoot, "continent", "");
-				string continentCode = JSONUtils::asString(geoServiceResponseIpRoot, "continent_code", "");
+				string continentCode = JSONUtils::asString(geoServiceResponseIpRoot, "continentCode", "");
 				string country = JSONUtils::asString(geoServiceResponseIpRoot, "country", "");
-				string countryCode = JSONUtils::asString(geoServiceResponseIpRoot, "country_code", "");
+				string countryCode = JSONUtils::asString(geoServiceResponseIpRoot, "countryCode", "");
 				string regionName = JSONUtils::asString(geoServiceResponseIpRoot, "regionName", "");
 				string city = JSONUtils::asString(geoServiceResponseIpRoot, "city", "");
 				string org = JSONUtils::asString(geoServiceResponseIpRoot, "org", "");
@@ -734,9 +730,9 @@ SPDLOG_INFO("geoServiceResponseIp: {}", JSONUtils::toString(geoServiceResponseIp
 
 			string query = JSONUtils::asString(geoServiceResponseIp, "query", "");
 			string continent = JSONUtils::asString(geoServiceResponseIp, "continent", "");
-			string continentCode = JSONUtils::asString(geoServiceResponseIp, "continent_code", "");
+			string continentCode = JSONUtils::asString(geoServiceResponseIp, "continentCode", "");
 			string country = JSONUtils::asString(geoServiceResponseIp, "country", "");
-			string countryCode = JSONUtils::asString(geoServiceResponseIp, "country_code", "");
+			string countryCode = JSONUtils::asString(geoServiceResponseIp, "countryCode", "");
 			string regionName = JSONUtils::asString(geoServiceResponseIp, "regionName", "");
 			string city = JSONUtils::asString(geoServiceResponseIp, "city", "");
 			string org = JSONUtils::asString(geoServiceResponseIp, "org", "");
