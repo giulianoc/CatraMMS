@@ -690,6 +690,26 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
+        {
+			OncePerDayType oncePerDayType = OncePerDayType::GEOInfo;
+
+            string sqlStatement = fmt::format(
+				"insert into MMS_OncePerDayExecution (type, lastExecutionTime) "
+				"select {}, NULL where not exists "
+				"(select type from MMS_OncePerDayExecution where type = {})",
+				trans.quote(MMSEngineDBFacade::toString(oncePerDayType)),
+				trans.quote(MMSEngineDBFacade::toString(oncePerDayType))
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
 
         {
 			string sqlStatement =
