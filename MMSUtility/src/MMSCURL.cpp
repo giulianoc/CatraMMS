@@ -1450,11 +1450,11 @@ pair<string, string> MMSCURL::httpPostPutString(
 		try
 		{
 int aaa = 0;
-SPDLOG_INFO("AAAAA: {}", aaa++);
+logger->info(__FILEREF__ + "aaaa: " + to_string(aaa++));
 			curlpp::Cleanup cleaner;
 			curlpp::Easy request;
 
-SPDLOG_INFO("AAAAA: {}", aaa++);
+logger->info(__FILEREF__ + "aaaa: " + to_string(aaa++));
 			list<string> headers;
 			if (contentType != "")
 				headers.push_back(string("Content-Type: ") + contentType);
@@ -1469,10 +1469,10 @@ SPDLOG_INFO("AAAAA: {}", aaa++);
 			}
 			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
 
-SPDLOG_INFO("AAAAA: {}", aaa++);
+logger->info(__FILEREF__ + "aaaa: " + to_string(aaa++));
 			request.setOpt(new curlpp::options::Url(url));
 
-SPDLOG_INFO("AAAAA: {}", aaa++);
+logger->info(__FILEREF__ + "aaaa: " + to_string(aaa++));
 			// timeout consistent with nginx configuration (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
 
