@@ -23,6 +23,8 @@ int main (int iArgc, char *pArgv [])
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
 
+	spdlog::set_default_logger(logger);
+
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
