@@ -2706,8 +2706,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
         Json::Value responseRoot;
         {
             string sqlStatement = 
-				fmt::format("select count(*) from MMS_LoginStatistic s, MMS_User u "
-					"{} order by s.successfulLogin desc", sqlWhere);
+				fmt::format("select count(*) from MMS_LoginStatistic s, MMS_User u {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO("SQL statement"
