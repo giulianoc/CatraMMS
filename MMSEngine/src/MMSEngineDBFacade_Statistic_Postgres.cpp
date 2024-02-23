@@ -2900,7 +2900,9 @@ Json::Value MMSEngineDBFacade::getGEOInfo(string ip)
 
         {
 			string sqlStatement = fmt::format(
-				"select continent, continentCode, country, countryCode, region, city, org, isp "
+				"select continent, continentCode, country, countryCode, region, city, org, isp, "
+				"to_char(lastGEOUpdate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedLastGEOUpdate, "
+				"to_char(lastTimeUsed, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedLastTimeUsed "
 				"from MMS_GEOInfo where ip = {} ", trans.quote(ip));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
@@ -2971,6 +2973,15 @@ Json::Value MMSEngineDBFacade::getGEOInfo(string ip)
 				geoInfoRoot[field] = Json::nullValue;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
+
+			field = "lastGEOUpdate";
+			if (res[0]["formattedLastGEOUpdate"].is_null())
+				geoInfoRoot[field] = Json::nullValue;
+			else
+				geoInfoRoot[field] = res[0]["formattedLastGEOUpdate"].as<string>();
+
+			field = "lastTimeUsed";
+			geoInfoRoot[field] = res[0]["formattedLastTimeUsed"].as<string>();
 		}
 
 		trans.commit();
