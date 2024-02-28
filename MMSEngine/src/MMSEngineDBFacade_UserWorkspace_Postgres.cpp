@@ -4927,7 +4927,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
     return emailAddressAndName;
 }
 
-pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
+pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email, bool warningIfError)
 {
 	int64_t			userKey;
 	string			name;
@@ -4967,7 +4967,10 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
                     + ", email: " + email
                     + ", sqlStatement: " + sqlStatement
                 ;
-                _logger->error(errorMessage);
+				if (warningIfError)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
             }
@@ -5007,11 +5010,18 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email)
 	}
 	catch(runtime_error& e)
 	{
-		SPDLOG_ERROR("runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		if (warningIfError)
+			SPDLOG_WARN("runtime_error"
+				", exceptionMessage: {}"
+				", conn: {}",
+				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		else
+			SPDLOG_ERROR("runtime_error"
+				", exceptionMessage: {}"
+				", conn: {}",
+				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			);
 
 		try
 		{

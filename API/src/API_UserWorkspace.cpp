@@ -816,7 +816,7 @@ void API::shareWorkspace_(
 				+ ", Json field: " + field;
 				_logger->error(__FILEREF__ + errorMessage);
 
-				sendError(request, 400, errorMessage);
+				sendError(request, 500, errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -828,6 +828,22 @@ void API::shareWorkspace_(
 
 		string email = JSONUtils::asString(metadataRoot, "email", "");
 
+		// email format check
+		{
+			// [[:w:]] ---> word character: digit, number or undescore
+			regex e("[[:w:]]+@[[:w:]]+\\.[[:w:]]+");
+			if (!regex_match(email, e))
+			{
+				string errorMessage = fmt::format("Wrong email format"
+					", email: {}", email);
+				SPDLOG_ERROR(errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
 		// In case of ActiveDirectory, userAlreadyPresent is always true
 		if(_ldapEnabled)
 			userAlreadyPresent = true;
@@ -835,7 +851,8 @@ void API::shareWorkspace_(
 		{
 			try
 			{
-				pair<int64_t, string> userDetails = _mmsEngineDBFacade->getUserDetailsByEmail(email);
+				bool warningIfError = true;
+				pair<int64_t, string> userDetails = _mmsEngineDBFacade->getUserDetailsByEmail(email, warningIfError);
 				tie(userKey, name) = userDetails;
 
 				userAlreadyPresent = true;
@@ -2007,8 +2024,8 @@ void API::createTokenToResetPassword(
                 + ", email: " + email
             );
 
-			pair<int64_t, string> userDetails
-				= _mmsEngineDBFacade->getUserDetailsByEmail(email);
+			bool warningIfError = false;
+			pair<int64_t, string> userDetails = _mmsEngineDBFacade->getUserDetailsByEmail(email, warningIfError);
 			int64_t userKey = userDetails.first;
 			name = userDetails.second;
 
