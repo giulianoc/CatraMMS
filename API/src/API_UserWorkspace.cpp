@@ -2867,11 +2867,6 @@ void API::deleteWorkspace(
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
             
-            string responseBody;
-            
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);            
-
 			if (usersRemoved.size() > 0)
 			{
 				for(tuple<int64_t, string, string> userDetails: usersRemoved)
@@ -2945,7 +2940,6 @@ void API::deleteWorkspace(
             );
             
             string responseBody;
-            
             sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
 				request, "", api, 200, responseBody);            
         }
