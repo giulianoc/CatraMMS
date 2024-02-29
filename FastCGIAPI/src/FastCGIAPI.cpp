@@ -466,6 +466,24 @@ void FastCGIAPI::sendSuccess(
 	string cookieName, string cookieValue, string cookiePath,
 	bool enableCorsGETHeader, string originHeader)
 {
+	if (_fcgxFinishDone)
+	{
+		// se viene chiamato due volte sendSuccess/sendRedirect/sendHeadSuccess/sendError
+		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
+		// request.out è stato resettato nella prima chiamata
+		// Questo controllo è una protezione rispetto al segmentation fault
+		SPDLOG_ERROR("response was already done"
+			", requestIdentifier: {}"
+			", threadId: {}"
+			", requestURI: {}"
+			", requestMethod: {}"
+			", responseBody.size: @{}@",
+			requestIdentifier, sThreadId, requestURI, requestMethod, responseBody.size()
+		);
+
+		return;
+	}
+
     string endLine = "\r\n";
     
     string httpStatus = fmt::format("Status: {} {}{}",
@@ -613,6 +631,17 @@ void FastCGIAPI::sendSuccess(
 
 void FastCGIAPI::sendRedirect(FCGX_Request& request, string locationURL)
 {
+	if (_fcgxFinishDone)
+	{
+		// se viene chiamato due volte sendSuccess/sendRedirect/sendHeadSuccess/sendError
+		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
+		// request.out è stato resettato nella prima chiamata
+		// Questo controllo è una protezione rispetto al segmentation fault
+		SPDLOG_ERROR("response was already done");
+
+		return;
+	}
+
     string endLine = "\r\n";
     
     int htmlResponseCode = 301;
@@ -633,6 +662,17 @@ void FastCGIAPI::sendRedirect(FCGX_Request& request, string locationURL)
 
 void FastCGIAPI::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize)
 {
+	if (_fcgxFinishDone)
+	{
+		// se viene chiamato due volte sendSuccess/sendRedirect/sendHeadSuccess/sendError
+		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
+		// request.out è stato resettato nella prima chiamata
+		// Questo controllo è una protezione rispetto al segmentation fault
+		SPDLOG_ERROR("response was already done");
+
+		return;
+	}
+
     string endLine = "\r\n";
     
     string httpStatus = fmt::format("Status: {} {}{}",
@@ -673,6 +713,17 @@ void FastCGIAPI::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
 
 void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string errorMessage)
 {
+	if (_fcgxFinishDone)
+	{
+		// se viene chiamato due volte sendSuccess/sendRedirect/sendHeadSuccess/sendError
+		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
+		// request.out è stato resettato nella prima chiamata
+		// Questo controllo è una protezione rispetto al segmentation fault
+		SPDLOG_ERROR("response was already done");
+
+		return;
+	}
+
     string endLine = "\r\n";
 
 	long contentLength;
