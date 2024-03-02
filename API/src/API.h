@@ -100,10 +100,10 @@ shared_ptr<spdlog::logger>	_logger;
 
     int                 _maxPageSize;
     
-    string              _apiProtocol;
-    string              _apiHostname;
-    int                 _apiPort;
-    string				_apiVersion;
+    // string              _apiProtocol;
+    // string              _apiHostname;
+    // int                 _apiPort;
+    // string				_apiVersion;
     
     // string				_ffmpegEncoderProtocol;
     // int					_ffmpegEncoderPort;

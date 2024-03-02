@@ -682,6 +682,20 @@ void API::createWorkspace(
             pair<string, string> emailAddressAndName =
 				_mmsEngineDBFacade->getUserDetails (userKey);
 
+			string confirmationURL = _guiProtocol + "://" + _guiHostname;
+			if (_guiProtocol == "https" && _guiPort != 443)
+				confirmationURL += (":" + to_string(_guiPort));
+			confirmationURL += ("/catramms/conf/yourWorkspaces.xhtml?confirmationRequested=true&confirmationUserKey="
+				+ to_string(userKey)
+				+ "&confirmationCode=" + confirmationCode);
+
+			_logger->info(__FILEREF__ + "Created Workspace code"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+				+ ", userKey: " + to_string(userKey)
+				+ ", confirmationCode: " + confirmationCode
+				+ ", confirmationURL: " + confirmationURL
+			);
+
             string tosCommaSeparated = emailAddressAndName.first;
             string subject = "Confirmation code";
             
@@ -689,9 +703,9 @@ void API::createWorkspace(
             emailBody.push_back(string("<p>Dear ") + emailAddressAndName.second + ",</p>");
             emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
             emailBody.push_back(string("<p>here follows the confirmation code ") + confirmationCode + " to be used to confirm the registration</p>");
-			string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/" + _apiVersion + "/user/" 
-				+ to_string(userKey) + "/" + confirmationCode;
-			emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
+			// string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/" + _apiVersion + "/user/" 
+			// 	+ to_string(userKey) + "/" + confirmationCode;
+			emailBody.push_back(string("<p>Click <a href=\"") + confirmationURL + "\">here</a> to confirm the registration</p>");
 			emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 

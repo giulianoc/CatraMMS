@@ -131,6 +131,7 @@ _logger = spdlog::default_logger();
         ", api->defaultSharedHLSChannelsNumber: {}", _defaultSharedHLSChannelsNumber
     );
 
+	/*
     _apiProtocol =  JSONUtils::asString(_configuration["api"], "protocol", "");
     SPDLOG_INFO("Configuration item"
         ", api->protocol: {}", _apiProtocol
@@ -147,6 +148,7 @@ _logger = spdlog::default_logger();
     SPDLOG_INFO("Configuration item"
         ", api->version: {}", _apiVersion
     );
+	*/
 
     Json::Value api = _configuration["api"];
     // _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
