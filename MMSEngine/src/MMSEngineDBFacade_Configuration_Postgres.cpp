@@ -3928,14 +3928,19 @@ Json::Value MMSEngineDBFacade::getStreamList (
 	int start, int rows,
 	string label, bool labelLike, string url, string sourceType, string type,
 	string name, string region, string country,
-	string labelOrder	// "" or "asc" or "desc"
+	string labelOrder,	// "" or "asc" or "desc"
+	bool fromMaster
 )
 {
-    Json::Value streamListRoot;
-    
+	Json::Value streamListRoot;
+
 	shared_ptr<PostgresConnection> conn = nullptr;
 
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
+	if (fromMaster)
+		connectionPool = _masterPostgresConnectionPool;
+	else
+		connectionPool = _slavePostgresConnectionPool;
 
 	conn = connectionPool->borrow();	
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
@@ -4966,7 +4971,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 				sqlStatement, conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
 		Json::Value sourceTVStreamsRoot;
 		{
@@ -4982,7 +4987,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 			string nameOrder;
 			Json::Value sourceTVStreamRoot = getSourceTVStreamList (
 				confKey, start, rows, type, serviceId, name, frequency, lnb,
-				videoPid, audioPids, nameOrder);
+				videoPid, audioPids, nameOrder, true);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(sourceTVStreamRoot, field))
@@ -5008,7 +5013,12 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 
 			if (sourceTVStreamsRoot.size() != 1)
 			{
-				string errorMessage = __FILEREF__ + "Wrong channelConf";
+				string errorMessage = fmt::format(
+					"Wrong channelConf"
+					", confKey: {}"
+					", sourceTVStreamsRoot.size: {}"
+					, confKey, sourceTVStreamsRoot.size()
+				);
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -5351,7 +5361,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 			string nameOrder;
 			Json::Value sourceTVStreamRoot = getSourceTVStreamList (
 				confKey, start, rows, type, serviceId, name, frequency, lnb,
-				videoPid, audioPids, nameOrder);
+				videoPid, audioPids, nameOrder, true);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(sourceTVStreamRoot, field))
@@ -5611,13 +5621,17 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 	int start, int rows,
 	string type, int64_t serviceId, string name, int64_t frequency, string lnb,
 	int videoPid, string audioPids,
-	string nameOrder)
+	string nameOrder, bool fromMaster)
 {
     Json::Value streamListRoot;
     
 	shared_ptr<PostgresConnection> conn = nullptr;
 
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
+	if (fromMaster)
+		connectionPool = _masterPostgresConnectionPool;
+	else
+		connectionPool = _slavePostgresConnectionPool;
 
 	conn = connectionPool->borrow();	
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
@@ -5712,8 +5726,8 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 
             field = "requestParameters";
             streamListRoot[field] = requestParametersRoot;
-        }
-        
+		}
+
 		string sqlWhere;
         if (confKey != -1)
 		{
@@ -5789,9 +5803,9 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 				sqlStatement, conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-        Json::Value streamsRoot(Json::arrayValue);
+		Json::Value streamsRoot(Json::arrayValue);
         {
 			string orderByCondition;
 				orderByCondition = fmt::format("order by sc.name {}", nameOrder);

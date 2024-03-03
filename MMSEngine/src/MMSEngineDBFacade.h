@@ -2489,12 +2489,21 @@ public:
         int64_t confKey,
 		string label);
 
+	#ifdef __POSTGRES__
+    Json::Value getStreamList (
+        int64_t workspaceKey, int64_t liveURLKey,
+		int start, int rows,
+		string label, bool labelLike, string sourceType, string type,
+		string name, string region, string country, string url,
+		string labelOrder, bool fromMaster = false);
+	#else
     Json::Value getStreamList (
         int64_t workspaceKey, int64_t liveURLKey,
 		int start, int rows,
 		string label, bool labelLike, string sourceType, string type,
 		string name, string region, string country, string url,
 		string labelOrder);
+	#endif
 
 	tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
 		int, string, int, int, int, int, int, int64_t>
@@ -2553,12 +2562,21 @@ public:
     void removeSourceTVStream(
         int64_t confKey);
 
+	#ifdef __POSTGRES__
+    Json::Value getSourceTVStreamList (
+        int64_t confKey,
+		int start, int rows,
+		string type, int64_t serviceId, string name, int64_t frequency, string lnb,
+		int videoPid, string audioPids,
+		string nameOrder, bool fromMaster = false);
+	#else
     Json::Value getSourceTVStreamList (
         int64_t confKey,
 		int start, int rows,
 		string type, int64_t serviceId, string name, int64_t frequency, string lnb,
 		int videoPid, string audioPids,
 		string nameOrder);
+	#endif
 
     tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 		getSourceTVStreamDetails(int64_t confKey, bool warningIfMissing);

@@ -7,7 +7,7 @@
 
 void MMSEngineDBFacade::createTablesIfNeeded()
 {
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
@@ -398,7 +398,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement =
 				"create unique index if not exists MMS_Conf_SourceTVStream_idx "
-				"on MMS_Conf_SourceTVStream (serviceId, name, lnb, frequency, videoPid, audioPids) NULLS NOT DISTINCT";
+				"on MMS_Conf_SourceTVStream (type, serviceId, name, lnb, frequency, videoPid, audioPids) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO("SQL statement"
