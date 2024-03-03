@@ -4973,11 +4973,11 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 			int start = 0;
 			int rows = 1;
 			string type;
-			int64_t serviceId;
+			int64_t serviceId = -1;
 			string name;
-			int64_t frequency;
+			int64_t frequency = -1;
 			string lnb;
-			int videoPid;
+			int videoPid = -1;
 			string audioPids;
 			string nameOrder;
 			Json::Value sourceTVStreamRoot = getSourceTVStreamList (
@@ -5342,11 +5342,11 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 			int start = 0;
 			int rows = 1;
 			string type;
-			int64_t serviceId;
+			int64_t serviceId = -1;
 			string name;
-			int64_t frequency;
+			int64_t frequency = -1;
 			string lnb;
-			int videoPid;
+			int videoPid = -1;
 			string audioPids;
 			string nameOrder;
 			Json::Value sourceTVStreamRoot = getSourceTVStreamList (
