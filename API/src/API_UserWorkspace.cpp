@@ -2873,6 +2873,7 @@ void API::deleteWorkspace(
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
 
+			// ritorna gli utenti eliminati perchè avevano solamente il workspace che è stato rimosso
 			vector<tuple<int64_t, string, string>> usersRemoved = _mmsEngineDBFacade->deleteWorkspace(
 				userKey, workspace->_workspaceKey);
 
@@ -2967,6 +2968,135 @@ void API::deleteWorkspace(
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception& e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error& e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+			+ ", userKey: " + to_string(userKey)
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception& e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+			+ ", userKey: " + to_string(userKey)
+			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::unshareWorkspace(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+	FCGX_Request& request,
+	int64_t userKey,
+	shared_ptr<Workspace> workspace)
+{
+    string api = "unshareWorkspace";
+
+    _logger->info(__FILEREF__ + "Received " + api
+		+ ", userKey: " + to_string(userKey)
+		+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
+    );
+
+    try
+    {
+		if (_noFileSystemAccess)
+		{
+            _logger->error(__FILEREF__ + api + " failed, no rights to execute this method"
+				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+            );
+
+            string errorMessage = string("Internal server error: ") + "no rights to execute this method";
+            _logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+		}
+
+        try
+        {
+            _logger->info(__FILEREF__ + "Unshare Workspace"
+                + ", userKey: " + to_string(userKey)
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+
+			// ritorna gli utenti eliminati perchè avevano solamente il workspace che è stato unshared
+			auto [userToBeRemoved, name, eMailAddress] = _mmsEngineDBFacade->unshareWorkspace(
+				userKey, workspace->_workspaceKey);
+
+            _logger->info(__FILEREF__ + "Workspace from DB unshared"
+                + ", userKey: " + to_string(userKey)
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+            
+			if (userToBeRemoved)
+			{
+				string tosCommaSeparated = eMailAddress;
+				string subject = "Your account was removed";
+
+				vector<string> emailBody;
+				emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + workspace->_name + ") was unshared and</p>"));
+				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>"));
+				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>"));
+				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+
+				MMSCURL::sendEmail(
+					_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
+					_emailUserName,	// i.e.: info@catramms-cloud.com
+					tosCommaSeparated,
+					_emailCcsCommaSeparated,
+					subject,
+					emailBody,
+					_emailPassword
+				);
+			}
+
+            string responseBody;
+            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
+				request, "", api, 200, responseBody);            
+        }
+        catch(runtime_error& e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }

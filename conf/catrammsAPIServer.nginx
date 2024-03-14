@@ -66,6 +66,7 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=updateWorkspace last;
 		}
 		if ($request_method = DELETE) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/share/?$ /api?version=$1&method=unshareWorkspace last;
 			#moved to binary API
 			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=deleteWorkspace last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=removeAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;

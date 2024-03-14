@@ -205,6 +205,12 @@ shared_ptr<spdlog::logger>	_logger;
 		int64_t userKey,
         shared_ptr<Workspace> workspace);
 
+    void unshareWorkspace(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
+        FCGX_Request& request,
+		int64_t userKey,
+        shared_ptr<Workspace> workspace);
+
 	void workspaceUsage (
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
 			FCGX_Request& request,

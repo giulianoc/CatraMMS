@@ -2044,21 +2044,21 @@ tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
 			char        strExpirationUtcDate [64];
             {
                 chrono::system_clock::time_point apiKeyExpirationDate =
-                        chrono::system_clock::now()
-						+ chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
+					chrono::system_clock::now()
+					+ chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
 
-                tm          tmDateTime;
-                time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
+				tm tmDateTime;
+				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
 
-                gmtime_r (&utcTime, &tmDateTime);
+				gmtime_r (&utcTime, &tmDateTime);
 
-                sprintf (strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d",
-                        tmDateTime. tm_year + 1900,
-                        tmDateTime. tm_mon + 1,
-                        tmDateTime. tm_mday,
-                        tmDateTime. tm_hour,
-                        tmDateTime. tm_min,
-                        tmDateTime. tm_sec);
+				sprintf (strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d",
+					tmDateTime. tm_year + 1900,
+					tmDateTime. tm_mon + 1,
+					tmDateTime. tm_mday,
+					tmDateTime. tm_hour,
+					tmDateTime. tm_min,
+					tmDateTime. tm_sec);
             }
             string sqlStatement = fmt::format( 
                 "insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
@@ -2318,8 +2318,8 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 }
 
 vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
-		int64_t userKey,
-		int64_t workspaceKey)
+	int64_t userKey,
+	int64_t workspaceKey)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2554,8 +2554,241 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 
 		throw e;
 	}
-    
-    // return workspaceKeyUserKeyAndConfirmationCode;
+}
+
+tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(
+	int64_t userKey,
+	int64_t workspaceKey)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	work trans{*(conn->_sqlConnection)};
+
+    try
+    {
+        // check if ADMIN flag is already present
+        bool admin = false;
+		bool isOwner = false;
+        {
+            string sqlStatement = fmt::format( 
+                "select isOwner, permissions "
+				"from MMS_APIKey where workspaceKey = {} and userKey = {}",
+				workspaceKey, userKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (!empty(res))
+            {
+				string permissions = res[0]["permissions"].as<string>();
+				Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+
+				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
+                isOwner = res[0]["isOwner"].as<bool>();
+            }
+        }
+
+		if (isOwner)
+		{
+			string errorMessage = __FILEREF__ + "The user requesting the unshare has the ownership rights. In this case he should call removeWorkspace"
+				+ ", workspaceKey: " + to_string(workspaceKey)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		// 2023-03-01: nel caso in cui l'utente ha solamente questo workspace, è necessario eliminarlo
+		//	perchè non puo rimanere un utente senza workspace
+		bool userToBeRemoved = false;
+		string name;
+		string eMailAddress;
+		{
+			{
+				string sqlStatement = fmt::format( 
+					"select name, eMailAddress from MMS_User "
+					"where userKey = {}", userKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				result res = trans.exec(sqlStatement);
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
+				if (empty(res))
+				{
+					string errorMessage = fmt::format("The user does not exist"
+						", userKey: {}", userKey
+					);
+					_logger->error(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				name = res[0]["name"].as<string>();
+				eMailAddress = res[0]["eMailAddress"].as<string>();
+			}
+			{
+				string sqlStatement = fmt::format( 
+					"select count(*) from MMS_APIKey where userKey = {}",
+					userKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				int count = trans.exec1(sqlStatement)[0].as<int>();
+				SPDLOG_INFO("SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
+				if (count == 1)
+				{
+					// it means the user has ONLY the workspace that will be removed
+					// So the user will be removed too
+
+					userToBeRemoved = true;
+				}
+			}
+        }
+
+        {
+            string sqlStatement = fmt::format(
+                "WITH rows AS (delete from MMS_APIKey where userKey = {} and workspaceKey = {} returning 1) "
+				"select count(*) from rows",
+				userKey, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+        }
+
+        // the users do not have any other workspace will be removed
+		if (userToBeRemoved)
+        {
+			// in all the tables depending from User we have 'on delete cascade'
+			// So all should be removed automatically from DB
+			string sqlStatement = fmt::format( 
+				"WITH rows AS (delete from MMS_User where userKey = {} "
+				"returning 1) select count(*) from rows",
+				userKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			SPDLOG_INFO("SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+        }
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return make_tuple(userToBeRemoved, name, eMailAddress);
+    }
+	catch(sql_error const &e)
+	{
+		SPDLOG_ERROR("SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch(runtime_error& e)
+	{
+		SPDLOG_ERROR("runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
+	catch(exception& e)
+	{
+		SPDLOG_ERROR("exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR("abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+
+		throw e;
+	}
 }
 
 tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
@@ -2750,7 +2983,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
 }
 
 Json::Value MMSEngineDBFacade::login (
-        string eMailAddress, string password)
+	string eMailAddress, string password)
 {
     Json::Value     loginDetailsRoot;
 
