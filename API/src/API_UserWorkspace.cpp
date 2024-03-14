@@ -3029,20 +3029,6 @@ void API::unshareWorkspace(
 
     try
     {
-		if (_noFileSystemAccess)
-		{
-            _logger->error(__FILEREF__ + api + " failed, no rights to execute this method"
-				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
-            );
-
-            string errorMessage = string("Internal server error: ") + "no rights to execute this method";
-            _logger->error(__FILEREF__ + errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-		}
-
         try
         {
             _logger->info(__FILEREF__ + "Unshare Workspace"
