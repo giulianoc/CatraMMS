@@ -1332,6 +1332,23 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         deleteWorkspace(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, userKey, workspace);
     }
+    else if (method == "unshareWorkspace")
+    {
+        if (!admin && !shareWorkspace)
+        {
+            string errorMessage = fmt::format("APIKey does not have the permission"
+				", shareWorkspace: {}", shareWorkspace
+			);
+            SPDLOG_ERROR(errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        unshareWorkspace(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, userKey, workspace);
+    }
     else if (method == "workspaceUsage")
     {
         workspaceUsage(sThreadId, requestIdentifier, responseBodyCompressed,
