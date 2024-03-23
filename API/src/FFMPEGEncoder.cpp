@@ -1664,6 +1664,32 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
+        bool encodingCompleted = false;
+		{
+			lock_guard<mutex> locker(*_encodingCompletedMutex);
+
+			map<int64_t,
+				shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it =
+				_encodingCompletedMap->find(encodingJobKey);
+			if (it != _encodingCompletedMap->end())
+				encodingCompleted = true;
+		}
+
+		if (encodingCompleted)
+		{
+			string errorMessage = fmt::format("filterNotification, encoding is already finished"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", encodingCompleted: {}"
+                                     , ingestionJobKey, ingestionJobKey, encodingCompleted);
+
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		auto filterNameIt = queryParameters.find("filterName");
 		if (filterNameIt == queryParameters.end())
 		{
@@ -1694,14 +1720,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!liveProxyFound)
 		{
-			string errorMessage =
-				"ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", " +
-				NoEncodingJobKeyFound().what();
+			string errorMessage = fmt::format("filterNotification, liveProxy not found"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", liveProxyFound: {}"
+                                    , ingestionJobKey, ingestionJobKey, liveProxyFound);
 
 			_logger->error(__FILEREF__ + errorMessage);
 
-			sendError(request, 400, errorMessage);
+			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
