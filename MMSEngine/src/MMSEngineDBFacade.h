@@ -2074,7 +2074,8 @@ public:
 		int64_t utcProxyPeriodStart, // int64_t utcProxyPeriodEnd,
 		// long maxAttemptsNumberInCaseOfErrors,
 		long waitingSecondsBetweenAttemptsInCaseOfErrors,
-		Json::Value outputsRoot);
+		Json::Value outputsRoot,
+		string mmsWorkflowIngestionURL);
 
 	void addEncoding_VODProxyJob (
 		shared_ptr<Workspace> workspace,

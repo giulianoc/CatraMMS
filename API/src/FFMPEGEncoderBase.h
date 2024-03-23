@@ -41,6 +41,7 @@ class FFMPEGEncoderBase {
 			Json::Value				_outputsRoot;
 
 			int64_t					_ingestionJobKey;
+			Json::Value				_encodingParametersRoot;
 			Json::Value				_ingestedParametersRoot;
 
 			Json::Value				_inputsRoot;
@@ -65,6 +66,7 @@ class FFMPEGEncoderBase {
 				liveProxyAndGrid->_ingestionJobKey = _ingestionJobKey;
 
 				liveProxyAndGrid->_outputsRoot = _outputsRoot;
+				liveProxyAndGrid->_encodingParametersRoot = _encodingParametersRoot;
 				liveProxyAndGrid->_ingestedParametersRoot = _ingestedParametersRoot;
 				liveProxyAndGrid->_inputsRoot = _inputsRoot;
 

@@ -28,6 +28,9 @@ project(
 	CatraMMS
 )
 
+#generate compile_commands.json
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+
 SET(CMAKE_CXX_FLAGS "-std=c++20")
 
 #this is to generate a compilation database (for the YCM vim plugin)
@@ -47,8 +50,11 @@ set(CatraMMS_VERSION_MINOR 0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(LibCrypto)
+#$(LibCrypto_INCLUDE_DIRS) and $(LibCrypto_LIBS) availables
 find_package(ZLIB)
+#$(ZLIB_INCLUDE_DIRS) and $(ZLIB_LIBS) availables
 find_package(aws-cpp-sdk-ec2)
+#$(aws-cpp-sdk-ec2_INCLUDE_DIRS) and $(aws-cpp-sdk-ec2_LIBS) availables
 
 add_compile_options(-D_FILE_OFFSET_BITS=64)
 #Next Magick defines are just to avoid compilation warnings

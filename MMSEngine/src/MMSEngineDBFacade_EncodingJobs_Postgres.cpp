@@ -5770,7 +5770,8 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	int64_t utcProxyPeriodStart,
 	// long maxAttemptsNumberInCaseOfErrors,
 	long waitingSecondsBetweenAttemptsInCaseOfErrors,
-	Json::Value outputsRoot
+	Json::Value outputsRoot,
+	string mmsWorkflowIngestionURL
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -5818,6 +5819,9 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 
 				field = "outputsRoot";
 				parametersRoot[field] = outputsRoot;
+
+				field = "mmsWorkflowIngestionURL";
+				parametersRoot[field] = mmsWorkflowIngestionURL;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}

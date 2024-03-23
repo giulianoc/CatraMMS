@@ -5,6 +5,7 @@
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/StringUtils.h"
 #include "catralibraries/DateTime.h"
+#include "json/value.h"
 
 
 LiveProxy::LiveProxy(
@@ -28,6 +29,7 @@ LiveProxy::LiveProxy(
 
 LiveProxy::~LiveProxy()
 {
+	_liveProxyData->_encodingParametersRoot = Json::nullValue;
 	_liveProxyData->_method = "";
 	_liveProxyData->_ingestionJobKey = 0;
 	// _liveProxyData->_channelLabel = "";
@@ -63,6 +65,7 @@ void LiveProxy::encodeContent(
 
 		_liveProxyData->_ingestionJobKey = _ingestionJobKey;	// JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
+		_liveProxyData->_encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		_liveProxyData->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
