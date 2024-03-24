@@ -7,13 +7,13 @@ then
 	echo "usage $0 moduleType_1 [parameter_1] [moduleType_2 [parameter_2]] [moduleType_3 [parameter_3]]" >> $debugFilename
 	echo "	examples:" >> $debugFilename
 	echo "	$0 engine" >> $debugFilename
-	echo "	$0 api <healthCheckURL" >> $debugFilename
-	echo "	$0 webapi <healthCheckURL" >> $debugFilename
+	echo "	$0 api <baseAPIURL>" >> $debugFilename        #http://10.0.0.5:8088/catramms/1.0.1
+	echo "	$0 webapi <baseWEBAPIURL>" >> $debugFilename  #http://10.0.0.5:8086/catramms/webapi/1.0.0
 	echo "	$0 delivery" >> $debugFilename
-	echo "	$0 encoder <healthCheckURL>" >> $debugFilename
-	echo "	$0 externalEncoder <healthCheckURL>" >> $debugFilename
+	echo "	$0 encoder <baseEncoderURL>" >> $debugFilename  #http://10.0.1.5:8088/catramms/v1/encoder
+	echo "	$0 externalEncoder <healthCheckURL> >> $debugFilename #http://localhost:8088/catramms/v1/encoder
 	echo "	$0 storage" >> $debugFilename
-	echo "	$0 integration" >> $debugFilename
+	echo "	$0 integration <healthCheckURL>" >> $debugFilename  #http://localhost:8084/cibortv/rest/api-v1
 
 	exit
 fi
@@ -82,7 +82,7 @@ do
 
 			echo "" >> $debugFilename
 			serviceName=api
-			healthCheckURL=$2
+			healthCheckURL=$2/status
 			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
 
 			echo "" >> $debugFilename
@@ -101,7 +101,7 @@ do
 
 			echo "" >> $debugFilename
 			serviceName=webapi
-			healthCheckURL=$2
+			healthCheckURL=$2/status
 			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
 
 			#echo "" >> $debugFilename
@@ -143,21 +143,26 @@ do
 			nginx_error encoder
 
 			echo "" >> $debugFilename
+
 			serviceName=encoder
-			healthCheckURL=$2
+      baseEncoderURL=$2
+			healthCheckURL=$baseEncoderURL/status
+      encoderAPIUser=1
+      encoderAPIPassword=SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHu3Iy6W94kQvSd4cJm.el3j
+
 			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
 
 			echo "" >> $debugFilename
-			ffmpeg_filter_detect blackdetect
+			ffmpeg_filter_detect blackdetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
 
 			echo "" >> $debugFilename
-			ffmpeg_filter_detect blackframe
+			ffmpeg_filter_detect blackframe "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
 
 			echo "" >> $debugFilename
-			ffmpeg_filter_detect freezedetect
+			ffmpeg_filter_detect freezedetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
 
 			echo "" >> $debugFilename
-			ffmpeg_filter_detect silencedetect
+			ffmpeg_filter_detect silencedetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
 
 			shift
 
@@ -174,7 +179,7 @@ do
 
 			echo "" >> $debugFilename
 			serviceName=cibortv
-			healthCheckURL=$2
+			healthCheckURL=$2/status
 			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
 
 			echo "" >> $debugFilename

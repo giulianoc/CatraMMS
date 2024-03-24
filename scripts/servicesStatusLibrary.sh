@@ -49,18 +49,6 @@ getAlarmDescription()
 		"alarm_mms_service_running")
 			echo "mms service is not running"
 			;;
-		"alarm_blackdetect")
-			echo "got blackdetect"
-			;;
-		"alarm_blackframe")
-			echo "got blackframe"
-			;;
-		"alarm_freezedetect")
-			echo "got freezedetect"
-			;;
-		"alarm_silencedetect")
-			echo "got silencedetect"
-			;;
 		"alarm_mms_call_api_service")
 			echo "mms call api service not working or too slow"
 			;;
@@ -80,34 +68,34 @@ getAlarmDescription()
 	esac
 }
 
-getIngestionJobLabelByIngestionJobKey()
-{
-	ingestionJobKey=$1
+#getIngestionJobLabelByIngestionJobKey()
+#{
+	#ingestionJobKey=$1
 
-	#dominio da essere cambiato con catramms-cloud
-	apiIngestionJobDetailsURL="https://mms-api.cibortv-mms.com:443/catramms/1.0.1/ingestionJob/__INGESTIONJOBKEY__?ingestionJobOutputs=true&fromMaster=false"
-	#custom key
-	basicAuthentication="MTpITlZPb1ZoSHgweW9XTkl4RnUtVGhCQTF2QVBFS1dzeG5lR2d6ZTZlb2RkRXY5YUIxeHA5TnpzQktEQkRNRUZO"
-	maxTime=5
-	apiIngestionJobDetailsURL=${apiIngestionJobDetailsURL/__INGESTIONJOBKEY__/$ingestionJobKey}
-	ingestionJobKeyPathName=/tmp/$ingestionJobKey.json
-	start=$(date +%s)
-	curl -k --silent --output $ingestionJobKeyPathName --max-time $maxTime -H 'accept:: application/json' -H "Authorization: Basic $basicAuthentication" -X 'GET' "$apiIngestionJobDetailsURL"
-	end=$(date +%s)
-	ingestionJobLabel=""
-	if [ -f "$ingestionJobKeyPathName" ]; then
-		fileSize=$(stat -c%s "$ingestionJobKeyPathName")
-		if [ $fileSize -gt 1000 ]; then
-			ingestionJobLabel=$(cat $ingestionJobKeyPathName | jq '.response.ingestionJobs[0].label')
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, ingestionJobLabel: $ingestionJobLabel, elapsed: $((end-start)) secs" >> $debugFilename
-		else
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, $ingestionJobKeyPathName size: $(stat -c%s "$ingestionJobKeyPathName"), elapsed: $((end-start)) secs" >> $debugFilename
-		fi
-	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, elapsed: $((end-start)) secs" >> $debugFilename
-	fi
-	rm -f $ingestionJobKeyPathName
-}
+	##dominio da essere cambiato con catramms-cloud
+	#apiIngestionJobDetailsURL="https://mms-api.cibortv-mms.com:443/catramms/1.0.1/ingestionJob/__INGESTIONJOBKEY__?ingestionJobOutputs=true&fromMaster=false"
+	##custom key
+	#basicAuthentication="MTpITlZPb1ZoSHgweW9XTkl4RnUtVGhCQTF2QVBFS1dzeG5lR2d6ZTZlb2RkRXY5YUIxeHA5TnpzQktEQkRNRUZO"
+	#maxTime=5
+	#apiIngestionJobDetailsURL=${apiIngestionJobDetailsURL/__INGESTIONJOBKEY__/$ingestionJobKey}
+	#ingestionJobKeyPathName=/tmp/$ingestionJobKey.json
+	#start=$(date +%s)
+	#curl -k --silent --output $ingestionJobKeyPathName --max-time $maxTime -H 'accept:: application/json' -H "Authorization: Basic $basicAuthentication" -X 'GET' "$apiIngestionJobDetailsURL"
+	#end=$(date +%s)
+	#ingestionJobLabel=""
+	#if [ -f "$ingestionJobKeyPathName" ]; then
+		#fileSize=$(stat -c%s "$ingestionJobKeyPathName")
+		#if [ $fileSize -gt 1000 ]; then
+			#ingestionJobLabel=$(cat $ingestionJobKeyPathName | jq '.response.ingestionJobs[0].label')
+			#echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, ingestionJobLabel: $ingestionJobLabel, elapsed: $((end-start)) secs" >> $debugFilename
+		#else
+			#echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, $ingestionJobKeyPathName size: $(stat -c%s "$ingestionJobKeyPathName"), elapsed: $((end-start)) secs" >> $debugFilename
+		#fi
+	#else
+		#echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, elapsed: $((end-start)) secs" >> $debugFilename
+	#fi
+	#rm -f $ingestionJobKeyPathName
+#}
 
 notify()
 {
@@ -490,6 +478,9 @@ mms_service_running_by_healthCheckURL()
 ffmpeg_filter_detect()
 {
 	filterName=$1
+	baseEncoderURL=$2
+	encoderFilterNotificationURLUser=$3
+	encoderFilterNotificationURLPassword=$4
 
 	#2880: 2 giorni
 	find /tmp -maxdepth 1 -name "alarm_${filterName}_*" -mmin +2880 -type f -delete
@@ -532,16 +523,25 @@ ffmpeg_filter_detect()
 				#fileName: 3267084_118879_2023-03-11-16-50-24.liveProxy.0.log
 				array=(${fileName//_/ })
 				ingestionJobKey=${array[0]}
+				encodingJobKey=${array[1]}
 
-				#inizializza ingestionJobLabel
-				getIngestionJobLabelByIngestionJobKey $ingestionJobKey
+                #http://10.0.1.7:8088/catramms/v1/encoder/filterNotification/6565093/1424493?filterName=freezeDetect
+                encoderFilterNotificationURL="$baseEncoderURL/filterNotification/$ingestionJobKey/$encodingJobKey?filterName=$filterName"
 
-				notify "$(hostname)" "alarm_${filterName}" "alarm_${filterName}_${fileName}" $alarmNotificationPeriod "got ${filterCount} times on file $fileName, ingestionJob: $ingestionJobKey - $ingestionJobLabel"
-				status=$?
-				if [ $status -eq 0 ]; then
-					#status 0 means alarm was sent
+                start=$(date +%s)
+                curl -k -u $encoderFilterNotificationURLUser:$encoderFilterNotificationURLPassword --silent --output /dev/null --max-time $maxTime -H 'accept:: application/json' -X 'GET' "$encoderFilterNotificationURL"
+	            end=$(date +%s)
+			    echo "$(date +'%Y/%m/%d %H:%M:%S'): encoderFilterNotificationURL: $encoderFilterNotificationURL, elapsed: $((end-start)) secs" >> $debugFilename
+
+				##inizializza ingestionJobLabel
+				#getIngestionJobLabelByIngestionJobKey $ingestionJobKey
+
+				#notify "$(hostname)" "alarm_${filterName}" "alarm_${filterName}_${fileName}" $alarmNotificationPeriod "got ${filterCount} times on file $fileName, ingestionJob: $ingestionJobKey - $ingestionJobLabel"
+				#status=$?
+				#if [ $status -eq 0 ]; then
+				#	#status 0 means alarm was sent
 					echo "$filterCount" > $infoPathFileName
-				fi
+				#fi
 			fi
 		fi
 	done

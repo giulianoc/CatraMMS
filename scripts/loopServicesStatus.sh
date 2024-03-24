@@ -12,7 +12,7 @@ then
 	exit
 fi
 
-while [ 1 -eq 1 ]
+while [ 1 ]
 do
 	before=$(date +%s)
 	/opt/catramms/CatraMMS/scripts/servicesStatusAgent.sh $*
