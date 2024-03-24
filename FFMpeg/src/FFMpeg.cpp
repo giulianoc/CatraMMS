@@ -211,14 +211,9 @@ void FFMpeg::encodeContent(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".encode.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "encode", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 		// special case:
@@ -1836,14 +1831,9 @@ void FFMpeg::overlayImageOnVideo(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".overlayImage.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "overlayImageOnVideo", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 
@@ -2288,14 +2278,9 @@ void FFMpeg::overlayTextOnVideo(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".overlayText.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "overlayTextOnVideo", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
         {
@@ -2766,14 +2751,9 @@ void FFMpeg::videoSpeed(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".videoSpeed.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "videoSpeed", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 
@@ -3381,14 +3361,9 @@ void FFMpeg::pictureInPicture(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".pictureInPicture.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "pictureInPicture", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 
@@ -3925,14 +3900,9 @@ void FFMpeg::introOutroOverlay(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".introOutroOverlay.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "introOutroOverlay", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 
@@ -4360,14 +4330,9 @@ void FFMpeg::introOverlay(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".introOverlay.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "introOverlay", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 
@@ -4774,14 +4739,9 @@ void FFMpeg::outroOverlay(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".outroOverlay.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "outroOverlay", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 
@@ -5156,14 +5116,9 @@ void FFMpeg::silentAudio(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-                _ffmpegTempDir + "/"
-                + to_string(_currentIngestionJobKey)
-                + "_"
-                + to_string(_currentEncodingJobKey)
-                + "_"
-				+ sUtcTimestamp
-                + ".addSilentAudio.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "silentAudio", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 
@@ -7562,12 +7517,9 @@ void FFMpeg::generateFrameToIngest(
 			tmUtcTimestamp.tm_min,
 			tmUtcTimestamp.tm_sec);
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(_currentIngestionJobKey)
-			+ "_"
-			+ sUtcTimestamp
-			+ ".generateFrame.log";
+		_outputFfmpegPathFileName = fmt::format(
+             "{}/{}_{}_{}.log",
+             _ffmpegTempDir, "generateFrameToIngest", _currentIngestionJobKey, sUtcTimestamp);
 	}
 
     // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
@@ -7770,14 +7722,9 @@ void FFMpeg::generateFramesToIngest(
 			tmUtcTimestamp.tm_min,
 			tmUtcTimestamp.tm_sec);
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(_currentIngestionJobKey)
-			+ "_"
-			+ to_string(_currentEncodingJobKey)
-			+ "_"
-			+ sUtcTimestamp
-			+ ".generateFrames.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "generateFramesToIngest", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 	}
 
     string localImageFileName;
@@ -8044,12 +7991,9 @@ void FFMpeg::concat(int64_t ingestionJobKey,
 			tmUtcTimestamp.tm_min,
 			tmUtcTimestamp.tm_sec);
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey)
-			+ "_"
-			+ sUtcTimestamp
-			+ ".concat.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}.log",
+              _ffmpegTempDir, "concat", _currentIngestionJobKey, sUtcTimestamp);
 	}
 
     // Then you can stream copy or re-encode your files
@@ -8250,12 +8194,9 @@ void FFMpeg::splitVideoInChunks(
 			tmUtcTimestamp.tm_min,
 			tmUtcTimestamp.tm_sec);
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey)
-			+ "_"
-			+ sUtcTimestamp
-			+ ".splitVideoInChunks.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}.log",
+              _ffmpegTempDir, "splitVideoInChunks", _currentIngestionJobKey, sUtcTimestamp);
 	}
 
 	string outputPathFileName;
@@ -8443,12 +8384,9 @@ void FFMpeg::cutWithoutEncoding(
 			tmUtcTimestamp.tm_min,
 			tmUtcTimestamp.tm_sec);
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey)
-			+ "_"
-			+ sUtcTimestamp
-			+ ".cut.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}.log",
+              _ffmpegTempDir, "cutWithoutEncoding", _currentIngestionJobKey, sUtcTimestamp);
 	}
 
 
@@ -8736,12 +8674,9 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-				_ffmpegTempDir + "/"
-				+ to_string(ingestionJobKey)
-				+ "_"
-				+ sUtcTimestamp
-				+ ".cut.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}.log",
+              _ffmpegTempDir, "cutFrameAccurateWithEncoding", _currentIngestionJobKey, sUtcTimestamp);
 		}
 
 		/*
@@ -9445,12 +9380,9 @@ void FFMpeg::slideShow(
 			tmUtcTimestamp.tm_min,
 			tmUtcTimestamp.tm_sec);
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey)
-			+ "_"
-			+ sUtcTimestamp
-			+ ".slideshow.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}.log",
+              _ffmpegTempDir, "slideShow", _currentIngestionJobKey, sUtcTimestamp);
 	}
 
     
@@ -9668,12 +9600,9 @@ void FFMpeg::extractTrackMediaToIngest(
 			tmUtcTimestamp.tm_min,
 			tmUtcTimestamp.tm_sec);
 
-		_outputFfmpegPathFileName =
-			_ffmpegTempDir + "/"
-			+ to_string(ingestionJobKey)
-			+ "_"
-			+ sUtcTimestamp
-			+ ".extractTrack.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}.log",
+              _ffmpegTempDir, "extractTrackMediaToIngest", _currentIngestionJobKey, sUtcTimestamp);
 	}
 
 
@@ -10002,14 +9931,9 @@ void FFMpeg::liveRecorder(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-				_ffmpegTempDir + "/"
-				+ to_string(ingestionJobKey)
-				+ "_"
-				+ to_string(encodingJobKey)
-				+ "_"
-				+ sUtcTimestamp
-				+ ".liveRecorder.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "liveRecorder", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
     
@@ -12213,14 +12137,9 @@ void FFMpeg::liveRecorder2(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-				_ffmpegTempDir + "/"
-				+ to_string(ingestionJobKey)
-				+ "_"
-				+ to_string(encodingJobKey)
-				+ "_"
-				+ sUtcTimestamp
-				+ ".liveRecorder.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "liveRecorder", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 		string recordedFileNameTemplate = recordedFileNamePrefix;
@@ -13367,14 +13286,9 @@ void FFMpeg::liveProxy2(
 					tmUtcTimestamp.tm_min,
 					tmUtcTimestamp.tm_sec);
 
-				_outputFfmpegPathFileName =
-					_ffmpegTempDir + "/"
-					+ to_string(ingestionJobKey)
-					+ "_"
-					+ to_string(encodingJobKey)
-					+ "_"
-					+ sUtcTimestamp
-					+ ".liveProxy." + to_string(currentInputIndex) + ".log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.{}.log",
+              _ffmpegTempDir, "liveProxy", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp, currentInputIndex);
 			}
 
 			vector<string> ffmpegArgumentList;
@@ -15896,14 +15810,9 @@ void FFMpeg::liveGrid(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-				_ffmpegTempDir + "/"
-				+ to_string(ingestionJobKey)
-				+ "_"
-				+ to_string(encodingJobKey)
-				+ "_"
-				+ sUtcTimestamp
-				+ ".liveGrid.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "liveGrid", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp);
 		}
 
 
@@ -16727,14 +16636,9 @@ void FFMpeg::changeFileFormat(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-				_ffmpegTempDir + "/"
-				+ to_string(ingestionJobKey)
-				+ "_"
-				+ to_string(physicalPathKey)
-				+ "_"
-				+ sUtcTimestamp
-				+ ".changeFileFormat.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}_{}.log",
+              _ffmpegTempDir, "changeFileFormat", _currentIngestionJobKey, physicalPathKey, sUtcTimestamp);
 		}
 
 		/*
@@ -16893,12 +16797,9 @@ void FFMpeg::streamingToFile(
 				tmUtcTimestamp.tm_min,
 				tmUtcTimestamp.tm_sec);
 
-			_outputFfmpegPathFileName =
-				_ffmpegTempDir + "/"
-				+ to_string(ingestionJobKey)
-				+ "_"
-				+ sUtcTimestamp
-				+ ".streamingToFile.log";
+			_outputFfmpegPathFileName = fmt::format(
+              "{}/{}_{}_{}.log",
+              _ffmpegTempDir, "streamingToFile", _currentIngestionJobKey, sUtcTimestamp);
 		}
 
 		ffmpegExecuteCommand = _ffmpegPath + "/ffmpeg ";

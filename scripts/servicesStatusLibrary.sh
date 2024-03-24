@@ -485,7 +485,8 @@ ffmpeg_filter_detect()
 	#2880: 2 giorni
 	find /tmp -maxdepth 1 -name "alarm_${filterName}_*" -mmin +2880 -type f -delete
 
-	for logFile in /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/*.log
+    folders=( /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/liveRecorder_*.log /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/liveProxy_*.log )
+	for logFile in "${folders[@]}"
 	do
 		fileName=$(basename $logFile)
 		filterCount=$(grep "$filterName" $logFile | wc -l)

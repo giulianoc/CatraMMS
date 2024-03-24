@@ -11,7 +11,7 @@ then
 	echo "	$0 webapi <baseWEBAPIURL>" >> $debugFilename  #http://10.0.0.5:8086/catramms/webapi/1.0.0
 	echo "	$0 delivery" >> $debugFilename
 	echo "	$0 encoder <baseEncoderURL>" >> $debugFilename  #http://10.0.1.5:8088/catramms/v1/encoder
-	echo "	$0 externalEncoder <healthCheckURL> >> $debugFilename #http://localhost:8088/catramms/v1/encoder
+	echo "	$0 externalEncoder <healthCheckURL>" >> $debugFilename #http://localhost:8088/catramms/v1/encoder
 	echo "	$0 storage" >> $debugFilename
 	echo "	$0 integration <healthCheckURL>" >> $debugFilename  #http://localhost:8084/cibortv/rest/api-v1
 
