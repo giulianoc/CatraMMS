@@ -126,7 +126,7 @@ notify()
 	alarmDescription=$(getAlarmDescription $alarmType)
 	message="$(date +'%Y/%m/%d %H:%M:%S') - ${serverName} - ${alarmDescription} - ${alarmDetails}"
 
-	curl -X GET	\
+	curl -X POST	\
 		--data-urlencode "chat_id=${TELEGRAM_GROUPALARMS_ID}" \
 		--data-urlencode "text=${message}" \
 		"https://api.telegram.org/bot${TELEGRAM_GROUPALARMS_BOT_TOKEN}/sendMessage" > /dev/null
