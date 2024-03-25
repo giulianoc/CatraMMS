@@ -3452,10 +3452,10 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(
 				{
 					Json::Value eventsRoot = internalMMSRoot[field];
 
-					if (filterName == "blackDetect" ||
-						filterName == "blackFrame" ||
-						filterName == "freezeDetect" ||
-						filterName == "silentDetect")
+					if (filterName == "blackdetect" ||
+						filterName == "blackframe" ||
+						filterName == "freezedetect" ||
+						filterName == "silentdetect")
 					{
 						field = "onError";
 						if (JSONUtils::isMetadataPresent(eventsRoot, field))
@@ -3477,7 +3477,7 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(
 
 		if (eventTaskRoot == Json::nullValue)
 		{
-			SPDLOG_INFO(
+			SPDLOG_ERROR(
 				"buildFilterNotificationIngestionWorkflow, no events found in "
 				"Workflow"
 				", ingestionJobKey: {}",
