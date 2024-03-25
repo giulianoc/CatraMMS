@@ -529,6 +529,7 @@ ffmpeg_filter_detect()
                 #http://10.0.1.7:8088/catramms/v1/encoder/filterNotification/6565093/1424493?filterName=freezeDetect
                 encoderFilterNotificationURL="$baseEncoderURL/filterNotification/$ingestionJobKey/$encodingJobKey?filterName=$filterName"
 
+	            maxTime=5
                 start=$(date +%s)
                 curl -k -u $encoderFilterNotificationURLUser:$encoderFilterNotificationURLPassword -w "%{http_code}" --silent --output /dev/null --max-time $maxTime -H 'accept:: application/json' -X 'GET' "$encoderFilterNotificationURL"
 	            end=$(date +%s)

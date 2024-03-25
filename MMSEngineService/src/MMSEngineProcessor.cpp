@@ -32492,14 +32492,17 @@ void MMSEngineProcessor::userHttpCallback(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "userHttpCallback" +
-			", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", httpProtocol: " + httpProtocol + ", httpHostName: " +
-			httpHostName + ", httpPort: " + to_string(httpPort) +
-			", httpURI: " + httpURI + ", formData: " + to_string(formData) +
-			", maxRetries: " + to_string(maxRetries)
+		SPDLOG_INFO(
+			"userHttpCallback"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", httpProtocol: {}"
+            ", httpHostName: {}"
+			", httpPort: {}"
+			", httpURI: {}"
+            ", formData: {}"
+			", maxRetries: {}"
+            , _processorIdentifier, ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, formData, maxRetries
 		);
 
 		userURL = httpProtocol + "://" + httpHostName + ":" +

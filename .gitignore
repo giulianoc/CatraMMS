@@ -27,6 +27,8 @@ nbproject
 .vscode
 Release
 
+.cache
+
 Makefile
 *.dylib
 *.so
