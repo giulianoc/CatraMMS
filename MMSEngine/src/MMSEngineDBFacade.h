@@ -2083,7 +2083,8 @@ public:
 		Json::Value inputsRoot,
 		int64_t utcProxyPeriodStart,
 		Json::Value outputsRoot,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
+		string mmsWorkflowIngestionURL);
 
 	void addEncoding_CountdownJob (
 		shared_ptr<Workspace> workspace,
@@ -2091,7 +2092,8 @@ public:
 		Json::Value inputsRoot,
 		int64_t utcProxyPeriodStart,
 		Json::Value outputsRoot,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors);
+		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
+		string mmsWorkflowIngestionURL);
 
 	void addEncoding_LiveGridJob (
 		shared_ptr<Workspace> workspace,

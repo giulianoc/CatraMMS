@@ -1751,28 +1751,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				string apiKey;
 				{
 					string field = "internalMMS";
-					if (JSONUtils::isMetadataPresent(
-							ingestedParametersRoot, field
-						))
+					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 					{
-						Json::Value internalMMSRoot =
-							ingestedParametersRoot[field];
+						Json::Value internalMMSRoot = ingestedParametersRoot[field];
 
 						field = "credentials";
-						if (JSONUtils::isMetadataPresent(
-								internalMMSRoot, field
-							))
+						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 						{
-							Json::Value credentialsRoot =
-								internalMMSRoot[field];
+							Json::Value credentialsRoot = internalMMSRoot[field];
 
 							field = "userKey";
-							userKey =
-								JSONUtils::asInt64(credentialsRoot, field, -1);
+							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
 
 							field = "apiKey";
-							string apiKeyEncrypted =
-								JSONUtils::asString(credentialsRoot, field, "");
+							string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
 							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 						}
 					}
@@ -1780,9 +1772,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				{
 					string field = "mmsWorkflowIngestionURL";
-					if (!JSONUtils::isMetadataPresent(
-							encodingParametersRoot, field
-						))
+					if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 					{
 						string errorMessage =
 							__FILEREF__ + "Field is not present or it is null" +
@@ -1795,8 +1785,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 						throw runtime_error(errorMessage);
 					}
-					mmsWorkflowIngestionURL =
-						JSONUtils::asString(encodingParametersRoot, field, "");
+					mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 				}
 
 				vector<string> otherHeaders;

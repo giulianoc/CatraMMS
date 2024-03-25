@@ -1283,9 +1283,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			//	- in case we reached the max number of threads in MMS Engine,
 			//		we still have to call getIngestionsToBeManaged
 			//		but it has to return ONLY tasks that do not involve creation
-			//of threads 		(a lot of important tasks 		do not involve threads in MMS
-			//Engine) 	That is to avoid to block every thing in case we reached
-			//the max number of threads 	in MMS Engine
+			// of threads 		(a lot of important tasks 		do not involve
+			// threads in MMS Engine) 	That is to avoid to block every thing in
+			// case we reached the max number of threads 	in MMS Engine
 			bool onlyTasksNotInvolvingMMSEngineThreads = false;
 
 			int maxAdditionalProcessorThreads =
@@ -2275,7 +2275,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											// is used only
 											//	in case of m3u8-streaming
 											//	(see
-											//docs/TASK_01_Add_Content_JSON_Format.txt)
+											// docs/TASK_01_Add_Content_JSON_Format.txt)
 											bool regenerateTimestamps = false;
 											if (mediaFileFormat ==
 												"m3u8-streaming")
@@ -8783,40 +8783,45 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				// TASK_01_Add_Content_JSON_Format.txt, in caso di
 				//	fileFormat == "m3u8-tar.gz" ci sono due opzioni:
 				//	1. in case of copy:// or move:// sourceURL, the tar.gz file
-				//name will be the same name 		of the internal directory. In
-				//questo caso
-				//MMSStorage::manageTarFileInCaseOfIngestionOfSegments 		è stato
-				//già chiamato dai metodi
-				//MMSEngineProcessor::moveMediaSourceFileThread 		e
-				//MMSEngineProcessor::copyMediaSourceFileThread. Era importante
-				//che i due precedenti 		metodi chiamassero
-				//MMSStorage::manageTarFileInCaseOfIngestionOfSegments perchè
-				//solo 		loro sapevano il nome del file .tar.gz e quindi il nome
-				//della directory contenuta 		nel file .tar.gz. 		In questo scenario
-				//quindi, MMSStorage::manageTarFileInCaseOfIngestionOfSegments è
-				//stato già 		chiamato e workspaceIngestionBinaryPathName è la
-				//directory <ingestionJobKey>_source
+				// name will be the same name 		of the internal directory.
+				// In questo caso
+				// MMSStorage::manageTarFileInCaseOfIngestionOfSegments è stato
+				// già chiamato dai metodi
+				// MMSEngineProcessor::moveMediaSourceFileThread 		e
+				// MMSEngineProcessor::copyMediaSourceFileThread. Era importante
+				// che i due precedenti 		metodi chiamassero
+				// MMSStorage::manageTarFileInCaseOfIngestionOfSegments perchè
+				// solo 		loro sapevano il nome del file .tar.gz e quindi
+				// il nome della directory contenuta 		nel file .tar.gz.
+				// In questo scenario quindi,
+				// MMSStorage::manageTarFileInCaseOfIngestionOfSegments è stato
+				// già 		chiamato e workspaceIngestionBinaryPathName è la
+				// directory <ingestionJobKey>_source
 				//	2. in caso di <download> o <upload tramite PUSH>, come
-				//indicato 		in TASK_01_Add_Content_JSON_Format.txt, il .tar.gz
-				//conterrà una directory dal nome 		"content". 		2.1 In caso di
-				//<download>, il metodo
-				//MMSEngineProcessor::downloadMediaSourceFileThread 			chiama lui
-				//stesso MMSStorage::manageTarFileInCaseOfIngestionOfSegments,
-				//per cui, anche 			in questo caso,
-				//workspaceIngestionBinaryPathName è la directory
-				//<ingestionJobKey>_source 		2.2 In caso di <upload tramite PUSH>,
-				//abbiamo evitato che API::uploadedBinary 			chiamasse
-				//MMSStorage::manageTarFileInCaseOfIngestionOfSegments perchè
-				//manageTar... 			potrebbe impiegare anche parecchi minuti e l'API
-				//non puo' rimanere appesa 			per diversi minuti, avremmo timeout
-				//del load balancer e/o dei clients in generale. 			Quindi, solo
-				//per questo scenario, chiamiamo qui il metodo
-				//MMSStorage::manageTarFileInCaseOfIngestionOfSegments 			Possiamo
-				//distinguere questo caso dagli altri perchè, non essendo stato
-				//chiamato 			il metodo
-				//MMSStorage::manageTarFileInCaseOfIngestionOfSegments, avremmo
-				//il file 			<ingestionJobKey>_source.tar.gz e non, come nei casi
-				//precedenti, 			la directory <ingestionJobKey>_source.
+				// indicato 		in TASK_01_Add_Content_JSON_Format.txt, il
+				// .tar.gz conterrà una directory dal nome
+				// "content". 		2.1 In caso di <download>, il metodo
+				// MMSEngineProcessor::downloadMediaSourceFileThread
+				// chiama lui stesso
+				// MMSStorage::manageTarFileInCaseOfIngestionOfSegments, per
+				// cui, anche 			in questo caso,
+				// workspaceIngestionBinaryPathName è la directory
+				//<ingestionJobKey>_source 		2.2 In caso di <upload tramite
+				//PUSH>, abbiamo evitato che API::uploadedBinary
+				// chiamasse
+				// MMSStorage::manageTarFileInCaseOfIngestionOfSegments perchè
+				// manageTar... 			potrebbe impiegare anche parecchi
+				// minuti e l'API non puo' rimanere appesa 			per diversi
+				// minuti, avremmo timeout del load balancer e/o dei clients in
+				// generale. 			Quindi, solo per questo scenario,
+				// chiamiamo qui il metodo
+				// MMSStorage::manageTarFileInCaseOfIngestionOfSegments
+				// Possiamo distinguere questo caso dagli altri perchè, non
+				// essendo stato chiamato 			il metodo
+				// MMSStorage::manageTarFileInCaseOfIngestionOfSegments, avremmo
+				// il file 			<ingestionJobKey>_source.tar.gz e non, come
+				// nei casi precedenti, 			la directory
+				// <ingestionJobKey>_source.
 
 				// i.e.:
 				// /var/catramms/storage/IngestionRepository/users/8/2848783_source.tar.gz
@@ -11060,8 +11065,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		// source,
 		//	è possibile indicare encodingProfileKey
 		//	Ad esempio: se si esegue un Task OverlayText dove si specifica
-		//l'encoding profile, 	il file generato e ingestato in MMS è un source ed
-		//ha anche uno specifico profilo.
+		// l'encoding profile, 	il file generato e ingestato in MMS è un source
+		// ed ha anche uno specifico profilo.
 		int64_t encodingProfileKey = -1;
 		{
 			string field = "encodingProfileKey";
@@ -16684,7 +16689,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		// in case of 'localTranscoder', the chunks are moved to a shared
 		// directory,
 		//		specified by 'stagingContentsPath', to be ingested using a
-		//copy/move source URL
+		// copy/move source URL
 		// in case of an external encoder, 'stagingContentsPath' is not used and
 		// the chunk
 		//		is ingested using PUSH through the binary MMS URL (mms-binary)
@@ -16738,7 +16743,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		// generated HLS will be used to build the Virtual VOD In case of a
 		// local encoder, the virtual VOD is generated into a shared directory
 		//		(virtualVODStagingContentsPath) to be ingested using a copy/move
-		//source URL
+		// source URL
 		// In case of an external encoder, the virtual VOD is generated in a
 		// local directory
 		//	(virtualVODTranscoderStagingContentsPath) to be ingested using PUSH
@@ -16776,14 +16781,14 @@ void MMSEngineProcessor::manageLiveRecorder(
 						// next param. is initialized with "content" because:
 						//	- this is the external encoder scenario
 						//	- in this scenario, the m3u8 virtual VOD, will be
-						//ingested 		using PUSH and the mms-binary url
+						// ingested 		using PUSH and the mms-binary url
 						//	- In this case (PUSH of m3u8) there is the
-						//convention that 		the directory name has to be 'content'
-						//		(see the TASK_01_Add_Content_JSON_Format.txt
-						//documentation)
+						// convention that 		the directory name has to be
+						// 'content' 		(see the
+						//TASK_01_Add_Content_JSON_Format.txt documentation)
 						//	- the last part of the
-						//virtualVODTranscoderStagingContentsPath variable 		is
-						//used to name the m3u8 virtual vod directory
+						// virtualVODTranscoderStagingContentsPath variable
+						// is used to name the m3u8 virtual vod directory
 						"content", // to_string(_encodingItem->_ingestionJobKey)
 								   // + "_liveRecorderVirtualVOD",
 						-1, // _encodingItem->_mediaItemKey, not used because
@@ -17642,7 +17647,8 @@ void MMSEngineProcessor::manageVODProxy(
 
 			utcProxyPeriodStart, localOutputsRoot,
 			maxAttemptsNumberInCaseOfErrors,
-			waitingSecondsBetweenAttemptsInCaseOfErrors
+			waitingSecondsBetweenAttemptsInCaseOfErrors,
+			_mmsWorkflowIngestionURL
 		);
 	}
 	catch (runtime_error &e)
@@ -17974,7 +17980,8 @@ void MMSEngineProcessor::manageCountdown(
 		_mmsEngineDBFacade->addEncoding_CountdownJob(
 			workspace, ingestionJobKey, inputsRoot, utcProxyPeriodStart,
 			localOutputsRoot, maxAttemptsNumberInCaseOfErrors,
-			waitingSecondsBetweenAttemptsInCaseOfErrors
+			waitingSecondsBetweenAttemptsInCaseOfErrors,
+			_mmsWorkflowIngestionURL
 		);
 	}
 	catch (runtime_error &e)
@@ -19139,8 +19146,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 				// 2020-07-19: keyFrameSeeking by default it is true.
 				//	Result is that the cut is a bit over (in my test it was
-				//about one second more). 	Using keyFrameSeeking false the Cut is
-				//accurate.
+				// about one second more). 	Using keyFrameSeeking false the Cut
+				// is accurate.
 				string cutType = "FrameAccurateWithoutEncoding";
 				field = "cutType";
 				cutParametersRoot[field] = cutType;
@@ -19164,7 +19171,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 						// to_string(static_cast<int>(liveCutParametersRoot[field].type()))
 						// == 7 means objectValue
 						//		(see Json::ValueType definition:
-						//http://jsoncpp.sourceforge.net/value_8h_source.html)
+						// http://jsoncpp.sourceforge.net/value_8h_source.html)
 
 						Json::ValueType valueType =
 							liveCutParametersRoot[field].type();
@@ -20088,8 +20095,8 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				// 2020-07-19: keyFrameSeeking by default it is true.
 				//	Result is that the cut is a bit over (in my test it was
-				//about one second more). 	Using keyFrameSeeking false the Cut is
-				//accurate because it could be a bframe too.
+				// about one second more). 	Using keyFrameSeeking false the Cut
+				// is accurate because it could be a bframe too.
 				string cutType = "FrameAccurateWithoutEncoding";
 				field = "cutType";
 				cutParametersRoot[field] = cutType;
@@ -20113,7 +20120,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						// to_string(static_cast<int>(liveCutParametersRoot[field].type()))
 						// == 7 means objectValue
 						//		(see Json::ValueType definition:
-						//http://jsoncpp.sourceforge.net/value_8h_source.html)
+						// http://jsoncpp.sourceforge.net/value_8h_source.html)
 
 						Json::ValueType valueType =
 							liveCutParametersRoot[field].type();
@@ -23297,7 +23304,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 
 		// 2021-09-14: default is set to true because often we have the error
 		//	endTimeInSeconds is bigger of few milliseconds of the duration of
-		//the media 	For this reason this field is set to true by default
+		// the media 	For this reason this field is set to true by default
 		bool fixStartTimeIfOvercomeDuration = true;
 		if (JSONUtils::isMetadataPresent(
 				parametersRoot, "fixInstantInSecondsIfOvercomeDuration"
@@ -23659,7 +23666,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 		// getEncodedFileExtensionByEncodingProfile
 		//	che ritorna l'estensione in base all'encodingProfile.
 		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe
-		//verificare che funziona 	anche per estensioni diverse da .mp4
+		// verificare che funziona 	anche per estensioni diverse da .mp4
 		string targetFileFormat = ".mp4";
 		string encodedFileName =
 			to_string(ingestionJobKey) + "_slideShow" + targetFileFormat;
@@ -24723,7 +24730,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 			// 2021-02-05: default is set to true because often we have the
 			// error
 			//	endTimeInSeconds is bigger of few milliseconds of the duration
-			//of the media 	For this reason this field is set to true by default
+			// of the media 	For this reason this field is set to true by
+			// default
 			bool fixEndTimeIfOvercomeDuration = true;
 			field = "FixEndTimeIfOvercomeDuration";
 			fixEndTimeIfOvercomeDuration =
@@ -24746,7 +24754,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					// se ad esempio sono 4 frames su 25 frames al secondo
 					//	la parte decimale del secondo richiesta dal formato
-					//ffmpeg sarà 16, 	cioè: (4/25)*100
+					// ffmpeg sarà 16, 	cioè: (4/25)*100
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
 					string newStartTime = startTime.substr(0, framesIndex) +
@@ -24772,7 +24780,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					// se ad esempio sono 4 frames su 25 frames al secondo
 					//	la parte decimale del secondo richiesta dal formato
-					//ffmpeg sarà 16, 	cioè: (4/25)*100
+					// ffmpeg sarà 16, 	cioè: (4/25)*100
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
 					string newEndTime = endTime.substr(0, framesIndex) + "." +
@@ -24859,7 +24867,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					// se ad esempio sono 4 frames su 25 frames al secondo
 					//	la parte decimale del secondo richiesta dal formato
-					//ffmpeg sarà 16, 	cioè: (4/25)*100
+					// ffmpeg sarà 16, 	cioè: (4/25)*100
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
 					string newTimeCode = timeCode.substr(0, framesIndex) + "." +
@@ -25703,48 +25711,49 @@ void MMSEngineProcessor::manageEncodeTask(
 		// 1. inside _mmsEngineDBFacade->addEncodingJob, the ingestionJob is
 		// updated to encodingQueue
 		//		and the second call will fail (because the update of the
-		//ingestion was already done
+		// ingestion was already done
 		//	2. The ingestionJob mantains the status of the encoding, how would
-		//be managed 		the status in case of more than one encoding?
+		// be managed 		the status in case of more than one encoding?
 		//	3. EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg
-		//saves 		encoder URL and staging directory into database to recover the
-		//scenario 		where the engine reboot.
+		// saves 		encoder URL and staging directory into database to
+		// recover the scenario 		where the engine reboot.
 		// 2021-06-07: we have the need to manage more than one encoding.
 		//	For example, we have the I-Frame task and, on success, we want to
-		//encode 	all the images generated by the I-Frames task. 	In this scenario
-		//the Encode task receives a lot of images as input. 	Solution no. 1: 		we
-		//manage all the inputs sequentially (as it is doing the RemoveContent
-		//task). 		This is not a good solution because, in case of the Encode task
-		//and in case of videos, 		every encoding would take a lot of time. Manage
-		//all these encodings sequentially 		is not what the User expect to see.
-		//	Solution no. 2:
-		//		we can create one EncodingJob for each encoding. This is exactly
-		//what the User expects 		because the encodings will run in parallel.
+		// encode 	all the images generated by the I-Frames task. 	In this
+		// scenario the Encode task receives a lot of images as input. 	Solution
+		// no. 1: 		we manage all the inputs sequentially (as it is doing
+		// the RemoveContent task). 		This is not a good solution because,
+		// in case of the Encode task and in case of videos, 		every
+		// encoding would take a lot of time. Manage all these encodings
+		// sequentially 		is not what the User expect to see. 	Solution no.
+		//2: 		we can create one EncodingJob for each encoding. This is exactly
+		// what the User expects 		because the encodings will run in
+		// parallel.
 		//
 		//		Issue 1: How to manage the ingestionJob status in case of
-		//multiple encodings? 		Issue 2: GUI and API are planned to manage one
-		//EncodingJob for each IngestionJob
+		// multiple encodings? 		Issue 2: GUI and API are planned to manage
+		// one EncodingJob for each IngestionJob
 		//
 		//	2021-08-25: In case the Encode Task is received by the MMS with
-		//multiple References 	as input during the ingestion, it will be
-		//automatically converted with a 	GroupOfTasks with all the Encode Tasks
-		//as children (just done). 	The problem is when the input references are
-		//generated dinamically as output 	of the parent task. We will manage
-		//this issue ONLY in case of images doing 	the encoding sequentially. 	For
-		//video/audio we cannot manage it sequentially (like images) mainly
-		//because 	the encoder URL and the staging directory are saved into the
-		//database 	to manage the recovering in case of reboot of the Engine.
-		//	This recovery is very important and I do not know how to manage it
-		//	in case the task has in his queue a list of encodings to do!!!
-		//	We should save into DB also the specific encoding it is doing?!?!??!
-		//	Also che encoding progress would not have sense in the
-		//"sequential/queue" scenario
+		// multiple References 	as input during the ingestion, it will be
+		// automatically converted with a 	GroupOfTasks with all the Encode
+		// Tasks as children (just done). 	The problem is when the input
+		// references are generated dinamically as output 	of the parent task.
+		// We will manage this issue ONLY in case of images doing 	the encoding
+		// sequentially. 	For video/audio we cannot manage it sequentially
+		// (like images) mainly because 	the encoder URL and the staging
+		// directory are saved into the database 	to manage the recovering in
+		// case of reboot of the Engine. 	This recovery is very important and I
+		//do not know how to manage it 	in case the task has in his queue a list
+		//of encodings to do!!! 	We should save into DB also the specific
+		//encoding it is doing?!?!??! 	Also che encoding progress would not have
+		//sense in the "sequential/queue" scenario
 		Json::Value sourcesToBeEncodedRoot(Json::arrayValue);
 		{
 			// 2022-12-10: next for and the sourcesToBeEncodedRoot structure
 			// sarebbe inutile per
 			//	l'encoding di video/audio ma serve invece per l'encoding di
-			//picture
+			// picture
 			for (tuple<
 					 int64_t, MMSEngineDBFacade::ContentType,
 					 Validator::DependencyType, bool> &keyAndDependencyType :
@@ -26233,9 +26242,9 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 		// 1. inside _mmsEngineDBFacade->addEncodingJob, the ingestionJob is
 		// updated to encodingQueue
 		//		and the second call will fail (because the update of the
-		//ingestion was already done
+		// ingestion was already done
 		//	2. The ingestionJob mantains the status of the encoding, how would
-		//be managed 		the status in case of more than one encoding?
+		// be managed 		the status in case of more than one encoding?
 		// for
 		// (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
 		// 		keyAndDependencyType: dependencies)
@@ -26244,8 +26253,8 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 		// getEncodedFileExtensionByEncodingProfile
 		//	che ritorna l'estensione in base all'encodingProfile.
 		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe
-		//verificare che funziona 	anche per estensioni diverse da
-		//sourceFileExtension
+		// verificare che funziona 	anche per estensioni diverse da
+		// sourceFileExtension
 		string encodedFileName =
 			to_string(ingestionJobKey) + "_videoSpeed" + sourceFileExtension;
 
@@ -26281,9 +26290,9 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 
 		// 2021-08-26: si dovrebbe cambiare l'implementazione:
 		//	aggiungere la gestione di multi-video-speed: l'encoding dovrebbe
-		//eseguire il processing in modo sequenziale e utilizzare il bool
+		// eseguire il processing in modo sequenziale e utilizzare il bool
 		//	stopIfReferenceProcessingError per decidere se interrompere in caso
-		//di errore
+		// di errore
 		_mmsEngineDBFacade->addEncoding_VideoSpeed(
 			workspace, ingestionJobKey, sourceMediaItemKey,
 			sourcePhysicalPathKey, sourceAssetPathName,
@@ -26738,8 +26747,8 @@ void MMSEngineProcessor::managePictureInPictureTask(
 		// getEncodedFileExtensionByEncodingProfile
 		//	che ritorna l'estensione in base all'encodingProfile.
 		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe
-		//verificare che funziona 	anche per estensioni diverse da
-		//mainSourceFileExtension
+		// verificare che funziona 	anche per estensioni diverse da
+		// mainSourceFileExtension
 		string encodedFileName = to_string(ingestionJobKey) +
 								 "_pictureInPicture" + mainSourceFileExtension;
 
@@ -27267,8 +27276,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 		// getEncodedFileExtensionByEncodingProfile
 		//	che ritorna l'estensione in base all'encodingProfile.
 		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe
-		//verificare che funziona 	anche per estensioni diverse da
-		//sourceVideoFileExtension
+		// verificare che funziona 	anche per estensioni diverse da
+		// sourceVideoFileExtension
 		string encodedFileName = to_string(ingestionJobKey) +
 								 "_overlayedimage" + sourceVideoFileExtension;
 
@@ -27450,8 +27459,8 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 		// getEncodedFileExtensionByEncodingProfile
 		//	che ritorna l'estensione in base all'encodingProfile.
 		//	Non abbiamo ancora utilizzato questo metodo perchè si dovrebbe
-		//verificare che funziona 	anche per estensioni diverse da
-		//sourceFileExtension
+		// verificare che funziona 	anche per estensioni diverse da
+		// sourceFileExtension
 		string encodedFileName =
 			to_string(ingestionJobKey) + "_overlayedText" + sourceFileExtension;
 
@@ -30514,12 +30523,12 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			// metodo progressDownloadCallback
 			//	nel caso l'utente cancelli il download. Ci sono due problemi:
 			//	1. l'utente non puo cancellare il download perchè attualmente la
-			//GUI permette il kill/cancel 		in caso di encodingJob e, nel
-			//Download, non abbiamo alcun encodingJob
+			// GUI permette il kill/cancel 		in caso di encodingJob e, nel
+			// Download, non abbiamo alcun encodingJob
 			//	2. anche se questa variabile viene passata come 'reference' nel
-			//metodo progressDownloadCallback 		il suo valore modificato non
-			//ritorna qui, per cui la gestione di downloadingStoppedByUser =
-			//true 		nella eccezione sotto non funziona
+			// metodo progressDownloadCallback 		il suo valore modificato non
+			// ritorna qui, per cui la gestione di downloadingStoppedByUser =
+			// true 		nella eccezione sotto non funziona
 			bool downloadingStoppedByUser = false;
 
 			try

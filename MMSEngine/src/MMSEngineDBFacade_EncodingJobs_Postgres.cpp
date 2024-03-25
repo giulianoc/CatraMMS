@@ -5964,7 +5964,8 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 	Json::Value inputsRoot,
 	int64_t utcProxyPeriodStart,
 	Json::Value outputsRoot,
-	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
+	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
+	string mmsWorkflowIngestionURL
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -6007,6 +6008,9 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
+
+				field = "mmsWorkflowIngestionURL";
+				parametersRoot[field] = mmsWorkflowIngestionURL;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}
@@ -6149,7 +6153,9 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
 	Json::Value inputsRoot,
 	int64_t utcProxyPeriodStart,
 	Json::Value outputsRoot,
-	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors)
+	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
+	string mmsWorkflowIngestionURL
+)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -6186,6 +6192,9 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
 
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
+
+				field = "mmsWorkflowIngestionURL";
+				parametersRoot[field] = mmsWorkflowIngestionURL;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}
