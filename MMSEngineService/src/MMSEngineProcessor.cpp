@@ -32500,9 +32500,10 @@ void MMSEngineProcessor::userHttpCallback(
             ", httpHostName: {}"
 			", httpPort: {}"
 			", httpURI: {}"
+			", httpURLParameters: {}"
             ", formData: {}"
 			", maxRetries: {}"
-            , _processorIdentifier, ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, formData, maxRetries
+            , _processorIdentifier, ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, httpURLParameters, formData, maxRetries
 		);
 
 		userURL = httpProtocol + "://" + httpHostName + ":" +
