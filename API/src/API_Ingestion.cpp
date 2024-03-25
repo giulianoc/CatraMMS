@@ -1612,7 +1612,8 @@ vector<int64_t> API::ingestionSingleTask(
             );
         }
     }
-    else if (type == "Live-Recorder" || type == "Live-Proxy")
+    else if (type == "Live-Recorder"
+      || type == "Live-Proxy" || type == "VOD-Proxy" || type == "Countdown")
     {
         // 1. Live-Recorder needs the UserKey/ApiKey for the ingestion of the
         // chunks. The same UserKey/ApiKey used for the ingestion of the

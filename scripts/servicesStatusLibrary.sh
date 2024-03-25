@@ -521,18 +521,22 @@ ffmpeg_filter_detect()
 			if [ $counterIncreased -eq 1 ]; then
 				alarmNotificationPeriod=$((60 * 15))		#15 minuti
 
-				#fileName: 3267084_118879_2023-03-11-16-50-24.liveProxy.0.log
+				#fileName: liveProxy_6595960_1431305_2024-03-25-11-24-52.0.log
 				array=(${fileName//_/ })
-				ingestionJobKey=${array[0]}
-				encodingJobKey=${array[1]}
+				ingestionJobKey=${array[1]}
+				encodingJobKey=${array[2]}
 
                 #http://10.0.1.7:8088/catramms/v1/encoder/filterNotification/6565093/1424493?filterName=freezeDetect
                 encoderFilterNotificationURL="$baseEncoderURL/filterNotification/$ingestionJobKey/$encodingJobKey?filterName=$filterName"
 
                 start=$(date +%s)
-                curl -k -u $encoderFilterNotificationURLUser:$encoderFilterNotificationURLPassword --silent --output /dev/null --max-time $maxTime -H 'accept:: application/json' -X 'GET' "$encoderFilterNotificationURL"
+                curl -k -u $encoderFilterNotificationURLUser:$encoderFilterNotificationURLPassword -w "%{http_code}" --silent --output /dev/null --max-time $maxTime -H 'accept:: application/json' -X 'GET' "$encoderFilterNotificationURL"
 	            end=$(date +%s)
-			    echo "$(date +'%Y/%m/%d %H:%M:%S'): encoderFilterNotificationURL: $encoderFilterNotificationURL, elapsed: $((end-start)) secs" >> $debugFilename
+			    echo "$(date +'%Y/%m/%d %H:%M:%S'): encoderFilterNotificationURL: $encoderFilterNotificationURL, httpStatus: $httpStatus, filterCount: $filterCount, elapsed: $((end-start)) secs" >> $debugFilename
+	            if [ $httpStatus -ne 200 ]
+	            then
+			       echo "$(date +'%Y/%m/%d %H:%M:%S'): encoderFilterNotificationURL failed: $encoderFilterNotificationURL, elapsed: $((end-start)) secs" >> $debugFilename
+                fi
 
 				##inizializza ingestionJobLabel
 				#getIngestionJobLabelByIngestionJobKey $ingestionJobKey
