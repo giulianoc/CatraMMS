@@ -44,8 +44,8 @@ string JSONUtils::asString(json root, string field, string defaultValue)
 		}
 		else
 		{
-			if (root.type() == json::value_t::number_integer ||
-				root.type() == json::value_t::number_float)
+			if (root.at(field).type() == json::value_t::number_integer ||
+				root.at(field).type() == json::value_t::number_float)
 				return to_string(root.at(field));
 			else
 				return root.at(field);
