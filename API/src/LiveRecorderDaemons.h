@@ -25,7 +25,7 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 
 	public:
 		LiveRecorderDaemons(
-			Json::Value configuration,
+			json configurationRoot,
 			mutex* liveRecordingMutex,                                                                            
 			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>* liveRecordingsCapability,
 			shared_ptr<spdlog::logger> logger);
@@ -56,8 +56,8 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 			string streamSourceType,
 			bool externalEncoder,
 			int segmentDurationInSeconds, string outputFileFormat,
-			Json::Value encodingParametersRoot,
-			Json::Value ingestedParametersRoot,
+			json encodingParametersRoot,
+			json ingestedParametersRoot,
 			string chunksTranscoderStagingContentsPath,
 			string chunksNFSStagingContentsPath,
 			string segmentListFileName,
@@ -71,8 +71,8 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 			string streamSourceType,
 			bool externalEncoder,
 			int segmentDurationInSeconds, string outputFileFormat,
-			Json::Value encodingParametersRoot,
-			Json::Value ingestedParametersRoot,
+			json encodingParametersRoot,
+			json ingestedParametersRoot,
 			string chunksTranscoderStagingContentsPath,
 			string chunksNFSStagingContentsPath,
 			string segmentListFileName,
@@ -88,10 +88,10 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 			string addContentTitle,
 			string uniqueName,
 			// bool highAvailability,
-			Json::Value userDataRoot,
+			json userDataRoot,
 			string fileFormat,
-			Json::Value ingestedParametersRoot,
-			Json::Value encodingParametersRoot,
+			json ingestedParametersRoot,
+			json encodingParametersRoot,
 			bool copy);
 
 		void ingestRecordedMediaInCaseOfExternalTranscoder(
@@ -99,10 +99,10 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 			string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName,
 			string addContentTitle,
 			string uniqueName,
-			Json::Value userDataRoot,
+			json userDataRoot,
 			string fileFormat,
-			Json::Value ingestedParametersRoot,
-			Json::Value encodingParametersRoot);
+			json ingestedParametersRoot,
+			json encodingParametersRoot);
 
 		string buildChunkIngestionWorkflow(
 			int64_t ingestionJobKey,
@@ -111,10 +111,10 @@ class LiveRecorderDaemons: public FFMPEGEncoderBase {
 			string chunksNFSStagingContentsPath,
 			string addContentTitle,
 			string uniqueName,
-			Json::Value userDataRoot,
+			json userDataRoot,
 			string fileFormat,
-			Json::Value ingestedParametersRoot,
-			Json::Value encodingParametersRoot);
+			json ingestedParametersRoot,
+			json encodingParametersRoot);
 
 		bool isLastLiveRecorderFile(
 			int64_t ingestionJobKey, int64_t encodingJobKey,

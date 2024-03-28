@@ -529,19 +529,19 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
     return dependenciesNumber;
 }
 
-Json::Value MMSEngineDBFacade::updateMediaItem (
+json MMSEngineDBFacade::updateMediaItem (
 	int64_t workspaceKey,
 	int64_t mediaItemKey,
 	bool titleModified, string newTitle,
 	bool userDataModified, string newUserData,
 	bool retentionInMinutesModified, int64_t newRetentionInMinutes,
-	bool tagsModified, Json::Value tagsRoot,
+	bool tagsModified, json tagsRoot,
 	bool uniqueNameModified, string newUniqueName,
-	Json::Value crossReferencesRoot,
+	json crossReferencesRoot,
 	bool admin
 	)
 {
-    Json::Value mediaItemRoot;
+    json mediaItemRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -643,7 +643,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 			);
 		}
 
-		if (crossReferencesRoot != Json::nullValue)
+		if (crossReferencesRoot != nullptr)
 			manageCrossReferences(conn, &trans, -1, workspaceKey, mediaItemKey, crossReferencesRoot);
 
 		trans.commit();
@@ -754,9 +754,9 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
 	vector<string> tagsNotIn;
 	string orderBy;
 	string jsonOrderBy;
-	Json::Value responseFields = Json::nullValue;
+	json responseFields = nullptr;
 
-	Json::Value mediaItemsListRoot = getMediaItemsList (
+	json mediaItemsListRoot = getMediaItemsList (
 		workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
 		otherMediaItemsKey,
         start, rows,
@@ -778,7 +778,7 @@ Json::Value MMSEngineDBFacade::updateMediaItem (
     return mediaItemsListRoot;
 }
 
-Json::Value MMSEngineDBFacade::updatePhysicalPath (
+json MMSEngineDBFacade::updatePhysicalPath (
 	int64_t workspaceKey,
 	int64_t mediaItemKey,
 	int64_t physicalPathKey,
@@ -786,7 +786,7 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 	bool admin
 	)
 {
-    Json::Value mediaItemRoot;
+    json mediaItemRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -939,9 +939,9 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
 	vector<string> tagsNotIn;
 	string orderBy;
 	string jsonOrderBy;
-	Json::Value responseFields = Json::nullValue;
+	json responseFields = nullptr;
 
-	Json::Value mediaItemsListRoot = getMediaItemsList (
+	json mediaItemsListRoot = getMediaItemsList (
 		workspaceKey, mediaItemKey, uniqueName, localPhysicalPathKey,
 		otherMediaItemsKey,
         start, rows,
@@ -963,7 +963,7 @@ Json::Value MMSEngineDBFacade::updatePhysicalPath (
     return mediaItemsListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getMediaItemsList (
+json MMSEngineDBFacade::getMediaItemsList (
         int64_t workspaceKey, int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey,
 		vector<int64_t>& otherMediaItemsKey,
         int start, int rows,
@@ -977,12 +977,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		vector<string>& tagsIn, vector<string>& tagsNotIn,
         string orderBy,			// i.e.: "", mi.ingestionDate desc, mi.title asc
 		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
-        Json::Value responseFields,
+        json responseFields,
 		bool admin,
 		bool fromMaster
 )
 {
-    Json::Value mediaItemsListRoot;
+    json mediaItemsListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1026,7 +1026,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             field = "start";
             requestParametersRoot[field] = start;
@@ -1077,10 +1077,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
             if (tagsIn.size() > 0)
 			{
-				Json::Value tagsRoot(Json::arrayValue);
+				json tagsRoot = json::array();
 
 				for (int tagIndex = 0; tagIndex < tagsIn.size(); tagIndex++)
-					tagsRoot.append(tagsIn[tagIndex]);
+					tagsRoot.push_back(tagsIn[tagIndex]);
 
                 field = "tagsIn";
                 requestParametersRoot[field] = tagsRoot;
@@ -1088,10 +1088,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
             if (tagsNotIn.size() > 0)
 			{
-				Json::Value tagsRoot(Json::arrayValue);
+				json tagsRoot = json::array();
 
 				for (int tagIndex = 0; tagIndex < tagsNotIn.size(); tagIndex++)
-					tagsRoot.append(tagsNotIn[tagIndex]);
+					tagsRoot.push_back(tagsNotIn[tagIndex]);
 
                 field = "tagsNotIn";
                 requestParametersRoot[field] = tagsRoot;
@@ -1099,10 +1099,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
             if (otherMediaItemsKey.size() > 0)
 			{
-				Json::Value otherMediaItemsKeyRoot(Json::arrayValue);
+				json otherMediaItemsKeyRoot = json::array();
 
 				for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
-					otherMediaItemsKeyRoot.append(otherMediaItemsKey[mediaItemIndex]);
+					otherMediaItemsKeyRoot.push_back(otherMediaItemsKey[mediaItemIndex]);
 
                 field = "otherMediaItemsKey";
                 requestParametersRoot[field] = otherMediaItemsKeyRoot;
@@ -1328,26 +1328,26 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		result res = trans.exec(sqlStatement);
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			field = "numFound";
 			responseRoot[field] = numFound;
         }
 
-        Json::Value mediaItemsRoot(Json::arrayValue);
+        json mediaItemsRoot = json::array();
         {
 			chrono::system_clock::time_point startSqlResultSet = chrono::system_clock::now();
 			chrono::milliseconds internalSqlDuration (0);
 			for (auto row: res)
             {
-                Json::Value mediaItemRoot;
+                json mediaItemRoot;
 
 				int64_t localMediaItemKey = row["mediaItemKey"].as<int64_t>();
 
                 field = "mediaItemKey";
                 mediaItemRoot[field] = localMediaItemKey;
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "title"))
 				{
 					string localTitle = row["title"].as<string>();
@@ -1363,57 +1363,57 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					mediaItemRoot[field] = localTitle;
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "deliveryFileName"))
 				{
 					field = "deliveryFileName";
 					if (row["deliveryFileName"].is_null())
-						mediaItemRoot[field] = Json::nullValue;
+						mediaItemRoot[field] = nullptr;
 					else
 						mediaItemRoot[field] = row["deliveryFileName"].as<string>();
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "ingester"))
 				{
 					field = "ingester";
 					if (row["ingester"].is_null())
-						mediaItemRoot[field] = Json::nullValue;
+						mediaItemRoot[field] = nullptr;
 					else
 						mediaItemRoot[field] = row["ingester"].as<string>();
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "userData"))
 				{
 					field = "userData";
 					if (row["userData"].is_null())
-						mediaItemRoot[field] = Json::nullValue;
+						mediaItemRoot[field] = nullptr;
 					else
 						mediaItemRoot[field] = row["userData"].as<string>();
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "ingestionDate"))
 				{
 					field = "ingestionDate";
 					mediaItemRoot[field] = row["formattedIngestionDate"].as<string>();
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "startPublishing"))
 				{
 					field = "startPublishing";
 					mediaItemRoot[field] = row["formattedStartPublishing"].as<string>();
 				}
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "endPublishing"))
 				{
 					field = "endPublishing";
 					mediaItemRoot[field] = row["formattedEndPublishing"].as<string>();
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "willBeRemovedAt"))
 				{
 					field = "willBeRemovedAt";
@@ -1422,24 +1422,24 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 				ContentType contentType = MMSEngineDBFacade::toContentType(
 					row["contentType"].as<string>());
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "contentType"))
 				{
 					field = "contentType";
 					mediaItemRoot[field] = row["contentType"].as<string>();
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "retentionInMinutes"))
 				{
 					field = "retentionInMinutes";
 					mediaItemRoot[field] = row["retentionInMinutes"].as<int64_t>();
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "tags"))
 				{
-					Json::Value mediaItemTagsRoot(Json::arrayValue);
+					json mediaItemTagsRoot = json::array();
 
 					{
 						// pqxx::array<string> tagsArray = row["tags"].as<array>();
@@ -1449,7 +1449,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						{
 							elem = tagsArray.get_next();
 							if (elem.first == pqxx::array_parser::juncture::string_value)
-								mediaItemTagsRoot.append(elem.second);
+								mediaItemTagsRoot.push_back(elem.second);
 						}
 						while (elem.first != pqxx::array_parser::juncture::done);
 					}
@@ -1458,7 +1458,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					mediaItemRoot[field] = mediaItemTagsRoot;
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "uniqueName"))
 				{
 					{
@@ -1491,12 +1491,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				// CrossReferences
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "crossReferences"))
 				{
 					// if (contentType == ContentType::Video)
 					{
-						Json::Value mediaItemReferencesRoot(Json::arrayValue);
+						json mediaItemReferencesRoot = json::array();
                     
 						{
 							string sqlStatement = fmt::format( 
@@ -1509,7 +1509,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							result res = trans.exec(sqlStatement);
 							for (auto row: res)
 							{
-								Json::Value crossReferenceRoot;
+								json crossReferenceRoot;
 
 								field = "sourceMediaItemKey";
 								crossReferenceRoot[field] = row["sourceMediaItemKey"].as<int64_t>();
@@ -1522,15 +1522,15 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									string crossReferenceParameters = row["parameters"].as<string>();
 									if (crossReferenceParameters != "")
 									{
-										Json::Value crossReferenceParametersRoot
-											= JSONUtils::toJson(-1, -1, crossReferenceParameters);
+										json crossReferenceParametersRoot
+											= JSONUtils::toJson(crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;
 									}
 								}
 
-								mediaItemReferencesRoot.append(crossReferenceRoot);
+								mediaItemReferencesRoot.push_back(crossReferenceRoot);
 							}
 							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
 								chrono::system_clock::now() - startSql);
@@ -1554,7 +1554,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							result res = trans.exec(sqlStatement);
 							for (auto row: res)
 							{
-								Json::Value crossReferenceRoot;
+								json crossReferenceRoot;
 
 								field = "type";
 								crossReferenceRoot[field] = row["type"].as<string>();
@@ -1567,15 +1567,15 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									string crossReferenceParameters = row["parameters"].as<string>();
 									if (crossReferenceParameters != "")
 									{
-										Json::Value crossReferenceParametersRoot
-											= JSONUtils::toJson(-1, -1, crossReferenceParameters);
+										json crossReferenceParametersRoot
+											= JSONUtils::toJson(crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;
 									}
 								}
 
-								mediaItemReferencesRoot.append(crossReferenceRoot);
+								mediaItemReferencesRoot.push_back(crossReferenceRoot);
 							}
 							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
 								chrono::system_clock::now() - startSql);
@@ -1598,10 +1598,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					*/
 				}
 
-				if (responseFields == Json::nullValue
+				if (responseFields == nullptr
 					|| JSONUtils::isMetadataPresent(responseFields, "physicalPaths"))
                 {
-                    Json::Value mediaItemProfilesRoot(Json::arrayValue);
+                    json mediaItemProfilesRoot = json::array();
                     
                     string sqlStatement = fmt::format( 
                         "select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage, "
@@ -1615,7 +1615,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					result res = trans.exec(sqlStatement);
 					for (auto row: res)
                     {
-                        Json::Value profileRoot;
+                        json profileRoot;
                         
                         int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
 
@@ -1624,13 +1624,13 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                         field = "durationInMilliSeconds";
 						if (row["durationInMilliSeconds"].is_null())
-							profileRoot[field] = Json::nullValue;
+							profileRoot[field] = nullptr;
 						else
 							profileRoot[field] = row["durationInMilliSeconds"].as<int64_t>();
 
                         field = "bitRate";
 						if (row["bitRate"].is_null())
-							profileRoot[field] = Json::nullValue;
+							profileRoot[field] = nullptr;
 						else
 							profileRoot[field] = row["bitRate"].as<int64_t>();
 
@@ -1639,7 +1639,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         size_t extensionIndex = fileName.find_last_of(".");
 						string fileExtension;
                         if (extensionIndex == string::npos)
-                            profileRoot[field] = Json::nullValue;
+                            profileRoot[field] = nullptr;
                         else
 						{
 							fileExtension = fileName.substr(extensionIndex + 1);
@@ -1651,7 +1651,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 						field = "metaData";
 						if (row["metaData"].is_null())
-							profileRoot[field] = Json::nullValue;
+							profileRoot[field] = nullptr;
 						else
 							profileRoot[field] = row["metaData"].as<string>();
 
@@ -1673,7 +1673,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 						field = "externalDeliveryTechnology";
 						string externalDeliveryTechnology;
                         if (row["externalDeliveryTechnology"].is_null())
-                            profileRoot[field] = Json::nullValue;
+                            profileRoot[field] = nullptr;
                         else
 						{
 							externalDeliveryTechnology = row["externalDeliveryTechnology"].as<string>();
@@ -1682,14 +1682,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 						field = "externalDeliveryURL";
                         if (row["externalDeliveryURL"].is_null())
-                            profileRoot[field] = Json::nullValue;
+                            profileRoot[field] = nullptr;
                         else
                             profileRoot[field] = row["externalDeliveryURL"].as<string>();
 
                         field = "encodingProfileKey";
                         if (row["encodingProfileKey"].is_null())
 						{
-                            profileRoot[field] = Json::nullValue;
+                            profileRoot[field] = nullptr;
 
 							field = "deliveryTechnology";
 							if (externalDeliveryTechnology == "hls")
@@ -1705,7 +1705,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							}
 
 							field = "encodingProfileLabel";
-                            profileRoot[field] = Json::nullValue;
+                            profileRoot[field] = nullptr;
 						}
                         else
 						{
@@ -1740,7 +1740,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                         field = "retentionInMinutes";
 						if (row["retentionInMinutes"].is_null())
-							profileRoot[field] = Json::nullValue;
+							profileRoot[field] = nullptr;
 						else
 							profileRoot[field] = row["retentionInMinutes"].as<int64_t>();
 
@@ -1762,7 +1762,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							);
 
 							{
-								Json::Value videoTracksRoot(Json::arrayValue);
+								json videoTracksRoot = json::array();
 
 								for(tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack: videoTracks)
 								{
@@ -1779,7 +1779,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									tie(videoTrackKey, trackIndex, durationInMilliSeconds, width, height,
 										avgFrameRate, codecName, bitRate, profile) = videoTrack;
 
-									Json::Value videoTrackRoot;
+									json videoTrackRoot;
 
 									field = "videoTrackKey";
 									videoTrackRoot[field] = videoTrackKey;
@@ -1808,7 +1808,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									field = "profile";
 									videoTrackRoot[field] = profile;
 
-									videoTracksRoot.append(videoTrackRoot);
+									videoTracksRoot.push_back(videoTrackRoot);
 								}
 
 								field = "videoTracks";
@@ -1816,7 +1816,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 							}
 
 							{
-								Json::Value audioTracksRoot(Json::arrayValue);
+								json audioTracksRoot = json::array();
 
 								for(tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack: audioTracks)
 								{
@@ -1832,7 +1832,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									tie(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate, codecName,
 										sampleRate, channels, language) = audioTrack;
 
-									Json::Value audioTrackRoot;
+									json audioTrackRoot;
 
 									field = "audioTrackKey";
 									audioTrackRoot[field] = audioTrackKey;
@@ -1858,7 +1858,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									field = "language";
 									audioTrackRoot[field] = language;
 
-									audioTracksRoot.append(audioTrackRoot);
+									audioTracksRoot.push_back(audioTrackRoot);
 								}
 
 								field = "audioTracks";
@@ -1875,7 +1875,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 								chrono::system_clock::now() - startMethod);
 
 							{
-								Json::Value audioTracksRoot(Json::arrayValue);
+								json audioTracksRoot = json::array();
 
 								for(tuple<int64_t, int, int64_t, long, string, long, int, string>
 									audioTrack: audioTracks)
@@ -1892,7 +1892,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									tie(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate,
 										codecName, sampleRate, channels, language) = audioTrack;
 
-									Json::Value audioTrackRoot;
+									json audioTrackRoot;
 
 									field = "audioTrackKey";
 									audioTrackRoot[field] = audioTrackKey;
@@ -1918,7 +1918,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									field = "language";
 									audioTrackRoot[field] = language;
 
-									audioTracksRoot.append(audioTrackRoot);
+									audioTracksRoot.push_back(audioTrackRoot);
 								}
 
 								field = "audioTracks";
@@ -1940,7 +1940,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                             tie(width, height, format, quality) = imageDetails;
 
-                            Json::Value imageDetailsRoot;
+                            json imageDetailsRoot;
 
                             field = "width";
                             imageDetailsRoot[field] = width;
@@ -1969,7 +1969,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                             throw runtime_error(errorMessage);  
                         }
 
-                        mediaItemProfilesRoot.append(profileRoot);
+                        mediaItemProfilesRoot.push_back(profileRoot);
                     }
 					chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
                         chrono::system_clock::now() - startSql);
@@ -1985,7 +1985,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     mediaItemRoot[field] = mediaItemProfilesRoot;
                 }
 
-                mediaItemsRoot.append(mediaItemRoot);
+                mediaItemsRoot.push_back(mediaItemRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -4820,7 +4820,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         bool ingestionRowToBeUpdatedAsSuccess,        
         MMSEngineDBFacade::ContentType contentType,
 		int64_t encodingProfileKey,
-        Json::Value parametersRoot,
+        json parametersRoot,
 		bool externalReadOnlyStorage,
         string relativePath,
         string mediaSourceFileName,
@@ -4828,7 +4828,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         unsigned long sizeInBytes,
 
         // video-audio
-		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
+		tuple<int64_t, long, json>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -4873,7 +4873,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
             {
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
-				if ((parametersRoot[field]).type() == Json::stringValue)
+				if ((parametersRoot[field]).type() == json::value_t::string)
 					userData = JSONUtils::asString(parametersRoot, field, "");
 				else
 					userData = JSONUtils::toString(parametersRoot[field]);
@@ -4895,7 +4895,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                 field = "publishing";
                 if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 {
-                    Json::Value publishingRoot = parametersRoot[field];
+                    json publishingRoot = parametersRoot[field];
 
                     field = "startPublishing";
 					startPublishing = JSONUtils::asString(publishingRoot, field, "NOW");
@@ -4950,7 +4950,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 			string tags;
 			{
-				Json::Value tagsRoot;
+				json tagsRoot;
 				string field = "tags";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					tagsRoot = parametersRoot[field];
@@ -5006,7 +5006,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			string field = "crossReferences";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-                Json::Value crossReferencesRoot = parametersRoot[field];
+                json crossReferencesRoot = parametersRoot[field];
 
 				manageCrossReferences(conn, &trans, ingestionJobKey,
 					workspace->_workspaceKey, mediaItemKey, crossReferencesRoot);
@@ -5053,12 +5053,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                 string field = "userData";
                 if (JSONUtils::isMetadataPresent(parametersRoot, field))
                 {
-                    Json::Value userDataRoot = parametersRoot[field];
+                    json userDataRoot = parametersRoot[field];
 
                     field = "mmsData";
                     if (JSONUtils::isMetadataPresent(userDataRoot, field))
 					{
-						Json::Value mmsDataRoot = userDataRoot[field];
+						json mmsDataRoot = userDataRoot[field];
 
 						field = "ingestionJobKey";
 						if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveRecordingChunk"))
@@ -5662,7 +5662,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
+		tuple<int64_t, long, json>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -5825,7 +5825,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		int64_t physicalItemRetentionPeriodInMinutes,
         
         // video-audio
-		tuple<int64_t, long, Json::Value>& mediaInfoDetails,
+		tuple<int64_t, long, json>& mediaInfoDetails,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
 
@@ -5871,7 +5871,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		{
 			if (externalDeliveryTechnology != "" || externalDeliveryURL != "")
 			{
-				Json::Value deliveryInfoRoot;
+				json deliveryInfoRoot;
 
 				string field = "externalDeliveryTechnology";
 				deliveryInfoRoot[field] = externalDeliveryTechnology;
@@ -5885,11 +5885,11 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
         int64_t durationInMilliSeconds;
         long bitRate;
-		Json::Value metaDataRoot;
+		json metaDataRoot;
 		string metaData;
 
 		tie(durationInMilliSeconds, bitRate, metaDataRoot) = mediaInfoDetails;
-		if (metaDataRoot != Json::nullValue)
+		if (metaDataRoot != nullptr)
 			metaData = JSONUtils::toString(metaDataRoot);
 
         {
@@ -6076,7 +6076,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 void MMSEngineDBFacade::manageCrossReferences(
     shared_ptr<PostgresConnection> conn, transaction_base* trans,
 	int64_t ingestionJobKey,
-	int64_t workspaceKey, int64_t mediaItemKey, Json::Value crossReferencesRoot)
+	int64_t workspaceKey, int64_t mediaItemKey, json crossReferencesRoot)
 {
 	try
 	{
@@ -6129,7 +6129,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 
 		for(int crossReferenceIndex = 0; crossReferenceIndex < crossReferencesRoot.size(); crossReferenceIndex++)
 		{
-			Json::Value crossReferenceRoot = crossReferencesRoot[crossReferenceIndex];
+			json crossReferenceRoot = crossReferencesRoot[crossReferenceIndex];
 
 			string field = "type";
 			CrossReferenceType crossReferenceType = toCrossReferenceType(JSONUtils::asString(crossReferenceRoot, field, ""));
@@ -6181,7 +6181,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
 			}
 
-			Json::Value crossReferenceParametersRoot;
+			json crossReferenceParametersRoot;
 			field = "parameters";
 			if (JSONUtils::isMetadataPresent(crossReferenceRoot, field))
 				crossReferenceParametersRoot = crossReferenceRoot[field];
@@ -6226,7 +6226,7 @@ void MMSEngineDBFacade::addCrossReference (
 	int64_t ingestionJobKey,
 	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
 	int64_t targetMediaItemKey,
-	Json::Value crossReferenceParametersRoot)
+	json crossReferenceParametersRoot)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -6364,7 +6364,7 @@ void MMSEngineDBFacade::addCrossReference (
     shared_ptr<PostgresConnection> conn, transaction_base* trans,
 	int64_t ingestionJobKey,
 	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
-	Json::Value crossReferenceParametersRoot)
+	json crossReferenceParametersRoot)
 {
     
     try
@@ -6711,7 +6711,7 @@ void MMSEngineDBFacade::removeMediaItem (
 	}
 }
 
-Json::Value MMSEngineDBFacade::getTagsList (
+json MMSEngineDBFacade::getTagsList (
 	int64_t workspaceKey, int start, int rows,
 	int liveRecordingChunk, bool contentTypePresent, ContentType contentType,
 	string tagNameFilter, bool fromMaster
@@ -6731,7 +6731,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    Json::Value tagsListRoot;
+    json tagsListRoot;
     try
     {
         string field;
@@ -6747,7 +6747,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
             field = "start";
             requestParametersRoot[field] = start;
@@ -6791,7 +6791,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 		else if (liveRecordingChunk == 1)
 			sqlWhere += ("and userData -> 'mmsData' ->> 'liveRecordingChunk' is not NULL ");
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
 				"select count(distinct tagName) from ("
@@ -6812,7 +6812,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 			);
 		}
 
-        Json::Value tagsRoot(Json::arrayValue);
+        json tagsRoot = json::array();
         {
 			string sqlStatement = fmt::format( 
 				"select distinct tagName from ("
@@ -6824,7 +6824,7 @@ Json::Value MMSEngineDBFacade::getTagsList (
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
-                tagsRoot.append(static_cast<string>(row["tagName"].as<string>()));
+                tagsRoot.push_back(static_cast<string>(row["tagName"].as<string>()));
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"

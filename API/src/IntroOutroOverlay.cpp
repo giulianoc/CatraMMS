@@ -6,7 +6,7 @@
 
 
 void IntroOutroOverlay::encodeContent(
-	Json::Value metadataRoot)
+	json metadataRoot)
 {
     string api = "introOutroOverlay";
 
@@ -18,15 +18,15 @@ void IntroOutroOverlay::encodeContent(
 
     try
     {
-        // Json::Value metadataRoot = JSONUtils::toJson(
+        // json metadataRoot = JSONUtils::toJson(
 		// 	-1, _encodingJobKey, requestBody);
 
 		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
+		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		string introSourceFileExtension;
 		{
@@ -502,7 +502,7 @@ void IntroOutroOverlay::encodeContent(
 							{
 								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-								tuple<int64_t, long, Json::Value> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								tuple<int64_t, long, json> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
 									true,	// isMMSAssetPathName
 									-1,		// timeoutInSeconds,		// used only in case of URL
@@ -549,7 +549,7 @@ void IntroOutroOverlay::encodeContent(
 							{
 								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-								tuple<int64_t, long, Json::Value> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								tuple<int64_t, long, json> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
 									true,	// isMMSAssetPathName
 									-1,		// timeoutInSeconds,		// used only in case of URL
@@ -598,7 +598,7 @@ void IntroOutroOverlay::encodeContent(
 							{
 								vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-								tuple<int64_t, long, Json::Value> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
+								tuple<int64_t, long, json> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
 									true,	// isMMSAssetPathName
 									-1,		// timeoutInSeconds,		// used only in case of URL
@@ -615,9 +615,9 @@ void IntroOutroOverlay::encodeContent(
 								encodedPathName,
 								encodingProfileDetailsRoot,
 								true,
-								Json::nullValue, Json::nullValue,
+								nullptr, nullptr,
 								-1, -1,
-								Json::nullValue,
+								nullptr,
 								-1, _encodingJobKey, _ingestionJobKey,
 								&(_encoding->_childPid));
 						}
@@ -852,7 +852,7 @@ void IntroOutroOverlay::encodeContent(
 				mainCenterEncodedPathName,
 				encodingProfileDetailsRoot,
 				true,
-				Json::nullValue, Json::nullValue,
+				nullptr, nullptr,
 				-1, -1,
 				-1, _encodingJobKey, _ingestionJobKey,
 				&(_encoding->_childPid));

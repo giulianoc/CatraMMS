@@ -29,6 +29,7 @@
 #include <sstream>
 // #include "EMailSender.h"
 #include "Magick++.h"
+#include "spdlog/spdlog.h"
 // #include <openssl/md5.h>
 #include <openssl/evp.h>
 
@@ -42,12 +43,12 @@ MMSEngineProcessor::MMSEngineProcessor(
 	shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
 	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
 	ActiveEncodingsManager *pActiveEncodingsManager, mutex *cpuUsageMutex,
-	deque<int> *cpuUsage, Json::Value configuration
+	deque<int> *cpuUsage, json configurationRoot
 )
 {
 	_processorIdentifier = processorIdentifier;
 	_logger = logger;
-	_configuration = configuration;
+	_configurationRoot = configurationRoot;
 	_multiEventsSet = multiEventsSet;
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 	_mmsStorage = mmsStorage;
@@ -63,391 +64,391 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_cpuUsageThreadShutdown = false;
 
 	_processorThreads =
-		JSONUtils::asInt(configuration["mms"], "processorThreads", 1);
+		JSONUtils::asInt(configurationRoot["mms"], "processorThreads", 1);
 	_cpuUsageThreshold =
-		JSONUtils::asInt(configuration["mms"], "cpuUsageThreshold", 10);
+		JSONUtils::asInt(configurationRoot["mms"], "cpuUsageThreshold", 10);
 
 	_maxDownloadAttemptNumber = JSONUtils::asInt(
-		configuration["download"], "maxDownloadAttemptNumber", 5
+		configurationRoot["download"], "maxDownloadAttemptNumber", 5
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", download->maxDownloadAttemptNumber: " +
-		to_string(_maxDownloadAttemptNumber)
+	SPDLOG_INFO(
+		"Configuration item"
+		", download->maxDownloadAttemptNumber: {}",
+		_maxDownloadAttemptNumber
 	);
 	_progressUpdatePeriodInSeconds = JSONUtils::asInt(
-		configuration["download"], "progressUpdatePeriodInSeconds", 5
+		configurationRoot["download"], "progressUpdatePeriodInSeconds", 5
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", download->progressUpdatePeriodInSeconds: " +
 		to_string(_progressUpdatePeriodInSeconds)
 	);
 	_secondsWaitingAmongDownloadingAttempt = JSONUtils::asInt(
-		configuration["download"], "secondsWaitingAmongDownloadingAttempt", 5
+		configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt", 5
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", download->secondsWaitingAmongDownloadingAttempt: " +
 		to_string(_secondsWaitingAmongDownloadingAttempt)
 	);
 
 	_maxIngestionJobsPerEvent =
-		JSONUtils::asInt(configuration["mms"], "maxIngestionJobsPerEvent", 5);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asInt(configurationRoot["mms"], "maxIngestionJobsPerEvent", 5);
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", mms->maxIngestionJobsPerEvent: " +
 		to_string(_maxIngestionJobsPerEvent)
 	);
 	_maxEncodingJobsPerEvent =
-		JSONUtils::asInt(configuration["mms"], "maxEncodingJobsPerEvent", 5);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asInt(configurationRoot["mms"], "maxEncodingJobsPerEvent", 5);
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent)
 	);
 
 	_maxEventManagementTimeInSeconds = JSONUtils::asInt(
-		configuration["mms"], "maxEventManagementTimeInSeconds", 5
+		configurationRoot["mms"], "maxEventManagementTimeInSeconds", 5
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", mms->maxEventManagementTimeInSeconds: " +
 		to_string(_maxEventManagementTimeInSeconds)
 	);
 
 	_dependencyExpirationInHours = JSONUtils::asInt(
-		configuration["mms"], "dependencyExpirationInHours", 5
+		configurationRoot["mms"], "dependencyExpirationInHours", 5
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", mms->dependencyExpirationInHours: " +
 		to_string(_dependencyExpirationInHours)
 	);
 
 	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt(
-		configuration["mms"],
+		configurationRoot["mms"],
 		"liveRecording_timeBeforeToPrepareResourcesInMinutes", 2
 	);
 
 	_downloadChunkSizeInMegaBytes = JSONUtils::asInt(
-		configuration["download"], "downloadChunkSizeInMegaBytes", 5
+		configurationRoot["download"], "downloadChunkSizeInMegaBytes", 5
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", download->downloadChunkSizeInMegaBytes: " +
 		to_string(_downloadChunkSizeInMegaBytes)
 	);
 
 	_emailProviderURL = JSONUtils::asString(
-		_configuration["EmailNotification"], "providerURL", ""
+		_configurationRoot["EmailNotification"], "providerURL", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", EmailNotification->providerURL: " + _emailProviderURL
 	);
 	_emailUserName = JSONUtils::asString(
-		_configuration["EmailNotification"], "userName", ""
+		_configurationRoot["EmailNotification"], "userName", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", EmailNotification->userName: " + _emailUserName
 	);
 	string _emailPassword;
 	{
 		string encryptedPassword = JSONUtils::asString(
-			_configuration["EmailNotification"], "password", ""
+			_configurationRoot["EmailNotification"], "password", ""
 		);
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
-		_logger->info(
-			__FILEREF__ + "Configuration item" +
+		SPDLOG_INFO(
+			string() + "Configuration item" +
 			", EmailNotification->password: " + encryptedPassword
 			// + ", EmailNotification->password: " + _emailPassword
 		);
 	}
 	_emailCcsCommaSeparated =
-		JSONUtils::asString(_configuration["EmailNotification"], "cc", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["EmailNotification"], "cc", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", EmailNotification->cc: " + _emailCcsCommaSeparated
 	);
 
 	_facebookGraphAPIProtocol =
-		JSONUtils::asString(_configuration["FacebookGraphAPI"], "protocol", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "protocol", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol
 	);
 	_facebookGraphAPIHostName =
-		JSONUtils::asString(_configuration["FacebookGraphAPI"], "hostName", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "hostName", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName
 	);
 	_facebookGraphAPIVideoHostName = JSONUtils::asString(
-		_configuration["FacebookGraphAPI"], "videoHostName", ""
+		_configurationRoot["FacebookGraphAPI"], "videoHostName", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->videoHostName: " + _facebookGraphAPIVideoHostName
 	);
 	_facebookGraphAPIPort =
-		JSONUtils::asInt(_configuration["FacebookGraphAPI"], "port", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asInt(_configurationRoot["FacebookGraphAPI"], "port", 0);
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort)
 	);
 	_facebookGraphAPIVersion =
-		JSONUtils::asString(_configuration["FacebookGraphAPI"], "version", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "version", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->version: " + _facebookGraphAPIVersion
 	);
 	_facebookGraphAPITimeoutInSeconds =
-		JSONUtils::asInt(_configuration["FacebookGraphAPI"], "timeout", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" + ", FacebookGraphAPI->timeout: " +
+		JSONUtils::asInt(_configurationRoot["FacebookGraphAPI"], "timeout", 0);
+	SPDLOG_INFO(
+		string() + "Configuration item" + ", FacebookGraphAPI->timeout: " +
 		to_string(_facebookGraphAPITimeoutInSeconds)
 	);
 	_facebookGraphAPIClientId =
-		JSONUtils::asString(_configuration["FacebookGraphAPI"], "clientId", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientId", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId
 	);
 	_facebookGraphAPIClientSecret = JSONUtils::asString(
-		_configuration["FacebookGraphAPI"], "clientSecret", ""
+		_configurationRoot["FacebookGraphAPI"], "clientSecret", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->clientSecret: " + _facebookGraphAPIClientSecret
 	);
 	_facebookGraphAPIRedirectURL = JSONUtils::asString(
-		_configuration["FacebookGraphAPI"], "redirectURL", ""
+		_configurationRoot["FacebookGraphAPI"], "redirectURL", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->redirectURL: " + _facebookGraphAPIRedirectURL
 	);
 	_facebookGraphAPIAccessTokenURI = JSONUtils::asString(
-		_configuration["FacebookGraphAPI"], "accessTokenURI", ""
+		_configurationRoot["FacebookGraphAPI"], "accessTokenURI", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->accessTokenURI: " + _facebookGraphAPIAccessTokenURI
 	);
 	_facebookGraphAPILiveVideosURI = JSONUtils::asString(
-		_configuration["FacebookGraphAPI"], "liveVideosURI", ""
+		_configurationRoot["FacebookGraphAPI"], "liveVideosURI", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", FacebookGraphAPI->liveVideosURI: " + _facebookGraphAPILiveVideosURI
 	);
 
 	_youTubeDataAPIProtocol =
-		JSONUtils::asString(_configuration["YouTubeDataAPI"], "protocol", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "protocol", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol
 	);
 	_youTubeDataAPIHostName =
-		JSONUtils::asString(_configuration["YouTubeDataAPI"], "hostName", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "hostName", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName
 	);
 	_youTubeDataAPIPort =
-		JSONUtils::asInt(_configuration["YouTubeDataAPI"], "port", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asInt(_configurationRoot["YouTubeDataAPI"], "port", 0);
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort)
 	);
 	_youTubeDataAPIRefreshTokenURI = JSONUtils::asString(
-		_configuration["YouTubeDataAPI"], "refreshTokenURI", ""
+		_configurationRoot["YouTubeDataAPI"], "refreshTokenURI", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->refreshTokenURI: " + _youTubeDataAPIRefreshTokenURI
 	);
 	_youTubeDataAPIUploadVideoURI = JSONUtils::asString(
-		_configuration["YouTubeDataAPI"], "uploadVideoURI", ""
+		_configurationRoot["YouTubeDataAPI"], "uploadVideoURI", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI
 	);
 	_youTubeDataAPILiveBroadcastURI = JSONUtils::asString(
-		_configuration["YouTubeDataAPI"], "liveBroadcastURI", ""
+		_configurationRoot["YouTubeDataAPI"], "liveBroadcastURI", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->liveBroadcastURI: " + _youTubeDataAPILiveBroadcastURI
 	);
 	_youTubeDataAPILiveStreamURI = JSONUtils::asString(
-		_configuration["YouTubeDataAPI"], "liveStreamURI", ""
+		_configurationRoot["YouTubeDataAPI"], "liveStreamURI", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI
 	);
 	_youTubeDataAPILiveBroadcastBindURI = JSONUtils::asString(
-		_configuration["YouTubeDataAPI"], "liveBroadcastBindURI", ""
+		_configurationRoot["YouTubeDataAPI"], "liveBroadcastBindURI", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->liveBroadcastBindURI: " +
 		_youTubeDataAPILiveBroadcastBindURI
 	);
 	_youTubeDataAPITimeoutInSeconds =
-		JSONUtils::asInt(_configuration["YouTubeDataAPI"], "timeout", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" + ", YouTubeDataAPI->timeout: " +
+		JSONUtils::asInt(_configurationRoot["YouTubeDataAPI"], "timeout", 0);
+	SPDLOG_INFO(
+		string() + "Configuration item" + ", YouTubeDataAPI->timeout: " +
 		to_string(_youTubeDataAPITimeoutInSeconds)
 	);
 	_youTubeDataAPITimeoutInSecondsForUploadVideo = JSONUtils::asInt(
-		_configuration["YouTubeDataAPI"], "timeoutForUploadVideo", 0
+		_configurationRoot["YouTubeDataAPI"], "timeoutForUploadVideo", 0
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->timeoutForUploadVideo: " +
 		to_string(_youTubeDataAPITimeoutInSecondsForUploadVideo)
 	);
 	_youTubeDataAPIClientId =
-		JSONUtils::asString(_configuration["YouTubeDataAPI"], "clientId", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "clientId", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId
 	);
 	_youTubeDataAPIClientSecret = JSONUtils::asString(
-		_configuration["YouTubeDataAPI"], "clientSecret", ""
+		_configurationRoot["YouTubeDataAPI"], "clientSecret", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret
 	);
 
 	_localCopyTaskEnabled =
-		JSONUtils::asBool(_configuration["mms"], "localCopyTaskEnabled", false);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asBool(_configurationRoot["mms"], "localCopyTaskEnabled", false);
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled)
 	);
 
 	string mmsAPIProtocol =
-		JSONUtils::asString(_configuration["api"], "protocol", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["api"], "protocol", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->protocol: " + mmsAPIProtocol
 	);
 	string mmsAPIHostname =
-		JSONUtils::asString(_configuration["api"], "hostname", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["api"], "hostname", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->hostname: " + mmsAPIHostname
 	);
-	int mmsAPIPort = JSONUtils::asInt(_configuration["api"], "port", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	int mmsAPIPort = JSONUtils::asInt(_configurationRoot["api"], "port", 0);
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->port: " + to_string(mmsAPIPort)
 	);
 	string mmsAPIVersion =
-		JSONUtils::asString(_configuration["api"], "version", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" + ", api->version: " + mmsAPIVersion
+		JSONUtils::asString(_configurationRoot["api"], "version", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" + ", api->version: " + mmsAPIVersion
 	);
 	string mmsAPIWorkflowURI =
-		JSONUtils::asString(_configuration["api"], "workflowURI", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["api"], "workflowURI", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->workflowURI: " + mmsAPIWorkflowURI
 	);
 	string mmsAPIIngestionURI =
-		JSONUtils::asString(_configuration["api"], "ingestionURI", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["api"], "ingestionURI", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->ingestionURI: " + mmsAPIIngestionURI
 	);
 	string mmsBinaryProtocol =
-		JSONUtils::asString(_configuration["api"]["binary"], "protocol", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["api"]["binary"], "protocol", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->binary->protocol: " + mmsBinaryProtocol
 	);
 	string mmsBinaryHostname =
-		JSONUtils::asString(_configuration["api"]["binary"], "hostname", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["api"]["binary"], "hostname", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->binary->hostname: " + mmsBinaryHostname
 	);
 	int mmsBinaryPort =
-		JSONUtils::asInt(_configuration["api"]["binary"], "port", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asInt(_configurationRoot["api"]["binary"], "port", 0);
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->binary->port: " + to_string(mmsBinaryPort)
 	);
 	string mmsBinaryVersion =
-		JSONUtils::asString(_configuration["api"]["binary"], "version", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["api"]["binary"], "version", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->binary->version: " + mmsBinaryVersion
 	);
 	string mmsBinaryIngestionURI = JSONUtils::asString(
-		_configuration["api"]["binary"], "ingestionURI", ""
+		_configurationRoot["api"]["binary"], "ingestionURI", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->binary->ingestionURI: " + mmsBinaryIngestionURI
 	);
 	_mmsAPIVODDeliveryURI =
-		JSONUtils::asString(_configuration["api"], "vodDeliveryURI", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asString(_configurationRoot["api"], "vodDeliveryURI", "");
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->vodDeliveryURI: " + _mmsAPIVODDeliveryURI
 	);
 	_mmsAPITimeoutInSeconds =
-		JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+		JSONUtils::asInt(_configurationRoot["api"], "timeoutInSeconds", 120);
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
 	);
 
 	_deliveryProtocol = JSONUtils::asString(
-		_configuration["api"]["delivery"], "deliveryProtocol", ""
+		_configurationRoot["api"]["delivery"], "deliveryProtocol", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->delivery->deliveryProtocol: " + _deliveryProtocol
 	);
 	_deliveryHost = JSONUtils::asString(
-		_configuration["api"]["delivery"], "deliveryHost", ""
+		_configurationRoot["api"]["delivery"], "deliveryHost", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", api->delivery->deliveryHost: " + _deliveryHost
 	);
 
 	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(
-		configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000
+		configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", storage->_waitingNFSSync_maxMillisecondsToWait: " +
 		to_string(_waitingNFSSync_maxMillisecondsToWait)
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(
-		configuration["storage"],
+		configurationRoot["storage"],
 		"waitingNFSSync_milliSecondsWaitingBetweenChecks", 100
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: " +
 		to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
 
 	_liveRecorderVirtualVODImageLabel = JSONUtils::asString(
-		_configuration["ffmpeg"], "liveRecorderVirtualVODImageLabel", ""
+		_configurationRoot["ffmpeg"], "liveRecorderVirtualVODImageLabel", ""
 	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
+	SPDLOG_INFO(
+		string() + "Configuration item" +
 		", ffmpeg->liveRecorderVirtualVODImageLabel: " +
 		_liveRecorderVirtualVODImageLabel
 	);
@@ -472,8 +473,8 @@ MMSEngineProcessor::MMSEngineProcessor(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(
-				__FILEREF__ +
+			SPDLOG_ERROR(
+				string() +
 				"_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
@@ -483,8 +484,8 @@ MMSEngineProcessor::MMSEngineProcessor(
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ +
+			SPDLOG_ERROR(
+				string() +
 				"_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
@@ -523,8 +524,8 @@ void MMSEngineProcessor::operator()()
 	// 1, 3.23);
 	//  SPDLOG_TRACE(_logger , "Enabled only #ifdef SPDLOG_TRACE_ON..{} ,{}",
 	//  1, 3.23);
-	_logger->info(
-		__FILEREF__ + "MMSEngineProcessor thread started" +
+	SPDLOG_INFO(
+		string() + "MMSEngineProcessor thread started" +
 		", _processorIdentifier: " + to_string(_processorIdentifier)
 	);
 
@@ -533,8 +534,8 @@ void MMSEngineProcessor::operator()()
 	{
 		if (isProcessorShutdown())
 		{
-			_logger->info(
-				__FILEREF__ + "Processor was shutdown" +
+			SPDLOG_INFO(
+				string() + "Processor was shutdown" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
@@ -560,8 +561,8 @@ void MMSEngineProcessor::operator()()
 		{
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT: // 1
 		{
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
@@ -572,8 +573,8 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleCheckIngestionEvent failed" +
+				SPDLOG_ERROR(
+					string() + "handleCheckIngestionEvent failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -581,8 +582,8 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
@@ -590,8 +591,8 @@ void MMSEngineProcessor::operator()()
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT: // 2
 		{
-			_logger->debug(
-				__FILEREF__ + "1. Received LOCALASSETINGESTIONEVENT" +
+			SPDLOG_DEBUG(
+				string() + "1. Received LOCALASSETINGESTIONEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
@@ -605,7 +606,7 @@ void MMSEngineProcessor::operator()()
 				(_processorsThreadsNumber.use_count() > _processorThreads +
 				_maxAdditionalProcessorThreads)
 				{
-					_logger->warn(__FILEREF__
+					_logger->warn(string()
 						+ "Not enough available threads to manage
 				handleLocalAssetIngestionEvent, activity is postponed"
 						+ ", _processorIdentifier: " +
@@ -666,7 +667,7 @@ void MMSEngineProcessor::operator()()
 				dynamic_pointer_cast<Event2>( cloneLocalAssetIngestionEvent);
 						_multiEventsSet->addEvent(cloneEvent);
 
-						_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE
+						SPDLOG_INFO(string() + "addEvent: EVENT_TYPE
 				(INGESTASSETEVENT)"
 							+ ", _processorIdentifier: " +
 				to_string(_processorIdentifier)
@@ -692,16 +693,16 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleLocalAssetIngestionEvent failed" +
+				SPDLOG_ERROR(
+					string() + "handleLocalAssetIngestionEvent failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleLocalAssetIngestionEvent failed" +
+				SPDLOG_ERROR(
+					string() + "handleLocalAssetIngestionEvent failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -712,16 +713,16 @@ void MMSEngineProcessor::operator()()
 					localAssetIngestionEvent
 				);
 
-			_logger->debug(
-				__FILEREF__ + "2. Received LOCALASSETINGESTIONEVENT" +
+			SPDLOG_DEBUG(
+				string() + "2. Received LOCALASSETINGESTIONEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT: // 3
 		{
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
@@ -732,8 +733,8 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleCheckEncodingEvent failed" +
+				SPDLOG_ERROR(
+					string() + "handleCheckEncodingEvent failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -741,8 +742,8 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
@@ -750,8 +751,8 @@ void MMSEngineProcessor::operator()()
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT: // 4
 		{
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"1. Received "
 				"MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -768,7 +769,7 @@ void MMSEngineProcessor::operator()()
 					// next one
 
 					_logger->warn(
-						__FILEREF__ +
+						string() +
 						"Not enough available threads to manage "
 						"handleContentRetentionEventThread, activity is "
 						"postponed" +
@@ -794,8 +795,8 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleContentRetentionEventThread failed" +
+				SPDLOG_ERROR(
+					string() + "handleContentRetentionEventThread failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -803,8 +804,8 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"2. Received "
 				"MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -813,8 +814,8 @@ void MMSEngineProcessor::operator()()
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT: // 5
 		{
-			_logger->debug(
-				__FILEREF__ + "1. Received MULTILOCALASSETINGESTIONEVENT" +
+			SPDLOG_DEBUG(
+				string() + "1. Received MULTILOCALASSETINGESTIONEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
@@ -829,7 +830,7 @@ void MMSEngineProcessor::operator()()
 				(_processorsThreadsNumber.use_count() > _processorThreads +
 				_maxAdditionalProcessorThreads)
 				{
-					_logger->warn(__FILEREF__
+					_logger->warn(string()
 						+ "Not enough available threads to manage
 				handleLocalAssetIngestionEvent, activity is postponed"
 						+ ", _processorIdentifier: " +
@@ -878,7 +879,7 @@ void MMSEngineProcessor::operator()()
 								cloneMultiLocalAssetIngestionEvent);
 						_multiEventsSet->addEvent(cloneEvent);
 
-						_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE
+						SPDLOG_INFO(string() + "addEvent: EVENT_TYPE
 				(MULTIINGESTASSETEVENT)"
 							+ ", _processorIdentifier: " +
 				to_string(_processorIdentifier)
@@ -904,16 +905,16 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed" +
+				SPDLOG_ERROR(
+					string() + "handleMultiLocalAssetIngestionEvent failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed" +
+				SPDLOG_ERROR(
+					string() + "handleMultiLocalAssetIngestionEvent failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -924,16 +925,16 @@ void MMSEngineProcessor::operator()()
 					multiLocalAssetIngestionEvent
 				);
 
-			_logger->debug(
-				__FILEREF__ + "2. Received MULTILOCALASSETINGESTIONEVENT" +
+			SPDLOG_DEBUG(
+				string() + "2. Received MULTILOCALASSETINGESTIONEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT: // 7
 		{
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"1. Received "
 				"MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -948,7 +949,7 @@ void MMSEngineProcessor::operator()()
 					// content retention is a periodical event, we will wait the
 				next one
 
-					_logger->warn(__FILEREF__ + "Not enough available threads to
+					_logger->warn(string() + "Not enough available threads to
 				manage handleContentRetentionEventThread, activity is postponed"
 						+ ", _processorIdentifier: " +
 				to_string(_processorIdentifier)
@@ -971,8 +972,8 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleDBDataRetentionEventThread failed" +
+				SPDLOG_ERROR(
+					string() + "handleDBDataRetentionEventThread failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -980,8 +981,8 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"2. Received "
 				"MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -990,8 +991,8 @@ void MMSEngineProcessor::operator()()
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT: // 8
 		{
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"1. Received "
 				"MMSENGINE_EVENTTYPEIDENTIFIER_"
 				"CHECKREFRESHPARTITIONFREESIZEEVENT" +
@@ -1007,7 +1008,7 @@ void MMSEngineProcessor::operator()()
 					// content retention is a periodical event, we will wait the
 				next one
 
-					_logger->warn(__FILEREF__ + "Not enough available threads to
+					_logger->warn(string() + "Not enough available threads to
 				manage handleContentRetentionEventThread, activity is postponed"
 						+ ", _processorIdentifier: " +
 				to_string(_processorIdentifier)
@@ -1031,8 +1032,8 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"handleCheckRefreshPartitionFreeSizeEvent failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
@@ -1041,8 +1042,8 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"2. Received "
 				"MMSENGINE_EVENTTYPEIDENTIFIER_"
 				"CHECKREFRESHPARTITIONFREESIZEEVENT" +
@@ -1052,8 +1053,8 @@ void MMSEngineProcessor::operator()()
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT: // 9
 		{
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"1. Received "
 				"MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1065,8 +1066,8 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"_mmsThreadsStatistic->logRunningThreads failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
@@ -1075,8 +1076,8 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"2. Received "
 				"MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT:" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1085,8 +1086,8 @@ void MMSEngineProcessor::operator()()
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT: // 10
 		{
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"1. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
@@ -1099,7 +1100,7 @@ void MMSEngineProcessor::operator()()
 				{
 					// GEOInfo is a periodical event, we will wait the next one
 
-					_logger->warn(__FILEREF__ + "Not enough available threads to
+					_logger->warn(string() + "Not enough available threads to
 				manage handleGEOInfoEventThread, activity is postponed"
 						+ ", _processorIdentifier: " +
 				to_string(_processorIdentifier)
@@ -1121,8 +1122,8 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "handleGEOInfoEventThread failed" +
+				SPDLOG_ERROR(
+					string() + "handleGEOInfoEventThread failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -1130,8 +1131,8 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			_logger->debug(
-				__FILEREF__ +
+			SPDLOG_DEBUG(
+				string() +
 				"2. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
@@ -1151,7 +1152,7 @@ void MMSEngineProcessor::operator()()
 
 		if (elapsedInSeconds > _maxEventManagementTimeInSeconds)
 			_logger->warn(
-				__FILEREF__ +
+				string() +
 				"MMSEngineProcessor. Event management took too time" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", event id: " + to_string(event->getEventKey().first) +
@@ -1162,8 +1163,8 @@ void MMSEngineProcessor::operator()()
 			);
 	}
 
-	_logger->info(
-		__FILEREF__ + "MMSEngineProcessor thread terminated" +
+	SPDLOG_INFO(
+		string() + "MMSEngineProcessor thread terminated" +
 		", _processorIdentifier: " + to_string(_processorIdentifier)
 	);
 }
@@ -1189,8 +1190,8 @@ int MMSEngineProcessor::getMaxAdditionalProcessorThreads()
 	string lastCPUUsage;
 	for (int cpuUsage : *_cpuUsage)
 		lastCPUUsage += (to_string(cpuUsage) + " ");
-	_logger->info(
-		__FILEREF__ + "getMaxAdditionalProcessorThreads" +
+	SPDLOG_INFO(
+		string() + "getMaxAdditionalProcessorThreads" +
 		", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", lastCPUUsage: " + lastCPUUsage +
 		", maxAdditionalProcessorThreads: " +
@@ -1223,8 +1224,8 @@ void MMSEngineProcessor::cpuUsageThread()
 				for (int cpuUsage : *_cpuUsage)
 					lastCPUUsage += (to_string(cpuUsage) + " ");
 
-				_logger->info(
-					__FILEREF__ + "cpuUsageThread" +
+				SPDLOG_INFO(
+					string() + "cpuUsageThread" +
 					", lastCPUUsage: " + lastCPUUsage
 				);
 			}
@@ -1234,14 +1235,14 @@ void MMSEngineProcessor::cpuUsageThread()
 			string errorMessage =
 				string("cpuUsage thread failed") + ", e.what(): " + e.what();
 
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage =
 				string("cpuUsage thread failed") + ", e.what(): " + e.what();
 
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 		}
 	}
 }
@@ -1261,8 +1262,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 	{
 		if (isMaintenanceMode())
 		{
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"Received handleCheckIngestionEvent, not managed it because of "
 				"MaintenanceMode" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -1294,7 +1295,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				_processorThreads + maxAdditionalProcessorThreads)
 			{
 				_logger->warn(
-					__FILEREF__ +
+					string() +
 					"Not enough available threads to manage Tasks involving "
 					"more threads" +
 					", _processorIdentifier: " +
@@ -1314,8 +1315,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				onlyTasksNotInvolvingMMSEngineThreads
 			);
 
-			_logger->info(
-				__FILEREF__ + "getIngestionsToBeManaged result" +
+			SPDLOG_INFO(
+				string() + "getIngestionsToBeManaged result" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionsToBeManaged.size: " +
 				to_string(ingestionsToBeManaged.size())
@@ -1324,7 +1325,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 		catch (AlreadyLocked &e)
 		{
 			_logger->warn(
-				__FILEREF__ + "getIngestionsToBeManaged failed" +
+				string() + "getIngestionsToBeManaged failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -1334,8 +1335,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(
-				__FILEREF__ + "getIngestionsToBeManaged failed" +
+			SPDLOG_ERROR(
+				string() + "getIngestionsToBeManaged failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -1344,8 +1345,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "getIngestionsToBeManaged failed" +
+			SPDLOG_ERROR(
+				string() + "getIngestionsToBeManaged failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -1374,8 +1375,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					ingestionDate, metaDataContent, ingestionType,
 					ingestionStatus) = ingestionToBeManaged;
 
-				_logger->info(
-					__FILEREF__ + "json to be processed" +
+				SPDLOG_INFO(
+					string() + "json to be processed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1402,8 +1403,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				}
 				catch (runtime_error &e)
 				{
-					_logger->error(
-						__FILEREF__ +
+					SPDLOG_ERROR(
+						string() +
 						"checkWorkspaceStorageAndMaxIngestionNumber failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
@@ -1412,8 +1413,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					);
 					string errorMessage = e.what();
 
-					_logger->info(
-						__FILEREF__ + "Update IngestionJob" +
+					SPDLOG_INFO(
+						string() + "Update IngestionJob" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1432,8 +1433,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 					catch (runtime_error &re)
 					{
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob failed" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1444,8 +1445,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 					catch (exception &ex)
 					{
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob failed" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1459,8 +1460,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				}
 				catch (exception &e)
 				{
-					_logger->error(
-						__FILEREF__ +
+					SPDLOG_ERROR(
+						string() +
 						"checkWorkspaceStorageAndMaxIngestionNumber failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
@@ -1469,8 +1470,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					);
 					string errorMessage = e.what();
 
-					_logger->info(
-						__FILEREF__ + "Update IngestionJob" +
+					SPDLOG_INFO(
+						string() + "Update IngestionJob" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1489,8 +1490,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 					catch (runtime_error &re)
 					{
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob failed" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1501,8 +1502,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 					catch (exception &ex)
 					{
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob failed" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1572,8 +1573,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						);
 						_multiEventsSet->addEvent(event);
 
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"addEvent: EVENT_TYPE (INGESTASSETEVENT)" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -1587,12 +1588,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				}
 				else // Start_TaskQueued
 				{
-					Json::Value parametersRoot;
+					json parametersRoot;
 					try
 					{
-						parametersRoot = JSONUtils::toJson(
-							ingestionJobKey, -1, metaDataContent
-						);
+						parametersRoot = JSONUtils::toJson(metaDataContent);
 					}
 					catch (runtime_error &e)
 					{
@@ -1602,10 +1601,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", metaDataContent: " + metaDataContent;
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(string() + errorMessage);
 
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1625,8 +1624,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						catch (runtime_error &re)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -1638,8 +1637,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						catch (exception &ex)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -1660,9 +1659,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 					try
 					{
-						Validator validator(
-							_logger, _mmsEngineDBFacade, _configuration
-						);
+						Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
 						if (ingestionType ==
 							MMSEngineDBFacade::IngestionType::GroupOfTasks)
 							validator.validateGroupOfTasksMetadata(
@@ -1676,16 +1673,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "validateMetadata failed" +
+						SPDLOG_ERROR(
+							string() + "validateMetadata failed" +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", exception: " + e.what()
 						);
 
 						string errorMessage = e.what();
 
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1705,8 +1702,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						catch (runtime_error &re)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -1718,8 +1715,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						catch (exception &ex)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -1734,8 +1731,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ + "validateMetadata failed" +
+						SPDLOG_ERROR(
+							string() + "validateMetadata failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1744,8 +1741,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 						string errorMessage = e.what();
 
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1765,8 +1762,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						catch (runtime_error &re)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -1778,8 +1775,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						catch (exception &ex)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -1805,8 +1802,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageGroupOfTasks failed" +
+								SPDLOG_ERROR(
+									string() + "manageGroupOfTasks failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -1816,8 +1813,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -1838,8 +1835,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -1852,8 +1849,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -1869,8 +1866,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageGroupOfTasks failed" +
+								SPDLOG_ERROR(
+									string() + "manageGroupOfTasks failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -1880,8 +1877,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -1902,8 +1899,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -1916,8 +1913,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -1959,8 +1956,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"getMediaSourceDetails failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -1971,8 +1968,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -1993,8 +1990,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2007,8 +2004,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2024,8 +2021,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"getMediaSourceDetails failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -2036,8 +2033,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -2058,8 +2055,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2072,8 +2069,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2141,8 +2138,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										);
 									_multiEventsSet->addEvent(event);
 
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"addEvent: EVENT_TYPE "
 										"(INGESTASSETEVENT)" +
 										", _processorIdentifier: " +
@@ -2189,7 +2186,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 												maxAdditionalProcessorThreads)
 										{
 											_logger->warn(
-												__FILEREF__ +
+												string() +
 												"Not enough available threads "
 												"to manage "
 												"downloadMediaSourceFileThread,"
@@ -2218,8 +2215,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage = "";
 											string processorMMS = "";
 
-											_logger->info(
-												__FILEREF__ +
+											SPDLOG_INFO(
+												string() +
 												"Update IngestionJob" +
 												", _processorIdentifier: " +
 												to_string(_processorIdentifier
@@ -2247,8 +2244,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage = "";
 											string processorMMS = "";
 
-											_logger->info(
-												__FILEREF__ +
+											SPDLOG_INFO(
+												string() +
 												"Update IngestionJob" +
 												", _processorIdentifier: " +
 												to_string(_processorIdentifier
@@ -2320,7 +2317,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 												maxAdditionalProcessorThreads)
 										{
 											_logger->warn(
-												__FILEREF__ +
+												string() +
 												"Not enough available threads "
 												"to manage "
 												"moveMediaSourceFileThread, "
@@ -2349,8 +2346,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage = "";
 											string processorMMS = "";
 
-											_logger->info(
-												__FILEREF__ +
+											SPDLOG_INFO(
+												string() +
 												"Update IngestionJob" +
 												", _processorIdentifier: " +
 												to_string(_processorIdentifier
@@ -2378,8 +2375,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage = "";
 											string processorMMS = "";
 
-											_logger->info(
-												__FILEREF__ +
+											SPDLOG_INFO(
+												string() +
 												"Update IngestionJob" +
 												", _processorIdentifier: " +
 												to_string(_processorIdentifier
@@ -2435,7 +2432,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 												maxAdditionalProcessorThreads)
 										{
 											_logger->warn(
-												__FILEREF__ +
+												string() +
 												"Not enough available threads "
 												"to manage "
 												"copyMediaSourceFileThread, "
@@ -2464,8 +2461,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage = "";
 											string processorMMS = "";
 
-											_logger->info(
-												__FILEREF__ +
+											SPDLOG_INFO(
+												string() +
 												"Update IngestionJob" +
 												", _processorIdentifier: " +
 												to_string(_processorIdentifier
@@ -2493,8 +2490,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage = "";
 											string processorMMS = "";
 
-											_logger->info(
-												__FILEREF__ +
+											SPDLOG_INFO(
+												string() +
 												"Update IngestionJob" +
 												", _processorIdentifier: " +
 												to_string(_processorIdentifier
@@ -2534,8 +2531,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										string errorMessage = "";
 										string processorMMS = "";
 
-										_logger->info(
-											__FILEREF__ +
+										SPDLOG_INFO(
+											string() +
 											"Update IngestionJob" +
 											", _processorIdentifier: " +
 											to_string(_processorIdentifier) +
@@ -2566,7 +2563,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", exception: " + e.what();
-								_logger->error(__FILEREF__ + errorMessage);
+								SPDLOG_ERROR(string() + errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -2601,7 +2598,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage removeContentThread, activity "
 										"is postponed" +
@@ -2626,8 +2623,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -2662,8 +2659,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "removeContentThread failed" +
+								SPDLOG_ERROR(
+									string() + "removeContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -2673,8 +2670,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -2693,8 +2690,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2707,8 +2704,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2724,8 +2721,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "removeContentThread failed" +
+								SPDLOG_ERROR(
+									string() + "removeContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -2735,8 +2732,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -2757,8 +2754,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2771,8 +2768,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2817,7 +2814,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage ftpDeliveryContentThread, "
 										"activity is postponed" +
@@ -2842,8 +2839,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -2878,8 +2875,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"ftpDeliveryContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -2890,8 +2887,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -2910,8 +2907,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2924,8 +2921,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2941,8 +2938,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"ftpDeliveryContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -2953,8 +2950,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -2975,8 +2972,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -2989,8 +2986,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3022,7 +3019,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
 										to_string(ingestionJobKey);
-									_logger->error(__FILEREF__ + errorMessage);
+									SPDLOG_ERROR(string() + errorMessage);
 
 									throw runtime_error(errorMessage);
 								}
@@ -3050,7 +3047,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage localCopyContent, activity is "
 										"postponed" +
@@ -3075,8 +3072,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -3111,8 +3108,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"localCopyContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -3123,8 +3120,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -3143,8 +3140,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3157,8 +3154,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3174,8 +3171,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"localCopyContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -3186,8 +3183,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3208,8 +3205,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3222,8 +3219,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3269,7 +3266,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage http callback, activity is "
 										"postponed" +
@@ -3294,8 +3291,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -3329,8 +3326,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "httpCallbackThread failed" +
+								SPDLOG_ERROR(
+									string() + "httpCallbackThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3340,8 +3337,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -3360,8 +3357,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3374,8 +3371,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3391,8 +3388,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "httpCallbackThread failed" +
+								SPDLOG_ERROR(
+									string() + "httpCallbackThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3402,8 +3399,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3424,8 +3421,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3438,8 +3435,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3466,8 +3463,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageEncodeTask failed" +
+								SPDLOG_ERROR(
+									string() + "manageEncodeTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3477,8 +3474,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3499,8 +3496,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3513,8 +3510,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3530,8 +3527,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageEncodeTask failed" +
+								SPDLOG_ERROR(
+									string() + "manageEncodeTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3541,8 +3538,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3563,8 +3560,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3577,8 +3574,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3605,8 +3602,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageVideoSpeedTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -3617,8 +3614,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3639,8 +3636,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3653,8 +3650,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3670,8 +3667,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageVideoSpeedTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -3682,8 +3679,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3704,8 +3701,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3718,8 +3715,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3747,8 +3744,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"managePictureInPictureTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -3759,8 +3756,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3781,8 +3778,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3795,8 +3792,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3812,8 +3809,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"managePictureInPictureTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -3824,8 +3821,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3846,8 +3843,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3860,8 +3857,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3889,8 +3886,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageIntroOutroOverlayTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -3901,8 +3898,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3923,8 +3920,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3937,8 +3934,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -3954,8 +3951,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageIntroOutroOverlayTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -3966,8 +3963,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3988,8 +3985,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4002,8 +3999,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4031,8 +4028,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageAddSilentAudioTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -4043,8 +4040,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4065,8 +4062,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4079,8 +4076,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4096,8 +4093,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageAddSilentAudioTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -4108,8 +4105,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4130,8 +4127,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4144,8 +4141,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4216,7 +4213,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											maxAdditionalProcessorThreads)
 									{
 										_logger->warn(
-											__FILEREF__ +
+											string() +
 											"Not enough available threads to "
 											"manage changeFileFormatThread, "
 											"activity is postponed" +
@@ -4240,8 +4237,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										string errorMessage = "";
 										string processorMMS = "";
 
-										_logger->info(
-											__FILEREF__ +
+										SPDLOG_INFO(
+											string() +
 											"Update IngestionJob" +
 											", _processorIdentifier: " +
 											to_string(_processorIdentifier) +
@@ -4286,8 +4283,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"generateAndIngestFramesTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -4298,8 +4295,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4320,8 +4317,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4334,8 +4331,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4351,8 +4348,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"generateAndIngestFramesTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -4363,8 +4360,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4385,8 +4382,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4399,8 +4396,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4430,8 +4427,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageSlideShowTask failed" +
+								SPDLOG_ERROR(
+									string() + "manageSlideShowTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4441,8 +4438,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4463,8 +4460,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4477,8 +4474,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4494,8 +4491,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageSlideShowTask failed" +
+								SPDLOG_ERROR(
+									string() + "manageSlideShowTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4505,8 +4502,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4527,8 +4524,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4541,8 +4538,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4580,7 +4577,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage manageConcatThread, activity "
 										"is postponed" +
@@ -4605,8 +4602,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -4641,8 +4638,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageConcatThread failed" +
+								SPDLOG_ERROR(
+									string() + "manageConcatThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4652,8 +4649,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -4672,8 +4669,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4686,8 +4683,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4703,8 +4700,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageConcatThread failed" +
+								SPDLOG_ERROR(
+									string() + "manageConcatThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4714,8 +4711,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4736,8 +4733,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4750,8 +4747,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4788,7 +4785,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage manageCutMediaThread, activity "
 										"is postponed" +
@@ -4813,8 +4810,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -4849,8 +4846,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageCutMediaThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -4861,8 +4858,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -4881,8 +4878,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4895,8 +4892,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4912,8 +4909,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageCutMediaThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -4924,8 +4921,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4946,8 +4943,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4960,8 +4957,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -4986,7 +4983,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch(runtime_error& e)
 							{
-								_logger->error(__FILEREF__ +
+								SPDLOG_ERROR(string() +
 							"generateAndIngestCutMediaTask failed"
 									+ ", _processorIdentifier: " +
 							to_string(_processorIdentifier)
@@ -4997,7 +4994,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(__FILEREF__ + "Update
+								SPDLOG_INFO(string() + "Update
 							IngestionJob"
 									+ ", _processorIdentifier: " +
 							to_string(_processorIdentifier)
@@ -5018,7 +5015,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch(runtime_error& re)
 								{
-									_logger->info(__FILEREF__ + "Update
+									SPDLOG_INFO(string() + "Update
 							IngestionJob failed"
 										+ ", _processorIdentifier: " +
 							to_string(_processorIdentifier)
@@ -5031,7 +5028,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch(exception& ex)
 								{
-									_logger->info(__FILEREF__ + "Update
+									SPDLOG_INFO(string() + "Update
 							IngestionJob failed"
 										+ ", _processorIdentifier: " +
 							to_string(_processorIdentifier)
@@ -5047,7 +5044,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch(exception& e)
 							{
-								_logger->error(__FILEREF__ +
+								SPDLOG_ERROR(string() +
 							"generateAndIngestCutMediaTask failed"
 									+ ", _processorIdentifier: " +
 							to_string(_processorIdentifier)
@@ -5058,7 +5055,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(__FILEREF__ + "Update
+								SPDLOG_INFO(string() + "Update
 							IngestionJob"
 									+ ", _processorIdentifier: " +
 							to_string(_processorIdentifier)
@@ -5079,7 +5076,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch(runtime_error& re)
 								{
-									_logger->info(__FILEREF__ + "Update
+									SPDLOG_INFO(string() + "Update
 							IngestionJob failed"
 										+ ", _processorIdentifier: " +
 							to_string(_processorIdentifier)
@@ -5092,7 +5089,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch(exception& ex)
 								{
-									_logger->info(__FILEREF__ + "Update
+									SPDLOG_INFO(string() + "Update
 							IngestionJob failed"
 										+ ", _processorIdentifier: " +
 							to_string(_processorIdentifier)
@@ -5128,7 +5125,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage extractTracksContentThread, "
 										"activity is postponed" +
@@ -5153,8 +5150,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -5189,8 +5186,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"extractTracksContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5201,8 +5198,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -5221,8 +5218,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5235,8 +5232,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5252,8 +5249,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"extractTracksContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5264,8 +5261,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5286,8 +5283,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5300,8 +5297,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5332,8 +5329,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageOverlayImageOnVideoTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5344,8 +5341,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5366,8 +5363,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5380,8 +5377,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5397,8 +5394,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageOverlayImageOnVideoTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5409,8 +5406,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5431,8 +5428,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5445,8 +5442,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5477,8 +5474,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageOverlayTextOnVideoTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5489,8 +5486,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5511,8 +5508,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5525,8 +5522,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5542,8 +5539,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageOverlayTextOnVideoTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5554,8 +5551,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5576,8 +5573,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5590,8 +5587,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5629,7 +5626,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage email notification, activity "
 										"is postponed" +
@@ -5654,8 +5651,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -5697,8 +5694,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"emailNotificationThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5709,8 +5706,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5731,8 +5728,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5745,8 +5742,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5762,8 +5759,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"emailNotificationThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5774,8 +5771,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5796,8 +5793,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5810,8 +5807,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5846,7 +5843,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage check streaming, activity is "
 										"postponed" +
@@ -5871,8 +5868,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -5903,8 +5900,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"checkStreamingThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5915,8 +5912,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5937,8 +5934,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5951,8 +5948,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -5968,8 +5965,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"checkStreamingThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -5980,8 +5977,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6002,8 +5999,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6016,8 +6013,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6048,8 +6045,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageMediaCrossReferenceTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -6060,8 +6057,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6082,8 +6079,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6096,8 +6093,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6113,8 +6110,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageMediaCrossReferenceTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -6125,8 +6122,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6147,8 +6144,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6161,8 +6158,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6200,7 +6197,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage post on facebook, activity is "
 										"postponed" +
@@ -6225,8 +6222,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -6269,8 +6266,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"postOnFacebookThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -6281,8 +6278,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -6301,8 +6298,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6315,8 +6312,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6332,8 +6329,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"postOnFacebookThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -6344,8 +6341,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6366,8 +6363,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6380,8 +6377,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6419,7 +6416,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage post on youtube, activity is "
 										"postponed" +
@@ -6444,8 +6441,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -6488,8 +6485,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "postOnYouTubeTask failed" +
+								SPDLOG_ERROR(
+									string() + "postOnYouTubeTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6499,8 +6496,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -6519,8 +6516,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6533,8 +6530,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6550,8 +6547,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "postOnYouTubeTask failed" +
+								SPDLOG_ERROR(
+									string() + "postOnYouTubeTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6561,8 +6558,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6583,8 +6580,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6597,8 +6594,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6629,8 +6626,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageFaceRecognitionMediaTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -6641,8 +6638,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6663,8 +6660,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6677,8 +6674,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6694,8 +6691,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageFaceRecognitionMediaTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -6706,8 +6703,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6728,8 +6725,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6742,8 +6739,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6774,8 +6771,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageFaceIdentificationMediaTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -6786,8 +6783,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6808,8 +6805,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6822,8 +6819,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6839,8 +6836,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"manageFaceIdentificationMediaTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -6851,8 +6848,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6873,8 +6870,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6887,8 +6884,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6915,8 +6912,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageLiveRecorder failed" +
+								SPDLOG_ERROR(
+									string() + "manageLiveRecorder failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6926,8 +6923,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6948,8 +6945,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6962,8 +6959,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -6979,8 +6976,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageLiveRecorder failed" +
+								SPDLOG_ERROR(
+									string() + "manageLiveRecorder failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6990,8 +6987,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7012,8 +7009,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7026,8 +7023,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7054,8 +7051,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageLiveProxy failed" +
+								SPDLOG_ERROR(
+									string() + "manageLiveProxy failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7065,8 +7062,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7087,8 +7084,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7101,8 +7098,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7118,8 +7115,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageLiveProxy failed" +
+								SPDLOG_ERROR(
+									string() + "manageLiveProxy failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7129,8 +7126,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7151,8 +7148,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7165,8 +7162,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7193,8 +7190,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageVODProxy failed" +
+								SPDLOG_ERROR(
+									string() + "manageVODProxy failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7204,8 +7201,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7226,8 +7223,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7240,8 +7237,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7257,8 +7254,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageVODProxy failed" +
+								SPDLOG_ERROR(
+									string() + "manageVODProxy failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7268,8 +7265,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7290,8 +7287,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7304,8 +7301,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7333,8 +7330,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageCountdown failed" +
+								SPDLOG_ERROR(
+									string() + "manageCountdown failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7344,8 +7341,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7366,8 +7363,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7380,8 +7377,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7397,8 +7394,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageCountdown failed" +
+								SPDLOG_ERROR(
+									string() + "manageCountdown failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7408,8 +7405,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7430,8 +7427,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7444,8 +7441,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7472,8 +7469,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageLiveGrid failed" +
+								SPDLOG_ERROR(
+									string() + "manageLiveGrid failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7483,8 +7480,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7505,8 +7502,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7519,8 +7516,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7536,8 +7533,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageLiveGrid failed" +
+								SPDLOG_ERROR(
+									string() + "manageLiveGrid failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7547,8 +7544,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7569,8 +7566,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7583,8 +7580,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7618,7 +7615,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage manageLiveCutThread, activity "
 										"is postponed" +
@@ -7643,8 +7640,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -7691,8 +7688,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageLiveCutThread failed" +
+								SPDLOG_ERROR(
+									string() + "manageLiveCutThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7702,8 +7699,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -7722,8 +7719,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7736,8 +7733,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7753,8 +7750,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ + "manageLiveCutThread failed" +
+								SPDLOG_ERROR(
+									string() + "manageLiveCutThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7764,8 +7761,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7786,8 +7783,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7800,8 +7797,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7837,7 +7834,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage YouTubeLiveBroadcast, activity "
 										"is postponed" +
@@ -7862,8 +7859,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -7894,8 +7891,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"youTubeLiveBroadcastThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -7906,8 +7903,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -7926,8 +7923,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7940,8 +7937,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -7957,8 +7954,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"youTubeLiveBroadcastThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -7969,8 +7966,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -7991,8 +7988,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8005,8 +8002,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8042,7 +8039,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage facebookLiveBroadcastThread, "
 										"activity is postponed" +
@@ -8067,8 +8064,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -8099,8 +8096,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"facebookLiveBroadcastThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -8111,8 +8108,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -8131,8 +8128,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8145,8 +8142,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8162,8 +8159,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"facebookLiveBroadcastThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -8174,8 +8171,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -8196,8 +8193,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8210,8 +8207,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8246,7 +8243,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										maxAdditionalProcessorThreads)
 								{
 									_logger->warn(
-										__FILEREF__ +
+										string() +
 										"Not enough available threads to "
 										"manage changeFileFormatThread, "
 										"activity is postponed" +
@@ -8271,8 +8268,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage = "";
 									string processorMMS = "";
 
-									_logger->info(
-										__FILEREF__ + "Update IngestionJob" +
+									SPDLOG_INFO(
+										string() + "Update IngestionJob" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
 										", ingestionJobKey: " +
@@ -8307,8 +8304,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"changeFileFormatThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -8319,8 +8316,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", IngestionStatus: " +
@@ -8339,8 +8336,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8353,8 +8350,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8370,8 +8367,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								_logger->error(
-									__FILEREF__ +
+								SPDLOG_ERROR(
+									string() +
 									"changeFileFormatThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
@@ -8382,8 +8379,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -8404,8 +8401,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (runtime_error &re)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8418,8 +8415,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									_logger->info(
-										__FILEREF__ +
+									SPDLOG_INFO(
+										string() +
 										"Update IngestionJob failed" +
 										", _processorIdentifier: " +
 										to_string(_processorIdentifier) +
@@ -8444,10 +8441,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								to_string(ingestionJobKey) +
 								", ingestionType: " +
 								MMSEngineDBFacade::toString(ingestionType);
-							_logger->error(__FILEREF__ + errorMessage);
+							SPDLOG_ERROR(string() + errorMessage);
 
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -8468,8 +8465,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (runtime_error &re)
 							{
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob failed" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -8481,8 +8478,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &ex)
 							{
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob failed" +
+								SPDLOG_INFO(
+									string() + "Update IngestionJob failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -8500,8 +8497,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ + "Exception managing the Ingestion entry" +
+				SPDLOG_ERROR(
+					string() + "Exception managing the Ingestion entry" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", exception: " + e.what()
@@ -8509,8 +8506,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "Exception managing the Ingestion entry" +
+				SPDLOG_ERROR(
+					string() + "Exception managing the Ingestion entry" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", exception: " + e.what()
@@ -8531,8 +8528,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 			_multiEventsSet->addEvent(event);
 
-			_logger->debug(
-				__FILEREF__ + "addEvent: EVENT_TYPE" +
+			SPDLOG_DEBUG(
+				string() + "addEvent: EVENT_TYPE" +
 				", MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION" +
 				", getEventKey().first: " +
 				to_string(event->getEventKey().first) +
@@ -8543,8 +8540,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 	}
 	catch (...)
 	{
-		_logger->error(
-			__FILEREF__ + "handleCheckIngestionEvent failed" +
+		SPDLOG_ERROR(
+			string() + "handleCheckIngestionEvent failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier)
 		);
 	}
@@ -8578,8 +8575,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "handleLocalAssetIngestionEvent failed" +
+		SPDLOG_ERROR(
+			string() + "handleLocalAssetIngestionEvent failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8593,8 +8590,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "handleLocalAssetIngestionEvent failed" +
+		SPDLOG_ERROR(
+			string() + "handleLocalAssetIngestionEvent failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8612,8 +8609,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 )
 {
 
-	_logger->info(
-		__FILEREF__ + "handleLocalAssetIngestionEvent" +
+	SPDLOG_INFO(
+		string() + "handleLocalAssetIngestionEvent" +
 		", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", ingestionJobKey: " +
 		to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8624,7 +8621,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		to_string(_processorsThreadsNumber.use_count())
 	);
 
-	Json::Value parametersRoot;
+	json parametersRoot;
 	try
 	{
 		string sMetadataContent = localAssetIngestionEvent.getMetadataContent();
@@ -8634,14 +8631,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			   (sMetadataContent.back() == 10 || sMetadataContent.back() == 13))
 			sMetadataContent.pop_back();
 
-		parametersRoot = JSONUtils::toJson(
-			localAssetIngestionEvent.getIngestionJobKey(), -1, sMetadataContent
-		);
+		parametersRoot = JSONUtils::toJson(sMetadataContent);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "parsing parameters failed" +
+		SPDLOG_ERROR(
+			string() + "parsing parameters failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8652,8 +8647,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" +
@@ -8670,8 +8665,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8681,8 +8676,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8695,8 +8690,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "validateMetadata failed" +
+		SPDLOG_ERROR(
+			string() + "validateMetadata failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8705,8 +8700,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" +
@@ -8723,8 +8718,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8734,8 +8729,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8855,7 +8850,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 							) +
 							", localWorkspaceIngestionBinaryPathName: " +
 							localWorkspaceIngestionBinaryPathName;
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(string() + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -8888,7 +8883,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", mediaSourceURL: " + mediaSourceURL;
 
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -8903,8 +8898,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "binaryPathName initialization failed" +
+		SPDLOG_ERROR(
+			string() + "binaryPathName initialization failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8913,8 +8908,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" +
@@ -8931,8 +8926,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8942,8 +8937,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8956,8 +8951,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "binaryPathName initialization failed" +
+		SPDLOG_ERROR(
+			string() + "binaryPathName initialization failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8966,8 +8961,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" +
@@ -8984,8 +8979,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -8995,8 +8990,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9008,15 +9003,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		throw e;
 	}
 
-	_logger->info(
-		__FILEREF__ + "binaryPathName" + ", _processorIdentifier: " +
+	SPDLOG_INFO(
+		string() + "binaryPathName" + ", _processorIdentifier: " +
 		to_string(_processorIdentifier) + ", ingestionJobKey: " +
 		to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 		", binaryPathName: " + binaryPathName.string()
 	);
 
 	string metadataFileContent;
-	Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+	Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
 	try
 	{
 		vector<tuple<
@@ -9031,8 +9026,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "validateMetadata failed" +
+		SPDLOG_ERROR(
+			string() + "validateMetadata failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9043,8 +9038,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" +
@@ -9061,8 +9056,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9072,8 +9067,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9086,8 +9081,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove file" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", binaryPathName: " + binaryPathName.string()
@@ -9097,8 +9092,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9106,8 +9101,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9119,8 +9114,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "validateMetadata failed" +
+		SPDLOG_ERROR(
+			string() + "validateMetadata failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9129,8 +9124,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" +
@@ -9147,8 +9142,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9158,8 +9153,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9172,8 +9167,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove file" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", binaryPathName: " + binaryPathName.string()
@@ -9183,8 +9178,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9192,8 +9187,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9240,7 +9235,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 						  0, youTubePrefix2.size(), youTubePrefix2
 					  )))
 			{
-				FFMpeg ffmpeg(_configuration, _logger);
+				FFMpeg ffmpeg(_configurationRoot, _logger);
 				pair<string, string> streamingURLDetails =
 					ffmpeg.retrieveStreamingYouTubeURL(
 						localAssetIngestionEvent.getIngestionJobKey(),
@@ -9249,8 +9244,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 				tie(ignore, mediaFileFormat) = streamingURLDetails;
 
-				_logger->info(
-					__FILEREF__ + "Retrieve streaming YouTube URL" +
+				SPDLOG_INFO(
+					string() + "Retrieve streaming YouTube URL" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9261,8 +9256,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "getMediaSourceDetails failed" +
+		SPDLOG_ERROR(
+			string() + "getMediaSourceDetails failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9271,8 +9266,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMediaSourceFailed" +
@@ -9289,8 +9284,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9300,8 +9295,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9314,8 +9309,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove file" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", binaryPathName: " + binaryPathName.string()
@@ -9325,8 +9320,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9334,8 +9329,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9347,8 +9342,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "getMediaSourceDetails failed" +
+		SPDLOG_ERROR(
+			string() + "getMediaSourceDetails failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9357,8 +9352,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMediaSourceFailed" +
@@ -9375,8 +9370,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9386,8 +9381,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9400,8 +9395,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove file" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", binaryPathName: " + binaryPathName.string()
@@ -9411,8 +9406,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9420,8 +9415,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9442,8 +9437,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "validateMediaSourceFile failed" +
+		SPDLOG_ERROR(
+			string() + "validateMediaSourceFile failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9452,8 +9447,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMediaSourceFailed" +
@@ -9470,8 +9465,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9481,8 +9476,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9495,8 +9490,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove file" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", binaryPathName: " + binaryPathName.string()
@@ -9506,8 +9501,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9515,8 +9510,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9528,8 +9523,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "validateMediaSourceFile failed" +
+		SPDLOG_ERROR(
+			string() + "validateMediaSourceFile failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9538,8 +9533,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		string errorMessage = e.what();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMediaSourceFailed" +
@@ -9556,8 +9551,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9567,8 +9562,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9581,8 +9576,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove file" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", binaryPathName: " + binaryPathName.string()
@@ -9592,8 +9587,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9601,8 +9596,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9676,14 +9671,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			if (fileNameIndex == string::npos)
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"No fileName found in externalStorageRelativePathName" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", externalStorageRelativePathName: " +
 					externalStorageRelativePathName;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -9695,16 +9690,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed" +
+		SPDLOG_ERROR(
+			string() + "_mmsStorage->moveAssetInMMSRepository failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", errorMessage: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -9720,8 +9715,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9730,8 +9725,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9743,8 +9738,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", binaryPathName: " + binaryPathName.string()
@@ -9754,8 +9749,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9763,8 +9758,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9776,15 +9771,15 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed" +
+		SPDLOG_ERROR(
+			string() + "_mmsStorage->moveAssetInMMSRepository failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey())
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -9800,8 +9795,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9810,8 +9805,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9823,8 +9818,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", binaryPathName: " + binaryPathName.string()
@@ -9834,8 +9829,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9843,8 +9838,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -9887,19 +9882,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					string errorMessage = __FILEREF__ +
+					string errorMessage = string() +
 										  "listing directory failed" +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw e;
 				}
 				catch (exception &e)
 				{
-					string errorMessage = __FILEREF__ +
+					string errorMessage = string() +
 										  "listing directory failed" +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw e;
 				}
@@ -9908,12 +9903,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			if (m3u8FileName == "")
 			{
 				string errorMessage =
-					__FILEREF__ + "m3u8 file not found" +
+					string() + "m3u8 file not found" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", mmsAssetPathName: " + mmsAssetPathName;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -9922,8 +9917,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(
-				__FILEREF__ + "retrieving m3u8 file failed" +
+			SPDLOG_ERROR(
+				string() + "retrieving m3u8 file failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9934,8 +9929,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove directory" +
+					SPDLOG_INFO(
+						string() + "Remove directory" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -9948,8 +9943,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -9960,8 +9955,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -9972,8 +9967,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -9990,8 +9985,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10000,8 +9995,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10013,8 +10008,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "retrieving m3u8 file failed" +
+			SPDLOG_ERROR(
+				string() + "retrieving m3u8 file failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10025,8 +10020,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+					SPDLOG_INFO(
+						string() + "Remove" + ", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
 						to_string(localAssetIngestionEvent.getIngestionJobKey()
@@ -10038,8 +10033,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10050,8 +10045,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10062,8 +10057,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10080,8 +10075,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10090,8 +10085,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10105,7 +10100,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 	MMSEngineDBFacade::ContentType contentType;
 
-	tuple<int64_t, long, Json::Value> mediaInfoDetails;
+	tuple<int64_t, long, json> mediaInfoDetails;
 	vector<tuple<int, int64_t, string, string, int, int, string, long>>
 		videoTracks;
 	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
@@ -10118,7 +10113,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	{
 		try
 		{
-			FFMpeg ffmpeg(_configuration, _logger);
+			FFMpeg ffmpeg(_configurationRoot, _logger);
 			// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 			// mediaInfo;
 
@@ -10142,8 +10137,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			long bitRate = -1;
 			tie(durationInMilliSeconds, bitRate, ignore) = mediaInfoDetails;
 
-			_logger->info(
-				__FILEREF__ + "ffmpeg.getMediaInfo" + ", mmsAssetPathName: " +
+			SPDLOG_INFO(
+				string() + "ffmpeg.getMediaInfo" + ", mmsAssetPathName: " +
 				mmsAssetPathName + ", durationInMilliSeconds: " +
 				to_string(durationInMilliSeconds) +
 				", bitRate: " + to_string(bitRate) +
@@ -10164,7 +10159,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			 * avg frame rate format is: total duration / total # of frames
 			if (localAssetIngestionEvent.getForcedAvgFrameRate() != "")
 			{
-				_logger->info(__FILEREF__ + "handleLocalAssetIngestionEvent.
+				SPDLOG_INFO(string() + "handleLocalAssetIngestionEvent.
 			Forced Avg Frame Rate"
 					+ ", current avgFrameRate: " + videoAvgFrameRate
 					+ ", forced avgFrameRate: " +
@@ -10183,8 +10178,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(
-				__FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed" +
+			SPDLOG_ERROR(
+				string() + "EncoderVideoAudioProxy::getMediaInfo failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey())
@@ -10194,8 +10189,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+					SPDLOG_INFO(
+						string() + "Remove" + ", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
 						to_string(localAssetIngestionEvent.getIngestionJobKey()
@@ -10207,7 +10202,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 					size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
 					if (fileNameIndex == string::npos)
 					{
-						string errorMessage = __FILEREF__ + "No fileName found
+						string errorMessage = string() + "No fileName found
 					in mmsAssetPathName"
 							+ ", _processorIdentifier: " +
 					to_string(_processorIdentifier)
@@ -10215,7 +10210,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 					to_string(localAssetIngestionEvent.getIngestionJobKey())
 							+ ", mmsAssetPathName: " + mmsAssetPathName
 						;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -10223,7 +10218,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 					string destBinaryPathName =
 					"/var/catramms/storage/MMSWorkingAreaRepository/Staging" +
 					mmsAssetPathName.substr(fileNameIndex);
-					_logger->info(__FILEREF__ + "Moving"
+					SPDLOG_INFO(string() + "Moving"
 						+ ", _processorIdentifier: " +
 					to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " +
@@ -10238,8 +10233,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10250,8 +10245,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10262,8 +10257,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10280,8 +10275,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10290,8 +10285,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10303,8 +10298,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ +
+			SPDLOG_ERROR(
+				string() +
 				"EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds "
 				"failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
@@ -10316,8 +10311,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+					SPDLOG_INFO(
+						string() + "Remove" + ", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
 						to_string(localAssetIngestionEvent.getIngestionJobKey()
@@ -10329,8 +10324,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10341,8 +10336,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10353,8 +10348,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10371,8 +10366,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10381,8 +10376,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10397,8 +10392,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	{
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "Processing through Magick" +
+			SPDLOG_INFO(
+				string() + "Processing through Magick" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10422,8 +10417,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			// If a warning is produced while loading an image, the image
 			// can normally still be used (but not if the warning was about
 			// something important!)
-			_logger->error(
-				__FILEREF__ +
+			SPDLOG_ERROR(
+				string() +
 				"ImageMagick failed to retrieve width and height failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
@@ -10435,8 +10430,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+					SPDLOG_INFO(
+						string() + "Remove" + ", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
 						to_string(localAssetIngestionEvent.getIngestionJobKey()
@@ -10448,8 +10443,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10460,8 +10455,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10472,8 +10467,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10490,8 +10485,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10500,8 +10495,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10514,8 +10509,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (Magick::Warning &e)
 		{
-			_logger->error(
-				__FILEREF__ +
+			SPDLOG_ERROR(
+				string() +
 				"ImageMagick failed to retrieve width and height failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
@@ -10527,8 +10522,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+					SPDLOG_INFO(
+						string() + "Remove" + ", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
 						to_string(localAssetIngestionEvent.getIngestionJobKey()
@@ -10540,8 +10535,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10552,8 +10547,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10564,8 +10559,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10582,8 +10577,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10592,8 +10587,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10606,8 +10601,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (Magick::ErrorFileOpen &e)
 		{
-			_logger->error(
-				__FILEREF__ +
+			SPDLOG_ERROR(
+				string() +
 				"ImageMagick failed to retrieve width and height failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
@@ -10619,8 +10614,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+					SPDLOG_INFO(
+						string() + "Remove" + ", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
 						to_string(localAssetIngestionEvent.getIngestionJobKey()
@@ -10632,8 +10627,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10644,8 +10639,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10656,8 +10651,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10674,8 +10669,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10684,8 +10679,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10698,8 +10693,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (Magick::Error &e)
 		{
-			_logger->error(
-				__FILEREF__ +
+			SPDLOG_ERROR(
+				string() +
 				"ImageMagick failed to retrieve width and height failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
@@ -10711,8 +10706,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+					SPDLOG_INFO(
+						string() + "Remove" + ", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
 						to_string(localAssetIngestionEvent.getIngestionJobKey()
@@ -10724,8 +10719,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10736,8 +10731,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10748,8 +10743,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10766,8 +10761,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10776,8 +10771,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10790,8 +10785,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ +
+			SPDLOG_ERROR(
+				string() +
 				"ImageMagick failed to retrieve width and height failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
@@ -10802,8 +10797,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+					SPDLOG_INFO(
+						string() + "Remove" + ", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
 						to_string(localAssetIngestionEvent.getIngestionJobKey()
@@ -10815,8 +10810,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10827,8 +10822,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 				catch (exception &e)
 				{
-					_logger->info(
-						__FILEREF__ + "remove failed" +
+					SPDLOG_INFO(
+						string() + "remove failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " +
@@ -10839,8 +10834,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10857,8 +10852,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10867,8 +10862,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10888,14 +10883,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", mmsAssetPathName: " + mmsAssetPathName;
 
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(string() + errorMessage);
 
 		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", mmsAssetPathName: " + mmsAssetPathName
@@ -10905,8 +10900,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -10914,8 +10909,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -10923,8 +10918,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -10940,8 +10935,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -10950,8 +10945,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11049,7 +11044,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 									  ->_workspaceKey) +
 						", mediaItemsDetails.size(): " +
 						to_string(mediaItemsDetails.size());
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(string() + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -11075,8 +11070,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 		if (variantOfMediaItemKey == -1)
 		{
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"_mmsEngineDBFacade->saveSourceContentMetadata..." +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
@@ -11119,8 +11114,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 			int64_t mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
 
-			_logger->info(
-				__FILEREF__ + "Added a new ingested content" +
+			SPDLOG_INFO(
+				string() + "Added a new ingested content" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11164,12 +11159,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				string field = "userData";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
-					Json::Value userDataRoot = parametersRoot[field];
+					json userDataRoot = parametersRoot[field];
 
 					field = "mmsData";
 					if (JSONUtils::isMetadataPresent(userDataRoot, field))
 					{
-						Json::Value mmsDataRoot = userDataRoot[field];
+						json mmsDataRoot = userDataRoot[field];
 
 						if (JSONUtils::isMetadataPresent(
 								mmsDataRoot, "externalTranscoder"
@@ -11183,8 +11178,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"_mmsEngineDBFacade->saveVariantContentMetadata.." +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", workspaceKey: " +
@@ -11234,8 +11229,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 					// image
 					imageWidth, imageHeight, imageFormat, imageQuality
 				);
-			_logger->info(
-				__FILEREF__ + "Added a new variant content" +
+			SPDLOG_INFO(
+				string() + "Added a new variant content" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11244,8 +11239,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				", physicalPathKey: " + to_string(physicalPathKey)
 			);
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11261,8 +11256,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (DeadlockFound &e)
 	{
-		_logger->error(
-			__FILEREF__ +
+		SPDLOG_ERROR(
+			string() +
 			"_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", workspaceKey: " +
@@ -11276,8 +11271,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", mmsAssetPathName: " + mmsAssetPathName
@@ -11287,8 +11282,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -11296,8 +11291,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -11305,8 +11300,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -11322,8 +11317,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11332,8 +11327,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11346,8 +11341,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	catch (MediaItemKeyNotFound &e
 	) // getMediaItemDetailsByIngestionJobKey failure
 	{
-		_logger->error(
-			__FILEREF__ +
+		SPDLOG_ERROR(
+			string() +
 			"_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", workspaceKey: " +
@@ -11361,8 +11356,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", mmsAssetPathName: " + mmsAssetPathName
@@ -11372,8 +11367,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -11381,8 +11376,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -11390,8 +11385,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -11407,8 +11402,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11417,8 +11412,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11430,8 +11425,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ +
+		SPDLOG_ERROR(
+			string() +
 			"_mmsEngineDBFacade->saveSourceContentMetadata failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
@@ -11443,8 +11438,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", mmsAssetPathName: " + mmsAssetPathName
@@ -11454,8 +11449,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -11463,8 +11458,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -11472,8 +11467,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -11489,8 +11484,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11499,8 +11494,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11512,8 +11507,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ +
+		SPDLOG_ERROR(
+			string() +
 			"_mmsEngineDBFacade->saveSourceContentMetadata failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
@@ -11524,8 +11519,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", mmsAssetPathName: " + mmsAssetPathName
@@ -11535,8 +11530,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -11544,8 +11539,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 			catch (exception &e)
 			{
-				_logger->info(
-					__FILEREF__ + "remove failed" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "remove failed" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 					", errorMessage: " + e.what()
@@ -11553,8 +11548,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -11570,8 +11565,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11580,8 +11575,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11595,14 +11590,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 
 void MMSEngineProcessor::manageGroupOfTasks(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot
+	json parametersRoot
 )
 {
 	try
 	{
 		vector<pair<int64_t, int64_t>> referencesOutput;
 
-		Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+		Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
 		// ReferencesOutput tag is always present:
 		// 1. because it is already set by the Workflow (by the user)
 		// 2. because it is automatically set by API_Ingestion.cpp using the
@@ -11639,8 +11634,8 @@ void MMSEngineProcessor::manageGroupOfTasks(
 			 */
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "References.Output" +
+				SPDLOG_INFO(
+					string() + "References.Output" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", mediaItemKey: " + to_string(referenceOutput.first) +
 					", physicalPathKey: " + to_string(referenceOutput.second)
@@ -11653,8 +11648,8 @@ void MMSEngineProcessor::manageGroupOfTasks(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"_mmsEngineDBFacade->addIngestionJobOutput failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
@@ -11666,8 +11661,8 @@ void MMSEngineProcessor::manageGroupOfTasks(
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"_mmsEngineDBFacade->addIngestionJobOutput failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
@@ -11707,7 +11702,7 @@ void MMSEngineProcessor::manageGroupOfTasks(
 				MMSEngineDBFacade::IngestionStatus childStatus =
 		groupOfTasksChildStatus.second;
 
-				_logger->info(__FILEREF__ + "manageGroupOfTasks, child status"
+				SPDLOG_INFO(string() + "manageGroupOfTasks, child status"
 						+ ", group of tasks ingestionJobKey: " +
 		to_string(ingestionJobKey)
 						+ ", childIngestionJobKey: " +
@@ -11719,7 +11714,7 @@ void MMSEngineProcessor::manageGroupOfTasks(
 				if
 		(!MMSEngineDBFacade::isIngestionStatusFinalState(childStatus))
 				{
-					_logger->error(__FILEREF__ + "manageGroupOfTasks, child
+					SPDLOG_ERROR(string() + "manageGroupOfTasks, child
 		status is not a final status. It should never happens because when this
 		GroupOfTasks is executed, all the children should be finished"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -11750,8 +11745,8 @@ void MMSEngineProcessor::manageGroupOfTasks(
 			errorMessage =
 				"Failed because there is no one child with Status Success";
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", IngestionStatus: " +
 			MMSEngineDBFacade::toString(groupOfTasksIngestionStatus) +
 			", errorMessage: " + errorMessage
@@ -11762,8 +11757,8 @@ void MMSEngineProcessor::manageGroupOfTasks(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageGroupOfTasks failed" +
+		SPDLOG_ERROR(
+			string() + "manageGroupOfTasks failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -11775,8 +11770,8 @@ void MMSEngineProcessor::manageGroupOfTasks(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageGroupOfTasks failed" +
+		SPDLOG_ERROR(
+			string() + "manageGroupOfTasks failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -11789,7 +11784,7 @@ void MMSEngineProcessor::manageGroupOfTasks(
 
 void MMSEngineProcessor::removeContentThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -11803,8 +11798,8 @@ void MMSEngineProcessor::removeContentThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "removeContentThread" +
+		SPDLOG_INFO(
+			string() + "removeContentThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -11814,7 +11809,7 @@ void MMSEngineProcessor::removeContentThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ + "No configured any media to be removed" +
+				string() + "No configured any media to be removed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
@@ -11878,7 +11873,7 @@ void MMSEngineProcessor::removeContentThread(
 						if (ingestionDependenciesNumber > 0)
 						{
 							string errorMessage =
-								__FILEREF__ +
+								string() +
 								"MediaItem cannot be removed because there are "
 								"still ingestion dependencies" +
 								", _processorIdentifier: " +
@@ -11889,7 +11884,7 @@ void MMSEngineProcessor::removeContentThread(
 								to_string(ingestionDependenciesNumber) +
 								", ingestionJobKeyOfItemToBeRemoved: " +
 								to_string(ingestionJobKeyOfItemToBeRemoved);
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -11931,7 +11926,7 @@ void MMSEngineProcessor::removeContentThread(
 						if (ingestionDependenciesNumber > 0)
 						{
 							string errorMessage =
-								__FILEREF__ +
+								string() +
 								"MediaItem cannot be removed because there are "
 								"still ingestion dependencies" +
 								", _processorIdentifier: " +
@@ -11942,7 +11937,7 @@ void MMSEngineProcessor::removeContentThread(
 								to_string(ingestionDependenciesNumber) +
 								", ingestionJobKeyOfItemToBeRemoved: " +
 								to_string(ingestionJobKeyOfItemToBeRemoved);
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -11951,8 +11946,8 @@ void MMSEngineProcessor::removeContentThread(
 
 				if (dependencyType == Validator::DependencyType::MediaItemKey)
 				{
-					_logger->info(
-						__FILEREF__ + "removeMediaItem" +
+					SPDLOG_INFO(
+						string() + "removeMediaItem" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", mediaItemKey: " + to_string(key)
@@ -11961,8 +11956,8 @@ void MMSEngineProcessor::removeContentThread(
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "removePhysicalPath" +
+					SPDLOG_INFO(
+						string() + "removePhysicalPath" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", physicalPathKey: " + to_string(key)
@@ -11973,14 +11968,14 @@ void MMSEngineProcessor::removeContentThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "Remove Content failed" +
+					string() + "Remove Content failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -11993,13 +11988,13 @@ void MMSEngineProcessor::removeContentThread(
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "Remove Content failed" +
+					string() + "Remove Content failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex);
 				+", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -12013,8 +12008,8 @@ void MMSEngineProcessor::removeContentThread(
 			dependencyIndex++;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -12026,15 +12021,15 @@ void MMSEngineProcessor::removeContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "removeContentThread failed" +
+		SPDLOG_ERROR(
+			string() + "removeContentThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -12050,8 +12045,8 @@ void MMSEngineProcessor::removeContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -12059,8 +12054,8 @@ void MMSEngineProcessor::removeContentThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -12073,14 +12068,14 @@ void MMSEngineProcessor::removeContentThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "removeContentThread failed" +
+		SPDLOG_ERROR(
+			string() + "removeContentThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -12096,8 +12091,8 @@ void MMSEngineProcessor::removeContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -12105,8 +12100,8 @@ void MMSEngineProcessor::removeContentThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -12121,7 +12116,7 @@ void MMSEngineProcessor::removeContentThread(
 
 void MMSEngineProcessor::ftpDeliveryContentThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -12138,7 +12133,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ + "No configured any media to be uploaded (FTP)" +
+				string() + "No configured any media to be uploaded (FTP)" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
@@ -12153,10 +12148,10 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -12264,14 +12259,14 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "FTP Content failed" +
+					string() + "FTP Content failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -12284,13 +12279,13 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "FTP Content failed" +
+					string() + "FTP Content failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex);
 				+", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -12304,8 +12299,8 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 			dependencyIndex++;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -12317,15 +12312,15 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ftpDeliveryContentTask failed" +
+		SPDLOG_ERROR(
+			string() + "ftpDeliveryContentTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -12341,8 +12336,8 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -12350,8 +12345,8 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -12364,14 +12359,14 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ftpDeliveryContentTask failed" +
+		SPDLOG_ERROR(
+			string() + "ftpDeliveryContentTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -12387,8 +12382,8 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -12396,8 +12391,8 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -12412,7 +12407,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 
 void MMSEngineProcessor::localCopyContentThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -12429,7 +12424,7 @@ void MMSEngineProcessor::localCopyContentThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ + "No configured any media to be copied" +
+				string() + "No configured any media to be copied" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
@@ -12445,10 +12440,10 @@ void MMSEngineProcessor::localCopyContentThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -12518,14 +12513,14 @@ void MMSEngineProcessor::localCopyContentThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "local copy Content failed" +
+					string() + "local copy Content failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -12538,13 +12533,13 @@ void MMSEngineProcessor::localCopyContentThread(
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "local copy Content failed" +
+					string() + "local copy Content failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex);
 				+", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -12558,8 +12553,8 @@ void MMSEngineProcessor::localCopyContentThread(
 			dependencyIndex++;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -12571,15 +12566,15 @@ void MMSEngineProcessor::localCopyContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "localCopyContentThread failed" +
+		SPDLOG_ERROR(
+			string() + "localCopyContentThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -12595,8 +12590,8 @@ void MMSEngineProcessor::localCopyContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -12604,8 +12599,8 @@ void MMSEngineProcessor::localCopyContentThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -12618,14 +12613,14 @@ void MMSEngineProcessor::localCopyContentThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "localCopyContentThread failed" +
+		SPDLOG_ERROR(
+			string() + "localCopyContentThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -12641,8 +12636,8 @@ void MMSEngineProcessor::localCopyContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -12650,8 +12645,8 @@ void MMSEngineProcessor::localCopyContentThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -12666,7 +12661,7 @@ void MMSEngineProcessor::localCopyContentThread(
 
 void MMSEngineProcessor::extractTracksContentThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -12681,8 +12676,8 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "extractTracksContentThread" +
+		SPDLOG_INFO(
+			string() + "extractTracksContentThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -12692,7 +12687,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"No configured media to be used to extract a track" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -12707,20 +12702,20 @@ void MMSEngineProcessor::extractTracksContentThread(
 		{
 			{
 				string field = "Tracks";
-				Json::Value tracksToot = parametersRoot[field];
+				json tracksToot = parametersRoot[field];
 				if (tracksToot.size() == 0)
 				{
 					string errorMessage =
-						__FILEREF__ + "No correct number of Tracks" +
+						string() + "No correct number of Tracks" +
 						", tracksToot.size: " + to_string(tracksToot.size());
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 				for (int trackIndex = 0; trackIndex < tracksToot.size();
 					 trackIndex++)
 				{
-					Json::Value trackRoot = tracksToot[trackIndex];
+					json trackRoot = tracksToot[trackIndex];
 
 					field = "TrackType";
 					if (!JSONUtils::isMetadataPresent(trackRoot, field))
@@ -12728,9 +12723,9 @@ void MMSEngineProcessor::extractTracksContentThread(
 						string sTrackRoot = JSONUtils::toString(trackRoot);
 
 						string errorMessage =
-							__FILEREF__ + "Field is not present or it is null" +
+							string() + "Field is not present or it is null" +
 							", Field: " + field + ", sTrackRoot: " + sTrackRoot;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -12751,10 +12746,10 @@ void MMSEngineProcessor::extractTracksContentThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -12827,15 +12822,15 @@ void MMSEngineProcessor::extractTracksContentThread(
 							localSourceFileName;
 					}
 
-					FFMpeg ffmpeg(_configuration, _logger);
+					FFMpeg ffmpeg(_configurationRoot, _logger);
 
 					ffmpeg.extractTrackMediaToIngest(
 						ingestionJobKey, mmsAssetPathName, tracksToBeExtracted,
 						extractTrackMediaPathName
 					);
 
-					_logger->info(
-						__FILEREF__ + "extractTrackMediaToIngest done" +
+					SPDLOG_INFO(
+						string() + "extractTrackMediaToIngest done" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -12920,7 +12915,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 						dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 						_multiEventsSet->addEvent(event);
 
-						_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE
+						SPDLOG_INFO(string() + "addEvent: EVENT_TYPE
 						(INGESTASSETEVENT)"
 							+ ", _processorIdentifier: " +
 						to_string(_processorIdentifier)
@@ -12936,14 +12931,14 @@ void MMSEngineProcessor::extractTracksContentThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "extract track failed" +
+					string() + "extract track failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -12956,13 +12951,13 @@ void MMSEngineProcessor::extractTracksContentThread(
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "extract track failed" +
+					string() + "extract track failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex);
 				+", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -12976,8 +12971,8 @@ void MMSEngineProcessor::extractTracksContentThread(
 			dependencyIndex++;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -12989,15 +12984,15 @@ void MMSEngineProcessor::extractTracksContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "Extracting tracks failed" +
+		SPDLOG_ERROR(
+			string() + "Extracting tracks failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", exception: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -13013,8 +13008,8 @@ void MMSEngineProcessor::extractTracksContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -13022,8 +13017,8 @@ void MMSEngineProcessor::extractTracksContentThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -13034,15 +13029,15 @@ void MMSEngineProcessor::extractTracksContentThread(
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Extracting tracks failed" +
+		SPDLOG_ERROR(
+			string() + "Extracting tracks failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", exception: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -13058,8 +13053,8 @@ void MMSEngineProcessor::extractTracksContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -13067,8 +13062,8 @@ void MMSEngineProcessor::extractTracksContentThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -13081,7 +13076,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 void MMSEngineProcessor::httpCallbackThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -13098,7 +13093,7 @@ void MMSEngineProcessor::httpCallbackThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"No configured any media to be notified (HTTP Callback)" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -13121,7 +13116,7 @@ void MMSEngineProcessor::httpCallbackThread(
 		long callbackTimeoutInSeconds;
 		int maxRetries;
 		string httpBody;
-		Json::Value httpHeadersRoot(Json::arrayValue);
+		json httpHeadersRoot = json::array();
 		{
 			string field = "addMediaData";
 			addMediaData = JSONUtils::asBool(parametersRoot, field, true);
@@ -13139,10 +13134,10 @@ void MMSEngineProcessor::httpCallbackThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -13167,10 +13162,10 @@ void MMSEngineProcessor::httpCallbackThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -13198,7 +13193,7 @@ void MMSEngineProcessor::httpCallbackThread(
 				while (getline(ss, token, delim))
 				{
 					if (!token.empty())
-						httpHeadersRoot.append(token);
+						httpHeadersRoot.push_back(token);
 				}
 				// httpHeadersRoot = parametersRoot[field];
 			}
@@ -13211,8 +13206,8 @@ void MMSEngineProcessor::httpCallbackThread(
 		{
 			if (httpBody != "")
 			{
-				_logger->info(
-					__FILEREF__ + "POST/PUT with httpBody" +
+				SPDLOG_INFO(
+					string() + "POST/PUT with httpBody" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -13296,8 +13291,8 @@ void MMSEngineProcessor::httpCallbackThread(
 							to_string(physicalPathKey)
 						);
 
-						_logger->info(
-							__FILEREF__ + "userHttpCallback" +
+						SPDLOG_INFO(
+							string() + "userHttpCallback" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -13321,7 +13316,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					catch (runtime_error &e)
 					{
 						string errorMessage =
-							__FILEREF__ + "http callback failed" +
+							string() + "http callback failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -13329,7 +13324,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							", dependencies.size(): " +
 							to_string(dependencies.size()) +
 							", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						if (dependencies.size() > 1)
 						{
@@ -13342,14 +13337,14 @@ void MMSEngineProcessor::httpCallbackThread(
 					catch (exception e)
 					{
 						string errorMessage =
-							__FILEREF__ + "http callback failed" +
+							string() + "http callback failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", dependencyIndex: " + to_string(dependencyIndex);
 						+", dependencies.size(): " +
 							to_string(dependencies.size());
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						if (dependencies.size() > 1)
 						{
@@ -13383,7 +13378,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							stopIfReferenceProcessingError) =
 							keyAndDependencyType;
 
-						Json::Value callbackMedatada;
+						json callbackMedatada;
 						{
 							callbackMedatada["workspaceKey"] =
 								(int64_t)(workspace->_workspaceKey);
@@ -13426,11 +13421,11 @@ void MMSEngineProcessor::httpCallbackThread(
 
 									if (userData == "")
 										callbackMedatada["userData"] =
-											Json::nullValue;
+											nullptr;
 									else
 									{
-										Json::Value userDataRoot =
-											JSONUtils::toJson(-1, -1, userData);
+										json userDataRoot =
+											JSONUtils::toJson(userData);
 
 										callbackMedatada["userData"] =
 											userDataRoot;
@@ -13505,12 +13500,11 @@ void MMSEngineProcessor::httpCallbackThread(
 									callbackMedatada["title"] = localTitle;
 
 									if (userData == "")
-										callbackMedatada["userData"] =
-											Json::nullValue;
+										callbackMedatada["userData"] = nullptr;
 									else
 									{
-										Json::Value userDataRoot =
-											JSONUtils::toJson(-1, -1, userData);
+										json userDataRoot =
+											JSONUtils::toJson(userData);
 
 										callbackMedatada["userData"] =
 											userDataRoot;
@@ -13568,8 +13562,8 @@ void MMSEngineProcessor::httpCallbackThread(
 								}
 								catch (runtime_error &e)
 								{
-									_logger->error(
-										__FILEREF__ +
+									SPDLOG_ERROR(
+										string() +
 										"getMediaDurationInMilliseconds "
 										"failed" +
 										", ingestionJobKey: " +
@@ -13583,8 +13577,8 @@ void MMSEngineProcessor::httpCallbackThread(
 								}
 								catch (exception &e)
 								{
-									_logger->error(
-										__FILEREF__ +
+									SPDLOG_ERROR(
+										string() +
 										"getMediaDurationInMilliseconds "
 										"failed" +
 										", ingestionJobKey: " +
@@ -13611,7 +13605,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					catch (runtime_error &e)
 					{
 						string errorMessage =
-							__FILEREF__ + "http callback failed" +
+							string() + "http callback failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -13619,7 +13613,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							", dependencies.size(): " +
 							to_string(dependencies.size()) +
 							", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						if (dependencies.size() > 1)
 						{
@@ -13632,14 +13626,14 @@ void MMSEngineProcessor::httpCallbackThread(
 					catch (exception e)
 					{
 						string errorMessage =
-							__FILEREF__ + "http callback failed" +
+							string() + "http callback failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", dependencyIndex: " + to_string(dependencyIndex);
 						+", dependencies.size(): " +
 							to_string(dependencies.size());
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						if (dependencies.size() > 1)
 						{
@@ -13668,32 +13662,32 @@ void MMSEngineProcessor::httpCallbackThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "http callback failed" +
+					string() + "http callback failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "http callback failed" +
+					string() + "http callback failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -13705,15 +13699,15 @@ void MMSEngineProcessor::httpCallbackThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "httpCallbackTask failed" +
+		SPDLOG_ERROR(
+			string() + "httpCallbackTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -13729,8 +13723,8 @@ void MMSEngineProcessor::httpCallbackThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -13738,8 +13732,8 @@ void MMSEngineProcessor::httpCallbackThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -13752,14 +13746,14 @@ void MMSEngineProcessor::httpCallbackThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "httpCallbackTask failed" +
+		SPDLOG_ERROR(
+			string() + "httpCallbackTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -13775,8 +13769,8 @@ void MMSEngineProcessor::httpCallbackThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -13784,8 +13778,8 @@ void MMSEngineProcessor::httpCallbackThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -13800,7 +13794,7 @@ void MMSEngineProcessor::httpCallbackThread(
 
 void MMSEngineProcessor::postOnFacebookThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -13817,7 +13811,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"No configured any media to be posted on Facebook" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -13835,10 +13829,10 @@ void MMSEngineProcessor::postOnFacebookThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -13849,10 +13843,10 @@ void MMSEngineProcessor::postOnFacebookThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -13862,10 +13856,10 @@ void MMSEngineProcessor::postOnFacebookThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -13978,14 +13972,14 @@ void MMSEngineProcessor::postOnFacebookThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "post on facebook failed" +
+					string() + "post on facebook failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -13998,13 +13992,13 @@ void MMSEngineProcessor::postOnFacebookThread(
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "post on facebook failed" +
+					string() + "post on facebook failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex);
 				+", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -14018,8 +14012,8 @@ void MMSEngineProcessor::postOnFacebookThread(
 			dependencyIndex++;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -14031,15 +14025,15 @@ void MMSEngineProcessor::postOnFacebookThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "postOnFacebookTask failed" +
+		SPDLOG_ERROR(
+			string() + "postOnFacebookTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -14055,8 +14049,8 @@ void MMSEngineProcessor::postOnFacebookThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -14064,8 +14058,8 @@ void MMSEngineProcessor::postOnFacebookThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -14078,14 +14072,14 @@ void MMSEngineProcessor::postOnFacebookThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "postOnFacebookTask failed" +
+		SPDLOG_ERROR(
+			string() + "postOnFacebookTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -14101,8 +14095,8 @@ void MMSEngineProcessor::postOnFacebookThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -14110,8 +14104,8 @@ void MMSEngineProcessor::postOnFacebookThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -14126,7 +14120,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 
 void MMSEngineProcessor::postOnYouTubeThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -14143,7 +14137,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"No configured any media to be posted on YouTube" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -14156,7 +14150,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		string youTubeConfigurationLabel;
 		string youTubeTitle;
 		string youTubeDescription;
-		Json::Value youTubeTags = Json::nullValue;
+		json youTubeTags = nullptr;
 		int youTubeCategoryId = -1;
 		string youTubePrivacyStatus;
 		bool youTubeMadeForKids;
@@ -14165,10 +14159,10 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -14301,14 +14295,14 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "post on youtube failed" +
+					string() + "post on youtube failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -14321,13 +14315,13 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "post on youtube failed" +
+					string() + "post on youtube failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex);
 				+", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -14341,8 +14335,8 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			dependencyIndex++;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -14354,15 +14348,15 @@ void MMSEngineProcessor::postOnYouTubeThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "postOnYouTubeTask failed" +
+		SPDLOG_ERROR(
+			string() + "postOnYouTubeTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -14378,8 +14372,8 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -14387,8 +14381,8 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -14401,14 +14395,14 @@ void MMSEngineProcessor::postOnYouTubeThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "postOnYouTubeTask failed" +
+		SPDLOG_ERROR(
+			string() + "postOnYouTubeTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -14424,8 +14418,8 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -14433,8 +14427,8 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -14449,7 +14443,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 
 void MMSEngineProcessor::changeFileFormatThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -14464,8 +14458,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "changeFileFormatThread" +
+		SPDLOG_INFO(
+			string() + "changeFileFormatThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -14475,7 +14469,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"No configured media to be used to changeFileFormat" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -14491,10 +14485,10 @@ void MMSEngineProcessor::changeFileFormatThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -14619,8 +14613,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 					try
 					{
-						_logger->info(
-							__FILEREF__ + "Calling ffmpeg.changeFileFormat" +
+						SPDLOG_INFO(
+							string() + "Calling ffmpeg.changeFileFormat" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -14632,7 +14626,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							stagingChangeFileFormatAssetPathName
 						);
 
-						FFMpeg ffmpeg(_configuration, _logger);
+						FFMpeg ffmpeg(_configurationRoot, _logger);
 
 						ffmpeg.changeFileFormat(
 							ingestionJobKey, physicalPathKey,
@@ -14641,8 +14635,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 							outputFileFormat
 						);
 
-						_logger->info(
-							__FILEREF__ + "ffmpeg.changeFileFormat done" +
+						SPDLOG_INFO(
+							string() + "ffmpeg.changeFileFormat done" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -14656,8 +14650,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "ffmpeg.changeFileFormat failed" +
+						SPDLOG_ERROR(
+							string() + "ffmpeg.changeFileFormat failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -14673,8 +14667,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ + "ffmpeg.changeFileFormat failed" +
+						SPDLOG_ERROR(
+							string() + "ffmpeg.changeFileFormat failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -14689,7 +14683,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						throw e;
 					}
 
-					tuple<int64_t, long, Json::Value> mediaInfoDetails;
+					tuple<int64_t, long, json> mediaInfoDetails;
 					vector<tuple<
 						int, int64_t, string, string, int, int, string, long>>
 						videoTracks;
@@ -14702,8 +14696,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					int imageQuality = -1;
 					try
 					{
-						_logger->info(
-							__FILEREF__ + "Calling ffmpeg.getMediaInfo" +
+						SPDLOG_INFO(
+							string() + "Calling ffmpeg.getMediaInfo" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", _ingestionJobKey: " +
@@ -14713,7 +14707,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						);
 						int timeoutInSeconds = 20;
 						bool isMMSAssetPathName = true;
-						FFMpeg ffmpeg(_configuration, _logger);
+						FFMpeg ffmpeg(_configurationRoot, _logger);
 						mediaInfoDetails = ffmpeg.getMediaInfo(
 							ingestionJobKey, isMMSAssetPathName,
 							timeoutInSeconds,
@@ -14729,8 +14723,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "getMediaInfo failed" +
+						SPDLOG_ERROR(
+							string() + "getMediaInfo failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", _ingestionJobKey: " +
@@ -14755,8 +14749,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 										stagingChangeFileFormatAssetPathName
 											.substr(0, endOfDirectoryIndex);
 
-									_logger->info(
-										__FILEREF__ + "removeDirectory" +
+									SPDLOG_INFO(
+										string() + "removeDirectory" +
 										", directoryPathName: " +
 										directoryPathName
 									);
@@ -14765,8 +14759,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "removeDirectory failed" +
+								SPDLOG_ERROR(
+									string() + "removeDirectory failed" +
 									", _ingestionJobKey: " +
 									to_string(ingestionJobKey) +
 									", stagingChangeFileFormatAssetPathName: " +
@@ -14782,8 +14776,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ + "getMediaInfo failed" +
+						SPDLOG_ERROR(
+							string() + "getMediaInfo failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", _ingestionJobKey: " +
@@ -14807,8 +14801,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 										stagingChangeFileFormatAssetPathName
 											.substr(0, endOfDirectoryIndex);
 
-									_logger->info(
-										__FILEREF__ + "removeDirectory" +
+									SPDLOG_INFO(
+										string() + "removeDirectory" +
 										", directoryPathName: " +
 										directoryPathName
 									);
@@ -14817,8 +14811,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "removeDirectory failed" +
+								SPDLOG_ERROR(
+									string() + "removeDirectory failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", _ingestionJobKey: " +
@@ -14856,8 +14850,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ +
+						SPDLOG_ERROR(
+							string() +
 							"_mmsStorage->moveAssetInMMSRepository failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -14883,8 +14877,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 										stagingChangeFileFormatAssetPathName
 											.substr(0, endOfDirectoryIndex);
 
-									_logger->info(
-										__FILEREF__ + "removeDirectory" +
+									SPDLOG_INFO(
+										string() + "removeDirectory" +
 										", directoryPathName: " +
 										directoryPathName
 									);
@@ -14893,8 +14887,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "removeDirectory failed" +
+								SPDLOG_ERROR(
+									string() + "removeDirectory failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", _ingestionJobKey: " +
@@ -14912,8 +14906,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ +
+						SPDLOG_ERROR(
+							string() +
 							"_mmsStorage->moveAssetInMMSRepository failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -14939,8 +14933,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 										stagingChangeFileFormatAssetPathName
 											.substr(0, endOfDirectoryIndex);
 
-									_logger->info(
-										__FILEREF__ + "removeDirectory" +
+									SPDLOG_INFO(
+										string() + "removeDirectory" +
 										", directoryPathName: " +
 										directoryPathName
 									);
@@ -14949,8 +14943,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 							}
 							catch (runtime_error &e)
 							{
-								_logger->error(
-									__FILEREF__ + "removeDirectory failed" +
+								SPDLOG_ERROR(
+									string() + "removeDirectory failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", _ingestionJobKey: " +
@@ -14982,8 +14976,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 										0, endOfDirectoryIndex
 									);
 
-								_logger->info(
-									__FILEREF__ + "removeDirectory" +
+								SPDLOG_INFO(
+									string() + "removeDirectory" +
 									", directoryPathName: " + directoryPathName
 								);
 								fs::remove_all(directoryPathName);
@@ -14991,8 +14985,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 						}
 						catch (runtime_error &e)
 						{
-							_logger->error(
-								__FILEREF__ + "removeDirectory failed" +
+							SPDLOG_ERROR(
+								string() + "removeDirectory failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", _ingestionJobKey: " +
@@ -15050,8 +15044,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 								imageQuality
 							);
 
-						_logger->info(
-							__FILEREF__ + "Saved the Encoded content" +
+						SPDLOG_INFO(
+							string() + "Saved the Encoded content" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", _ingestionJobKey: " +
@@ -15062,8 +15056,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ +
+						SPDLOG_ERROR(
+							string() +
 							"_mmsEngineDBFacade->saveVariantContentMetadata "
 							"failed" +
 							", _processorIdentifier: " +
@@ -15073,8 +15067,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 						if (fs::exists(mmsChangeFileFormatAssetPathName))
 						{
-							_logger->info(
-								__FILEREF__ + "Remove" +
+							SPDLOG_INFO(
+								string() + "Remove" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -15093,14 +15087,14 @@ void MMSEngineProcessor::changeFileFormatThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "change file format failed" +
+					string() + "change file format failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -15113,13 +15107,13 @@ void MMSEngineProcessor::changeFileFormatThread(
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "change file format failed" +
+					string() + "change file format failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex);
 				+", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -15133,8 +15127,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 			dependencyIndex++;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -15146,15 +15140,15 @@ void MMSEngineProcessor::changeFileFormatThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ChangeFileFormat failed" +
+		SPDLOG_ERROR(
+			string() + "ChangeFileFormat failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", exception: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -15170,8 +15164,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -15179,8 +15173,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -15191,15 +15185,15 @@ void MMSEngineProcessor::changeFileFormatThread(
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "ChangeFileFormat failed" +
+		SPDLOG_ERROR(
+			string() + "ChangeFileFormat failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", exception: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -15215,8 +15209,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -15224,8 +15218,8 @@ void MMSEngineProcessor::changeFileFormatThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -15240,7 +15234,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 void MMSEngineProcessor::generateAndIngestFrameThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
 	shared_ptr<Workspace> workspace,
-	MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot,
+	MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -15255,8 +15249,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "generateAndIngestFrameThread" +
+		SPDLOG_INFO(
+			string() + "generateAndIngestFrameThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -15268,14 +15262,14 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ + "No dependencies found" +
+				string() + "No dependencies found" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
 			_logger->warn(errorMessage);
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_TaskSuccess" +
@@ -15291,8 +15285,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", errorMessage: " + re.what()
@@ -15300,8 +15294,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
@@ -15336,11 +15330,11 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					MMSEngineDBFacade::ContentType::Video)
 				{
 					string errorMessage =
-						__FILEREF__ + "ContentTpe is not a Video" +
+						string() + "ContentTpe is not a Video" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey);
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -15422,7 +15416,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					workspaceIngestionRepository + "/" + frameFileName;
 
 				pid_t childPid;
-				FFMpeg ffmpeg(_configuration, _logger);
+				FFMpeg ffmpeg(_configurationRoot, _logger);
 				ffmpeg.generateFrameToIngest(
 					ingestionJobKey, sourcePhysicalPath, durationInMilliSeconds,
 					startTimeInSeconds, frameAssetPathName, imageWidth,
@@ -15430,8 +15424,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				);
 
 				{
-					_logger->info(
-						__FILEREF__ + "Generated Frame to ingest" +
+					SPDLOG_INFO(
+						string() + "Generated Frame to ingest" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -15498,8 +15492,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ +
+						SPDLOG_ERROR(
+							string() +
 							"handleLocalAssetIngestionEvent failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -15507,8 +15501,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 						);
 
 						{
-							_logger->info(
-								__FILEREF__ + "Remove file" +
+							SPDLOG_INFO(
+								string() + "Remove file" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -15522,8 +15516,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ +
+						SPDLOG_ERROR(
+							string() +
 							"handleLocalAssetIngestionEvent failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -15531,8 +15525,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 						);
 
 						{
-							_logger->info(
-								__FILEREF__ + "Remove file" +
+							SPDLOG_INFO(
+								string() + "Remove file" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -15549,14 +15543,14 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "generate and ingest frame failed" +
+					string() + "generate and ingest frame failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex) +
 					", dependencies.size(): " + to_string(dependencies.size()) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -15569,13 +15563,13 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			catch (exception e)
 			{
 				string errorMessage =
-					__FILEREF__ + "generate and ingest frame failed" +
+					string() + "generate and ingest frame failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", dependencyIndex: " + to_string(dependencyIndex);
 				+", dependencies.size(): " + to_string(dependencies.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -15591,15 +15585,15 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "generateAndIngestFrame failed" +
+		SPDLOG_ERROR(
+			string() + "generateAndIngestFrame failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -15615,8 +15609,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -15624,8 +15618,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -15638,14 +15632,14 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "generateAndIngestFrame failed" +
+		SPDLOG_ERROR(
+			string() + "generateAndIngestFrame failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -15661,8 +15655,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -15670,8 +15664,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -15686,7 +15680,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -15697,12 +15691,12 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 		if (dependencies.size() != 1)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"Wrong medias number to be processed for Face Recognition" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -15731,10 +15725,10 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -15745,10 +15739,10 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -15872,8 +15866,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageFaceRecognitionMediaTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageFaceRecognitionMediaTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -15885,8 +15879,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageFaceRecognitionMediaTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageFaceRecognitionMediaTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -15899,7 +15893,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
 void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -15910,12 +15904,12 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 		if (dependencies.size() != 1)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"Wrong medias number to be processed for Face Identification" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -15942,10 +15936,10 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -15956,10 +15950,10 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -16061,8 +16055,8 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageFaceIdendificationMediaTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageFaceIdendificationMediaTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -16074,8 +16068,8 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageFaceIdendificationMediaTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageFaceIdendificationMediaTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -16089,7 +16083,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 void MMSEngineProcessor::manageLiveRecorder(
 	int64_t ingestionJobKey, string ingestionJobLabel,
 	MMSEngineDBFacade::IngestionStatus ingestionStatus,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot
+	shared_ptr<Workspace> workspace, json parametersRoot
 )
 {
 	try
@@ -16145,18 +16139,18 @@ void MMSEngineProcessor::manageLiveRecorder(
 		// int monitorSegmentDurationInSeconds = 0;
 		int64_t monitorEncodingProfileKey = -1;
 
-		Json::Value outputsRoot = Json::nullValue;
-		Json::Value framesToBeDetectedRoot = Json::nullValue;
+		json outputsRoot = nullptr;
+		json framesToBeDetectedRoot = nullptr;
 		{
 			{
 				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) + ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -16194,16 +16188,16 @@ void MMSEngineProcessor::manageLiveRecorder(
 				JSONUtils::asString(parametersRoot, field, encodersPoolLabel);
 
 			field = "schedule";
-			Json::Value recordingPeriodRoot = parametersRoot[field];
+			json recordingPeriodRoot = parametersRoot[field];
 
 			field = "start";
 			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -16214,10 +16208,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -16233,7 +16227,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "monitorHLS";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				Json::Value monitorHLSRoot = parametersRoot[field];
+				json monitorHLSRoot = parametersRoot[field];
 
 				monitorHLS = true;
 
@@ -16298,7 +16292,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "liveRecorderVirtualVOD";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				Json::Value virtualVODRoot = parametersRoot[field];
+				json virtualVODRoot = parametersRoot[field];
 
 				liveRecorderVirtualVOD = true;
 
@@ -16364,20 +16358,20 @@ void MMSEngineProcessor::manageLiveRecorder(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			recordingCode = JSONUtils::asInt64(parametersRoot, field, 0);
 
 			field = "outputs";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
 			else if (JSONUtils::isMetadataPresent(
-						 parametersRoot, "Outputs", false
+						 parametersRoot, "Outputs"
 					 ))
 				outputsRoot = parametersRoot["Outputs"];
 
@@ -16391,7 +16385,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					 pictureIndex < framesToBeDetectedRoot.size();
 					 pictureIndex++)
 				{
-					Json::Value frameToBeDetectedRoot =
+					json frameToBeDetectedRoot =
 						framesToBeDetectedRoot[pictureIndex];
 
 					if (JSONUtils::isMetadataPresent(
@@ -16450,7 +16444,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		time_t utcRecordingPeriodStart =
 			DateTime::sDateSecondsToUtc(recordingPeriodStart);
-		// _logger->error(__FILEREF__ + "ctime recordingPeriodStart: "
+		// SPDLOG_ERROR(string() + "ctime recordingPeriodStart: "
 		//		+ ctime(utcRecordingPeriodStart));
 
 		// next code is the same in the Validator class
@@ -16512,9 +16506,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 			if (encodersNumber == 0)
 			{
 				string errorMessage =
-					__FILEREF__ + "No encoders available" +
+					string() + "No encoders available" +
 					", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -16551,7 +16545,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 						virtualVODEncodingProfileKey;
 			}
 
-			Json::Value encodingProfileDetailsRoot = Json::nullValue;
+			json encodingProfileDetailsRoot = nullptr;
 			MMSEngineDBFacade::ContentType encodingProfileContentType =
 				MMSEngineDBFacade::ContentType::Video;
 			if (monitorVirtualVODEncodingProfileKey != -1)
@@ -16570,7 +16564,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					jsonEncodingProfile) = encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 
 			/*
@@ -16597,7 +16591,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 			*/
 
-			Json::Value localOutputRoot;
+			json localOutputRoot;
 
 			field = "outputType";
 			localOutputRoot[field] = string("HLS_Channel");
@@ -16620,7 +16614,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			*/
 
 			field = "filters";
-			localOutputRoot[field] = Json::nullValue;
+			localOutputRoot[field] = nullptr;
 
 			{
 				field = "encodingProfileKey";
@@ -16634,7 +16628,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					MMSEngineDBFacade::toString(encodingProfileContentType);
 			}
 
-			outputsRoot.append(localOutputRoot);
+			outputsRoot.push_back(localOutputRoot);
 			monitorVirtualVODOutputRootIndex = outputsRoot.size() - 1;
 
 			field = "outputs";
@@ -16645,7 +16639,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			);
 		}
 
-		Json::Value localOutputsRoot = getReviewedOutputsRoot(
+		json localOutputsRoot = getReviewedOutputsRoot(
 			outputsRoot, workspace, ingestionJobKey, false
 		);
 
@@ -16671,12 +16665,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 			if (directoryEndIndex == string::npos)
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"No directory found in the staging asset path name" +
 					", _ingestionJobKey: " + to_string(ingestionJobKey) +
 					", stagingLiveRecordingAssetPathName: " +
 					stagingLiveRecordingAssetPathName;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -16714,12 +16708,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 			if (directoryEndIndex == string::npos)
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"No directory found in the staging asset path name" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", stagingLiveRecordingAssetPathName: " +
 					stagingLiveRecordingAssetPathName;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -16819,7 +16813,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			catch (MediaItemKeyNotFound e)
 			{
 				_logger->warn(
-					__FILEREF__ +
+					string() +
 					"No associated VirtualVODImage to the Workspace" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _liveRecorderVirtualVODImageLabel: " +
@@ -16831,8 +16825,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 			catch (exception e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName "
 					"failed" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -16845,8 +16839,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 		}
 
-		Json::Value captureRoot;
-		Json::Value tvRoot;
+		json captureRoot;
+		json tvRoot;
 		if (streamSourceType == "CaptureLive")
 		{
 			captureRoot["videoDeviceNumber"] = captureVideoDeviceNumber;
@@ -16895,8 +16889,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveRecorder failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveRecorder failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -16908,8 +16902,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveRecorder failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveRecorder failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -16922,7 +16916,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 void MMSEngineProcessor::manageLiveProxy(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot
+	shared_ptr<Workspace> workspace, json parametersRoot
 )
 {
 	try
@@ -16954,7 +16948,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		string otherInputOptions;
 
 		long waitingSecondsBetweenAttemptsInCaseOfErrors;
-		Json::Value outputsRoot;
+		json outputsRoot;
 		bool timePeriod = false;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
@@ -16966,10 +16960,10 @@ void MMSEngineProcessor::manageLiveProxy(
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) + ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -17005,8 +16999,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			// EncodersPool override the one included in ChannelConf if present
 			string field = "encodersPool";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				taskEncodersPoolLabel =
-					parametersRoot.get(field, "").asString();
+				taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "defaultBroadcast";
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
@@ -17021,11 +17014,11 @@ void MMSEngineProcessor::manageLiveProxy(
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage =
-							__FILEREF__ + "Field is not present or it is null" +
+							string() + "Field is not present or it is null" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", Field: " + field;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -17033,17 +17026,17 @@ void MMSEngineProcessor::manageLiveProxy(
 					// Validator validator(_logger, _mmsEngineDBFacade,
 					// _configuration);
 
-					Json::Value proxyPeriodRoot = parametersRoot[field];
+					json proxyPeriodRoot = parametersRoot[field];
 
 					field = "start";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage =
-							__FILEREF__ + "Field is not present or it is null" +
+							string() + "Field is not present or it is null" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", Field: " + field;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -17057,11 +17050,11 @@ void MMSEngineProcessor::manageLiveProxy(
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage =
-							__FILEREF__ + "Field is not present or it is null" +
+							string() + "Field is not present or it is null" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", Field: " + field;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -17097,14 +17090,14 @@ void MMSEngineProcessor::manageLiveProxy(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
 			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs",
 				 // false))
@@ -17117,8 +17110,8 @@ void MMSEngineProcessor::manageLiveProxy(
 		{
 			int64_t sourcePhysicalPathKey;
 
-			_logger->info(
-				__FILEREF__ + "useVideoTrackFromMediaItemKey" +
+			SPDLOG_INFO(
+				string() + "useVideoTrackFromMediaItemKey" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", useVideoTrackFromMediaItemKey: " +
@@ -17181,13 +17174,13 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 		}
 
-		Json::Value localOutputsRoot = getReviewedOutputsRoot(
+		json localOutputsRoot = getReviewedOutputsRoot(
 			outputsRoot, workspace, ingestionJobKey, false
 		);
 
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist
 		// (inputsRoot) already ready
-		Json::Value inputsRoot;
+		json inputsRoot;
 		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS") &&
 			JSONUtils::isMetadataPresent(
 				parametersRoot["internalMMS"], "broadcaster"
@@ -17208,13 +17201,13 @@ void MMSEngineProcessor::manageLiveProxy(
 			   campo broadcastDrawTextDetails, vedi il commento all'interno del
 			   metodo java CatraMMSBroadcaster::buildLiveProxyJsonForBroadcast
 			*/
-			Json::Value drawTextDetailsRoot = Json::nullValue;
+			json drawTextDetailsRoot = nullptr;
 
 			string field = "broadcastDrawTextDetails";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				drawTextDetailsRoot = parametersRoot[field];
 
-			Json::Value streamInputRoot =
+			json streamInputRoot =
 				_mmsEngineDBFacade->getStreamInputRoot(
 					workspace, ingestionJobKey, configurationLabel,
 					useVideoTrackFromPhysicalPathName,
@@ -17223,7 +17216,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					drawTextDetailsRoot
 				);
 
-			Json::Value inputRoot;
+			json inputRoot;
 			{
 				string field = "streamInput";
 				inputRoot[field] = streamInputRoot;
@@ -17248,8 +17241,8 @@ void MMSEngineProcessor::manageLiveProxy(
 				}
 			}
 
-			Json::Value localInputsRoot(Json::arrayValue);
-			localInputsRoot.append(inputRoot);
+			json localInputsRoot = json::array();
+			localInputsRoot.push_back(inputRoot);
 
 			inputsRoot = localInputsRoot;
 		}
@@ -17269,8 +17262,8 @@ void MMSEngineProcessor::manageLiveProxy(
 	}
 	catch (ConfKeyNotFound &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveProxy failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveProxy failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -17282,8 +17275,8 @@ void MMSEngineProcessor::manageLiveProxy(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveProxy failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveProxy failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -17295,8 +17288,8 @@ void MMSEngineProcessor::manageLiveProxy(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveProxy failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveProxy failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -17309,7 +17302,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 void MMSEngineProcessor::manageVODProxy(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -17317,8 +17310,8 @@ void MMSEngineProcessor::manageVODProxy(
 {
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "manageVODProxy" +
+		SPDLOG_INFO(
+			string() + "manageVODProxy" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -17326,16 +17319,16 @@ void MMSEngineProcessor::manageVODProxy(
 		if (dependencies.size() < 1)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong source number to be proxied" +
+				string() + "Wrong source number to be proxied" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		Json::Value outputsRoot;
+		json outputsRoot;
 		bool timePeriod = false;
 		int64_t utcProxyPeriodStart = -1;
 		int64_t utcProxyPeriodEnd = -1;
@@ -17351,11 +17344,11 @@ void MMSEngineProcessor::manageVODProxy(
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
 						string errorMessage =
-							__FILEREF__ + "Field is not present or it is null" +
+							string() + "Field is not present or it is null" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", Field: " + field;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -17363,17 +17356,17 @@ void MMSEngineProcessor::manageVODProxy(
 					// Validator validator(_logger, _mmsEngineDBFacade,
 					// _configuration);
 
-					Json::Value proxyPeriodRoot = parametersRoot[field];
+					json proxyPeriodRoot = parametersRoot[field];
 
 					field = "start";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage =
-							__FILEREF__ + "Field is not present or it is null" +
+							string() + "Field is not present or it is null" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", Field: " + field;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -17387,11 +17380,11 @@ void MMSEngineProcessor::manageVODProxy(
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage =
-							__FILEREF__ + "Field is not present or it is null" +
+							string() + "Field is not present or it is null" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", Field: " + field;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -17410,14 +17403,14 @@ void MMSEngineProcessor::manageVODProxy(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
 			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs",
 				 // false))
@@ -17426,7 +17419,7 @@ void MMSEngineProcessor::manageVODProxy(
 
 		MMSEngineDBFacade::ContentType vodContentType;
 
-		Json::Value inputsRoot(Json::arrayValue);
+		json inputsRoot = json::array();
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist
 		// (inputsRoot)
 		//		already ready
@@ -17462,8 +17455,8 @@ void MMSEngineProcessor::manageVODProxy(
 				tie(key, vodContentType, dependencyType,
 					stopIfReferenceProcessingError) = keyAndDependencyType;
 
-				_logger->info(
-					__FILEREF__ + "manageVODProxy" +
+				SPDLOG_INFO(
+					string() + "manageVODProxy" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", key: " + to_string(key)
@@ -17595,7 +17588,7 @@ void MMSEngineProcessor::manageVODProxy(
 			   campo broadcastDrawTextDetails, vedi il commento all'interno del
 			   metodo java CatraMMSBroadcaster::buildVODProxyJsonForBroadcast
 			*/
-			Json::Value drawTextDetailsRoot = Json::nullValue;
+			json drawTextDetailsRoot = nullptr;
 
 			string field = "broadcastDrawTextDetails";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -17603,11 +17596,11 @@ void MMSEngineProcessor::manageVODProxy(
 
 			// same json structure is used in
 			// API_Ingestion::changeLiveProxyPlaylist
-			Json::Value vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
+			json vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(
 				vodContentType, sources, drawTextDetailsRoot
 			);
 
-			Json::Value inputRoot;
+			json inputRoot;
 			{
 				string field = "vodInput";
 				inputRoot[field] = vodInputRoot;
@@ -17628,10 +17621,10 @@ void MMSEngineProcessor::manageVODProxy(
 				}
 			}
 
-			inputsRoot.append(inputRoot);
+			inputsRoot.push_back(inputRoot);
 		}
 
-		Json::Value localOutputsRoot = getReviewedOutputsRoot(
+		json localOutputsRoot = getReviewedOutputsRoot(
 			outputsRoot, workspace, ingestionJobKey,
 			vodContentType == MMSEngineDBFacade::ContentType::Image ? true
 																	: false
@@ -17653,8 +17646,8 @@ void MMSEngineProcessor::manageVODProxy(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageVODProxy failed" +
+		SPDLOG_ERROR(
+			string() + "manageVODProxy failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -17666,8 +17659,8 @@ void MMSEngineProcessor::manageVODProxy(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageVODProxy failed" +
+		SPDLOG_ERROR(
+			string() + "manageVODProxy failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -17681,7 +17674,7 @@ void MMSEngineProcessor::manageVODProxy(
 void MMSEngineProcessor::manageCountdown(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
 	string ingestionDate, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -17692,11 +17685,11 @@ void MMSEngineProcessor::manageCountdown(
 		if (dependencies.size() != 1)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong media number for Countdown" +
+				string() + "Wrong media number for Countdown" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -17713,26 +17706,26 @@ void MMSEngineProcessor::manageCountdown(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
 			// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-			Json::Value proxyPeriodRoot = parametersRoot[field];
+			json proxyPeriodRoot = parametersRoot[field];
 
 			field = "start";
 			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -17744,10 +17737,10 @@ void MMSEngineProcessor::manageCountdown(
 			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -17876,27 +17869,27 @@ void MMSEngineProcessor::manageCountdown(
 				true
 			);
 
-		Json::Value outputsRoot;
+		json outputsRoot;
 		{
 			string field = "outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
 			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs",
 				 // false))
 				outputsRoot = parametersRoot["Outputs"];
 		}
 
-		Json::Value localOutputsRoot = getReviewedOutputsRoot(
+		json localOutputsRoot = getReviewedOutputsRoot(
 			outputsRoot, workspace, ingestionJobKey,
 			referenceContentType == MMSEngineDBFacade::ContentType::Image
 				? true
@@ -17905,7 +17898,7 @@ void MMSEngineProcessor::manageCountdown(
 
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist
 		// (inputsRoot) already ready
-		Json::Value inputsRoot;
+		json inputsRoot;
 		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS") &&
 			JSONUtils::isMetadataPresent(
 				parametersRoot["internalMMS"], "broadcaster"
@@ -17926,7 +17919,7 @@ void MMSEngineProcessor::manageCountdown(
 			   campo broadcastDrawTextDetails, vedi il commento all'interno del
 			   metodo java CatraMMSBroadcaster::buildCountdownJsonForBroadcast
 			*/
-			Json::Value drawTextDetailsRoot = Json::nullValue;
+			json drawTextDetailsRoot = nullptr;
 
 			string field = "broadcastDrawTextDetails";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -17934,14 +17927,14 @@ void MMSEngineProcessor::manageCountdown(
 
 			// same json structure is used in
 			// API_Ingestion::changeLiveProxyPlaylist
-			Json::Value countdownInputRoot =
+			json countdownInputRoot =
 				_mmsEngineDBFacade->getCountdownInputRoot(
 					mmsSourceVideoAssetPathName, mmsSourceVideoAssetDeliveryURL,
 					sourcePhysicalPathKey, videoDurationInMilliSeconds,
 					drawTextDetailsRoot
 				);
 
-			Json::Value inputRoot;
+			json inputRoot;
 			{
 				string field = "countdownInput";
 				inputRoot[field] = countdownInputRoot;
@@ -17966,8 +17959,8 @@ void MMSEngineProcessor::manageCountdown(
 				}
 			}
 
-			Json::Value localInputsRoot(Json::arrayValue);
-			localInputsRoot.append(inputRoot);
+			json localInputsRoot = json::array();
+			localInputsRoot.push_back(inputRoot);
 
 			inputsRoot = localInputsRoot;
 		}
@@ -17986,8 +17979,8 @@ void MMSEngineProcessor::manageCountdown(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageCountdown failed" +
+		SPDLOG_ERROR(
+			string() + "manageCountdown failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -17999,8 +17992,8 @@ void MMSEngineProcessor::manageCountdown(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageCountdown failed" +
+		SPDLOG_ERROR(
+			string() + "manageCountdown failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -18011,19 +18004,19 @@ void MMSEngineProcessor::manageCountdown(
 	}
 }
 
-Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
-	Json::Value outputsRoot, shared_ptr<Workspace> workspace,
+json MMSEngineProcessor::getReviewedOutputsRoot(
+	json outputsRoot, shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey, bool encodingProfileMandatory
 )
 {
-	Json::Value localOutputsRoot(Json::arrayValue);
+	json localOutputsRoot = json::array();
 
-	if (outputsRoot == Json::nullValue)
+	if (outputsRoot == nullptr)
 		return localOutputsRoot;
 
 	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		Json::Value outputRoot = outputsRoot[outputIndex];
+		json outputRoot = outputsRoot[outputIndex];
 
 		string videoMap;
 		string audioMap;
@@ -18031,9 +18024,9 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string otherOutputOptions;
 		// int videoTrackIndexToBeUsed = -1;
 		// int audioTrackIndexToBeUsed = -1;
-		Json::Value filtersRoot = Json::nullValue;
+		json filtersRoot = nullptr;
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		json encodingProfileDetailsRoot = nullptr;
 		MMSEngineDBFacade::ContentType encodingProfileContentType =
 			MMSEngineDBFacade::ContentType::Video;
 		string awsChannelConfigurationLabel;
@@ -18044,7 +18037,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		string rtmpChannelConfigurationLabel;
 		string hlsChannelConfigurationLabel;
 		string udpUrl;
-		Json::Value drawTextDetailsRoot = Json::nullValue;
+		json drawTextDetailsRoot = nullptr;
 
 		string field = "videoMap";
 		videoMap = JSONUtils::asString(outputRoot, field, "default");
@@ -18120,8 +18113,8 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		{
 			encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
 
-			_logger->info(
-				__FILEREF__ + "outputRoot encodingProfileKey" +
+			SPDLOG_INFO(
+				string() + "outputRoot encodingProfileKey" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", encodingProfileKey: " + to_string(encodingProfileKey)
@@ -18156,8 +18149,8 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 						);
 				}
 
-				_logger->info(
-					__FILEREF__ + "outputRoot encodingProfileLabel" +
+				SPDLOG_INFO(
+					string() + "outputRoot encodingProfileLabel" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -18182,17 +18175,17 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 				jsonEncodingProfile) = encodingProfileDetails;
 
 			encodingProfileDetailsRoot =
-				JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+				JSONUtils::toJson(jsonEncodingProfile);
 		}
 		else
 		{
 			if (encodingProfileMandatory)
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"EncodingProfile is mandatory in case of Image" +
 					", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -18202,7 +18195,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
 			drawTextDetailsRoot = outputRoot[field];
 
-		Json::Value localOutputRoot;
+		json localOutputRoot;
 
 		field = "videoMap";
 		localOutputRoot[field] = videoMap;
@@ -18261,13 +18254,13 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 		field = "udpUrl";
 		localOutputRoot[field] = udpUrl;
 
-		if (drawTextDetailsRoot != Json::nullValue)
+		if (drawTextDetailsRoot != nullptr)
 		{
 			field = "drawTextDetails";
 			localOutputRoot[field] = drawTextDetailsRoot;
 		}
 
-		localOutputsRoot.append(localOutputRoot);
+		localOutputsRoot.push_back(localOutputRoot);
 	}
 
 	return localOutputsRoot;
@@ -18275,7 +18268,7 @@ Json::Value MMSEngineProcessor::getReviewedOutputsRoot(
 
 void MMSEngineProcessor::manageLiveGrid(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot
+	shared_ptr<Workspace> workspace, json parametersRoot
 )
 {
 	try
@@ -18297,21 +18290,21 @@ void MMSEngineProcessor::manageLiveGrid(
 		}
 		*/
 
-		Json::Value inputChannelsRoot(Json::arrayValue);
-		Json::Value outputsRoot;
+		json inputChannelsRoot = json::array();
+		json outputsRoot;
 		{
 			string field = "inputConfigurationLabels";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value inputChannelsRoot = parametersRoot[field];
+			json inputChannelsRoot = parametersRoot[field];
 			for (int inputChannelIndex = 0;
 				 inputChannelIndex < inputChannelsRoot.size();
 				 inputChannelIndex++)
@@ -18355,31 +18348,31 @@ void MMSEngineProcessor::manageLiveGrid(
 					);
 				}
 
-				Json::Value inputChannelRoot;
+				json inputChannelRoot;
 
 				inputChannelRoot["confKey"] = confKey;
 				inputChannelRoot["configurationLabel"] = configurationLabel;
 				inputChannelRoot["liveURL"] = liveURL;
 
-				inputChannelsRoot.append(inputChannelRoot);
+				inputChannelsRoot.push_back(inputChannelRoot);
 			}
 
 			field = "outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, field, false))
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
 		}
 
-		Json::Value localOutputsRoot = getReviewedOutputsRoot(
+		json localOutputsRoot = getReviewedOutputsRoot(
 			outputsRoot, workspace, ingestionJobKey, false
 		);
 
@@ -18390,8 +18383,8 @@ void MMSEngineProcessor::manageLiveGrid(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveGrid failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveGrid failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -18403,8 +18396,8 @@ void MMSEngineProcessor::manageLiveGrid(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveGrid failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveGrid failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -18417,13 +18410,13 @@ void MMSEngineProcessor::manageLiveGrid(
 
 void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value liveCutParametersRoot
+	shared_ptr<Workspace> workspace, json liveCutParametersRoot
 )
 {
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "manageLiveCutThread" +
+		SPDLOG_INFO(
+			string() + "manageLiveCutThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -18443,13 +18436,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			string field = "streamSourceType";
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it
+				string errorMessage = string() + "Field is not present or it
 			is null"
 					+ ", _processorIdentifier: " +
 			to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -18460,13 +18453,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or
+					string errorMessage = string() + "Field is not present or
 			it is null"
 						+ ", _processorIdentifier: " +
 			to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -18478,13 +18471,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or
+					string errorMessage = string() + "Field is not present or
 			it is null"
 						+ ", _processorIdentifier: " +
 			to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -18498,12 +18491,12 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -18519,18 +18512,18 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				JSONUtils::asBool(liveCutParametersRoot, field, false);
 
 			field = "cutPeriod";
-			Json::Value cutPeriodRoot = liveCutParametersRoot[field];
+			json cutPeriodRoot = liveCutParametersRoot[field];
 
 			field = "start";
 			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -18541,12 +18534,12 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -18594,7 +18587,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		}
 		*/
 
-		Json::Value mediaItemKeyReferencesRoot(Json::arrayValue);
+		json mediaItemKeyReferencesRoot = json::array();
 		int64_t utcFirstChunkStartTime;
 		string firstChunkStartTime;
 		int64_t utcLastChunkEndTime;
@@ -18688,14 +18681,14 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			// retrieve the reference of all the MediaItems to be concatenate
 			mediaItemKeyReferencesRoot.clear();
 
-			// Json::Value mediaItemsListRoot;
-			Json::Value mediaItemsRoot;
+			// json mediaItemsListRoot;
+			json mediaItemsRoot;
 			do
 			{
 				int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
 				int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
-				Json::Value responseFields = Json::nullValue;
-				Json::Value mediaItemsListRoot =
+				json responseFields = nullptr;
+				json mediaItemsListRoot =
 					_mmsEngineDBFacade->getMediaItemsList(
 						workspace->_workspaceKey, mediaItemKey, uniqueName,
 						physicalPathKey, otherMediaItemsKey, start, rows,
@@ -18713,7 +18706,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					);
 
 				string field = "response";
-				Json::Value responseRoot = mediaItemsListRoot[field];
+				json responseRoot = mediaItemsListRoot[field];
 
 				field = "mediaItems";
 				mediaItemsRoot = responseRoot[field];
@@ -18721,13 +18714,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				for (int mediaItemIndex = 0;
 					 mediaItemIndex < mediaItemsRoot.size(); mediaItemIndex++)
 				{
-					Json::Value mediaItemRoot = mediaItemsRoot[mediaItemIndex];
+					json mediaItemRoot = mediaItemsRoot[mediaItemIndex];
 
 					field = "mediaItemKey";
 					int64_t mediaItemKey =
 						JSONUtils::asInt64(mediaItemRoot, field, 0);
 
-					Json::Value userDataRoot;
+					json userDataRoot;
 					{
 						field = "userData";
 						string userData =
@@ -18735,24 +18728,24 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 						if (userData == "")
 						{
 							string errorMessage =
-								__FILEREF__ +
+								string() +
 								"recording media item without userData!!!" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
 								to_string(ingestionJobKey) +
 								", mediaItemKey: " + to_string(mediaItemKey);
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 
 						userDataRoot =
-							JSONUtils::toJson(ingestionJobKey, -1, userData);
+							JSONUtils::toJson(userData);
 					}
 
 					field = "mmsData";
-					Json::Value mmsDataRoot = userDataRoot[field];
+					json mmsDataRoot = userDataRoot[field];
 
 					field = "utcChunkStartTime";
 					int64_t currentUtcChunkStartTime =
@@ -18787,8 +18780,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 						currentChunkEndTime = strDateTime;
 					}
 
-					_logger->info(
-						__FILEREF__ + "Retrieved chunk" +
+					SPDLOG_INFO(
+						string() + "Retrieved chunk" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -18847,13 +18840,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 							" (" + cutPeriodEndTimeInMilliSeconds + ")";
 						if (errorIfAChunkIsMissing)
 						{
-							_logger->error(__FILEREF__ + errorMessage);
+							SPDLOG_ERROR(string() + errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 						else
 						{
-							_logger->warn(__FILEREF__ + errorMessage);
+							_logger->warn(string() + errorMessage);
 						}
 					}
 
@@ -18894,13 +18887,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 								" (" + cutPeriodEndTimeInMilliSeconds + ")";
 							if (errorIfAChunkIsMissing)
 							{
-								_logger->error(__FILEREF__ + errorMessage);
+								SPDLOG_ERROR(string() + errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
 							else
 							{
-								_logger->warn(__FILEREF__ + errorMessage);
+								_logger->warn(string() + errorMessage);
 							}
 						}
 						else
@@ -18913,12 +18906,12 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					}
 
 					{
-						Json::Value mediaItemKeyReferenceRoot;
+						json mediaItemKeyReferenceRoot;
 
 						field = "mediaItemKey";
 						mediaItemKeyReferenceRoot[field] = mediaItemKey;
 
-						mediaItemKeyReferencesRoot.append(
+						mediaItemKeyReferencesRoot.push_back(
 							mediaItemKeyReferenceRoot
 						);
 					}
@@ -18944,8 +18937,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 				start += rows;
 
-				_logger->info(
-					__FILEREF__ + "Retrieving chunk" +
+				SPDLOG_INFO(
+					string() + "Retrieving chunk" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -18994,37 +18987,37 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				to_string(maxWaitingForLastChunkInSeconds);
 			if (errorIfAChunkIsMissing)
 			{
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			else
 			{
-				_logger->warn(__FILEREF__ + errorMessage);
+				_logger->warn(string() + errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Preparing workflow to ingest..." +
+		SPDLOG_INFO(
+			string() + "Preparing workflow to ingest..." +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		Json::Value liveCutOnSuccess = Json::nullValue;
-		Json::Value liveCutOnError = Json::nullValue;
-		Json::Value liveCutOnComplete = Json::nullValue;
+		json liveCutOnSuccess = nullptr;
+		json liveCutOnError = nullptr;
+		json liveCutOnComplete = nullptr;
 		int64_t userKey;
 		string apiKey;
 		{
 			string field = "internalMMS";
 			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
-				Json::Value internalMMSRoot = liveCutParametersRoot[field];
+				json internalMMSRoot = liveCutParametersRoot[field];
 
 				field = "credentials";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value credentialsRoot = internalMMSRoot[field];
+					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -19038,7 +19031,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				field = "events";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value eventsRoot = internalMMSRoot[field];
+					json eventsRoot = internalMMSRoot[field];
 
 					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
@@ -19058,8 +19051,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		// create workflow to ingest
 		string workflowMetadata;
 		{
-			Json::Value concatDemuxerRoot;
-			Json::Value concatDemuxerParametersRoot;
+			json concatDemuxerRoot;
+			json concatDemuxerParametersRoot;
 			{
 				string field = "label";
 				concatDemuxerRoot[field] =
@@ -19073,15 +19066,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
 				{
-					Json::Value removed;
 					field = "recordingCode";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
+					concatDemuxerParametersRoot.erase(field);
 				}
 
 				{
-					Json::Value removed;
 					field = "cutPeriod";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
+					concatDemuxerParametersRoot.erase(field);
 				}
 				{
 					field = "maxWaitingForLastChunkInSeconds";
@@ -19089,10 +19080,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 							concatDemuxerParametersRoot, field
 						))
 					{
-						Json::Value removed;
-						concatDemuxerParametersRoot.removeMember(
-							field, &removed
-						);
+						concatDemuxerParametersRoot.erase(field);
 					}
 				}
 
@@ -19106,7 +19094,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				concatDemuxerRoot[field] = concatDemuxerParametersRoot;
 			}
 
-			Json::Value cutRoot;
+			json cutRoot;
 			{
 				string field = "label";
 				cutRoot[field] =
@@ -19119,11 +19107,10 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				field = "type";
 				cutRoot[field] = "Cut";
 
-				Json::Value cutParametersRoot = concatDemuxerParametersRoot;
+				json cutParametersRoot = concatDemuxerParametersRoot;
 				{
-					Json::Value removed;
 					field = "references";
-					cutParametersRoot.removeMember(field, &removed);
+					cutParametersRoot.erase(field);
 				}
 
 				field = "retention";
@@ -19161,7 +19148,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				cutParametersRoot[field] = fixEndTimeIfOvercomeDuration;
 
 				{
-					Json::Value userDataRoot;
+					json userDataRoot;
 
 					field = "userData";
 					if (JSONUtils::isMetadataPresent(
@@ -19173,11 +19160,11 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 						//		(see Json::ValueType definition:
 						// http://jsoncpp.sourceforge.net/value_8h_source.html)
 
-						Json::ValueType valueType =
+                        json::value_t valueType =
 							liveCutParametersRoot[field].type();
 
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Preparing workflow to ingest... (2)" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -19185,16 +19172,14 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 							", type: " + to_string(static_cast<int>(valueType))
 						);
 
-						if (valueType == Json::ValueType::stringValue)
+						if (valueType == json::value_t::string)
 						{
 							string sUserData = JSONUtils::asString(
 								liveCutParametersRoot, field, ""
 							);
 
 							if (sUserData != "")
-								userDataRoot = JSONUtils::toJson(
-									ingestionJobKey, -1, sUserData
-								);
+								userDataRoot = JSONUtils::toJson(sUserData);
 						}
 						else // if (valueType == Json::ValueType::objectValue)
 						{
@@ -19202,7 +19187,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 						}
 					}
 
-					Json::Value mmsDataRoot;
+					json mmsDataRoot;
 
 					/*
 					 * liveCutUtcStartTimeInMilliSecs and
@@ -19258,26 +19243,26 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				field = "parameters";
 				cutRoot[field] = cutParametersRoot;
 
-				if (liveCutOnSuccess != Json::nullValue)
+				if (liveCutOnSuccess != nullptr)
 				{
 					field = "onSuccess";
 					cutRoot[field] = liveCutOnSuccess;
 				}
-				if (liveCutOnError != Json::nullValue)
+				if (liveCutOnError != nullptr)
 				{
 					field = "onError";
 					cutRoot[field] = liveCutOnError;
 				}
-				if (liveCutOnComplete != Json::nullValue)
+				if (liveCutOnComplete != nullptr)
 				{
 					field = "onComplete";
 					cutRoot[field] = liveCutOnComplete;
 				}
 			}
 
-			Json::Value concatOnSuccessRoot;
+			json concatOnSuccessRoot;
 			{
-				Json::Value cutTaskRoot;
+				json cutTaskRoot;
 				string field = "task";
 				cutTaskRoot[field] = cutRoot;
 
@@ -19285,7 +19270,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				concatDemuxerRoot[field] = cutTaskRoot;
 			}
 
-			Json::Value workflowRoot;
+			json workflowRoot;
 			{
 				string field = "label";
 				workflowRoot[field] =
@@ -19318,8 +19303,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 		// mancherebbe la parte aggiunta a LiveCut hls segmenter
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -19331,15 +19316,15 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveCutThread failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveCutThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -19355,8 +19340,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -19364,8 +19349,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -19377,14 +19362,14 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveCutThread failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveCutThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -19400,8 +19385,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -19409,8 +19394,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -19425,13 +19410,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
 	string ingestionJobLabel, shared_ptr<Workspace> workspace,
-	Json::Value liveCutParametersRoot
+	json liveCutParametersRoot
 )
 {
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "manageLiveCutThread" +
+		SPDLOG_INFO(
+			string() + "manageLiveCutThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -19450,12 +19435,12 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -19479,18 +19464,18 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				JSONUtils::asBool(liveCutParametersRoot, field, false);
 
 			field = "cutPeriod";
-			Json::Value cutPeriodRoot = liveCutParametersRoot[field];
+			json cutPeriodRoot = liveCutParametersRoot[field];
 
 			field = "start";
 			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -19501,12 +19486,12 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -19535,7 +19520,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond =
 			utcCutPeriodEndTimeInMilliSeconds + 1000;
 
-		Json::Value mediaItemKeyReferencesRoot(Json::arrayValue);
+		json mediaItemKeyReferencesRoot = json::array();
 		int64_t utcFirstChunkStartTimeInMilliSecs;
 		string firstChunkStartTime;
 		int64_t utcLastChunkEndTimeInMilliSecs;
@@ -19595,12 +19580,12 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			// retrieve the reference of all the MediaItems to be concatenate
 			mediaItemKeyReferencesRoot.clear();
 
-			// Json::Value mediaItemsListRoot;
-			Json::Value mediaItemsRoot;
+			// json mediaItemsListRoot;
+			json mediaItemsRoot;
 			do
 			{
-				Json::Value responseFields = Json::nullValue;
-				Json::Value mediaItemsListRoot =
+				json responseFields = nullptr;
+				json mediaItemsListRoot =
 					_mmsEngineDBFacade->getMediaItemsList(
 						workspace->_workspaceKey, mediaItemKey, uniqueName,
 						physicalPathKey, otherMediaItemsKey, start, rows,
@@ -19618,7 +19603,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					);
 
 				string field = "response";
-				Json::Value responseRoot = mediaItemsListRoot[field];
+				json responseRoot = mediaItemsListRoot[field];
 
 				field = "mediaItems";
 				mediaItemsRoot = responseRoot[field];
@@ -19626,13 +19611,13 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				for (int mediaItemIndex = 0;
 					 mediaItemIndex < mediaItemsRoot.size(); mediaItemIndex++)
 				{
-					Json::Value mediaItemRoot = mediaItemsRoot[mediaItemIndex];
+					json mediaItemRoot = mediaItemsRoot[mediaItemIndex];
 
 					field = "mediaItemKey";
 					int64_t mediaItemKey =
 						JSONUtils::asInt64(mediaItemRoot, field, 0);
 
-					Json::Value userDataRoot;
+					json userDataRoot;
 					{
 						field = "userData";
 						string userData =
@@ -19640,24 +19625,24 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						if (userData == "")
 						{
 							string errorMessage =
-								__FILEREF__ +
+								string() +
 								"recording media item without userData!!!" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
 								to_string(ingestionJobKey) +
 								", mediaItemKey: " + to_string(mediaItemKey);
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 
 						userDataRoot =
-							JSONUtils::toJson(ingestionJobKey, -1, userData);
+							JSONUtils::toJson(userData);
 					}
 
 					field = "mmsData";
-					Json::Value mmsDataRoot = userDataRoot[field];
+					json mmsDataRoot = userDataRoot[field];
 
 					field = "utcStartTimeInMilliSecs";
 					int64_t currentUtcChunkStartTimeInMilliSecs =
@@ -19698,8 +19683,8 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						currentChunkEndTime = strDateTime;
 					}
 
-					_logger->info(
-						__FILEREF__ + "Retrieved chunk" +
+					SPDLOG_INFO(
+						string() + "Retrieved chunk" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -19764,13 +19749,13 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							" (" + cutPeriodEndTimeInMilliSeconds + ")";
 						if (errorIfAChunkIsMissing)
 						{
-							_logger->error(__FILEREF__ + errorMessage);
+							SPDLOG_ERROR(string() + errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 						else
 						{
-							_logger->warn(__FILEREF__ + errorMessage);
+							_logger->warn(string() + errorMessage);
 						}
 					}
 
@@ -19809,13 +19794,13 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 								" (" + cutPeriodEndTimeInMilliSeconds + ")";
 							if (errorIfAChunkIsMissing)
 							{
-								_logger->error(__FILEREF__ + errorMessage);
+								SPDLOG_ERROR(string() + errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
 							else
 							{
-								_logger->warn(__FILEREF__ + errorMessage);
+								_logger->warn(string() + errorMessage);
 							}
 						}
 						else
@@ -19829,7 +19814,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					}
 
 					{
-						Json::Value mediaItemKeyReferenceRoot;
+						json mediaItemKeyReferenceRoot;
 
 						field = "mediaItemKey";
 						mediaItemKeyReferenceRoot[field] = mediaItemKey;
@@ -19847,7 +19832,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 								chunkEncodingProfileLabel;
 						}
 
-						mediaItemKeyReferencesRoot.append(
+						mediaItemKeyReferencesRoot.push_back(
 							mediaItemKeyReferenceRoot
 						);
 					}
@@ -19875,8 +19860,8 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				start += rows;
 
-				_logger->info(
-					__FILEREF__ + "Retrieving chunk" +
+				SPDLOG_INFO(
+					string() + "Retrieving chunk" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -19899,8 +19884,8 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				{
 					int secondsToWaitLastChunk = 15;
 
-					_logger->info(
-						__FILEREF__ + "Sleeping to wait the last chunk..." +
+					SPDLOG_INFO(
+						string() + "Sleeping to wait the last chunk..." +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -19939,37 +19924,37 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				to_string(maxWaitingForLastChunkInSeconds);
 			if (errorIfAChunkIsMissing)
 			{
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			else
 			{
-				_logger->warn(__FILEREF__ + errorMessage);
+				_logger->warn(string() + errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Preparing workflow to ingest..." +
+		SPDLOG_INFO(
+			string() + "Preparing workflow to ingest..." +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		Json::Value liveCutOnSuccess = Json::nullValue;
-		Json::Value liveCutOnError = Json::nullValue;
-		Json::Value liveCutOnComplete = Json::nullValue;
+		json liveCutOnSuccess = nullptr;
+		json liveCutOnError = nullptr;
+		json liveCutOnComplete = nullptr;
 		int64_t userKey;
 		string apiKey;
 		{
 			string field = "internalMMS";
 			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
 			{
-				Json::Value internalMMSRoot = liveCutParametersRoot[field];
+				json internalMMSRoot = liveCutParametersRoot[field];
 
 				field = "credentials";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value credentialsRoot = internalMMSRoot[field];
+					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -19983,7 +19968,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				field = "events";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value eventsRoot = internalMMSRoot[field];
+					json eventsRoot = internalMMSRoot[field];
 
 					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
@@ -20004,8 +19989,8 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		string workflowMetadata;
 		string cutLabel;
 		{
-			Json::Value concatDemuxerRoot;
-			Json::Value concatDemuxerParametersRoot;
+			json concatDemuxerRoot;
+			json concatDemuxerParametersRoot;
 			{
 				string field = "label";
 				concatDemuxerRoot[field] =
@@ -20020,15 +20005,13 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				concatDemuxerParametersRoot = liveCutParametersRoot;
 				{
-					Json::Value removed;
 					field = "recordingCode";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
+					concatDemuxerParametersRoot.erase(field);
 				}
 
 				{
-					Json::Value removed;
 					field = "cutPeriod";
-					concatDemuxerParametersRoot.removeMember(field, &removed);
+					concatDemuxerParametersRoot.erase(field);
 				}
 				{
 					field = "maxWaitingForLastChunkInSeconds";
@@ -20036,10 +20019,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							concatDemuxerParametersRoot, field
 						))
 					{
-						Json::Value removed;
-						concatDemuxerParametersRoot.removeMember(
-							field, &removed
-						);
+						concatDemuxerParametersRoot.erase(field);
 					}
 				}
 
@@ -20053,7 +20033,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				concatDemuxerRoot[field] = concatDemuxerParametersRoot;
 			}
 
-			Json::Value cutRoot;
+			json cutRoot;
 			{
 				string field = "label";
 				cutLabel = string("Cut (Live) from ") +
@@ -20066,11 +20046,10 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				field = "type";
 				cutRoot[field] = "Cut";
 
-				Json::Value cutParametersRoot = concatDemuxerParametersRoot;
+				json cutParametersRoot = concatDemuxerParametersRoot;
 				{
-					Json::Value removed;
 					field = "references";
-					cutParametersRoot.removeMember(field, &removed);
+					cutParametersRoot.erase(field);
 				}
 
 				field = "retention";
@@ -20110,7 +20089,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				cutParametersRoot[field] = fixEndTimeIfOvercomeDuration;
 
 				{
-					Json::Value userDataRoot;
+					json userDataRoot;
 
 					field = "userData";
 					if (JSONUtils::isMetadataPresent(
@@ -20122,11 +20101,10 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						//		(see Json::ValueType definition:
 						// http://jsoncpp.sourceforge.net/value_8h_source.html)
 
-						Json::ValueType valueType =
-							liveCutParametersRoot[field].type();
+            json::value_t valueType = liveCutParametersRoot[field].type();
 
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Preparing workflow to ingest... (2)" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -20134,7 +20112,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							", type: " + to_string(static_cast<int>(valueType))
 						);
 
-						if (valueType == Json::ValueType::stringValue)
+						if (valueType == json::value_t::string)
 						{
 							string sUserData = JSONUtils::asString(
 								liveCutParametersRoot, field, ""
@@ -20142,9 +20120,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 							if (sUserData != "")
 							{
-								userDataRoot = JSONUtils::toJson(
-									ingestionJobKey, -1, sUserData
-								);
+								userDataRoot = JSONUtils::toJson(sUserData);
 							}
 						}
 						else // if (valueType == Json::ValueType::objectValue)
@@ -20153,7 +20129,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						}
 					}
 
-					Json::Value mmsDataRoot;
+					json mmsDataRoot;
 
 					/*
 					 * liveCutUtcStartTimeInMilliSecs and
@@ -20182,7 +20158,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					// Per capire il motivo dell'aggiunta dei due campi liveCut
 					// e ingestionJobKey, leggi il commento sotto (2023-08-10)
 					// in particolare la parte "Per risolvere il problema nr. 2"
-					Json::Value liveCutRoot;
+					json liveCutRoot;
 					liveCutRoot["recordingCode"] = recordingCode;
 					liveCutRoot["ingestionJobKey"] = (int64_t)(ingestionJobKey);
 					mmsDataRoot["liveCut"] = liveCutRoot;
@@ -20197,26 +20173,26 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				field = "parameters";
 				cutRoot[field] = cutParametersRoot;
 
-				if (liveCutOnSuccess != Json::nullValue)
+				if (liveCutOnSuccess != nullptr)
 				{
 					field = "onSuccess";
 					cutRoot[field] = liveCutOnSuccess;
 				}
-				if (liveCutOnError != Json::nullValue)
+				if (liveCutOnError != nullptr)
 				{
 					field = "onError";
 					cutRoot[field] = liveCutOnError;
 				}
-				if (liveCutOnComplete != Json::nullValue)
+				if (liveCutOnComplete != nullptr)
 				{
 					field = "onComplete";
 					cutRoot[field] = liveCutOnComplete;
 				}
 			}
 
-			Json::Value concatOnSuccessRoot;
+			json concatOnSuccessRoot;
 			{
-				Json::Value cutTaskRoot;
+				json cutTaskRoot;
 				string field = "task";
 				cutTaskRoot[field] = cutRoot;
 
@@ -20224,7 +20200,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				concatDemuxerRoot[field] = cutTaskRoot;
 			}
 
-			Json::Value workflowRoot;
+			json workflowRoot;
 			{
 				string field = "label";
 				workflowRoot[field] =
@@ -20245,7 +20221,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		}
 
 		vector<string> otherHeaders;
-		Json::Value workflowResponseRoot = MMSCURL::httpPostStringAndGetJson(
+		json workflowResponseRoot = MMSCURL::httpPostStringAndGetJson(
 			_logger, ingestionJobKey, _mmsWorkflowIngestionURL,
 			_mmsAPITimeoutInSeconds, to_string(userKey), apiKey,
 			workflowMetadata,
@@ -20314,15 +20290,15 @@ task Live-Recorder.
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", workflowResponseRoot: " +
 						JSONUtils::toString(workflowResponseRoot);
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(string() + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				Json::Value tasksRoot = workflowResponseRoot["tasks"];
+				json tasksRoot = workflowResponseRoot["tasks"];
 				for (int taskIndex = 0; taskIndex < tasksRoot.size();
 					 taskIndex++)
 				{
-					Json::Value taskRoot = tasksRoot[taskIndex];
+					json taskRoot = tasksRoot[taskIndex];
 					string taskIngestionJobLabel =
 						JSONUtils::asString(taskRoot, "label", "");
 					if (taskIngestionJobLabel == cutLabel)
@@ -20343,14 +20319,14 @@ task Live-Recorder.
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", cutLabel: " + cutLabel + ", workflowResponseRoot: " +
 						JSONUtils::toString(workflowResponseRoot);
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(string() + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "changeIngestionJobDependency" +
+			SPDLOG_INFO(
+				string() + "changeIngestionJobDependency" +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", cutIngestionJobKey: " + to_string(cutIngestionJobKey)
 			);
@@ -20359,8 +20335,8 @@ task Live-Recorder.
 			);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -20372,15 +20348,15 @@ task Live-Recorder.
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveCutThread failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveCutThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -20396,8 +20372,8 @@ task Live-Recorder.
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -20405,8 +20381,8 @@ task Live-Recorder.
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -20418,14 +20394,14 @@ task Live-Recorder.
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageLiveCutThread failed" +
+		SPDLOG_ERROR(
+			string() + "manageLiveCutThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -20441,8 +20417,8 @@ task Live-Recorder.
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -20450,8 +20426,8 @@ task Live-Recorder.
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -20466,13 +20442,13 @@ task Live-Recorder.
 void MMSEngineProcessor::youTubeLiveBroadcastThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
 	string ingestionJobLabel, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot
+	json parametersRoot
 )
 {
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "youTubeLiveBroadcastThread" +
+		SPDLOG_INFO(
+			string() + "youTubeLiveBroadcastThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -20486,22 +20462,22 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		bool youTubeLiveBroadcastMadeForKids;
 		string youTubeLiveBroadcastLatencyPreference;
 
-		Json::Value scheduleRoot;
+		json scheduleRoot;
 		string scheduleStartTimeInSeconds;
 		string scheduleEndTimeInSeconds;
 		string sourceType;
 		// streamConfigurationLabel or referencesRoot has to be present
 		string streamConfigurationLabel;
-		Json::Value referencesRoot;
+		json referencesRoot;
 		{
 			string field = "YouTubeConfigurationLabel";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -20512,10 +20488,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -20542,10 +20518,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -20555,12 +20531,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -20571,12 +20547,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -20587,10 +20563,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -20602,10 +20578,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) + ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -20618,10 +20594,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) + ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -20668,10 +20644,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			string body;
 			{
-				Json::Value bodyRoot;
+				json bodyRoot;
 
 				{
-					Json::Value snippetRoot;
+					json snippetRoot;
 
 					string field = "title";
 					snippetRoot[field] = youTubeLiveBroadcastTitle;
@@ -20728,7 +20704,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				}
 
 				{
-					Json::Value contentDetailsRoot;
+					json contentDetailsRoot;
 
 					bool enableContentEncryption = true;
 					string field = "enableContentEncryption";
@@ -20767,7 +20743,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				}
 
 				{
-					Json::Value statusRoot;
+					json statusRoot;
 
 					string field = "privacyStatus";
 					statusRoot[field] = youTubeLiveBroadcastPrivacyStatus;
@@ -20794,7 +20770,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				headerList.push_back(header);
 			}
 
-			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
+			json responseRoot = MMSCURL::httpPostStringAndGetJson(
 				_logger, ingestionJobKey, youTubeURL,
 				_youTubeDataAPITimeoutInSeconds, "", "", body,
 				"application/json", // contentType
@@ -20889,13 +20865,13 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"YouTube response, Field is not present or it is null" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field +
 					", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -20911,7 +20887,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse +
 				", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -20922,7 +20898,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -20956,10 +20932,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			string body;
 			{
-				Json::Value bodyRoot;
+				json bodyRoot;
 
 				{
-					Json::Value snippetRoot;
+					json snippetRoot;
 
 					string field = "title";
 					snippetRoot[field] = youTubeLiveBroadcastTitle;
@@ -20981,7 +20957,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				}
 
 				{
-					Json::Value cdnRoot;
+					json cdnRoot;
 
 					string field = "frameRate";
 					cdnRoot[field] = "variable";
@@ -20996,7 +20972,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					bodyRoot[field] = cdnRoot;
 				}
 				{
-					Json::Value contentDetailsRoot;
+					json contentDetailsRoot;
 
 					bool isReusable = true;
 					string field = "isReusable";
@@ -21021,7 +20997,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				headerList.push_back(header);
 			}
 
-			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
+			json responseRoot = MMSCURL::httpPostStringAndGetJson(
 				_logger, ingestionJobKey, youTubeURL,
 				_youTubeDataAPITimeoutInSeconds, "", "", body,
 				"application/json", // contentType
@@ -21089,13 +21065,13 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"YouTube response, Field is not present or it is null" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field +
 					", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21105,45 +21081,45 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"YouTube response, Field is not present or it is null" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field +
 					", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value cdnRoot = responseRoot[field];
+			json cdnRoot = responseRoot[field];
 
 			field = "ingestionInfo";
 			if (!JSONUtils::isMetadataPresent(cdnRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"YouTube response, Field is not present or it is null" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field +
 					", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value ingestionInfoRoot = cdnRoot[field];
+			json ingestionInfoRoot = cdnRoot[field];
 
 			field = "streamName";
 			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"YouTube response, Field is not present or it is null" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field +
 					", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21154,13 +21130,13 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"YouTube response, Field is not present or it is null" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field +
 					", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21179,7 +21155,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse +
 				", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -21190,7 +21166,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -21233,7 +21209,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			string body;
 
-			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
+			json responseRoot = MMSCURL::httpPostStringAndGetJson(
 				_logger, ingestionJobKey, youTubeURL,
 				_youTubeDataAPITimeoutInSeconds, "", "", body,
 				"", // contentType
@@ -21305,7 +21281,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse +
 				", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -21316,32 +21292,32 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Preparing workflow to ingest..." +
+		SPDLOG_INFO(
+			string() + "Preparing workflow to ingest..." +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		Json::Value youTubeLiveBroadcastOnSuccess = Json::nullValue;
-		Json::Value youTubeLiveBroadcastOnError = Json::nullValue;
-		Json::Value youTubeLiveBroadcastOnComplete = Json::nullValue;
+		json youTubeLiveBroadcastOnSuccess = nullptr;
+		json youTubeLiveBroadcastOnError = nullptr;
+		json youTubeLiveBroadcastOnComplete = nullptr;
 		int64_t userKey;
 		string apiKey;
 		{
 			string field = "internalMMS";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				Json::Value internalMMSRoot = parametersRoot[field];
+				json internalMMSRoot = parametersRoot[field];
 
 				field = "credentials";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value credentialsRoot = internalMMSRoot[field];
+					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -21355,7 +21331,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				field = "events";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value eventsRoot = internalMMSRoot[field];
+					json eventsRoot = internalMMSRoot[field];
 
 					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
@@ -21376,11 +21352,11 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		string workflowMetadata;
 		{
 			string proxyLabel;
-			Json::Value proxyRoot;
+			json proxyRoot;
 
 			if (sourceType == "Live")
 			{
-				Json::Value liveProxyParametersRoot;
+				json liveProxyParametersRoot;
 				{
 					string field = "label";
 					proxyLabel = "Proxy " + streamConfigurationLabel +
@@ -21393,44 +21369,34 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					liveProxyParametersRoot = parametersRoot;
 					{
-						Json::Value removed;
 						field = "YouTubeConfigurationLabel";
-						liveProxyParametersRoot.removeMember(field, &removed);
+						liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "title";
-						liveProxyParametersRoot.removeMember(field, &removed);
+						liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "Description";
-						liveProxyParametersRoot.removeMember(field, &removed);
+						liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "SourceType";
-						liveProxyParametersRoot.removeMember(field, &removed);
+						liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "internalMMS";
 						if (JSONUtils::isMetadataPresent(
 								liveProxyParametersRoot, field
 							))
-							liveProxyParametersRoot.removeMember(
-								field, &removed
-							);
+							liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "youTubeSchedule";
 						if (JSONUtils::isMetadataPresent(
 								liveProxyParametersRoot, field
 							))
-							liveProxyParametersRoot.removeMember(
-								field, &removed
-							);
+							liveProxyParametersRoot.erase(field);
 					}
 
 					{
@@ -21442,7 +21408,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						liveProxyParametersRoot[field] = scheduleRoot;
 					}
 
-					Json::Value outputsRoot(Json::arrayValue);
+					json outputsRoot = json::array();
 					{
 						// we will create/modify the RTMP_Channel using
 						// youTubeConfigurationLabel as his label
@@ -21477,7 +21443,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 							);
 						}
 
-						Json::Value outputRoot;
+						json outputRoot;
 
 						field = "outputType";
 						outputRoot[field] = "RTMP_Channel";
@@ -21485,7 +21451,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						field = "rtmpChannelConfigurationLabel";
 						outputRoot[field] = youTubeConfigurationLabel;
 
-						outputsRoot.append(outputRoot);
+						outputsRoot.push_back(outputRoot);
 					}
 					field = "outputs";
 					liveProxyParametersRoot[field] = outputsRoot;
@@ -21495,7 +21461,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 			else // if (sourceType == "MediaItem")
 			{
-				Json::Value vodProxyParametersRoot;
+				json vodProxyParametersRoot;
 				{
 					string field = "label";
 					proxyLabel = "VOD-Proxy MediaItem to YouTube (" +
@@ -21507,44 +21473,34 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					vodProxyParametersRoot = parametersRoot;
 					{
-						Json::Value removed;
 						field = "YouTubeConfigurationLabel";
-						vodProxyParametersRoot.removeMember(field, &removed);
+						vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "title";
-						vodProxyParametersRoot.removeMember(field, &removed);
+						vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "Description";
-						vodProxyParametersRoot.removeMember(field, &removed);
+						vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "SourceType";
-						vodProxyParametersRoot.removeMember(field, &removed);
+						vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "internalMMS";
 						if (JSONUtils::isMetadataPresent(
 								vodProxyParametersRoot, field
 							))
-							vodProxyParametersRoot.removeMember(
-								field, &removed
-							);
+							vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "youTubeSchedule";
 						if (JSONUtils::isMetadataPresent(
 								vodProxyParametersRoot, field
 							))
-							vodProxyParametersRoot.removeMember(
-								field, &removed
-							);
+							vodProxyParametersRoot.erase(field);
 					}
 
 					{
@@ -21559,7 +21515,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					field = "references";
 					vodProxyParametersRoot[field] = referencesRoot;
 
-					Json::Value outputsRoot(Json::arrayValue);
+					json outputsRoot = json::array();
 					{
 						// we will create/modify the RTMP_Channel using
 						// youTubeConfigurationLabel as his label
@@ -21594,7 +21550,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 							);
 						}
 
-						Json::Value outputRoot;
+						json outputRoot;
 
 						field = "outputType";
 						outputRoot[field] = "RTMP_Channel";
@@ -21602,7 +21558,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						field = "rtmpChannelConfigurationLabel";
 						outputRoot[field] = youTubeConfigurationLabel;
 
-						outputsRoot.append(outputRoot);
+						outputsRoot.push_back(outputRoot);
 					}
 					field = "outputs";
 					vodProxyParametersRoot[field] = outputsRoot;
@@ -21611,7 +21567,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				proxyRoot[field] = vodProxyParametersRoot;
 			}
 
-			Json::Value workflowRoot;
+			json workflowRoot;
 			{
 				string field = "label";
 				workflowRoot[field] = ingestionJobLabel + ". " + proxyLabel;
@@ -21635,8 +21591,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			otherHeaders
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -21648,15 +21604,15 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "youTubeLiveBroadcastThread failed" +
+		SPDLOG_ERROR(
+			string() + "youTubeLiveBroadcastThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -21672,8 +21628,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -21681,8 +21637,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -21694,14 +21650,14 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "youTubeLiveBroadcastThread failed" +
+		SPDLOG_ERROR(
+			string() + "youTubeLiveBroadcastThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -21717,8 +21673,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -21726,8 +21682,8 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -21742,13 +21698,13 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 void MMSEngineProcessor::facebookLiveBroadcastThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
 	string ingestionJobLabel, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot
+	json parametersRoot
 )
 {
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "facebookLiveBroadcastThread" +
+		SPDLOG_INFO(
+			string() + "facebookLiveBroadcastThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -21762,21 +21718,21 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		string description;
 		string facebookLiveType;
 
-		Json::Value scheduleRoot;
+		json scheduleRoot;
 		int64_t utcScheduleStartTimeInSeconds;
 		string sourceType;
 		// configurationLabel or referencesRoot has to be present
 		string configurationLabel;
-		Json::Value referencesRoot;
+		json referencesRoot;
 		{
 			string field = "facebookNodeType";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21786,10 +21742,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21799,10 +21755,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21812,10 +21768,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21826,10 +21782,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21842,10 +21798,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21855,12 +21811,12 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21873,10 +21829,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -21888,10 +21844,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) + ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -21904,10 +21860,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) + ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -21937,7 +21893,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		*/
 
 		string facebookURL;
-		Json::Value responseRoot;
+		json responseRoot;
 		string rtmpURL;
 		try
 		{
@@ -21980,13 +21936,13 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 					 to_string(utcScheduleStartTimeInSeconds));
 			}
 
-			_logger->info(
-				__FILEREF__ + "create a Live Video object" +
+			SPDLOG_INFO(
+				string() + "create a Live Video object" +
 				", facebookURL: " + facebookURL
 			);
 
 			vector<string> otherHeaders;
-			Json::Value responseRoot = MMSCURL::httpPostStringAndGetJson(
+			json responseRoot = MMSCURL::httpPostStringAndGetJson(
 				_logger, ingestionJobKey, facebookURL, _mmsAPITimeoutInSeconds,
 				"", "", "", "", otherHeaders
 			);
@@ -22003,11 +21959,11 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + field +
 					", response: " + JSONUtils::toString(responseRoot);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -22022,7 +21978,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				", facebookURL: " + facebookURL +
 				", response: " + JSONUtils::toString(responseRoot) +
 				", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -22034,33 +21990,33 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", facebookURL: " + facebookURL +
 				", response: " + JSONUtils::toString(responseRoot);
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Preparing workflow to ingest..." +
+		SPDLOG_INFO(
+			string() + "Preparing workflow to ingest..." +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", rtmpURL: " + rtmpURL
 		);
 
-		Json::Value facebookLiveBroadcastOnSuccess = Json::nullValue;
-		Json::Value facebookLiveBroadcastOnError = Json::nullValue;
-		Json::Value facebookLiveBroadcastOnComplete = Json::nullValue;
+		json facebookLiveBroadcastOnSuccess = nullptr;
+		json facebookLiveBroadcastOnError = nullptr;
+		json facebookLiveBroadcastOnComplete = nullptr;
 		int64_t userKey;
 		string apiKey;
 		{
 			string field = "internalMMS";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				Json::Value internalMMSRoot = parametersRoot[field];
+				json internalMMSRoot = parametersRoot[field];
 
 				field = "credentials";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value credentialsRoot = internalMMSRoot[field];
+					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -22074,7 +22030,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				field = "events";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value eventsRoot = internalMMSRoot[field];
+					json eventsRoot = internalMMSRoot[field];
 
 					field = "onSuccess";
 					if (JSONUtils::isMetadataPresent(eventsRoot, field))
@@ -22095,11 +22051,11 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		string workflowMetadata;
 		{
 			string proxyLabel;
-			Json::Value proxyRoot;
+			json proxyRoot;
 
 			if (sourceType == "Live")
 			{
-				Json::Value liveProxyParametersRoot;
+				json liveProxyParametersRoot;
 				{
 					string field = "label";
 					proxyLabel = "Proxy " + configurationLabel +
@@ -22112,44 +22068,34 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 					liveProxyParametersRoot = parametersRoot;
 					{
-						Json::Value removed;
 						field = "facebookConfigurationLabel";
-						liveProxyParametersRoot.removeMember(field, &removed);
+						liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "title";
-						liveProxyParametersRoot.removeMember(field, &removed);
+						liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "description";
-						liveProxyParametersRoot.removeMember(field, &removed);
+						liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "sourceType";
-						liveProxyParametersRoot.removeMember(field, &removed);
+						liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "internalMMS";
 						if (JSONUtils::isMetadataPresent(
 								liveProxyParametersRoot, field
 							))
-							liveProxyParametersRoot.removeMember(
-								field, &removed
-							);
+							liveProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "facebookSchedule";
 						if (JSONUtils::isMetadataPresent(
 								liveProxyParametersRoot, field
 							))
-							liveProxyParametersRoot.removeMember(
-								field, &removed
-							);
+							liveProxyParametersRoot.erase(field);
 					}
 
 					{
@@ -22189,7 +22135,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						liveProxyParametersRoot[field] = scheduleRoot;
 					}
 
-					Json::Value outputsRoot(Json::arrayValue);
+					json outputsRoot = json::array();
 					{
 						// we will create/modify the RTMP_Channel using
 						// facebookConfigurationLabel as his label
@@ -22224,7 +22170,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 							);
 						}
 
-						Json::Value outputRoot;
+						json outputRoot;
 
 						field = "outputType";
 						outputRoot[field] = "RTMP_Channel";
@@ -22232,7 +22178,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						field = "rtmpChannelConfigurationLabel";
 						outputRoot[field] = facebookConfigurationLabel;
 
-						outputsRoot.append(outputRoot);
+						outputsRoot.push_back(outputRoot);
 					}
 					field = "outputs";
 					liveProxyParametersRoot[field] = outputsRoot;
@@ -22242,7 +22188,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			}
 			else // if (sourceType == "MediaItem")
 			{
-				Json::Value vodProxyParametersRoot;
+				json vodProxyParametersRoot;
 				{
 					string field = "label";
 					proxyLabel = "Proxy MediaItem to Facebook (" +
@@ -22254,44 +22200,34 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 					vodProxyParametersRoot = parametersRoot;
 					{
-						Json::Value removed;
 						field = "facebookConfigurationLabel";
-						vodProxyParametersRoot.removeMember(field, &removed);
+						vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "title";
-						vodProxyParametersRoot.removeMember(field, &removed);
+						vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "description";
-						vodProxyParametersRoot.removeMember(field, &removed);
+						vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "sourceType";
-						vodProxyParametersRoot.removeMember(field, &removed);
+						vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "internalMMS";
 						if (JSONUtils::isMetadataPresent(
 								vodProxyParametersRoot, field
 							))
-							vodProxyParametersRoot.removeMember(
-								field, &removed
-							);
+							vodProxyParametersRoot.erase(field);
 					}
 					{
-						Json::Value removed;
 						field = "facebookSchedule";
 						if (JSONUtils::isMetadataPresent(
 								vodProxyParametersRoot, field
 							))
-							vodProxyParametersRoot.removeMember(
-								field, &removed
-							);
+							vodProxyParametersRoot.erase(field);
 					}
 
 					field = "references";
@@ -22312,7 +22248,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						vodProxyParametersRoot[field] = scheduleRoot;
 					}
 
-					Json::Value outputsRoot(Json::arrayValue);
+					json outputsRoot = json::array();
 					{
 						// we will create/modify the RTMP_Channel using
 						// facebookConfigurationLabel as his label
@@ -22347,7 +22283,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 							);
 						}
 
-						Json::Value outputRoot;
+						json outputRoot;
 
 						field = "outputType";
 						outputRoot[field] = "RTMP_Channel";
@@ -22355,7 +22291,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						field = "rtmpChannelConfigurationLabel";
 						outputRoot[field] = facebookConfigurationLabel;
 
-						outputsRoot.append(outputRoot);
+						outputsRoot.push_back(outputRoot);
 					}
 					field = "outputs";
 					vodProxyParametersRoot[field] = outputsRoot;
@@ -22364,7 +22300,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				proxyRoot[field] = vodProxyParametersRoot;
 			}
 
-			Json::Value workflowRoot;
+			json workflowRoot;
 			{
 				string field = "label";
 				workflowRoot[field] = ingestionJobLabel + ". " + proxyLabel;
@@ -22388,8 +22324,8 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			otherHeaders
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -22401,15 +22337,15 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "facebookLiveBroadcastThread failed" +
+		SPDLOG_ERROR(
+			string() + "facebookLiveBroadcastThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -22425,8 +22361,8 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -22434,8 +22370,8 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -22447,14 +22383,14 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "facebookLiveBroadcastThread failed" +
+		SPDLOG_ERROR(
+			string() + "facebookLiveBroadcastThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -22470,8 +22406,8 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -22479,8 +22415,8 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -22500,8 +22436,8 @@ void MMSEngineProcessor::copyContent(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "copyContent" +
+		SPDLOG_INFO(
+			string() + "copyContent" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -22530,14 +22466,14 @@ void MMSEngineProcessor::copyContent(
 					if (extensionIndex == string::npos)
 					{
 						string errorMessage =
-							__FILEREF__ +
+							string() +
 							"No fileFormat (extension of the file) found in "
 							"mmsAssetPathName" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", mmsAssetPathName: " + mmsAssetPathName;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -22563,8 +22499,8 @@ void MMSEngineProcessor::copyContent(
 			localPathName += cleanedFileName;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Coping" +
+		SPDLOG_INFO(
+			string() + "Coping" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", mmsAssetPathName: " + mmsAssetPathName +
@@ -22577,26 +22513,26 @@ void MMSEngineProcessor::copyContent(
 	catch (runtime_error &e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Coping failed" +
+			string() + "Coping failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", mmsAssetPathName: " + mmsAssetPathName +
 			", localPath: " + localPath + ", localFileName: " + localFileName +
 			", exception: " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (exception e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Coping failed" +
+			string() + "Coping failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", mmsAssetPathName: " + mmsAssetPathName +
 			", localPath: " + localPath + ", localFileName: " + localFileName +
 			", exception: " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -22622,8 +22558,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "handleMultiLocalAssetIngestionEventThread" +
+		SPDLOG_INFO(
+			string() + "handleMultiLocalAssetIngestionEventThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
@@ -22656,19 +22592,19 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 				}
 				catch (runtime_error &e)
 				{
-					string errorMessage = __FILEREF__ +
+					string errorMessage = string() +
 										  "listing directory failed" +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw e;
 				}
 				catch (exception &e)
 				{
-					string errorMessage = __FILEREF__ +
+					string errorMessage = string() +
 										  "listing directory failed" +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw e;
 				}
@@ -22698,8 +22634,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 				string workspaceIngestionBinaryPathName =
 					workspaceIngestionRepository + "/" + generatedFrameFileName;
 
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove file" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()
 					) +
@@ -22710,8 +22646,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 			}
 			else
 			{
-				_logger->info(
-					__FILEREF__ + "Generated Frame to ingest" +
+				SPDLOG_INFO(
+					string() + "Generated Frame to ingest" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()
@@ -22727,7 +22663,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 				if (extensionIndex == string::npos)
 				{
 					string errorMessage =
-						__FILEREF__ +
+						string() +
 						"No fileFormat (extension of the file) found in "
 						"generatedFileName" +
 						", _processorIdentifier: " +
@@ -22737,7 +22673,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 							multiLocalAssetIngestionEvent.getIngestionJobKey()
 						) +
 						", generatedFrameFileName: " + generatedFrameFileName;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -22748,8 +22684,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 				//                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced),
 				//                textToBeReplaced.length(), textToReplace);
 
-				_logger->info(
-					__FILEREF__ + "Generated Frame to ingest" +
+				SPDLOG_INFO(
+					string() + "Generated Frame to ingest" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()
@@ -22842,8 +22778,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 					{
 						generatedFrameIngestionFailed = true;
 
-						_logger->error(
-							__FILEREF__ +
+						SPDLOG_ERROR(
+							string() +
 							"handleLocalAssetIngestionEvent failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -22854,8 +22790,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 					{
 						generatedFrameIngestionFailed = true;
 
-						_logger->error(
-							__FILEREF__ +
+						SPDLOG_ERROR(
+							string() +
 							"handleLocalAssetIngestionEvent failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -22867,7 +22803,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 					//                    dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 					//                    _multiEventsSet->addEvent(event);
 					//
-					//                    _logger->info(__FILEREF__ + "addEvent:
+					//                    SPDLOG_INFO(string() + "addEvent:
 					//                    EVENT_TYPE (INGESTASSETEVENT)"
 					//                        + ", _processorIdentifier: " +
 					//                        to_string(_processorIdentifier)
@@ -22884,7 +22820,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		/*
 		if (generatedFrameIngestionFailed)
 		{
-			_logger->info(__FILEREF__ + "updater->updateEncodingJob
+			SPDLOG_INFO(string() + "updater->updateEncodingJob
 		PunctualError"
 				+ ", _encodingItem->_encodingJobKey: " +
 		to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
@@ -22902,7 +22838,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		ErrorBeforeEncoding, mediaItemKey, encodedPhysicalPathKey,
 					multiLocalAssetIngestionEvent->getIngestionJobKey());
 
-			_logger->info(__FILEREF__ + "updater->updateEncodingJob
+			SPDLOG_INFO(string() + "updater->updateEncodingJob
 		PunctualError"
 				+ ", _encodingItem->_encodingJobKey: " +
 		to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
@@ -22913,7 +22849,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		}
 		else
 		{
-			_logger->info(__FILEREF__ + "updater->updateEncodingJob NoError"
+			SPDLOG_INFO(string() + "updater->updateEncodingJob NoError"
 				+ ", _encodingItem->_encodingJobKey: " +
 		to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
 				+ ", _encodingItem->_ingestionJobKey: " +
@@ -22932,16 +22868,16 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed" +
+		SPDLOG_ERROR(
+			string() + "handleMultiLocalAssetIngestionEvent failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -22957,8 +22893,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
@@ -22967,8 +22903,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
@@ -22982,8 +22918,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 			string workspaceIngestionBinaryPathName =
 				workspaceIngestionRepository + "/" + *it;
 
-			_logger->info(
-				__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+			SPDLOG_INFO(
+				string() + "Remove file" + ", _processorIdentifier: " +
 				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 				", workspaceIngestionBinaryPathName: " +
@@ -22996,15 +22932,15 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed" +
+		SPDLOG_ERROR(
+			string() + "handleMultiLocalAssetIngestionEvent failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -23020,8 +22956,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
@@ -23030,8 +22966,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
@@ -23045,8 +22981,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 			string workspaceIngestionBinaryPathName =
 				workspaceIngestionRepository + "/" + *it;
 
-			_logger->info(
-				__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+			SPDLOG_INFO(
+				string() + "Remove file" + ", _processorIdentifier: " +
 				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 				", workspaceIngestionBinaryPathName: " +
@@ -23061,7 +22997,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 
 void MMSEngineProcessor::manageGenerateFramesTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot,
+	MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -23072,11 +23008,11 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 		if (dependencies.size() != 1)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong number of dependencies" +
+				string() + "Wrong number of dependencies" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -23122,10 +23058,10 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 		if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 		{
 			string errorMessage =
-				__FILEREF__ + "ContentTpe is not a Video" +
+				string() + "ContentTpe is not a Video" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -23190,8 +23126,8 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageGenerateFramesTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageGenerateFramesTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -23203,8 +23139,8 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageGenerateFramesTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageGenerateFramesTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -23217,7 +23153,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 
 void MMSEngineProcessor::fillGenerateFramesParameters(
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-	MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot,
+	MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot,
 	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
 
 	int &periodInSeconds, double &startTimeInSeconds, int &maxFramesNumber,
@@ -23243,10 +23179,10 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) + ", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -23379,12 +23315,12 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 			if (videoTracks.size() == 0)
 			{
 				string errorMessage =
-					__FILEREF__ + "No video track are present" +
+					string() + "No video track are present" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey);
 
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -23408,24 +23344,24 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 		catch (runtime_error &e)
 		{
 			string errorMessage =
-				__FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed" +
+				string() + "_mmsEngineDBFacade->getVideoDetails failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", e.what(): " + e.what();
 
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage =
-				__FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed" +
+				string() + "_mmsEngineDBFacade->getVideoDetails failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", e.what(): " + e.what();
 
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -23440,8 +23376,8 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 				double previousStartTimeInSeconds = startTimeInSeconds;
 				startTimeInSeconds = durationInMilliSeconds / 1000;
 
-				_logger->info(
-					__FILEREF__ +
+				SPDLOG_INFO(
+					string() +
 					"startTimeInSeconds was changed to durationInMilliSeconds" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
@@ -23456,7 +23392,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 			else
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"Frame was not generated because instantInSeconds is "
 					"bigger than the video duration" +
 					", _processorIdentifier: " +
@@ -23467,7 +23403,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					", startTimeInSeconds: " + to_string(startTimeInSeconds) +
 					", durationInMilliSeconds: " +
 					to_string(durationInMilliSeconds);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -23475,8 +23411,8 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "fillGenerateFramesParameters failed" +
+		SPDLOG_ERROR(
+			string() + "fillGenerateFramesParameters failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -23486,8 +23422,8 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "fillGenerateFramesParameters failed" +
+		SPDLOG_ERROR(
+			string() + "fillGenerateFramesParameters failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -23498,7 +23434,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 
 void MMSEngineProcessor::manageSlideShowTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -23509,11 +23445,11 @@ void MMSEngineProcessor::manageSlideShowTask(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ + "No images found" +
+				string() + "No images found" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -23534,7 +23470,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 		}
 
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot;
+		json encodingProfileDetailsRoot;
 		{
 			// This task shall contain EncodingProfileKey or
 			// EncodingProfileLabel. We cannot have EncodingProfilesSetKey
@@ -23576,12 +23512,12 @@ void MMSEngineProcessor::manageSlideShowTask(
 					encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 		}
 
-		Json::Value imagesRoot(Json::arrayValue);
-		Json::Value audiosRoot(Json::arrayValue);
+		json imagesRoot = json::array();
+		json audiosRoot = json::array();
 		float shortestAudioDurationInSeconds = -1.0;
 
 		for (tuple<
@@ -23614,7 +23550,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
 			{
-				Json::Value imageRoot;
+				json imageRoot;
 
 				imageRoot["sourceAssetPathName"] = sourceAssetPathName;
 				imageRoot["sourceFileExtension"] = sourceFileExtension;
@@ -23623,12 +23559,12 @@ void MMSEngineProcessor::manageSlideShowTask(
 				imageRoot["sourceTranscoderStagingAssetPathName"] =
 					sourceTranscoderStagingAssetPathName;
 
-				imagesRoot.append(imageRoot);
+				imagesRoot.push_back(imageRoot);
 			}
 			else if (referenceContentType ==
 					 MMSEngineDBFacade::ContentType::Audio)
 			{
-				Json::Value audioRoot;
+				json audioRoot;
 
 				audioRoot["sourceAssetPathName"] = sourceAssetPathName;
 				audioRoot["sourceFileExtension"] = sourceFileExtension;
@@ -23637,7 +23573,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 				audioRoot["sourceTranscoderStagingAssetPathName"] =
 					sourceTranscoderStagingAssetPathName;
 
-				audiosRoot.append(audioRoot);
+				audiosRoot.push_back(audioRoot);
 
 				if (shortestAudioDurationInSeconds == -1.0 ||
 					shortestAudioDurationInSeconds >
@@ -23648,7 +23584,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 			else
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"It is not possible to build a slideshow with a media that "
 					"is not an Image-Audio" +
 					", _processorIdentifier: " +
@@ -23656,7 +23592,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", referenceContentType: " +
 					MMSEngineDBFacade::toString(referenceContentType);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -23712,8 +23648,8 @@ void MMSEngineProcessor::manageSlideShowTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageSlideShowTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageSlideShowTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -23725,8 +23661,8 @@ void MMSEngineProcessor::manageSlideShowTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageSlideShowTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageSlideShowTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -23739,7 +23675,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 
 void MMSEngineProcessor::manageConcatThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -23753,8 +23689,8 @@ void MMSEngineProcessor::manageConcatThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "manageConcatThread" +
+		SPDLOG_INFO(
+			string() + "manageConcatThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -23764,11 +23700,11 @@ void MMSEngineProcessor::manageConcatThread(
 		if (dependencies.size() < 1)
 		{
 			string errorMessage =
-				__FILEREF__ + "No enough media to be concatenated" +
+				string() + "No enough media to be concatenated" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -23798,8 +23734,8 @@ void MMSEngineProcessor::manageConcatThread(
 			tie(key, referenceContentType, dependencyType,
 				stopIfReferenceProcessingError) = keyAndDependencyType;
 
-			_logger->info(
-				__FILEREF__ + "manageConcatThread" +
+			SPDLOG_INFO(
+				string() + "manageConcatThread" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", key: " + to_string(key)
@@ -23892,13 +23828,13 @@ void MMSEngineProcessor::manageConcatThread(
 				if (lastUserData != "")
 				{
 					// try to retrieve time codes
-					Json::Value sourceUserDataRoot =
-						JSONUtils::toJson(ingestionJobKey, -1, lastUserData);
+					json sourceUserDataRoot =
+						JSONUtils::toJson(lastUserData);
 
 					string field = "mmsData";
 					if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
 					{
-						Json::Value sourceMmsDataRoot =
+						json sourceMmsDataRoot =
 							sourceUserDataRoot[field];
 
 						string utcStartTimeInMilliSecsField =
@@ -23933,7 +23869,7 @@ void MMSEngineProcessor::manageConcatThread(
 					concatContentType != MMSEngineDBFacade::ContentType::Audio)
 				{
 					string errorMessage =
-						__FILEREF__ +
+						string() +
 						"It is not possible to concatenate a media that is not "
 						"video or audio" +
 						", _processorIdentifier: " +
@@ -23941,7 +23877,7 @@ void MMSEngineProcessor::manageConcatThread(
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", concatContentType: " +
 						MMSEngineDBFacade::toString(concatContentType);
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -23951,7 +23887,7 @@ void MMSEngineProcessor::manageConcatThread(
 				if (concatContentType != contentType)
 				{
 					string errorMessage =
-						__FILEREF__ +
+						string() +
 						"Not all the References have the same ContentType" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
@@ -23960,7 +23896,7 @@ void MMSEngineProcessor::manageConcatThread(
 						MMSEngineDBFacade::toString(contentType) +
 						", concatContentType: " +
 						MMSEngineDBFacade::toString(concatContentType);
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -23999,12 +23935,12 @@ void MMSEngineProcessor::manageConcatThread(
 				if (videoTracks.size() == 0)
 				{
 					string errorMessage =
-						__FILEREF__ + "No video track are present" +
+						string() + "No video track are present" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey);
 
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -24019,8 +23955,8 @@ void MMSEngineProcessor::manageConcatThread(
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "manageConcatThread, retrying time code" +
+		SPDLOG_INFO(
+			string() + "manageConcatThread, retrying time code" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", utcStartTimeInMilliSecs: " + to_string(utcStartTimeInMilliSecs) +
@@ -24032,13 +23968,13 @@ void MMSEngineProcessor::manageConcatThread(
 			if (lastUserData != "")
 			{
 				// try to retrieve time codes
-				Json::Value sourceUserDataRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, lastUserData);
+				json sourceUserDataRoot =
+					JSONUtils::toJson(lastUserData);
 
 				string field = "mmsData";
 				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
 				{
-					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
+					json sourceMmsDataRoot = sourceUserDataRoot[field];
 
 					string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
 					// string utcChunkEndTimeField = "utcChunkEndTime";
@@ -24064,13 +24000,13 @@ void MMSEngineProcessor::manageConcatThread(
 			// parametersRoot
 			if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
 			{
-				Json::Value destUserDataRoot;
+				json destUserDataRoot;
 
 				/*
 				{
 					string json = JSONUtils::toString(parametersRoot);
 
-					_logger->info(__FILEREF__ + "manageConcatThread"
+					SPDLOG_INFO(string() + "manageConcatThread"
 						+ ", _processorIdentifier: " +
 				to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -24083,7 +24019,7 @@ void MMSEngineProcessor::manageConcatThread(
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
 
-				Json::Value destMmsDataRoot;
+				json destMmsDataRoot;
 
 				field = "mmsData";
 				if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
@@ -24091,12 +24027,12 @@ void MMSEngineProcessor::manageConcatThread(
 
 				field = "utcStartTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-					destMmsDataRoot.removeMember(field);
+					destMmsDataRoot.erase(field);
 				destMmsDataRoot[field] = utcStartTimeInMilliSecs;
 
 				field = "utcEndTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-					destMmsDataRoot.removeMember(field);
+					destMmsDataRoot.erase(field);
 				destMmsDataRoot[field] = utcEndTimeInMilliSecs;
 
 				// next statements will provoke an std::exception in case
@@ -24122,13 +24058,13 @@ void MMSEngineProcessor::manageConcatThread(
 		if (extensionIndex == string::npos)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"No fileFormat (extension of the file) found in "
 				"sourcePhysicalPath" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", sourcePhysicalPaths.front(): " + sourcePhysicalPaths.front();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -24146,8 +24082,8 @@ void MMSEngineProcessor::manageConcatThread(
 		if (sourcePhysicalPaths.size() == 1)
 		{
 			string sourcePhysicalPath = sourcePhysicalPaths.at(0);
-			_logger->info(
-				__FILEREF__ + "Coping" +
+			SPDLOG_INFO(
+				string() + "Coping" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", sourcePhysicalPath: " + sourcePhysicalPath +
@@ -24161,7 +24097,7 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		else
 		{
-			FFMpeg ffmpeg(_configuration, _logger);
+			FFMpeg ffmpeg(_configurationRoot, _logger);
 			ffmpeg.concat(
 				ingestionJobKey,
 				concatContentType == MMSEngineDBFacade::ContentType::Video
@@ -24171,8 +24107,8 @@ void MMSEngineProcessor::manageConcatThread(
 			);
 		}
 
-		_logger->info(
-			__FILEREF__ + "generateConcatMediaToIngest done" +
+		SPDLOG_INFO(
+			string() + "generateConcatMediaToIngest done" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", concatenatedMediaPathName: " + concatenatedMediaPathName
@@ -24197,8 +24133,8 @@ void MMSEngineProcessor::manageConcatThread(
 					extraSecondsToCutWhenMaxDurationIsReached = 0.0;
 			}
 		}
-		_logger->info(
-			__FILEREF__ + "duration check" +
+		SPDLOG_INFO(
+			string() + "duration check" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", _ingestionJobKey: " + to_string(ingestionJobKey) +
 			", maxDurationInSeconds: " + to_string(maxDurationInSeconds) +
@@ -24207,22 +24143,22 @@ void MMSEngineProcessor::manageConcatThread(
 		);
 		if (maxDurationInSeconds != 0.0)
 		{
-			tuple<int64_t, long, Json::Value> mediaInfoDetails;
+			tuple<int64_t, long, json> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>>
 				videoTracks;
 			vector<tuple<int, int64_t, string, long, int, long, string>>
 				audioTracks;
 			int64_t durationInMilliSeconds;
 
-			_logger->info(
-				__FILEREF__ + "Calling ffmpeg.getMediaInfo" +
+			SPDLOG_INFO(
+				string() + "Calling ffmpeg.getMediaInfo" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", _ingestionJobKey: " + to_string(ingestionJobKey) +
 				", concatenatedMediaPathName: " + concatenatedMediaPathName
 			);
 			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = true;
-			FFMpeg ffmpeg(_configuration, _logger);
+			FFMpeg ffmpeg(_configurationRoot, _logger);
 			mediaInfoDetails = ffmpeg.getMediaInfo(
 				ingestionJobKey, isMMSAssetPathName, timeoutInSeconds,
 				concatenatedMediaPathName, videoTracks, audioTracks
@@ -24233,8 +24169,8 @@ void MMSEngineProcessor::manageConcatThread(
 			//	ignore, ignore, ignore, ignore) = mediaInfo;
 			tie(durationInMilliSeconds, ignore, ignore) = mediaInfoDetails;
 
-			_logger->info(
-				__FILEREF__ + "duration check" +
+			SPDLOG_INFO(
+				string() + "duration check" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", _ingestionJobKey: " + to_string(ingestionJobKey) +
 				", durationInMilliSeconds: " +
@@ -24275,8 +24211,8 @@ void MMSEngineProcessor::manageConcatThread(
 				}
 				int framesNumber = -1;
 
-				_logger->info(
-					__FILEREF__ + "Calling ffmpeg.cut" +
+				SPDLOG_INFO(
+					string() + "Calling ffmpeg.cut" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", _ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -24299,8 +24235,8 @@ void MMSEngineProcessor::manageConcatThread(
 					framesNumber, cutMediaPathName
 				);
 
-				_logger->info(
-					__FILEREF__ + "cut done" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "cut done" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", cutMediaPathName: " + cutMediaPathName
@@ -24308,8 +24244,8 @@ void MMSEngineProcessor::manageConcatThread(
 
 				localSourceFileName = localCutSourceFileName;
 
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Remove file" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", concatenatedMediaPathName: " + concatenatedMediaPathName
@@ -24382,8 +24318,8 @@ void MMSEngineProcessor::manageConcatThread(
 					dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 				_multiEventsSet->addEvent(event);
 
-				_logger->info(
-					__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" +
+				SPDLOG_INFO(
+					string() + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", getEventKey().first: " +
@@ -24396,15 +24332,15 @@ void MMSEngineProcessor::manageConcatThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageConcatThread failed" +
+		SPDLOG_ERROR(
+			string() + "manageConcatThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -24420,8 +24356,8 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -24429,8 +24365,8 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -24443,14 +24379,14 @@ void MMSEngineProcessor::manageConcatThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageConcatThread failed" +
+		SPDLOG_ERROR(
+			string() + "manageConcatThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -24466,8 +24402,8 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -24475,8 +24411,8 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -24491,7 +24427,7 @@ void MMSEngineProcessor::manageConcatThread(
 
 void MMSEngineProcessor::manageCutMediaThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -24505,8 +24441,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "manageCutMediaThread" +
+		SPDLOG_INFO(
+			string() + "manageCutMediaThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -24516,11 +24452,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 		if (dependencies.size() != 1)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong number of media to be cut" +
+				string() + "Wrong number of media to be cut" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -24570,13 +24506,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 			referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"It is not possible to cut a media that is not video or audio" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", contentType: " +
 				MMSEngineDBFacade::toString(referenceContentType);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -24606,12 +24542,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 					if (videoTracks.size() == 0)
 					{
 						string errorMessage =
-							__FILEREF__ + "No video track are present" +
+							string() + "No video track are present" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey);
 
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -24645,31 +24581,31 @@ void MMSEngineProcessor::manageCutMediaThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed" +
+					string() + "_mmsEngineDBFacade->getVideoDetails failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			catch (exception &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed" +
+					string() + "_mmsEngineDBFacade->getVideoDetails failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "manageCutMediaThread frame rate" +
+		SPDLOG_INFO(
+			string() + "manageCutMediaThread frame rate" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", forcedAvgFrameRate" + forcedAvgFrameRate
@@ -24684,12 +24620,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -24705,7 +24641,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					// because we cannot use the other option (FramesNumber)
 
 					string errorMessage =
-						__FILEREF__ +
+						string() +
 						"Field is not present or it is null, endTimeInSeconds "
 						"in case of Audio is mandatory because we cannot use "
 						"the other option (FramesNumber)" +
@@ -24713,7 +24649,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", Field: " + field;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -24834,8 +24770,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 
-				Json::Value metaDataRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, metaData);
+				json metaDataRoot =
+					JSONUtils::toJson(metaData);
 
 				string timeCode = JSONUtils::asString(
 					metaDataRoot, timesRelativeToMetaDataField, ""
@@ -24942,8 +24878,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					endTime = to_string(newEndTimeInSeconds);
 
-					_logger->error(
-						__FILEREF__ + "endTime was changed" +
+					SPDLOG_ERROR(
+						string() + "endTime was changed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -24962,8 +24898,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 			{
 				startTime = "0.0";
 
-				_logger->info(
-					__FILEREF__ +
+				SPDLOG_INFO(
+					string() +
 					"startTime was changed to 0.0 because it is negative" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
@@ -24984,7 +24920,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			if (startTimeInSeconds > endTimeInSeconds)
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"Cut was not done because startTimeInSeconds is bigger "
 					"than endTimeInSeconds" +
 					", _processorIdentifier: " +
@@ -24996,7 +24932,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					", endTimeInSeconds: " + to_string(endTimeInSeconds) +
 					", sourceDurationInMilliSecs: " +
 					to_string(sourceDurationInMilliSecs);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -25009,8 +24945,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 					{
 						endTime = to_string(sourceDurationInMilliSecs / 1000);
 
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"endTimeInSeconds was changed to "
 							"durationInMilliSeconds" +
 							", _processorIdentifier: " +
@@ -25030,7 +24966,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					else
 					{
 						string errorMessage =
-							__FILEREF__ +
+							string() +
 							"Cut was not done because endTimeInSeconds is "
 							"bigger than durationInMilliSeconds (input media)" +
 							", _processorIdentifier: " +
@@ -25044,7 +24980,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 							to_string(endTimeInSeconds) +
 							", sourceDurationInMilliSecs (input media): " +
 							to_string(sourceDurationInMilliSecs);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -25060,8 +24996,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 			if (framesNumber == -1 && userData != "")
 			{
 				// try to retrieve time codes
-				Json::Value sourceUserDataRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, userData);
+				json sourceUserDataRoot =
+					JSONUtils::toJson(userData);
 
 				int64_t utcStartTimeInMilliSecs = -1;
 				int64_t utcEndTimeInMilliSecs = -1;
@@ -25069,7 +25005,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				string field = "mmsData";
 				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
 				{
-					Json::Value sourceMmsDataRoot = sourceUserDataRoot[field];
+					json sourceMmsDataRoot = sourceUserDataRoot[field];
 
 					string utcStartTimeInMilliSecsField =
 						"utcStartTimeInMilliSecs";
@@ -25141,8 +25077,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 		string cutType =
 			JSONUtils::asString(parametersRoot, field, "KeyFrameSeeking");
 
-		_logger->info(
-			__FILEREF__ + "manageCutMediaThread new start/end" +
+		SPDLOG_INFO(
+			string() + "manageCutMediaThread new start/end" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", cutType: " +
 			cutType + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey) +
@@ -25163,8 +25099,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 			field = "outputFileFormat";
 			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
-			_logger->info(
-				__FILEREF__ + "1 manageCutMediaThread new start/end" +
+			SPDLOG_INFO(
+				string() + "1 manageCutMediaThread new start/end" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey)
 			);
@@ -25189,8 +25125,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 				fileFormat = outputFileFormat;
 			}
 
-			_logger->info(
-				__FILEREF__ + "manageCutMediaThread file format" +
+			SPDLOG_INFO(
+				string() + "manageCutMediaThread file format" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", fileFormat: " + fileFormat
@@ -25199,13 +25135,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 			if (newUtcStartTimeInMilliSecs != -1 &&
 				newUtcEndTimeInMilliSecs != -1)
 			{
-				Json::Value destUserDataRoot;
+				json destUserDataRoot;
 
 				field = "userData";
 				if (JSONUtils::isMetadataPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
 
-				Json::Value destMmsDataRoot;
+				json destMmsDataRoot;
 
 				field = "mmsData";
 				if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
@@ -25213,7 +25149,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				field = "utcStartTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-					destMmsDataRoot.removeMember(field);
+					destMmsDataRoot.erase(field);
 				destMmsDataRoot[field] = newUtcStartTimeInMilliSecs;
 
 				field = "utcStartTimeInMilliSecs_str";
@@ -25232,7 +25168,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				field = "utcEndTimeInMilliSecs";
 				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-					destMmsDataRoot.removeMember(field);
+					destMmsDataRoot.erase(field);
 				destMmsDataRoot[field] = newUtcEndTimeInMilliSecs;
 
 				field = "utcEndTimeInMilliSecs_str";
@@ -25256,8 +25192,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 				parametersRoot[field] = destUserDataRoot;
 			}
 
-			_logger->info(
-				__FILEREF__ + "manageCutMediaThread user data management" +
+			SPDLOG_INFO(
+				string() + "manageCutMediaThread user data management" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey)
 			);
@@ -25271,7 +25207,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			string cutMediaPathName =
 				workspaceIngestionRepository + "/" + localSourceFileName;
 
-			FFMpeg ffmpeg(_configuration, _logger);
+			FFMpeg ffmpeg(_configurationRoot, _logger);
 			ffmpeg.cutWithoutEncoding(
 				ingestionJobKey, sourceAssetPathName,
 				referenceContentType == MMSEngineDBFacade::ContentType::Video
@@ -25283,8 +25219,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 				startTime, endTime, framesNumber, cutMediaPathName
 			);
 
-			_logger->info(
-				__FILEREF__ + "cut done" +
+			SPDLOG_INFO(
+				string() + "cut done" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", cutMediaPathName: " + cutMediaPathName
@@ -25354,8 +25290,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 					dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 				_multiEventsSet->addEvent(event);
 
-				_logger->info(
-					__FILEREF__ +
+				SPDLOG_INFO(
+					string() +
 					"addEvent: EVENT_TYPE (LOCALASSETINGESTIONEVENT)" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
@@ -25383,7 +25319,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				);
 
 			int64_t encodingProfileKey;
-			Json::Value encodingProfileDetailsRoot;
+			json encodingProfileDetailsRoot;
 			{
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";
@@ -25410,12 +25346,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 				else
 				{
 					string errorMessage =
-						__FILEREF__ +
+						string() +
 						"Both fields are not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", Field: " + keyField + ", Field: " + labelField;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -25433,9 +25369,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					tie(ignore, ignore, ignore, jsonEncodingProfile) =
 						encodingProfileDetails;
 
-					encodingProfileDetailsRoot = JSONUtils::toJson(
-						ingestionJobKey, -1, jsonEncodingProfile
-					);
+					encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
 				}
 			}
 
@@ -25506,15 +25440,15 @@ void MMSEngineProcessor::manageCutMediaThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageCutMediaThread failed" +
+		SPDLOG_ERROR(
+			string() + "manageCutMediaThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -25531,8 +25465,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -25540,8 +25474,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -25554,14 +25488,14 @@ void MMSEngineProcessor::manageCutMediaThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageCutMediaThread failed" +
+		SPDLOG_ERROR(
+			string() + "manageCutMediaThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -25577,8 +25511,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -25586,8 +25520,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -25602,7 +25536,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 void MMSEngineProcessor::manageEncodeTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -25613,11 +25547,11 @@ void MMSEngineProcessor::manageEncodeTask(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ + "No media received to be encoded" +
+				string() + "No media received to be encoded" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -25651,7 +25585,7 @@ void MMSEngineProcessor::manageEncodeTask(
 		}
 
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot;
+		json encodingProfileDetailsRoot;
 		{
 			// This task shall contain EncodingProfileKey or
 			// EncodingProfileLabel. We cannot have EncodingProfilesSetKey
@@ -25679,12 +25613,12 @@ void MMSEngineProcessor::manageEncodeTask(
 			else
 			{
 				string errorMessage =
-					__FILEREF__ + "Both fields are not present or it is null" +
+					string() + "Both fields are not present or it is null" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + keyField +
 					", Field: " + labelField;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -25703,7 +25637,7 @@ void MMSEngineProcessor::manageEncodeTask(
 					encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 		}
 
@@ -25748,7 +25682,7 @@ void MMSEngineProcessor::manageEncodeTask(
 		//of encodings to do!!! 	We should save into DB also the specific
 		//encoding it is doing?!?!??! 	Also che encoding progress would not have
 		//sense in the "sequential/queue" scenario
-		Json::Value sourcesToBeEncodedRoot(Json::arrayValue);
+		json sourcesToBeEncodedRoot = json::array();
 		{
 			// 2022-12-10: next for and the sourcesToBeEncodedRoot structure
 			// sarebbe inutile per
@@ -25768,8 +25702,8 @@ void MMSEngineProcessor::manageEncodeTask(
 				int64_t sourceDurationInMilliSecs;
 				string sourceRelativePath;
 				string sourceFileExtension;
-				Json::Value videoTracksRoot(Json::arrayValue);
-				Json::Value audioTracksRoot(Json::arrayValue);
+				json videoTracksRoot = json::array();
+				json audioTracksRoot = json::array();
 				string sourceTranscoderStagingAssetPathName;
 				string
 					encodedTranscoderStagingAssetPathName; // used in case of
@@ -25795,13 +25729,13 @@ void MMSEngineProcessor::manageEncodeTask(
 					if (contentType != referenceContentType)
 					{
 						string errorMessage =
-							__FILEREF__ + "Wrong content type" +
+							string() + "Wrong content type" +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", contentType: " +
 							MMSEngineDBFacade::toString(contentType) +
 							", referenceContentType: " +
 							MMSEngineDBFacade::toString(referenceContentType);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -25822,7 +25756,7 @@ void MMSEngineProcessor::manageEncodeTask(
 								);
 
 							string errorMessage =
-								__FILEREF__ +
+								string() +
 								"Content profile is already present" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
@@ -25832,7 +25766,7 @@ void MMSEngineProcessor::manageEncodeTask(
 								to_string(sourceMediaItemKey) +
 								", encodingProfileKey: " +
 								to_string(encodingProfileKey);
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -25944,12 +25878,12 @@ void MMSEngineProcessor::manageEncodeTask(
 
 								if (trackIndex != -1)
 								{
-									Json::Value videoTrackRoot;
+									json videoTrackRoot;
 
 									string field = "trackIndex";
 									videoTrackRoot[field] = trackIndex;
 
-									videoTracksRoot.append(videoTrackRoot);
+									videoTracksRoot.push_back(videoTrackRoot);
 								}
 							}
 
@@ -25965,7 +25899,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 								if (trackIndex != -1 && language != "")
 								{
-									Json::Value audioTrackRoot;
+									json audioTrackRoot;
 
 									string field = "trackIndex";
 									audioTrackRoot[field] = trackIndex;
@@ -25973,7 +25907,7 @@ void MMSEngineProcessor::manageEncodeTask(
 									field = "language";
 									audioTrackRoot[field] = language;
 
-									audioTracksRoot.append(audioTrackRoot);
+									audioTracksRoot.push_back(audioTrackRoot);
 								}
 							}
 						}
@@ -26005,7 +25939,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 								if (trackIndex != -1 && language != "")
 								{
-									Json::Value audioTrackRoot;
+									json audioTrackRoot;
 
 									string field = "trackIndex";
 									audioTrackRoot[field] = trackIndex;
@@ -26013,13 +25947,13 @@ void MMSEngineProcessor::manageEncodeTask(
 									field = "language";
 									audioTrackRoot[field] = language;
 
-									audioTracksRoot.append(audioTrackRoot);
+									audioTracksRoot.push_back(audioTrackRoot);
 								}
 							}
 						}
 					}
 
-					Json::Value sourceRoot;
+					json sourceRoot;
 
 					string field = "stopIfReferenceProcessingError";
 					sourceRoot[field] = stopIfReferenceProcessingError;
@@ -26063,12 +25997,12 @@ void MMSEngineProcessor::manageEncodeTask(
 					field = "encodedNFSStagingAssetPathName";
 					sourceRoot[field] = encodedNFSStagingAssetPathName;
 
-					sourcesToBeEncodedRoot.append(sourceRoot);
+					sourcesToBeEncodedRoot.push_back(sourceRoot);
 				}
 				catch (runtime_error &e)
 				{
-					_logger->error(
-						__FILEREF__ + "processing media input failed" +
+					SPDLOG_ERROR(
+						string() + "processing media input failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -26091,10 +26025,10 @@ void MMSEngineProcessor::manageEncodeTask(
 			//	per il MediaItem
 
 			string errorMessage =
-				__FILEREF__ + "Content profile is already present" +
+				string() + "Content profile is already present" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -26110,8 +26044,8 @@ void MMSEngineProcessor::manageEncodeTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageEncodeTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageEncodeTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -26123,8 +26057,8 @@ void MMSEngineProcessor::manageEncodeTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageEncodeTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageEncodeTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -26137,7 +26071,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 void MMSEngineProcessor::manageVideoSpeedTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -26148,11 +26082,11 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 		if (dependencies.size() != 1)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong media number to be encoded" +
+				string() + "Wrong media number to be encoded" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -26192,7 +26126,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			stopIfReferenceProcessingError) = dependencyInfo;
 
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		json encodingProfileDetailsRoot = nullptr;
 		{
 			// This task shall contain EncodingProfileKey or
 			// EncodingProfileLabel. We cannot have EncodingProfilesSetKey
@@ -26233,7 +26167,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 					encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 		}
 
@@ -26306,8 +26240,8 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageVideoSpeedTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageVideoSpeedTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -26319,8 +26253,8 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageVideoSpeedTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageVideoSpeedTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -26333,7 +26267,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 
 void MMSEngineProcessor::manageAddSilentAudioTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -26344,11 +26278,11 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong media number to be encoded" +
+				string() + "Wrong media number to be encoded" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -26365,7 +26299,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 			);
 
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		json encodingProfileDetailsRoot = nullptr;
 		{
 			// This task shall contain EncodingProfileKey or
 			// EncodingProfileLabel. We cannot have EncodingProfilesSetKey
@@ -26408,11 +26342,11 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 					encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 		}
 
-		Json::Value sourcesRoot(Json::arrayValue);
+		json sourcesRoot = json::array();
 		int dependencyIndex = 0;
 		for (tuple<
 				 int64_t, MMSEngineDBFacade::ContentType,
@@ -26445,7 +26379,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 			string encodedFileName =
 				to_string(ingestionJobKey) + "_" +
 				to_string(dependencyIndex++) + "_addSilentAudio" +
-				(encodingProfileDetailsRoot == Json::nullValue
+				(encodingProfileDetailsRoot == nullptr
 					 ? sourceFileExtension
 					 : getEncodedFileExtensionByEncodingProfile(
 						   encodingProfileDetailsRoot
@@ -26482,7 +26416,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 					encodedFileName;
 			}
 
-			Json::Value sourceRoot;
+			json sourceRoot;
 			sourceRoot["stopIfReferenceProcessingError"] =
 				stopIfReferenceProcessingError;
 			sourceRoot["sourceMediaItemKey"] = sourceMediaItemKey;
@@ -26499,7 +26433,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 			sourceRoot["encodedNFSStagingAssetPathName"] =
 				encodedNFSStagingAssetPathName.string();
 
-			sourcesRoot.append(sourceRoot);
+			sourcesRoot.push_back(sourceRoot);
 		}
 
 		_mmsEngineDBFacade->addEncoding_AddSilentAudio(
@@ -26510,8 +26444,8 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageAddSilentAudioTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageAddSilentAudioTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -26523,8 +26457,8 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageAddSilentAudioTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageAddSilentAudioTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -26537,7 +26471,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 
 void MMSEngineProcessor::managePictureInPictureTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -26548,11 +26482,11 @@ void MMSEngineProcessor::managePictureInPictureTask(
 		if (dependencies.size() != 2)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong number of dependencies" +
+				string() + "Wrong number of dependencies" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -26697,7 +26631,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 		}
 
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		json encodingProfileDetailsRoot = nullptr;
 		{
 			// This task shall contain EncodingProfileKey or
 			// EncodingProfileLabel. We cannot have EncodingProfilesSetKey
@@ -26739,7 +26673,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 					encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 		}
 
@@ -26800,8 +26734,8 @@ void MMSEngineProcessor::managePictureInPictureTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "managePictureInPictureTask failed" +
+		SPDLOG_ERROR(
+			string() + "managePictureInPictureTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -26813,8 +26747,8 @@ void MMSEngineProcessor::managePictureInPictureTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "managePictureInPictureTask failed" +
+		SPDLOG_ERROR(
+			string() + "managePictureInPictureTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -26827,7 +26761,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
 void MMSEngineProcessor::manageIntroOutroOverlayTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -26838,11 +26772,11 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		if (dependencies.size() != 3)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong number of dependencies" +
+				string() + "Wrong number of dependencies" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -26937,7 +26871,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 			outroStopIfReferenceProcessingError) = outroDependencyInfo;
 
 		int64_t encodingProfileKey;
-		Json::Value encodingProfileDetailsRoot;
+		json encodingProfileDetailsRoot;
 		{
 			string keyField = "encodingProfileKey";
 			string labelField = "encodingProfileLabel";
@@ -26962,11 +26896,11 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 			else
 			{
 				string errorMessage =
-					__FILEREF__ + "Both fields are not present or it is null" +
+					string() + "Both fields are not present or it is null" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", Field: " + keyField +
 					", Field: " + labelField;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -26985,7 +26919,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 					encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 		}
 
@@ -27052,8 +26986,8 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageIntroOutroOverlayTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageIntroOutroOverlayTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -27065,8 +26999,8 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageIntroOutroOverlayTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageIntroOutroOverlayTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -27079,7 +27013,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 
 void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -27090,11 +27024,11 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 		if (dependencies.size() != 2)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong number of dependencies" +
+				string() + "Wrong number of dependencies" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -27212,7 +27146,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 		else
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"OverlayImageOnVideo is not receiving one Video and one Image" +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", referenceContentType_1: " +
@@ -27224,13 +27158,13 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 				", sourceMediaItemKey_2: " + to_string(sourceMediaItemKey_2) +
 				", sourcePhysicalPathKey_2: " +
 				to_string(sourcePhysicalPathKey_2);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		json encodingProfileDetailsRoot = nullptr;
 		{
 			string keyField = "encodingProfileKey";
 			string labelField = "encodingProfileLabel";
@@ -27268,7 +27202,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 					encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 		}
 
@@ -27328,8 +27262,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageOverlayImageOnVideoTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageOverlayImageOnVideoTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -27341,8 +27275,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageOverlayImageOnVideoTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageOverlayImageOnVideoTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -27355,7 +27289,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
 void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -27366,11 +27300,11 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 		if (dependencies.size() != 1)
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong number of dependencies" +
+				string() + "Wrong number of dependencies" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -27413,7 +27347,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			ignore) = dependencyInfo;
 
 		int64_t encodingProfileKey = -1;
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		json encodingProfileDetailsRoot = nullptr;
 		{
 			string keyField = "encodingProfileKey";
 			string labelField = "encodingProfileLabel";
@@ -27451,7 +27385,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 					encodingProfileDetails;
 
 				encodingProfileDetailsRoot =
-					JSONUtils::toJson(ingestionJobKey, -1, jsonEncodingProfile);
+					JSONUtils::toJson(jsonEncodingProfile);
 			}
 		}
 
@@ -27494,8 +27428,8 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 				encodedFileName;
 		}
 
-		_logger->info(
-			__FILEREF__ + "addEncoding_OverlayTextOnVideoJob" +
+		SPDLOG_INFO(
+			string() + "addEncoding_OverlayTextOnVideoJob" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", encodingPriority: " +
 			MMSEngineDBFacade::toString(encodingPriority)
@@ -27516,8 +27450,8 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageOverlayTextOnVideoTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageOverlayTextOnVideoTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -27529,8 +27463,8 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageOverlayTextOnVideoTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageOverlayTextOnVideoTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -27543,7 +27477,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
 void MMSEngineProcessor::emailNotificationThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot,
+	shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>>
@@ -27559,8 +27493,8 @@ void MMSEngineProcessor::emailNotificationThread(
 	{
 		string sParameters = JSONUtils::toString(parametersRoot);
 
-		_logger->info(
-			__FILEREF__ + "emailNotificationThread" +
+		SPDLOG_INFO(
+			string() + "emailNotificationThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -27686,7 +27620,7 @@ void MMSEngineProcessor::emailNotificationThread(
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey);
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(string() + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -27700,13 +27634,13 @@ void MMSEngineProcessor::emailNotificationThread(
 			string field = "references";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				Json::Value referencesRoot = parametersRoot[field];
+				json referencesRoot = parametersRoot[field];
 				for (int referenceIndex = 0;
 					 referenceIndex < referencesRoot.size(); referenceIndex++)
 				{
 					try
 					{
-						Json::Value referenceRoot =
+						json referenceRoot =
 							referencesRoot[referenceIndex];
 						field = "ingestionJobKey";
 						if (JSONUtils::isMetadataPresent(referenceRoot, field))
@@ -27749,9 +27683,7 @@ void MMSEngineProcessor::emailNotificationThread(
 								MMSEngineDBFacade::IngestionType::
 									CheckStreaming)
 							{
-								Json::Value parametersRoot = JSONUtils::toJson(
-									ingestionJobKey, -1, parameters
-								);
+								json parametersRoot = JSONUtils::toJson(parameters);
 
 								string inputType;
 								field = "inputType";
@@ -27824,7 +27756,7 @@ void MMSEngineProcessor::emailNotificationThread(
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey);
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(string() + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -27835,10 +27767,10 @@ void MMSEngineProcessor::emailNotificationThread(
 		string field = "configurationLabel";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
-			string errorMessage = __FILEREF__ +
+			string errorMessage = string() +
 								  "Field is not present or it is null" +
 								  ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -27857,19 +27789,19 @@ void MMSEngineProcessor::emailNotificationThread(
 		field = "UserSubstitutions";
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
-			Json::Value userSubstitutionsRoot = parametersRoot[field];
+			json userSubstitutionsRoot = parametersRoot[field];
 
 			for (int userSubstitutionIndex = 0;
 				 userSubstitutionIndex < userSubstitutionsRoot.size();
 				 userSubstitutionIndex++)
 			{
-				Json::Value userSubstitutionRoot =
+				json userSubstitutionRoot =
 					userSubstitutionsRoot[userSubstitutionIndex];
 
 				field = "ToBeReplaced";
 				if (!JSONUtils::isMetadataPresent(userSubstitutionRoot, field))
 				{
-					string errorMessage = __FILEREF__ +
+					string errorMessage = string() +
 										  "Field is not present or it is null" +
 										  ", Field: " + field;
 					_logger->warn(errorMessage);
@@ -27882,7 +27814,7 @@ void MMSEngineProcessor::emailNotificationThread(
 				field = "ReplaceWith";
 				if (!JSONUtils::isMetadataPresent(userSubstitutionRoot, field))
 				{
-					string errorMessage = __FILEREF__ +
+					string errorMessage = string() +
 										  "Field is not present or it is null" +
 										  ", Field: " + field;
 					_logger->warn(errorMessage);
@@ -27892,8 +27824,8 @@ void MMSEngineProcessor::emailNotificationThread(
 				string strToReplace =
 					JSONUtils::asString(userSubstitutionRoot, field, "");
 
-				_logger->info(
-					__FILEREF__ + "User substitution" +
+				SPDLOG_INFO(
+					string() + "User substitution" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -27917,8 +27849,8 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 		else
 		{
-			_logger->info(
-				__FILEREF__ + "NO User substitution" +
+			SPDLOG_INFO(
+				string() + "NO User substitution" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey)
 			);
@@ -27995,8 +27927,8 @@ void MMSEngineProcessor::emailNotificationThread(
 		// emailSender.sendEmail(emailAddresses, subject, emailBody,
 		// useMMSCCToo);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
@@ -28009,15 +27941,15 @@ void MMSEngineProcessor::emailNotificationThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "sendEmail failed" +
+		SPDLOG_ERROR(
+			string() + "sendEmail failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -28033,8 +27965,8 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -28042,8 +27974,8 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -28054,14 +27986,14 @@ void MMSEngineProcessor::emailNotificationThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "sendEmail failed" +
+		SPDLOG_ERROR(
+			string() + "sendEmail failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -28077,8 +28009,8 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -28086,8 +28018,8 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -28100,7 +28032,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 void MMSEngineProcessor::checkStreamingThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace, Json::Value parametersRoot
+	shared_ptr<Workspace> workspace, json parametersRoot
 )
 {
 	ThreadsStatistic::ThreadStatistic threadStatistic(
@@ -28110,8 +28042,8 @@ void MMSEngineProcessor::checkStreamingThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "checkStreamingThread" +
+		SPDLOG_INFO(
+			string() + "checkStreamingThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -28121,10 +28053,10 @@ void MMSEngineProcessor::checkStreamingThread(
 		string field = "inputType";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
-			string errorMessage = __FILEREF__ +
+			string errorMessage = string() +
 								  "Field is not present or it is null" +
 								  ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -28136,10 +28068,10 @@ void MMSEngineProcessor::checkStreamingThread(
 			string field = "channelConfigurationLabel";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ +
+				string errorMessage = string() +
 									  "Field is not present or it is null" +
 									  ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -28168,10 +28100,10 @@ void MMSEngineProcessor::checkStreamingThread(
 			string field = "streamingName";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ +
+				string errorMessage = string() +
 									  "Field is not present or it is null" +
 									  ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -28181,18 +28113,18 @@ void MMSEngineProcessor::checkStreamingThread(
 			field = "streamingUrl";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ +
+				string errorMessage = string() +
 									  "Field is not present or it is null" +
 									  ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			streamingUrl = JSONUtils::asString(parametersRoot, field, "");
 		}
 
-		_logger->info(
-			__FILEREF__ + "checkStreamingThread" +
+		SPDLOG_INFO(
+			string() + "checkStreamingThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", _ingestionJobKey: " + to_string(ingestionJobKey) +
 			", inputType: " + inputType + ", streamingUrl: " + streamingUrl
@@ -28200,28 +28132,28 @@ void MMSEngineProcessor::checkStreamingThread(
 
 		if (streamingUrl == "")
 		{
-			string errorMessage = __FILEREF__ + "streamingUrl is wrong" +
+			string errorMessage = string() + "streamingUrl is wrong" +
 								  ", streamingUrl: " + streamingUrl;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
 		{
-			_logger->info(
-				__FILEREF__ + "Calling ffmpeg.getMediaInfo" +
+			SPDLOG_INFO(
+				string() + "Calling ffmpeg.getMediaInfo" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", _ingestionJobKey: " + to_string(ingestionJobKey) +
 				", streamingUrl: " + streamingUrl
 			);
 			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = false;
-			tuple<int64_t, long, Json::Value> mediaInfoDetails;
+			tuple<int64_t, long, json> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>>
 				videoTracks;
 			vector<tuple<int, int64_t, string, long, int, long, string>>
 				audioTracks;
-			FFMpeg ffmpeg(_configuration, _logger);
+			FFMpeg ffmpeg(_configurationRoot, _logger);
 			mediaInfoDetails = ffmpeg.getMediaInfo(
 				ingestionJobKey, isMMSAssetPathName, timeoutInSeconds,
 				streamingUrl, videoTracks, audioTracks
@@ -28238,8 +28170,8 @@ void MMSEngineProcessor::checkStreamingThread(
 			);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
@@ -28252,15 +28184,15 @@ void MMSEngineProcessor::checkStreamingThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "checkStreamingThread failed" +
+		SPDLOG_ERROR(
+			string() + "checkStreamingThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -28276,8 +28208,8 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -28285,8 +28217,8 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -28297,14 +28229,14 @@ void MMSEngineProcessor::checkStreamingThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "checkStreamingThread failed" +
+		SPDLOG_ERROR(
+			string() + "checkStreamingThread failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -28320,8 +28252,8 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + re.what()
@@ -28329,8 +28261,8 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", errorMessage: " + ex.what()
@@ -28343,7 +28275,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -28354,13 +28286,13 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 		if (dependencies.size() != 2)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"No configured Two Media in order to create the Cross "
 				"Reference" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -28368,10 +28300,10 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 		string field = "type";
 		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
-			string errorMessage = __FILEREF__ +
+			string errorMessage = string() +
 								  "Field is not present or it is null" +
 								  ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -28501,13 +28433,13 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			crossReferenceType ==
 				MMSEngineDBFacade::CrossReferenceType::PosterOfVideo)
 		{
-			Json::Value crossReferenceParametersRoot;
+			json crossReferenceParametersRoot;
 
 			if (firstContentType == MMSEngineDBFacade::ContentType::Video &&
 				secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
-				_logger->info(
-					__FILEREF__ + "Add Cross Reference" +
+				SPDLOG_INFO(
+					string() + "Add Cross Reference" +
 					", sourceMediaItemKey: " + to_string(secondMediaItemKey) +
 					", crossReferenceType: " +
 					MMSEngineDBFacade::toString(crossReferenceType) +
@@ -28522,8 +28454,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 						 MMSEngineDBFacade::ContentType::Image &&
 					 secondContentType == MMSEngineDBFacade::ContentType::Video)
 			{
-				_logger->info(
-					__FILEREF__ + "Add Cross Reference" +
+				SPDLOG_INFO(
+					string() + "Add Cross Reference" +
 					", sourceMediaItemKey: " + to_string(firstMediaItemKey) +
 					", crossReferenceType: " +
 					MMSEngineDBFacade::toString(crossReferenceType) +
@@ -28537,7 +28469,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			else
 			{
 				string errorMessage =
-					__FILEREF__ + "Wrong content type" +
+					string() + "Wrong content type" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -28550,7 +28482,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(secondContentType) +
 					", firstMediaItemKey: " + to_string(firstMediaItemKey) +
 					", secondMediaItemKey: " + to_string(secondMediaItemKey);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -28558,13 +28490,13 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 		else if (crossReferenceType ==
 				 MMSEngineDBFacade::CrossReferenceType::ImageOfAudio)
 		{
-			Json::Value crossReferenceParametersRoot;
+			json crossReferenceParametersRoot;
 
 			if (firstContentType == MMSEngineDBFacade::ContentType::Audio &&
 				secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
-				_logger->info(
-					__FILEREF__ + "Add Cross Reference" +
+				SPDLOG_INFO(
+					string() + "Add Cross Reference" +
 					", sourceMediaItemKey: " + to_string(secondMediaItemKey) +
 					", crossReferenceType: " +
 					MMSEngineDBFacade::toString(crossReferenceType) +
@@ -28579,8 +28511,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 						 MMSEngineDBFacade::ContentType::Image &&
 					 secondContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
-				_logger->info(
-					__FILEREF__ + "Add Cross Reference" +
+				SPDLOG_INFO(
+					string() + "Add Cross Reference" +
 					", sourceMediaItemKey: " + to_string(firstMediaItemKey) +
 					", crossReferenceType: " +
 					MMSEngineDBFacade::toString(crossReferenceType) +
@@ -28594,7 +28526,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			else
 			{
 				string errorMessage =
-					__FILEREF__ + "Wrong content type" +
+					string() + "Wrong content type" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -28607,7 +28539,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(secondContentType) +
 					", firstMediaItemKey: " + to_string(firstMediaItemKey) +
 					", secondMediaItemKey: " + to_string(secondMediaItemKey);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -28619,7 +28551,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				secondContentType != MMSEngineDBFacade::ContentType::Video)
 			{
 				string errorMessage =
-					__FILEREF__ + "Wrong content type" +
+					string() + "Wrong content type" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -28632,7 +28564,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(secondContentType) +
 					", firstMediaItemKey: " + to_string(firstMediaItemKey) +
 					", secondMediaItemKey: " + to_string(secondMediaItemKey);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -28641,7 +28573,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Cross Reference Parameters are not present" +
+					string() + "Cross Reference Parameters are not present" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -28654,11 +28586,11 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(secondContentType) +
 					", firstMediaItemKey: " + to_string(firstMediaItemKey) +
 					", secondMediaItemKey: " + to_string(secondMediaItemKey);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value crossReferenceParametersRoot = parametersRoot[field];
+			json crossReferenceParametersRoot = parametersRoot[field];
 
 			_mmsEngineDBFacade->addCrossReference(
 				ingestionJobKey, firstMediaItemKey, crossReferenceType,
@@ -28672,7 +28604,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				secondContentType != MMSEngineDBFacade::ContentType::Audio)
 			{
 				string errorMessage =
-					__FILEREF__ + "Wrong content type" +
+					string() + "Wrong content type" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -28685,7 +28617,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(secondContentType) +
 					", firstMediaItemKey: " + to_string(firstMediaItemKey) +
 					", secondMediaItemKey: " + to_string(secondMediaItemKey);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -28694,7 +28626,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Cross Reference Parameters are not present" +
+					string() + "Cross Reference Parameters are not present" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -28707,11 +28639,11 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(secondContentType) +
 					", firstMediaItemKey: " + to_string(firstMediaItemKey) +
 					", secondMediaItemKey: " + to_string(secondMediaItemKey);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value crossReferenceParametersRoot = parametersRoot[field];
+			json crossReferenceParametersRoot = parametersRoot[field];
 
 			_mmsEngineDBFacade->addCrossReference(
 				ingestionJobKey, firstMediaItemKey, crossReferenceType,
@@ -28721,7 +28653,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 		else
 		{
 			string errorMessage =
-				__FILEREF__ + "Wrong type" +
+				string() + "Wrong type" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size()) +
@@ -28733,13 +28665,13 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				MMSEngineDBFacade::toString(secondContentType) +
 				", firstMediaItemKey: " + to_string(firstMediaItemKey) +
 				", secondMediaItemKey: " + to_string(secondMediaItemKey);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
@@ -28752,8 +28684,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	}
 	catch (DeadlockFound &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageMediaCrossReferenceTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageMediaCrossReferenceTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -28765,8 +28697,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageMediaCrossReferenceTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageMediaCrossReferenceTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", e.what(): " + e.what()
@@ -28778,8 +28710,8 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "manageMediaCrossReferenceTask failed" +
+		SPDLOG_ERROR(
+			string() + "manageMediaCrossReferenceTask failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -28794,7 +28726,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 	int64_t ingestionJobKey, string fileFormat, string title,
 	int64_t imageOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey,
 	int64_t cutOfAudioMediaItemKey, double startTimeInSeconds,
-	double endTimeInSeconds, Json::Value parametersRoot
+	double endTimeInSeconds, json parametersRoot
 )
 {
 	string field = "fileFormat";
@@ -28810,7 +28742,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", fileFormatSpecifiedByUser: " + fileFormatSpecifiedByUser +
 				", fileFormat: " + fileFormat;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -28822,9 +28754,9 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
 	if (imageOfVideoMediaItemKey != -1)
 	{
-		Json::Value crossReferencesRoot(Json::arrayValue);
+		json crossReferencesRoot = json::array();
 		{
-			Json::Value crossReferenceRoot;
+			json crossReferenceRoot;
 
 			MMSEngineDBFacade::CrossReferenceType crossReferenceType =
 				MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
@@ -28836,7 +28768,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			field = "mediaItemKey";
 			crossReferenceRoot[field] = imageOfVideoMediaItemKey;
 
-			crossReferencesRoot.append(crossReferenceRoot);
+			crossReferencesRoot.push_back(crossReferenceRoot);
 		}
 
 		field = "crossReferences";
@@ -28844,9 +28776,9 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 	}
 	else if (cutOfVideoMediaItemKey != -1)
 	{
-		Json::Value crossReferencesRoot(Json::arrayValue);
+		json crossReferencesRoot = json::array();
 		{
-			Json::Value crossReferenceRoot;
+			json crossReferenceRoot;
 
 			MMSEngineDBFacade::CrossReferenceType crossReferenceType =
 				MMSEngineDBFacade::CrossReferenceType::CutOfVideo;
@@ -28858,7 +28790,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			field = "mediaItemKey";
 			crossReferenceRoot[field] = cutOfVideoMediaItemKey;
 
-			Json::Value crossReferenceParametersRoot;
+			json crossReferenceParametersRoot;
 			{
 				field = "startTimeInSeconds";
 				crossReferenceParametersRoot[field] = startTimeInSeconds;
@@ -28870,7 +28802,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 				crossReferenceRoot[field] = crossReferenceParametersRoot;
 			}
 
-			crossReferencesRoot.append(crossReferenceRoot);
+			crossReferencesRoot.push_back(crossReferenceRoot);
 		}
 
 		field = "crossReferences";
@@ -28878,9 +28810,9 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 	}
 	else if (cutOfAudioMediaItemKey != -1)
 	{
-		Json::Value crossReferencesRoot(Json::arrayValue);
+		json crossReferencesRoot = json::array();
 		{
-			Json::Value crossReferenceRoot;
+			json crossReferenceRoot;
 
 			MMSEngineDBFacade::CrossReferenceType crossReferenceType =
 				MMSEngineDBFacade::CrossReferenceType::CutOfAudio;
@@ -28892,7 +28824,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			field = "mediaItemKey";
 			crossReferenceRoot[field] = cutOfAudioMediaItemKey;
 
-			Json::Value crossReferenceParametersRoot;
+			json crossReferenceParametersRoot;
 			{
 				field = "startTimeInSeconds";
 				crossReferenceParametersRoot[field] = startTimeInSeconds;
@@ -28904,7 +28836,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 				crossReferenceRoot[field] = crossReferenceParametersRoot;
 			}
 
-			crossReferencesRoot.append(crossReferenceRoot);
+			crossReferencesRoot.push_back(crossReferenceRoot);
 		}
 
 		field = "crossReferences";
@@ -28925,8 +28857,8 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
 	string mediaMetadata = JSONUtils::toString(parametersRoot);
 
-	_logger->info(
-		__FILEREF__ + "Media metadata generated" +
+	SPDLOG_INFO(
+		string() + "Media metadata generated" +
 		", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", ingestionJobKey: " + to_string(ingestionJobKey) +
 		", mediaMetadata: " + mediaMetadata
@@ -28941,8 +28873,8 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 	{
 		if (isMaintenanceMode())
 		{
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"Received handleCheckEncodingEvent, not managed it because of "
 				"MaintenanceMode" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -28951,8 +28883,8 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 			return;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Received handleCheckEncodingEvent" +
+		SPDLOG_INFO(
+			string() + "Received handleCheckEncodingEvent" +
 			", _processorIdentifier: " + to_string(_processorIdentifier)
 		);
 
@@ -28963,16 +28895,16 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 			_timeBeforeToPrepareResourcesInMinutes, _maxEncodingJobsPerEvent
 		);
 
-		_logger->info(
-			__FILEREF__ + "_pActiveEncodingsManager->addEncodingItems" +
+		SPDLOG_INFO(
+			string() + "_pActiveEncodingsManager->addEncodingItems" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", encodingItems.size: " + to_string(encodingItems.size())
 		);
 
 		_pActiveEncodingsManager->addEncodingItems(encodingItems);
 
-		_logger->info(
-			__FILEREF__ + "getEncodingJobs result" +
+		SPDLOG_INFO(
+			string() + "getEncodingJobs result" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", encodingItems.size: " + to_string(encodingItems.size())
 		);
@@ -28980,7 +28912,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 	catch (AlreadyLocked &e)
 	{
 		_logger->warn(
-			__FILEREF__ + "getEncodingJobs was not done" +
+			string() + "getEncodingJobs was not done" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", exception: " + e.what()
 		);
@@ -28990,8 +28922,8 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "getEncodingJobs failed" +
+		SPDLOG_ERROR(
+			string() + "getEncodingJobs failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", exception: " + e.what()
 		);
@@ -29000,8 +28932,8 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "getEncodingJobs failed" +
+		SPDLOG_ERROR(
+			string() + "getEncodingJobs failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", exception: " + e.what()
 		);
@@ -29021,8 +28953,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 		-1 // ingestionJobKey
 	);
 
-	_logger->info(
-		__FILEREF__ + "handleContentRetentionEventThread" +
+	SPDLOG_INFO(
+		string() + "handleContentRetentionEventThread" +
 		", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", _processorsThreadsNumber.use_count(): " +
 		to_string(_processorsThreadsNumber.use_count())
@@ -29052,8 +28984,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"getExpiredMediaItemKeysCheckingDependencies failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
@@ -29065,8 +28997,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"getExpiredMediaItemKeysCheckingDependencies failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
@@ -29088,8 +29020,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 				tie(workspace, mediaItemKey, physicalPathKey) =
 					workspaceMediaItemKeyOrPhysicalPathKey;
 
-				_logger->info(
-					__FILEREF__ + "Removing because of ContentRetention" +
+				SPDLOG_INFO(
+					string() + "Removing because of ContentRetention" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", workspace->_workspaceKey: " +
@@ -29108,8 +29040,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 				}
 				catch (runtime_error &e)
 				{
-					_logger->error(
-						__FILEREF__ + "_mmsStorage->removeMediaItem failed" +
+					SPDLOG_ERROR(
+						string() + "_mmsStorage->removeMediaItem failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", workspace->_workspaceKey: " +
@@ -29130,8 +29062,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "updateMediaItem failed" +
+						SPDLOG_ERROR(
+							string() + "updateMediaItem failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", mediaItemKeyToBeRemoved: " +
@@ -29143,8 +29075,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ + "updateMediaItem failed" +
+						SPDLOG_ERROR(
+							string() + "updateMediaItem failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", mediaItemKeyToBeRemoved: " +
@@ -29164,8 +29096,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 				}
 				catch (exception &e)
 				{
-					_logger->error(
-						__FILEREF__ + "_mmsStorage->removeMediaItem failed" +
+					SPDLOG_ERROR(
+						string() + "_mmsStorage->removeMediaItem failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", workspace->_workspaceKey: " +
@@ -29186,8 +29118,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "updateMediaItem failed" +
+						SPDLOG_ERROR(
+							string() + "updateMediaItem failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", mediaItemKeyToBeRemoved: " +
@@ -29199,8 +29131,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ + "updateMediaItem failed" +
+						SPDLOG_ERROR(
+							string() + "updateMediaItem failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", mediaItemKeyToBeRemoved: " +
@@ -29222,8 +29154,8 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(
-			__FILEREF__ + "Content retention finished" +
+		SPDLOG_INFO(
+			string() + "Content retention finished" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", @MMS statistics@ - duration (secs): @" +
 			to_string(
@@ -29235,7 +29167,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(
 
 	/* Already done by the crontab script
 	{
-		_logger->info(__FILEREF__ + "Staging Retention started"
+		SPDLOG_INFO(string() + "Staging Retention started"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", _mmsStorage->getStagingRootRepository(): " +
 _mmsStorage->getStagingRootRepository()
@@ -29276,7 +29208,7 @@ _stagingRetentionInDays)
 						if (detDirectoryEntryType == FileIO::
 TOOLS_FILEIO_DIRECTORY)
 						{
-							_logger->info(__FILEREF__ + "Removing staging
+							SPDLOG_INFO(string() + "Removing staging
 directory because of Retention"
 								+ ", _processorIdentifier: " +
 to_string(_processorIdentifier)
@@ -29295,7 +29227,7 @@ removeRecursively);
 							}
 							catch(runtime_error& e)
 							{
-								_logger->warn(__FILEREF__ + "Error removing
+								_logger->warn(string() + "Error removing
 staging directory because of Retention"
 									+ ", _processorIdentifier: " +
 to_string(_processorIdentifier)
@@ -29309,7 +29241,7 @@ to_string(_stagingRetentionInDays)
 							}
 							catch(exception& e)
 							{
-								_logger->warn(__FILEREF__ + "Error removing
+								_logger->warn(string() + "Error removing
 staging directory because of Retention"
 									+ ", _processorIdentifier: " +
 to_string(_processorIdentifier)
@@ -29324,7 +29256,7 @@ to_string(_stagingRetentionInDays)
 						}
 						else
 						{
-							_logger->info(__FILEREF__ + "Removing staging file
+							SPDLOG_INFO(string() + "Removing staging file
 because of Retention"
 								+ ", _processorIdentifier: " +
 to_string(_processorIdentifier)
@@ -29346,25 +29278,25 @@ to_string(_stagingRetentionInDays)
 				}
 				catch(runtime_error& e)
 				{
-					string errorMessage = __FILEREF__ + "listing directory
+					string errorMessage = string() + "listing directory
 failed"
 						+ ", _processorIdentifier: " +
 to_string(_processorIdentifier)
 						   + ", e.what(): " + e.what()
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw e;
 				}
 				catch(exception& e)
 				{
-					string errorMessage = __FILEREF__ + "listing directory
+					string errorMessage = string() + "listing directory
 failed"
 						+ ", _processorIdentifier: " +
 to_string(_processorIdentifier)
 						   + ", e.what(): " + e.what()
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw e;
 				}
@@ -29374,19 +29306,19 @@ to_string(_processorIdentifier)
 		}
 		catch(runtime_error& e)
 		{
-			_logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
+			SPDLOG_ERROR(string() + "removeHavingPrefixFileName failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", e.what(): " + e.what()
 			);
 		}
 		catch(exception& e)
 		{
-			_logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
+			SPDLOG_ERROR(string() + "removeHavingPrefixFileName failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 		}
 
-		_logger->info(__FILEREF__ + "Staging Retention finished"
+		SPDLOG_INFO(string() + "Staging Retention finished"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		);
 	}
@@ -29406,8 +29338,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "DBDataRetention: oncePerDayExecution" +
+		SPDLOG_INFO(
+			string() + "DBDataRetention: oncePerDayExecution" +
 			", _processorIdentifier: " + to_string(_processorIdentifier)
 		);
 
@@ -29417,8 +29349,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "DBDataRetention: Ingestion Data failed" +
+		SPDLOG_ERROR(
+			string() + "DBDataRetention: Ingestion Data failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", exception: " + e.what()
 		);
@@ -29428,8 +29360,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "DBDataRetention: Ingestion Data failed" +
+		SPDLOG_ERROR(
+			string() + "DBDataRetention: Ingestion Data failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", exception: " + e.what()
 		);
@@ -29444,8 +29376,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			chrono::system_clock::time_point start =
 				chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ + "DBDataRetention: Ingestion Data started" +
+			SPDLOG_INFO(
+				string() + "DBDataRetention: Ingestion Data started" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
@@ -29455,8 +29387,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ + "DBDataRetention: Ingestion Data failed" +
+				SPDLOG_ERROR(
+					string() + "DBDataRetention: Ingestion Data failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -29466,8 +29398,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "DBDataRetention: Ingestion Data failed" +
+				SPDLOG_ERROR(
+					string() + "DBDataRetention: Ingestion Data failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -29477,8 +29409,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 
 			chrono::system_clock::time_point end = chrono::system_clock::now();
-			_logger->info(
-				__FILEREF__ + "DBDataRetention: Ingestion Data finished" +
+			SPDLOG_INFO(
+				string() + "DBDataRetention: Ingestion Data finished" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", @MMS statistics@ - duration (secs): @" +
 				to_string(
@@ -29492,8 +29424,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			chrono::system_clock::time_point start =
 				chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ + "DBDataRetention: Delivery Autorization started" +
+			SPDLOG_INFO(
+				string() + "DBDataRetention: Delivery Autorization started" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
@@ -29503,8 +29435,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"DBDataRetention: Delivery Autorization failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
@@ -29515,8 +29447,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"DBDataRetention: Delivery Autorization failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
@@ -29527,8 +29459,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 
 			chrono::system_clock::time_point end = chrono::system_clock::now();
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"DBDataRetention: Delivery Autorization finished" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", @MMS statistics@ - duration (secs): @" +
@@ -29543,8 +29475,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			chrono::system_clock::time_point start =
 				chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ + "DBDataRetention: Statistic Data started" +
+			SPDLOG_INFO(
+				string() + "DBDataRetention: Statistic Data started" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 
@@ -29554,8 +29486,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ + "DBDataRetention: Statistic Data failed" +
+				SPDLOG_ERROR(
+					string() + "DBDataRetention: Statistic Data failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -29565,8 +29497,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "DBDataRetention: Statistic Data failed" +
+				SPDLOG_ERROR(
+					string() + "DBDataRetention: Statistic Data failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -29576,8 +29508,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 
 			chrono::system_clock::time_point end = chrono::system_clock::now();
-			_logger->info(
-				__FILEREF__ + "DBDataRetention: Statistic Data finished" +
+			SPDLOG_INFO(
+				string() + "DBDataRetention: Statistic Data finished" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", @MMS statistics@ - duration (secs): @" +
 				to_string(
@@ -29591,8 +29523,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			chrono::system_clock::time_point start =
 				chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"DBDataRetention: Fix of EncodingJobs having wrong status "
 				"started" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -29606,8 +29538,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"DBDataRetention: Fix of EncodingJobs having wrong status "
 					"failed" +
 					", _processorIdentifier: " +
@@ -29619,8 +29551,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"DBDataRetention: Fix of EncodingJobs having wrong status "
 					"failed" +
 					", _processorIdentifier: " +
@@ -29632,8 +29564,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 
 			chrono::system_clock::time_point end = chrono::system_clock::now();
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"DBDataRetention: Fix of EncodingJobs having wrong status "
 				"finished" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
@@ -29649,8 +29581,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			chrono::system_clock::time_point start =
 				chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"DBDataRetention: Fix of IngestionJobs having wrong status "
 				"started" +
 				", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -29665,8 +29597,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"DBDataRetention: Fix of IngestionJobs having wrong status "
 					"failed" +
 					", _processorIdentifier: " +
@@ -29678,8 +29610,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
+					string() +
 					"DBDataRetention: Fix of IngestionJobs having wrong status "
 					"failed" +
 					", _processorIdentifier: " +
@@ -29691,8 +29623,8 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			}
 
 			chrono::system_clock::time_point end = chrono::system_clock::now();
-			_logger->info(
-				__FILEREF__ +
+			SPDLOG_INFO(
+				string() +
 				"DBDataRetention: Fix of IngestionJobs having wrong status "
 				"finished" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
@@ -29719,8 +29651,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "GEOInfo: oncePerDayExecution" +
+		SPDLOG_INFO(
+			string() + "GEOInfo: oncePerDayExecution" +
 			", _processorIdentifier: " + to_string(_processorIdentifier)
 		);
 
@@ -29730,8 +29662,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "GEOInfo failed" + ", _processorIdentifier: " +
+		SPDLOG_ERROR(
+			string() + "GEOInfo failed" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", exception: " + e.what()
 		);
 
@@ -29740,8 +29672,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "GEOInfo failed" + ", _processorIdentifier: " +
+		SPDLOG_ERROR(
+			string() + "GEOInfo failed" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", exception: " + e.what()
 		);
 
@@ -29759,8 +29691,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(
-				__FILEREF__ + "GEOInfo: updateGEOInfo failed" +
+			SPDLOG_ERROR(
+				string() + "GEOInfo: updateGEOInfo failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -29770,8 +29702,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "GEOInfo: updateGEOInfo failed" +
+			SPDLOG_ERROR(
+				string() + "GEOInfo: updateGEOInfo failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -29781,8 +29713,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(
-			__FILEREF__ + "GEOInfo: updateGEOInfo finished" +
+		SPDLOG_INFO(
+			string() + "GEOInfo: updateGEOInfo finished" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", @MMS statistics@ - duration (secs): @" +
 			to_string(
@@ -29804,8 +29736,8 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
 	{
-		_logger->info(
-			__FILEREF__ + "Check Refresh Partition Free Size started" +
+		SPDLOG_INFO(
+			string() + "Check Refresh Partition Free Size started" +
 			", _processorIdentifier: " + to_string(_processorIdentifier)
 		);
 
@@ -29815,8 +29747,8 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(
-				__FILEREF__ + "refreshPartitionsFreeSizes failed" +
+			SPDLOG_ERROR(
+				string() + "refreshPartitionsFreeSizes failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -29826,8 +29758,8 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "refreshPartitionsFreeSizes failed" +
+			SPDLOG_ERROR(
+				string() + "refreshPartitionsFreeSizes failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -29837,8 +29769,8 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
-		_logger->info(
-			__FILEREF__ + "Check Refresh Partition Free Size finished" +
+		SPDLOG_INFO(
+			string() + "Check Refresh Partition Free Size finished" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", @MMS statistics@ - duration (secs): @" +
 			to_string(
@@ -29852,7 +29784,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
 MMSEngineProcessor::getMediaSourceDetails(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-	MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot
+	MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot
 )
 {
 	// only in case of externalReadOnlyStorage, nextIngestionStatus does not
@@ -29867,11 +29799,11 @@ MMSEngineProcessor::getMediaSourceDetails(
 	if (ingestionType != MMSEngineDBFacade::IngestionType::AddContent)
 	{
 		string errorMessage =
-			__FILEREF__ + "ingestionType is wrong" +
+			string() + "ingestionType is wrong" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -29961,8 +29893,8 @@ MMSEngineProcessor::getMediaSourceDetails(
 	get<4>(mediaSourceDetails) = fileSizeInBytes;
 	*/
 
-	_logger->info(
-		__FILEREF__ + "media source details" +
+	SPDLOG_INFO(
+		string() + "media source details" +
 		", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", ingestionJobKey: " + to_string(ingestionJobKey) +
 		", nextIngestionStatus: " +
@@ -30010,13 +29942,13 @@ void MMSEngineProcessor::validateMediaSourceFile(
 		if (!dirExists)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"Media Source directory does not exist (it was not uploaded "
 				"yet)" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", mediaSourcePathName: " + mediaSourcePathName;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -30050,12 +29982,12 @@ void MMSEngineProcessor::validateMediaSourceFile(
 		if (!fileExists)
 		{
 			string errorMessage =
-				__FILEREF__ +
+				string() +
 				"Media Source file does not exist (it was not uploaded yet)" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", mediaSourcePathName: " + mediaSourcePathName;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -30074,11 +30006,11 @@ void MMSEngineProcessor::validateMediaSourceFile(
 		if (!ifs.good())
 		{
 			string errorMessage =
-				__FILEREF__ + "Media files to be opened" +
+				string() + "Media files to be opened" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", mediaSourcePathName: " + mediaSourcePathName;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -30129,13 +30061,13 @@ void MMSEngineProcessor::validateMediaSourceFile(
 		if (!isCaseInsensitiveEqual)
 		{
 			string errorMessage =
-				__FILEREF__ + "MD5 check failed" +
+				string() + "MD5 check failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", mediaSourcePathName: " + mediaSourcePathName +
 				", md5FileCheckSum: " + md5FileCheckSum +
 				", md5RealDigest: " + md5RealDigest;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -30150,14 +30082,14 @@ void MMSEngineProcessor::validateMediaSourceFile(
 		if (fileSizeInBytes != downloadedFileSizeInBytes)
 		{
 			string errorMessage =
-				__FILEREF__ + "FileSize check failed" +
+				string() + "FileSize check failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", mediaSourcePathName: " + mediaSourcePathName +
 				", metadataFileSizeInBytes: " + to_string(fileSizeInBytes) +
 				", downloadedFileSizeInBytes: " +
 				to_string(downloadedFileSizeInBytes);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
 		}
 	}
@@ -30258,8 +30190,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 	bool downloadingCompleted = false;
 
-	_logger->info(
-		__FILEREF__ + "downloadMediaSourceFileThread" +
+	SPDLOG_INFO(
+		string() + "downloadMediaSourceFileThread" +
 		", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", ingestionJobKey: " + to_string(ingestionJobKey) +
 		", m3u8TarGzOrM3u8Streaming: " + to_string(m3u8TarGzOrM3u8Streaming) +
@@ -30316,7 +30248,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		{
 			try
 			{
-				FFMpeg ffmpeg(_configuration, _logger);
+				FFMpeg ffmpeg(_configurationRoot, _logger);
 				pair<string, string> streamingURLDetails =
 					ffmpeg.retrieveStreamingYouTubeURL(
 						ingestionJobKey, sourceReferenceURL
@@ -30325,8 +30257,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				string streamingYouTubeURL;
 				tie(streamingYouTubeURL, ignore) = streamingURLDetails;
 
-				_logger->info(
-					__FILEREF__ +
+				SPDLOG_INFO(
+					string() +
 					"downloadMediaSourceFileThread. YouTube URL calculation" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
@@ -30343,17 +30275,17 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			catch (runtime_error &e)
 			{
 				string errorMessage =
-					__FILEREF__ + "ffmpeg.retrieveStreamingYouTubeURL failed" +
+					string() + "ffmpeg.retrieveStreamingYouTubeURL failed" +
 					", may be the YouTube URL is not available anymore" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", YouTube URL: " + sourceReferenceURL +
 					", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30364,7 +30296,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					// to hide ffmpeg staff
 					errorMessage =
-						__FILEREF__ + "retrieveStreamingYouTubeURL failed" +
+						string() + "retrieveStreamingYouTubeURL failed" +
 						", may be the YouTube URL is not available anymore" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
@@ -30380,8 +30312,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				}
 				catch (runtime_error &re)
 				{
-					_logger->info(
-						__FILEREF__ + "Update IngestionJob failed" +
+					SPDLOG_INFO(
+						string() + "Update IngestionJob failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30390,8 +30322,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				}
 				catch (exception &ex)
 				{
-					_logger->info(
-						__FILEREF__ + "Update IngestionJob failed" +
+					SPDLOG_INFO(
+						string() + "Update IngestionJob failed" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30427,8 +30359,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	{
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "ffmpeg.streamingToFile" +
+			SPDLOG_INFO(
+				string() + "ffmpeg.streamingToFile" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", sourceReferenceURL: " + sourceReferenceURL +
@@ -30437,7 +30369,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 			// regenerateTimestamps (see
 			// docs/TASK_01_Add_Content_JSON_Format.txt)
-			FFMpeg ffmpeg(_configuration, _logger);
+			FFMpeg ffmpeg(_configurationRoot, _logger);
 			ffmpeg.streamingToFile(
 				ingestionJobKey, regenerateTimestamps, sourceReferenceURL,
 				destBinaryPathName
@@ -30445,8 +30377,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 			downloadingCompleted = true;
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", destBinaryPathName: " + destBinaryPathName +
@@ -30459,16 +30391,16 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		catch (runtime_error &e)
 		{
 			string errorMessage =
-				__FILEREF__ + "ffmpeg.streamingToFile failed" +
+				string() + "ffmpeg.streamingToFile failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", sourceReferenceURL: " + sourceReferenceURL +
 				", destBinaryPathName: " + destBinaryPathName +
 				", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -30478,7 +30410,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			{
 				// to hide ffmpeg staff
 				errorMessage =
-					__FILEREF__ + "streamingToFile failed" +
+					string() + "streamingToFile failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30493,8 +30425,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (runtime_error &re)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", errorMessage: " + re.what()
@@ -30502,8 +30434,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (exception &ex)
 			{
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob failed" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
@@ -30533,8 +30465,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Downloading" + ", _processorIdentifier: " +
+				SPDLOG_INFO(
+					string() + "Downloading" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", localSourceReferenceURL: " + localSourceReferenceURL +
@@ -30619,8 +30551,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					));
 					request.setOpt(new curlpp::options::NoProgress(0L));
 
-					_logger->info(
-						__FILEREF__ + "Downloading media file" +
+					SPDLOG_INFO(
+						string() + "Downloading media file" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30633,7 +30565,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				else
 				{
 					_logger->warn(
-						__FILEREF__ +
+						string() +
 						"Coming from a download failure, trying to Resume" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
@@ -30704,8 +30636,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 								 0, httpsPrefix.size(), httpsPrefix
 							 ))
 					{
-						_logger->info(
-							__FILEREF__ + "Setting SslEngineDefault" +
+						SPDLOG_INFO(
+							string() + "Setting SslEngineDefault" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier)
 						);
@@ -30735,8 +30667,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						request.setOpt(new curlpp::options::ResumeFrom(fileSize)
 						);
 
-					_logger->info(
-						__FILEREF__ + "Resume Download media file" +
+					SPDLOG_INFO(
+						string() + "Resume Download media file" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30773,7 +30705,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 							", localSourceReferenceURL: " +
 							localSourceReferenceURL;
 
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(string() + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -30781,8 +30713,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 				downloadingCompleted = true;
 
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" +
+				SPDLOG_INFO(
+					string() + "Update IngestionJob" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30814,8 +30746,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						_logger->error(
-							__FILEREF__ +
+						SPDLOG_ERROR(
+							string() +
 							"Reached the max number of download attempts" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -30824,8 +30756,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 							to_string(_maxDownloadAttemptNumber)
 						);
 
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30843,8 +30775,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (runtime_error &re)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -30854,8 +30786,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (exception &ex)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -30868,8 +30800,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					}
 					else
 					{
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Download failed. sleeping before to attempt "
 							"again" +
 							", _processorIdentifier: " +
@@ -30907,8 +30839,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Reached the max number of download attempts" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -30917,8 +30849,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 							to_string(_maxDownloadAttemptNumber)
 						);
 
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30936,8 +30868,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (runtime_error &re)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -30947,8 +30879,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (exception &ex)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -30961,8 +30893,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					}
 					else
 					{
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Download failed. sleeping before to attempt "
 							"again" +
 							", _processorIdentifier: " +
@@ -30981,8 +30913,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (runtime_error e)
 			{
-				_logger->error(
-					__FILEREF__ + "Download failed (runtime_error)" +
+				SPDLOG_ERROR(
+					string() + "Download failed (runtime_error)" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -30998,8 +30930,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Reached the max number of download attempts" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -31008,8 +30940,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 							to_string(_maxDownloadAttemptNumber)
 						);
 
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -31027,8 +30959,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (runtime_error &re)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -31038,8 +30970,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (exception &ex)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -31052,8 +30984,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					}
 					else
 					{
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Download failed. sleeping before to attempt "
 							"again" +
 							", _processorIdentifier: " +
@@ -31072,8 +31004,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (exception e)
 			{
-				_logger->error(
-					__FILEREF__ + "Download failed (exception)" +
+				SPDLOG_ERROR(
+					string() + "Download failed (exception)" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -31089,8 +31021,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Reached the max number of download attempts" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
@@ -31099,8 +31031,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 							to_string(_maxDownloadAttemptNumber)
 						);
 
-						_logger->info(
-							__FILEREF__ + "Update IngestionJob" +
+						SPDLOG_INFO(
+							string() + "Update IngestionJob" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -31118,8 +31050,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (runtime_error &re)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -31129,8 +31061,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (exception &ex)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob failed" +
+							SPDLOG_INFO(
+								string() + "Update IngestionJob failed" +
 								", _processorIdentifier: " +
 								to_string(_processorIdentifier) +
 								", ingestionJobKey: " +
@@ -31143,8 +31075,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					}
 					else
 					{
-						_logger->info(
-							__FILEREF__ +
+						SPDLOG_INFO(
+							string() +
 							"Download failed. sleeping before to attempt "
 							"again" +
 							", _processorIdentifier: " +
@@ -31179,8 +31111,8 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "ftpUploadMediaSource" +
+		SPDLOG_INFO(
+			string() + "ftpUploadMediaSource" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -31202,8 +31134,8 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 		);
 
 		{
-			_logger->info(
-				__FILEREF__ + "addIngestionJobOutput" +
+			SPDLOG_INFO(
+				string() + "addIngestionJobOutput" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", mediaItemKey: " + to_string(mediaItemKey) +
@@ -31219,12 +31151,12 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 	catch (exception e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Download failed (exception)" +
+			string() + "Download failed (exception)" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", mmsAssetPathName: " + mmsAssetPathName +
 			", exception: " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -31242,8 +31174,8 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "postVideoOnFacebook" +
+		SPDLOG_INFO(
+			string() + "postVideoOnFacebook" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", mmsAssetPathName: " + mmsAssetPathName +
@@ -31279,14 +31211,14 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			if (extensionIndex == string::npos)
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"No fileFormat (extension of the file) found in "
 					"mmsAssetPathName" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", mmsAssetPathName: " + mmsAssetPathName;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31324,7 +31256,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			formData.push_back(make_pair("upload_phase", "start"));
 			formData.push_back(make_pair("file_size", to_string(sizeInBytes)));
 
-			Json::Value facebookResponseRoot =
+			json facebookResponseRoot =
 				MMSCURL::httpPostFormDataAndGetJson(
 					_logger, ingestionJobKey, facebookURL, formData,
 					_facebookGraphAPITimeoutInSeconds
@@ -31334,10 +31266,10 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"Field into the response is not present or it is null" +
 					", Field: " + field + ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31348,10 +31280,10 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"Field into the response is not present or it is null" +
 					", Field: " + field + ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31361,10 +31293,10 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"Field into the response is not present or it is null" +
 					", Field: " + field + ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31376,10 +31308,10 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"Field into the response is not present or it is null" +
 					", Field: " + field + ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31421,7 +31353,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 					make_pair("upload_session_id", uploadSessionId)
 				);
 
-				Json::Value facebookResponseRoot =
+				json facebookResponseRoot =
 					MMSCURL::httpPostFileByFormDataAndGetJson(
 						_logger, ingestionJobKey, facebookURL, formData,
 						_facebookGraphAPITimeoutInSeconds, mmsAssetPathName,
@@ -31435,10 +31367,10 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", Field: " + field + ", facebookResponseRoot: " +
 						JSONUtils::toString(facebookResponseRoot);
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -31450,9 +31382,9 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
 				{
 					string errorMessage =
-						__FILEREF__ + "Field is not present or it is null" +
+						string() + "Field is not present or it is null" +
 						", Field: " + field + ", sResponse: " + sResponse;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -31487,7 +31419,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			formData.push_back(make_pair("upload_phase", "finish"));
 			formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
-			Json::Value facebookResponseRoot =
+			json facebookResponseRoot =
 				MMSCURL::httpPostFormDataAndGetJson(
 					_logger, ingestionJobKey, facebookURL, formData,
 					_facebookGraphAPITimeoutInSeconds
@@ -31497,9 +31429,9 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
-					__FILEREF__ + "Field is not present or it is null" +
+					string() + "Field is not present or it is null" +
 					", Field: " + field + ", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31508,10 +31440,10 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			if (!success)
 			{
 				string errorMessage =
-					__FILEREF__ + "Post Video on Facebook failed" +
+					string() + "Post Video on Facebook failed" +
 					", Field: " + field + ", success: " + to_string(success) +
 					", sResponse: " + sResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31520,20 +31452,20 @@ void MMSEngineProcessor::postVideoOnFacebook(
 	catch (runtime_error e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Post video on Facebook failed (runtime_error)" +
+			string() + "Post video on Facebook failed (runtime_error)" +
 			", facebookURL: " + facebookURL + ", exception: " + e.what() +
 			", sResponse: " + sResponse;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (exception e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Post video on Facebook failed (exception)" +
+			string() + "Post video on Facebook failed (exception)" +
 			", facebookURL: " + facebookURL + ", exception: " + e.what() +
 			", sResponse: " + sResponse;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -31550,7 +31482,7 @@ curlUploadVideoOnYouTubeCallback(char *ptr, size_t size, size_t nmemb, void *f)
 	int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
 
 	/*
-	logger->info(__FILEREF__ + "curlUploadVideoOnYouTubeCallback"
+	logger->info(string() + "curlUploadVideoOnYouTubeCallback"
 		+ ", currentFilePosition: " + to_string(currentFilePosition)
 		+ ", size: " + to_string(size)
 		+ ", nmemb: " + to_string(nmemb)
@@ -31574,7 +31506,7 @@ curlUploadVideoOnYouTubeCallback(char *ptr, size_t size, size_t nmemb, void *f)
 void MMSEngineProcessor::postVideoOnYouTube(
 	string mmsAssetPathName, int64_t sizeInBytes, int64_t ingestionJobKey,
 	shared_ptr<Workspace> workspace, string youTubeConfigurationLabel,
-	string youTubeTitle, string youTubeDescription, Json::Value youTubeTags,
+	string youTubeTitle, string youTubeDescription, json youTubeTags,
 	int youTubeCategoryId, string youTubePrivacy, bool youTubeMadeForKids
 )
 {
@@ -31585,8 +31517,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "postVideoOnYouTubeThread" +
+		SPDLOG_INFO(
+			string() + "postVideoOnYouTubeThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", _processorsThreadsNumber.use_count(): " +
 			to_string(_processorsThreadsNumber.use_count()) +
@@ -31614,14 +31546,14 @@ void MMSEngineProcessor::postVideoOnYouTube(
 			if (extensionIndex == string::npos)
 			{
 				string errorMessage =
-					__FILEREF__ +
+					string() +
 					"No fileFormat (extension of the file) found in "
 					"mmsAssetPathName" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", mmsAssetPathName: " + mmsAssetPathName;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31665,8 +31597,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 			string body;
 			{
-				Json::Value bodyRoot;
-				Json::Value snippetRoot;
+				json bodyRoot;
+				json snippetRoot;
 
 				string field = "title";
 				snippetRoot[field] = youTubeTitle;
@@ -31677,7 +31609,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 					snippetRoot[field] = youTubeDescription;
 				}
 
-				if (youTubeTags != Json::nullValue)
+				if (youTubeTags != nullptr)
 				{
 					field = "tags";
 					snippetRoot[field] = youTubeTags;
@@ -31692,7 +31624,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				field = "snippet";
 				bodyRoot[field] = snippetRoot;
 
-				Json::Value statusRoot;
+				json statusRoot;
 
 				field = "privacyStatus";
 				statusRoot[field] = youTubePrivacy;
@@ -31743,11 +31675,11 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				sHeaderResponse.find("location: ") == string::npos)
 			{
 				string errorMessage =
-					__FILEREF__ + "'Location' response header is not present" +
+					string() + "'Location' response header is not present" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", youTubeURL: " + youTubeURL +
 					", sHeaderResponse: " + sHeaderResponse;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -31939,13 +31871,13 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				}
 
 				for (string headerMessage : headerList)
-					_logger->info(
-						__FILEREF__ + "Adding header message: " + headerMessage
+					SPDLOG_INFO(
+						string() + "Adding header message: " + headerMessage
 					);
 				request.setOpt(new curlpp::options::HttpHeader(headerList));
 
-				_logger->info(
-					__FILEREF__ + "Calling youTube (upload)" +
+				SPDLOG_INFO(
+					string() + "Calling youTube (upload)" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", youTubeUploadURL: " + youTubeUploadURL
 				);
@@ -31953,8 +31885,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 				long responseCode = curlpp::infos::ResponseCode::get(request);
 
-				_logger->info(
-					__FILEREF__ + "Called youTube (upload)" +
+				SPDLOG_INFO(
+					string() + "Called youTube (upload)" +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", youTubeUploadURL: " + youTubeUploadURL +
 					", responseCode: " + to_string(responseCode)
@@ -31962,8 +31894,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 				if (responseCode == 200 || responseCode == 201)
 				{
-					_logger->info(
-						__FILEREF__ + "youTube upload successful" +
+					SPDLOG_INFO(
+						string() + "youTube upload successful" +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", youTubeUploadURL: " + youTubeUploadURL +
 						", responseCode: " + to_string(responseCode)
@@ -31975,7 +31907,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						 responseCode == 503 || responseCode == 504)
 				{
 					_logger->warn(
-						__FILEREF__ +
+						string() +
 						"youTube upload failed, trying to resume" +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", youTubeUploadURL: " + youTubeUploadURL +
@@ -32104,8 +32036,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						}
 
 						for (string headerMessage : headerList)
-							_logger->info(
-								__FILEREF__ +
+							SPDLOG_INFO(
+								string() +
 								"Adding header message: " + headerMessage
 							);
 						request.setOpt(
@@ -32122,8 +32054,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						// header to the normal body output.
 						request.setOpt(new curlpp::options::Header(true));
 
-						_logger->info(
-							__FILEREF__ + "Calling youTube check status" +
+						SPDLOG_INFO(
+							string() + "Calling youTube check status" +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", youTubeUploadURL: " + youTubeUploadURL +
 							", _youTubeDataAPIProtocol: " +
@@ -32139,8 +32071,8 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						long responseCode =
 							curlpp::infos::ResponseCode::get(request);
 
-						_logger->info(
-							__FILEREF__ + "Called youTube check status" +
+						SPDLOG_INFO(
+							string() + "Called youTube check status" +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", youTubeUploadURL: " + youTubeUploadURL +
 							", responseCode: " + to_string(responseCode) +
@@ -32152,13 +32084,13 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						{
 							// error
 							string errorMessage(
-								__FILEREF__ + "youTube check status failed" +
+								string() + "youTube check status failed" +
 								", ingestionJobKey: " +
 								to_string(ingestionJobKey) +
 								", youTubeUploadURL: " + youTubeUploadURL +
 								", responseCode: " + to_string(responseCode)
 							);
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -32195,19 +32127,19 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						{
 							// error
 							string errorMessage(
-								__FILEREF__ + "youTube check status failed" +
+								string() + "youTube check status failed" +
 								", ingestionJobKey: " +
 								to_string(ingestionJobKey) +
 								", youTubeUploadURL: " + youTubeUploadURL +
 								", rangeHeader: " + rangeHeader
 							);
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 
-						_logger->info(
-							__FILEREF__ + "Resuming" +
+						SPDLOG_INFO(
+							string() + "Resuming" +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", youTubeUploadURL: " + youTubeUploadURL +
 							", rangeHeader: " + rangeHeader +
@@ -32228,12 +32160,12 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				{
 					// error
 					string errorMessage(
-						__FILEREF__ + "youTube upload failed" +
+						string() + "youTube upload failed" +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", youTubeUploadURL: " + youTubeUploadURL +
 						", responseCode: " + to_string(responseCode)
 					);
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -32243,48 +32175,48 @@ void MMSEngineProcessor::postVideoOnYouTube(
 	catch (curlpp::LogicError &e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Post video on YouTube failed (LogicError)" +
+			string() + "Post video on YouTube failed (LogicError)" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", youTubeURL: " + youTubeURL +
 			", youTubeUploadURL: " + youTubeUploadURL +
 			", exception: " + e.what() + ", sResponse: " + sResponse;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (curlpp::RuntimeError &e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Post video on YouTube failed (RuntimeError)" +
+			string() + "Post video on YouTube failed (RuntimeError)" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", youTubeURL: " + youTubeURL +
 			", youTubeUploadURL: " + youTubeUploadURL +
 			", exception: " + e.what() + ", sResponse: " + sResponse;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (runtime_error e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Post video on YouTube failed (runtime_error)" +
+			string() + "Post video on YouTube failed (runtime_error)" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", youTubeURL: " + youTubeURL +
 			", youTubeUploadURL: " + youTubeUploadURL +
 			", exception: " + e.what() + ", sResponse: " + sResponse;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (exception e)
 	{
 		string errorMessage =
-			__FILEREF__ + "Post video on YouTube failed (exception)" +
+			string() + "Post video on YouTube failed (exception)" +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", youTubeURL: " + youTubeURL +
 			", youTubeUploadURL: " + youTubeUploadURL +
 			", exception: " + e.what() + ", sResponse: " + sResponse;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -32313,8 +32245,8 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 
 		if (youTubeTokenType == "AccessToken")
 		{
-			_logger->info(
-				__FILEREF__ + "Using the youTube access token" +
+			SPDLOG_INFO(
+				string() + "Using the youTube access token" +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", youTubeAccessToken: " + youTubeAccessToken
 			);
@@ -32343,7 +32275,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 		*/
 
 		vector<string> otherHeaders;
-		Json::Value youTubeResponseRoot = MMSCURL::httpPostStringAndGetJson(
+		json youTubeResponseRoot = MMSCURL::httpPostStringAndGetJson(
 			_logger, ingestionJobKey, youTubeURL,
 			_youTubeDataAPITimeoutInSeconds, "", "", body,
 			"application/x-www-form-urlencoded", // contentType
@@ -32364,10 +32296,10 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 		string field = "access_token";
 		if (!JSONUtils::isMetadataPresent(youTubeResponseRoot, field))
 		{
-			string errorMessage = __FILEREF__ +
+			string errorMessage = string() +
 								  "Field is not present or it is null" +
 								  ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -32381,7 +32313,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse +
 			", e.what(): " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(string() + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -32391,7 +32323,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 			string("youTube refresh token failed") +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(string() + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -32403,7 +32335,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 )
 {
 	string facebookURL;
-	Json::Value responseRoot;
+	json responseRoot;
 
 	try
 	{
@@ -32423,13 +32355,13 @@ string MMSEngineProcessor::getFacebookPageToken(
 					  "?fields=access_token" +
 					  "&access_token=" + curlpp::escape(userAccessToken);
 
-		_logger->info(
-			__FILEREF__ + "Retrieve page token" +
+		SPDLOG_INFO(
+			string() + "Retrieve page token" +
 			", facebookURL: " + facebookURL
 		);
 
 		vector<string> otherHeaders;
-		Json::Value responseRoot = MMSCURL::httpGetJson(
+		json responseRoot = MMSCURL::httpGetJson(
 			_logger, ingestionJobKey, facebookURL, _mmsAPITimeoutInSeconds, "",
 			"", otherHeaders
 		);
@@ -32444,10 +32376,10 @@ string MMSEngineProcessor::getFacebookPageToken(
 		string field = "access_token";
 		if (!JSONUtils::isMetadataPresent(responseRoot, field))
 		{
-			string errorMessage = __FILEREF__ +
+			string errorMessage = string() +
 								  "Field is not present or it is null" +
 								  ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -32462,7 +32394,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 			", facebookURL: " + facebookURL +
 			", response: " + JSONUtils::toString(responseRoot) +
 			", e.what(): " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(string() + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -32473,7 +32405,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", facebookURL: " + facebookURL +
 			", response: " + JSONUtils::toString(responseRoot);
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(string() + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -32483,7 +32415,7 @@ void MMSEngineProcessor::userHttpCallback(
 	int64_t ingestionJobKey, string httpProtocol, string httpHostName,
 	int httpPort, string httpURI, string httpURLParameters, bool formData,
 	string httpMethod, long callbackTimeoutInSeconds,
-	Json::Value userHeadersRoot, string &httpBody, string userName,
+	json userHeadersRoot, string &httpBody, string userName,
 	string password, int maxRetries
 )
 {
@@ -32526,12 +32458,12 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					Json::Value formDataParameters =
-						JSONUtils::toJson(ingestionJobKey, -1, httpBody);
+					json formDataParameters =
+						JSONUtils::toJson(httpBody);
 					for (int paramIndex = 0;
 						 paramIndex < formDataParameters.size(); paramIndex++)
 					{
-						Json::Value formDataParameter =
+						json formDataParameter =
 							formDataParameters[paramIndex];
 						string name =
 							JSONUtils::asString(formDataParameter, "name", "");
@@ -32567,12 +32499,12 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					Json::Value formDataParameters =
-						JSONUtils::toJson(ingestionJobKey, -1, httpBody);
+					json formDataParameters =
+						JSONUtils::toJson(httpBody);
 					for (int paramIndex = 0;
 						 paramIndex < formDataParameters.size(); paramIndex++)
 					{
-						Json::Value formDataParameter =
+						json formDataParameter =
 							formDataParameters[paramIndex];
 						string name =
 							JSONUtils::asString(formDataParameter, "name", "");
@@ -32614,20 +32546,20 @@ void MMSEngineProcessor::userHttpCallback(
 	catch (runtime_error e)
 	{
 		string errorMessage =
-			__FILEREF__ + "User Callback URL failed (runtime_error)" +
+			string() + "User Callback URL failed (runtime_error)" +
 			", userURL: " + userURL + ", maxRetries: " + to_string(maxRetries) +
 			", exception: " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (exception e)
 	{
 		string errorMessage =
-			__FILEREF__ + "User Callback URL failed (exception)" +
+			string() + "User Callback URL failed (exception)" +
 			", userURL: " + userURL + ", maxRetries: " + to_string(maxRetries) +
 			", exception: " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -32647,8 +32579,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "moveMediaSourceFileThread" +
+		SPDLOG_INFO(
+			string() + "moveMediaSourceFileThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -32679,7 +32611,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", sourceReferenceURL: " + sourceReferenceURL;
 
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -32690,8 +32622,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		else
 			sourcePathName = sourceReferenceURL.substr(mvPrefix.length());
 
-		_logger->info(
-			__FILEREF__ + "Moving" +
+		SPDLOG_INFO(
+			string() + "Moving" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", sourcePathName: " + sourcePathName +
@@ -32720,14 +32652,14 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", sourceReferenceURL: " + sourceReferenceURL;
 
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey)
 			// + ", movingCompleted: " + to_string(true)
@@ -32742,16 +32674,16 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "Moving failed" +
+		SPDLOG_ERROR(
+			string() + "Moving failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", sourceReferenceURL: " + sourceReferenceURL +
 			", exception: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -32767,8 +32699,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -32777,8 +32709,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -32790,16 +32722,16 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Moving failed" +
+		SPDLOG_ERROR(
+			string() + "Moving failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", sourceReferenceURL: " + sourceReferenceURL +
 			", exception: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -32815,8 +32747,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -32825,8 +32757,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -32851,8 +32783,8 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "copyMediaSourceFileThread" +
+		SPDLOG_INFO(
+			string() + "copyMediaSourceFileThread" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", _processorsThreadsNumber.use_count(): " +
@@ -32883,7 +32815,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", sourceReferenceURL: " + sourceReferenceURL;
 
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -32894,8 +32826,8 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		else
 			sourcePathName = sourceReferenceURL.substr(cpPrefix.length());
 
-		_logger->info(
-			__FILEREF__ + "Coping" +
+		SPDLOG_INFO(
+			string() + "Coping" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", sourcePathName: " + sourcePathName +
@@ -32928,14 +32860,14 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", sourceReferenceURL: " + sourceReferenceURL;
 
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", _processorIdentifier: " +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey)
 			// + ", movingCompleted: " + to_string(true)
@@ -32955,16 +32887,16 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "Coping failed" +
+		SPDLOG_ERROR(
+			string() + "Coping failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", sourceReferenceURL: " + sourceReferenceURL +
 			", exception: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -32980,8 +32912,8 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -32990,8 +32922,8 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -33003,16 +32935,16 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Coping failed" +
+		SPDLOG_ERROR(
+			string() + "Coping failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", sourceReferenceURL: " + sourceReferenceURL +
 			", exception: " + e.what()
 		);
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" +
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + "End_IngestionFailure" +
@@ -33028,8 +32960,8 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		}
 		catch (runtime_error &re)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -33038,8 +32970,8 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		}
 		catch (exception &ex)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob failed" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", IngestionStatus: " + "End_IngestionFailure" +
@@ -33144,8 +33076,8 @@ int MMSEngineProcessor::progressUploadCallback(
 		// this is to have one decimal in the percentage
 		double uploadingPercentage = ((double)((int)(progress * 10))) / 10;
 
-		_logger->info(
-			__FILEREF__ + "Upload still running" +
+		SPDLOG_INFO(
+			string() + "Upload still running" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", uploadingPercentage: " + to_string(uploadingPercentage) +
@@ -33158,8 +33090,8 @@ int MMSEngineProcessor::progressUploadCallback(
 
 		if (lastPercentageUpdated != uploadingPercentage)
 		{
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" +
+			SPDLOG_INFO(
+				string() + "Update IngestionJob" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", uploadingPercentage: " + to_string(uploadingPercentage)
@@ -33255,10 +33187,10 @@ MMSEngineProcessor::processDependencyInfo(
 		size_t extensionIndex = fileName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ +
+			string errorMessage = string() +
 								  "No extension find in the asset file name" +
 								  ", fileName: " + fileName;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -33329,7 +33261,7 @@ MMSEngineProcessor::processDependencyInfo(
 }
 
 string MMSEngineProcessor::getEncodedFileExtensionByEncodingProfile(
-	Json::Value encodingProfileDetailsRoot
+	json encodingProfileDetailsRoot
 )
 {
 	string extension;

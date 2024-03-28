@@ -40,14 +40,14 @@
 #include "API.h"
 
 
-API::API(bool noFileSystemAccess, Json::Value configuration, 
+API::API(bool noFileSystemAccess, json configurationRoot, 
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<MMSStorage> mmsStorage,
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
 		mutex* fcgiAcceptMutex,
 		FileUploadProgressData* fileUploadProgressData,
 		shared_ptr<spdlog::logger> logger)
-	:FastCGIAPI(configuration, 
+	:FastCGIAPI(configurationRoot, 
 		fcgiAcceptMutex),
 		_mmsEngineDBFacade(mmsEngineDBFacade),
 		_noFileSystemAccess(noFileSystemAccess),
@@ -60,7 +60,7 @@ API::API(bool noFileSystemAccess, Json::Value configuration,
 
 _logger = spdlog::default_logger();
 
-    string encodingPriority =  JSONUtils::asString(_configuration["api"]["workspaceDefaults"], "encodingPriority", "low");
+    string encodingPriority =  JSONUtils::asString(_configurationRoot["api"]["workspaceDefaults"], "encodingPriority", "low");
     SPDLOG_INFO("Configuration item"
 		", api->workspaceDefaults->encodingPriority: {}", encodingPriority
     );
@@ -88,12 +88,12 @@ _logger = spdlog::default_logger();
         _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
     }
 
-	_maxPageSize = JSONUtils::asInt(configuration["postgres"], "maxPageSize", 5);
+	_maxPageSize = JSONUtils::asInt(_configurationRoot["postgres"], "maxPageSize", 5);
 	logger->info(__FILEREF__ + "Configuration item"
 		+ ", postgres->maxPageSize: " + to_string(_maxPageSize)
 	);
 
-    string encodingPeriod =  JSONUtils::asString(_configuration["api"]["workspaceDefaults"], "encodingPeriod", "daily");
+    string encodingPeriod =  JSONUtils::asString(_configurationRoot["api"]["workspaceDefaults"], "encodingPeriod", "daily");
     SPDLOG_INFO("Configuration item"
 		", api->workspaceDefaults->encodingPeriod: {}", encodingPeriod
     );
@@ -102,21 +102,21 @@ _logger = spdlog::default_logger();
     else
         _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
-    _maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
+    _maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt(_configurationRoot["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
     SPDLOG_INFO("Configuration item"
 		", api->workspaceDefaults->maxIngestionsNumber: {}", _maxIngestionsNumberWorkspaceDefaultValue
     );
-    _maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "maxStorageInMB", 100);
+    _maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt(_configurationRoot["api"]["workspaceDefaults"], "maxStorageInMB", 100);
     SPDLOG_INFO("Configuration item"
 		", api->workspaceDefaults->maxStorageInMBWorkspaceDefaultValue: {}", _maxStorageInMBWorkspaceDefaultValue
     );
-    _expirationInDaysWorkspaceDefaultValue = JSONUtils::asInt(_configuration["api"]["workspaceDefaults"], "expirationInDays", 30);
+    _expirationInDaysWorkspaceDefaultValue = JSONUtils::asInt(_configurationRoot["api"]["workspaceDefaults"], "expirationInDays", 30);
     SPDLOG_INFO("Configuration item"
 		", api->workspaceDefaults->expirationInDaysWorkspaceDefaultValue: {}", _expirationInDaysWorkspaceDefaultValue
     );
 
 	{
-		Json::Value sharedEncodersPoolRoot = _configuration["api"]["sharedEncodersPool"];
+		json sharedEncodersPoolRoot = _configurationRoot["api"]["sharedEncodersPool"];
 
 		_sharedEncodersPoolLabel = JSONUtils::asString(sharedEncodersPoolRoot, "label", "");
 		SPDLOG_INFO("Configuration item"
@@ -126,7 +126,7 @@ _logger = spdlog::default_logger();
 		_sharedEncodersLabel = sharedEncodersPoolRoot["encodersLabel"];
 	}
 
-    _defaultSharedHLSChannelsNumber = JSONUtils::asInt(_configuration["api"], "defaultSharedHLSChannelsNumber", 1);
+    _defaultSharedHLSChannelsNumber = JSONUtils::asInt(_configurationRoot["api"], "defaultSharedHLSChannelsNumber", 1);
     SPDLOG_INFO("Configuration item"
         ", api->defaultSharedHLSChannelsNumber: {}", _defaultSharedHLSChannelsNumber
     );
@@ -150,7 +150,7 @@ _logger = spdlog::default_logger();
     );
 	*/
 
-    Json::Value api = _configuration["api"];
+    json api = _configurationRoot["api"];
     // _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
     // SPDLOG_INFO(__FILEREF__ + "Configuration item"
     //    + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
@@ -244,91 +244,91 @@ _logger = spdlog::default_logger();
         + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
     );
 	*/
-    _ffmpegEncoderUser = JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
+    _ffmpegEncoderUser = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");
     SPDLOG_INFO("Configuration item"
         ", ffmpeg->encoderUser: {}", _ffmpegEncoderUser
     );
-    _ffmpegEncoderPassword = JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
+    _ffmpegEncoderPassword = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderPassword", "");
     SPDLOG_INFO("Configuration item"
         ", ffmpeg->encoderPassword: {}", "..."
     );
-    _ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
+    _ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configurationRoot["ffmpeg"], "encoderTimeoutInSeconds", 120);
     SPDLOG_INFO("Configuration item"
         ", ffmpeg->encoderTimeoutInSeconds: {}", _ffmpegEncoderTimeoutInSeconds
     );
-    _ffmpegEncoderKillEncodingURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderKillEncodingURI", "");
+    _ffmpegEncoderKillEncodingURI = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderKillEncodingURI", "");
     SPDLOG_INFO("Configuration item"
         ", ffmpeg->encoderKillEncodingURI: {}", _ffmpegEncoderKillEncodingURI
     );
-    _ffmpegEncoderChangeLiveProxyPlaylistURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderChangeLiveProxyPlaylistURI", "");
+    _ffmpegEncoderChangeLiveProxyPlaylistURI = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderChangeLiveProxyPlaylistURI", "");
     SPDLOG_INFO("Configuration item"
 		", ffmpeg->encoderChangeLiveProxyPlaylistURI: {}", _ffmpegEncoderChangeLiveProxyPlaylistURI
     );
 
-	_intervalInSecondsToCheckEncodingFinished         = JSONUtils::asInt(_configuration["encoding"],
+	_intervalInSecondsToCheckEncodingFinished         = JSONUtils::asInt(_configurationRoot["encoding"],
 		"intervalInSecondsToCheckEncodingFinished", 0);
 	SPDLOG_INFO("Configuration item"
 		", encoding->intervalInSecondsToCheckEncodingFinished: {}", _intervalInSecondsToCheckEncodingFinished
 	);
 
-	_maxSecondsToWaitAPIIngestionLock  = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
+	_maxSecondsToWaitAPIIngestionLock  = JSONUtils::asInt(_configurationRoot["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
 	SPDLOG_INFO("Configuration item"
 		", mms->locks->maxSecondsToWaitAPIIngestionLock: {}", _maxSecondsToWaitAPIIngestionLock
 	);
 
-	_keyPairId =  JSONUtils::asString(_configuration["aws"], "keyPairId", "");
+	_keyPairId =  JSONUtils::asString(_configurationRoot["aws"], "keyPairId", "");
 	SPDLOG_INFO("Configuration item"
 		", aws->keyPairId: {}", _keyPairId
 	);
-	_privateKeyPEMPathName =  JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
+	_privateKeyPEMPathName =  JSONUtils::asString(_configurationRoot["aws"], "privateKeyPEMPathName", "");
 	SPDLOG_INFO("Configuration item"
 		", aws->privateKeyPEMPathName: {}", _privateKeyPEMPathName
 	);
-	_vodCloudFrontHostNamesRoot =  _configuration["aws"]["vodCloudFrontHostNames"];
+	_vodCloudFrontHostNamesRoot =  _configurationRoot["aws"]["vodCloudFrontHostNames"];
 	SPDLOG_INFO("Configuration item"
 		", aws->vodCloudFrontHostNames: {}", "..."
 	);
 
-	_emailProviderURL =  JSONUtils::asString(_configuration["EmailNotification"], "providerURL", "");
+	_emailProviderURL =  JSONUtils::asString(_configurationRoot["EmailNotification"], "providerURL", "");
 	SPDLOG_INFO("Configuration item"
 		", EmailNotification->providerURL: {}", _emailProviderURL
 	);
-	_emailUserName =  JSONUtils::asString(_configuration["EmailNotification"], "userName", "");
+	_emailUserName =  JSONUtils::asString(_configurationRoot["EmailNotification"], "userName", "");
 	SPDLOG_INFO("Configuration item"
 		", EmailNotification->userName: {}", _emailUserName
 	);
     {
-		string encryptedPassword = JSONUtils::asString(_configuration["EmailNotification"], "password", "");
+		string encryptedPassword = JSONUtils::asString(_configurationRoot["EmailNotification"], "password", "");
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);        
 		SPDLOG_INFO("Configuration item"
 			", EmailNotification->password: {}", encryptedPassword
 			// + ", _emailPassword: " + _emailPassword
 		);
     }
-	_emailCcsCommaSeparated =  JSONUtils::asString(_configuration["EmailNotification"], "cc", "");
+	_emailCcsCommaSeparated =  JSONUtils::asString(_configurationRoot["EmailNotification"], "cc", "");
 	SPDLOG_INFO("Configuration item"
 		", EmailNotification->cc: {}", _emailCcsCommaSeparated
 	);
 
-	_guiProtocol =  JSONUtils::asString(_configuration["mms"], "guiProtocol", "");
+	_guiProtocol =  JSONUtils::asString(_configurationRoot["mms"], "guiProtocol", "");
 	SPDLOG_INFO("Configuration item"
 		", mms->guiProtocol: {}", _guiProtocol
 	);
-    _guiHostname =  JSONUtils::asString(_configuration["mms"], "guiHostname", "");
+    _guiHostname =  JSONUtils::asString(_configurationRoot["mms"], "guiHostname", "");
 	SPDLOG_INFO("Configuration item"
 		", mms->guiHostname: {}", _guiHostname
 	);
-    _guiPort = JSONUtils::asInt(_configuration["mms"], "guiPort", 0);
+    _guiPort = JSONUtils::asInt(_configurationRoot["mms"], "guiPort", 0);
 	SPDLOG_INFO("Configuration item"
 		", mms->guiPort: {}", _guiPort
 	);
 
-	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"],
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(_configurationRoot["storage"],
 		"waitingNFSSync_maxMillisecondsToWait", 60000);
 	SPDLOG_INFO("Configuration item"
 		", storage->_waitingNFSSync_maxMillisecondsToWait: {}", _waitingNFSSync_maxMillisecondsToWait
 	);
-	_waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(configuration["storage"],
+	_waitingNFSSync_milliSecondsWaitingBetweenChecks = JSONUtils::asInt(_configurationRoot["storage"],
 		"waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	SPDLOG_INFO("Configuration item"
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",
@@ -439,7 +439,7 @@ void API::manageRequestAndResponse(
     {
         try
         {
-			Json::Value statusRoot;
+			json statusRoot;
 
 			statusRoot["status"] = "API server up and running";
 			statusRoot["version-api"] = version;
@@ -2706,10 +2706,10 @@ void API::mmsSupport(
         string subject;
         string text;
 
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(runtime_error& e)
         {

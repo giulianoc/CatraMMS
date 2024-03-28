@@ -8,7 +8,7 @@
 
 
 void GenerateFrames::encodeContent(
-	Json::Value metadataRoot)
+	json metadataRoot)
 {
     string api = "generateFrames";
 
@@ -22,13 +22,13 @@ void GenerateFrames::encodeContent(
 	string imagesDirectory;
     try
     {
-        // Json::Value metadataRoot = JSONUtils::toJson(
+        // json metadataRoot = JSONUtils::toJson(
 		// 	-1, _encodingJobKey, requestBody);
 
         bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
         // int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
         double startTimeInSeconds = JSONUtils::asDouble(encodingParametersRoot, "startTimeInSeconds", 0);
         int maxFramesNumber = JSONUtils::asInt(encodingParametersRoot, "maxFramesNumber", -1);
@@ -183,14 +183,14 @@ void GenerateFrames::encodeContent(
 
 					string ingestionJobLabel = generateFrameTitle + " (" + to_string(generatedFrameIndex) + ")";
 
-					Json::Value userDataRoot;
+					json userDataRoot;
 					{
 						if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
 							userDataRoot = ingestedParametersRoot["userData"];
 
-						Json::Value mmsDataRoot;
+						json mmsDataRoot;
 
-						Json::Value generatedFrameRoot;
+						json generatedFrameRoot;
 						generatedFrameRoot["ingestionJobLabel"] = ingestionJobLabel;
 						generatedFrameRoot["ingestionJobKey"] = _ingestionJobKey;
 						generatedFrameRoot["generatedFrameIndex"] = generatedFrameIndex;
@@ -337,12 +337,12 @@ void GenerateFrames::encodeContent(
 					string field = "internalMMS";
 					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 					{
-						Json::Value internalMMSRoot = ingestedParametersRoot[field];
+						json internalMMSRoot = ingestedParametersRoot[field];
 
 						field = "credentials";
 						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 						{
-							Json::Value credentialsRoot = internalMMSRoot[field];
+							json credentialsRoot = internalMMSRoot[field];
 
 							field = "userKey";
 							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -372,7 +372,7 @@ void GenerateFrames::encodeContent(
 					;
 
 					vector<string> otherHeaders;
-					Json::Value ingestionRoot = MMSCURL::httpGetJson(
+					json ingestionRoot = MMSCURL::httpGetJson(
 						_logger,
 						_ingestionJobKey,
 						mmsIngestionJobURL,
@@ -394,7 +394,7 @@ void GenerateFrames::encodeContent(
 
 						throw runtime_error(errorMessage);
 					}
-					Json::Value responseRoot = ingestionRoot[field];
+					json responseRoot = ingestionRoot[field];
 
 					field = "ingestionJobs";
 					if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -407,7 +407,7 @@ void GenerateFrames::encodeContent(
 
 						throw runtime_error(errorMessage);
 					}
-					Json::Value ingestionJobsRoot = responseRoot[field];
+					json ingestionJobsRoot = responseRoot[field];
 
 					if (ingestionJobsRoot.size() != 1)
 					{
@@ -420,7 +420,7 @@ void GenerateFrames::encodeContent(
 						throw runtime_error(errorMessage);
 					}
 
-					Json::Value ingestionJobRoot = ingestionJobsRoot[0];
+					json ingestionJobRoot = ingestionJobsRoot[0];
 
 					field = "status";
 					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
@@ -601,10 +601,10 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	bool externalEncoder,
 	string imagesDirectory, string generatedFrameFileName,
 	string addContentTitle,
-	Json::Value userDataRoot,
+	json userDataRoot,
 	string outputFileFormat,
-	Json::Value ingestedParametersRoot,
-	Json::Value encodingParametersRoot)
+	json ingestedParametersRoot,
+	json encodingParametersRoot)
 {
 	string workflowMetadata;
 	int64_t userKey;
@@ -631,12 +631,12 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			string field = "internalMMS";
     		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 			{
-				Json::Value internalMMSRoot = ingestedParametersRoot[field];
+				json internalMMSRoot = ingestedParametersRoot[field];
 
 				field = "credentials";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value credentialsRoot = internalMMSRoot[field];
+					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
 					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);

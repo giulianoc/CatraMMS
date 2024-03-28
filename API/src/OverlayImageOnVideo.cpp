@@ -6,7 +6,7 @@
 
 
 void OverlayImageOnVideo::encodeContent(
-	Json::Value metadataRoot)
+	json metadataRoot)
 {
     string api = "overlayImageOnVideo";
 
@@ -18,13 +18,13 @@ void OverlayImageOnVideo::encodeContent(
 
     try
     {
-        // Json::Value metadataRoot = JSONUtils::toJson(
+        // json metadataRoot = JSONUtils::toJson(
 		// 	-1, _encodingJobKey, requestBody);
 
 		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
         string imagePosition_X_InPixel = JSONUtils::asString(ingestedParametersRoot, "imagePosition_X_InPixel", "0");
         string imagePosition_Y_InPixel = JSONUtils::asString(ingestedParametersRoot, "imagePosition_Y_InPixel", "0");
@@ -32,7 +32,7 @@ void OverlayImageOnVideo::encodeContent(
         int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
 			"videoDurationInMilliSeconds", -1);
 
-        Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
+        json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		string sourceVideoFileExtension;
 		{

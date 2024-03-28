@@ -21,10 +21,14 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "spdlog/spdlog.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 
 
 using namespace std;
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
 
 class FFMpegFilters {
 public:
@@ -34,23 +38,23 @@ public:
 	~FFMpegFilters();
 
 	tuple<string, string, string> addFilters(
-		Json::Value filtersRoot,
+		json filtersRoot,
 		string ffmpegVideoResolutionParameter,
 		string ffmpegDrawTextFilter,
 		int64_t streamingDurationInSeconds);
 
 	string addVideoFilters(
-		Json::Value filtersRoot,
+		json filtersRoot,
 		string ffmpegVideoResolutionParameter,
 		string ffmpegDrawTextFilter,
 		int64_t streamingDurationInSeconds);
 
 	string addAudioFilters(
-		Json::Value filtersRoot,
+		json filtersRoot,
 		int64_t streamingDurationInSeconds);
 
 	string getFilter(
-		Json::Value filtersRoot,
+		json filtersRoot,
 		int64_t streamingDurationInSeconds);
 
 private:

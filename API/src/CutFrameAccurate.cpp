@@ -6,7 +6,7 @@
 
 
 void CutFrameAccurate::encodeContent(
-	Json::Value metadataRoot)
+	json metadataRoot)
 {
 	string api = "cutFrameAccurate";
 
@@ -18,13 +18,13 @@ void CutFrameAccurate::encodeContent(
 
     try
     {
-        // Json::Value metadataRoot = JSONUtils::toJson(-1, _encodingJobKey, requestBody);
+        // json metadataRoot = JSONUtils::toJson(-1, _encodingJobKey, requestBody);
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
+		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		string sourceFileExtension;
 		{

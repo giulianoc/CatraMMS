@@ -9,11 +9,11 @@ LiveGrid::LiveGrid(
 	shared_ptr<LiveProxyAndGrid> liveProxyData,
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	Json::Value configuration,
+	json configurationRoot,
 	mutex* encodingCompletedMutex,
 	map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
 	shared_ptr<spdlog::logger> logger):
-	FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configuration, encodingCompletedMutex,
+	FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configurationRoot, encodingCompletedMutex,
 		encodingCompletedMap, logger)
 {
 	_liveProxyData					= liveProxyData;
@@ -43,16 +43,15 @@ void LiveGrid::encodeContent(
     try
     {
 		_liveProxyData->_killedBecauseOfNotWorking = false;
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, _encodingJobKey, requestBody);
+        json metadataRoot = JSONUtils::toJson(requestBody);
 
 		_liveProxyData->_ingestionJobKey = _ingestionJobKey;	// JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-        Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+        json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 
-		Json::Value inputChannelsRoot = encodingParametersRoot["inputChannels"];
+		json inputChannelsRoot = encodingParametersRoot["inputChannels"];
 
 		string userAgent = JSONUtils::asString(ingestedParametersRoot, "userAgent", "");
 
@@ -66,7 +65,7 @@ void LiveGrid::encodeContent(
 		{
 			for(int outputIndex = 0; outputIndex < _liveProxyData->_outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = _liveProxyData->_outputsRoot[outputIndex];
+				json outputRoot = _liveProxyData->_outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 

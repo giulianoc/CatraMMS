@@ -15,7 +15,7 @@ FFMpegFilters::~FFMpegFilters()
 }
 
 tuple<string, string, string> FFMpegFilters::addFilters(
-	Json::Value filtersRoot,
+	json filtersRoot,
 	string ffmpegVideoResolutionParameter,
 	string ffmpegDrawTextFilter,
 	int64_t streamingDurationInSeconds
@@ -27,13 +27,13 @@ tuple<string, string, string> FFMpegFilters::addFilters(
 	string complexFilters;
 
 
-	if (filtersRoot != Json::nullValue)
+	if (filtersRoot != nullptr)
 	{
 		if (JSONUtils::isMetadataPresent(filtersRoot, "complex"))
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["complex"].size(); filterIndex++)
 			{
-				Json::Value filterRoot = filtersRoot["complex"][filterIndex];
+				json filterRoot = filtersRoot["complex"][filterIndex];
 
 				string filter = getFilter(filterRoot, streamingDurationInSeconds);
 				if (complexFilters != "")
@@ -47,7 +47,7 @@ tuple<string, string, string> FFMpegFilters::addFilters(
 }
 
 string FFMpegFilters::addVideoFilters(
-	Json::Value filtersRoot,
+	json filtersRoot,
 	string ffmpegVideoResolutionParameter,
 	string ffmpegDrawTextFilter,
 	int64_t streamingDurationInSeconds
@@ -69,13 +69,13 @@ string FFMpegFilters::addVideoFilters(
 		videoFilters += ffmpegDrawTextFilter;
 	}
 
-	if (filtersRoot != Json::nullValue)
+	if (filtersRoot != nullptr)
 	{
 		if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["video"].size(); filterIndex++)
 			{
-				Json::Value filterRoot = filtersRoot["video"][filterIndex];
+				json filterRoot = filtersRoot["video"][filterIndex];
 
 				string filter = getFilter(filterRoot, streamingDurationInSeconds);
 				if (videoFilters != "")
@@ -89,20 +89,20 @@ string FFMpegFilters::addVideoFilters(
 }
 
 string FFMpegFilters::addAudioFilters(
-	Json::Value filtersRoot,
+	json filtersRoot,
 	int64_t streamingDurationInSeconds
 )
 {
 	string audioFilters;
 
 
-	if (filtersRoot != Json::nullValue)
+	if (filtersRoot != nullptr)
 	{
 		if (JSONUtils::isMetadataPresent(filtersRoot, "audio"))
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["audio"].size(); filterIndex++)
 			{
-				Json::Value filterRoot = filtersRoot["audio"][filterIndex];
+				json filterRoot = filtersRoot["audio"][filterIndex];
 
 				string filter = getFilter(filterRoot, streamingDurationInSeconds);
 				if (audioFilters != "")
@@ -116,7 +116,7 @@ string FFMpegFilters::addAudioFilters(
 }
 
 string FFMpegFilters::getFilter(
-	Json::Value filterRoot,
+	json filterRoot,
 	int64_t streamingDurationInSeconds
 )
 {

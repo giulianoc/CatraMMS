@@ -40,7 +40,7 @@ int64_t MMSEngineDBFacade::addInvoice(
 		);
 
 		/*
-		Json::Value invoiceRoot;
+		json invoiceRoot;
 		{
 			string field = "invoiceKey";
 			invoiceRoot[field] = invoiceKey;
@@ -61,7 +61,7 @@ int64_t MMSEngineDBFacade::addInvoice(
 			invoiceRoot[field] = false;
 
 			field = "paymentDate";
-			invoiceRoot[field] = Json::nullValue;
+			invoiceRoot[field] = nullptr;
 		}
 		*/
 
@@ -157,7 +157,7 @@ int64_t MMSEngineDBFacade::addInvoice(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getInvoicesList (
+json MMSEngineDBFacade::getInvoicesList (
 	int64_t userKey,
 	bool admin,
 	int start, int rows
@@ -171,7 +171,7 @@ Json::Value MMSEngineDBFacade::getInvoicesList (
 		userKey, admin, start, rows
 	);
 
-    Json::Value invoiceListRoot;
+    json invoiceListRoot;
     
     shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -188,7 +188,7 @@ Json::Value MMSEngineDBFacade::getInvoicesList (
         string field;
 
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			{
 				field = "userKey";
@@ -218,7 +218,7 @@ Json::Value MMSEngineDBFacade::getInvoicesList (
 		if (!admin)
 			sqlWhere = fmt::format("where userKey = {} ", userKey);
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = 
 				fmt::format("select count(*) from MMS_Invoice {}", sqlWhere);
@@ -236,7 +236,7 @@ Json::Value MMSEngineDBFacade::getInvoicesList (
             responseRoot[field] = count;
         }
 
-        Json::Value invoicesRoot(Json::arrayValue);
+        json invoicesRoot = json::array();
         {
 			string orderBy;
 			if (admin)
@@ -255,7 +255,7 @@ Json::Value MMSEngineDBFacade::getInvoicesList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value invoiceRoot;
+                json invoiceRoot;
 
                 field = "invoiceKey";
 				invoiceRoot[field] = row["invoiceKey"].as<int64_t>();
@@ -280,11 +280,11 @@ Json::Value MMSEngineDBFacade::getInvoicesList (
 
 				field = "paymentDate";
 				if (row["paymentDate"].is_null())
-					invoiceRoot[field] = Json::nullValue;
+					invoiceRoot[field] = nullptr;
 				else
 					invoiceRoot[field] = row["paymentDate"].as<string>();
 
-				invoicesRoot.append(invoiceRoot);
+				invoicesRoot.push_back(invoiceRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"

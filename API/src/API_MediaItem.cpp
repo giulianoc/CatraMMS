@@ -52,10 +52,10 @@ void API::updateMediaItem(
         }
 		mediaItemKey = stoll(mediaItemKeyIt->second);
 
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(runtime_error& e)
         {
@@ -73,10 +73,10 @@ void API::updateMediaItem(
 		bool retentionInMinutesModified = false;
 		int64_t newRetentionInMinutes;
 		bool tagsModified = false;
-		Json::Value newTagsRoot;
+		json newTagsRoot;
 		bool uniqueNameModified = false;
 		string newUniqueName;
-		Json::Value crossReferencesRoot = Json::nullValue;
+		json crossReferencesRoot = nullptr;
 
         {
 			string field = "title";
@@ -126,7 +126,7 @@ void API::updateMediaItem(
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
             
-			Json::Value mediaItemRoot = _mmsEngineDBFacade->updateMediaItem (
+			json mediaItemRoot = _mmsEngineDBFacade->updateMediaItem (
 				workspace->_workspaceKey,
 				mediaItemKey,
 				titleModified, newTitle,
@@ -246,10 +246,10 @@ void API::updatePhysicalPath(
         }
 		physicalPathKey = stoll(physicalPathKeyIt->second);
 
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(runtime_error& e)
         {
@@ -288,7 +288,7 @@ void API::updatePhysicalPath(
                 + ", workspaceKey: " + to_string(workspace->_workspaceKey)
             );
             
-			Json::Value mediaItemRoot = _mmsEngineDBFacade->updatePhysicalPath (
+			json mediaItemRoot = _mmsEngineDBFacade->updatePhysicalPath (
 				workspace->_workspaceKey,
 				mediaItemKey,
 				physicalPathKey,
@@ -555,15 +555,15 @@ void API::mediaItemsList(
 		vector<string> tagsIn;
 		vector<string> tagsNotIn;
 		vector<int64_t> otherMediaItemsKey;
-		Json::Value responseFields = Json::nullValue;
+		json responseFields = nullptr;
 		if (requestBody != "")
 		{
-			Json::Value otherInputsRoot = JSONUtils::toJson(-1, -1, requestBody);
+			json otherInputsRoot = JSONUtils::toJson(requestBody);
 
 			string field = "tagsIn";
             if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
             {
-				Json::Value tagsInRoot = otherInputsRoot[field];
+				json tagsInRoot = otherInputsRoot[field];
 
 				for (int tagIndex = 0; tagIndex < tagsInRoot.size(); ++tagIndex)
 				{
@@ -574,7 +574,7 @@ void API::mediaItemsList(
 			field = "tagsNotIn";
             if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
             {
-				Json::Value tagsNotInRoot = otherInputsRoot[field];
+				json tagsNotInRoot = otherInputsRoot[field];
 
 				for (int tagIndex = 0; tagIndex < tagsNotInRoot.size(); ++tagIndex)
 				{
@@ -585,7 +585,7 @@ void API::mediaItemsList(
 			field = "otherMediaItemsKey";
             if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
             {
-				Json::Value otherMediaItemsKeyRoot = otherInputsRoot[field];
+				json otherMediaItemsKeyRoot = otherInputsRoot[field];
 
 				for (int mediaItemsIndex = 0; mediaItemsIndex < otherMediaItemsKeyRoot.size(); ++mediaItemsIndex)
 				{
@@ -669,7 +669,7 @@ void API::mediaItemsList(
 			int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
 			int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 
-			Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
+			json ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
 				workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
 				otherMediaItemsKey,
 				start, rows,
@@ -807,7 +807,7 @@ void API::tagsList(
         }
 
         {
-            Json::Value tagsRoot = _mmsEngineDBFacade->getTagsList(
+            json tagsRoot = _mmsEngineDBFacade->getTagsList(
 				workspace->_workspaceKey, start, rows,
 				liveRecordingChunk, contentTypePresent, contentType, tagNameFilter,
 				// 2022-12-18: false because from API(get)

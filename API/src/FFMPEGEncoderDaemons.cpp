@@ -11,7 +11,7 @@
 #include "catralibraries/DateTime.h"
 
 FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
-	Json::Value configuration,
+	json configurationRoot,
 	mutex* liveRecordingMutex,
 	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>* liveRecordingsCapability,
 	mutex* liveProxyMutex,
@@ -19,7 +19,7 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 	mutex* cpuUsageMutex,
 	deque<int>* cpuUsage,
 	shared_ptr<spdlog::logger> logger):
-	FFMPEGEncoderBase(configuration, logger)
+	FFMPEGEncoderBase(configurationRoot, logger)
 {
 	try
 	{
@@ -33,7 +33,7 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_monitorThreadShutdown = false;
 		_cpuUsageThreadShutdown = false;
 
-		_monitorCheckInSeconds =  JSONUtils::asInt(configuration["ffmpeg"], "monitorCheckInSeconds", 5);
+		_monitorCheckInSeconds =  JSONUtils::asInt(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds)
 		);
@@ -139,11 +139,11 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				string configurationLabel;
 				if (copiedLiveProxy->_inputsRoot.size() > 0)
 				{
-					Json::Value inputRoot = copiedLiveProxy->_inputsRoot[0];
+					json inputRoot = copiedLiveProxy->_inputsRoot[0];
 					string field = "streamInput";
 					if (JSONUtils::isMetadataPresent(inputRoot, field))
 					{
-						Json::Value streamInputRoot = inputRoot[field];
+						json streamInputRoot = inputRoot[field];
 						field = "configurationLabel";
 						configurationLabel = JSONUtils::asString(streamInputRoot, field, "");
 					}
@@ -238,7 +238,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					for(int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size();
 						outputIndex++)
 					{
-						Json::Value outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
+						json outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
 
 						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -433,7 +433,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					for(int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size();
 						outputIndex++)
 					{
-						Json::Value outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
+						json outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
 
 						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -1176,10 +1176,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
 					);
 
-					Json::Value outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
+					json outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
 					for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 					{
-						Json::Value outputRoot = outputsRoot[outputIndex];
+						json outputRoot = outputsRoot[outputIndex];
 
 						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
@@ -1370,10 +1370,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
 					);
 
-					Json::Value outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
+					json outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
 					for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 					{
-						Json::Value outputRoot = outputsRoot[outputIndex];
+						json outputRoot = outputsRoot[outputIndex];
 
 						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");

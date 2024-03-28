@@ -9,7 +9,7 @@
 MMSStorage::MMSStorage(
 	bool noFileSystemAccess,
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-	Json::Value configuration,
+	json configuration,
 	shared_ptr<spdlog::logger> logger) 
 {
 
@@ -63,7 +63,7 @@ MMSStorage::~MMSStorage(void) {
 }
 
 void MMSStorage::createDirectories(
-	Json::Value configuration,
+	json configuration,
 	shared_ptr<spdlog::logger> logger) 
 {
 

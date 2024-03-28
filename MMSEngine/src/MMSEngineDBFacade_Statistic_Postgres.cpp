@@ -4,7 +4,7 @@
 #include "MMSEngineDBFacade.h"
 
 
-Json::Value MMSEngineDBFacade::addRequestStatistic(
+json MMSEngineDBFacade::addRequestStatistic(
 	int64_t workspaceKey,
 	string ipAddress,
 	string userId,
@@ -15,7 +15,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 {
 	if (!_statisticsEnabled)
 	{
-		Json::Value statisticRoot;
+		json statisticRoot;
 
 		return statisticRoot;
 	}
@@ -113,7 +113,7 @@ Json::Value MMSEngineDBFacade::addRequestStatistic(
 			}
 		}
 
-		Json::Value statisticRoot;
+		json statisticRoot;
 		{
 			string field = "requestStatisticKey";
 			statisticRoot[field] = requestStatisticKey;
@@ -650,17 +650,17 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			// https://pro.ip-api.com/batch?key=GvoGDQ05j7fyQmj
 			string geoServiceURL = fmt::format("{}/batch?key={}", _geoServiceURL, _geoServiceKey);
 
-			Json::Value bodyRoot(Json::arrayValue);
+			json bodyRoot = json::array();
 			for(string ip: ips)
 			{
-				Json::Value ipRoot;
+				json ipRoot;
 				ipRoot["query"] = ip;
 				ipRoot["fields"] = fields;
-				bodyRoot.append(ipRoot);
+				bodyRoot.push_back(ipRoot);
 			}
 			
 			vector<string> otherHeaders;
-			Json::Value geoServiceResponseRoot = MMSCURL::httpPostStringAndGetJson(
+			json geoServiceResponseRoot = MMSCURL::httpPostStringAndGetJson(
 				_logger,
 				-1,
 				geoServiceURL,
@@ -674,7 +674,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 
 			for(int index = 0, length = geoServiceResponseRoot.size(); index < length; index++)
 			{
-				Json::Value geoServiceResponseIpRoot = geoServiceResponseRoot[index];
+				json geoServiceResponseIpRoot = geoServiceResponseRoot[index];
 
 				string status  = JSONUtils::asString(geoServiceResponseIpRoot, "status", "");
 				if (status != "success")
@@ -707,7 +707,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 				_geoServiceURL, ips[0], fields, _geoServiceKey);
 
 			vector<string> otherHeaders;
-			Json::Value geoServiceResponseIp = MMSCURL::httpGetJson(
+			json geoServiceResponseIp = MMSCURL::httpGetJson(
 				_logger,
 				-1,
 				geoServiceURL,
@@ -776,7 +776,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			string geoServiceURL = _geoServiceURL + ip;
 
 			vector<string> otherHeaders;
-			Json::Value geoServiceResponse = MMSCURL::httpGetJson(
+			json geoServiceResponse = MMSCURL::httpGetJson(
 				_logger,
 				-1,
 				geoServiceURL,
@@ -840,7 +840,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 	return ipsAPIGEOInfo;
 }
 
-Json::Value MMSEngineDBFacade::getRequestStatisticList (
+json MMSEngineDBFacade::getRequestStatisticList (
 	int64_t workspaceKey,
 	string userId,
 	string title,
@@ -859,7 +859,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 		workspaceKey, userId, title, startStatisticDate, endStatisticDate, start, rows
 	);
 
-    Json::Value statisticsListRoot;
+    json statisticsListRoot;
     
     shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -876,7 +876,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
         string field;
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
@@ -931,7 +931,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 		if (endStatisticDate != "")
 			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = 
 				fmt::format("select count(*) from MMS_RequestStatistic {}", sqlWhere);
@@ -949,7 +949,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
             responseRoot[field] = count;
         }
 
-        Json::Value statisticsRoot(Json::arrayValue);
+        json statisticsRoot = json::array();
         {
 			string sqlStatement = fmt::format(
                 "select requestStatisticKey, ipAddress, userId, physicalPathKey, confStreamKey, title, "
@@ -962,14 +962,14 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value statisticRoot;
+                json statisticRoot;
 
                 field = "requestStatisticKey";
 				statisticRoot[field] = row["requestStatisticKey"].as<int64_t>();
 
                 field = "ipAddress";
 				if (row["ipAddress"].is_null())
-					statisticRoot[field] = Json::nullValue;
+					statisticRoot[field] = nullptr;
 				else
 					statisticRoot[field] = row["ipAddress"].as<string>();
 
@@ -978,13 +978,13 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
 
                 field = "physicalPathKey";
 				if (row["physicalPathKey"].is_null())
-					statisticRoot[field] = Json::nullValue;
+					statisticRoot[field] = nullptr;
 				else
 					statisticRoot[field] = row["physicalPathKey"].as<int64_t>();
 
                 field = "confStreamKey";
 				if (row["confStreamKey"].is_null())
-					statisticRoot[field] = Json::nullValue;
+					statisticRoot[field] = nullptr;
 				else
 					statisticRoot[field] = row["confStreamKey"].as<int64_t>();
 
@@ -994,7 +994,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
                 field = "requestTimestamp";
 				statisticRoot[field] = row["formattedRequestTimestamp"].as<string>();
 
-                statisticsRoot.append(statisticRoot);
+                statisticsRoot.push_back(statisticRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -1101,7 +1101,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticList (
     return statisticsListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
+json MMSEngineDBFacade::getRequestStatisticPerContentList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
@@ -1124,7 +1124,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 		minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated, start, rows
 	);
 
-	Json::Value statisticsListRoot;
+	json statisticsListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1141,7 +1141,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
         string field;
 
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
@@ -1203,7 +1203,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        Json::Value responseRoot;
+        json responseRoot;
 		if (totalNumFoundToBeCalculated)
         {
 			string sqlStatement = 
@@ -1231,7 +1231,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 			responseRoot[field] = -1;
 		}
 
-        Json::Value statisticsRoot(Json::arrayValue);
+        json statisticsRoot = json::array();
         {
             string sqlStatement = 
 				fmt::format("select title, count(*) as count from MMS_RequestStatistic {}"
@@ -1242,7 +1242,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value statisticRoot;
+                json statisticRoot;
 
                 field = "title";
                 statisticRoot[field] = row["title"].as<string>();
@@ -1250,7 +1250,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
                 field = "count";
                 statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.append(statisticRoot);
+                statisticsRoot.push_back(statisticRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -1358,7 +1358,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerContentList (
     return statisticsListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
+json MMSEngineDBFacade::getRequestStatisticPerUserList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
@@ -1380,7 +1380,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 		minimalNextRequestDistanceInSeconds, start, rows
 	);
 
-    Json::Value statisticsListRoot;
+    json statisticsListRoot;
 
     shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1397,7 +1397,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
         string field;
 
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
@@ -1459,7 +1459,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        Json::Value responseRoot;
+        json responseRoot;
 		if (totalNumFoundToBeCalculated)
         {
 			string sqlStatement = 
@@ -1485,7 +1485,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 			responseRoot[field] = -1;
 		}
 
-        Json::Value statisticsRoot(Json::arrayValue);
+        json statisticsRoot = json::array();
         {
             string sqlStatement = 
 				fmt::format("select userId, count(*) as count from MMS_RequestStatistic {}"
@@ -1496,7 +1496,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value statisticRoot;
+                json statisticRoot;
 
                 field = "userId";
                 statisticRoot[field] = row["userId"].as<string>();
@@ -1504,7 +1504,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
                 field = "count";
                 statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.append(statisticRoot);
+                statisticsRoot.push_back(statisticRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -1612,7 +1612,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerUserList (
     return statisticsListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
+json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
@@ -1634,7 +1634,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 		minimalNextRequestDistanceInSeconds, start, rows
 	);
 
-    Json::Value statisticsListRoot;
+    json statisticsListRoot;
 
     shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1651,7 +1651,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
         string field;
 
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
@@ -1713,7 +1713,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        Json::Value responseRoot;
+        json responseRoot;
 		if (totalNumFoundToBeCalculated)
         {
 			string sqlStatement = fmt::format(
@@ -1741,7 +1741,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			responseRoot[field] = -1;
 		}
 
-        Json::Value statisticsRoot(Json::arrayValue);
+        json statisticsRoot = json::array();
         {
             string sqlStatement = fmt::format(
 				"select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count "
@@ -1754,7 +1754,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value statisticRoot;
+                json statisticRoot;
 
                 field = "date";
                 statisticRoot[field] = row["date"].as<string>();
@@ -1762,7 +1762,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
                 field = "count";
                 statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.append(statisticRoot);
+                statisticsRoot.push_back(statisticRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -1870,7 +1870,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerMonthList (
     return statisticsListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
+json MMSEngineDBFacade::getRequestStatisticPerDayList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
@@ -1892,7 +1892,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 		minimalNextRequestDistanceInSeconds, start, rows
 	);
 
-    Json::Value statisticsListRoot;
+    json statisticsListRoot;
 
     shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1909,7 +1909,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
         string field;
 
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
@@ -1971,7 +1971,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        Json::Value responseRoot;
+        json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
 			string sqlStatement = fmt::format(
@@ -1999,7 +1999,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 			responseRoot[field] = -1;
 		}
 
-        Json::Value statisticsRoot(Json::arrayValue);
+        json statisticsRoot = json::array();
         {
             string sqlStatement = fmt::format(
 				"select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
@@ -2012,7 +2012,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value statisticRoot;
+                json statisticRoot;
 
                 field = "date";
                 statisticRoot[field] = row["date"].as<string>();
@@ -2020,7 +2020,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
                 field = "count";
                 statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.append(statisticRoot);
+                statisticsRoot.push_back(statisticRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -2128,7 +2128,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerDayList (
     return statisticsListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
+json MMSEngineDBFacade::getRequestStatisticPerHourList (
 	int64_t workspaceKey,
 	string title, string userId,
 	string startStatisticDate, string endStatisticDate,
@@ -2150,7 +2150,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 		minimalNextRequestDistanceInSeconds, start, rows
 	);
 
-    Json::Value statisticsListRoot;
+    json statisticsListRoot;
 
     shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2167,7 +2167,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
         string field;
 
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
@@ -2229,7 +2229,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        Json::Value responseRoot;
+        json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
 			string sqlStatement = fmt::format(
@@ -2257,7 +2257,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 			responseRoot[field] = -1;
 		}
 
-        Json::Value statisticsRoot(Json::arrayValue);
+        json statisticsRoot = json::array();
         {
             string sqlStatement = fmt::format( 
 				"select to_char(requestTimestamp, 'YYYY-MM-DD HH24') as date, count(*) as count "
@@ -2270,7 +2270,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value statisticRoot;
+                json statisticRoot;
 
                 field = "date";
                 statisticRoot[field] = row["date"].as<string>();
@@ -2278,7 +2278,7 @@ Json::Value MMSEngineDBFacade::getRequestStatisticPerHourList (
                 field = "count";
                 statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.append(statisticRoot);
+                statisticsRoot.push_back(statisticRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -2639,7 +2639,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 	}
 }
 
-Json::Value MMSEngineDBFacade::getLoginStatisticList (
+json MMSEngineDBFacade::getLoginStatisticList (
 	string startStatisticDate, string endStatisticDate,
 	int start, int rows
 )
@@ -2652,7 +2652,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
 		startStatisticDate, endStatisticDate, start, rows
 	);
 
-    Json::Value statisticsListRoot;
+    json statisticsListRoot;
     
     shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2669,7 +2669,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
         string field;
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			if (startStatisticDate != "")
             {
@@ -2703,7 +2703,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
 		if (endStatisticDate != "")
 			sqlWhere += fmt::format("and s.successfulLogin <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = 
 				fmt::format("select count(*) from MMS_LoginStatistic s, MMS_User u {}", sqlWhere);
@@ -2721,7 +2721,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
             responseRoot[field] = count;
         }
 
-        Json::Value statisticsRoot(Json::arrayValue);
+        json statisticsRoot = json::array();
         {
 			string sqlStatement = fmt::format(
                 "select u.name as userName, u.eMailAddress as emailAddress, s.loginStatisticKey, "
@@ -2735,7 +2735,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value statisticRoot;
+                json statisticRoot;
 
                 field = "loginStatisticKey";
 				statisticRoot[field] = row["loginStatisticKey"].as<int64_t>();
@@ -2751,7 +2751,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
 
 				field = "ip";
 				if (row["ip"].is_null())
-					statisticRoot[field] = Json::nullValue;
+					statisticRoot[field] = nullptr;
 				else
 				{
 					string ip = row["ip"].as<string>();
@@ -2766,11 +2766,11 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
 
                 field = "successfulLogin";
 				if (row["formattedSuccessfulLogin"].is_null())
-					statisticRoot[field] = Json::nullValue;
+					statisticRoot[field] = nullptr;
 				else
 					statisticRoot[field] = row["formattedSuccessfulLogin"].as<string>();
 
-                statisticsRoot.append(statisticRoot);
+                statisticsRoot.push_back(statisticRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -2877,7 +2877,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
     return statisticsListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getGEOInfo(string ip)
+json MMSEngineDBFacade::getGEOInfo(string ip)
 {
 	SPDLOG_INFO("getGEOInfo"
 		", ip: {}",
@@ -2896,7 +2896,7 @@ Json::Value MMSEngineDBFacade::getGEOInfo(string ip)
 
     try
     {
-		Json::Value geoInfoRoot;
+		json geoInfoRoot;
 
         {
 			string sqlStatement = fmt::format(
@@ -2923,60 +2923,60 @@ Json::Value MMSEngineDBFacade::getGEOInfo(string ip)
 				connectionPool->unborrow(conn);
 				conn = nullptr;
 
-				return Json::nullValue;
+				return nullptr;
 			}
 
 			string field = "continent";
 			if (res[0][field].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
 
 			field = "continentCode";
 			if (res[0][field].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
 
 			field = "country";
 			if (res[0][field].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
 
 			field = "countryCode";
 			if (res[0][field].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
 
 			field = "region";
 			if (res[0][field].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
 
 			field = "city";
 			if (res[0][field].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
 
 			field = "org";
 			if (res[0][field].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
 
 			field = "isp";
 			if (res[0][field].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
 
 			field = "lastGEOUpdate";
 			if (res[0]["formattedLastGEOUpdate"].is_null())
-				geoInfoRoot[field] = Json::nullValue;
+				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0]["formattedLastGEOUpdate"].as<string>();
 

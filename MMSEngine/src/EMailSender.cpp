@@ -14,12 +14,13 @@
 #include "JSONUtils.h"
 #include "EMailSender.h"
 #include <sstream>
+#include <deque>
 #include <curl/curl.h>
 #include "catralibraries/Encrypt.h"
 
 EMailSender::EMailSender(
         shared_ptr<spdlog::logger> logger, 
-        Json::Value configuration
+        json configuration
 ) 
 {
     _logger             = logger;

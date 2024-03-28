@@ -18,7 +18,7 @@
 #include <fstream>
 
 ActiveEncodingsManager::ActiveEncodingsManager (
-    Json::Value configuration, shared_ptr<MultiEventsSet> multiEventsSet,
+    json configuration, shared_ptr<MultiEventsSet> multiEventsSet,
     shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
     shared_ptr<MMSStorage> mmsStorage, shared_ptr<spdlog::logger> logger
 )

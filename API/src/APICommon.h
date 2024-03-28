@@ -21,9 +21,13 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "spdlog/spdlog.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 #include "MMSEngineDBFacade.h"
 #include "fcgi_config.h"
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
 
 struct WrongBasicAuthentication: public exception {    
     char const* what() const throw() 
@@ -35,18 +39,18 @@ struct WrongBasicAuthentication: public exception {
 class APICommon {
 public:
     APICommon(
-		Json::Value configuration,
+		json configurationRoot,
 		mutex* fcgiAcceptMutex,
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<spdlog::logger> logger);
 
     APICommon(
-		Json::Value configuration,
+		json configurationRoot,
 		mutex* fcgiAcceptMutex,
 		shared_ptr<spdlog::logger> logger);
     
 	void init(
-		Json::Value configuration,
+		json configurationRoot,
 		mutex* fcgiAcceptMutex,                                                                           
 		shared_ptr<spdlog::logger> logger);
     
@@ -81,10 +85,10 @@ public:
     ) = 0;
     */
     
-    static Json::Value loadConfigurationFile(const char* configurationPathName);
+    static json loadConfigurationFile(const char* configurationPathName);
     
 protected:
-    Json::Value                     _configuration;
+    json                     _configurationRoot;
 
     string							_guiProtocol;
     string							_guiHostname;

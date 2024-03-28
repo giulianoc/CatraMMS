@@ -158,7 +158,7 @@ void API::encodingJobsStatus(
 		}
 
         {
-            Json::Value encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
+            json encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
 				workspace, encodingJobKey,
 				start, rows,
 				// startAndEndIngestionDatePresent,
@@ -731,7 +731,7 @@ void API::encodingProfilesSetsList(
         
         {
             
-            Json::Value encodingProfilesSetListRoot = _mmsEngineDBFacade->getEncodingProfilesSetList(
+            json encodingProfilesSetListRoot = _mmsEngineDBFacade->getEncodingProfilesSetList(
                     workspace->_workspaceKey, encodingProfilesSetKey,
                     contentTypePresent, contentType);
 
@@ -818,7 +818,7 @@ void API::encodingProfilesList(
         }
 
         {
-            Json::Value encodingProfileListRoot = _mmsEngineDBFacade->getEncodingProfileList(
+            json encodingProfileListRoot = _mmsEngineDBFacade->getEncodingProfileList(
                     workspace->_workspaceKey, encodingProfileKey,
                     contentTypePresent, contentType, label);
 
@@ -886,7 +886,7 @@ void API::addUpdateEncodingProfilesSet(
         MMSEngineDBFacade::ContentType contentType = 
                 MMSEngineDBFacade::toContentType(sContentTypeIt->second);
         
-        Json::Value encodingProfilesSetRoot = JSONUtils::toJson(-1, -1, requestBody);
+        json encodingProfilesSetRoot = JSONUtils::toJson(requestBody);
 
         string responseBody;
 		#ifdef __POSTGRES__
@@ -898,7 +898,7 @@ void API::addUpdateEncodingProfilesSet(
 
         try
         {
-            Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+            Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
             validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
         
             string field = "label";
@@ -922,7 +922,7 @@ void API::addUpdateEncodingProfilesSet(
 			#endif
 
 			field = "Profiles";
-			Json::Value profilesRoot = encodingProfilesSetRoot[field];
+			json profilesRoot = encodingProfilesSetRoot[field];
 
             for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
             {
@@ -1058,13 +1058,13 @@ void API::addEncodingProfile(
         MMSEngineDBFacade::ContentType contentType = 
                 MMSEngineDBFacade::toContentType(sContentTypeIt->second);
         
-        Json::Value encodingProfileRoot = JSONUtils::toJson(-1, -1, requestBody);
+        json encodingProfileRoot = JSONUtils::toJson(requestBody);
 
         string responseBody;    
 
         try
         {
-            Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+            Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
             validator.validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
 
             string field = "label";

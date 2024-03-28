@@ -6,7 +6,7 @@
 
 
 void SlideShow::encodeContent(
-	Json::Value metadataRoot)
+	json metadataRoot)
 {
     string api = "slideShow";
 
@@ -18,13 +18,13 @@ void SlideShow::encodeContent(
 
     try
     {
-        // Json::Value metadataRoot = JSONUtils::toJson(
+        // json metadataRoot = JSONUtils::toJson(
 		// 	-1, _encodingJobKey, requestBody);
 
 		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
 		float durationOfEachSlideInSeconds = 2.0;
 		string field = "durationOfEachSlideInSeconds";
@@ -40,10 +40,10 @@ void SlideShow::encodeContent(
 
 		vector<string> imagesPathNames;
 		{
-			Json::Value imagesRoot = encodingParametersRoot["imagesRoot"];
+			json imagesRoot = encodingParametersRoot["imagesRoot"];
 			for(int index = 0; index < imagesRoot.size(); index++)
 			{
-				Json::Value imageRoot = imagesRoot[index];
+				json imageRoot = imagesRoot[index];
 
 				if (externalEncoder)
 				{
@@ -125,10 +125,10 @@ void SlideShow::encodeContent(
 
 		vector<string> audiosPathNames;
 		{
-			Json::Value audiosRoot = encodingParametersRoot["audiosRoot"];
+			json audiosRoot = encodingParametersRoot["audiosRoot"];
 			for(int index = 0; index < audiosRoot.size(); index++)
 			{
-				Json::Value audioRoot = audiosRoot[index];
+				json audioRoot = audiosRoot[index];
 
 				if (externalEncoder)
 				{
@@ -261,7 +261,7 @@ void SlideShow::encodeContent(
 			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];                       
+		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];                       
 
 		_encoding->_ffmpeg->slideShow(_ingestionJobKey, _encodingJobKey,
 			durationOfEachSlideInSeconds, frameRateMode,

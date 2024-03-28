@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 			return 1;
 		}
     
-		Json::Value configuration = FastCGIAPI::loadConfigurationFile(configurationPathName);
+		json configuration = FastCGIAPI::loadConfigurationFile(configurationPathName);
     
 		string logPathName =  JSONUtils::asString(configuration["log"]["api"], "pathName", "");
 		string logErrorPathName =  JSONUtils::asString(configuration["log"]["api"], "errorPathName", "");

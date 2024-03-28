@@ -6,7 +6,7 @@
 
 
 void VideoSpeed::encodeContent(
-	Json::Value metadataRoot)
+	json metadataRoot)
 {
     string api = "videoSpeed";
 
@@ -18,15 +18,15 @@ void VideoSpeed::encodeContent(
 
     try
     {
-        // Json::Value metadataRoot = JSONUtils::toJson(
+        // json metadataRoot = JSONUtils::toJson(
 		// 	-1, _encodingJobKey, requestBody);
 
 		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
+		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
 			"sourceDurationInMilliSeconds", -1);

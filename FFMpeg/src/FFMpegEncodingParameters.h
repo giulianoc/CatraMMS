@@ -19,7 +19,11 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "spdlog/spdlog.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
 
 #ifndef __FILEREF__
     #ifdef __APPLE__
@@ -44,8 +48,8 @@ private:
 	int64_t					_encodingJobKey;
 	string					_encodedStagingAssetPathName;
 	bool					_isVideo;
-	Json::Value				_videoTracksRoot;
-	Json::Value				_audioTracksRoot;
+	json				_videoTracksRoot;
+	json				_audioTracksRoot;
 	int						_videoTrackIndexToBeUsed;
 	int						_audioTrackIndexToBeUsed;
 
@@ -78,13 +82,13 @@ public:
     FFMpegEncodingParameters(
 		int64_t ingestionJobKey,
 		int64_t encodingJobKey,
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 		bool isVideo,   // if false it means is audio
 		int videoTrackIndexToBeUsed,
 		int audioTrackIndexToBeUsed,
 		string encodedStagingAssetPathName,
-		Json::Value videoTracksRoot,
-		Json::Value audioTracksRoot,
+		json videoTracksRoot,
+		json audioTracksRoot,
 
 		bool& twoPasses,	// out
 
@@ -107,7 +111,7 @@ public:
 
 		bool videoResolutionToBeAdded,
 
-		Json::Value filtersRoot,
+		json filtersRoot,
 
 		// out (in append)
 		vector<string>& ffmpegArgumentList
@@ -133,7 +137,7 @@ public:
 
 	static void settingFfmpegParameters(
 		shared_ptr<spdlog::logger> logger,
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 		bool isVideo,   // if false it means is audio
         
 		string& httpStreamingFileFormat,

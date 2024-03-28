@@ -5,20 +5,19 @@
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/StringUtils.h"
 #include "catralibraries/DateTime.h"
-#include "json/value.h"
 
 
 LiveProxy::LiveProxy(
 	shared_ptr<LiveProxyAndGrid> liveProxyData,
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	Json::Value configuration,
+	json configurationRoot,
 	mutex* encodingCompletedMutex,
 	map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,
 	shared_ptr<spdlog::logger> logger,
 	mutex* tvChannelsPortsMutex,
 	long* tvChannelPort_CurrentOffset):
-	FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configuration, encodingCompletedMutex,
+	FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configurationRoot, encodingCompletedMutex,
 		encodingCompletedMap, logger)
 {
 	_liveProxyData					= liveProxyData;
@@ -29,7 +28,7 @@ LiveProxy::LiveProxy(
 
 LiveProxy::~LiveProxy()
 {
-	_liveProxyData->_encodingParametersRoot = Json::nullValue;
+	_liveProxyData->_encodingParametersRoot = nullptr;
 	_liveProxyData->_method = "";
 	_liveProxyData->_ingestionJobKey = 0;
 	// _liveProxyData->_channelLabel = "";
@@ -60,14 +59,13 @@ void LiveProxy::encodeContent(
     try
     {
 		_liveProxyData->_killedBecauseOfNotWorking = false;
-        Json::Value metadataRoot = JSONUtils::toJson(
-			-1, _encodingJobKey, requestBody);
+        json metadataRoot = JSONUtils::toJson(requestBody);
 
 		_liveProxyData->_ingestionJobKey = _ingestionJobKey;	// JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		_liveProxyData->_encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		_liveProxyData->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
@@ -76,7 +74,7 @@ void LiveProxy::encodeContent(
 		{
 			for(int outputIndex = 0; outputIndex < _liveProxyData->_outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = _liveProxyData->_outputsRoot[outputIndex];
+				json outputRoot = _liveProxyData->_outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -135,11 +133,11 @@ void LiveProxy::encodeContent(
 
 		for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
 		{
-			Json::Value inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+			json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
 
 			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 				continue;
-			Json::Value streamInputRoot = inputRoot["streamInput"];
+			json streamInputRoot = inputRoot["streamInput"];
 
 			string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 			if (streamSourceType == "TV")
@@ -225,7 +223,7 @@ void LiveProxy::encodeContent(
 			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
 			if (_liveProxyData->_inputsRoot.size() > 0)	// it has to be > 0
 			{
-				Json::Value inputRoot = _liveProxyData->_inputsRoot[0];
+				json inputRoot = _liveProxyData->_inputsRoot[0];
 
 				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcScheduleStart", -1);
 				// if (utcProxyPeriodStart == -1)
@@ -233,7 +231,7 @@ void LiveProxy::encodeContent(
 
 				if (JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 				{
-					Json::Value streamInputRoot = inputRoot["streamInput"];
+					json streamInputRoot = inputRoot["streamInput"];
 
 					string streamSourceType =
 						JSONUtils::asString(streamInputRoot, "streamSourceType", "");
@@ -303,11 +301,11 @@ void LiveProxy::encodeContent(
 
 		for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
 		{
-			Json::Value inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+			json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
 
 			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 				continue;
-			Json::Value streamInputRoot = inputRoot["streamInput"];
+			json streamInputRoot = inputRoot["streamInput"];
 
 			string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 			if (streamSourceType == "TV")
@@ -347,15 +345,15 @@ void LiveProxy::encodeContent(
     }
 	catch(FFMpegEncodingKilledByUser& e)
 	{
-		if (_liveProxyData->_inputsRoot != Json::nullValue)
+		if (_liveProxyData->_inputsRoot != nullptr)
 		{
 			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				Json::Value inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
+				json streamInputRoot = inputRoot["streamInput"];
 
 				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
@@ -423,15 +421,15 @@ void LiveProxy::encodeContent(
     }
     catch(FFMpegURLForbidden& e)
     {
-		if (_liveProxyData->_inputsRoot != Json::nullValue)
+		if (_liveProxyData->_inputsRoot != nullptr)
 		{
 			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				Json::Value inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
+				json streamInputRoot = inputRoot["streamInput"];
 
 				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
@@ -492,15 +490,15 @@ void LiveProxy::encodeContent(
     }
     catch(FFMpegURLNotFound& e)
     {
-		if (_liveProxyData->_inputsRoot != Json::nullValue)
+		if (_liveProxyData->_inputsRoot != nullptr)
 		{
 			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				Json::Value inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
+				json streamInputRoot = inputRoot["streamInput"];
 
 				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
@@ -561,15 +559,15 @@ void LiveProxy::encodeContent(
     }
     catch(runtime_error& e)
     {
-		if (_liveProxyData->_inputsRoot != Json::nullValue)
+		if (_liveProxyData->_inputsRoot != nullptr)
 		{
 			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				Json::Value inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
+				json streamInputRoot = inputRoot["streamInput"];
 
 				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
@@ -628,15 +626,15 @@ void LiveProxy::encodeContent(
     }
     catch(exception& e)
     {
-		if (_liveProxyData->_inputsRoot != Json::nullValue)
+		if (_liveProxyData->_inputsRoot != nullptr)
 		{
 			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				Json::Value inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
-				Json::Value streamInputRoot = inputRoot["streamInput"];
+				json streamInputRoot = inputRoot["streamInput"];
 
 				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")

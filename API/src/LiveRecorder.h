@@ -9,7 +9,7 @@ class LiveRecorder: public FFMPEGEncoderTask {
 			shared_ptr<LiveRecording> liveRecording,
 			int64_t ingestionJobKey,
 			int64_t encodingJobKey,
-			Json::Value configuration,
+			json configurationRoot,
 			mutex* encodingCompletedMutex,                                                                        
 			map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,                                    
 			shared_ptr<spdlog::logger> logger,

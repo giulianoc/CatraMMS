@@ -29,7 +29,7 @@
 // https://curl.se/libcurl/c/CURLOPT_POST.html
 
 
-Json::Value MMSCURL::httpGetJson(
+json MMSCURL::httpGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -52,7 +52,7 @@ Json::Value MMSCURL::httpGetJson(
 		maxRetryNumber,
 		secondsToWaitBeforeToRetry);
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }
@@ -123,7 +123,7 @@ string MMSCURL::httpPutString(
 	return responseDetails.second;
 }
 
-Json::Value MMSCURL::httpPostStringAndGetJson(
+json MMSCURL::httpPostStringAndGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -151,12 +151,12 @@ Json::Value MMSCURL::httpPostStringAndGetJson(
 		secondsToWaitBeforeToRetry
 	).second;
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }
 
-Json::Value MMSCURL::httpPutStringAndGetJson(
+json MMSCURL::httpPutStringAndGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -184,7 +184,7 @@ Json::Value MMSCURL::httpPutStringAndGetJson(
 		secondsToWaitBeforeToRetry
 	);
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }
@@ -257,7 +257,7 @@ string MMSCURL::httpPutFile(
 	);
 }
 
-Json::Value MMSCURL::httpPostFileAndGetJson(
+json MMSCURL::httpPostFileAndGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -287,12 +287,12 @@ Json::Value MMSCURL::httpPostFileAndGetJson(
 		contentRangeEnd_Excluded
 	);
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }
 
-Json::Value MMSCURL::httpPutFileAndGetJson(
+json MMSCURL::httpPutFileAndGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -322,7 +322,7 @@ Json::Value MMSCURL::httpPutFileAndGetJson(
 		contentRangeEnd_Excluded
 	);
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }
@@ -468,7 +468,7 @@ string MMSCURL::httpPutFormData(
 	);
 }
 
-Json::Value MMSCURL::httpPostFormDataAndGetJson(
+json MMSCURL::httpPostFormDataAndGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -488,12 +488,12 @@ Json::Value MMSCURL::httpPostFormDataAndGetJson(
 		secondsToWaitBeforeToRetry
 	);
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }
 
-Json::Value MMSCURL::httpPutFormDataAndGetJson(
+json MMSCURL::httpPutFormDataAndGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -513,7 +513,7 @@ Json::Value MMSCURL::httpPutFormDataAndGetJson(
 		secondsToWaitBeforeToRetry
 	);
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }
@@ -586,7 +586,7 @@ string MMSCURL::httpPutFileByFormData(
 	);
 }
 
-Json::Value MMSCURL::httpPostFileByFormDataAndGetJson(
+json MMSCURL::httpPostFileByFormDataAndGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -616,12 +616,12 @@ Json::Value MMSCURL::httpPostFileByFormDataAndGetJson(
 		contentRangeEnd_Excluded
 	);
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }
 
-Json::Value MMSCURL::httpPutFileByFormDataAndGetJson(
+json MMSCURL::httpPutFileByFormDataAndGetJson(
 	shared_ptr<spdlog::logger> logger,
 	int64_t ingestionJobKey,
 	string url,
@@ -651,7 +651,7 @@ Json::Value MMSCURL::httpPutFileByFormDataAndGetJson(
 		contentRangeEnd_Excluded
 	);
 
-	Json::Value jsonRoot = JSONUtils::toJson(ingestionJobKey, -1, response);
+	json jsonRoot = JSONUtils::toJson(response);
 
 	return jsonRoot;
 }

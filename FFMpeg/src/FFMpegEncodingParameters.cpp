@@ -22,13 +22,13 @@ namespace fs = std::filesystem;
 FFMpegEncodingParameters::FFMpegEncodingParameters(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 	bool isVideo,   // if false it means is audio
 	int videoTrackIndexToBeUsed,
 	int audioTrackIndexToBeUsed,
 	string encodedStagingAssetPathName,
-	Json::Value videoTracksRoot,	// used only in case of _audioGroup
-	Json::Value audioTracksRoot,	// used only in case of _audioGroup
+	json videoTracksRoot,	// used only in case of _audioGroup
+	json audioTracksRoot,	// used only in case of _audioGroup
 
 	bool& twoPasses,	// out
 
@@ -55,7 +55,7 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 
 	_initialized = false;
 	twoPasses = false;
-	if (encodingProfileDetailsRoot == Json::nullValue)
+	if (encodingProfileDetailsRoot == nullptr)
 		return;
 
     try
@@ -152,7 +152,7 @@ void FFMpegEncodingParameters::applyEncoding(
 	// e quindi applyEncoding non la aggiunge
 	bool videoResolutionToBeAdded,
 
-	Json::Value filtersRoot,
+	json filtersRoot,
 
 	// out (in append)
 	vector<string>& ffmpegArgumentList
@@ -263,7 +263,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 						if (videoResolutionToBeAdded)
 						{
-							if (filtersRoot == Json::nullValue)
+							if (filtersRoot == nullptr)
 								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 									ffmpegArgumentList);
 							else
@@ -295,7 +295,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-						if (filtersRoot != Json::nullValue)
+						if (filtersRoot != nullptr)
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
@@ -386,7 +386,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(ffmpegVideoBufSizeParameter, ffmpegArgumentList);
 						if (videoResolutionToBeAdded)
 						{
-							if (filtersRoot == Json::nullValue)
+							if (filtersRoot == nullptr)
 								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 									ffmpegArgumentList);
 							else
@@ -413,7 +413,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-						if (filtersRoot != Json::nullValue)
+						if (filtersRoot != nullptr)
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
@@ -513,7 +513,7 @@ void FFMpegEncodingParameters::applyEncoding(
 					FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 					if (videoResolutionToBeAdded)
 					{
-						if (filtersRoot == Json::nullValue)
+						if (filtersRoot == nullptr)
 							FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 								ffmpegArgumentList);
 						else
@@ -541,7 +541,7 @@ void FFMpegEncodingParameters::applyEncoding(
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-					if (filtersRoot != Json::nullValue)
+					if (filtersRoot != nullptr)
 					{
 						string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
@@ -639,7 +639,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 						if (videoResolutionToBeAdded)
 						{
-							if (filtersRoot == Json::nullValue)
+							if (filtersRoot == nullptr)
 								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 									ffmpegArgumentList);
 							else
@@ -681,7 +681,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-						if (filtersRoot != Json::nullValue)
+						if (filtersRoot != nullptr)
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
@@ -741,7 +741,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 						if (videoResolutionToBeAdded)
 						{
-							if (filtersRoot == Json::nullValue)
+							if (filtersRoot == nullptr)
 								FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 									ffmpegArgumentList);
 							else
@@ -778,7 +778,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-						if (filtersRoot != Json::nullValue)
+						if (filtersRoot != nullptr)
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
@@ -851,7 +851,7 @@ void FFMpegEncodingParameters::applyEncoding(
 							FFMpegEncodingParameters::addToArguments(_ffmpegVideoKeyFramesRateParameter, ffmpegArgumentList);
 							if (videoResolutionToBeAdded)
 							{
-								if (filtersRoot == Json::nullValue)
+								if (filtersRoot == nullptr)
 									FFMpegEncodingParameters::addToArguments(string("-vf ") + ffmpegVideoResolutionParameter,
 										ffmpegArgumentList);
 								else
@@ -879,7 +879,7 @@ void FFMpegEncodingParameters::applyEncoding(
 							FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 							FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 							FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-							if (filtersRoot != Json::nullValue)
+							if (filtersRoot != nullptr)
 							{
 								string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
@@ -947,7 +947,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-						if (filtersRoot != Json::nullValue)
+						if (filtersRoot != nullptr)
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
@@ -991,7 +991,7 @@ void FFMpegEncodingParameters::applyEncoding(
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioOtherParameters, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioChannelsParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioSampleRateParameter, ffmpegArgumentList);
-						if (filtersRoot != Json::nullValue)
+						if (filtersRoot != nullptr)
 						{
 							string audioFilters = ffmpegFilters.addAudioFilters(filtersRoot, -1);
 
@@ -1229,15 +1229,15 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
 				//  So, this is the reason, I'm adding phase 2 as well
 				// + "-an "    // disable audio
-				if (_audioTracksRoot != Json::nullValue)
+				if (_audioTracksRoot != nullptr)
 				{
 					for (int index = 0; index < _audioTracksRoot.size(); index++)
 					{
-						Json::Value audioTrack = _audioTracksRoot[index];
+						json audioTrack = _audioTracksRoot[index];
 
 						ffmpegArgumentList.push_back("-map");
 						ffmpegArgumentList.push_back(
-							string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
+							string("0:") + to_string(JSONUtils::asInt(audioTrack, "trackIndex")));
 
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
@@ -1275,13 +1275,13 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 					}
 				}
 
-				if (_videoTracksRoot != Json::nullValue)
+				if (_videoTracksRoot != nullptr)
 				{
-					Json::Value videoTrack = _videoTracksRoot[0];
+					json videoTrack = _videoTracksRoot[0];
 
 					ffmpegArgumentList.push_back("-map");
 					ffmpegArgumentList.push_back(
-						string("0:") + to_string(videoTrack.get("trackIndex", -1).asInt()));
+						string("0:") + to_string(JSONUtils::asInt(videoTrack, "trackIndex")));
 				}
 				FFMpegEncodingParameters::addToArguments(_ffmpegVideoCodecParameter, ffmpegArgumentList);
 				FFMpegEncodingParameters::addToArguments(_ffmpegVideoProfileParameter, ffmpegArgumentList);
@@ -1318,15 +1318,15 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 				//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
 				//  So, this is the reason, I'm adding phase 2 as well
 				// + "-an "    // disable audio
-				if (_audioTracksRoot != Json::nullValue)
+				if (_audioTracksRoot != nullptr)
 				{
 					for (int index = 0; index < _audioTracksRoot.size(); index++)
 					{
-						Json::Value audioTrack = _audioTracksRoot[index];
+						json audioTrack = _audioTracksRoot[index];
 
 						ffmpegArgumentList.push_back("-map");
 						ffmpegArgumentList.push_back(
-							string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
+							string("0:") + to_string(JSONUtils::asInt(audioTrack, "trackIndex")));
 
 						FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
 						FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
@@ -1364,13 +1364,13 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 					}
 				}
 
-				if (_videoTracksRoot != Json::nullValue)
+				if (_videoTracksRoot != nullptr)
 				{
-					Json::Value videoTrack = _videoTracksRoot[0];
+					json videoTrack = _videoTracksRoot[0];
 
 					ffmpegArgumentList.push_back("-map");
 					ffmpegArgumentList.push_back(
-						string("0:") + to_string(videoTrack.get("trackIndex", -1).asInt()));
+						string("0:") + to_string(JSONUtils::asInt(videoTrack, "trackIndex")));
 				}
 				FFMpegEncodingParameters::addToArguments(_ffmpegVideoCodecParameter, ffmpegArgumentList);
 				FFMpegEncodingParameters::addToArguments(_ffmpegVideoProfileParameter, ffmpegArgumentList);
@@ -1392,11 +1392,11 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 				FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
 				string videoTrackDirectoryName;
-				if (_videoTracksRoot != Json::nullValue)
+				if (_videoTracksRoot != nullptr)
 				{
-					Json::Value videoTrack = _videoTracksRoot[0];
+					json videoTrack = _videoTracksRoot[0];
 
-					videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+					videoTrackDirectoryName = to_string(JSONUtils::asInt(videoTrack, "trackIndex"));
 				}
 
 				{
@@ -1431,15 +1431,15 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 			//  it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
 			//  So, this is the reason, I'm adding phase 2 as well
 			// + "-an "    // disable audio
-			if (_audioTracksRoot != Json::nullValue)
+			if (_audioTracksRoot != nullptr)
 			{
 				for (int index = 0; index < _audioTracksRoot.size(); index++)
 				{
-					Json::Value audioTrack = _audioTracksRoot[index];
+					json audioTrack = _audioTracksRoot[index];
 
 					ffmpegArgumentList.push_back("-map");
 					ffmpegArgumentList.push_back(
-						string("0:") + to_string(audioTrack.get("trackIndex", -1).asInt()));
+						string("0:") + to_string(JSONUtils::asInt(audioTrack, "trackIndex")));
 
 					FFMpegEncodingParameters::addToArguments(_ffmpegAudioCodecParameter, ffmpegArgumentList);
 					FFMpegEncodingParameters::addToArguments(ffmpegAudioBitRateParameter, ffmpegArgumentList);
@@ -1477,13 +1477,13 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 				}
 			}
 
-			if (_videoTracksRoot != Json::nullValue)
+			if (_videoTracksRoot != nullptr)
 			{
-				Json::Value videoTrack = _videoTracksRoot[0];
+				json videoTrack = _videoTracksRoot[0];
 
 				ffmpegArgumentList.push_back("-map");
 				ffmpegArgumentList.push_back(
-					string("0:") + to_string(videoTrack.get("trackIndex", -1).asInt()));
+					string("0:") + to_string(JSONUtils::asInt(videoTrack, "trackIndex")));
 			}
 			FFMpegEncodingParameters::addToArguments(_ffmpegVideoCodecParameter, ffmpegArgumentList);
 			FFMpegEncodingParameters::addToArguments(_ffmpegVideoProfileParameter, ffmpegArgumentList);
@@ -1501,11 +1501,11 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 			FFMpegEncodingParameters::addToArguments(_ffmpegHttpStreamingParameter, ffmpegArgumentList);
 
 			string videoTrackDirectoryName;	
-			if (_videoTracksRoot != Json::nullValue)
+			if (_videoTracksRoot != nullptr)
 			{
-				Json::Value videoTrack = _videoTracksRoot[0];
+				json videoTrack = _videoTracksRoot[0];
 
-				videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+				videoTrackDirectoryName = to_string(JSONUtils::asInt(videoTrack, "trackIndex"));
 			}
 
 			{
@@ -1577,11 +1577,11 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 
 		mainManifest = string("#EXTM3U") + "\n";
 
-		if (_audioTracksRoot != Json::nullValue)
+		if (_audioTracksRoot != nullptr)
 		{
 			for (int index = 0; index < _audioTracksRoot.size(); index++)
 			{
-				Json::Value audioTrack = _audioTracksRoot[index];
+				json audioTrack = _audioTracksRoot[index];
 
 				string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
 
@@ -1599,11 +1599,11 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 		mainManifest += (videoManifestLine + "\n");
 
 		string videoTrackDirectoryName;
-		if (_videoTracksRoot != Json::nullValue)
+		if (_videoTracksRoot != nullptr)
 		{
-			Json::Value videoTrack = _videoTracksRoot[0];
+			json videoTrack = _videoTracksRoot[0];
 
-			videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+			videoTrackDirectoryName = to_string(JSONUtils::asInt(videoTrack, "trackIndex"));
 		}
 		mainManifest += (videoTrackDirectoryName + "/" + manifestFileName + "\n");
 
@@ -1680,7 +1680,7 @@ string FFMpegEncodingParameters::getManifestFileName()
 
 void FFMpegEncodingParameters::settingFfmpegParameters(
 	shared_ptr<spdlog::logger> logger,
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 	bool isVideo,   // if false it means is audio
         
 	string& httpStreamingFileFormat,
@@ -1747,7 +1747,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			field = "HLS";
 			if (JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
 			{
-				Json::Value hlsRoot = encodingProfileDetailsRoot[field]; 
+				json hlsRoot = encodingProfileDetailsRoot[field]; 
 
 				field = "segmentDuration";
 				segmentDurationInSeconds = JSONUtils::asInt(hlsRoot, field, 10);
@@ -1773,7 +1773,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			field = "DASH";
 			if (JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
 			{
-				Json::Value dashRoot = encodingProfileDetailsRoot[field]; 
+				json dashRoot = encodingProfileDetailsRoot[field]; 
 
 				field = "segmentDuration";
 				segmentDurationInSeconds = JSONUtils::asInt(dashRoot, field, 10);
@@ -1824,7 +1824,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 		field = "video";
 		if (JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
 		{
-			Json::Value videoRoot = encodingProfileDetailsRoot[field]; 
+			json videoRoot = encodingProfileDetailsRoot[field]; 
 
 			// codec
 			string codec;
@@ -1982,13 +1982,13 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value bitRatesRoot = videoRoot[field];
+			json bitRatesRoot = videoRoot[field];
 
 			videoBitRatesInfo.clear();
 			{
 				for (int bitRateIndex = 0; bitRateIndex < bitRatesRoot.size(); bitRateIndex++)
 				{
-					Json::Value bitRateInfo = bitRatesRoot[bitRateIndex];
+					json bitRateInfo = bitRatesRoot[bitRateIndex];
 
 					// resolution
 					string ffmpegVideoResolution;
@@ -2122,7 +2122,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
             throw runtime_error(errorMessage);
         }
 
-        Json::Value audioRoot = encodingProfileDetailsRoot[field]; 
+        json audioRoot = encodingProfileDetailsRoot[field]; 
 
         // codec
         {
@@ -2207,13 +2207,13 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
 			throw runtime_error(errorMessage);
 		}
-		Json::Value bitRatesRoot = audioRoot[field];
+		json bitRatesRoot = audioRoot[field];
 
 		audioBitRatesInfo.clear();
 		{
 			for (int bitRateIndex = 0; bitRateIndex < bitRatesRoot.size(); bitRateIndex++)
 			{
-				Json::Value bitRateInfo = bitRatesRoot[bitRateIndex];
+				json bitRateInfo = bitRatesRoot[bitRateIndex];
 
 				string ffmpegAudioBitRate;
 				{

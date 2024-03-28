@@ -28,7 +28,7 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 			shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 			int64_t ingestionJobKey,
 			int64_t encodingJobKey,
-			Json::Value configuration,
+			json configurationRoot,
 			mutex* encodingCompletedMutex,                                                                        
 			map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>* encodingCompletedMap,                                    
 			shared_ptr<spdlog::logger> logger);
@@ -85,8 +85,8 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 			// in case of a new content
 			string sourceURL,	// if empty it means binary is ingested later (PUSH)
 			string title,
-			Json::Value userDataRoot,
-			Json::Value ingestedParametersRoot,	// it could be also nullValue
+			json userDataRoot,
+			json ingestedParametersRoot,	// it could be also nullValue
 
 			int64_t encodingProfileKey,
 
@@ -96,9 +96,9 @@ class FFMPEGEncoderTask: public FFMPEGEncoderBase {
 		void uploadLocalMediaToMMS(
 			int64_t ingestionJobKey,
 			int64_t encodingJobKey,
-			Json::Value ingestedParametersRoot,
-			Json::Value encodingProfileDetailsRoot,
-			Json::Value encodingParametersRoot,
+			json ingestedParametersRoot,
+			json encodingProfileDetailsRoot,
+			json encodingParametersRoot,
 			string sourceFileExtension,
 			string encodedStagingAssetPathName,
 			string workflowLabel,

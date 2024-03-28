@@ -40,7 +40,7 @@ struct MaxEncodingsManagerCapacityReached: public exception {
 class ActiveEncodingsManager {
 public:
     ActiveEncodingsManager(       
-            Json::Value configuration,
+            json configuration,
             shared_ptr<MultiEventsSet> multiEventsSet,
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
@@ -72,7 +72,7 @@ private:
     };
 
     shared_ptr<spdlog::logger>                  _logger;
-    Json::Value                                 _configuration;
+    json                                 _configuration;
     shared_ptr<MMSEngineDBFacade>               _mmsEngineDBFacade;
     shared_ptr<MMSStorage>                      _mmsStorage;
     shared_ptr<EncodersLoadBalancer>            _encodersLoadBalancer;

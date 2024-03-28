@@ -38,13 +38,13 @@ class FFMPEGEncoderBase {
 			bool					_killedBecauseOfNotWorking;	// by monitorThread
 
 			// string					_liveGridOutputType;	// only for LiveGrid
-			Json::Value				_outputsRoot;
+			json				_outputsRoot;
 
 			int64_t					_ingestionJobKey;
-			Json::Value				_encodingParametersRoot;
-			Json::Value				_ingestedParametersRoot;
+			json				_encodingParametersRoot;
+			json				_ingestedParametersRoot;
 
-			Json::Value				_inputsRoot;
+			json				_inputsRoot;
 			mutex					_inputsRootMutex;
 
 			chrono::system_clock::time_point	_proxyStart;
@@ -85,8 +85,8 @@ class FFMPEGEncoderBase {
 
 			int64_t					_ingestionJobKey;
 			bool					_externalEncoder;
-			Json::Value				_encodingParametersRoot;
-			Json::Value				_ingestedParametersRoot;
+			json				_encodingParametersRoot;
+			json				_ingestedParametersRoot;
 			string					_streamSourceType;
 			string					_chunksTranscoderStagingContentsPath;
 			string					_chunksNFSStagingContentsPath;
@@ -156,7 +156,7 @@ class FFMPEGEncoderBase {
 
 	public:
 		FFMPEGEncoderBase(
-			Json::Value configuration,
+			json configurationRoot,
 			shared_ptr<spdlog::logger> logger);
 		~FFMPEGEncoderBase();
 

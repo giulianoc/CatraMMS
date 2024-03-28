@@ -11,20 +11,20 @@ LiveRecorder::LiveRecorder(
 	shared_ptr<LiveRecording> liveRecording,
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	Json::Value configuration,
+	json configurationRoot,
 	mutex* encodingCompletedMutex,                                                                        
 	map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,                                    
 	shared_ptr<spdlog::logger> logger,
 	mutex* tvChannelsPortsMutex,                                                                          
 	long* tvChannelPort_CurrentOffset):
-	FFMPEGEncoderTask(liveRecording, ingestionJobKey, encodingJobKey, configuration, encodingCompletedMutex,
+	FFMPEGEncoderTask(liveRecording, ingestionJobKey, encodingJobKey, configurationRoot, encodingCompletedMutex,
 		encodingCompletedMap, logger)
 {
 	_liveRecording					= liveRecording;
 	_tvChannelsPortsMutex			= tvChannelsPortsMutex;                                                                          
 	_tvChannelPort_CurrentOffset	= tvChannelPort_CurrentOffset;
 
-	_liveRecorderChunksIngestionCheckInSeconds =  JSONUtils::asInt(configuration["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
+	_liveRecorderChunksIngestionCheckInSeconds =  JSONUtils::asInt(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
 	_logger->info(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: " + to_string(_liveRecorderChunksIngestionCheckInSeconds)
 	);
@@ -32,7 +32,7 @@ LiveRecorder::LiveRecorder(
 
 LiveRecorder::~LiveRecorder()
 {
-	_liveRecording->_encodingParametersRoot = Json::nullValue;
+	_liveRecording->_encodingParametersRoot = nullptr;
 	_liveRecording->_ingestionJobKey		= 0;
 	_liveRecording->_channelLabel		= "";
 	_liveRecording->_killedBecauseOfNotWorking = false;
@@ -63,12 +63,12 @@ void LiveRecorder::encodeContent(
     {
         _liveRecording->_killedBecauseOfNotWorking = false;
 
-        Json::Value metadataRoot = JSONUtils::toJson(-1, _encodingJobKey, requestBody);
+        json metadataRoot = JSONUtils::toJson(requestBody);
 
         _liveRecording->_ingestionJobKey = _ingestionJobKey;	// JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
         _liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 		// _chunksTranscoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
@@ -127,7 +127,7 @@ void LiveRecorder::encodeContent(
 		string outputFileFormat;
 		{
 			string field = "schedule";
-			Json::Value recordingPeriodRoot = (_liveRecording->_ingestedParametersRoot)[field];
+			json recordingPeriodRoot = (_liveRecording->_ingestedParametersRoot)[field];
 
 			field = "start";
 			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -191,7 +191,7 @@ void LiveRecorder::encodeContent(
 
         _liveRecording->_streamSourceType = JSONUtils::asString(encodingParametersRoot,
 			"streamSourceType", "IP_PULL");
-		int ipMMSAsServer_listenTimeoutInSeconds = encodingParametersRoot.get("actAsServerListenTimeout", 300).asInt();
+		int ipMMSAsServer_listenTimeoutInSeconds = JSONUtils::asInt(encodingParametersRoot, "actAsServerListenTimeout", 300);
 		int pushListenTimeout = JSONUtils::asInt(encodingParametersRoot, "pushListenTimeout", -1);
 
 		int captureLive_videoDeviceNumber = -1;
@@ -294,7 +294,7 @@ void LiveRecorder::encodeContent(
 			liveURL = JSONUtils::asString(encodingParametersRoot, "liveURL", "");
 		}
 
-		Json::Value outputsRoot = encodingParametersRoot["outputsRoot"];
+		json outputsRoot = encodingParametersRoot["outputsRoot"];
 
 		{
 			bool monitorHLS = JSONUtils::asBool(encodingParametersRoot, "monitorHLS", false);
@@ -368,7 +368,7 @@ void LiveRecorder::encodeContent(
 		{
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				json outputRoot = outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
@@ -417,7 +417,7 @@ void LiveRecorder::encodeContent(
 			}
 		}
 
-		Json::Value framesToBeDetectedRoot = encodingParametersRoot["framesToBeDetected"];
+		json framesToBeDetectedRoot = encodingParametersRoot["framesToBeDetected"];
 
 		string otherInputOptions = JSONUtils::asString(_liveRecording->_ingestedParametersRoot,
 			"otherInputOptions", "");
@@ -489,7 +489,7 @@ void LiveRecorder::encodeContent(
 				2 * _liveRecorderChunksIngestionCheckInSeconds));
 		}
 
-		_liveRecording->_encodingParametersRoot = Json::nullValue;
+		_liveRecording->_encodingParametersRoot = nullptr;
         _liveRecording->_killedBecauseOfNotWorking = false;
         
         _logger->info(__FILEREF__ + "liveRecorded finished"

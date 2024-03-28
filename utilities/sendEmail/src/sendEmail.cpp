@@ -9,7 +9,7 @@
 
 using namespace std;
 
-Json::Value loadConfigurationFile(const char* configurationPathName);
+json loadConfigurationFile(const char* configurationPathName);
 
 int main (int iArgc, char *pArgv [])
 {
@@ -21,7 +21,7 @@ int main (int iArgc, char *pArgv [])
         return 1;
     }
     
-    Json::Value configuration = loadConfigurationFile(pArgv[1]);
+    json configuration = loadConfigurationFile(pArgv[1]);
     string tosCommaSeparated = pArgv[2];
     string ccsCommaSeparated = pArgv[3];
 
@@ -75,21 +75,25 @@ int main (int iArgc, char *pArgv [])
     return 0;
 }
 
-Json::Value loadConfigurationFile(const char* configurationPathName)
+json loadConfigurationFile(const char* configurationPathName)
 {
-    Json::Value configurationJson;
-    
     try
     {
-        ifstream configurationFile(configurationPathName, std::ifstream::binary);
-        configurationFile >> configurationJson;
+        ifstream configurationFile(configurationPathName, ifstream::binary);
+
+		return json::parse(configurationFile,
+			nullptr,	// callback
+			true,		// allow exceptions
+			true		// ignore_comments
+		);
     }
     catch(...)
     {
-        cerr << string("wrong json configuration format")
-                + ", configurationPathName: " + configurationPathName
-            << endl;
+		string errorMessage = fmt::format("wrong json configuration format"
+			", configurationPathName: {}", configurationPathName
+		);
+
+		throw runtime_error(errorMessage);
     }
-    
-    return configurationJson;
 }
+

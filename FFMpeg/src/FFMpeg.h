@@ -21,7 +21,7 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "spdlog/spdlog.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 
 #ifndef __FILEREF__
     #ifdef __APPLE__
@@ -33,6 +33,10 @@
 
 using namespace std;
 namespace fs = std::filesystem;
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
 
 struct FFMpegEncodingStatusNotAvailable: public exception {
     char const* what() const throw() 
@@ -99,7 +103,7 @@ struct EncodingIsAlreadyRunning: public exception {
 
 class FFMpeg {
 public:
-    FFMpeg(Json::Value configuration,
+    FFMpeg(json configuration,
             shared_ptr<spdlog::logger> logger);
     
     ~FFMpeg();
@@ -108,12 +112,12 @@ public:
         string mmsSourceAssetPathName,
         int64_t durationInMilliSeconds,
         string stagingEncodedAssetPathName,
-        Json::Value encodingProfileDetailsRoot,
+        json encodingProfileDetailsRoot,
         bool isVideo,   // if false it means is audio
-		Json::Value videoTracksRoot,
-		Json::Value audioTracksRoot,
+		json videoTracksRoot,
+		json audioTracksRoot,
 		int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
-		Json::Value filtersRoot,
+		json filtersRoot,
         int64_t physicalPathKey,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -128,7 +132,7 @@ public:
         string imagePosition_Y_InPixel,
         // string encodedFileName,
         string stagingEncodedAssetPathName,
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
 		pid_t* pChildPid);
@@ -138,8 +142,8 @@ public:
 		string mmsSourceVideoAssetPathName,
 		int64_t videoDurationInMilliSeconds,
 
-		Json::Value drawTextDetailsRoot,
-		Json::Value encodingProfileDetailsRoot,
+		json drawTextDetailsRoot,
+		json encodingProfileDetailsRoot,
 		string stagingEncodedAssetPathName,
 		int64_t encodingJobKey,
 		int64_t ingestionJobKey,
@@ -152,7 +156,7 @@ public:
         string videoSpeedType,
         int videoSpeedSize,
 
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -169,7 +173,7 @@ public:
         string overlayPosition_Y_InPixel,
         string overlay_Width_InPixel,
         string overlay_Height_InPixel,
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
         int64_t ingestionJobKey,
@@ -189,7 +193,7 @@ public:
 		bool muteIntroOverlay,
 		bool muteOutroOverlay,
 
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -206,7 +210,7 @@ public:
 
 		bool muteIntroOverlay,
 
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -223,7 +227,7 @@ public:
 
 		bool muteOutroOverlay,
 
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -235,7 +239,7 @@ public:
 		int64_t videoDurationInMilliSeconds,
 		string addType,	// entireTrack, begin, end
 		int seconds,
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 		string stagingEncodedAssetPathName,
 		int64_t encodingJobKey,
 		int64_t ingestionJobKey,
@@ -247,7 +251,7 @@ public:
 	bool forbiddenErrorInOutputLog();
 	bool isFrameIncreasing(int maxMilliSecondsToWait);
 
-	tuple<int64_t, long, Json::Value> getMediaInfo(int64_t ingestionJobKey,
+	tuple<int64_t, long, json> getMediaInfo(int64_t ingestionJobKey,
 		bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,
 		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
 		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
@@ -319,7 +323,7 @@ public:
 		int64_t encodingJobKey,
 		float durationOfEachSlideInSeconds, 
 		string frameRateMode,
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 		vector<string>& imagesSourcePhysicalPaths,
 		vector<string>& audiosSourcePhysicalPaths,
 		float shortestAudioDurationInSeconds,	// the shortest duration among the audios
@@ -345,7 +349,7 @@ public:
 		// If you re-encode your video when you cut/trim, then you get a frame-accurate cut
 		// because FFmpeg will re-encode the video and start with an I-frame.
 		int64_t encodingJobKey,
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 		string startTime,
 		string endTime,
 		int framesNumber,
@@ -386,9 +390,9 @@ public:
         string outputFileFormat,
 		string segmenterType,
 
-		Json::Value outputsRoot,
+		json outputsRoot,
 
-		Json::Value picturePathNamesToBeDetectedRoot,
+		json picturePathNamesToBeDetectedRoot,
 
 		pid_t* pChildPid,
 		chrono::system_clock::time_point* pRecordingStart);
@@ -421,9 +425,9 @@ public:
         string outputFileFormat,
 		string segmenterType,
 
-		Json::Value outputsRoot,
+		json outputsRoot,
 
-		Json::Value picturePathNamesToBeDetectedRoot,
+		json picturePathNamesToBeDetectedRoot,
 
 		pid_t* pChildPid,
 		chrono::system_clock::time_point* pRecordingStart);
@@ -434,9 +438,9 @@ public:
 		bool externalEncoder,
 
 		mutex* inputsRootMutex,
-		Json::Value* inputsRoot,
+		json* inputsRoot,
 
-		Json::Value outputsRoot,
+		json outputsRoot,
 
 		pid_t* pChildPid,
 		chrono::system_clock::time_point* pProxyStart
@@ -447,12 +451,12 @@ public:
 		int64_t encodingJobKey,
 		bool externalEncoder,
 		string userAgent,
-		Json::Value inputChannelsRoot,	// name,url
+		json inputChannelsRoot,	// name,url
 		int gridColumns,
 		int gridWidth,	// i.e.: 1024
 		int gridHeight, // i.e.: 578
 
-		Json::Value outputsRoot,
+		json outputsRoot,
 
 		pid_t* pChildPid);
 
@@ -679,39 +683,39 @@ private:
 
 	/*
 	tuple<string, string, string> addFilters(
-		Json::Value filtersRoot,
+		json filtersRoot,
 		string ffmpegVideoResolutionParameter,
 		string ffmpegDrawTextFilter,
 		int64_t streamingDurationInSeconds);
 
 	string getFilter(
-		Json::Value filtersRoot,
+		json filtersRoot,
 		int64_t streamingDurationInSeconds);
 	*/
 
 	int getNextLiveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value* inputsRoot, mutex* inputsRootMutex,
-		int currentInputIndex, bool timedInput, Json::Value* newInputRoot);
+		json* inputsRoot, mutex* inputsRootMutex,
+		int currentInputIndex, bool timedInput, json* newInputRoot);
 
-	tuple<long, string, string, int, int64_t, Json::Value
+	tuple<long, string, string, int, int64_t, json
 		// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
 		// vector<tuple<int, int64_t, string, long, int, long, string>>
 		>
 		liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
-		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList);
+		json inputRoot, vector<string>& ffmpegInputArgumentList);
 
 	void outputsRootToFfmpeg(int64_t ingestionJobKey, int64_t encodingJobKey,
 		bool externalEncoder,
 		string otherOutputOptionsBecauseOfMaxWidth,
-		Json::Value inputDrawTextDetailsRoot,
+		json inputDrawTextDetailsRoot,
 		// vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
 		// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
 		long streamingDurationInSeconds,
-		Json::Value outputsRoot,
+		json outputsRoot,
 		vector<string>& ffmpegOutputArgumentList);
 	void outputsRootToFfmpeg_clean(
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value outputsRoot,
+		json outputsRoot,
 		bool externalEncoder);
 
     string getLastPartOfFile(

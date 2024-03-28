@@ -210,7 +210,7 @@ void API::createDeliveryAuthorization(
 			}
 			else
 			{
-				Json::Value responseRoot;
+				json responseRoot;
 
 				string field = "deliveryURL";
 				responseRoot[field] = deliveryURL;
@@ -342,10 +342,10 @@ void API::createBulkOfDeliveryAuthorization(
              }
 			output is like the input with the addition of the deliveryURL field
 		*/
-		Json::Value deliveryAutorizationDetailsRoot;
+		json deliveryAutorizationDetailsRoot;
         try
         {
-			deliveryAutorizationDetailsRoot = JSONUtils::toJson(-1, -1, requestBody);
+			deliveryAutorizationDetailsRoot = JSONUtils::toJson(requestBody);
         }
         catch(exception& e)
         {
@@ -373,35 +373,30 @@ void API::createBulkOfDeliveryAuthorization(
 			string field = "mediaItemKeyList";
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
-				Json::Value mediaItemKeyListRoot = deliveryAutorizationDetailsRoot[field];
+				json mediaItemKeyListRoot = deliveryAutorizationDetailsRoot[field];
 
 				// spesso molte entry contengono lo stesso input. Ad esempio, la pagina mediaItems della GUI,
 				// spesso richiede la stessa immagina (nel caso dei contenuti di una serie, le immagini
 				// sono tutte le stesse). Per questo motivo usiamo una mappa che conserva le deliveryURL
 				// ed evita di farle ricalcolare se il lavoro è stato già fatto
 				map<string, string> deliveryURLAlreadyCreated;
-				for(Json::Value::iterator it=mediaItemKeyListRoot.begin();
-					it != mediaItemKeyListRoot.end(); ++it)
+                for (auto& [keyRoot, valRoot] : mediaItemKeyListRoot.items())
 				{
-					// Json::Value mediaItemKeyRoot = mediaItemKeyListRoot[mediaItemKeyIndex];
-					Json::Value mediaItemKeyRoot = *it;
-
 					field = "mediaItemKey";
-					int64_t mediaItemKey = JSONUtils::asInt64(mediaItemKeyRoot, field, -1);
+					int64_t mediaItemKey = JSONUtils::asInt64(valRoot, field, -1);
 					field = "encodingProfileKey";
-					int64_t encodingProfileKey = JSONUtils::asInt64(mediaItemKeyRoot,
-						field, -1);
+					int64_t encodingProfileKey = JSONUtils::asInt64(valRoot, field, -1);
 					field = "encodingProfileLabel";
-					string encodingProfileLabel = JSONUtils::asString(mediaItemKeyRoot, field, "");
+					string encodingProfileLabel = JSONUtils::asString(valRoot, field, "");
 
 					field = "deliveryType";
-					string deliveryType = JSONUtils::asString(mediaItemKeyRoot, field, "");
+					string deliveryType = JSONUtils::asString(valRoot, field, "");
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic  = JSONUtils::asBool(mediaItemKeyRoot, field, false);
+					bool filteredByStatistic  = JSONUtils::asBool(valRoot, field, false);
 
 					field = "userId";
-					string userId = JSONUtils::asString(mediaItemKeyRoot, field, "");
+					string userId = JSONUtils::asString(valRoot, field, "");
 
 					string requestKey = fmt::format("{}_{}_{}_{}_{}_{}",
 						mediaItemKey, encodingProfileKey, encodingProfileLabel,
@@ -477,18 +472,15 @@ void API::createBulkOfDeliveryAuthorization(
 						tie(deliveryURL, ignore) = deliveryAuthorizationDetails;
 
 						field = "deliveryURL";
-						mediaItemKeyRoot[field] = deliveryURL;
+						valRoot[field] = deliveryURL;
 
 						deliveryURLAlreadyCreated.insert(make_pair(requestKey, deliveryURL));
 					}
 					else
 					{
 						field = "deliveryURL";
-						mediaItemKeyRoot[field] = searchIt->second;
+						valRoot[field] = searchIt->second;
 					}
-
-					// mediaItemKeyListRoot[mediaItemKeyIndex] = mediaItemKeyRoot;
-					*it = mediaItemKeyRoot;
 				}
 
 				field = "mediaItemKeyList";
@@ -498,7 +490,7 @@ void API::createBulkOfDeliveryAuthorization(
 			field = "uniqueNameList";
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
-				Json::Value uniqueNameListRoot = deliveryAutorizationDetailsRoot[field];
+				json uniqueNameListRoot = deliveryAutorizationDetailsRoot[field];
 
 				// spesso molte entry contengono lo stesso input. Ad esempio, la pagina mediaItems della GUI,
 				// spesso richiede la stessa immagina (nel caso dei contenuti di una serie, le immagini
@@ -508,7 +500,7 @@ void API::createBulkOfDeliveryAuthorization(
 				for (int uniqueNameIndex = 0; uniqueNameIndex < uniqueNameListRoot.size();
 					uniqueNameIndex++)
 				{
-					Json::Value uniqueNameRoot = uniqueNameListRoot[uniqueNameIndex];
+					json uniqueNameRoot = uniqueNameListRoot[uniqueNameIndex];
 
 					field = "uniqueName";
 					string uniqueName = JSONUtils::asString(uniqueNameRoot, field, "");
@@ -621,12 +613,12 @@ void API::createBulkOfDeliveryAuthorization(
 			field = "liveIngestionJobKeyList";
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
-				Json::Value liveIngestionJobKeyListRoot = deliveryAutorizationDetailsRoot[field];
+				json liveIngestionJobKeyListRoot = deliveryAutorizationDetailsRoot[field];
 				for (int liveIngestionJobKeyIndex = 0;
 					liveIngestionJobKeyIndex < liveIngestionJobKeyListRoot.size();
 					liveIngestionJobKeyIndex++)
 				{
-					Json::Value liveIngestionJobKeyRoot = liveIngestionJobKeyListRoot[liveIngestionJobKeyIndex];
+					json liveIngestionJobKeyRoot = liveIngestionJobKeyListRoot[liveIngestionJobKeyIndex];
 
 					field = "ingestionJobKey";
 					int64_t ingestionJobKey = JSONUtils::asInt64(liveIngestionJobKeyRoot, field, -1);

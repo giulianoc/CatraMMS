@@ -4019,7 +4019,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(
     return ingestionJobOutputsCount;
 }
 
-Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
+json MMSEngineDBFacade::getIngestionRootsStatus (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionRootKey, int64_t mediaItemKey,
 	int start, int rows,
@@ -4029,7 +4029,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 	bool fromMaster
 )
 {
-    Json::Value statusListRoot;
+    json statusListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -4050,7 +4050,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         string field;
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             field = "start";
             requestParametersRoot[field] = start;
@@ -4166,7 +4166,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             }
         }
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = fmt::format( 
                 "select count(*) from MMS_IngestionRoot {}",
@@ -4183,7 +4183,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 			);
         }
         
-        Json::Value workflowsRoot(Json::arrayValue);
+        json workflowsRoot = json::array();
         {
             string sqlStatement = fmt::format( 
                 "select ingestionRootKey, userKey, label, status, "
@@ -4198,7 +4198,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value workflowRoot;
+                json workflowRoot;
                 
                 int64_t currentIngestionRootKey = row["ingestionRootKey"].as<int64_t>();
                 field = "ingestionRootKey";
@@ -4231,7 +4231,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 field = "lastUpdate";
                 workflowRoot[field] = row["lastUpdate"].as<string>();
 
-                Json::Value ingestionJobsRoot(Json::arrayValue);
+                json ingestionJobsRoot = json::array();
                 {
                     string sqlStatement = fmt::format( 
                         "select ingestionRootKey, ingestionJobKey, label, "
@@ -4250,11 +4250,11 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 					result res = trans.exec(sqlStatement);
 					for (auto row: res)
                     {
-                        Json::Value ingestionJobRoot = getIngestionJobRoot(
+                        json ingestionJobRoot = getIngestionJobRoot(
                                 workspace, row,
 								dependencyInfo, ingestionJobOutputs, conn, trans);
 
-                        ingestionJobsRoot.append(ingestionJobRoot);
+                        ingestionJobsRoot.push_back(ingestionJobRoot);
                     }
 					chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
                         chrono::system_clock::now() - startSql);
@@ -4270,7 +4270,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 field = "ingestionJobs";
                 workflowRoot[field] = ingestionJobsRoot;
 
-                workflowsRoot.append(workflowRoot);
+                workflowsRoot.push_back(workflowRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -4379,7 +4379,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
     return statusListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
+json MMSEngineDBFacade::getIngestionJobsStatus (
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 	int start, int rows, string label, bool labelLike,
 	/* bool startAndEndIngestionDatePresent, */
@@ -4394,7 +4394,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 	bool fromMaster
 )
 {
-    Json::Value statusListRoot;
+    json statusListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -4415,7 +4415,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         string field;
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             field = "start";
             requestParametersRoot[field] = start;
@@ -4548,7 +4548,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         else if (status == "notCompleted")
             sqlWhere += ("and ij.status not like 'End_%' ");
             
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = fmt::format( 
                 "select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij {}",
@@ -4565,7 +4565,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 			);
         }
 
-        Json::Value ingestionJobsRoot(Json::arrayValue);
+        json ingestionJobsRoot = json::array();
         {
             string sqlStatement = fmt::format(
                 "select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
@@ -4584,13 +4584,13 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-				Json::Value ingestionJobRoot = getIngestionJobRoot(
+				json ingestionJobRoot = getIngestionJobRoot(
 					workspace, row,
 					dependencyInfo, ingestionJobOutputs, conn, trans);
 				internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
                        chrono::system_clock::now() - startSql);
 
-                ingestionJobsRoot.append(ingestionJobRoot);
+                ingestionJobsRoot.push_back(ingestionJobRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -4699,7 +4699,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
     return statusListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getIngestionJobRoot(
+json MMSEngineDBFacade::getIngestionJobRoot(
 	shared_ptr<Workspace> workspace,
 	row& row,
 	bool dependencyInfo,		// added for performance issue
@@ -4707,7 +4707,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 	shared_ptr<PostgresConnection> conn, nontransaction& trans
 )
 {
-    Json::Value ingestionJobRoot;
+    json ingestionJobRoot;
 
     try
     {
@@ -4729,13 +4729,13 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
         field = "processorMMS";
         if (row["processorMMS"].is_null())
-            ingestionJobRoot[field] = Json::nullValue;
+            ingestionJobRoot[field] = nullptr;
         else
 			ingestionJobRoot[field] = row["processorMMS"].as<string>();
 
         field = "label";
         if (row["label"].is_null())
-            ingestionJobRoot[field] = Json::nullValue;
+            ingestionJobRoot[field] = nullptr;
         else
             ingestionJobRoot[field] = row["label"].as<string>();
 
@@ -4767,7 +4767,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 			}
 		}
 
-        Json::Value mediaItemsRoot(Json::arrayValue);
+        json mediaItemsRoot = json::array();
 		if(ingestionJobOutputs)
         {
             string sqlStatement = fmt::format( 
@@ -4778,7 +4778,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value mediaItemRoot;
+                json mediaItemRoot;
 
                 field = "mediaItemKey";
                 int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
@@ -4791,7 +4791,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 field = "position";
                 mediaItemRoot[field] = row["position"].as<int>();
 
-                mediaItemsRoot.append(mediaItemRoot);
+                mediaItemsRoot.push_back(mediaItemRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -4809,13 +4809,13 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
         field = "startProcessing";
         if (row["startProcessing"].is_null())
-            ingestionJobRoot[field] = Json::nullValue;
+            ingestionJobRoot[field] = nullptr;
         else
             ingestionJobRoot[field] = row["startProcessing"].as<string>();
 
         field = "endProcessing";
         if (row["endProcessing"].is_null())
-            ingestionJobRoot[field] = Json::nullValue;
+            ingestionJobRoot[field] = nullptr;
         else
             ingestionJobRoot[field] = row["endProcessing"].as<string>();
 
@@ -4823,7 +4823,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         {
             field = "downloadingProgress";
             if (row["downloadingProgress"].is_null())
-                ingestionJobRoot[field] = Json::nullValue;
+                ingestionJobRoot[field] = nullptr;
             else
                 ingestionJobRoot[field] = row["downloadingProgress"].as<float>();
         }
@@ -4832,7 +4832,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         {
             field = "uploadingProgress";
             if (row["uploadingProgress"].is_null())
-                ingestionJobRoot[field] = Json::nullValue;
+                ingestionJobRoot[field] = nullptr;
             else
                 ingestionJobRoot[field] = (int) row["uploadingProgress"].as<float>();
         }
@@ -4842,7 +4842,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
         field = "errorMessage";
         if (row["errorMessage"].is_null())
-            ingestionJobRoot[field] = Json::nullValue;
+            ingestionJobRoot[field] = nullptr;
         else
 		{
 			int maxErrorMessageLength = 2000;
@@ -4919,7 +4919,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 				);
 				if (!empty(res))
 				{
-					Json::Value encodingJobRoot;
+					json encodingJobRoot;
 
 					int64_t encodingJobKey = res[0]["encodingJobKey"].as<int64_t>();
                 
@@ -4938,9 +4938,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 					{
 						string parameters = res[0]["parameters"].as<string>();
 
-						Json::Value parametersRoot;
+						json parametersRoot;
 						if (parameters != "")
-							parametersRoot = JSONUtils::toJson(-1, encodingJobKey, parameters);
+							parametersRoot = JSONUtils::toJson(parameters);
 
 						field = "parameters";
 						encodingJobRoot[field] = parametersRoot;
@@ -4961,30 +4961,30 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
 					field = "progress";
 					if (res[0]["encodingProgress"].is_null())
-						encodingJobRoot[field] = Json::nullValue;
+						encodingJobRoot[field] = nullptr;
 					else
 						encodingJobRoot[field] = res[0]["encodingProgress"].as<float>();
 
 					field = "start";
 					if (encodingStatus == EncodingStatus::ToBeProcessed)
-						encodingJobRoot[field] = Json::nullValue;
+						encodingJobRoot[field] = nullptr;
 					else
 					{
 						if (res[0]["encodingJobStart"].is_null())
-							encodingJobRoot[field] = Json::nullValue;
+							encodingJobRoot[field] = nullptr;
 						else
 							encodingJobRoot[field] = static_cast<string>(res[0]["encodingJobStart"].as<string>());
 					}
 
 					field = "end";
 					if (res[0]["encodingJobEnd"].is_null())
-						encodingJobRoot[field] = Json::nullValue;
+						encodingJobRoot[field] = nullptr;
 					else
 						encodingJobRoot[field] = res[0]["encodingJobEnd"].as<string>();
 
 					field = "processorMMS";
 					if (res[0]["processorMMS"].is_null())
-						encodingJobRoot[field] = Json::nullValue;
+						encodingJobRoot[field] = nullptr;
 					else
 						encodingJobRoot[field] = res[0]["processorMMS"].as<string>();
 

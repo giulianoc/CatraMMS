@@ -23,7 +23,7 @@
 
 
 MMSDeliveryAuthorization::MMSDeliveryAuthorization(
-	Json::Value configuration,
+	json configuration,
 	shared_ptr<MMSStorage> mmsStorage,
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 	shared_ptr<spdlog::logger> logger
@@ -47,7 +47,7 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 		+ ", aws->vodCloudFrontHostNames: " + "..."
 	);
 
-    Json::Value api = _configuration["api"];
+    json api = _configuration["api"];
 
     _deliveryProtocol  = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
     _logger->info(__FILEREF__ + "Configuration item"
@@ -357,7 +357,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			throw runtime_error(errorMessage);
 		}
 
-		Json::Value ingestionJobRoot = JSONUtils::toJson(-1, -1, metaDataContent);
+		json ingestionJobRoot = JSONUtils::toJson(metaDataContent, false);
 
 		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy
 			|| ingestionType == MMSEngineDBFacade::IngestionType::VODProxy
@@ -376,10 +376,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value outputsRoot;
-			if (JSONUtils::isMetadataPresent(ingestionJobRoot, "outputs", false))
+			json outputsRoot;
+			if (JSONUtils::isMetadataPresent(ingestionJobRoot, "outputs"))
 				outputsRoot = ingestionJobRoot["outputs"];
-			else // if (JSONUtils::isMetadataPresent(ingestionJobRoot, "Outputs", false))
+			else // if (JSONUtils::isMetadataPresent(ingestionJobRoot, "Outputs"))
 				outputsRoot = ingestionJobRoot["Outputs"];
 
 			// Option 1: OutputType HLS with deliveryCode
@@ -388,7 +388,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				json outputRoot = outputsRoot[outputIndex];
 
 				string outputType;
 				int64_t localDeliveryCode = -1;
@@ -703,14 +703,14 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string field = "outputs";
 			if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
-				Json::Value outputsRoot = ingestionJobRoot[field];
+				json outputsRoot = ingestionJobRoot[field];
 
 				// Option 1: OutputType HLS with deliveryCode
 				// Option 2: OutputType RTMP_Channel/CDN_AWS/CDN_CDN77 with playURL
 				// tuple<string, int64_t, string> means OutputType, deliveryCode, playURL
 				for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 				{
-					Json::Value outputRoot = outputsRoot[outputIndex];
+					json outputRoot = outputsRoot[outputIndex];
 
 					string outputType;
 					int64_t localDeliveryCode = -1;

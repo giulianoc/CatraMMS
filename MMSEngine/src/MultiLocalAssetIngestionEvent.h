@@ -38,7 +38,7 @@ private:
     int64_t                 _ingestionJobKey;
     int64_t                 _encodingJobKey;
     shared_ptr<Workspace>   _workspace;
-    Json::Value             _parametersRoot;
+    json             _parametersRoot;
 
 public:
     void setIngestionJobKey(int64_t ingestionJobKey)
@@ -68,11 +68,11 @@ public:
         return _workspace;
     }
 
-    void setParametersRoot(Json::Value parametersRoot)
+    void setParametersRoot(json parametersRoot)
     {
         _parametersRoot   = parametersRoot;
     }    
-    Json::Value getParametersRoot()
+    json getParametersRoot()
     {
         return _parametersRoot;
     }

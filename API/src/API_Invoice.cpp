@@ -41,7 +41,7 @@ void API::addInvoice(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "userKey";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -109,7 +109,7 @@ void API::addInvoice(
 			#else
 			#endif
 
-			Json::Value response;
+			json response;
 			#ifdef __POSTGRES__
 			response["invoiceKey"] = invoiceKey;
 			#else
@@ -212,7 +212,7 @@ void API::invoiceList(
 
         {
 			#ifdef __POSTGRES__
-			Json::Value invoiceListRoot = _mmsEngineDBFacade->getInvoicesList(
+			json invoiceListRoot = _mmsEngineDBFacade->getInvoicesList(
 				userKey, admin, start, rows); 
 
 			string responseBody = JSONUtils::toString(invoiceListRoot);

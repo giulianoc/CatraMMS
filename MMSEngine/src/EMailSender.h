@@ -18,10 +18,15 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "spdlog/spdlog.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 #include <string>
 #include <memory>
 #include <vector>
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
+
 
 #ifndef __FILEREF__
     #ifdef __APPLE__
@@ -39,7 +44,7 @@ public:
 public:
     EMailSender(            
             shared_ptr<spdlog::logger> logger, 
-            Json::Value configuration
+            json configuration
     );
     
     virtual ~EMailSender();
@@ -53,7 +58,7 @@ public:
   
 private:
     shared_ptr<spdlog::logger>          _logger;
-    Json::Value                         _configuration;
+    json                         _configuration;
 
     static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
 };

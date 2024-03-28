@@ -21,7 +21,11 @@
 #include "LocalAssetIngestionEvent.h"
 #include "MultiLocalAssetIngestionEvent.h"
 #include "Validator.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
 
 #define MMSENGINEPROCESSORNAME    "MMSEngineProcessor"
 
@@ -72,7 +76,7 @@ public:
 		ActiveEncodingsManager* pActiveEncodingsManager,
 		mutex* cpuUsageMutex,
 		deque<int>* cpuUsage,
-		Json::Value configuration);
+		json configurationRoot);
     
     ~MMSEngineProcessor();
     
@@ -87,7 +91,7 @@ private:
     int                                 _processorThreads;
     int									_cpuUsageThreshold;
     shared_ptr<spdlog::logger>          _logger;
-    Json::Value                         _configuration;
+    json                         _configurationRoot;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
     shared_ptr<MMSStorage>              _mmsStorage;
@@ -169,8 +173,8 @@ private:
 	string					_emailCcsCommaSeparated;
 
 
-	Json::Value getReviewedOutputsRoot(
-		Json::Value outputsRoot, shared_ptr<Workspace> workspace,
+	json getReviewedOutputsRoot(
+		json outputsRoot, shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey, bool encodingProfileMandatory);
 
 	int getMaxAdditionalProcessorThreads();
@@ -206,28 +210,28 @@ private:
     void removeContentThread(
 		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
     
     void ftpDeliveryContentThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
     void postOnFacebookThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
     void postOnYouTubeThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
@@ -235,7 +239,7 @@ private:
 		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
@@ -243,13 +247,13 @@ private:
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
         int httpPort, string httpURI, string httpURLParameters, bool formData,
         string httpMethod, long callbackTimeoutInSeconds,
-        Json::Value userHeadersRoot, 
+        json userHeadersRoot, 
         string& data, string userName, string password, int maxRetries);
 
     void localCopyContentThread(
 		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
@@ -261,7 +265,7 @@ private:
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
@@ -269,7 +273,7 @@ private:
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
@@ -277,19 +281,19 @@ private:
         int64_t ingestionJobKey, string ingestionJobLabel,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot);
+        json parametersRoot);
 
 	void manageLiveProxy(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot);
+        json parametersRoot);
 
 	void manageVODProxy(
 		int64_t ingestionJobKey,
 		MMSEngineDBFacade::IngestionStatus ingestionStatus,
 		shared_ptr<Workspace> workspace,
-		Json::Value parametersRoot,
+		json parametersRoot,
 		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies
 	);
@@ -299,7 +303,7 @@ private:
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
 		string ingestionDate,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
 		vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
@@ -307,39 +311,39 @@ private:
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot);
+        json parametersRoot);
 
 	void manageLiveCutThread_streamSegmenter(
 		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot);
+        json parametersRoot);
 	void manageLiveCutThread_hlsSegmenter(
 		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
 		string ingestionJobLabel,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot);
+        json parametersRoot);
 
 	void youTubeLiveBroadcastThread(
 		shared_ptr<long> processorsThreadsNumber,
 		int64_t ingestionJobKey,
 		string ingestionJobLabel,
 		shared_ptr<Workspace> workspace,
-		Json::Value parametersRoot);
+		json parametersRoot);
 
 	void facebookLiveBroadcastThread(
 		shared_ptr<long> processorsThreadsNumber,
 		int64_t ingestionJobKey,
 		string ingestionJobLabel,
 		shared_ptr<Workspace> workspace,
-		Json::Value parametersRoot);
+		json parametersRoot);
 
     void extractTracksContentThread(
         shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
@@ -347,7 +351,7 @@ private:
         shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
@@ -357,59 +361,59 @@ private:
         string title,
 		int64_t imageOfVideoMediaItemKey,
 		int64_t cutOfVideoMediaItemKey, int64_t cutOfAudioMediaItemKey, double startTimeInSeconds, double endTimeInSeconds,
-        Json::Value parametersRoot);
+        json parametersRoot);
 
     void manageEncodeTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
 	void manageGroupOfTasks(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot);
+        json parametersRoot);
 
 	void manageVideoSpeedTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
 	void manageAddSilentAudioTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
 	void managePictureInPictureTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
 	void manageIntroOutroOverlayTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
     void manageOverlayImageOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
     
     void manageOverlayTextOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
@@ -417,7 +421,7 @@ private:
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
@@ -425,7 +429,7 @@ private:
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
@@ -433,7 +437,7 @@ private:
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionType ingestionType,
-        Json::Value parametersRoot,
+        json parametersRoot,
 		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
 
         int& periodInSeconds, double& startTimeInSeconds,
@@ -444,7 +448,7 @@ private:
     void manageSlideShowTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
@@ -452,20 +456,20 @@ private:
     void generateAndIngestSlideshow(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<pair<int64_t,Validator::DependencyType>>& dependencies);
     */
     void manageConcatThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
     void manageCutMediaThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
@@ -473,7 +477,7 @@ private:
 		shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 			dependencies);
 
@@ -481,19 +485,19 @@ private:
 		shared_ptr<long> processorsThreadsNumber,
 		int64_t ingestionJobKey,
 		shared_ptr<Workspace> workspace,
-		Json::Value parametersRoot);
+		json parametersRoot);
 
     void manageMediaCrossReferenceTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
+        json parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 			dependencies);
 
 	tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool>
 		getMediaSourceDetails(
 			int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-			MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot);
+			MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot);
 
     void validateMediaSourceFile (int64_t ingestionJobKey,
         string mediaSourcePathName, string mediaFileFormat,
@@ -547,7 +551,7 @@ private:
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string youTubeConfigurationLabel, string youTubeTitle,
-        string youTubeDescription, Json::Value youTubeTags,
+        string youTubeDescription, json youTubeTags,
         int youTubeCategoryId, string youTubePrivacy,
 		bool youTubeMadeForKids);
 
@@ -564,7 +568,7 @@ private:
 		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 		tuple<int64_t,MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> keyAndDependencyType);
 
-	string getEncodedFileExtensionByEncodingProfile(Json::Value encodingProfileDetailsRoot);
+	string getEncodedFileExtensionByEncodingProfile(json encodingProfileDetailsRoot);
 
 } ;
 

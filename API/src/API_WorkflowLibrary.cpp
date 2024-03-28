@@ -36,7 +36,7 @@ void API::workflowsAsLibraryList(
 
     try
     {
-		Json::Value workflowListRoot = _mmsEngineDBFacade->getWorkflowsAsLibraryList(
+		json workflowListRoot = _mmsEngineDBFacade->getWorkflowsAsLibraryList(
 			workspace->_workspaceKey);
 
 		string responseBody = JSONUtils::toString(workflowListRoot);
@@ -161,9 +161,9 @@ void API::saveWorkflowAsLibrary(
 			string workflowLabel;
 			string workflowAsLibraryScope;
 			{
-				Json::Value requestBodyRoot = manageWorkflowVariables(requestBody, Json::nullValue);
+				json requestBodyRoot = manageWorkflowVariables(requestBody, nullptr);
 
-				Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+				Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
 				// it starts from the root and validate recursively the entire body
 				validator.validateIngestedRootMetadata(workspace->_workspaceKey,
                     requestBodyRoot);

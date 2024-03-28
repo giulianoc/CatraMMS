@@ -13,11 +13,11 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 	shared_ptr<Encoding> encoding,                                                                        
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	Json::Value configuration,
+	json configurationRoot,
 	mutex* encodingCompletedMutex,                                                                        
 	map<int64_t, shared_ptr<EncodingCompleted>>* encodingCompletedMap,                                    
 	shared_ptr<spdlog::logger> logger):
-	FFMPEGEncoderBase(configuration, logger)
+	FFMPEGEncoderBase(configurationRoot, logger)
 {
 	try
 	{
@@ -32,7 +32,7 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 		_urlForbidden			= false;
 		_urlNotFound			= false;
 
-		_tvChannelConfigurationDirectory = JSONUtils::asString(configuration["ffmpeg"],
+		_tvChannelConfigurationDirectory = JSONUtils::asString(configurationRoot["ffmpeg"],
 			"tvChannelConfigurationDirectory", "");
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", ffmpeg->tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
@@ -127,9 +127,9 @@ void FFMPEGEncoderTask::removeEncodingCompletedIfPresent()
 void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	int64_t ingestionJobKey,
 	int64_t encodingJobKey,
-	Json::Value ingestedParametersRoot,
-	Json::Value encodingProfileDetailsRoot,
-	Json::Value encodingParametersRoot,
+	json ingestedParametersRoot,
+	json encodingProfileDetailsRoot,
+	json encodingParametersRoot,
 	string sourceFileExtension,
 	string encodedStagingAssetPathName,
 	string workflowLabel,
@@ -146,12 +146,12 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		field = "internalMMS";
 		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 		{
-			Json::Value internalMMSRoot = ingestedParametersRoot[field];
+			json internalMMSRoot = ingestedParametersRoot[field];
 
 			field = "credentials";
 			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 			{
-				Json::Value credentialsRoot = internalMMSRoot[field];
+				json credentialsRoot = internalMMSRoot[field];
 
 				field = "userKey";
 				userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -164,7 +164,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	}
 
 	string fileFormat;
-	if (encodingProfileDetailsRoot != Json::nullValue)
+	if (encodingProfileDetailsRoot != nullptr)
 	{
 		field = "fileFormat";
 		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
@@ -224,14 +224,14 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		fileSizeInBytes = fs::file_size(encodedStagingAssetPathName);                                                                          
 	}
 
-	Json::Value userDataRoot;
+	json userDataRoot;
 	{
 		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
 			userDataRoot = ingestedParametersRoot["userData"];
 
-		Json::Value mmsDataRoot;
+		json mmsDataRoot;
 
-		Json::Value externalTranscoderRoot;
+		json externalTranscoderRoot;
 
 		externalTranscoderRoot["ingestionJobKey"] = ingestionJobKey;
 
@@ -253,7 +253,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				"",	// sourceURL
 				"",	// title
 				userDataRoot,
-				Json::nullValue,
+				nullptr,
 				encodingProfileKey,
 				variantOfMediaItemKey
 			);
@@ -340,7 +340,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			;
 
 			vector<string> otherHeaders;
-			Json::Value ingestionRoot = MMSCURL::httpGetJson(
+			json ingestionRoot = MMSCURL::httpGetJson(
 				_logger,
 				ingestionJobKey,
 				mmsIngestionJobURL,
@@ -362,7 +362,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = ingestionRoot[field];
+			json responseRoot = ingestionRoot[field];
 
 			field = "ingestionJobs";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -375,7 +375,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value ingestionJobsRoot = responseRoot[field];
+			json ingestionJobsRoot = responseRoot[field];
 
 			if (ingestionJobsRoot.size() != 1)
 			{
@@ -388,7 +388,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				throw runtime_error(errorMessage);
 			}
 
-			Json::Value ingestionJobRoot = ingestionJobsRoot[0];
+			json ingestionJobRoot = ingestionJobsRoot[0];
 
 			field = "status";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
@@ -684,8 +684,8 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 	// in case of a new content
 	string sourceURL,	// if empty it means binary is ingested later (PUSH)
 	string title,
-	Json::Value userDataRoot,
-	Json::Value ingestedParametersRoot,	// it could be also nullValue
+	json userDataRoot,
+	json ingestedParametersRoot,	// it could be also nullValue
 	int64_t encodingProfileKey,
 
 	int64_t variantOfMediaItemKey		// in case of a variant, otherwise -1
@@ -694,7 +694,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 	string workflowMetadata;
 	try
 	{
-		Json::Value addContentRoot;
+		json addContentRoot;
 
 		string field = "label";
 		addContentRoot[field] = label;
@@ -702,7 +702,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 		field = "type";
 		addContentRoot[field] = "Add-Content";
 
-		Json::Value addContentParametersRoot;
+		json addContentParametersRoot;
 
 		if (variantOfMediaItemKey != -1)
 		{
@@ -720,7 +720,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			field = "encodingProfileKey";
 			addContentParametersRoot[field] = encodingProfileKey;
 
-			if (userDataRoot != Json::nullValue)
+			if (userDataRoot != nullptr)
 			{
 				field = "userData";
 				addContentParametersRoot[field] = userDataRoot;
@@ -730,16 +730,13 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 		{
 			// it is a new content
 
-			if (ingestedParametersRoot != Json::nullValue)
+			if (ingestedParametersRoot != nullptr)
 			{
 				addContentParametersRoot = ingestedParametersRoot;
 
 				field = "internalMMS";
 				if (JSONUtils::isMetadataPresent(addContentParametersRoot, field))
-				{
-					Json::Value removed;
-					addContentParametersRoot.removeMember(field, &removed);
-				}
+					addContentParametersRoot.erase(field);
 			}
 
 			field = "fileFormat";
@@ -761,7 +758,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 				addContentParametersRoot[field] = title;
 			}
 
-			if (userDataRoot != Json::nullValue)
+			if (userDataRoot != nullptr)
 			{
 				field = "userData";
 				addContentParametersRoot[field] = userDataRoot;
@@ -778,7 +775,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 		addContentRoot[field] = addContentParametersRoot;
 
 
-		Json::Value workflowRoot;
+		json workflowRoot;
 
 		field = "label";
 		workflowRoot[field] = label;

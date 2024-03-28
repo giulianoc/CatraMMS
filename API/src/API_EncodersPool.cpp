@@ -42,7 +42,7 @@ void API::addEncoder(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -56,10 +56,10 @@ void API::addEncoder(
             label = JSONUtils::asString(requestBodyRoot, field, "");            
 
             field = "External";
-			external = requestBodyRoot.get(field, false).asBool();            
+			external = JSONUtils::asBool(requestBodyRoot, field, false);            
 
             field = "Enabled";
-			enabled = requestBodyRoot.get(field, true).asBool();            
+			enabled = JSONUtils::asBool(requestBodyRoot, field, true);            
 
             field = "Protocol";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -98,7 +98,7 @@ void API::addEncoder(
             field = "Port";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				port = requestBodyRoot.get(field, 80).asInt();            
+				port = JSONUtils::asInt(requestBodyRoot, field, 80);            
             }    
 			else
 			{
@@ -231,7 +231,7 @@ void API::modifyEncoder(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -245,7 +245,7 @@ void API::modifyEncoder(
             field = "External";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				external = requestBodyRoot.get(field, false).asBool();            
+				external = JSONUtils::asBool(requestBodyRoot, field, false);            
 				externalToBeModified = true;
 			}
 			else
@@ -254,7 +254,7 @@ void API::modifyEncoder(
             field = "Enabled";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				enabled = requestBodyRoot.get(field, true).asBool();            
+				enabled = JSONUtils::asBool(requestBodyRoot, field, true);            
 				enabledToBeModified = true;
 			}
 			else
@@ -290,7 +290,7 @@ void API::modifyEncoder(
             field = "Port";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				port = requestBodyRoot.get(field, 80).asInt();            
+				port = JSONUtils::asInt(requestBodyRoot, field, 80);            
 				portToBeModified = true;
             }
 			else
@@ -616,7 +616,7 @@ void API::encoderList(
 		}
 
         {
-            Json::Value encoderListRoot = _mmsEngineDBFacade->getEncoderList(
+            json encoderListRoot = _mmsEngineDBFacade->getEncoderList(
 				admin,
 				start, rows,
 				allEncoders, workspaceKey, runningInfo,
@@ -735,7 +735,7 @@ void API::encodersPoolList(
 		}
 
         {
-            Json::Value encodersPoolListRoot = _mmsEngineDBFacade->getEncodersPoolList(
+            json encodersPoolListRoot = _mmsEngineDBFacade->getEncodersPoolList(
                     start, rows,
 					workspace->_workspaceKey,
 					encodersPoolKey, label, labelOrder);
@@ -796,7 +796,7 @@ void API::addEncodersPool(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -812,12 +812,12 @@ void API::addEncodersPool(
             field = "encoderKeys";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				Json::Value encoderKeysRoot = requestBodyRoot[field];
+				json encoderKeysRoot = requestBodyRoot[field];
 
 				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size();
 					++encoderIndex)
 				{
-					encoderKeys.push_back((encoderKeysRoot[encoderIndex]).asInt64());
+					encoderKeys.push_back(JSONUtils::asInt64(encoderKeysRoot[encoderIndex]));
 				}
             }
         }
@@ -939,7 +939,7 @@ void API::modifyEncodersPool(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -955,11 +955,11 @@ void API::modifyEncodersPool(
             field = "encoderKeys";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
             {
-				Json::Value encoderKeysRoot = requestBodyRoot[field];
+				json encoderKeysRoot = requestBodyRoot[field];
 
 				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size(); ++encoderIndex)
 				{
-					encoderKeys.push_back((encoderKeysRoot[encoderIndex]).asInt64());
+					encoderKeys.push_back(JSONUtils::asInt64(encoderKeysRoot[encoderIndex]));
 				}
             }
         }

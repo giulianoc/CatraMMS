@@ -12,12 +12,12 @@
 #include <sstream>
 
 LiveRecorderDaemons::LiveRecorderDaemons(
-    Json::Value configuration, mutex *liveRecordingMutex,
+    json configurationRoot, mutex *liveRecordingMutex,
     vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>
         *liveRecordingsCapability,
     shared_ptr<spdlog::logger> logger
 )
-    : FFMPEGEncoderBase(configuration, logger)
+    : FFMPEGEncoderBase(configurationRoot, logger)
 {
     try
     {
@@ -28,7 +28,7 @@ LiveRecorderDaemons::LiveRecorderDaemons(
         _liveRecorderVirtualVODIngestionThreadShutdown = false;
 
         _liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt(
-            configuration["ffmpeg"],
+            configurationRoot["ffmpeg"],
             "liveRecorderChunksIngestionCheckInSeconds", 5
         );
         _logger->info(
@@ -38,7 +38,7 @@ LiveRecorderDaemons::LiveRecorderDaemons(
         );
 
         _liveRecorderVirtualVODRetention = JSONUtils::asString(
-            configuration["ffmpeg"], "liveRecorderVirtualVODRetention", "15m"
+            configurationRoot["ffmpeg"], "liveRecorderVirtualVODRetention", "15m"
         );
         _logger->info(
             __FILEREF__ + "Configuration item" +
@@ -46,7 +46,7 @@ LiveRecorderDaemons::LiveRecorderDaemons(
             _liveRecorderVirtualVODRetention
         );
         _liveRecorderVirtualVODIngestionInSeconds = JSONUtils::asInt(
-            configuration["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds",
+            configurationRoot["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds",
             5
         );
         _logger->info(
@@ -118,8 +118,7 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 
                     try
                     {
-                        if (liveRecording->_encodingParametersRoot !=
-                            Json::nullValue)
+                        if (liveRecording->_encodingParametersRoot != nullptr)
                         {
                             int segmentDurationInSeconds;
                             string outputFileFormat;
@@ -472,17 +471,14 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
                                     field
                                 ))
                             {
-                                Json::Value internalMMSRoot =
-                                    copiedLiveRecording
-                                        ->_ingestedParametersRoot[field];
+                                json internalMMSRoot = copiedLiveRecording->_ingestedParametersRoot[field];
 
                                 field = "credentials";
                                 if (JSONUtils::isMetadataPresent(
                                         internalMMSRoot, field
                                     ))
                                 {
-                                    Json::Value credentialsRoot =
-                                        internalMMSRoot[field];
+                                    json credentialsRoot = internalMMSRoot[field];
 
                                     field = "userKey";
                                     userKey = JSONUtils::asInt64(
@@ -676,7 +672,7 @@ tuple<string, double, int64_t>
 LiveRecorderDaemons::processStreamSegmenterOutput(
     int64_t ingestionJobKey, int64_t encodingJobKey, string streamSourceType,
     bool externalEncoder, int segmentDurationInSeconds, string outputFileFormat,
-    Json::Value encodingParametersRoot, Json::Value ingestedParametersRoot,
+    json encodingParametersRoot, json ingestedParametersRoot,
     string chunksTranscoderStagingContentsPath,
     string chunksNFSStagingContentsPath, string segmentListFileName,
     string recordedFileNamePrefix, string lastRecordedAssetFileName,
@@ -911,16 +907,16 @@ LiveRecorderDaemons::processStreamSegmenterOutput(
             );
 
             // UserData
-            Json::Value userDataRoot;
+            json userDataRoot;
             {
                 if (JSONUtils::isMetadataPresent(
                         ingestedParametersRoot, "userData"
                     ))
                     userDataRoot = ingestedParametersRoot["userData"];
 
-                Json::Value mmsDataRoot;
+                json mmsDataRoot;
 
-                Json::Value liveRecordingChunkRoot;
+                json liveRecordingChunkRoot;
                 {
                     int64_t recordingCode = JSONUtils::asInt64(
                         ingestedParametersRoot, "recordingCode", 0
@@ -1202,7 +1198,7 @@ LiveRecorderDaemons::processStreamSegmenterOutput(
 tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
     int64_t ingestionJobKey, int64_t encodingJobKey, string streamSourceType,
     bool externalEncoder, int segmentDurationInSeconds, string outputFileFormat,
-    Json::Value encodingParametersRoot, Json::Value ingestedParametersRoot,
+    json encodingParametersRoot, json ingestedParametersRoot,
     string chunksTranscoderStagingContentsPath,
     string chunksNFSStagingContentsPath, string segmentListFileName,
     string recordedFileNamePrefix, string lastRecordedAssetFileName,
@@ -1521,7 +1517,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
                             );
 
                             // UserData
-                            Json::Value userDataRoot;
+                            json userDataRoot;
                             {
                                 if (JSONUtils::isMetadataPresent(
                                         ingestedParametersRoot, "userData"
@@ -1529,9 +1525,9 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
                                     userDataRoot =
                                         ingestedParametersRoot["userData"];
 
-                                Json::Value mmsDataRoot;
+                                json mmsDataRoot;
 
-                                Json::Value liveRecordingChunkRoot;
+                                json liveRecordingChunkRoot;
 
                                 {
                                     int64_t recordingCode = JSONUtils::asInt64(
@@ -1883,8 +1879,8 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
     string currentRecordedAssetFileName, string chunksNFSStagingContentsPath,
     string addContentTitle, string uniqueName,
     // bool highAvailability,
-    Json::Value userDataRoot, string fileFormat,
-    Json::Value ingestedParametersRoot, Json::Value encodingParametersRoot,
+    json userDataRoot, string fileFormat,
+    json ingestedParametersRoot, json encodingParametersRoot,
     bool copy
 )
 {
@@ -2028,12 +2024,12 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
             string field = "internalMMS";
             if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
             {
-                Json::Value internalMMSRoot = ingestedParametersRoot[field];
+                json internalMMSRoot = ingestedParametersRoot[field];
 
                 field = "credentials";
                 if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
                 {
-                    Json::Value credentialsRoot = internalMMSRoot[field];
+                    json credentialsRoot = internalMMSRoot[field];
 
                     field = "userKey";
                     userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -2104,8 +2100,8 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
     int64_t ingestionJobKey, string chunksTranscoderStagingContentsPath,
     string currentRecordedAssetFileName, string addContentTitle,
-    string uniqueName, Json::Value userDataRoot, string fileFormat,
-    Json::Value ingestedParametersRoot, Json::Value encodingParametersRoot
+    string uniqueName, json userDataRoot, string fileFormat,
+    json ingestedParametersRoot, json encodingParametersRoot
 )
 {
     string workflowMetadata;
@@ -2129,12 +2125,12 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
             string field = "internalMMS";
             if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
             {
-                Json::Value internalMMSRoot = ingestedParametersRoot[field];
+                json internalMMSRoot = ingestedParametersRoot[field];
 
                 field = "credentials";
                 if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
                 {
-                    Json::Value credentialsRoot = internalMMSRoot[field];
+                    json credentialsRoot = internalMMSRoot[field];
 
                     field = "userKey";
                     userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -2280,9 +2276,9 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 string LiveRecorderDaemons::buildChunkIngestionWorkflow(
     int64_t ingestionJobKey, bool externalEncoder,
     string currentRecordedAssetFileName, string chunksNFSStagingContentsPath,
-    string addContentTitle, string uniqueName, Json::Value userDataRoot,
-    string fileFormat, Json::Value ingestedParametersRoot,
-    Json::Value encodingParametersRoot
+    string addContentTitle, string uniqueName, json userDataRoot,
+    string fileFormat, json ingestedParametersRoot,
+    json encodingParametersRoot
 )
 {
     string workflowMetadata;
@@ -2303,8 +2299,8 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
             }
         }
         */
-        Json::Value mmsDataRoot = userDataRoot["mmsData"];
-        Json::Value liveRecordingChunkRoot = mmsDataRoot["liveRecordingChunk"];
+        json mmsDataRoot = userDataRoot["mmsData"];
+        json liveRecordingChunkRoot = mmsDataRoot["liveRecordingChunk"];
         int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(
             liveRecordingChunkRoot, "utcPreviousChunkStartTime", -1
         );
@@ -2313,7 +2309,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
         int64_t utcChunkEndTime =
             JSONUtils::asInt64(liveRecordingChunkRoot, "utcChunkEndTime", -1);
 
-        Json::Value addContentRoot;
+        json addContentRoot;
 
         string field = "label";
         addContentRoot[field] = to_string(utcChunkStartTime);
@@ -2325,12 +2321,12 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
             field = "internalMMS";
             if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
             {
-                Json::Value internalMMSRoot = ingestedParametersRoot[field];
+                json internalMMSRoot = ingestedParametersRoot[field];
 
                 field = "events";
                 if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
                 {
-                    Json::Value eventsRoot = internalMMSRoot[field];
+                    json eventsRoot = internalMMSRoot[field];
 
                     field = "onSuccess";
                     if (JSONUtils::isMetadataPresent(eventsRoot, field))
@@ -2347,12 +2343,11 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
             }
         }
 
-        Json::Value addContentParametersRoot = ingestedParametersRoot;
+        json addContentParametersRoot = ingestedParametersRoot;
         // if (internalMMSRootPresent)
         {
-            Json::Value removed;
             field = "internalMMS";
-            addContentParametersRoot.removeMember(field, &removed);
+            addContentParametersRoot.erase(field);
         }
 
         field = "fileFormat";
@@ -2389,7 +2384,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
         field = "parameters";
         addContentRoot[field] = addContentParametersRoot;
 
-        Json::Value workflowRoot;
+        json workflowRoot;
 
         field = "label";
         workflowRoot[field] = addContentTitle;
@@ -2398,10 +2393,10 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
         workflowRoot[field] = "Workflow";
 
         {
-            Json::Value variablesWorkflowRoot;
+            json variablesWorkflowRoot;
 
             {
-                Json::Value variableWorkflowRoot;
+                json variableWorkflowRoot;
 
                 field = "type";
                 variableWorkflowRoot[field] = "integer";
@@ -2427,7 +2422,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
                 );
             }
             {
-                Json::Value variableWorkflowRoot;
+                json variableWorkflowRoot;
 
                 field = "type";
                 variableWorkflowRoot[field] = "string";
@@ -2442,7 +2437,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
             }
 
             {
-                Json::Value variableWorkflowRoot;
+                json variableWorkflowRoot;
 
                 field = "type";
                 variableWorkflowRoot[field] = "integer";
@@ -2458,7 +2453,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
             int64_t recordingCode =
                 JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
             {
-                Json::Value variableWorkflowRoot;
+                json variableWorkflowRoot;
 
                 field = "type";
                 variableWorkflowRoot[field] = "integer";
@@ -2475,7 +2470,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
                 encodingParametersRoot, "ingestionJobLabel", ""
             );
             {
-                Json::Value variableWorkflowRoot;
+                json variableWorkflowRoot;
 
                 field = "type";
                 variableWorkflowRoot[field] = "string";
@@ -3744,12 +3739,12 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
         //        },
         //	}
         // }
-        Json::Value mmsDataRoot;
+        json mmsDataRoot;
 
         // 2020-04-28: set it to liveRecordingChunk to avoid to be visible into
         // the GUI (view MediaItems).
         //	This is because this MediaItem is not completed yet
-        Json::Value liveRecordingVODRoot;
+        json liveRecordingVODRoot;
 
         // utcStartTimeInMilliSecs is used by DB generated column
         string field = "utcStartTimeInMilliSecs";
@@ -3780,12 +3775,12 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
         field = "liveRecordingVOD";
         mmsDataRoot[field] = liveRecordingVODRoot;
 
-        Json::Value userDataRoot;
+        json userDataRoot;
 
         field = "mmsData";
         userDataRoot[field] = mmsDataRoot;
 
-        Json::Value addContentRoot;
+        json addContentRoot;
 
         string addContentLabel = liveRecorderIngestionJobLabel;
 
@@ -3795,7 +3790,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
         field = "type";
         addContentRoot[field] = "Add-Content";
 
-        Json::Value addContentParametersRoot;
+        json addContentParametersRoot;
 
         field = "fileFormat";
         addContentParametersRoot[field] = "m3u8-tar.gz";
@@ -3844,9 +3839,9 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
                 mediaItemDetails;
                 */
 
-                Json::Value crossReferencesRoot(Json::arrayValue);
+                json crossReferencesRoot = json::array();
                 {
-                    Json::Value crossReferenceRoot;
+                    json crossReferenceRoot;
 
                     field = "type";
                     crossReferenceRoot[field] = "VideoOfImage";
@@ -3855,7 +3850,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
                     crossReferenceRoot[field] =
                         liveRecorderVirtualVODImageMediaItemKey;
 
-                    crossReferencesRoot.append(crossReferenceRoot);
+                    crossReferencesRoot.push_back(crossReferenceRoot);
                 }
 
                 field = "crossReferences";
@@ -3904,7 +3899,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
         field = "parameters";
         addContentRoot[field] = addContentParametersRoot;
 
-        Json::Value workflowRoot;
+        json workflowRoot;
 
         field = "label";
         workflowRoot[field] = addContentLabel + " (virtual VOD)";

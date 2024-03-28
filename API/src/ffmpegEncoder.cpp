@@ -26,21 +26,21 @@ int main(int argc, char** argv)
 			return 1;
 		}
 
-		Json::Value configuration = FastCGIAPI::loadConfigurationFile(configurationPathName);
+		json configurationRoot = FastCGIAPI::loadConfigurationFile(configurationPathName);
 
-		string logPathName =  JSONUtils::asString(configuration["log"]["encoder"], "pathName", "");
-		string logErrorPathName =  JSONUtils::asString(configuration["log"]["encoder"], "errorPathName", "");
-		string logType =  JSONUtils::asString(configuration["log"]["encoder"], "type", "");
-		bool stdout =  JSONUtils::asBool(configuration["log"]["encoder"], "stdout", false);
+		string logPathName =  JSONUtils::asString(configurationRoot["log"]["encoder"], "pathName", "");
+		string logErrorPathName =  JSONUtils::asString(configurationRoot["log"]["encoder"], "errorPathName", "");
+		string logType =  JSONUtils::asString(configurationRoot["log"]["encoder"], "type", "");
+		bool stdout =  JSONUtils::asBool(configurationRoot["log"]["encoder"], "stdout", false);
 
 		std::vector<spdlog::sink_ptr> sinks;
 		{
-			string logLevel =  JSONUtils::asString(configuration["log"]["api"], "level", "");
+			string logLevel =  JSONUtils::asString(configurationRoot["log"]["api"], "level", "");
 			if(logType == "daily")
 			{
-				int logRotationHour = JSONUtils::asInt(configuration["log"]["encoder"]["daily"],
+				int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["encoder"]["daily"],
 					"rotationHour", 1);
-				int logRotationMinute = JSONUtils::asInt(configuration["log"]["encoder"]["daily"],
+				int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["encoder"]["daily"],
 					"rotationMinute", 1);
 
 				auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(),
@@ -64,9 +64,9 @@ int main(int argc, char** argv)
 			}
 			else if(logType == "rotating")
 			{
-				int64_t maxSizeInKBytes = JSONUtils::asInt64(configuration["log"]["encoder"]["rotating"],
+				int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["encoder"]["rotating"],
 					"maxSizeInKBytes", 1000);
-				int maxFiles = JSONUtils::asInt(configuration["log"]["encoder"]["rotating"],
+				int maxFiles = JSONUtils::asInt(configurationRoot["log"]["encoder"]["rotating"],
 					"maxFiles", 10);
 
 				auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(),
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 		logger->flush_on(spdlog::level::trace);
     
 		spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
-		string pattern =  JSONUtils::asString(configuration["log"]["encoder"], "pattern", "");
+		string pattern =  JSONUtils::asString(configurationRoot["log"]["encoder"], "pattern", "");
 		spdlog::set_pattern(pattern);
 
 		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
@@ -115,11 +115,11 @@ int main(int argc, char** argv)
 
 		spdlog::set_default_logger(logger);
 
-		MMSStorage::createDirectories(configuration, logger);
+		MMSStorage::createDirectories(configurationRoot, logger);
 
 		FCGX_Init();
 
-		int threadsNumber = JSONUtils::asInt(configuration["ffmpeg"], "encoderThreadsNumber", 1);
+		int threadsNumber = JSONUtils::asInt(configurationRoot["ffmpeg"], "encoderThreadsNumber", 1);
 		logger->info(__FILEREF__ + "Configuration item"
 			+ ", ffmpeg->encoderThreadsNumber: " + to_string(threadsNumber)
 		);
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
 				shared_ptr<FFMPEGEncoderBase::Encoding>    encoding = make_shared<FFMPEGEncoderBase::Encoding>();
 				encoding->_available   = true;
 				encoding->_childPid		= 0;	// not running
-				encoding->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
+				encoding->_ffmpeg   = make_shared<FFMpeg>(configurationRoot, logger);
 
 				encodingsCapability.push_back(encoding);
 			}
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
 				liveProxy->_available				= true;
 				liveProxy->_childPid				= 0;	// not running
 				liveProxy->_ingestionJobKey			= 0;
-				liveProxy->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
+				liveProxy->_ffmpeg   = make_shared<FFMpeg>(configurationRoot, logger);
 
 				liveProxiesCapability.push_back(liveProxy);
 			}
@@ -200,8 +200,8 @@ int main(int argc, char** argv)
 				liveRecording->_available			= true;
 				liveRecording->_childPid			= 0;	// not running
 				liveRecording->_ingestionJobKey		= 0;
-				liveRecording->_encodingParametersRoot = Json::nullValue;
-				liveRecording->_ffmpeg   = make_shared<FFMpeg>(configuration, logger);
+				liveRecording->_encodingParametersRoot = nullptr;
+				liveRecording->_ffmpeg   = make_shared<FFMpeg>(configurationRoot, logger);
 
 				liveRecordingsCapability.push_back(liveRecording);
 
@@ -217,7 +217,7 @@ int main(int argc, char** argv)
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
 			shared_ptr<FFMPEGEncoder> ffmpegEncoder = make_shared<FFMPEGEncoder>(
-				configuration, 
+				configurationRoot, 
 				// encoderCapabilityConfigurationPathName, 
 
 				&fcgiAcceptMutex,
@@ -261,7 +261,7 @@ int main(int argc, char** argv)
 			// thread liveRecorderVirtualVODIngestion(&FFMPEGEncoder::liveRecorderVirtualVODIngestionThread,
 			// 		ffmpegEncoders[0]);
 			shared_ptr<LiveRecorderDaemons> liveRecorderDaemons = make_shared<LiveRecorderDaemons>(
-				configuration, &liveRecordingMutex, &liveRecordingsCapability, logger);
+				configurationRoot, &liveRecordingMutex, &liveRecordingsCapability, logger);
 
 			thread liveRecorderChunksIngestion(&LiveRecorderDaemons::startChunksIngestionThread,
 					liveRecorderDaemons);
@@ -271,7 +271,7 @@ int main(int argc, char** argv)
 			// thread monitor(&FFMPEGEncoder::monitorThread, ffmpegEncoders[0]);
 			// thread cpuUsage(&FFMPEGEncoder::cpuUsageThread, ffmpegEncoders[0]);
 			shared_ptr<FFMPEGEncoderDaemons> ffmpegEncoderDaemons = make_shared<FFMPEGEncoderDaemons>(
-				configuration, &liveRecordingMutex, &liveRecordingsCapability,
+				configurationRoot, &liveRecordingMutex, &liveRecordingsCapability,
 				&liveProxyMutex, &liveProxiesCapability, &cpuUsageMutex, &cpuUsage, logger);
 
 			thread monitor(&FFMPEGEncoderDaemons::startMonitorThread, ffmpegEncoderDaemons);

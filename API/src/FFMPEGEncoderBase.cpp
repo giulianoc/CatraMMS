@@ -8,18 +8,18 @@
 // #include "catralibraries/StringUtils.h"
 
 FFMPEGEncoderBase::FFMPEGEncoderBase(
-	Json::Value configuration,
+	json configurationRoot,
 	shared_ptr<spdlog::logger> logger)
 {
 	try
 	{
 		_logger = logger;
 
-		_mmsAPITimeoutInSeconds = JSONUtils::asInt(configuration["api"], "timeoutInSeconds", 120);
+		_mmsAPITimeoutInSeconds = JSONUtils::asInt(configurationRoot["api"], "timeoutInSeconds", 120);
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
 		);
-		_mmsBinaryTimeoutInSeconds = JSONUtils::asInt(configuration["api"]["binary"], "timeoutInSeconds", 120);
+		_mmsBinaryTimeoutInSeconds = JSONUtils::asInt(configurationRoot["api"]["binary"], "timeoutInSeconds", 120);
 		_logger->info(__FILEREF__ + "Configuration item"
 			+ ", api->binary->timeoutInSeconds: " + to_string(_mmsBinaryTimeoutInSeconds)
 		);
@@ -90,8 +90,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(
 			}
 		}
 		*/
-        Json::Value ingestionResponseRoot = JSONUtils::toJson(
-			ingestionJobKey, -1, ingestionResponse);
+        json ingestionResponseRoot = JSONUtils::toJson(ingestionResponse);
 
 		string field = "tasks";
 		if (!JSONUtils::isMetadataPresent(ingestionResponseRoot, field))
@@ -105,11 +104,11 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(
 
 			throw runtime_error(errorMessage);
 		}
-		Json::Value tasksRoot = ingestionResponseRoot[field];
+		json tasksRoot = ingestionResponseRoot[field];
 
 		for(int taskIndex = 0; taskIndex < tasksRoot.size(); taskIndex++)
 		{
-			Json::Value ingestionJobRoot = tasksRoot[taskIndex];
+			json ingestionJobRoot = tasksRoot[taskIndex];
 
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))

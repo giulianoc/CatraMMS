@@ -3,7 +3,7 @@
 #include "FFMpeg.h"
 #include "MMSEngineDBFacade.h"
 
-Json::Value MMSEngineDBFacade::addYouTubeConf(
+json MMSEngineDBFacade::addYouTubeConf(
 	int64_t workspaceKey,
 	string label,
 	string tokenType,
@@ -42,7 +42,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
 			);
         }
 
-		Json::Value youTubeConfRoot;
+		json youTubeConfRoot;
 		{
 			string field = "confKey";
 			youTubeConfRoot[field] = confKey;
@@ -59,11 +59,11 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
 				youTubeConfRoot[field] = refreshToken;
 
 				field = "accessToken";
-				youTubeConfRoot[field] = Json::nullValue;
+				youTubeConfRoot[field] = nullptr;
 			}
 			else
 			{
-				youTubeConfRoot[field] = Json::nullValue;
+				youTubeConfRoot[field] = nullptr;
 
 				field = "accessToken";
 				youTubeConfRoot[field] = accessToken;
@@ -161,7 +161,7 @@ Json::Value MMSEngineDBFacade::addYouTubeConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::modifyYouTubeConf(
+json MMSEngineDBFacade::modifyYouTubeConf(
     int64_t confKey, int64_t workspaceKey,
     string label, bool labelModified,
     string tokenType, bool tokenTypeModified,
@@ -245,7 +245,7 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
             }
         }
 
-		Json::Value youTubeConfRoot;
+		json youTubeConfRoot;
         {
 			string sqlStatement = fmt::format(
                 "select confKey, label, tokenType, refreshToken, accessToken "
@@ -285,13 +285,13 @@ Json::Value MMSEngineDBFacade::modifyYouTubeConf(
 
 				field = "refreshToken";
 				if (res[0]["refreshToken"].is_null())
-					youTubeConfRoot[field] = Json::nullValue;
+					youTubeConfRoot[field] = nullptr;
 				else
 					youTubeConfRoot[field] = res[0]["refreshToken"].as<string>();
 
 				field = "accessToken";
 				if (res[0]["accessToken"].is_null())
-					youTubeConfRoot[field] = Json::nullValue;
+					youTubeConfRoot[field] = nullptr;
 				else
 					youTubeConfRoot[field] = res[0]["accessToken"].as<string>();
             }
@@ -520,11 +520,11 @@ void MMSEngineDBFacade::removeYouTubeConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getYouTubeConfList (
+json MMSEngineDBFacade::getYouTubeConfList (
 	int64_t workspaceKey, string label
 )
 {
-    Json::Value youTubeConfListRoot;
+    json youTubeConfListRoot;
     
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -545,7 +545,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             {
                 field = "workspaceKey";
@@ -566,7 +566,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
         if (label != "")
 			sqlWhere += fmt::format("and LOWER(label) = LOWER({}) ", trans.quote(label));
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_YouTube {}",
@@ -583,7 +583,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
 			);
         }
 
-        Json::Value youTubeRoot(Json::arrayValue);
+        json youTubeRoot = json::array();
         {
 			string sqlStatement = fmt::format(
                 "select confKey, label, tokenType, refreshToken, accessToken "
@@ -593,7 +593,7 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value youTubeConfRoot;
+                json youTubeConfRoot;
 
                 field = "confKey";
                 youTubeConfRoot[field] = row["confKey"].as<int64_t>();
@@ -606,17 +606,17 @@ Json::Value MMSEngineDBFacade::getYouTubeConfList (
 
 				field = "refreshToken";
 				if (row["refreshToken"].is_null())
-					youTubeConfRoot[field] = Json::nullValue;
+					youTubeConfRoot[field] = nullptr;
 				else
 					youTubeConfRoot[field] = row["refreshToken"].as<string>();
 
 				field = "accessToken";
 				if (row["accessToken"].is_null())
-					youTubeConfRoot[field] = Json::nullValue;
+					youTubeConfRoot[field] = nullptr;
 				else
 					youTubeConfRoot[field] = row["accessToken"].as<string>();
 
-                youTubeRoot.append(youTubeConfRoot);
+                youTubeRoot.push_back(youTubeConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -1269,11 +1269,11 @@ void MMSEngineDBFacade::removeFacebookConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getFacebookConfList (
+json MMSEngineDBFacade::getFacebookConfList (
 	int64_t workspaceKey, int64_t confKey, string label
 )
 {
-	Json::Value facebookConfListRoot;
+	json facebookConfListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1296,7 +1296,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
 			{
 				field = "workspaceKey";
@@ -1323,7 +1323,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
 		else if (label != "")
 			sqlWhere += fmt::format("and label = {} ", trans.quote(label));
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_Facebook {}",
@@ -1340,7 +1340,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
 			);
         }
 
-        Json::Value facebookRoot(Json::arrayValue);
+        json facebookRoot = json::array();
         {
 			string sqlStatement = fmt::format(
                 "select confKey, label, userAccessToken, "
@@ -1351,7 +1351,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value facebookConfRoot;
+                json facebookConfRoot;
 
                 field = "confKey";
 				facebookConfRoot[field] = row["confKey"].as<int64_t>();
@@ -1365,7 +1365,7 @@ Json::Value MMSEngineDBFacade::getFacebookConfList (
                 field = "userAccessToken";
 				facebookConfRoot[field] = row["userAccessToken"].as<string>();
 
-                facebookRoot.append(facebookConfRoot);
+                facebookRoot.push_back(facebookConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -2009,11 +2009,11 @@ void MMSEngineDBFacade::removeTwitchConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getTwitchConfList (
+json MMSEngineDBFacade::getTwitchConfList (
 	int64_t workspaceKey, int64_t confKey, string label
 )
 {
-	Json::Value twitchConfListRoot;
+	json twitchConfListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2036,7 +2036,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
 			{
 				field = "workspaceKey";
@@ -2063,7 +2063,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
 		else if (label != "")
 			sqlWhere += fmt::format("and label = {} ", trans.quote(label));
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_Twitch {}",
@@ -2080,7 +2080,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
 			);
         }
 
-        Json::Value twitchRoot(Json::arrayValue);
+        json twitchRoot = json::array();
         {
 			string sqlStatement = fmt::format(
                 "select confKey, label, refreshToken, "
@@ -2091,7 +2091,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value twitchConfRoot;
+                json twitchConfRoot;
 
                 field = "confKey";
 				twitchConfRoot[field] = row["confKey"].as<int64_t>();
@@ -2105,7 +2105,7 @@ Json::Value MMSEngineDBFacade::getTwitchConfList (
                 field = "refreshToken";
 				twitchConfRoot[field] = row["refreshToken"].as<string>();
 
-                twitchRoot.append(twitchConfRoot);
+                twitchRoot.push_back(twitchConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -2749,11 +2749,11 @@ void MMSEngineDBFacade::removeTiktokConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getTiktokConfList (
+json MMSEngineDBFacade::getTiktokConfList (
 	int64_t workspaceKey, int64_t confKey, string label
 )
 {
-	Json::Value tiktokConfListRoot;
+	json tiktokConfListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2776,7 +2776,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
 			{
 				field = "workspaceKey";
@@ -2803,7 +2803,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
 		else if (label != "")
 			sqlWhere += fmt::format("and label = {} ", trans.quote(label));
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_Tiktok {}",
@@ -2820,7 +2820,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
 			);
         }
 
-        Json::Value tiktokRoot(Json::arrayValue);
+        json tiktokRoot = json::array();
         {
 			string sqlStatement = fmt::format(
                 "select confKey, label, token, "
@@ -2831,7 +2831,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value tiktokConfRoot;
+                json tiktokConfRoot;
 
 				field = "confKey";
 				tiktokConfRoot[field] = row["confKey"].as<int64_t>();
@@ -2845,7 +2845,7 @@ Json::Value MMSEngineDBFacade::getTiktokConfList (
                 field = "token";
 				tiktokConfRoot[field] = row["token"].as<string>();
 
-                tiktokRoot.append(tiktokConfRoot);
+                tiktokRoot.push_back(tiktokConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -3094,7 +3094,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(
     return tiktokToken;
 }
 
-Json::Value MMSEngineDBFacade::addStream(
+json MMSEngineDBFacade::addStream(
     int64_t workspaceKey,
     string label,
 	string sourceType,
@@ -3122,7 +3122,7 @@ Json::Value MMSEngineDBFacade::addStream(
 	int64_t imageMediaItemKey,
 	string imageUniqueName,
 	int position,
-	Json::Value userData)
+	json userData)
 {
     int64_t     confKey;
     
@@ -3177,7 +3177,7 @@ Json::Value MMSEngineDBFacade::addStream(
 				imageMediaItemKey == -1 ? "null" : to_string(imageMediaItemKey),
 				imageUniqueName == "" ? "null" : trans.quote(imageUniqueName),
 				position == -1 ? "null" : to_string(position),
-				userData == Json::nullValue ? "null" : trans.quote(JSONUtils::toString(userData))
+				userData == nullptr ? "null" : trans.quote(JSONUtils::toString(userData))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -3190,7 +3190,7 @@ Json::Value MMSEngineDBFacade::addStream(
 			);
 		}
 
-		Json::Value streamsRoot;
+		json streamsRoot;
 		{
 			int start = 0;
 			int rows = 1;
@@ -3203,7 +3203,7 @@ Json::Value MMSEngineDBFacade::addStream(
 			string region;
 			string country;
 			string labelOrder;
-			Json::Value streamListRoot = getStreamList (
+			json streamListRoot = getStreamList (
 				trans, conn, workspaceKey, confKey,
 				start, rows, label, labelLike, url, sourceType, type, name,
 				region, country, labelOrder);
@@ -3217,7 +3217,7 @@ Json::Value MMSEngineDBFacade::addStream(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = streamListRoot[field];
+			json responseRoot = streamListRoot[field];
 
 			field = "streams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -3330,7 +3330,7 @@ Json::Value MMSEngineDBFacade::addStream(
 	}
 }
 
-Json::Value MMSEngineDBFacade::modifyStream(
+json MMSEngineDBFacade::modifyStream(
     int64_t confKey, string labelKey,
     int64_t workspaceKey,
     bool labelToBeModified, string label,
@@ -3360,7 +3360,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 	bool countryToBeModified, string country,
 	bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
 	bool positionToBeModified, int position,
-	bool userDataToBeModified, Json::Value userData)
+	bool userDataToBeModified, json userData)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -3585,7 +3585,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("userData = " + (userData == Json::nullValue ? "null" : trans.quote(JSONUtils::toString(userData))));
+				setSQL += ("userData = " + (userData == nullptr ? "null" : trans.quote(JSONUtils::toString(userData))));
 				oneParameterPresent = true;
 			}
 
@@ -3631,7 +3631,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
             }
 		}
 
-		Json::Value streamsRoot;
+		json streamsRoot;
 		{
 			int start = 0;
 			int rows = 1;
@@ -3645,7 +3645,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 			string region;
 			string country;
 			string labelOrder;
-			Json::Value streamListRoot = getStreamList (
+			json streamListRoot = getStreamList (
 				trans, conn, workspaceKey, confKey,
 				start, rows, labelKey, labelLike, url, sourceType, type, name, region, country, labelOrder);
 
@@ -3658,7 +3658,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = streamListRoot[field];
+			json responseRoot = streamListRoot[field];
 
 			field = "streams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -3923,7 +3923,7 @@ void MMSEngineDBFacade::removeStream(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getStreamList (
+json MMSEngineDBFacade::getStreamList (
 	int64_t workspaceKey, int64_t liveURLKey,
 	int start, int rows,
 	string label, bool labelLike, string url, string sourceType, string type,
@@ -3932,7 +3932,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 	bool fromMaster
 )
 {
-	Json::Value streamListRoot;
+	json streamListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -4048,7 +4048,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
     return streamListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getStreamList (
+json MMSEngineDBFacade::getStreamList (
 	nontransaction& trans, shared_ptr<PostgresConnection> conn,
 	int64_t workspaceKey, int64_t liveURLKey,
 	int start, int rows,
@@ -4057,7 +4057,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 	string labelOrder	// "" or "asc" or "desc"
 )
 {
-    Json::Value streamListRoot;
+    json streamListRoot;
     
     try
     {
@@ -4080,7 +4080,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
@@ -4183,7 +4183,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
         if (country != "")
             sqlWhere += fmt::format("and country like {} ", trans.quote("%" + country + "%"));
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_Stream {}",
@@ -4200,7 +4200,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 			);
         }
 
-        Json::Value streamsRoot(Json::arrayValue);
+        json streamsRoot = json::array();
         {
 			string orderByCondition;
 			if (labelOrder != "")
@@ -4223,7 +4223,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value streamRoot;
+                json streamRoot;
 
 				int64_t confKey = row["confKey"].as<int64_t>();
                 field = "confKey";
@@ -4238,7 +4238,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 
                 field = "encodersPoolKey";
 				if (row["encodersPoolKey"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 				{
 					int64_t encodersPoolKey = row["encodersPoolKey"].as<int64_t>();
@@ -4268,7 +4268,7 @@ Json::Value MMSEngineDBFacade::getStreamList (
 				{
 					field = "url";
 					if (row["url"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["url"].as<string>();
 				}
@@ -4276,13 +4276,13 @@ Json::Value MMSEngineDBFacade::getStreamList (
 				{
 					field = "pushProtocol";
 					if (row["pushProtocol"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushProtocol"].as<string>();
 
 					field = "pushEncoderKey";
 					if (row["pushEncoderKey"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 					{
 						int64_t pushEncoderKey = row["pushEncoderKey"].as<int64_t>();
@@ -4312,25 +4312,25 @@ Json::Value MMSEngineDBFacade::getStreamList (
 
 					field = "pushServerName";
 					if (row["pushServerName"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushServerName"].as<string>();
 
 					field = "pushServerPort";
 					if (row["pushServerPort"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushServerPort"].as<int>();
 
 					field = "pushUri";
 					if (row["pushUri"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushUri"].as<string>();
 
 					field = "pushListenTimeout";
 					if (row["pushListenTimeout"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushListenTimeout"].as<int>();
 				}
@@ -4338,43 +4338,43 @@ Json::Value MMSEngineDBFacade::getStreamList (
 				{
 					field = "captureLiveVideoDeviceNumber";
 					if (row["captureLiveVideoDeviceNumber"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveVideoDeviceNumber"].as<int>();
 
 					field = "captureLiveVideoInputFormat";
 					if (row["captureLiveVideoInputFormat"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveVideoInputFormat"].as<string>();
 
 					field = "captureLiveFrameRate";
 					if (row["captureLiveFrameRate"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveFrameRate"].as<int>();
 
 					field = "captureLiveWidth";
 					if (row["captureLiveWidth"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveWidth"].as<int>();
 
 					field = "captureLiveHeight";
 					if (row["captureLiveHeight"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveHeight"].as<int>();
 
 					field = "captureLiveAudioDeviceNumber";
 					if (row["captureLiveAudioDeviceNumber"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveAudioDeviceNumber"].as<int>();
 
 					field = "captureLiveChannelsNumber";
 					if (row["captureLiveChannelsNumber"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveChannelsNumber"].as<int>();
 				}
@@ -4382,66 +4382,66 @@ Json::Value MMSEngineDBFacade::getStreamList (
 				{
 					field = "tvSourceTVConfKey";
 					if (row["tvSourceTVConfKey"].is_null())
-						streamRoot[field] = Json::nullValue;
+						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["tvSourceTVConfKey"].as<int64_t>();
 				}
 
 				field = "type";
 				if (row["type"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["type"].as<string>();
 
                 field = "description";
 				if (row["description"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["description"].as<string>();
 
                 field = "name";
 				if (row["name"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["name"].as<string>();
 
                 field = "region";
 				if (row["region"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["region"].as<string>();
 
                 field = "country";
 				if (row["country"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["country"].as<string>();
 
                 field = "imageMediaItemKey";
 				if (row["imageMediaItemKey"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["imageMediaItemKey"].as<int64_t>();
 
                 field = "imageUniqueName";
 				if (row["imageUniqueName"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["imageUniqueName"].as<string>();
 
                 field = "position";
 				if (row["position"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["position"].as<int>();
 
                 field = "userData";
 				if (row["userData"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["userData"].as<string>();
 
-                streamsRoot.append(streamRoot);
+                streamsRoot.push_back(streamRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -4896,7 +4896,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(
 	}
 }
 
-Json::Value MMSEngineDBFacade::addSourceTVStream(
+json MMSEngineDBFacade::addSourceTVStream(
 	string type,
 	int64_t serviceId,
 	int64_t networkId,
@@ -4973,7 +4973,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 			);
 		}
 
-		Json::Value sourceTVStreamsRoot;
+		json sourceTVStreamsRoot;
 		{
 			int start = 0;
 			int rows = 1;
@@ -4985,7 +4985,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 			int videoPid = -1;
 			string audioPids;
 			string nameOrder;
-			Json::Value sourceTVStreamRoot = getSourceTVStreamList (
+			json sourceTVStreamRoot = getSourceTVStreamList (
 				confKey, start, rows, type, serviceId, name, frequency, lnb,
 				videoPid, audioPids, nameOrder, true);
 
@@ -4998,7 +4998,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = sourceTVStreamRoot[field];
+			json responseRoot = sourceTVStreamRoot[field];
 
 			field = "sourceTVStreams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -5116,7 +5116,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 	}
 }
 
-Json::Value MMSEngineDBFacade::modifySourceTVStream(
+json MMSEngineDBFacade::modifySourceTVStream(
 	int64_t confKey,
 
 	bool typeToBeModified, string type,
@@ -5347,7 +5347,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
             }
         }
 
-		Json::Value sourceTVStreamsRoot;
+		json sourceTVStreamsRoot;
 		{
 			int start = 0;
 			int rows = 1;
@@ -5359,7 +5359,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 			int videoPid = -1;
 			string audioPids;
 			string nameOrder;
-			Json::Value sourceTVStreamRoot = getSourceTVStreamList (
+			json sourceTVStreamRoot = getSourceTVStreamList (
 				confKey, start, rows, type, serviceId, name, frequency, lnb,
 				videoPid, audioPids, nameOrder, true);
 
@@ -5372,7 +5372,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value responseRoot = sourceTVStreamRoot[field];
+			json responseRoot = sourceTVStreamRoot[field];
 
 			field = "sourceTVStreams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
@@ -5616,14 +5616,14 @@ void MMSEngineDBFacade::removeSourceTVStream(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getSourceTVStreamList (
+json MMSEngineDBFacade::getSourceTVStreamList (
 	int64_t confKey,
 	int start, int rows,
 	string type, int64_t serviceId, string name, int64_t frequency, string lnb,
 	int videoPid, string audioPids,
 	string nameOrder, bool fromMaster)
 {
-    Json::Value streamListRoot;
+    json streamListRoot;
     
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -5658,7 +5658,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
             if (confKey != -1)
 			{
@@ -5788,7 +5788,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 		if (sqlWhere != "")
 			sqlWhere = fmt::format("where {}", sqlWhere);
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
 				"select count(*) from MMS_Conf_SourceTVStream sc {}",
@@ -5805,7 +5805,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 			);
 		}
 
-		Json::Value streamsRoot(Json::arrayValue);
+		json streamsRoot = json::array();
         {
 			string orderByCondition;
 				orderByCondition = fmt::format("order by sc.name {}", nameOrder);
@@ -5824,7 +5824,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value streamRoot;
+                json streamRoot;
 
                 field = "confKey";
 				streamRoot[field] = row["confKey"].as<int64_t>();
@@ -5834,19 +5834,19 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 
                 field = "serviceId";
 				if (row["serviceId"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["serviceId"].as<int>();
 
                 field = "networkId";
 				if (row["networkId"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["networkId"].as<int>();
 
                 field = "transportStreamId";
 				if (row["transportStreamId"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["transportStreamId"].as<int>();
 
@@ -5855,7 +5855,7 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 
                 field = "satellite";
 				if (row["satellite"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["satellite"].as<string>();
 
@@ -5864,77 +5864,77 @@ Json::Value MMSEngineDBFacade::getSourceTVStreamList (
 
                 field = "lnb";
 				if (row["lnb"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["lnb"].as<string>();
 
                 field = "videoPid";
 				if (row["videoPid"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["videoPid"].as<int>();
 
                 field = "audioPids";
 				if (row["audioPids"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["audioPids"].as<string>();
 
                 field = "audioItalianPid";
 				if (row["audioItalianPid"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["audioItalianPid"].as<int>();
 
                 field = "audioEnglishPid";
 				if (row["audioEnglishPid"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["audioEnglishPid"].as<int>();
 
                 field = "teletextPid";
 				if (row["teletextPid"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["teletextPid"].as<int>();
 
                 field = "modulation";
 				if (row["modulation"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["modulation"].as<string>();
 
                 field = "polarization";
 				if (row["polarization"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["polarization"].as<string>();
 
                 field = "symbolRate";
 				if (row["symbolRate"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["symbolRate"].as<int>();
 
                 field = "bandwidthInHz";
 				if (row["bandwidthInHz"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["bandwidthInHz"].as<int>();
 
 				field = "country";
 				if (row["country"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["country"].as<string>();
 
                 field = "deliverySystem";
 				if (row["deliverySystem"].is_null())
-					streamRoot[field] = Json::nullValue;
+					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["deliverySystem"].as<string>();
 
-                streamsRoot.append(streamRoot);
+                streamsRoot.push_back(streamRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -6642,12 +6642,12 @@ void MMSEngineDBFacade::removeAWSChannelConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getAWSChannelConfList (
+json MMSEngineDBFacade::getAWSChannelConfList (
 	int64_t workspaceKey, int64_t confKey, string label,
 	int type	// 0: all, 1: SHARED, 2: DEDICATED
 )
 {
-    Json::Value awsChannelConfListRoot;
+    json awsChannelConfListRoot;
     
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -6668,7 +6668,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             {
                 field = "workspaceKey";
@@ -6695,7 +6695,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 		else if (type == 2)
 			sqlWhere += "and ac.type = 'DEDICATED' ";
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_AWSChannel ac {}",
@@ -6712,7 +6712,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 			);
         }
 
-        Json::Value awsChannelRoot(Json::arrayValue);
+        json awsChannelRoot = json::array();
         {
 			string sqlStatement = fmt::format(
 				"select ac.confKey, ac.label, ac.channelId, ac.rtmpURL, ac.playURL, "
@@ -6726,7 +6726,7 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value awsChannelConfRoot;
+                json awsChannelConfRoot;
 
                 field = "confKey";
 				awsChannelConfRoot[field] = row["confKey"].as<int64_t>();
@@ -6748,23 +6748,23 @@ Json::Value MMSEngineDBFacade::getAWSChannelConfList (
 
                 field = "outputIndex";
 				if (row["outputIndex"].is_null())
-					awsChannelConfRoot[field] = Json::nullValue;
+					awsChannelConfRoot[field] = nullptr;
 				else
 					awsChannelConfRoot[field] = row["outputIndex"].as<int>();
 
                 field = "reservedByIngestionJobKey";
 				if (row["reservedByIngestionJobKey"].is_null())
-					awsChannelConfRoot[field] = Json::nullValue;
+					awsChannelConfRoot[field] = nullptr;
 				else
 					awsChannelConfRoot[field] = row["reservedByIngestionJobKey"].as<int64_t>();
 
                 field = "configurationLabel";
 				if (row["configurationLabel"].is_null())
-					awsChannelConfRoot[field] = Json::nullValue;
+					awsChannelConfRoot[field] = nullptr;
 				else
 					awsChannelConfRoot[field] = row["configurationLabel"].as<string>();
 
-                awsChannelRoot.append(awsChannelConfRoot);
+                awsChannelRoot.push_back(awsChannelConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -7739,12 +7739,12 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
+json MMSEngineDBFacade::getCDN77ChannelConfList (
 	int64_t workspaceKey, int64_t confKey, string label,
 	int type	// 0: all, 1: SHARED, 2: DEDICATED
 )
 {
-    Json::Value cdn77ChannelConfListRoot;
+    json cdn77ChannelConfListRoot;
     
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -7765,7 +7765,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             {
                 field = "workspaceKey";
@@ -7792,7 +7792,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 		else if (type == 2)
 			sqlWhere += "and cc.type = 'DEDICATED' ";
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_CDN77Channel cc {}",
@@ -7809,7 +7809,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 			);
         }
 
-        Json::Value cdn77ChannelRoot(Json::arrayValue);
+        json cdn77ChannelRoot = json::array();
         {
 			string sqlStatement = fmt::format(
 				"select cc.confKey, cc.label, cc.rtmpURL, cc.resourceURL, cc.filePath, "
@@ -7824,7 +7824,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value cdn77ChannelConfRoot;
+                json cdn77ChannelConfRoot;
 
                 field = "confKey";
 				cdn77ChannelConfRoot[field] = row["confKey"].as<int64_t>();
@@ -7843,7 +7843,7 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 
                 field = "secureToken";
 				if (row["secureToken"].is_null())
-					cdn77ChannelConfRoot[field] = Json::nullValue;
+					cdn77ChannelConfRoot[field] = nullptr;
 				else
 					cdn77ChannelConfRoot[field] = row["secureToken"].as<string>();
 
@@ -7852,23 +7852,23 @@ Json::Value MMSEngineDBFacade::getCDN77ChannelConfList (
 
                 field = "outputIndex";
 				if (row["outputIndex"].is_null())
-					cdn77ChannelConfRoot[field] = Json::nullValue;
+					cdn77ChannelConfRoot[field] = nullptr;
 				else
 					cdn77ChannelConfRoot[field] = row["outputIndex"].as<int>();
 
                 field = "reservedByIngestionJobKey";
 				if (row["reservedByIngestionJobKey"].is_null())
-					cdn77ChannelConfRoot[field] = Json::nullValue;
+					cdn77ChannelConfRoot[field] = nullptr;
 				else
 					cdn77ChannelConfRoot[field] = row["reservedByIngestionJobKey"].as<int64_t>();
 
                 field = "configurationLabel";
 				if (row["configurationLabel"].is_null())
-					cdn77ChannelConfRoot[field] = Json::nullValue;
+					cdn77ChannelConfRoot[field] = nullptr;
 				else
 					cdn77ChannelConfRoot[field] = row["configurationLabel"].as<string>();
 
-                cdn77ChannelRoot.append(cdn77ChannelConfRoot);
+                cdn77ChannelRoot.push_back(cdn77ChannelConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -9025,12 +9025,12 @@ void MMSEngineDBFacade::removeRTMPChannelConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
+json MMSEngineDBFacade::getRTMPChannelConfList (
 	int64_t workspaceKey, int64_t confKey, string label,
 	int type	// 0: all, 1: SHARED, 2: DEDICATED
 )
 {
-    Json::Value rtmpChannelConfListRoot;
+    json rtmpChannelConfListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -9051,7 +9051,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             {
                 field = "workspaceKey";
@@ -9078,7 +9078,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 		else if (type == 2)
 			sqlWhere += "and rc.type = 'DEDICATED' ";
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_RTMPChannel rc {}",
@@ -9095,7 +9095,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 			);
         }
 
-        Json::Value rtmpChannelRoot(Json::arrayValue);
+        json rtmpChannelRoot = json::array();
         {
 			string sqlStatement = fmt::format(
 				"select rc.confKey, rc.label, rc.rtmpURL, rc.streamName, rc.userName, rc.password, "
@@ -9109,7 +9109,7 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value rtmpChannelConfRoot;
+                json rtmpChannelConfRoot;
 
                 field = "confKey";
 				rtmpChannelConfRoot[field] = row["confKey"].as<int64_t>();
@@ -9122,25 +9122,25 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 
                 field = "streamName";
 				if (row["streamName"].is_null())
-					rtmpChannelConfRoot[field] = Json::nullValue;
+					rtmpChannelConfRoot[field] = nullptr;
 				else
 					rtmpChannelConfRoot[field] = row["streamName"].as<string>();
 
                 field = "userName";
 				if (row["userName"].is_null())
-					rtmpChannelConfRoot[field] = Json::nullValue;
+					rtmpChannelConfRoot[field] = nullptr;
 				else
 					rtmpChannelConfRoot[field] = row["userName"].as<string>();
 
                 field = "password";
 				if (row["password"].is_null())
-					rtmpChannelConfRoot[field] = Json::nullValue;
+					rtmpChannelConfRoot[field] = nullptr;
 				else
 					rtmpChannelConfRoot[field] = row["password"].as<string>();
 
                 field = "playURL";
 				if (row["playURL"].is_null())
-					rtmpChannelConfRoot[field] = Json::nullValue;
+					rtmpChannelConfRoot[field] = nullptr;
 				else
 					rtmpChannelConfRoot[field] = row["playURL"].as<string>();
 
@@ -9149,23 +9149,23 @@ Json::Value MMSEngineDBFacade::getRTMPChannelConfList (
 
                 field = "outputIndex";
 				if (row["outputIndex"].is_null())
-					rtmpChannelConfRoot[field] = Json::nullValue;
+					rtmpChannelConfRoot[field] = nullptr;
 				else
 					rtmpChannelConfRoot[field] = row["outputIndex"].as<int>();
 
                 field = "reservedByIngestionJobKey";
 				if (row["reservedByIngestionJobKey"].is_null())
-					rtmpChannelConfRoot[field] = Json::nullValue;
+					rtmpChannelConfRoot[field] = nullptr;
 				else
 					rtmpChannelConfRoot[field] = row["reservedByIngestionJobKey"].as<int64_t>();
 
                 field = "configurationLabel";
 				if (row["configurationLabel"].is_null())
-					rtmpChannelConfRoot[field] = Json::nullValue;
+					rtmpChannelConfRoot[field] = nullptr;
 				else
 					rtmpChannelConfRoot[field] = row["configurationLabel"].as<string>();
 
-                rtmpChannelRoot.append(rtmpChannelConfRoot);
+                rtmpChannelRoot.push_back(rtmpChannelConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -10335,12 +10335,12 @@ void MMSEngineDBFacade::removeHLSChannelConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getHLSChannelConfList (
+json MMSEngineDBFacade::getHLSChannelConfList (
 	int64_t workspaceKey, int64_t confKey, string label,
 	int type	// 0: all, 1: SHARED, 2: DEDICATED
 )
 {
-    Json::Value hlsChannelConfListRoot;
+    json hlsChannelConfListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -10361,7 +10361,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             {
                 field = "workspaceKey";
@@ -10388,7 +10388,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 		else if (type == 2)
 			sqlWhere += "and hc.type = 'DEDICATED' ";
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_HLSChannel hc {}",
@@ -10405,7 +10405,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 			);
         }
 
-        Json::Value hlsChannelRoot(Json::arrayValue);
+        json hlsChannelRoot = json::array();
         {
 			string sqlStatement = fmt::format(
 				"select hc.confKey, hc.label, hc.deliveryCode, hc.segmentDuration, hc.playlistEntriesNumber, "
@@ -10419,7 +10419,7 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value hlsChannelConfRoot;
+                json hlsChannelConfRoot;
 
                 field = "confKey";
 				hlsChannelConfRoot[field] = row["confKey"].as<int64_t>();
@@ -10432,13 +10432,13 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 
                 field = "segmentDuration";
 				if (row["segmentDuration"].is_null())
-					hlsChannelConfRoot[field] = Json::nullValue;
+					hlsChannelConfRoot[field] = nullptr;
 				else
 					hlsChannelConfRoot[field] = row["segmentDuration"].as<int>();
 
                 field = "playlistEntriesNumber";
 				if (row["playlistEntriesNumber"].is_null())
-					hlsChannelConfRoot[field] = Json::nullValue;
+					hlsChannelConfRoot[field] = nullptr;
 				else
 					hlsChannelConfRoot[field] = row["playlistEntriesNumber"].as<int>();
 
@@ -10447,23 +10447,23 @@ Json::Value MMSEngineDBFacade::getHLSChannelConfList (
 
                 field = "outputIndex";
 				if (row["outputIndex"].is_null())
-					hlsChannelConfRoot[field] = Json::nullValue;
+					hlsChannelConfRoot[field] = nullptr;
 				else
 					hlsChannelConfRoot[field] = row["outputIndex"].as<int>();
 
                 field = "reservedByIngestionJobKey";
 				if (row["reservedByIngestionJobKey"].is_null())
-					hlsChannelConfRoot[field] = Json::nullValue;
+					hlsChannelConfRoot[field] = nullptr;
 				else
 					hlsChannelConfRoot[field] = row["reservedByIngestionJobKey"].as<int64_t>();
 
                 field = "configurationLabel";
 				if (row["configurationLabel"].is_null())
-					hlsChannelConfRoot[field] = Json::nullValue;
+					hlsChannelConfRoot[field] = nullptr;
 				else
 					hlsChannelConfRoot[field] = row["configurationLabel"].as<string>();
 
-                hlsChannelRoot.append(hlsChannelConfRoot);
+                hlsChannelRoot.push_back(hlsChannelConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -11616,11 +11616,11 @@ void MMSEngineDBFacade::removeFTPConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getFTPConfList (
+json MMSEngineDBFacade::getFTPConfList (
         int64_t workspaceKey
 )
 {
-    Json::Value ftpConfListRoot;
+    json ftpConfListRoot;
     
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -11641,7 +11641,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             {
                 field = "workspaceKey";
@@ -11654,7 +11654,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
         
         string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_FTP {}",
@@ -11671,7 +11671,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
 			);
         }
 
-        Json::Value ftpRoot(Json::arrayValue);
+        json ftpRoot = json::array();
         {                    
 			string sqlStatement = fmt::format(
                 "select confKey, label, server, port, userName, password, remoteDirectory from MMS_Conf_FTP {}", 
@@ -11680,7 +11680,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value ftpConfRoot;
+                json ftpConfRoot;
 
                 field = "confKey";
 				ftpConfRoot[field] = row["confKey"].as<int64_t>();
@@ -11703,7 +11703,7 @@ Json::Value MMSEngineDBFacade::getFTPConfList (
                 field = "remoteDirectory";
 				ftpConfRoot[field] = row["remoteDirectory"].as<string>();
 
-                ftpRoot.append(ftpConfRoot);
+                ftpRoot.push_back(ftpConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -12358,11 +12358,11 @@ void MMSEngineDBFacade::removeEMailConf(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getEMailConfList (
+json MMSEngineDBFacade::getEMailConfList (
         int64_t workspaceKey
 )
 {
-    Json::Value emailConfListRoot;
+    json emailConfListRoot;
     
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -12383,7 +12383,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             {
                 field = "workspaceKey";
@@ -12396,7 +12396,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
         
         string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
                 "select count(*) from MMS_Conf_EMail {}",
@@ -12413,7 +12413,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
 			);
         }
 
-        Json::Value emailRoot(Json::arrayValue);
+        json emailRoot = json::array();
         {
 			string sqlStatement = fmt::format(
                 "select confKey, label, addresses, subject, message from MMS_Conf_EMail {}",
@@ -12422,7 +12422,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value emailConfRoot;
+                json emailConfRoot;
 
                 field = "confKey";
 				emailConfRoot[field] = row["confKey"].as<int64_t>();
@@ -12439,7 +12439,7 @@ Json::Value MMSEngineDBFacade::getEMailConfList (
                 field = "message";
 				emailConfRoot[field] = row["message"].as<string>();
 
-                emailRoot.append(emailConfRoot);
+                emailRoot.push_back(emailConfRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -12695,15 +12695,15 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(
 }
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
-Json::Value MMSEngineDBFacade::getStreamInputRoot(
+json MMSEngineDBFacade::getStreamInputRoot(
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
 	string configurationLabel,
 	string useVideoTrackFromPhysicalPathName, string useVideoTrackFromPhysicalDeliveryURL,
 	int maxWidth, string userAgent, string otherInputOptions,
-	string taskEncodersPoolLabel, Json::Value drawTextDetailsRoot
+	string taskEncodersPoolLabel, json drawTextDetailsRoot
 )
 {
-	Json::Value streamInputRoot;
+	json streamInputRoot;
 
     try
     {
@@ -12926,20 +12926,20 @@ Json::Value MMSEngineDBFacade::getStreamInputRoot(
 }
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
-Json::Value MMSEngineDBFacade::getVodInputRoot(
+json MMSEngineDBFacade::getVodInputRoot(
 	MMSEngineDBFacade::ContentType vodContentType,
 	vector<tuple<int64_t, string, string, string>>& sources,
-	Json::Value drawTextDetailsRoot
+	json drawTextDetailsRoot
 )
 {
-	Json::Value vodInputRoot;
+	json vodInputRoot;
 
     try
     {
 		string field = "vodContentType";
 		vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
 
-		Json::Value sourcesRoot(Json::arrayValue);
+		json sourcesRoot = json::array();
 
 		for (tuple<int64_t, string, string, string> source: sources)
 		{
@@ -12952,7 +12952,7 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 				sourcePhysicalDeliveryURL) = source;
 
 
-			Json::Value sourceRoot;
+			json sourceRoot;
 
 			field = "mediaItemTitle";
 			sourceRoot[field] = mediaItemTitle;
@@ -12966,7 +12966,7 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 			field = "sourcePhysicalDeliveryURL";
 			sourceRoot[field] = sourcePhysicalDeliveryURL;
 
-			sourcesRoot.append(sourceRoot);
+			sourcesRoot.push_back(sourceRoot);
 		}
 
 		field = "sources";
@@ -12995,15 +12995,15 @@ Json::Value MMSEngineDBFacade::getVodInputRoot(
 }
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
-Json::Value MMSEngineDBFacade::getCountdownInputRoot(
+json MMSEngineDBFacade::getCountdownInputRoot(
 	string mmsSourceVideoAssetPathName,
 	string mmsSourceVideoAssetDeliveryURL,
 	int64_t physicalPathKey,
 	int64_t videoDurationInMilliSeconds,
-	Json::Value drawTextDetailsRoot
+	json drawTextDetailsRoot
 )
 {
-	Json::Value countdownInputRoot;
+	json countdownInputRoot;
 
     try
     {
@@ -13042,11 +13042,11 @@ Json::Value MMSEngineDBFacade::getCountdownInputRoot(
 }
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
-Json::Value MMSEngineDBFacade::getDirectURLInputRoot(
-	string url, Json::Value drawTextDetailsRoot
+json MMSEngineDBFacade::getDirectURLInputRoot(
+	string url, json drawTextDetailsRoot
 )
 {
-	Json::Value directURLInputRoot;
+	json directURLInputRoot;
 
     try
     {
@@ -13237,12 +13237,12 @@ pair<long,string> MMSEngineDBFacade::getLastYouTubeURLDetails(
 
 		tie(ignore, ignore, channelData) = channelDetails;
 
-		Json::Value channelDataRoot = JSONUtils::toJson(ingestionKey, -1, channelData);
+		json channelDataRoot = JSONUtils::toJson(channelData);
 
 
 		string field;
 
-		Json::Value mmsDataRoot;
+		json mmsDataRoot;
 		{
 			field = "mmsData";
 			if (!JSONUtils::isMetadataPresent(channelDataRoot, field))
@@ -13259,7 +13259,7 @@ pair<long,string> MMSEngineDBFacade::getLastYouTubeURLDetails(
 			mmsDataRoot = channelDataRoot[field];
 		}
 
-		Json::Value youTubeURLsRoot(Json::arrayValue);
+		json youTubeURLsRoot;
 		{
 			field = "youTubeURLs";
 			if (!JSONUtils::isMetadataPresent(mmsDataRoot, field))
@@ -13288,7 +13288,7 @@ pair<long,string> MMSEngineDBFacade::getLastYouTubeURLDetails(
 		}
 
 		{
-			Json::Value youTubeLiveURLRoot = youTubeURLsRoot[youTubeURLsRoot.size() - 1];
+			json youTubeLiveURLRoot = youTubeURLsRoot[youTubeURLsRoot.size() - 1];
 
 			time_t tNow;
 			{
@@ -13382,13 +13382,13 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 
 		tie(ignore, ignore, channelData) = channelDetails;
 
-		Json::Value channelDataRoot = JSONUtils::toJson(ingestionJobKey, -1, channelData);
+		json channelDataRoot = JSONUtils::toJson(channelData);
 
 		// add streamingYouTubeLiveURL info to the channelData
 		{
 			string field;
 
-			Json::Value youTubeLiveURLRoot;
+			json youTubeLiveURLRoot;
 			{
 				char strNow[64];
 				{
@@ -13412,21 +13412,21 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 				youTubeLiveURLRoot[field] = streamingYouTubeLiveURL;
 			}
 
-			Json::Value mmsDataRoot;
+			json mmsDataRoot;
 			{
 				field = "mmsData";
 				if (JSONUtils::isMetadataPresent(channelDataRoot, field))
 					mmsDataRoot = channelDataRoot[field];
 			}
 
-			Json::Value previousYouTubeURLsRoot(Json::arrayValue);
+			json previousYouTubeURLsRoot;
 			{
 				field = "youTubeURLs";
 				if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
 					previousYouTubeURLsRoot = mmsDataRoot[field];
 			}
 
-			Json::Value youTubeURLsRoot(Json::arrayValue);
+			json youTubeURLsRoot = json::array();
 
 			// maintain the last 10 URLs
 			int youTubeURLIndex;
@@ -13435,8 +13435,8 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 			else
 				youTubeURLIndex = previousYouTubeURLsRoot.size();
 			for (; youTubeURLIndex >= 0; youTubeURLIndex--)
-				youTubeURLsRoot.append(previousYouTubeURLsRoot[youTubeURLIndex]);
-			youTubeURLsRoot.append(youTubeLiveURLRoot);
+				youTubeURLsRoot.push_back(previousYouTubeURLsRoot[youTubeURLIndex]);
+			youTubeURLsRoot.push_back(youTubeLiveURLRoot);
 
 			field = "youTubeURLs";
 			mmsDataRoot[field] = youTubeURLsRoot;

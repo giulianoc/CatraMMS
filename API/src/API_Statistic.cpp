@@ -45,7 +45,7 @@ void API::addRequestStatistic(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "userId";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -112,7 +112,7 @@ void API::addRequestStatistic(
         string sResponse;
         try
         {
-			Json::Value statisticRoot = _mmsEngineDBFacade->addRequestStatistic(
+			json statisticRoot = _mmsEngineDBFacade->addRequestStatistic(
 				workspace->_workspaceKey, ipAddress, userId, physicalPathKey, confStreamKey, title);
 
 			sResponse = JSONUtils::toString(statisticRoot);
@@ -270,7 +270,7 @@ void API::requestStatisticList(
 		endStatisticDate = endStatisticDateIt->second;
 
         {
-			Json::Value statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticList(
+			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticList(
 				workspace->_workspaceKey, userId, title, startStatisticDate, endStatisticDate,
 				start, rows); 
 
@@ -422,7 +422,7 @@ void API::requestStatisticPerContentList(
 			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
         {
-			Json::Value statisticsListRoot
+			json statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerContentList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
 				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
@@ -575,7 +575,7 @@ void API::requestStatisticPerUserList(
 			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
         {
-			Json::Value statisticsListRoot
+			json statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerUserList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
 				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
@@ -728,7 +728,7 @@ void API::requestStatisticPerMonthList(
 			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
         {
-			Json::Value statisticsListRoot
+			json statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerMonthList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
 				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
@@ -881,7 +881,7 @@ void API::requestStatisticPerDayList(
 			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
         {
-			Json::Value statisticsListRoot
+			json statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerDayList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
 				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
@@ -1034,7 +1034,7 @@ void API::requestStatisticPerHourList(
 			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
         {
-			Json::Value statisticsListRoot
+			json statisticsListRoot
 				= _mmsEngineDBFacade->getRequestStatisticPerHourList(
 				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate,
 				minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated,
@@ -1145,7 +1145,7 @@ void API::loginStatisticList(
 		endStatisticDate = endStatisticDateIt->second;
 
         {
-			Json::Value statisticsListRoot = _mmsEngineDBFacade->getLoginStatisticList(
+			json statisticsListRoot = _mmsEngineDBFacade->getLoginStatisticList(
 				startStatisticDate, endStatisticDate, start, rows); 
 
             string responseBody = JSONUtils::toString(statisticsListRoot);

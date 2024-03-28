@@ -808,12 +808,12 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
+json MMSEngineDBFacade::getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,
         bool contentTypePresent, ContentType contentType
 )
 {
-    Json::Value contentListRoot;
+    json contentListRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -836,7 +836,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             if (encodingProfilesSetKey != -1)
             {
@@ -860,7 +860,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
         if (contentTypePresent)
             sqlWhere += fmt::format("and contentType = {} ", trans.quote(toString(contentType)));
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = fmt::format( 
                 "select count(*) from MMS_EncodingProfilesSet {}",
@@ -877,7 +877,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 			);
         }
 
-        Json::Value encodingProfilesSetsRoot(Json::arrayValue);
+        json encodingProfilesSetsRoot = json::array();
         {
             string sqlStatement = fmt::format( 
                 "select encodingProfilesSetKey, contentType, label from MMS_EncodingProfilesSet {}",
@@ -886,7 +886,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value encodingProfilesSetRoot;
+                json encodingProfilesSetRoot;
 
 				int64_t localEncodingProfilesSetKey = row["encodingProfilesSetKey"].as<int64_t>();
 
@@ -900,7 +900,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                 field = "contentType";
                 encodingProfilesSetRoot[field] = row["contentType"].as<string>();
 
-                Json::Value encodingProfilesRoot(Json::arrayValue);
+                json encodingProfilesRoot = json::array();
                 {
                     string sqlStatement = fmt::format(
                         "select ep.encodingProfileKey, ep.contentType, ep.label, ep.deliveryTechnology, ep.jsonProfile "
@@ -912,7 +912,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
 					result res = trans.exec(sqlStatement);
 					for (auto row: res)
                     {
-                        Json::Value encodingProfileRoot;
+                        json encodingProfileRoot;
 
 						field = "global";
 						encodingProfileRoot[field] = false;
@@ -932,10 +932,10 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                         {
 							string jsonProfile = row["jsonProfile"].as<string>();
 
-                            Json::Value profileRoot;
+                            json profileRoot;
                             try
                             {
-								profileRoot = JSONUtils::toJson(-1, -1, jsonProfile);
+								profileRoot = JSONUtils::toJson(jsonProfile);
                             }
                             catch(exception& e)
                             {
@@ -951,14 +951,14 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                             encodingProfileRoot[field] = profileRoot;
                         }
                         
-                        encodingProfilesRoot.append(encodingProfileRoot);
+                        encodingProfilesRoot.push_back(encodingProfileRoot);
                     }
                 }
 
                 field = "encodingProfiles";
                 encodingProfilesSetRoot[field] = encodingProfilesRoot;
                 
-                encodingProfilesSetsRoot.append(encodingProfilesSetRoot);
+                encodingProfilesSetsRoot.push_back(encodingProfilesSetRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -1066,13 +1066,13 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
     return contentListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getEncodingProfileList (
+json MMSEngineDBFacade::getEncodingProfileList (
         int64_t workspaceKey, int64_t encodingProfileKey,
         bool contentTypePresent, ContentType contentType,
 		string label
 )
 {
-    Json::Value contentListRoot;
+    json contentListRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1096,7 +1096,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             if (encodingProfileKey != -1)
             {
@@ -1128,7 +1128,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         if (label != "")
             sqlWhere += fmt::format("and lower(label) like lower({}) ", trans.quote("%" + label + "%"));
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = fmt::format( 
                 "select count(*) from MMS_EncodingProfile {}",
@@ -1145,7 +1145,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 			);
         }
 
-        Json::Value encodingProfilesRoot(Json::arrayValue);
+        json encodingProfilesRoot = json::array();
         {                    
             string sqlStatement = fmt::format( 
                 "select workspaceKey, encodingProfileKey, label, contentType, deliveryTechnology, "
@@ -1155,7 +1155,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value encodingProfileRoot;
+                json encodingProfileRoot;
 
                 field = "global";
 				if (row["workspaceKey"].is_null())
@@ -1178,10 +1178,10 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                 {
 					string jsonProfile = row["jsonProfile"].as<string>();
 
-                    Json::Value profileRoot;
+                    json profileRoot;
                     try
                     {
-						profileRoot = JSONUtils::toJson(-1, -1, jsonProfile);
+						profileRoot = JSONUtils::toJson(jsonProfile);
                     }
                     catch(exception& e)
                     {
@@ -1197,7 +1197,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
                     encodingProfileRoot[field] = profileRoot;
                 }
 
-                encodingProfilesRoot.append(encodingProfileRoot);
+                encodingProfilesRoot.push_back(encodingProfileRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"

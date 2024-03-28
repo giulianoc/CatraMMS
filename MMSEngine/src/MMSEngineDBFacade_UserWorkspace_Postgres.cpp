@@ -1125,7 +1125,7 @@ string MMSEngineDBFacade::createCode(
 		code = to_string(e());
 
         {
-			Json::Value permissionsRoot;
+			json permissionsRoot;
             {
 				permissionsRoot["admin"] = admin;
 
@@ -1568,7 +1568,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
     {
 		// create the API of the user for each existing Workspace
         {
-			Json::Value permissionsRoot;
+			json permissionsRoot;
             {
                 bool admin = false;
 
@@ -1693,7 +1693,7 @@ pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
 {
     int64_t         workspaceKey;
     string          confirmationCode;
-	Json::Value		workspaceRoot;
+	json		workspaceRoot;
     
     try
     {
@@ -2181,7 +2181,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 
     try
     {
-		Json::Value permissionsRoot;
+		json permissionsRoot;
 		{
 			bool admin = true;
 
@@ -2353,7 +2353,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(
 			if (!empty(res))
             {
 				string permissions = res[0]["permissions"].as<string>();
-				Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+				json permissionsRoot = JSONUtils::toJson(permissions);
 
 				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
                 isOwner = res[0]["isOwner"].as<bool>();
@@ -2592,7 +2592,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(
 			if (!empty(res))
             {
 				string permissions = res[0]["permissions"].as<string>();
-				Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+				json permissionsRoot = JSONUtils::toJson(permissions);
 
 				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
                 isOwner = res[0]["isOwner"].as<bool>();
@@ -2796,7 +2796,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
 {
     shared_ptr<Workspace> workspace;
     int64_t         userKey;
-    Json::Value		permissionsRoot;
+    json		permissionsRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2835,7 +2835,7 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
                 userKey = res[0]["userKey"].as<int64_t>();
                 workspaceKey = res[0]["workspaceKey"].as<int64_t>();
                 string permissions = res[0]["permissions"].as<string>();
-				permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+				permissionsRoot = JSONUtils::toJson(permissions);
             }
             else
             {
@@ -2982,10 +2982,10 @@ tuple<int64_t,shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, b
     );
 }
 
-Json::Value MMSEngineDBFacade::login (
+json MMSEngineDBFacade::login (
 	string eMailAddress, string password)
 {
-    Json::Value     loginDetailsRoot;
+    json     loginDetailsRoot;
 
 	// 2023-02-22: in questo metodo viene:
 	//	1. controllato l'utente
@@ -3371,10 +3371,10 @@ Json::Value MMSEngineDBFacade::login (
     return loginDetailsRoot;
 }
 
-Json::Value MMSEngineDBFacade::getWorkspaceList (
+json MMSEngineDBFacade::getWorkspaceList (
 	int64_t userKey, bool admin, bool costDetails)
 {
-	Json::Value workspaceListRoot;
+	json workspaceListRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -3389,7 +3389,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 	{
 		string field;
 		{
-			Json::Value requestParametersRoot;
+			json requestParametersRoot;
 
 			field = "userKey";
 			requestParametersRoot[field] = userKey;
@@ -3406,7 +3406,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			workspaceListRoot[field] = requestParametersRoot;
 		}
 
-		Json::Value responseRoot;
+		json responseRoot;
 		{
 			string sqlStatement;
 			if (admin)
@@ -3434,7 +3434,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			);
 		}
 
-		Json::Value workspacesRoot(Json::arrayValue);
+		json workspacesRoot = json::array();
         {
 			string sqlStatement;
 			if (admin)
@@ -3467,10 +3467,10 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 			bool userAPIKeyInfo = true;
 			for (auto row: res)
             {
-                Json::Value workspaceDetailRoot = getWorkspaceDetailsRoot (
+                json workspaceDetailRoot = getWorkspaceDetailsRoot (
 					conn, trans, row, userAPIKeyInfo, costDetails);
 
-                workspacesRoot.append(workspaceDetailRoot);                        
+                workspacesRoot.push_back(workspaceDetailRoot);                        
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -3578,9 +3578,9 @@ Json::Value MMSEngineDBFacade::getWorkspaceList (
 	return workspaceListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
+json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 {
-	Json::Value loginWorkspaceRoot;
+	json loginWorkspaceRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -3771,7 +3771,7 @@ Json::Value MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaste
 	return loginWorkspaceRoot;
 }
 
-Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
+json MMSEngineDBFacade::getWorkspaceDetailsRoot (
 	shared_ptr<PostgresConnection> conn,
 	nontransaction& trans,
 	row& row,
@@ -3779,7 +3779,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 	bool costDetails
 	)
 {
-    Json::Value     workspaceDetailRoot;
+    json     workspaceDetailRoot;
 
     try
     {
@@ -3830,7 +3830,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 
 		if (userAPIKeyInfo)
 		{
-			Json::Value     userAPIKeyRoot;
+			json     userAPIKeyRoot;
 
 			field = "apiKey";
 			userAPIKeyRoot[field] = row["apiKey"].as<string>();
@@ -3845,7 +3845,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
 			userAPIKeyRoot[field] = row["expirationDate"].as<string>();
 
 			string permissions = row["permissions"].as<string>();
-			Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+			json permissionsRoot = JSONUtils::toJson(permissions);
 
 			field = "admin";
 			bool admin = JSONUtils::asBool(permissionsRoot, "admin", false);
@@ -3984,7 +3984,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot (
     return workspaceDetailRoot;
 }
 
-Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
+json MMSEngineDBFacade::updateWorkspaceDetails (
 	int64_t userKey,
 	int64_t workspaceKey,
 	bool enabledChanged, bool newEnabled,
@@ -4020,7 +4020,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 	bool newEditEncodersPool,
 	bool newApplicationRecorder)
 {
-    Json::Value		workspaceDetailRoot;
+    json		workspaceDetailRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -4053,7 +4053,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
 			if (!empty(res))
             {
                 string permissions = res[0]["permissions"].as<string>();
-				Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+				json permissionsRoot = JSONUtils::toJson(permissions);
                 
                 admin = JSONUtils::asBool(permissionsRoot, "admin", false);
                 isOwner = res[0]["isOwner"].as<bool>();
@@ -4368,7 +4368,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         }
 
         {
-			Json::Value permissionsRoot;
+			json permissionsRoot;
 			permissionsRoot["admin"] = admin;
 			permissionsRoot["createRemoveWorkspace"] = newCreateRemoveWorkspace;
 			permissionsRoot["ingestWorkflow"] = newIngestWorkflow;
@@ -4535,12 +4535,12 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
     return workspaceDetailRoot;
 }
 
-Json::Value MMSEngineDBFacade::setWorkspaceAsDefault (
+json MMSEngineDBFacade::setWorkspaceAsDefault (
         int64_t userKey,
         int64_t workspaceKey,
 		int64_t workspaceKeyToBeSetAsDefault)
 {
-    Json::Value workspaceDetailRoot;
+    json workspaceDetailRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -4813,12 +4813,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
     return workspaceUsage;
 }
 
-Json::Value MMSEngineDBFacade::getWorkspaceCost(
+json MMSEngineDBFacade::getWorkspaceCost(
 	shared_ptr<PostgresConnection> conn,
 	nontransaction& trans,
 	int64_t workspaceKey)
 {
-	Json::Value workspaceCost;
+	json workspaceCost;
 
     try
     {
@@ -5309,7 +5309,7 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail (string email, bo
     return userDetails;
 }
 
-Json::Value MMSEngineDBFacade::updateUser (
+json MMSEngineDBFacade::updateUser (
 		bool admin,
 		bool ldapEnabled,
         int64_t userKey,
@@ -5321,7 +5321,7 @@ Json::Value MMSEngineDBFacade::updateUser (
         bool expirationDateChanged, string expirationUtcDate,
 		bool passwordChanged, string newPassword, string oldPassword)
 {
-    Json::Value     loginDetailsRoot;
+    json     loginDetailsRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;

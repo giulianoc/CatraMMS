@@ -18,7 +18,7 @@
 Validator::Validator(
         shared_ptr<spdlog::logger> logger, 
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-        Json::Value configuration
+        json configuration
 ) 
 {
     _logger             = logger;
@@ -36,7 +36,7 @@ Validator::Validator(const Validator& orig) {
 Validator::~Validator() {
 }
 
-void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root)
+void Validator::validateIngestedRootMetadata(int64_t workspaceKey, json root)
 {
     string field = "type";
     if (!JSONUtils::isMetadataPresent(root, field))
@@ -73,7 +73,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
 
         throw runtime_error(errorMessage);
     }    
-    Json::Value taskRoot = root[field];                        
+    json taskRoot = root[field];                        
 
     field = "type";
     if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -104,7 +104,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, Json::Value r
 }
 
 void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
-	Json::Value groupOfTasksRoot, bool validateDependenciesToo)
+	json groupOfTasksRoot, bool validateDependenciesToo)
 {
     string field = "parameters";
     if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
@@ -118,7 +118,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 
         throw runtime_error(errorMessage);
     }
-    Json::Value parametersRoot = groupOfTasksRoot[field];
+    json parametersRoot = groupOfTasksRoot[field];
     
 	validateGroupOfTasksMetadata(workspaceKey, parametersRoot);
 
@@ -134,7 +134,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 
         throw runtime_error(errorMessage);
     }
-    Json::Value tasksRoot = parametersRoot[field];
+    json tasksRoot = parametersRoot[field];
 
 	/* 2021-02-20: A group that does not have any Task couls be a scenario,
 	 * so we do not have to raise an error. Same check commented in API_Ingestion.cpp
@@ -149,7 +149,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 
     for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
     {
-        Json::Value taskRoot = tasksRoot[taskIndex];
+        json taskRoot = tasksRoot[taskIndex];
         
         field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -179,7 +179,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
 }
 
 void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, 
-	Json::Value parametersRoot)
+	json parametersRoot)
 {
     string field = "executionType";
     if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -206,13 +206,13 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey,
     }
 }
 
-void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot,
+void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot,
 	bool validateDependenciesToo)
 {
     string field = "onSuccess";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
+        json onSuccessRoot = taskOrGroupOfTasksRoot[field];
         
         field = "task";
         if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
@@ -226,7 +226,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        Json::Value taskRoot = onSuccessRoot[field];                        
+        json taskRoot = onSuccessRoot[field];                        
 
         string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -255,7 +255,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     field = "onError";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
+        json onErrorRoot = taskOrGroupOfTasksRoot[field];
         
         field = "task";
         if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
@@ -269,7 +269,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        Json::Value taskRoot = onErrorRoot[field];                        
+        json taskRoot = onErrorRoot[field];                        
 
         string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -298,7 +298,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     field = "onComplete";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
+        json onCompleteRoot = taskOrGroupOfTasksRoot[field];
         
         field = "task";
         if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
@@ -312,7 +312,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
             throw runtime_error(errorMessage);
         }    
-        Json::Value taskRoot = onCompleteRoot[field];                        
+        json taskRoot = onCompleteRoot[field];                        
 
         string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -341,7 +341,7 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
 
 vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>
 	Validator::validateSingleTaskMetadata(
-	int64_t workspaceKey, Json::Value taskRoot, bool validateDependenciesToo)
+	int64_t workspaceKey, json taskRoot, bool validateDependenciesToo)
 {
     MMSEngineDBFacade::IngestionType    ingestionType;
     vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
@@ -382,7 +382,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateAddContentMetadata(label, parametersRoot);
     }
     else if (type == "Add-Silent-Audio")
@@ -402,7 +402,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateAddSilentAudioMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -423,7 +423,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateRemoveContentMetadata(workspaceKey, label, parametersRoot,
 			dependencies);
     }
@@ -444,7 +444,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateEncodeMetadata(workspaceKey, label, parametersRoot,
 			dependencies);
     }
@@ -465,7 +465,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateFrameMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);        
     }
@@ -486,7 +486,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -507,7 +507,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -528,7 +528,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -549,7 +549,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -570,7 +570,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateSlideshowMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -591,7 +591,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateConcatDemuxerMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -612,7 +612,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -633,7 +633,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateOverlayImageOnVideoMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);        
     }
@@ -654,7 +654,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateOverlayTextOnVideoMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);        
     }
@@ -675,7 +675,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateEmailNotificationMetadata(workspaceKey, label, parametersRoot,
 				validateDependenciesToo, dependencies);
     }
@@ -696,7 +696,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateCheckStreamingMetadata(workspaceKey, label, parametersRoot);
     }
     else if (type == "Media-Cross-Reference")
@@ -716,7 +716,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateMediaCrossReferenceMetadata(workspaceKey, label, parametersRoot,
 				validateDependenciesToo, dependencies);
     }
@@ -737,7 +737,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateFTPDeliveryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -758,7 +758,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
@@ -779,7 +779,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateLocalCopyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -800,7 +800,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateExtractTracksMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -821,7 +821,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validatePostOnFacebookMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -842,7 +842,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validatePostOnYouTubeMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -863,7 +863,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -884,7 +884,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
@@ -905,7 +905,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -926,7 +926,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -947,7 +947,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -968,7 +968,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -989,7 +989,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateIntroOutroOverlayMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
@@ -1010,7 +1010,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -1031,7 +1031,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateYouTubeLiveBroadcastMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
@@ -1052,7 +1052,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateFacebookLiveBroadcastMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
@@ -1073,7 +1073,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateVODProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -1094,7 +1094,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateCountdownMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
@@ -1115,7 +1115,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateLiveGridMetadata(workspaceKey, label, parametersRoot,
 			validateDependenciesToo, dependencies);
     }
@@ -1136,7 +1136,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateLiveCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -1157,7 +1157,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
             throw runtime_error(errorMessage);
         }
 
-        Json::Value parametersRoot = taskRoot[field]; 
+        json parametersRoot = taskRoot[field]; 
         validateWorkflowAsLibraryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo,
 			dependencies);
     }
@@ -1177,7 +1177,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, b
 
 vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
 	Validator::validateSingleTaskMetadata(int64_t workspaceKey,
-	MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot)
+	MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot)
 {
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
 		dependencies;
@@ -1382,7 +1382,7 @@ vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 }
 
 void Validator::validateAddContentMetadata(
-    string label, Json::Value parametersRoot)
+    string label, json parametersRoot)
 {
     vector<string> mandatoryFields = {
         // "sourceURL",     it is optional in case of push
@@ -1450,7 +1450,7 @@ void Validator::validateAddContentMetadata(
     field = "crossReference";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-		Json::Value crossReferenceRoot = parametersRoot[field];
+		json crossReferenceRoot = parametersRoot[field];
 
 		// in AddContent MediaItemKey has to be present
 		bool mediaItemKeyMandatory = true;
@@ -1478,11 +1478,11 @@ void Validator::validateAddContentMetadata(
         field = "Territories";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            const Json::Value territories = parametersRoot[field];
+            const json territories = parametersRoot[field];
             
             for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
             {
-                Json::Value territory = territories[territoryIndex];
+                json territory = territories[territoryIndex];
             }
         }
         
@@ -1491,7 +1491,7 @@ void Validator::validateAddContentMetadata(
 }
 
 void Validator::validateAddSilentAudioMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -1540,7 +1540,7 @@ void Validator::validateAddSilentAudioMetadata(int64_t workspaceKey, string labe
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
         {
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
@@ -1577,7 +1577,7 @@ void Validator::validateAddSilentAudioMetadata(int64_t workspaceKey, string labe
 }
 
 void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot,
+    json parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies
 	)
@@ -1594,7 +1594,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -1631,7 +1631,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
 }
 
 void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
 {
@@ -1691,7 +1691,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -1704,7 +1704,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
         }
 		*/
 
-        // Json::Value referenceRoot = referencesRoot[0];
+        // json referenceRoot = referencesRoot[0];
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = true;
@@ -1730,7 +1730,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -1749,7 +1749,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References (1)"
@@ -1814,7 +1814,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies
@@ -1853,7 +1853,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -1916,7 +1916,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string la
 }
 
 void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -1935,7 +1935,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -1998,7 +1998,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -2015,7 +2015,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
         {
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
@@ -2097,7 +2097,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -2116,7 +2116,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 2)
         {
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements (2)"
@@ -2219,7 +2219,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label
 }
 
 void Validator::validateCutMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -2318,7 +2318,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -2390,7 +2390,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -2401,7 +2401,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
     string field = "references";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
 		// before the check was
 		//	if (referencesRoot.size() != 2)
 		// This was changed to > 2 because it could be used
@@ -2494,7 +2494,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string
 }
 
 void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -2522,7 +2522,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     }
 
 	{
-		Json::Value drawTextDetailsRoot = parametersRoot["drawTextDetails"];
+		json drawTextDetailsRoot = parametersRoot["drawTextDetails"];
 
 		vector<string> mandatoryFields = {
 			"text"
@@ -2668,7 +2668,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -2731,7 +2731,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
 }
 
 void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -2770,7 +2770,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
 			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
@@ -2793,7 +2793,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 			/*
             for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
             {
-                Json::Value referenceRoot = referencesRoot[referenceIndex];
+                json referenceRoot = referencesRoot[referenceIndex];
 
                 int64_t referenceIngestionJobKey = -1;
                 bool referenceLabel = false;
@@ -2853,7 +2853,7 @@ void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string l
 }
 
 void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot)
+    json parametersRoot)
 {
     // see sample in directory samples
         
@@ -2955,7 +2955,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 }
 
 void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot, 
+	json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies
@@ -2979,7 +2979,7 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		// before the check was
 		//	if (referencesRoot.size() != 2)
 		// This was changed to > 2 because it could be used
@@ -3036,7 +3036,7 @@ void Validator::validateMediaCrossReferenceMetadata(int64_t workspaceKey, string
 }
 
 void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -3075,7 +3075,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
 			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
@@ -3116,7 +3116,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -3166,7 +3166,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     field = "Headers";
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
     {
-        Json::Value headersRoot = parametersRoot[field];
+        json headersRoot = parametersRoot[field];
         
         if (headersRoot.type() != Json::arrayValue)
         {
@@ -3207,7 +3207,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
 			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
@@ -3248,7 +3248,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -3301,7 +3301,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
 			string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
@@ -3342,7 +3342,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -3369,7 +3369,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     }
 
     string field = "Tracks";
-    Json::Value tracksRoot = parametersRoot[field];
+    json tracksRoot = parametersRoot[field];
     if (tracksRoot.size() == 0)
     {
         string errorMessage = __FILEREF__ + "No correct number of Tracks"
@@ -3382,7 +3382,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
     }
     for (int trackIndex = 0; trackIndex < tracksRoot.size(); trackIndex++)
     {
-        Json::Value trackRoot = tracksRoot[trackIndex];
+        json trackRoot = tracksRoot[trackIndex];
         
         field = "TrackType";
         if (!JSONUtils::isMetadataPresent(trackRoot, field))
@@ -3438,7 +3438,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() == 0)
 		{
 			string errorMessage = __FILEREF__ + "No References"
@@ -3504,7 +3504,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 }
 
 void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -3554,7 +3554,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
 			string errorMessage = __FILEREF__ + "No correct number of References"
@@ -3620,7 +3620,7 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
 }
 
 void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -3677,7 +3677,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
 			string errorMessage = __FILEREF__ + "No correct number of References"
@@ -3742,7 +3742,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
 }
 
 void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -3814,7 +3814,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
 		{
 			string errorMessage = __FILEREF__ + "No correct number of References"
@@ -3891,7 +3891,7 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 }
 
 void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -3936,7 +3936,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
     }
 
     field = "deepLearnedModelTags";
-    if (!parametersRoot[field].isArray()
+    if (parametersRoot[field].type() != json::value_t::array
 			|| parametersRoot[field].size() == 0)
     {
         string errorMessage = __FILEREF__ + field + " is not an array or the array is empty"
@@ -3960,7 +3960,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
 		{
 			string errorMessage = __FILEREF__ + "No correct number of References"
@@ -4037,7 +4037,7 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
 }
 
 void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,
 		Validator::DependencyType, bool>>& dependencies)
 {
@@ -4100,7 +4100,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	}
 
     field = "schedule";
-	Json::Value recordingPeriodRoot = parametersRoot[field];
+	json recordingPeriodRoot = parametersRoot[field];
     field = "start";
 	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 	{
@@ -4175,8 +4175,8 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 	field = "outputs";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		Json::Value outputsRoot;
-		if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+		json outputsRoot;
+		if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 			outputsRoot = parametersRoot["outputs"];
 		else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
 			outputsRoot = parametersRoot["Outputs"];
@@ -4184,7 +4184,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 
 		for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			json outputRoot = outputsRoot[outputIndex];
 
 			validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 		}
@@ -4207,7 +4207,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -4252,7 +4252,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 	}
 	else
 	{
-		Json::Value proxyPeriodRoot = parametersRoot[field];
+		json proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -4303,8 +4303,8 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
-	Json::Value outputsRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+	json outputsRoot;
+	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
 	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
@@ -4325,7 +4325,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 
 	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		Json::Value outputRoot = outputsRoot[outputIndex];
+		json outputRoot = outputsRoot[outputIndex];
 
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 	}
@@ -4347,7 +4347,7 @@ void Validator::validateLiveProxyMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -4421,7 +4421,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-			Json::Value referencesRoot = parametersRoot[field];
+			json referencesRoot = parametersRoot[field];
 			if (referencesRoot.size() != 1)
 			{
 				string errorMessage = __FILEREF__ + "No correct number of References"
@@ -4499,7 +4499,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 	}
 
 	{
-		Json::Value proxyPeriodRoot = parametersRoot[field];
+		json proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -4553,7 +4553,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(int64_t workspaceKey, strin
 }
 
 void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -4651,7 +4651,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-			Json::Value referencesRoot = parametersRoot[field];
+			json referencesRoot = parametersRoot[field];
 			if (referencesRoot.size() != 1)
 			{
 				string errorMessage = __FILEREF__ + "No correct number of References"
@@ -4729,7 +4729,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 	}
 
 	{
-		Json::Value proxyPeriodRoot = parametersRoot[field];
+		json proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -4783,7 +4783,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(int64_t workspaceKey, stri
 }
 
 void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies)
@@ -4854,7 +4854,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 	}
 	else
 	{
-		Json::Value proxyPeriodRoot = parametersRoot[field];
+		json proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -4905,8 +4905,8 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
-	Json::Value outputsRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+	json outputsRoot;
+	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
 	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
@@ -4927,7 +4927,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 
 	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		Json::Value outputRoot = outputsRoot[outputIndex];
+		json outputRoot = outputsRoot[outputIndex];
 
 		// check that, in case of an Image, the encoding profile is mandatory
 		if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
@@ -4970,7 +4970,7 @@ void Validator::validateVODProxyMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot,
+	json parametersRoot,
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -4988,7 +4988,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
@@ -5051,7 +5051,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 		throw runtime_error(errorMessage);
 	}
 	{
-		Json::Value proxyPeriodRoot = parametersRoot[field];
+		json proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -5102,8 +5102,8 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
-	Json::Value outputsRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+	json outputsRoot;
+	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
 	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
@@ -5124,7 +5124,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 
 	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		Json::Value outputRoot = outputsRoot[outputIndex];
+		json outputRoot = outputsRoot[outputIndex];
 
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 	}
@@ -5146,7 +5146,7 @@ void Validator::validateCountdownMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -5203,7 +5203,7 @@ void Validator::validateWorkflowAsLibraryMetadata(int64_t workspaceKey, string l
 }
 
 void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot, 
+	json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -5261,7 +5261,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() < 1)
 		{
 			string errorMessage = __FILEREF__ + "No correct number of References"
@@ -5344,7 +5344,7 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 }
 
 void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, 
+    json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -5420,7 +5420,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-		Json::Value referencesRoot = parametersRoot[field];
+		json referencesRoot = parametersRoot[field];
 		if (referencesRoot.size() != 1)
 		{
 			string errorMessage = __FILEREF__ + "No correct number of References"
@@ -5497,7 +5497,7 @@ void Validator::validateVideoSpeedMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot, 
+	json parametersRoot, 
 	bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
@@ -5515,7 +5515,7 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
 				non validava questo Task.
 				Quindi la conclusione è che non bisogna fare il controllo in base al referencesRoot.size
 				ma in base ai media items effettivi. Per questo motivo, il controllo l'ho commentato
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
 		// before the check was
 		//	if (referencesRoot.size() != 2)
 		// This was changed to > 2 because it could be used
@@ -5597,7 +5597,7 @@ void Validator::validatePictureInPictureMetadata(int64_t workspaceKey, string la
 }
 
 void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot, bool validateDependenciesToo,
+	json parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
 {
@@ -5621,7 +5621,7 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
 		// the "DependOnIngestionJobKeysToBeAddedToReferences" tag. It means now may be we have
 		// 1 reference and DependOnIngestionJobKeysToBeAddedToReferences will add more
 		// references when the task will be executed
-        Json::Value referencesRoot = parametersRoot[field];
+        json referencesRoot = parametersRoot[field];
         if (referencesRoot.size() > 3)
         {
             string errorMessage = __FILEREF__ + "Field is present but it is not the right number of elements"
@@ -5769,7 +5769,7 @@ void Validator::validateIntroOutroOverlayMetadata(int64_t workspaceKey, string l
 }
 
 void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
-	Json::Value parametersRoot, bool validateDependenciesToo,
+	json parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
 {
@@ -5798,7 +5798,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
     }
 
     string field = "inputConfigurationLabels";
-    Json::Value inputConfigurationLabelsRoot = parametersRoot[field];
+    json inputConfigurationLabelsRoot = parametersRoot[field];
 	if (inputConfigurationLabelsRoot.size() < 2)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong, it should contains at least 2 configuration labels"
@@ -5867,8 +5867,8 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
-	Json::Value outputsRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs", false))
+	json outputsRoot;
+	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
 
 	if (outputsRoot.size() == 0)
@@ -5887,7 +5887,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 
 	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		Json::Value outputRoot = outputsRoot[outputIndex];
+		json outputRoot = outputsRoot[outputIndex];
 
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, true);
 	}
@@ -5909,7 +5909,7 @@ void Validator::validateLiveGridMetadata(int64_t workspaceKey, string label,
 }
 
 void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, bool validateDependenciesToo,
+    json parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType, bool>>&
 		dependencies)
 {
@@ -5964,7 +5964,7 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 
 		throw runtime_error(errorMessage);
 	}
-	Json::Value cutPeriodRoot = parametersRoot[field];
+	json cutPeriodRoot = parametersRoot[field];
     field = "start";
 	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 	{
@@ -6033,18 +6033,18 @@ void Validator::validateLiveCutMetadata(int64_t workspaceKey, string label,
 	}
 }
 
-void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value parametersRoot, 
+void Validator::fillDependencies(int64_t workspaceKey, string label, json parametersRoot, 
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>&
 		dependencies,
 	bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
 	bool encodingProfileFieldsToBeManaged)
 {
     string field = "references";
-    Json::Value referencesRoot = parametersRoot[field];
+    json referencesRoot = parametersRoot[field];
 
     for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
     {
-        Json::Value referenceRoot = referencesRoot[referenceIndex];
+        json referenceRoot = referencesRoot[referenceIndex];
 
 		field = "stopIfReferenceProcessingError";
 		bool stopIfReferenceProcessingError = JSONUtils::asBool(referenceRoot, field, false);
@@ -6459,7 +6459,7 @@ void Validator::fillDependencies(int64_t workspaceKey, string label, Json::Value
 }
 
 void Validator::fillReferencesOutput(
-	int64_t workspaceKey, Json::Value parametersRoot,
+	int64_t workspaceKey, json parametersRoot,
 	vector<pair<int64_t, int64_t>>& referencesOutput)
 {
 
@@ -6476,11 +6476,11 @@ void Validator::fillReferencesOutput(
 
 		return;
 	}
-    Json::Value referencesOutputRoot = parametersRoot[field];
+    json referencesOutputRoot = parametersRoot[field];
 
     for (int referenceIndex = 0; referenceIndex < referencesOutputRoot.size(); referenceIndex++)
     {
-        Json::Value referenceOutputRoot = referencesOutputRoot[referenceIndex];
+        json referenceOutputRoot = referencesOutputRoot[referenceIndex];
 
         int64_t referenceMediaItemKey = -1;
         int64_t referencePhysicalPathKey = -1;
@@ -7068,7 +7068,7 @@ bool Validator::isWorkflowAsLibraryTypeValid(string workflowAsLibraryType)
 }
 
 void Validator::validateCrossReference(
-    string label, Json::Value crossReferenceRoot,
+    string label, json crossReferenceRoot,
 	bool mediaItemKeyMandatory)
 {
 	if (mediaItemKeyMandatory)
@@ -7154,7 +7154,7 @@ void Validator::validateCrossReference(
 
 			throw runtime_error(errorMessage);
 		}
-		Json::Value crossReferenceParameters = crossReferenceRoot[field];
+		json crossReferenceParameters = crossReferenceRoot[field];
 
 		vector<string> crossReferenceCutMandatoryFields = {
 			"startTimeInSeconds",
@@ -7181,7 +7181,7 @@ void Validator::validateCrossReference(
 
 void Validator::validateEncodingProfilesSetRootMetadata(
     MMSEngineDBFacade::ContentType contentType,
-    Json::Value encodingProfilesSetRoot)
+    json encodingProfilesSetRoot)
 {
     vector<string> mandatoryFields = {
         "label",
@@ -7207,11 +7207,11 @@ void Validator::validateEncodingProfilesSetRootMetadata(
     string field = "Profiles";
     if (JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
     {
-        Json::Value profilesRoot = encodingProfilesSetRoot[field];
+        json profilesRoot = encodingProfilesSetRoot[field];
 
         for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
         {
-            Json::Value encodingProfileRoot = profilesRoot[profileIndex];
+            json encodingProfileRoot = profilesRoot[profileIndex];
 
             validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
         }
@@ -7221,7 +7221,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
 
 void Validator::validateEncodingProfileRootMetadata(
     MMSEngineDBFacade::ContentType contentType,
-    Json::Value encodingProfileRoot)
+    json encodingProfileRoot)
 {
     if (contentType == MMSEngineDBFacade::ContentType::Video)
         validateEncodingProfileRootVideoMetadata(encodingProfileRoot);
@@ -7232,7 +7232,7 @@ void Validator::validateEncodingProfileRootMetadata(
 }
 
 void Validator::validateEncodingProfileRootVideoMetadata(
-    Json::Value encodingProfileRoot)
+    json encodingProfileRoot)
 {
     {
         vector<string> mandatoryFields = {
@@ -7271,7 +7271,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         }
     }
     
-	Json::Value encodingProfileVideoRoot;
+	json encodingProfileVideoRoot;
     {
         string field = "video";
         encodingProfileVideoRoot = encodingProfileRoot[field];
@@ -7299,7 +7299,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 
     {
         string field = "bitRates";
-		Json::Value videoBitRatesRoot = encodingProfileVideoRoot[field];
+		json videoBitRatesRoot = encodingProfileVideoRoot[field];
 
 		if (videoBitRatesRoot.size() == 0)
 		{
@@ -7319,7 +7319,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         };
 		for(int bitRateIndex = 0; bitRateIndex < videoBitRatesRoot.size(); bitRateIndex++)
 		{
-			Json::Value bitRateRoot = videoBitRatesRoot[bitRateIndex];
+			json bitRateRoot = videoBitRatesRoot[bitRateIndex];
 
 			for (string mandatoryField: mandatoryFields)
 			{
@@ -7338,7 +7338,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         }
     }
 
-	Json::Value encodingProfileAudioRoot;
+	json encodingProfileAudioRoot;
     {
         string field = "audio";
         encodingProfileAudioRoot = encodingProfileRoot[field];
@@ -7365,7 +7365,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 
     {
         string field = "bitRates";
-		Json::Value audioBitRatesRoot = encodingProfileAudioRoot[field];
+		json audioBitRatesRoot = encodingProfileAudioRoot[field];
 
 		if (audioBitRatesRoot.size() == 0)
 		{
@@ -7383,7 +7383,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         };
 		for(int bitRateIndex = 0; bitRateIndex < audioBitRatesRoot.size(); bitRateIndex++)
 		{
-			Json::Value bitRateRoot = audioBitRatesRoot[bitRateIndex];
+			json bitRateRoot = audioBitRatesRoot[bitRateIndex];
 
 			for (string mandatoryField: mandatoryFields)
 			{
@@ -7404,7 +7404,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 }
 
 void Validator::validateEncodingProfileRootAudioMetadata(
-    Json::Value encodingProfileRoot)
+    json encodingProfileRoot)
 {
     {
         vector<string> mandatoryFields = {
@@ -7442,7 +7442,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         }
     }
     
-	Json::Value encodingProfileAudioRoot;
+	json encodingProfileAudioRoot;
     {
         string field = "audio";
         encodingProfileAudioRoot = encodingProfileRoot[field];
@@ -7469,7 +7469,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
 
     {
         string field = "bitRates";
-		Json::Value audioBitRatesRoot = encodingProfileAudioRoot[field];
+		json audioBitRatesRoot = encodingProfileAudioRoot[field];
 
 		if (audioBitRatesRoot.size() == 0)
 		{
@@ -7487,7 +7487,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         };
 		for(int bitRateIndex = 0; bitRateIndex < audioBitRatesRoot.size(); bitRateIndex++)
 		{
-			Json::Value bitRateRoot = audioBitRatesRoot[bitRateIndex];
+			json bitRateRoot = audioBitRatesRoot[bitRateIndex];
 
 			for (string mandatoryField: mandatoryFields)
 			{
@@ -7508,7 +7508,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
 }
 
 void Validator::validateEncodingProfileRootImageMetadata(
-    Json::Value encodingProfileRoot)
+    json encodingProfileRoot)
 {
     {
         vector<string> mandatoryFields = {
@@ -7548,7 +7548,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
     
     {
         string field = "Image";
-        Json::Value encodingProfileImageRoot = encodingProfileRoot[field];
+        json encodingProfileImageRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
             "width",
@@ -7574,7 +7574,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
 }
 
 void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
-	Json::Value outputRoot, bool encodingMandatory)
+	json outputRoot, bool encodingMandatory)
 {
 
 	string field = "outputType";
@@ -7632,7 +7632,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label,
 
 	if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
 	{
-		Json::Value drawTextDetailsRoot = outputRoot["drawTextDetails"];
+		json drawTextDetailsRoot = outputRoot["drawTextDetails"];
 
 		vector<string> mandatoryFields = {
 			"text"

@@ -57,10 +57,10 @@ void API::registerUser(
 		int64_t userKey;
 		string confirmationCode;
 
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(exception& e)
         {
@@ -352,7 +352,7 @@ void API::registerUser(
 
         try
         {
-			Json::Value registrationRoot;
+			json registrationRoot;
 			// registrationRoot["workspaceKey"] = workspaceKey;
 			registrationRoot["userKey"] = userKey;
 			registrationRoot["confirmationCode"] = confirmationCode;
@@ -668,7 +668,7 @@ void API::createWorkspace(
 
         try
         {
-			Json::Value registrationRoot;
+			json registrationRoot;
 			// registrationRoot["workspaceKey"] = workspaceKey;
 			registrationRoot["userKey"] = userKey;
 			registrationRoot["workspaceKey"] = workspaceKey;
@@ -791,10 +791,10 @@ void API::shareWorkspace_(
 
     try
     {
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(exception& e)
         {
@@ -945,7 +945,7 @@ void API::shareWorkspace_(
 					+ ", confirmationURL: " + confirmationURL
 				);
 
-				Json::Value registrationRoot;
+				json registrationRoot;
 				registrationRoot["userKey"] = userKey;
 				registrationRoot["confirmationCode"] = shareWorkspaceCode;
 
@@ -1015,7 +1015,7 @@ void API::shareWorkspace_(
 					+ ", shareWorkspaceURL: " + shareWorkspaceURL
 				);
 
-				Json::Value registrationRoot;
+				json registrationRoot;
 				registrationRoot["shareWorkspaceCode"] = shareWorkspaceCode;
 
 				string responseBody = JSONUtils::toString(registrationRoot);
@@ -1128,7 +1128,7 @@ void API::workspaceList(
 			costDetails = true;
 
         {
-			Json::Value workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin, costDetails);
+			json workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin, costDetails);
 
             string responseBody = JSONUtils::toString(workspaceListRoot);
 
@@ -1196,7 +1196,7 @@ void API::confirmRegistration(
             
             tie(apiKey, name, emailAddress) = apiKeyNameAndEmailAddress;
 
-			Json::Value registrationRoot;
+			json registrationRoot;
 			registrationRoot["apiKey"] = apiKey;
 
 			string responseBody = JSONUtils::toString(registrationRoot);
@@ -1302,10 +1302,10 @@ void API::login(
 
     try
     {
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(exception& e)
         {
@@ -1319,7 +1319,7 @@ void API::login(
             throw runtime_error(errorMessage);
         }
 
-		Json::Value loginDetailsRoot;
+		json loginDetailsRoot;
 		int64_t userKey;
 		string remoteClientIPAddress;
 
@@ -1713,7 +1713,7 @@ void API::login(
                 + ", userKey: " + to_string(userKey)
             );
 
-            Json::Value loginWorkspaceRoot =
+            json loginWorkspaceRoot =
 				_mmsEngineDBFacade->getLoginWorkspace(userKey,
 				// 2022-12-18: viene chiamato quando l'utente fa la login
 				false);
@@ -1811,10 +1811,10 @@ void API::updateUser(
         string newPassword;
         string oldPassword;
 
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(exception& e)
         {
@@ -1919,7 +1919,7 @@ void API::updateUser(
                 + ", email: " + email
             );
 
-            Json::Value loginDetailsRoot = _mmsEngineDBFacade->updateUser(
+            json loginDetailsRoot = _mmsEngineDBFacade->updateUser(
 				admin,
 				_ldapEnabled,
 				userKey,
@@ -2177,10 +2177,10 @@ void API::resetPassword(
 		string newPassword;
 		string resetPasswordToken;
 
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(exception& e)
         {
@@ -2386,10 +2386,10 @@ void API::updateWorkspace(
         bool newEditEncodersPool;
         bool newApplicationRecorder;
 
-        Json::Value metadataRoot;
+        json metadataRoot;
         try
         {
-			metadataRoot = JSONUtils::toJson(-1, -1, requestBody);
+			metadataRoot = JSONUtils::toJson(requestBody);
         }
         catch(exception& e)
         {
@@ -2532,7 +2532,7 @@ void API::updateWorkspace(
 		field = "userAPIKey";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
 		{
-			Json::Value userAPIKeyRoot = metadataRoot[field];
+			json userAPIKeyRoot = metadataRoot[field];
 
 			{
 				vector<string> mandatoryFields = {
@@ -2613,7 +2613,7 @@ void API::updateWorkspace(
             );
 
 			#ifdef __POSTGRES__
-			Json::Value workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
+			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
 				userKey,
 				workspace->_workspaceKey,
 				enabledChanged, newEnabled,
@@ -2651,7 +2651,7 @@ void API::updateWorkspace(
 			#else
 			bool maxStorageInMBChanged = false;
 			int64_t newMaxStorageInMB = 0;
-			Json::Value workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
+			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
 				userKey,
 				workspace->_workspaceKey,
 				enabledChanged, newEnabled,
@@ -3134,7 +3134,7 @@ void API::workspaceUsage (
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
-    Json::Value workspaceUsageRoot;
+    json workspaceUsageRoot;
     
     string api = "workspaceUsage";
 
@@ -3143,13 +3143,13 @@ void API::workspaceUsage (
         string field;
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             field = "requestParameters";
             workspaceUsageRoot[field] = requestParametersRoot;
         }
         
-        Json::Value responseRoot;
+        json responseRoot;
 		{
 			int64_t workSpaceUsageInBytes;
 

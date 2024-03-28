@@ -31,13 +31,13 @@ public:
     MMSStorage (
 		bool noFileSystemAccess,
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		Json::Value configuration,
+		json configuration,
 		shared_ptr<spdlog::logger> logger);
 
     ~MMSStorage (void);
 
 	static void createDirectories(
-		Json::Value configuration,
+		json configuration,
 		shared_ptr<spdlog::logger> logger);
 
     fs::path getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace);
@@ -169,7 +169,7 @@ private:
 	bool						_noFileSystemAccess;
 	shared_ptr<MMSEngineDBFacade>	_mmsEngineDBFacade;
     shared_ptr<spdlog::logger>  _logger;
-	Json::Value					_configuration;
+	json					_configuration;
 
     string                      _hostName;
 

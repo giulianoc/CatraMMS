@@ -23,7 +23,7 @@
 #include "FFMpeg.h"
 
 
-FFMpeg::FFMpeg(Json::Value configuration,
+FFMpeg::FFMpeg(json configuration,
         shared_ptr<spdlog::logger> logger) 
 {
     _logger             = logger;
@@ -89,12 +89,12 @@ void FFMpeg::encodeContent(
 	string mmsSourceAssetPathName,
 	int64_t durationInMilliSeconds,
 	string encodedStagingAssetPathName,
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 	bool isVideo,   // if false it means is audio
-	Json::Value videoTracksRoot,
-	Json::Value audioTracksRoot,
+	json videoTracksRoot,
+	json audioTracksRoot,
 	int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
-	Json::Value filtersRoot,
+	json filtersRoot,
 	int64_t physicalPathKey,
 	int64_t encodingJobKey,
 	int64_t ingestionJobKey,
@@ -120,8 +120,8 @@ void FFMpeg::encodeContent(
 			+ ", isVideo: " + to_string(isVideo)
 			+ ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
 			+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-			// + ", videoTracksRoot.size: " + (videoTracksRoot == Json::nullValue ? "0" : to_string(videoTracksRoot.size()))
-			// + ", audioTracksRoot.size: " + (audioTracksRoot == Json::nullValue ? "0" : to_string(audioTracksRoot.size()))
+			// + ", videoTracksRoot.size: " + (videoTracksRoot == nullptr ? "0" : to_string(videoTracksRoot.size()))
+			// + ", audioTracksRoot.size: " + (audioTracksRoot == nullptr ? "0" : to_string(audioTracksRoot.size()))
 			+ ", videoTrackIndexToBeUsed: " + to_string(videoTrackIndexToBeUsed)
 			+ ", audioTrackIndexToBeUsed: " + to_string(audioTrackIndexToBeUsed)
 		);
@@ -241,10 +241,10 @@ void FFMpeg::encodeContent(
 			&& ffmpegEncodingParameters._httpStreamingFileFormat == "hls"
 
 			// more than 1 audio track
-			&& audioTracksRoot != Json::nullValue && audioTracksRoot.size() > 1
+			&& audioTracksRoot != nullptr && audioTracksRoot.size() > 1
 
 			// one video track
-			&& videoTracksRoot != Json::nullValue && videoTracksRoot.size() == 1
+			&& videoTracksRoot != nullptr && videoTracksRoot.size() == 1
 		)
 		{
 			/*
@@ -289,7 +289,7 @@ void FFMpeg::encodeContent(
 
 				for (int index = 0; index < audioTracksRoot.size(); index++)
 				{
-					Json::Value audioTrack = audioTracksRoot[index];
+					json audioTrack = audioTracksRoot[index];
 
 					string audioTrackDirectoryName = JSONUtils::asString(audioTrack, "language", "");
 
@@ -310,9 +310,9 @@ void FFMpeg::encodeContent(
 				{
 					string videoTrackDirectoryName;
 					{
-						Json::Value videoTrack = videoTracksRoot[0];
+						json videoTrack = videoTracksRoot[0];
 
-						videoTrackDirectoryName = to_string(videoTrack.get("trackIndex", -1).asInt());
+						videoTrackDirectoryName = to_string(JSONUtils::asInt(videoTrack, "trackIndex"));
 					}
 
 					string videoPathName = encodedStagingAssetPathName + "/"
@@ -1630,7 +1630,7 @@ void FFMpeg::overlayImageOnVideo(
 	string imagePosition_X_InPixel,
 	string imagePosition_Y_InPixel,
 	string stagingEncodedAssetPathName,
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 	int64_t encodingJobKey,
 	int64_t ingestionJobKey,
 	pid_t* pChildPid)
@@ -1677,7 +1677,7 @@ void FFMpeg::overlayImageOnVideo(
 		}
 
 		vector<string> ffmpegEncodingProfileArgumentList;
-		if (encodingProfileDetailsRoot != Json::nullValue)
+		if (encodingProfileDetailsRoot != nullptr)
 		{
 			try
 			{
@@ -1873,7 +1873,7 @@ void FFMpeg::overlayImageOnVideo(
 				FFMpegEncodingParameters::addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
 
 				// encoding parameters
-				if (encodingProfileDetailsRoot != Json::nullValue)
+				if (encodingProfileDetailsRoot != nullptr)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
 						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
@@ -2088,9 +2088,9 @@ void FFMpeg::overlayTextOnVideo(
 	string mmsSourceVideoAssetPathName,
 	int64_t videoDurationInMilliSeconds,
 
-	Json::Value drawTextDetailsRoot,
+	json drawTextDetailsRoot,
 
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 	string stagingEncodedAssetPathName,
 	int64_t encodingJobKey,
 	int64_t ingestionJobKey,
@@ -2124,7 +2124,7 @@ void FFMpeg::overlayTextOnVideo(
 		}
 
 		vector<string> ffmpegEncodingProfileArgumentList;
-		if (encodingProfileDetailsRoot != Json::nullValue)
+		if (encodingProfileDetailsRoot != nullptr)
 		{
 			try
 			{
@@ -2306,7 +2306,7 @@ void FFMpeg::overlayTextOnVideo(
 
 			string ffmpegDrawTextFilter;
 			{
-				Json::Value filterRoot = drawTextDetailsRoot;
+				json filterRoot = drawTextDetailsRoot;
 				filterRoot["type"] = "drawtext";
 				filterRoot["textFilePathName"] = textTemporaryFileName;
 
@@ -2336,7 +2336,7 @@ void FFMpeg::overlayTextOnVideo(
 				ffmpegArgumentList.push_back(ffmpegDrawTextFilter);
 
 				// encoding parameters
-				if (encodingProfileDetailsRoot != Json::nullValue)
+				if (encodingProfileDetailsRoot != nullptr)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
 						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
@@ -2563,7 +2563,7 @@ void FFMpeg::videoSpeed(
         string videoSpeedType,
         int videoSpeedSize,
 
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -2597,7 +2597,7 @@ void FFMpeg::videoSpeed(
 		}
 
 		vector<string> ffmpegEncodingProfileArgumentList;
-		if (encodingProfileDetailsRoot != Json::nullValue)
+		if (encodingProfileDetailsRoot != nullptr)
 		{
 			try
 			{
@@ -2923,7 +2923,7 @@ void FFMpeg::videoSpeed(
 				FFMpegEncodingParameters::addToArguments(audioMap, ffmpegArgumentList);
 
 				// encoding parameters
-				if (encodingProfileDetailsRoot != Json::nullValue)
+				if (encodingProfileDetailsRoot != nullptr)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
 						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
@@ -3146,7 +3146,7 @@ void FFMpeg::pictureInPicture(
 	string overlay_Width_InPixel,
 	string overlay_Height_InPixel,
 
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 
 	string stagingEncodedAssetPathName,
 	int64_t encodingJobKey,
@@ -3207,7 +3207,7 @@ void FFMpeg::pictureInPicture(
 		}
 
 		vector<string> ffmpegEncodingProfileArgumentList;
-		if (encodingProfileDetailsRoot != Json::nullValue)
+		if (encodingProfileDetailsRoot != nullptr)
 		{
 			try
 			{
@@ -3436,7 +3436,7 @@ void FFMpeg::pictureInPicture(
 				FFMpegEncodingParameters::addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
 
 				// encoding parameters
-				if (encodingProfileDetailsRoot != Json::nullValue)
+				if (encodingProfileDetailsRoot != nullptr)
 				{
 					for (string parameter: ffmpegEncodingProfileArgumentList)
 						FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
@@ -3665,7 +3665,7 @@ void FFMpeg::introOutroOverlay(
 		bool muteIntroOverlay,
 		bool muteOutroOverlay,
 
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -3738,7 +3738,7 @@ void FFMpeg::introOutroOverlay(
 			throw runtime_error(errorMessage);
 		}
 
-		if (encodingProfileDetailsRoot == Json::nullValue)
+		if (encodingProfileDetailsRoot == nullptr)
 		{
 			string errorMessage = __FILEREF__ + "encodingProfileDetailsRoot is mandatory"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3757,8 +3757,8 @@ void FFMpeg::introOutroOverlay(
 			-1,		// videoTrackIndexToBeUsed,
 			-1,		// audioTrackIndexToBeUsed,
 			stagingEncodedAssetPathName,
-			Json::nullValue,	// videoTracksRoot,
-			Json::nullValue,	// audioTracksRoot,
+			nullptr,	// videoTracksRoot,
+			nullptr,	// audioTracksRoot,
 
 			_twoPasses, // out
 
@@ -4014,7 +4014,7 @@ ffmpeg \
 					-1, // -1: NO two passes
 					true,   // outputFileToBeAdded
 					false,	// videoResolutionToBeAdded
-					Json::nullValue,
+					nullptr,
 					ffmpegArgumentList  // out
 				);
 
@@ -4230,7 +4230,7 @@ void FFMpeg::introOverlay(
 
 		bool muteIntroOverlay,
 
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -4287,7 +4287,7 @@ void FFMpeg::introOverlay(
 			throw runtime_error(errorMessage);
 		}
 
-		if (encodingProfileDetailsRoot == Json::nullValue)
+		if (encodingProfileDetailsRoot == nullptr)
 		{
 			string errorMessage = __FILEREF__ + "encodingProfileDetailsRoot is mandatory"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4306,8 +4306,8 @@ void FFMpeg::introOverlay(
 			-1,		// videoTrackIndexToBeUsed,
 			-1,		// audioTrackIndexToBeUsed,
 			stagingEncodedAssetPathName,
-			Json::nullValue,	// videoTracksRoot,
-			Json::nullValue,	// audioTracksRoot,
+			nullptr,	// videoTracksRoot,
+			nullptr,	// audioTracksRoot,
 
 			_twoPasses, // out
 
@@ -4423,7 +4423,7 @@ ffmpeg -y -i /var/catramms/storage/MMSRepository/MMS_0000/14/000/000/001/3450777
 					-1, // -1: NO two passes
 					true,   // outputFileToBeAdded
 					false,	// videoResolutionToBeAdded
-					Json::nullValue,
+					nullptr,
 					ffmpegArgumentList  // out
 				);
 
@@ -4639,7 +4639,7 @@ void FFMpeg::outroOverlay(
 
 		bool muteOutroOverlay,
 
-		Json::Value encodingProfileDetailsRoot,
+		json encodingProfileDetailsRoot,
 
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -4696,7 +4696,7 @@ void FFMpeg::outroOverlay(
 			throw runtime_error(errorMessage);
 		}
 
-		if (encodingProfileDetailsRoot == Json::nullValue)
+		if (encodingProfileDetailsRoot == nullptr)
 		{
 			string errorMessage = __FILEREF__ + "encodingProfileDetailsRoot is mandatory"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -4715,8 +4715,8 @@ void FFMpeg::outroOverlay(
 			-1,		// videoTrackIndexToBeUsed,
 			-1,		// audioTrackIndexToBeUsed,
 			stagingEncodedAssetPathName,
-			Json::nullValue,	// videoTracksRoot,
-			Json::nullValue,	// audioTracksRoot,
+			nullptr,	// videoTracksRoot,
+			nullptr,	// audioTracksRoot,
 
 			_twoPasses, // out
 
@@ -4828,7 +4828,7 @@ ffmpeg -y
 					-1, // -1: NO two passes
 					true,   // outputFileToBeAdded
 					false,	// videoResolutionToBeAdded
-					Json::nullValue,
+					nullptr,
 					ffmpegArgumentList  // out
 				);
 
@@ -5041,7 +5041,7 @@ void FFMpeg::silentAudio(
 	string addType,	// entireTrack, begin, end
 	int seconds,
 
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 
 	string stagingEncodedAssetPathName,
 	int64_t encodingJobKey,
@@ -5092,8 +5092,8 @@ void FFMpeg::silentAudio(
 			-1,		// videoTrackIndexToBeUsed,
 			-1,		// audioTrackIndexToBeUsed,
 			stagingEncodedAssetPathName,
-			Json::nullValue,	// videoTracksRoot,
-			Json::nullValue,	// audioTracksRoot,
+			nullptr,	// videoTracksRoot,
+			nullptr,	// audioTracksRoot,
 
 			_twoPasses, // out
 
@@ -5170,13 +5170,13 @@ void FFMpeg::silentAudio(
 
 					ffmpegArgumentList.push_back("-shortest");
 
-					if (encodingProfileDetailsRoot != Json::nullValue)
+					if (encodingProfileDetailsRoot != nullptr)
 					{
 						ffmpegEncodingParameters.applyEncoding(
 							-1, // -1: NO two passes
 							true,   // outputFileToBeAdded
 							true,	// videoResolutionToBeAdded
-							Json::nullValue,
+							nullptr,
 							ffmpegArgumentList  // out
 						);
 					}
@@ -5208,13 +5208,13 @@ void FFMpeg::silentAudio(
 					ffmpegArgumentList.push_back("-af");
 					ffmpegArgumentList.push_back("adelay=" + to_string(seconds) + "s:all=true");
 
-					if (encodingProfileDetailsRoot != Json::nullValue)
+					if (encodingProfileDetailsRoot != nullptr)
 					{
 						ffmpegEncodingParameters.applyEncoding(
 							-1, // -1: NO two passes
 							true,   // outputFileToBeAdded
 							true,	// videoResolutionToBeAdded
-							Json::nullValue,
+							nullptr,
 							ffmpegArgumentList  // out
 						);
 					}
@@ -5246,13 +5246,13 @@ void FFMpeg::silentAudio(
 					ffmpegArgumentList.push_back("-af");
 					ffmpegArgumentList.push_back("apad=pad_dur=" + to_string(seconds));
 
-					if (encodingProfileDetailsRoot != Json::nullValue)
+					if (encodingProfileDetailsRoot != nullptr)
 					{
 						ffmpegEncodingParameters.applyEncoding(
 							-1, // -1: NO two passes
 							true,   // outputFileToBeAdded
 							true,	// videoResolutionToBeAdded
-							Json::nullValue,
+							nullptr,
 							ffmpegArgumentList  // out
 						);
 					}
@@ -5469,7 +5469,7 @@ void FFMpeg::silentAudio(
     }
 }
 
-tuple<int64_t, long, Json::Value> FFMpeg::getMediaInfo(
+tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 	int64_t ingestionJobKey,
 	bool isMMSAssetPathName,	// false means it is a URL
 	int timeoutInSeconds,		// used only in case of URL
@@ -5676,7 +5676,7 @@ tuple<int64_t, long, Json::Value> FFMpeg::getMediaInfo(
 
 	int64_t durationInMilliSeconds = -1;
 	long bitRate = -1;
-	Json::Value metadataRoot = Json::nullValue;
+	json metadataRoot = nullptr;
 
     try
     {
@@ -5801,7 +5801,7 @@ tuple<int64_t, long, Json::Value> FFMpeg::getMediaInfo(
         while (mediaDetails.size() > 0 && (mediaDetails.back() == 10 || mediaDetails.back() == 13))
             mediaDetails.pop_back();
 
-        Json::Value detailsRoot = JSONUtils::toJson(ingestionJobKey, -1, mediaDetails);
+        json detailsRoot = JSONUtils::toJson(mediaDetails);
 
         string field = "streams";
         if (!JSONUtils::isMetadataPresent(detailsRoot, field))
@@ -5823,13 +5823,13 @@ tuple<int64_t, long, Json::Value> FFMpeg::getMediaInfo(
 			;
             throw runtime_error(errorMessage);
         }
-        Json::Value streamsRoot = detailsRoot[field];
+        json streamsRoot = detailsRoot[field];
         bool videoFound = false;
         bool audioFound = false;
 		string firstVideoCodecName;
         for(int streamIndex = 0; streamIndex < streamsRoot.size(); streamIndex++) 
         {
-            Json::Value streamRoot = streamsRoot[streamIndex];
+            json streamRoot = streamsRoot[streamIndex];
             
             field = "codec_type";
             if (!JSONUtils::isMetadataPresent(streamRoot, field))
@@ -6172,7 +6172,7 @@ tuple<int64_t, long, Json::Value> FFMpeg::getMediaInfo(
 				+ ", Field: " + field;
             throw runtime_error(errorMessage);
         }
-        Json::Value formatRoot = detailsRoot[field];
+        json formatRoot = detailsRoot[field];
 
         field = "duration";
         if (!JSONUtils::isMetadataPresent(formatRoot, field))
@@ -6550,7 +6550,7 @@ string FFMpeg::getNearestKeyFrameTime(
         while (mediaDetails.size() > 0 && (mediaDetails.back() == 10 || mediaDetails.back() == 13))
             mediaDetails.pop_back();
 
-        Json::Value detailsRoot = JSONUtils::toJson(ingestionJobKey, -1, mediaDetails);
+        json detailsRoot = JSONUtils::toJson(mediaDetails);
 
         string field = "packets";
         if (!JSONUtils::isMetadataPresent(detailsRoot, field))
@@ -6572,10 +6572,10 @@ string FFMpeg::getNearestKeyFrameTime(
 			;
             throw runtime_error(errorMessage);
         }
-        Json::Value packetsRoot = detailsRoot[field];
+        json packetsRoot = detailsRoot[field];
         for(int packetIndex = 0; packetIndex < packetsRoot.size(); packetIndex++) 
         {
-            Json::Value packetRoot = packetsRoot[packetIndex];
+            json packetRoot = packetsRoot[packetIndex];
             
 			field = "pts_time";
             if (!JSONUtils::isMetadataPresent(packetRoot, field))
@@ -7747,7 +7747,7 @@ void FFMpeg::generateFramesToIngest(
     {
 		string filter;
 		{
-			Json::Value filterRoot;
+			json filterRoot;
 			filterRoot["type"] = "fps";
 			filterRoot["framesNumber"] = 1;
 			filterRoot["periodInSeconds"] = periodInSeconds;
@@ -7764,7 +7764,7 @@ void FFMpeg::generateFramesToIngest(
 		{
 			string filter;
 			{
-				Json::Value filterRoot;
+				json filterRoot;
 				filterRoot["type"] = "select";
 				filterRoot["frameType"] = "i-frame";
 				filter = ffmpegFilters.getFilter(filterRoot, -1);
@@ -7777,7 +7777,7 @@ void FFMpeg::generateFramesToIngest(
 		{
 			string filter;
 			{
-				Json::Value filterRoot;
+				json filterRoot;
 				filterRoot["type"] = "select";
 				filterRoot["frameType"] = "i-frame";
 				filterRoot["fpsMode"] = "vfr";
@@ -8617,7 +8617,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	// There is an option to encode only a little part of the video,
 	// see https://stackoverflow.com/questions/63548027/cut-a-video-in-between-key-frames-without-re-encoding-the-full-video-using-ffpme
 	int64_t encodingJobKey,
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 	string startTime,
 	string endTime,
 	int framesNumber,
@@ -8699,7 +8699,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				(see http://www.markbuckler.com/post/cutting-ffmpeg/)
 		*/
 
-		if (encodingProfileDetailsRoot == Json::nullValue)
+		if (encodingProfileDetailsRoot == nullptr)
 		{
 			string errorMessage = __FILEREF__ + "encodingProfileDetailsRoot is mandatory"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -9057,7 +9057,7 @@ void FFMpeg::slideShow(
 	int64_t encodingJobKey,
 	float durationOfEachSlideInSeconds, 
 	string frameRateMode,
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 	vector<string>& imagesSourcePhysicalPaths,
 	vector<string>& audiosSourcePhysicalPaths,
 	float shortestAudioDurationInSeconds,	// the shortest duration among the audios
@@ -9225,7 +9225,7 @@ void FFMpeg::slideShow(
 	}
 
 	vector<string> ffmpegEncodingProfileArgumentList;
-	if (encodingProfileDetailsRoot != Json::nullValue)
+	if (encodingProfileDetailsRoot != nullptr)
 	{
 		try
 		{
@@ -9419,7 +9419,7 @@ void FFMpeg::slideShow(
 	}
 
 	// encoding parameters
-	if (encodingProfileDetailsRoot != Json::nullValue)
+	if (encodingProfileDetailsRoot != nullptr)
 	{
 		for (string parameter: ffmpegEncodingProfileArgumentList)
 			FFMpegEncodingParameters::addToArguments(parameter, ffmpegArgumentList);
@@ -9745,9 +9745,9 @@ void FFMpeg::liveRecorder(
     string outputFileFormat,
 	string segmenterType,	// streamSegmenter or hlsSegmenter
 
-	Json::Value outputsRoot,
+	json outputsRoot,
 
-	Json::Value framesToBeDetectedRoot,
+	json framesToBeDetectedRoot,
 
 	pid_t* pChildPid,
 	chrono::system_clock::time_point* pRecordingStart
@@ -10014,7 +10014,7 @@ void FFMpeg::liveRecorder(
 			FFMpegEncodingParameters::addToArguments(otherInputOptions, ffmpegArgumentList);
 		}
 
-		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
+		if (framesToBeDetectedRoot != nullptr && framesToBeDetectedRoot.size() > 0)
 		{
 			// 2022-05-28; in caso di framedetection, we will "fix" PTS 
 			//	otherwise the one logged seems are not correct.
@@ -10125,12 +10125,12 @@ void FFMpeg::liveRecorder(
 		// to detect a frame we have to:
 		// 1. add -r 1 -loop 1 -i <picture path name of the frame to be detected>
 		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
-		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
+		if (framesToBeDetectedRoot != nullptr && framesToBeDetectedRoot.size() > 0)
 		{
 			for(int pictureIndex = 0; pictureIndex < framesToBeDetectedRoot.size();
 				pictureIndex++)
 			{
-				Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
+				json frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
 				if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
 				{
@@ -10228,15 +10228,15 @@ void FFMpeg::liveRecorder(
 
 		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			json outputRoot = outputsRoot[outputIndex];
 
 			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
-			Json::Value filtersRoot = Json::nullValue;
+			json filtersRoot = nullptr;
 			if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
 				filtersRoot = outputRoot["filters"];
 
-			Json::Value encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
+			json encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 
 			string encodingProfileContentType =
 				JSONUtils::asString(outputRoot, "encodingProfileContentType", "Video");
@@ -10274,7 +10274,7 @@ void FFMpeg::liveRecorder(
 				string ffmpegVideoResolutionParameter;
 
 				vector<string> ffmpegEncodingProfileArgumentList;
-				if (encodingProfileDetailsRoot != Json::nullValue)
+				if (encodingProfileDetailsRoot != nullptr)
 				{
 					try
 					{
@@ -10578,7 +10578,7 @@ void FFMpeg::liveRecorder(
 				string ffmpegVideoResolutionParameter;
 
 				vector<string> ffmpegEncodingProfileArgumentList;
-				if (encodingProfileDetailsRoot != Json::nullValue)
+				if (encodingProfileDetailsRoot != nullptr)
 				{
 					try
 					{
@@ -10861,7 +10861,7 @@ void FFMpeg::liveRecorder(
 				string ffmpegVideoResolutionParameter;
 
 				vector<string> ffmpegEncodingProfileArgumentList;
-				if (encodingProfileDetailsRoot != Json::nullValue)
+				if (encodingProfileDetailsRoot != nullptr)
 				{
 					try
 					{
@@ -11161,7 +11161,7 @@ void FFMpeg::liveRecorder(
 				string ffmpegVideoResolutionParameter;
 
 				vector<string> ffmpegEncodingProfileArgumentList;
-				if (encodingProfileDetailsRoot != Json::nullValue)
+				if (encodingProfileDetailsRoot != nullptr)
 				{
 					try
 					{
@@ -11394,12 +11394,12 @@ void FFMpeg::liveRecorder(
 		}
 
 		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
-		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
+		if (framesToBeDetectedRoot != nullptr && framesToBeDetectedRoot.size() > 0)
 		{
 			for(int pictureIndex = 0; pictureIndex < framesToBeDetectedRoot.size();
 				pictureIndex++)
 			{
-				Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
+				json frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
 				if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
 				{
@@ -11594,7 +11594,7 @@ void FFMpeg::liveRecorder(
 
 		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			json outputRoot = outputsRoot[outputIndex];
 
 			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -11804,7 +11804,7 @@ void FFMpeg::liveRecorder(
 
 		for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 		{
-			Json::Value outputRoot = outputsRoot[outputIndex];
+			json outputRoot = outputsRoot[outputIndex];
 
 			string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -11951,9 +11951,9 @@ void FFMpeg::liveRecorder2(
     string outputFileFormat,
 	string segmenterType,	// streamSegmenter or hlsSegmenter
 
-	Json::Value outputsRoot,
+	json outputsRoot,
 
-	Json::Value framesToBeDetectedRoot,
+	json framesToBeDetectedRoot,
 
 	pid_t* pChildPid,
 	chrono::system_clock::time_point* pRecordingStart
@@ -12219,7 +12219,7 @@ void FFMpeg::liveRecorder2(
 			FFMpegEncodingParameters::addToArguments(otherInputOptions, ffmpegArgumentList);
 		}
 
-		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
+		if (framesToBeDetectedRoot != nullptr && framesToBeDetectedRoot.size() > 0)
 		{
 			// 2022-05-28; in caso di framedetection, we will "fix" PTS 
 			//	otherwise the one logged seems are not correct.
@@ -12330,12 +12330,12 @@ void FFMpeg::liveRecorder2(
 		// to detect a frame we have to:
 		// 1. add -r 1 -loop 1 -i <picture path name of the frame to be detected>
 		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
-		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
+		if (framesToBeDetectedRoot != nullptr && framesToBeDetectedRoot.size() > 0)
 		{
 			for(int pictureIndex = 0; pictureIndex < framesToBeDetectedRoot.size();
 				pictureIndex++)
 			{
-				Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
+				json frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
 				if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
 				{
@@ -12438,18 +12438,18 @@ void FFMpeg::liveRecorder2(
 		);                                                                                                
 		outputsRootToFfmpeg(ingestionJobKey, encodingJobKey, externalEncoder,                                 
 			"",	// otherOutputOptionsBecauseOfMaxWidth,                                                          
-			Json::nullValue, // inputDrawTextDetailsRoot,                                                                     
+			nullptr, // inputDrawTextDetailsRoot,                                                                     
 			-1,	// streamingDurationInSeconds,                                                                   
 			outputsRoot,                                                                                  
 			ffmpegArgumentList);                                                                    
 
 		// 2. add: -filter_complex "[0:v][1:v]blend=difference:shortest=1,blackframe=99:32[f]" -map "[f]" -f null -
-		if (framesToBeDetectedRoot != Json::nullValue && framesToBeDetectedRoot.size() > 0)
+		if (framesToBeDetectedRoot != nullptr && framesToBeDetectedRoot.size() > 0)
 		{
 			for(int pictureIndex = 0; pictureIndex < framesToBeDetectedRoot.size();
 				pictureIndex++)
 			{
-				Json::Value frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
+				json frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
 				if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot, "picturePathName"))
 				{
@@ -12915,9 +12915,9 @@ void FFMpeg::liveProxy2(
 	bool externalEncoder,
 
 	mutex* inputsRootMutex,
-	Json::Value* inputsRoot,
+	json* inputsRoot,
 
-	Json::Value outputsRoot,
+	json outputsRoot,
 
 	pid_t* pChildPid,
 	chrono::system_clock::time_point* pProxyStart
@@ -12977,7 +12977,7 @@ void FFMpeg::liveProxy2(
 
 		for (int inputIndex = 0; inputIndex < inputsRoot->size(); inputIndex++)
 		{
-			Json::Value inputRoot = (*inputsRoot)[inputIndex];
+			json inputRoot = (*inputsRoot)[inputIndex];
 
 			bool timePeriod = false;
 			string field = "timePeriod";
@@ -13027,7 +13027,7 @@ void FFMpeg::liveProxy2(
 
 			for (int inputIndex = 0; inputIndex < inputsRoot->size(); inputIndex++)
 			{
-				Json::Value inputRoot = (*inputsRoot)[inputIndex];
+				json inputRoot = (*inputsRoot)[inputIndex];
 
 				string field = "utcScheduleStart";
 				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
@@ -13131,7 +13131,7 @@ void FFMpeg::liveProxy2(
 	int currentNumberOfRepeatingSameInput = 0;
 	int sleepInSecondsInCaseOfRepeating = 5;
 	int currentInputIndex = -1;
-	Json::Value currentInputRoot;
+	json currentInputRoot;
 	while ((currentInputIndex = getNextLiveProxyInput(ingestionJobKey, encodingJobKey,
 		inputsRoot,
 		inputsRootMutex, currentInputIndex, timedInput, &currentInputRoot)) != -1)
@@ -13142,7 +13142,7 @@ void FFMpeg::liveProxy2(
 		string endlessPlaylistListPathName;
 		int pushListenTimeout;
 		int64_t utcProxyPeriodStart;
-		Json::Value inputDrawTextDetailsRoot;
+		json inputDrawTextDetailsRoot;
 		// vector<tuple<int, int64_t, string, string, int, int, string, long>> inputVideoTracks;
 		// vector<tuple<int, int64_t, string, long, int, long, string>> inputAudioTracks;
 		try
@@ -13154,7 +13154,7 @@ void FFMpeg::liveProxy2(
 				+ ", timedInput: " + to_string(timedInput)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			tuple<long, string, string, int, int64_t, Json::Value
+			tuple<long, string, string, int, int64_t, json
 				// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
 				// vector<tuple<int, int64_t, string, long, int, long, string>>
 				> inputDetails = liveProxyInput(
@@ -13787,17 +13787,17 @@ void FFMpeg::liveProxy2(
 // return the index of the selected input
 int FFMpeg::getNextLiveProxyInput(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	Json::Value* inputsRoot,	// IN: list of inputs
+	json* inputsRoot,	// IN: list of inputs
 	mutex* inputsRootMutex,		// IN: mutex
 	int currentInputIndex,		// IN: current index on the inputs
 	bool timedInput,			// IN: specify if the input is "timed". If "timed", next input is calculated based on the current time, otherwise it is retrieved simply the next
-	Json::Value* newInputRoot	// OUT: refer the input to be run
+	json* newInputRoot	// OUT: refer the input to be run
 )
 {
 	lock_guard<mutex> locker(*inputsRootMutex);
 
 	int newInputIndex = -1;
-	*newInputRoot = Json::nullValue;
+	*newInputRoot = nullptr;
 
 	if (timedInput)
 	{
@@ -13805,7 +13805,7 @@ int FFMpeg::getNextLiveProxyInput(
 
 		for (int inputIndex = 0; inputIndex < inputsRoot->size(); inputIndex++)
 		{
-			Json::Value inputRoot = (*inputsRoot)[inputIndex];
+			json inputRoot = (*inputsRoot)[inputIndex];
 
 			string field = "utcScheduleStart";
 			int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, field, -1);
@@ -13864,20 +13864,20 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
-tuple<long, string, string, int, int64_t, Json::Value
+tuple<long, string, string, int, int64_t, json
 	// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
 	// vector<tuple<int, int64_t, string, long, int, long, string>>
 	>
 	FFMpeg::liveProxyInput(
 		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
-		Json::Value inputRoot, vector<string>& ffmpegInputArgumentList)
+		json inputRoot, vector<string>& ffmpegInputArgumentList)
 {
 	long streamingDurationInSeconds = -1;
 	string otherOutputOptionsBecauseOfMaxWidth;
 	string endlessPlaylistListPathName;
 	int pushListenTimeout = -1;
 	int64_t utcProxyPeriodStart = -1;
-	Json::Value inputDrawTextDetailsRoot = Json::nullValue;
+	json inputDrawTextDetailsRoot = nullptr;
 	// 2023-03-26: vengono per ora commentate perchè
 	// - sembra non siano utilizzate in questo momento
 	// - getMediaInfo impiega qualche secondo per calcolarle e, in caso di LiveChannel, serve
@@ -13918,7 +13918,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 	if (JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 	{
 		field = "streamInput";
-		Json::Value streamInputRoot = inputRoot[field];
+		json streamInputRoot = inputRoot[field];
 
 		field = "streamSourceType";
 		if (!JSONUtils::isMetadataPresent(streamInputRoot, field))
@@ -14422,7 +14422,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 	else if (JSONUtils::isMetadataPresent(inputRoot, "directURLInput"))
 	{
 		field = "directURLInput";
-		Json::Value streamInputRoot = inputRoot[field];
+		json streamInputRoot = inputRoot[field];
 
 		string url;
 		field = "url";
@@ -14516,7 +14516,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 	else if (JSONUtils::isMetadataPresent(inputRoot, "vodInput"))
 	{
 		string field = "vodInput";
-		Json::Value vodInputRoot = inputRoot[field];
+		json vodInputRoot = inputRoot[field];
 
 		field = "vodContentType";
 		if (!JSONUtils::isMetadataPresent(vodInputRoot, field))
@@ -14545,11 +14545,11 @@ tuple<long, string, string, int, int64_t, Json::Value
 
 				throw runtime_error(errorMessage);
 			}
-			Json::Value sourcesRoot = vodInputRoot[field];
+			json sourcesRoot = vodInputRoot[field];
 
 			for(int sourceIndex = 0; sourceIndex < sourcesRoot.size(); sourceIndex++)
 			{
-				Json::Value sourceRoot = sourcesRoot[sourceIndex];
+				json sourceRoot = sourcesRoot[sourceIndex];
 
 				if (externalEncoder)
 					field = "sourcePhysicalDeliveryURL";
@@ -14793,7 +14793,7 @@ tuple<long, string, string, int, int64_t, Json::Value
 	else if (JSONUtils::isMetadataPresent(inputRoot, "countdownInput"))
 	{
 		string field = "countdownInput";
-		Json::Value countdownInputRoot = inputRoot[field];
+		json countdownInputRoot = inputRoot[field];
 
 		if (externalEncoder)
 			field = "mmsSourceVideoAssetDeliveryURL";
@@ -14934,11 +14934,11 @@ void FFMpeg::outputsRootToFfmpeg(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
 	bool externalEncoder,
 	string otherOutputOptionsBecauseOfMaxWidth,
-	Json::Value inputDrawTextDetailsRoot,
+	json inputDrawTextDetailsRoot,
 	// vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
 	// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
 	long streamingDurationInSeconds,
-	Json::Value outputsRoot,
+	json outputsRoot,
 
 	/*
 	// vengono usati i due vector seguenti nel caso abbiamo una lista di maps (video and audio)
@@ -14976,7 +14976,7 @@ void FFMpeg::outputsRootToFfmpeg(
 	//		siamo nello scenario di un inputRoot che richiede il suo drawtext.
 	//		Per questo motivo, il prossimo if, gestisce il caso di drawTextDetails solo per un input root,
 	string ffmpegDrawTextFilter;
-	if (inputDrawTextDetailsRoot != Json::nullValue)
+	if (inputDrawTextDetailsRoot != nullptr)
 	{
 		{
 			string text = JSONUtils::asString(inputDrawTextDetailsRoot, "text", "");
@@ -15000,7 +15000,7 @@ void FFMpeg::outputsRootToFfmpeg(
 				+ ", textTemporaryFileName: " + textTemporaryFileName
 			);
 
-			Json::Value filterRoot = inputDrawTextDetailsRoot;
+			json filterRoot = inputDrawTextDetailsRoot;
 			filterRoot["type"] = "drawtext";
 			filterRoot["textFilePathName"] = textTemporaryFileName;
 			ffmpegDrawTextFilter = ffmpegFilters.getFilter(filterRoot, streamingDurationInSeconds);
@@ -15016,18 +15016,18 @@ void FFMpeg::outputsRootToFfmpeg(
 
 	for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		Json::Value outputRoot = outputsRoot[outputIndex];
+		json outputRoot = outputsRoot[outputIndex];
 
 		string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
 		string inputVideoMap = JSONUtils::asString(outputRoot, "inputVideoMap", "");
 		string inputAudioMap = JSONUtils::asString(outputRoot, "inputAudioMap", "");
 
-		Json::Value filtersRoot = Json::nullValue;
+		json filtersRoot = nullptr;
 		if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
 			filtersRoot = outputRoot["filters"];
 
-		Json::Value encodingProfileDetailsRoot = Json::nullValue;
+		json encodingProfileDetailsRoot = nullptr;
 		if (JSONUtils::isMetadataPresent(outputRoot, "encodingProfileDetails"))
 			encodingProfileDetailsRoot = outputRoot["encodingProfileDetails"];
 
@@ -15039,7 +15039,7 @@ void FFMpeg::outputsRootToFfmpeg(
 		if (ffmpegDrawTextFilter == "" && JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
 		{
 			string field = "drawTextDetails";
-			Json::Value drawTextDetailsRoot = outputRoot[field];
+			json drawTextDetailsRoot = outputRoot[field];
 
 			string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
 
@@ -15060,7 +15060,7 @@ void FFMpeg::outputsRootToFfmpeg(
 
 			// string ffmpegDrawTextFilter;
 			{
-				Json::Value filterRoot = drawTextDetailsRoot;
+				json filterRoot = drawTextDetailsRoot;
 				filterRoot["type"] = "drawtext";
 				filterRoot["textFilePathName"] = textTemporaryFileName;
 				ffmpegDrawTextFilter = ffmpegFilters.getFilter(filterRoot, streamingDurationInSeconds);
@@ -15100,7 +15100,7 @@ void FFMpeg::outputsRootToFfmpeg(
 		string ffmpegAudioSampleRateParameter = "";
 		vector<string> audioBitRatesInfo;
 
-		if (encodingProfileDetailsRoot != Json::nullValue)
+		if (encodingProfileDetailsRoot != nullptr)
 		{
 			try
 			{
@@ -15184,7 +15184,7 @@ void FFMpeg::outputsRootToFfmpeg(
 		}
 
 		// se abbiamo overlay, necessariamente serve un profilo di encoding
-		if (ffmpegDrawTextFilter != "" && encodingProfileDetailsRoot == Json::nullValue)
+		if (ffmpegDrawTextFilter != "" && encodingProfileDetailsRoot == nullptr)
 		{
 			string errorMessage = fmt::format("text-overlay requires an encoding profile"
 				", ingestionJobKey: {}"
@@ -15222,7 +15222,7 @@ void FFMpeg::outputsRootToFfmpeg(
 			else
 				ffmpegOutputArgumentList.push_back(inputVideoMap);
 		}
-		if (encodingProfileDetailsRoot != Json::nullValue)
+		if (encodingProfileDetailsRoot != nullptr)
 		{
 			threadsParameterToBeAdded = true;
 
@@ -15279,7 +15279,7 @@ void FFMpeg::outputsRootToFfmpeg(
 			else
 				ffmpegOutputArgumentList.push_back(inputAudioMap);
 		}
-		if (encodingProfileDetailsRoot != Json::nullValue)
+		if (encodingProfileDetailsRoot != nullptr)
 		{
 			threadsParameterToBeAdded = true;
 
@@ -15607,13 +15607,13 @@ void FFMpeg::outputsRootToFfmpeg(
 
 void FFMpeg::outputsRootToFfmpeg_clean(
 	int64_t ingestionJobKey, int64_t encodingJobKey,
-	Json::Value outputsRoot,
+	json outputsRoot,
 	bool externalEncoder)
 {
 
 	for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
-		Json::Value outputRoot = outputsRoot[outputIndex];
+		json outputRoot = outputsRoot[outputIndex];
 
 		string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -15695,12 +15695,12 @@ void FFMpeg::liveGrid(
 	int64_t encodingJobKey,
 	bool externalEncoder,
 	string userAgent,
-	Json::Value inputChannelsRoot,	// name,url
+	json inputChannelsRoot,	// name,url
 	int gridColumns,
 	int gridWidth,	// i.e.: 1024
 	int gridHeight, // i.e.: 578
 
-	Json::Value outputsRoot,
+	json outputsRoot,
 
 	pid_t* pChildPid)
 {
@@ -15754,7 +15754,7 @@ void FFMpeg::liveGrid(
 			);
 			outputsRootToFfmpeg(ingestionJobKey, encodingJobKey, externalEncoder,
 				"", // otherOutputOptionsBecauseOfMaxWidth,
-				Json::nullValue, // inputDrawTextDetailsRoot,
+				nullptr, // inputDrawTextDetailsRoot,
 				// inputVideoTracks, inputAudioTracks,
 				-1, // streamingDurationInSeconds,
 				outputsRoot,
@@ -15907,7 +15907,7 @@ void FFMpeg::liveGrid(
 		ffmpegArgumentList.push_back("-re");
 		for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsNumber; inputChannelIndex++)
 		{
-			Json::Value inputChannelRoot = inputChannelsRoot[inputChannelIndex];
+			json inputChannelRoot = inputChannelsRoot[inputChannelIndex];
 			string inputChannelURL = JSONUtils::asString(inputChannelRoot, "inputChannelURL", "");
 
 			ffmpegArgumentList.push_back("-i");
@@ -16278,7 +16278,7 @@ void FFMpeg::liveGrid(
         }
 */
 
-		Json::Value outputRoot = outputsRoot[0];
+		json outputRoot = outputsRoot[0];
 
 		string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -16354,7 +16354,7 @@ void FFMpeg::liveGrid(
 				{
 					string audioTrackDirectoryName = to_string(inputChannelIndex) + "_audio";
 
-					Json::Value inputChannelRoot = inputChannelsRoot[inputChannelIndex];
+					json inputChannelRoot = inputChannelsRoot[inputChannelIndex];
 					string inputChannelName = JSONUtils::asString(inputChannelRoot, "inputConfigurationLabel", "");
 
 					string audioManifestLine = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",LANGUAGE=\""
@@ -17988,7 +17988,7 @@ void FFMpeg::setStatus(
 
 /*
 tuple<string, string, string> FFMpeg::addFilters(
-	Json::Value filtersRoot,
+	json filtersRoot,
 	string ffmpegVideoResolutionParameter,
 	string ffmpegDrawTextFilter,
 	int64_t streamingDurationInSeconds
@@ -18012,13 +18012,13 @@ tuple<string, string, string> FFMpeg::addFilters(
 		videoFilters += ffmpegDrawTextFilter;
 	}
 
-	if (filtersRoot != Json::nullValue)
+	if (filtersRoot != nullptr)
 	{
 		if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["video"].size(); filterIndex++)
 			{
-				Json::Value filterRoot = filtersRoot["video"][filterIndex];
+				json filterRoot = filtersRoot["video"][filterIndex];
 
 				string filter = getFilter(filterRoot, streamingDurationInSeconds);
 				if (videoFilters != "")
@@ -18031,7 +18031,7 @@ tuple<string, string, string> FFMpeg::addFilters(
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["audio"].size(); filterIndex++)
 			{
-				Json::Value filterRoot = filtersRoot["audio"][filterIndex];
+				json filterRoot = filtersRoot["audio"][filterIndex];
 
 				string filter = getFilter(filterRoot, streamingDurationInSeconds);
 				if (audioFilters != "")
@@ -18044,7 +18044,7 @@ tuple<string, string, string> FFMpeg::addFilters(
 		{
 			for (int filterIndex = 0; filterIndex < filtersRoot["complex"].size(); filterIndex++)
 			{
-				Json::Value filterRoot = filtersRoot["complex"][filterIndex];
+				json filterRoot = filtersRoot["complex"][filterIndex];
 
 				string filter = getFilter(filterRoot, streamingDurationInSeconds);
 				if (complexFilters != "")
@@ -18060,7 +18060,7 @@ tuple<string, string, string> FFMpeg::addFilters(
 
 /*
 string FFMpeg::getFilter(
-	Json::Value filterRoot,
+	json filterRoot,
 	int64_t streamingDurationInSeconds
 )
 {

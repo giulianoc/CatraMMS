@@ -21,12 +21,16 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "spdlog/spdlog.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 #include "Workspace.h"
 #include "MMSEngineDBFacade.h"
 
 
 using namespace std;
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
 
 #ifndef __FILEREF__
     #ifdef __APPLE__
@@ -40,7 +44,7 @@ class EncodersLoadBalancer {
 public:
     EncodersLoadBalancer(
 			shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            Json::Value configuration,
+            json configuration,
             shared_ptr<spdlog::logger> logger);
 
     virtual ~EncodersLoadBalancer();

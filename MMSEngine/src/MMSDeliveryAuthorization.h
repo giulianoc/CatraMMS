@@ -28,7 +28,7 @@ class MMSDeliveryAuthorization {
     
 public:
 	MMSDeliveryAuthorization(
-		Json::Value configuration,
+		json configuration,
 		shared_ptr<MMSStorage> mmsStorage,
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<spdlog::logger> logger
@@ -75,14 +75,14 @@ public:
 		shared_ptr<spdlog::logger> logger);
 
 private:
-	Json::Value						_configuration;
+	json						_configuration;
 	shared_ptr<MMSStorage>			_mmsStorage;
 	shared_ptr<MMSEngineDBFacade>	_mmsEngineDBFacade;
 	shared_ptr<spdlog::logger>		_logger;
 
 	string							_keyPairId;
 	string							_privateKeyPEMPathName;
-	Json::Value						_vodCloudFrontHostNamesRoot;
+	json						_vodCloudFrontHostNamesRoot;
 
 	string							_deliveryProtocol;
 	string							_deliveryHost_authorizationThroughParameter;

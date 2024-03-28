@@ -822,7 +822,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 
 void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
     int64_t workspaceKey,
-	string sharedEncodersPoolLabel, Json::Value sharedEncodersLabel)
+	string sharedEncodersPoolLabel, json sharedEncodersLabel)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1111,7 +1111,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
+json MMSEngineDBFacade::getEncoderWorkspacesAssociation(
     int64_t encoderKey)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -1126,7 +1126,7 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 
     try
     {
-		Json::Value encoderWorkspacesAssociatedRoot(Json::arrayValue);
+		json encoderWorkspacesAssociatedRoot = json::array();
         {
 			string sqlStatement = fmt::format(
 				"select w.workspaceKey, w.name "
@@ -1137,7 +1137,7 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-				Json::Value encoderWorkspaceAssociatedRoot;
+				json encoderWorkspaceAssociatedRoot;
     
 				string field = "workspaceKey";
 				encoderWorkspaceAssociatedRoot[field] = row["workspaceKey"].as<int64_t>();
@@ -1145,7 +1145,7 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 				field = "workspaceName";
 				encoderWorkspaceAssociatedRoot[field] = row["name"].as<string>();
 
-				encoderWorkspacesAssociatedRoot.append(encoderWorkspaceAssociatedRoot);
+				encoderWorkspacesAssociatedRoot.push_back(encoderWorkspaceAssociatedRoot);
 			}
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -1248,7 +1248,7 @@ Json::Value MMSEngineDBFacade::getEncoderWorkspacesAssociation(
 }
 
 
-Json::Value MMSEngineDBFacade::getEncoderList (
+json MMSEngineDBFacade::getEncoderList (
 	bool admin,
 	int start, int rows,
 	bool allEncoders, int64_t workspaceKey, bool runningInfo, int64_t encoderKey,
@@ -1256,7 +1256,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 	string labelOrder	// "" or "asc" or "desc"
 )
 {
-    Json::Value encoderListRoot;
+    json encoderListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1288,7 +1288,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
 			/*
 			{
@@ -1400,7 +1400,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 					"and ewm.workspaceKey = {} ", workspaceKey);
 		}
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement;
 			if (allEncoders)
@@ -1428,7 +1428,7 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			);
         }
 
-        Json::Value encodersRoot(Json::arrayValue);
+        json encodersRoot = json::array();
         {
 			string orderByCondition;
 			if (labelOrder == "")
@@ -1453,9 +1453,9 @@ Json::Value MMSEngineDBFacade::getEncoderList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-				Json::Value encoderRoot = getEncoderRoot(admin, runningInfo, row);
+				json encoderRoot = getEncoderRoot(admin, runningInfo, row);
 
-				encodersRoot.append(encoderRoot);
+				encodersRoot.push_back(encoderRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -1563,13 +1563,13 @@ Json::Value MMSEngineDBFacade::getEncoderList (
     return encoderListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getEncoderRoot (
+json MMSEngineDBFacade::getEncoderRoot (
 	bool admin,
 	bool runningInfo,
 	row& row
 )
 {
-    Json::Value encoderRoot;
+    json encoderRoot;
     
     try
     {
@@ -1676,7 +1676,7 @@ bool MMSEngineDBFacade::isEncoderRunning(
 		;
 
 		vector<string> otherHeaders;
-		Json::Value infoResponseRoot = MMSCURL::httpGetJson(
+		json infoResponseRoot = MMSCURL::httpGetJson(
 			_logger,
 			-1,	// ingestionJobKey
 			ffmpegEncoderURL,
@@ -1736,7 +1736,7 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(
 		;
 
 		vector<string> otherHeaders;
-		Json::Value infoResponseRoot = MMSCURL::httpGetJson(
+		json infoResponseRoot = MMSCURL::httpGetJson(
 			_logger,
 			-1,	// ingestionJobKey
 			ffmpegEncoderURL,
@@ -1922,13 +1922,13 @@ string MMSEngineDBFacade::getEncodersPoolDetails (int64_t encodersPoolKey)
 	}
 }
 
-Json::Value MMSEngineDBFacade::getEncodersPoolList (
+json MMSEngineDBFacade::getEncodersPoolList (
 	int start, int rows,
 	int64_t workspaceKey, int64_t encodersPoolKey, string label,
 	string labelOrder	// "" or "asc" or "desc"
 )
 {
-    Json::Value encodersPoolListRoot;
+    json encodersPoolListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1955,7 +1955,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
         );
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
 
             if (encodersPoolKey != -1)
 			{
@@ -1998,7 +1998,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 			sqlWhere += fmt::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
 
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
 			string sqlStatement = fmt::format(
 				"select count(*) from MMS_EncodersPool {}", sqlWhere);
@@ -2014,7 +2014,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 			);
         }
 
-        Json::Value encodersPoolsRoot(Json::arrayValue);
+        json encodersPoolsRoot = json::array();
         {
 			string orderByCondition;
 			if (labelOrder != "")
@@ -2027,7 +2027,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-				Json::Value encodersPoolRoot;
+				json encodersPoolRoot;
 
                 int64_t encodersPoolKey = row["encodersPoolKey"].as<int64_t>();
 
@@ -2037,7 +2037,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 				field = "label";
                 encodersPoolRoot[field] = row["label"].as<string>();
 
-				Json::Value encodersRoot(Json::arrayValue);
+				json encodersRoot = json::array();
 				{
 					string sqlStatement = fmt::format( 
 						"select encoderKey from MMS_EncoderEncodersPoolMapping " 
@@ -2068,10 +2068,10 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 								bool admin = false;
 								bool runningInfo = false;
 								auto row1 = res[0];
-								Json::Value encoderRoot = getEncoderRoot (
+								json encoderRoot = getEncoderRoot (
 									admin, runningInfo, row1);
 
-								encodersRoot.append(encoderRoot);
+								encodersRoot.push_back(encoderRoot);
 							}
 							else
 							{
@@ -2089,7 +2089,7 @@ Json::Value MMSEngineDBFacade::getEncodersPoolList (
 				field = "encoders";
 				encodersPoolRoot[field] = encodersRoot;
 
-                encodersPoolsRoot.append(encodersPoolRoot);
+                encodersPoolsRoot.push_back(encodersPoolRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -3327,7 +3327,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(
 pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey,
 	string serverName)
 {
-    Json::Value encodersPoolListRoot;
+    json encodersPoolListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 

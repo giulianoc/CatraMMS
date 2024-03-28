@@ -10,7 +10,7 @@ SET (HEADERS
 
 include_directories ("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../deploy/nlohmann/include")
 
 add_library (fastCGIAPI SHARED ${SOURCES} ${HEADERS})
 

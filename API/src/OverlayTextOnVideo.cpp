@@ -6,7 +6,7 @@
 
 
 void OverlayTextOnVideo::encodeContent(
-	Json::Value metadataRoot)
+	json metadataRoot)
 {
     string api = "overlayTextOnVideo";
 
@@ -18,19 +18,19 @@ void OverlayTextOnVideo::encodeContent(
 
     try
     {
-        // Json::Value metadataRoot = JSONUtils::toJson(
+        // json metadataRoot = JSONUtils::toJson(
 		// 	-1, _encodingJobKey, requestBody);
 
 		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
 
 
 		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
 			"sourceDurationInMilliSeconds", -1);
 
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
+		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
 		string sourceFileExtension;
 		{
@@ -171,7 +171,7 @@ void OverlayTextOnVideo::encodeContent(
 			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
-		Json::Value drawTextDetailsRoot = metadataRoot["ingestedParametersRoot"]["drawTextDetails"];
+		json drawTextDetailsRoot = metadataRoot["ingestedParametersRoot"]["drawTextDetails"];
 
 		_encoding->_ffmpeg->overlayTextOnVideo(
 			sourceAssetPathName,

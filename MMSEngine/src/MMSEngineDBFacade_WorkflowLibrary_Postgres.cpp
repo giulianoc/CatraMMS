@@ -417,11 +417,11 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(
 	}
 }
 
-Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
+json MMSEngineDBFacade::getWorkflowsAsLibraryList (
 	int64_t workspaceKey
 )
 {
-    Json::Value workflowsLibraryRoot;
+    json workflowsLibraryRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -441,7 +441,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
         );
 
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             field = "requestParameters";
             workflowsLibraryRoot[field] = requestParametersRoot;
@@ -449,7 +449,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 
         string sqlWhere = fmt::format("where (workspaceKey = {} or workspaceKey is null) ", workspaceKey);
 
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = fmt::format( 
                 "select count(*) from MMS_WorkflowLibrary {}",
@@ -466,7 +466,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 			);
         }
 
-        Json::Value workflowsRoot(Json::arrayValue);
+        json workflowsRoot = json::array();
         {
 			string sqlStatement = fmt::format( 
 				"select workspaceKey, workflowLibraryKey, creatorUserKey, label, "
@@ -476,7 +476,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value workflowLibraryRoot;
+                json workflowLibraryRoot;
 
                 field = "global";
 				if (row["workspaceKey"].is_null())
@@ -497,17 +497,17 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 
 				field = "thumbnailMediaItemKey";
 				if (row["thumbnailMediaItemKey"].is_null())
-					workflowLibraryRoot[field] = Json::nullValue;
+					workflowLibraryRoot[field] = nullptr;
 				else
 					workflowLibraryRoot[field] = row["thumbnailMediaItemKey"].as<int64_t>();
 
                 {
                     string jsonWorkflow = row["jsonWorkflow"].as<string>();
 
-                    Json::Value workflowRoot;
+                    json workflowRoot;
                     try
                     {
-						workflowRoot = JSONUtils::toJson(-1, -1, jsonWorkflow);
+						workflowRoot = JSONUtils::toJson(jsonWorkflow);
                     }
                     catch(runtime_error& e)
                     {
@@ -518,12 +518,12 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
 
                     field = "variables";
 					if (!JSONUtils::isMetadataPresent(workflowRoot, field))
-						workflowLibraryRoot["variables"] = Json::nullValue;
+						workflowLibraryRoot["variables"] = nullptr;
 					else
 						workflowLibraryRoot["variables"] = workflowRoot[field];
                 }
 
-                workflowsRoot.append(workflowLibraryRoot);
+                workflowsRoot.push_back(workflowLibraryRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"

@@ -52,7 +52,7 @@ EncoderVideoAudioProxy::~EncoderVideoAudioProxy()
 void EncoderVideoAudioProxy::init(
         int proxyIdentifier,
         mutex* mtEncodingJobs,
-        Json::Value configuration,
+        json configuration,
         shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
@@ -1358,12 +1358,12 @@ void EncoderVideoAudioProxy::encodeContentImage()
 	int64_t encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot,
 		"encodingProfileKey", 0);
 
-	Json::Value sourcesToBeEncodedRoot
+	json sourcesToBeEncodedRoot
 		= _encodingItem->_encodingParametersRoot["sourcesToBeEncoded"];
 
 	for(int sourceIndex = 0; sourceIndex < sourcesToBeEncodedRoot.size(); sourceIndex++)
 	{
-		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[sourceIndex];
+		json sourceToBeEncodedRoot = sourcesToBeEncodedRoot[sourceIndex];
 
 		bool stopIfReferenceProcessingError = JSONUtils::asBool(sourceToBeEncodedRoot,
 			"stopIfReferenceProcessingError", false);
@@ -1376,7 +1376,7 @@ void EncoderVideoAudioProxy::encodeContentImage()
 			string sourceRelativePath = JSONUtils::asString(sourceToBeEncodedRoot, "sourceRelativePath", "");
 			string sourceFileExtension = JSONUtils::asString(sourceToBeEncodedRoot, "sourceFileExtension", "");
 			string mmsSourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, "mmsSourceAssetPathName", "");
-			Json::Value encodingProfileDetailsRoot
+			json encodingProfileDetailsRoot
 				= _encodingItem->_encodingParametersRoot["encodingProfileDetails"];
 
 			string encodedFileName;
@@ -1626,12 +1626,12 @@ void EncoderVideoAudioProxy::processEncodedImage()
 		}
 	}
 
-	Json::Value sourcesToBeEncodedRoot
+	json sourcesToBeEncodedRoot
 		= _encodingItem->_encodingParametersRoot["sourcesToBeEncoded"];
 
 	for(int sourceIndex = 0; sourceIndex < sourcesToBeEncodedRoot.size(); sourceIndex++)
 	{
-		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[sourceIndex];
+		json sourceToBeEncodedRoot = sourcesToBeEncodedRoot[sourceIndex];
 
 		// bool stopIfReferenceProcessingError = JSONUtils::asBool(sourceToBeEncodedRoot,
 		// 	"stopIfReferenceProcessingError", false);
@@ -1651,7 +1651,7 @@ void EncoderVideoAudioProxy::processEncodedImage()
 			if (stagingEncodedAssetPathName == "")
 				continue;
 
-			tuple<int64_t, long, Json::Value> mediaInfoDetails;
+			tuple<int64_t, long, json> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			/*
@@ -2220,10 +2220,10 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
 					+ ", _directoryName: " + _encodingItem->_workspace->_directoryName
 				);
 
-                Json::Value encodingMedatada;
+                json encodingMedatada;
 
 				// 2023-03-21: rimuovere il parametro ingestionJobKey se il trascoder deployed è > 1.0.5315
-                encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+                encodingMedatada["ingestionJobKey"] = _encodingItem->_ingestionJobKey;
                 encodingMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
                 encodingMedatada["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
                 encodingMedatada["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
@@ -2232,7 +2232,7 @@ bool EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg(
             }
 
 			vector<string> otherHeaders;
-			Json::Value encodeContentResponse;
+			json encodeContentResponse;
 			try
 			{
 				encodeContentResponse = MMSCURL::httpPostStringAndGetJson(
@@ -2442,10 +2442,10 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 		return;
 	}
 
-	Json::Value sourcesToBeEncodedRoot;
-	Json::Value sourceToBeEncodedRoot;
+	json sourcesToBeEncodedRoot;
+	json sourceToBeEncodedRoot;
 	string encodedNFSStagingAssetPathName;
-	Json::Value encodingProfileDetailsRoot;
+	json encodingProfileDetailsRoot;
     int64_t sourceMediaItemKey;
     int64_t encodingProfileKey;    
 	string sourceRelativePath;
@@ -2539,7 +2539,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio()
 	else if (fileFormatLowerCase == "dash")
 		manifestFileName += ".mpd";
 
-	tuple<int64_t, long, Json::Value> mediaInfoDetails;
+	tuple<int64_t, long, json> mediaInfoDetails;
 	vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 	vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 
@@ -3310,11 +3310,11 @@ void EncoderVideoAudioProxy::processAddSilentAudio(bool killedByUser)
 	string stagingEncodedAssetPathName;
 	try
     {
-		Json::Value sourcesRoot = _encodingItem->_encodingParametersRoot["sources"];                                          
+		json sourcesRoot = _encodingItem->_encodingParametersRoot["sources"];                                          
 
 		for(int sourceIndex = 0; sourceIndex < sourcesRoot.size(); sourceIndex++)
 		{
-			Json::Value sourceRoot = sourcesRoot[sourceIndex];
+			json sourceRoot = sourcesRoot[sourceIndex];
 
 			stagingEncodedAssetPathName = JSONUtils::asString(sourceRoot,
 				"encodedNFSStagingAssetPathName", "");
@@ -3743,13 +3743,13 @@ void EncoderVideoAudioProxy::processCutFrameAccurate()
 
 		if (newUtcStartTimeInMilliSecs != -1 && newUtcEndTimeInMilliSecs != -1)
 		{
-			Json::Value destUserDataRoot;
+			json destUserDataRoot;
 
 			field = "userData";
 			if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
 				destUserDataRoot = _encodingItem->_ingestedParametersRoot[field];
 
-			Json::Value destMmsDataRoot;
+			json destMmsDataRoot;
 
 			field = "mmsData";
 			if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
@@ -3757,12 +3757,12 @@ void EncoderVideoAudioProxy::processCutFrameAccurate()
 
 			field = "utcStartTimeInMilliSecs";
 			if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-				destMmsDataRoot.removeMember(field);
+				destMmsDataRoot.erase(field);
 			destMmsDataRoot[field] = newUtcStartTimeInMilliSecs;
 
 			field = "utcEndTimeInMilliSecs";
 			if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
-				destMmsDataRoot.removeMember(field);
+				destMmsDataRoot.erase(field);
 			destMmsDataRoot[field] = newUtcEndTimeInMilliSecs;
 
 			field = "mmsData";
@@ -4834,7 +4834,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		string jsonCondition;
 		string orderBy;
 		string jsonOrderBy;
-		Json::Value responseFields = Json::nullValue;
+		json responseFields = nullptr;
 		bool admin = true;
 
 		int start = 0;
@@ -4848,7 +4848,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 		while(!imagesFinished)
 		{
-			Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
+			json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 				_encodingItem->_workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
 				otherMediaItemsKey, start, rows, contentTypePresent, contentType,
 				// startAndEndIngestionDatePresent,
@@ -4863,7 +4863,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 				false);
 
 			field = "response";
-			Json::Value responseRoot = mediaItemsListRoot[field];
+			json responseRoot = mediaItemsListRoot[field];
 
 			if (totalImagesNumber == -1)
 			{
@@ -4872,7 +4872,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 			}
 			
 			field = "mediaItems";
-			Json::Value mediaItemsArrayRoot = responseRoot[field];
+			json mediaItemsArrayRoot = responseRoot[field];
 			if (mediaItemsArrayRoot.size() < rows)
 				imagesFinished = true;
 			else
@@ -4887,7 +4887,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 			for (int imageIndex = 0; imageIndex < mediaItemsArrayRoot.size(); imageIndex++)
 			{
-				Json::Value mediaItemRoot = mediaItemsArrayRoot[imageIndex];
+				json mediaItemRoot = mediaItemsArrayRoot[imageIndex];
 
 				int currentIdImage;
 				unordered_map<string, int>::iterator tagIdIterator;
@@ -4917,10 +4917,10 @@ string EncoderVideoAudioProxy::faceIdentification()
 				}
 
 				field = "physicalPaths";
-				Json::Value physicalPathsArrayRoot = mediaItemRoot[field];
+				json physicalPathsArrayRoot = mediaItemRoot[field];
 				if (physicalPathsArrayRoot.size() > 0)
 				{
-					Json::Value physicalPathRoot = physicalPathsArrayRoot[0];
+					json physicalPathRoot = physicalPathsArrayRoot[0];
 
 					field = "physicalPathKey";
 					int64_t physicalPathKey = JSONUtils::asInt64(physicalPathRoot, field, 0);
@@ -5416,7 +5416,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 	bool autoRenew;
 	{
 		string field = "schedule";
-		Json::Value recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)[field];
+		json recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)[field];
 
 		field = "start";
 		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -5505,7 +5505,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 	{
 		string field = "outputsRoot";
-		Json::Value outputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+		json outputsRoot = (_encodingItem->_encodingParametersRoot)[field];
 
 		bool killedByUser = false;
 		try
@@ -5516,7 +5516,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				json outputRoot = outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -6065,7 +6065,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 			killedByUser = liveRecorder_through_ffmpeg();
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				json outputRoot = outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -6165,7 +6165,7 @@ bool EncoderVideoAudioProxy::liveRecorder()
 		{
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				json outputRoot = outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -6287,7 +6287,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	bool autoRenew;
 	{
 		string field = "schedule";
-		Json::Value recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)[field];
+		json recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)[field];
 
 		field = "start";
 		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -6422,11 +6422,11 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 				string body;
 				{
-					Json::Value liveRecorderMedatada;
+					json liveRecorderMedatada;
 
 					// 2023-03-21: rimuovere il parametro ingestionJobKey se il trascoder deployed è > 1.0.5315
-					liveRecorderMedatada["ingestionJobKey"] = (Json::LargestUInt) (
-						_encodingItem->_ingestionJobKey);
+					liveRecorderMedatada["ingestionJobKey"] = 
+						_encodingItem->_ingestionJobKey;
 					liveRecorderMedatada["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
 					liveRecorderMedatada["encodingParametersRoot"] =
 						_encodingItem->_encodingParametersRoot;
@@ -6437,7 +6437,7 @@ bool EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				}
 
 				vector<string> otherHeaders;
-				Json::Value liveRecorderContentResponse;
+				json liveRecorderContentResponse;
 				try
 				{
 					liveRecorderContentResponse = MMSCURL::httpPostStringAndGetJson(
@@ -7136,9 +7136,9 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 	time_t utcProxyPeriodEnd = -1;
 	{
 		string field = "inputsRoot";
-		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+		json inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
 
-		if (inputsRoot == Json::nullValue || inputsRoot.size() == 0)
+		if (inputsRoot == nullptr || inputsRoot.size() == 0)
 		{
 			string errorMessage = __FILEREF__ + "No inputsRoot are present"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -7152,7 +7152,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 		}
 
 		{
-			Json::Value firstInputRoot = inputsRoot[0];
+			json firstInputRoot = inputsRoot[0];
 
 			field = "timePeriod";
 			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
@@ -7163,7 +7163,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
 			}
 
-			Json::Value lastInputRoot = inputsRoot[inputsRoot.size() - 1];
+			json lastInputRoot = inputsRoot[inputsRoot.size() - 1];
 
 			field = "timePeriod";
 			timePeriod = JSONUtils::asBool(lastInputRoot, field, false);
@@ -7224,14 +7224,14 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 
 	{
 		string field = "outputsRoot";
-		Json::Value outputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+		json outputsRoot = (_encodingItem->_encodingParametersRoot)[field];
 
 		bool killedByUser = false;
 		try
 		{
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				json outputRoot = outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -7721,7 +7721,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 			killedByUser = liveProxy_through_ffmpeg(proxyType);
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				json outputRoot = outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -7821,7 +7821,7 @@ bool EncoderVideoAudioProxy::liveProxy(string proxyType)
 		{
 			for(int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				Json::Value outputRoot = outputsRoot[outputIndex];
+				json outputRoot = outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -7929,9 +7929,9 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 	string pushServerName;
 	{
 		string field = "inputsRoot";
-		Json::Value inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+		json inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
 
-		Json::Value firstInputRoot = inputsRoot[0];
+		json firstInputRoot = inputsRoot[0];
 
 		if (proxyType == "vodProxy")
 			field = "vodInput";
@@ -7939,7 +7939,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			field = "streamInput";
 		else if (proxyType == "countdownProxy")
 			field = "countdownInput";
-		Json::Value streamInputRoot = firstInputRoot[field];
+		json streamInputRoot = firstInputRoot[field];
 
 		if (proxyType == "vodProxy" || proxyType == "countdownProxy")
 		{
@@ -7977,7 +7977,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 			_encodingItem->_ingestedParametersRoot, field, -1);
 
 		{
-			// Json::Value firstInputRoot = inputsRoot[0];
+			// json firstInputRoot = inputsRoot[0];
 
 			field = "timePeriod";
 			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
@@ -7988,7 +7988,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
 			}
 
-			Json::Value lastInputRoot = inputsRoot[inputsRoot.size() - 1];
+			json lastInputRoot = inputsRoot[inputsRoot.size() - 1];
 
 			field = "timePeriod";
 			timePeriod = JSONUtils::asBool(lastInputRoot, field, false);
@@ -8176,9 +8176,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 							tie(ignore, ignore, ignore, ignore, encodingParameters)
 								= encodingJobDetails;
 
-							_encodingItem->_encodingParametersRoot = JSONUtils::toJson(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
-								encodingParameters);
+							_encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
 						}
 						catch(runtime_error& e)
 						{
@@ -8205,10 +8203,10 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 						}
 					}
 
-					Json::Value liveProxyMetadata;
+					json liveProxyMetadata;
 
 					// 2023-03-21: rimuovere il parametro ingestionJobKey se il trascoder deployed è > 1.0.5315
-					liveProxyMetadata["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+					liveProxyMetadata["ingestionJobKey"] = _encodingItem->_ingestionJobKey;
 					liveProxyMetadata["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
 					liveProxyMetadata["liveURL"] = liveURL;
 					liveProxyMetadata["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
@@ -8218,7 +8216,7 @@ bool EncoderVideoAudioProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
 
 				vector<string> otherHeaders;
-				Json::Value liveProxyContentResponse;
+				json liveProxyContentResponse;
 				try
 				{
 					liveProxyContentResponse = MMSCURL::httpPostStringAndGetJson(
@@ -9349,7 +9347,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int>
         ;
 
 		vector<string> otherHeaders;
-		Json::Value encodeStatusResponse = MMSCURL::httpGetJson(
+		json encodeStatusResponse = MMSCURL::httpGetJson(
 			_logger,
 			_encodingItem->_ingestionJobKey,
 			ffmpegEncoderURL,
@@ -9368,7 +9366,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int>
 
         try
         {
-            // Json::Value encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
+            // json encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
 
 			string field = "completedWithError";
 			completedWithError = JSONUtils::asBool(encodeStatusResponse, field, false);
@@ -9451,7 +9449,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
         string fileFormat,
 		int64_t faceOfVideoMediaItemKey,
 		int64_t cutOfVideoMediaItemKey, double startTimeInSeconds, double endTimeInSeconds,
-        Json::Value parametersRoot
+        json parametersRoot
 )
 {
     string field = "fileFormat";
@@ -9478,9 +9476,9 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
     
 	if (faceOfVideoMediaItemKey != -1)
 	{
-		Json::Value crossReferencesRoot(Json::arrayValue);
+		json crossReferencesRoot = json::array();
 		{
-			Json::Value crossReferenceRoot;
+			json crossReferenceRoot;
 
 			MMSEngineDBFacade::CrossReferenceType	crossReferenceType =
 				MMSEngineDBFacade::CrossReferenceType::FaceOfVideo;
@@ -9491,7 +9489,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 			field = "mediaItemKey";
 			crossReferenceRoot[field] = faceOfVideoMediaItemKey;
 
-			crossReferencesRoot.append(crossReferenceRoot);
+			crossReferencesRoot.push_back(crossReferenceRoot);
 		}
 
 		field = "crossReferences";
@@ -9499,9 +9497,9 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 	}
 	else if (cutOfVideoMediaItemKey != -1)
 	{
-		Json::Value crossReferencesRoot(Json::arrayValue);
+		json crossReferencesRoot = json::array();
 		{
-			Json::Value crossReferenceRoot;
+			json crossReferenceRoot;
 
 			MMSEngineDBFacade::CrossReferenceType crossReferenceType = MMSEngineDBFacade::CrossReferenceType::CutOfVideo;
 
@@ -9511,7 +9509,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 			field = "mediaItemKey";
 			crossReferenceRoot[field] = cutOfVideoMediaItemKey;
 
-			Json::Value crossReferenceParametersRoot;
+			json crossReferenceParametersRoot;
 			{
 				field = "startTimeInSeconds";
 				crossReferenceParametersRoot[field] = startTimeInSeconds;
@@ -9523,7 +9521,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 				crossReferenceRoot[field] = crossReferenceParametersRoot;
 			}
 
-			crossReferencesRoot.append(crossReferenceRoot);
+			crossReferencesRoot.push_back(crossReferenceRoot);
 		}
 
 		field = "crossReferences";
@@ -9544,7 +9542,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
 }
 
 void EncoderVideoAudioProxy::readingImageProfile(
-	Json::Value encodingProfileRoot,
+	json encodingProfileRoot,
 	string& newFormat,
 	int& newWidth,
 	int& newHeight,
@@ -9572,7 +9570,7 @@ void EncoderVideoAudioProxy::readingImageProfile(
         encodingImageFormatValidation(newFormat);
     }
 
-    Json::Value encodingProfileImageRoot;
+    json encodingProfileImageRoot;
     {
         field = "Image";
         if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))

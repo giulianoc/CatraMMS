@@ -11,27 +11,28 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "spdlog/spdlog.h"
+#include "JSONUtils.h"
 #include "FastCGIAPI.h"
 
 extern char** environ;
 
 
 FastCGIAPI::FastCGIAPI(
-	Json::Value configuration, 
+	json configurationRoot,
 	mutex* fcgiAcceptMutex)
 {
-	init(configuration, fcgiAcceptMutex);
+	init(configurationRoot, fcgiAcceptMutex);
 }
 
 
 FastCGIAPI::~FastCGIAPI() = default;
 
 void FastCGIAPI::init(
-	Json::Value configuration,
+	json configurationRoot,
 	mutex* fcgiAcceptMutex)
 {
 	_shutdown				= false;
-	_configuration			= configuration;
+	_configurationRoot		= configurationRoot;
 	_fcgiAcceptMutex		= fcgiAcceptMutex;
 
 	_fcgxFinishDone			= false;
@@ -44,11 +45,15 @@ void FastCGIAPI::init(
 
 	_requestIdentifier = 0;
 
-	_maxAPIContentLength = JSONUtils::asInt64(_configuration["api"], "maxContentLength", 0);
+  loadConfiguration();
+}
+
+void FastCGIAPI::loadConfiguration()
+{
+	_maxAPIContentLength = JSONUtils::asInt64(_configurationRoot["api"], "maxContentLength", 0);
 	SPDLOG_DEBUG("Configuration item"
 		", api->maxContentLength: {}", _maxAPIContentLength
 	);
-
 }
 
 int FastCGIAPI::operator()()
@@ -221,7 +226,7 @@ int FastCGIAPI::operator()()
                 requestURI = it->second;
         }
 
-        Json::Value permissionsRoot;
+        json permissionsRoot;
         bool authorizationPresent = basicAuthenticationRequired(requestURI, queryParameters);
 		string userName;
 		string password;
@@ -732,7 +737,7 @@ void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string e
 	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
 	if (errorMessage.find("%") != string::npos)
 	{
-		Json::Value temporaryResponseBodyRoot;
+		json temporaryResponseBodyRoot;
 		temporaryResponseBodyRoot["status"] = to_string(htmlResponseCode);
 		temporaryResponseBodyRoot["error"] = errorMessage;
 
@@ -749,7 +754,7 @@ void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string e
 	}
 	else
 	{
-		Json::Value responseBodyRoot;
+		json responseBodyRoot;
 		responseBodyRoot["status"] = to_string(htmlResponseCode);
 		responseBodyRoot["error"] = errorMessage;
 
@@ -792,7 +797,7 @@ void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
 	if (errorMessage.find("%") != string::npos)
 	{
-		Json::Value temporaryResponseBodyRoot;
+		json temporaryResponseBodyRoot;
 		temporaryResponseBodyRoot["status"] = to_string(htmlResponseCode);
 		temporaryResponseBodyRoot["error"] = errorMessage;
 
@@ -809,7 +814,7 @@ void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 	}
 	else
 	{
-		Json::Value responseBodyRoot;
+		json responseBodyRoot;
 		responseBodyRoot["status"] = to_string(htmlResponseCode);
 		responseBodyRoot["error"] = errorMessage;
 
@@ -956,23 +961,26 @@ void FastCGIAPI::fillQueryString(
     }    
 }
 
-Json::Value FastCGIAPI::loadConfigurationFile(const char* configurationPathName)
+json FastCGIAPI::loadConfigurationFile(const char* configurationPathName)
 {
-    Json::Value configurationJson;
-
     try
     {
         ifstream configurationFile(configurationPathName, ifstream::binary);
-        configurationFile >> configurationJson;
+
+		return json::parse(configurationFile,
+			nullptr,	// callback
+			true,		// allow exceptions
+			true		// ignore_comments
+		);
     }
     catch(...)
     {
-        cerr << fmt::format("wrong json configuration format"
-                ", configurationPathName: {}", configurationPathName)
-            << endl;
-    }
+		string errorMessage = fmt::format("wrong json configuration format"
+			", configurationPathName: {}", configurationPathName
+		);
 
-    return configurationJson;
+		throw runtime_error(errorMessage);
+    }
 }
 
 string FastCGIAPI::base64_encode(const string& in)

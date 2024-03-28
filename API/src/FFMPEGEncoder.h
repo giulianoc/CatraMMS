@@ -31,7 +31,7 @@ class FFMPEGEncoder : public FastCGIAPI
 {
   public:
 	FFMPEGEncoder(
-		Json::Value configuration,
+		json configurationRoot,
 		// string encoderCapabilityConfigurationPathName,
 
 		mutex *fcgiAcceptMutex,
@@ -147,35 +147,35 @@ class FFMPEGEncoder : public FastCGIAPI
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void overlayImageOnVideoThread(
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void overlayTextOnVideoThread(
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void generateFramesThread(
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void slideShowThread(
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void liveRecorderThread(
@@ -200,40 +200,40 @@ class FFMPEGEncoder : public FastCGIAPI
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void addSilentAudioThread(
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void pictureInPictureThread(
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void introOutroOverlayThread(
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	void cutFrameAccurateThread(
 		// FCGX_Request& request,
 		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
 		int64_t ingestionJobKey, int64_t encodingJobKey,
-		Json::Value metadataRoot
+		json metadataRoot
 	);
 
 	string buildFilterNotificationIngestionWorkflow(
 		int64_t ingestionJobKey, string filterName,
-		Json::Value ingestedParametersRoot
+		json ingestedParametersRoot
 	);
 
 	void encodingCompletedRetention();

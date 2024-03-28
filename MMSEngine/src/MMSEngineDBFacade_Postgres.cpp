@@ -24,7 +24,7 @@
 // http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
 
 MMSEngineDBFacade::MMSEngineDBFacade(
-	Json::Value configuration,
+	json configuration,
 	size_t masterDbPoolSize,
 	size_t slaveDbPoolSize,
 	shared_ptr<spdlog::logger> logger) 
@@ -2163,7 +2163,7 @@ string MMSEngineDBFacade::getPostgresArray (
 }
 
 string MMSEngineDBFacade::getPostgresArray (
-	Json::Value arrayRoot, bool emptyElementToBeRemoved, transaction_base* trans)
+	json arrayRoot, bool emptyElementToBeRemoved, transaction_base* trans)
 {
 	string postgresArray;
 	for (int index = 0; index < arrayRoot.size(); index++)

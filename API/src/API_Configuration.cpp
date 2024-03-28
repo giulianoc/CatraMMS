@@ -46,7 +46,7 @@ void API::addYouTubeConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -121,7 +121,7 @@ void API::addYouTubeConf(
         string sResponse;
         try
         {
-			Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+			Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
 			if (!validator.isYouTubeTokenTypeValid(tokenType))
 			{
 				string errorMessage = string("The 'tokenType' is not valid")
@@ -153,7 +153,7 @@ void API::addYouTubeConf(
 				}
 			}
 
-			Json::Value youTubeRoot = _mmsEngineDBFacade->addYouTubeConf(
+			json youTubeRoot = _mmsEngineDBFacade->addYouTubeConf(
 				workspace->_workspaceKey, label, tokenType, refreshToken, accessToken);
 
 			sResponse = JSONUtils::toString(youTubeRoot);
@@ -237,7 +237,7 @@ void API::modifyYouTubeConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -303,7 +303,7 @@ void API::modifyYouTubeConf(
 
 			if (tokenTypeModified)
 			{
-				Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+				Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
 				if (!validator.isYouTubeTokenTypeValid(tokenType))
 				{
 					string errorMessage = string("The 'tokenType' is not valid");
@@ -336,7 +336,7 @@ void API::modifyYouTubeConf(
 				}
 			}
 
-			Json::Value youTubeRoot = _mmsEngineDBFacade->modifyYouTubeConf(
+			json youTubeRoot = _mmsEngineDBFacade->modifyYouTubeConf(
                 confKey, workspace->_workspaceKey,
 				label, labelModified,
 				tokenType, tokenTypeModified,
@@ -517,7 +517,7 @@ void API::youTubeConfList(
 		}
 
         {
-			Json::Value youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(
+			json youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(
 				workspace->_workspaceKey, label);
 
 			string responseBody = JSONUtils::toString(youTubeConfListRoot);
@@ -577,7 +577,7 @@ void API::addFacebookConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -706,7 +706,7 @@ void API::modifyFacebookConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -958,7 +958,7 @@ void API::facebookConfList(
 		}
 
         {
-			Json::Value facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(
+			json facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(
 				workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(facebookConfListRoot);
@@ -1018,7 +1018,7 @@ void API::addTwitchConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1147,7 +1147,7 @@ void API::modifyTwitchConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1399,7 +1399,7 @@ void API::twitchConfList(
 		}
 
         {
-			Json::Value twitchConfListRoot = _mmsEngineDBFacade->getTwitchConfList(
+			json twitchConfListRoot = _mmsEngineDBFacade->getTwitchConfList(
 				workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(twitchConfListRoot);
@@ -1459,7 +1459,7 @@ void API::addTiktokConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1588,7 +1588,7 @@ void API::modifyTiktokConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1840,7 +1840,7 @@ void API::tiktokConfList(
 		}
 
         {
-			Json::Value tiktokConfListRoot = _mmsEngineDBFacade->getTiktokConfList(
+			json tiktokConfListRoot = _mmsEngineDBFacade->getTiktokConfList(
 				workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(tiktokConfListRoot);
@@ -1923,11 +1923,11 @@ void API::addStream(
 		int64_t imageMediaItemKey = -1;
 		string imageUniqueName;
 		int position = -1;
-        Json::Value userData = Json::nullValue;
+        json userData = nullptr;
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2050,7 +2050,7 @@ void API::addStream(
         string sResponse;
         try
         {
-			Json::Value streamRoot = _mmsEngineDBFacade->addStream(
+			json streamRoot = _mmsEngineDBFacade->addStream(
                 workspace->_workspaceKey, label,
 				sourceType,
 				encodersPoolKey,
@@ -2171,7 +2171,7 @@ void API::modifyStream(
 		int64_t imageMediaItemKey = -1;
 		string imageUniqueName;
 		int position = -1;
-        Json::Value userData;
+        json userData;
         
 		bool labelToBeModified;
 		bool sourceTypeToBeModified;
@@ -2202,7 +2202,7 @@ void API::modifyStream(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
 			labelToBeModified = false;
             string field = "label";
@@ -2479,7 +2479,7 @@ void API::modifyStream(
                 throw runtime_error(errorMessage);
             }
 
-			Json::Value streamRoot = _mmsEngineDBFacade->modifyStream(
+			json streamRoot = _mmsEngineDBFacade->modifyStream(
                 confKey, labelKey, workspace->_workspaceKey,
 				labelToBeModified, label,
 				sourceTypeToBeModified, sourceType,
@@ -2853,7 +2853,7 @@ void API::streamList(
 
         {
             
-            Json::Value streamListRoot = _mmsEngineDBFacade->getStreamList(
+            json streamListRoot = _mmsEngineDBFacade->getStreamList(
                     workspace->_workspaceKey, liveURLKey, start, rows, label, labelLike,
 					url, sourceType, type, name, region, country, labelOrder);
 
@@ -2932,7 +2932,7 @@ void API::addSourceTVStream(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
 			string field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3038,7 +3038,7 @@ void API::addSourceTVStream(
         string sResponse;
         try
         {
-			Json::Value sourceTVStreamRoot =
+			json sourceTVStreamRoot =
 				_mmsEngineDBFacade->addSourceTVStream(
 				type, serviceId, networkId, transportStreamId,
 				name, satellite, frequency, lnb,
@@ -3159,7 +3159,7 @@ void API::modifySourceTVStream(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "type";
             if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3330,7 +3330,7 @@ void API::modifySourceTVStream(
             }
             confKey = stoll(confKeyIt->second);
 
-			Json::Value sourceTVStreamRoot =
+			json sourceTVStreamRoot =
 				_mmsEngineDBFacade->modifySourceTVStream(
 				confKey,
                 typeToBeModified, type,
@@ -3629,7 +3629,7 @@ void API::sourceTVStreamList(
 		}
 
         {
-            Json::Value sourceTVStreamRoot =
+            json sourceTVStreamRoot =
 				_mmsEngineDBFacade->getSourceTVStreamList(
 				confKey, start, rows,
 				type, serviceId, name, frequency, lnb, videoPid, audioPids, nameOrder);
@@ -3694,7 +3694,7 @@ void API::addAWSChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3860,7 +3860,7 @@ void API::modifyAWSChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4144,7 +4144,7 @@ void API::awsChannelConfList(
 				type = 2;
 		}
         {
-            Json::Value awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(
+            json awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(
                     workspace->_workspaceKey, -1, label, type);
 
             string responseBody = JSONUtils::toString(awsChannelConfListRoot);
@@ -4208,7 +4208,7 @@ void API::addCDN77ChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4377,7 +4377,7 @@ void API::modifyCDN77ChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4672,7 +4672,7 @@ void API::cdn77ChannelConfList(
 				type = 2;
 		}
         {
-			Json::Value cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(
+			json cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(
 				workspace->_workspaceKey, -1, label, type);
 
             string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
@@ -4737,7 +4737,7 @@ void API::addRTMPChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4894,7 +4894,7 @@ void API::modifyRTMPChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -5201,7 +5201,7 @@ void API::rtmpChannelConfList(
 		}
 
         {
-			Json::Value rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(
+			json rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(
 				workspace->_workspaceKey, -1, label, type);
 
             string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
@@ -5264,7 +5264,7 @@ void API::addHLSChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -5413,7 +5413,7 @@ void API::modifyHLSChannelConf(
 
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -5698,7 +5698,7 @@ void API::hlsChannelConfList(
 		}
 
         {
-			Json::Value hlsChannelConfListRoot = _mmsEngineDBFacade->getHLSChannelConfList(
+			json hlsChannelConfListRoot = _mmsEngineDBFacade->getHLSChannelConfList(
 				workspace->_workspaceKey, -1, label, type);
 
             string responseBody = JSONUtils::toString(hlsChannelConfListRoot);
@@ -5762,7 +5762,7 @@ void API::addFTPConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -5940,7 +5940,7 @@ void API::modifyFTPConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
             
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -6209,7 +6209,7 @@ void API::ftpConfList(
     {
         {
             
-            Json::Value ftpConfListRoot = _mmsEngineDBFacade->getFTPConfList(
+            json ftpConfListRoot = _mmsEngineDBFacade->getFTPConfList(
                     workspace->_workspaceKey);
 
             string responseBody = JSONUtils::toString(ftpConfListRoot);
@@ -6271,7 +6271,7 @@ void API::addEMailConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -6424,7 +6424,7 @@ void API::modifyEMailConf(
         
         try
         {
-            Json::Value requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+            json requestBodyRoot = JSONUtils::toJson(requestBody);
 
             string field = "label";
             if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -6671,7 +6671,7 @@ void API::emailConfList(
     {
         {
             
-            Json::Value emailConfListRoot = _mmsEngineDBFacade->getEMailConfList(
+            json emailConfListRoot = _mmsEngineDBFacade->getEMailConfList(
                     workspace->_workspaceKey);
 
             string responseBody = JSONUtils::toString(emailConfListRoot);

@@ -94,7 +94,7 @@ public:
     
     void init(
         int proxyIdentifier, mutex* mtEncodingJobs,
-        Json::Value configuration,
+        json configuration,
         shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
@@ -119,7 +119,7 @@ public:
 private:
     shared_ptr<spdlog::logger>          _logger;
     int                                 _proxyIdentifier;
-    Json::Value                         _configuration;
+    json                         _configuration;
     mutex*                              _mtEncodingJobs;
     EncodingJobStatus*                  _status;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
@@ -194,7 +194,7 @@ private:
 	void encodeContentImage();
 	void processEncodedImage();
 	void readingImageProfile(
-        Json::Value encodingProfileRoot,
+        json encodingProfileRoot,
         string& newFormat,
         int& newWidth,
         int& newHeight,
@@ -249,7 +249,7 @@ private:
         string fileFormat,
 		int64_t faceOfVideoMediaItemKey,
 		int64_t cutOfVideoMediaItemKey, double startTimeInSeconds, double endTimeInSeconds,
-        Json::Value parametersRoot);
+        json parametersRoot);
 
 	// void killEncodingJob(string transcoderHost, int64_t encodingJobKey);
 	void awsStartChannel(int64_t ingestionJobKey,

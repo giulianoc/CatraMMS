@@ -238,8 +238,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 				try
                 {
-					encodingItem->_encodingParametersRoot = JSONUtils::toJson(-1, encodingJobKey,
-						encodingParameters);
+					encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
                 }
 				catch (runtime_error e)
                 {
@@ -297,7 +296,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						try
 						{
 							encodingItem->_ingestedParametersRoot =
-								JSONUtils::toJson(encodingItem->_ingestionJobKey, -1, ingestionParameters);
+								JSONUtils::toJson(ingestionParameters);
 						}
 						catch(runtime_error& e)
 						{
@@ -3425,7 +3424,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngest
     return make_tuple(encodingJobKey, encoderKey, parameters);
 }
 
-Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
+json MMSEngineDBFacade::getEncodingJobsStatus (
 	shared_ptr<Workspace> workspace, int64_t encodingJobKey,
 	int start, int rows,
 	// bool startAndEndIngestionDatePresent,
@@ -3448,7 +3447,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 	bool fromMaster
 )
 {
-    Json::Value statusListRoot;
+    json statusListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -3469,7 +3468,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         string field;
         
         {
-            Json::Value requestParametersRoot;
+            json requestParametersRoot;
             
             field = "start";
             requestParametersRoot[field] = start;
@@ -3610,7 +3609,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 				sqlWhere += ("and ej.type in (" + typesArgument + ")");
 		}
         
-        Json::Value responseRoot;
+        json responseRoot;
         {
             string sqlStatement = fmt::format( 
                 "select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej {}",
@@ -3627,7 +3626,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 			);
         }
         
-        Json::Value encodingJobsRoot(Json::arrayValue);
+        json encodingJobsRoot = json::array();
         {            
             string sqlStatement = fmt::format( 
                 "select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, "
@@ -3645,7 +3644,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 			result res = trans.exec(sqlStatement);
 			for (auto row: res)
             {
-                Json::Value encodingJobRoot;
+                json encodingJobRoot;
 
 				int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
 
@@ -3680,7 +3679,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 					// see comment above (2021-01-29)
 
 					field = "ingestionJobKey";
-					encodingJobRoot[field] = Json::nullValue;
+					encodingJobRoot[field] = nullptr;
 				}
 				*/
 
@@ -3691,9 +3690,9 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 {
                     string parameters = row["parameters"].as<string>();
 
-                    Json::Value parametersRoot;
+                    json parametersRoot;
                     if (parameters != "")
-						parametersRoot = JSONUtils::toJson(-1, encodingJobKey, parameters);
+						parametersRoot = JSONUtils::toJson(parameters);
 
                     field = "parameters";
                     encodingJobRoot[field] = parametersRoot;
@@ -3702,7 +3701,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 				else
 				{
                     field = "parameters";
-					encodingJobRoot[field] = Json::nullValue;
+					encodingJobRoot[field] = nullptr;
 				}
 				*/
 
@@ -3712,30 +3711,30 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
                 field = "progress";
                 if (row["encodingProgress"].is_null())
-                    encodingJobRoot[field] = Json::nullValue;
+                    encodingJobRoot[field] = nullptr;
                 else
                     encodingJobRoot[field] = row["encodingProgress"].as<float>();
 
                 field = "start";
                 if (encodingStatus == EncodingStatus::ToBeProcessed)
-                    encodingJobRoot[field] = Json::nullValue;
+                    encodingJobRoot[field] = nullptr;
                 else
                 {
                     if (row["encodingJobStart"].is_null())
-                        encodingJobRoot[field] = Json::nullValue;
+                        encodingJobRoot[field] = nullptr;
                     else
                         encodingJobRoot[field] = row["encodingJobStart"].as<string>();
                 }
 
                 field = "end";
                 if (row["encodingJobEnd"].is_null())
-                    encodingJobRoot[field] = Json::nullValue;
+                    encodingJobRoot[field] = nullptr;
                 else
                     encodingJobRoot[field] = row["encodingJobEnd"].as<string>();
 
                 field = "processorMMS";
                 if (row["processorMMS"].is_null())
-                    encodingJobRoot[field] = Json::nullValue;
+                    encodingJobRoot[field] = nullptr;
                 else
                     encodingJobRoot[field] = row["processorMMS"].as<string>();
 
@@ -3763,7 +3762,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 field = "maxEncodingPriorityCode";
                 encodingJobRoot[field] = workspace->_maxEncodingPriority;
 
-                encodingJobsRoot.append(encodingJobRoot);
+                encodingJobsRoot.push_back(encodingJobRoot);
             }
 			SPDLOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
@@ -4069,9 +4068,9 @@ void MMSEngineDBFacade::addEncodingJob (
 	MMSEngineDBFacade::ContentType contentType,
 	EncodingPriority encodingPriority,
 	int64_t encodingProfileKey,
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 
-	Json::Value sourcesToBeEncodedRoot,
+	json sourcesToBeEncodedRoot,
 
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL
 )
@@ -4096,7 +4095,7 @@ void MMSEngineDBFacade::addEncodingJob (
 
         string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field = "contentType";
 			parametersRoot[field] = MMSEngineDBFacade::toString(contentType);
@@ -4263,7 +4262,7 @@ void MMSEngineDBFacade::addEncodingJob (
 void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
-	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
+	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
     int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
 	string mmsSourceVideoAssetPathName, string sourceVideoPhysicalDeliveryURL,
 	string sourceVideoFileExtension,
@@ -4292,7 +4291,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 
         string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field = "sourceVideoMediaItemKey";
 			parametersRoot[field] = sourceVideoMediaItemKey;
@@ -4492,7 +4491,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
 
-	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
+	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 
 	string sourceAssetPathName,
 	int64_t sourceDurationInMilliSeconds,
@@ -4520,7 +4519,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
         
         string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field = "encodingProfileKey";
 			parametersRoot[field] = encodingProfileKey;
@@ -4733,7 +4732,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 
         string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field = "ingestionJobKey";
 			parametersRoot[field] = ingestionJobKey;
@@ -4937,8 +4936,8 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 void MMSEngineDBFacade::addEncoding_SlideShowJob (
     shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
-	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot, string targetFileFormat,
-	Json::Value imagesRoot, Json::Value audiosRoot, float shortestAudioDurationInSeconds,
+	int64_t encodingProfileKey, json encodingProfileDetailsRoot, string targetFileFormat,
+	json imagesRoot, json audiosRoot, float shortestAudioDurationInSeconds,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
     EncodingPriority encodingPriority
@@ -4960,7 +4959,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob (
 
 		string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field = "encodingProfileDetailsRoot";
 			parametersRoot[field] = encodingProfileDetailsRoot;
@@ -5487,14 +5486,14 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	EncodingPriority encodingPriority,
 
 	int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
-	Json::Value captureRoot,
-	Json::Value tvRoot,
+	json captureRoot,
+	json tvRoot,
 
 	bool monitorHLS,
 	bool liveRecorderVirtualVOD,
 	int monitorVirtualVODOutputRootIndex,
 
-	Json::Value outputsRoot, Json::Value framesToBeDetectedRoot,
+	json outputsRoot, json framesToBeDetectedRoot,
 
 	string chunksTranscoderStagingContentsPath, string chunksNFSStagingContentsPath,
 	string segmentListFileName, string recordedFileNamePrefix,
@@ -5526,7 +5525,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             + ", encodingPriority: " + toString(encodingPriority)
             + ", monitorHLS: " + to_string(monitorHLS)
             + ", liveRecorderVirtualVOD: " + to_string(liveRecorderVirtualVOD)
-            + ", outputsRoot.size: " + (outputsRoot != Json::nullValue ? to_string(outputsRoot.size()) : to_string(0))
+            + ", outputsRoot.size: " + (outputsRoot != nullptr ? to_string(outputsRoot.size()) : to_string(0))
         );
 
 		{
@@ -5534,7 +5533,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         
 			string parameters;
 			{
-				Json::Value parametersRoot;
+				json parametersRoot;
 
 				string field = "ingestionJobLabel";
 				parametersRoot[field] = ingestionJobLabel;
@@ -5765,12 +5764,12 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	Json::Value inputsRoot,
+	json inputsRoot,
 	string streamSourceType,
 	int64_t utcProxyPeriodStart,
 	// long maxAttemptsNumberInCaseOfErrors,
 	long waitingSecondsBetweenAttemptsInCaseOfErrors,
-	Json::Value outputsRoot,
+	json outputsRoot,
 	string mmsWorkflowIngestionURL
 )
 {
@@ -5798,7 +5797,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
         
 			string parameters;
 			{
-				Json::Value parametersRoot;
+				json parametersRoot;
 
 				string field = "inputsRoot";
 				parametersRoot[field] = inputsRoot;
@@ -5961,9 +5960,9 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob (
 void MMSEngineDBFacade::addEncoding_VODProxyJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	Json::Value inputsRoot,
+	json inputsRoot,
 	int64_t utcProxyPeriodStart,
-	Json::Value outputsRoot,
+	json outputsRoot,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	string mmsWorkflowIngestionURL
 )
@@ -5990,7 +5989,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
         
 			string parameters;
 			{
-				Json::Value parametersRoot;
+				json parametersRoot;
 
 				string field = "inputsRoot";
 				parametersRoot[field] = inputsRoot;
@@ -6150,9 +6149,9 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob (
 void MMSEngineDBFacade::addEncoding_CountdownJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	Json::Value inputsRoot,
+	json inputsRoot,
 	int64_t utcProxyPeriodStart,
-	Json::Value outputsRoot,
+	json outputsRoot,
 	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors,
 	string mmsWorkflowIngestionURL
 )
@@ -6174,7 +6173,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
         
 			string parameters;
 			{
-				Json::Value parametersRoot;
+				json parametersRoot;
 
 				string field = "inputsRoot";
 				parametersRoot[field] = inputsRoot;
@@ -6334,8 +6333,8 @@ void MMSEngineDBFacade::addEncoding_CountdownJob (
 void MMSEngineDBFacade::addEncoding_LiveGridJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
-	Json::Value inputChannelsRoot,
-	Json::Value outputsRoot
+	json inputChannelsRoot,
+	json outputsRoot
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -6359,7 +6358,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob (
 
 			string parameters;
 			{
-				Json::Value parametersRoot;
+				json parametersRoot;
 
 				string field;
 
@@ -6510,7 +6509,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
 	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,                                                        
 	string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourceFileExtension,                                                         
 	string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,                                  
-	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
+	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 	EncodingPriority encodingPriority)
@@ -6531,7 +6530,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
         
 		string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field;
 
@@ -6718,8 +6717,8 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed (
 
 void MMSEngineDBFacade::addEncoding_AddSilentAudio (
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-	Json::Value sourcesRoot,
-	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
+	json sourcesRoot,
+	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 	EncodingPriority encodingPriority)
 {
@@ -6739,7 +6738,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio (
         
 		string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field;
 
@@ -6910,7 +6909,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 	int64_t overlaySourceDurationInMilliSeconds, string overlaySourceFileExtension,
 	string overlaySourcePhysicalDeliveryURL, string overlaySourceTranscoderStagingAssetPathName,                    
 	bool soundOfMain,
-	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
+	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
 	EncodingPriority encodingPriority)
@@ -6931,7 +6930,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob (
 
 		string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field;
 
@@ -7145,7 +7144,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
 	int64_t ingestionJobKey,
 
 	int64_t encodingProfileKey,
-	Json::Value encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 
 	int64_t introSourcePhysicalPathKey, string introSourceAssetPathName,
 	string introSourceFileExtension, int64_t introSourceDurationInMilliSeconds,
@@ -7179,7 +7178,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob (
 		EncodingType encodingType = EncodingType::IntroOutroOverlay;
 		string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field = "encodingProfileKey";
 			parametersRoot[field] = encodingProfileKey;
@@ -7404,7 +7403,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 	string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,
 	string endTime,
 
-	int64_t encodingProfileKey, Json::Value encodingProfileDetailsRoot,
+	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 
 	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
 	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
@@ -7427,7 +7426,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate (
 		EncodingType encodingType = EncodingType::CutFrameAccurate;
 		string parameters;
 		{
-			Json::Value parametersRoot;
+			json parametersRoot;
 
 			string field = "sourceMediaItemKey";
 			parametersRoot[field] = sourceMediaItemKey;

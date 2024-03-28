@@ -47,12 +47,12 @@ void API::ingestion(
         chrono::system_clock::time_point startPoint =
             chrono::system_clock::now();
 
-        Json::Value requestBodyRoot =
-            manageWorkflowVariables(requestBody, Json::nullValue);
+        json requestBodyRoot =
+            manageWorkflowVariables(requestBody, nullptr);
 
         // string responseBody;
-        Json::Value responseBodyRoot;
-        Json::Value responseBodyTasksRoot(Json::arrayValue);
+        json responseBodyRoot;
+        json responseBodyTasksRoot = json::array();
 
 #ifdef __POSTGRES__
         shared_ptr<PostgresConnection> conn =
@@ -79,7 +79,7 @@ void API::ingestion(
             // used when ReferenceLabel is used.
             unordered_map<string, vector<int64_t>> mapLabelAndIngestionJobKey;
 
-            Validator validator(_logger, _mmsEngineDBFacade, _configuration);
+            Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
             // it starts from the root and validate recursively the entire body
             validator.validateIngestedRootMetadata(
                 workspace->_workspaceKey, requestBodyRoot
@@ -125,7 +125,7 @@ void API::ingestion(
 
                 throw runtime_error(errorMessage);
             }
-            Json::Value &taskRoot = requestBodyRoot[field];
+            json &taskRoot = requestBodyRoot[field];
 
             field = "type";
             if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -223,7 +223,7 @@ void API::ingestion(
                 responseBody += " ] }";
                 */
 
-                Json::Value responseBodyWorkflowRoot;
+                json responseBodyWorkflowRoot;
                 responseBodyWorkflowRoot["ingestionRootKey"] = ingestionRootKey;
                 responseBodyWorkflowRoot["label"] = rootLabel;
 
@@ -347,11 +347,11 @@ void API::ingestion(
     }
 }
 
-Json::Value API::manageWorkflowVariables(
-    string requestBody, Json::Value variablesValuesToBeUsedRoot
+json API::manageWorkflowVariables(
+    string requestBody, json variablesValuesToBeUsedRoot
 )
 {
-    Json::Value requestBodyRoot;
+    json requestBodyRoot;
 
     try
     {
@@ -360,7 +360,7 @@ Json::Value API::manageWorkflowVariables(
             ", requestBody: " + requestBody
         );
 
-        if (variablesValuesToBeUsedRoot == Json::nullValue)
+        if (variablesValuesToBeUsedRoot == nullptr)
         {
             _logger->info(
                 __FILEREF__ + "manageWorkflowVariables" +
@@ -379,7 +379,7 @@ Json::Value API::manageWorkflowVariables(
             );
         }
 
-        requestBodyRoot = JSONUtils::toJson(-1, -1, requestBody);
+        requestBodyRoot = JSONUtils::toJson(requestBody);
 
         /*
          * Definition of the Variables into the Workflow:
@@ -420,7 +420,7 @@ Json::Value API::manageWorkflowVariables(
         string field = "variables";
         if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
         {
-            Json::Value variablesRoot = requestBodyRoot[field];
+            json variablesRoot = requestBodyRoot[field];
             if (variablesRoot.begin() != variablesRoot.end())
             // if (variablesRoot.size() > 0)
             {
@@ -428,12 +428,9 @@ Json::Value API::manageWorkflowVariables(
 
                 _logger->info(__FILEREF__ + "variables processing...");
 
-                for (Json::Value::iterator it = variablesRoot.begin();
-                     it != variablesRoot.end(); ++it)
+                for (auto& [keyRoot, valRoot] : variablesRoot.items())
                 {
-                    Json::Value key = it.key();
-
-                    string sKey = JSONUtils::toString(key);
+                    string sKey = JSONUtils::toString(keyRoot);
                     if (sKey.length() > 2)
                         sKey = sKey.substr(1, sKey.length() - 2);
 
@@ -444,7 +441,7 @@ Json::Value API::manageWorkflowVariables(
                     string variableToBeReplaced;
                     string sValue;
                     {
-                        Json::Value variableDetails = (*it);
+                        json variableDetails = valRoot;
 
                         field = "type";
                         string variableType =
@@ -461,7 +458,7 @@ Json::Value API::manageWorkflowVariables(
                         else
                             variableToBeReplaced = string("${") + sKey + "}";
 
-                        if (variablesValuesToBeUsedRoot == Json::nullValue)
+                        if (variablesValuesToBeUsedRoot == nullptr)
                         {
                             field = "value";
                             if (variableType == "string")
@@ -688,7 +685,7 @@ Json::Value API::manageWorkflowVariables(
                     ", localRequestBody: " + localRequestBody
                 );
 
-                requestBodyRoot = JSONUtils::toJson(-1, -1, localRequestBody);
+                requestBodyRoot = JSONUtils::toJson(localRequestBody);
             }
         }
     }
@@ -716,13 +713,13 @@ Json::Value API::manageWorkflowVariables(
 void API::manageReferencesInput(
     int64_t ingestionRootKey, string taskOrGroupOfTasksLabel,
     string ingestionType,
-    Json::Value &taskRoot, // taskRoot updated with the new parametersRoot
+    json &taskRoot, // taskRoot updated with the new parametersRoot
     bool parametersSectionPresent,
 
     // parametersRoot is changed:
     //	1. added ReferenceIngestionJobKey in case of ReferenceLabel
     //	2. added all the inherited references
-    Json::Value &parametersRoot,
+    json &parametersRoot,
 
     // dependOnIngestionJobKeysForStarting is extended with the
     // ReferenceIngestionJobKey in case of ReferenceLabel
@@ -770,7 +767,7 @@ void API::manageReferencesInput(
 
     // initialize referencesRoot
     bool referencesSectionPresent = false;
-    Json::Value referencesRoot(Json::arrayValue);
+    json referencesRoot = json::array();
     if (parametersSectionPresent)
     {
         field = "references";
@@ -850,7 +847,7 @@ void API::manageReferencesInput(
         for (int referenceIndex = 0; referenceIndex < referencesRoot.size();
              ++referenceIndex)
         {
-            Json::Value referenceRoot = referencesRoot[referenceIndex];
+            json referenceRoot = referencesRoot[referenceIndex];
 
             field = "label";
             if (JSONUtils::isMetadataPresent(referenceRoot, field))
@@ -988,9 +985,9 @@ void API::manageReferencesInput(
                     to_string(dependenciesToBeAddedToReferencesAtIndex)
                 );
 
-                referencesRoot.resize(
-                    previousReferencesRootSize + dependOnIngestionJobKeysSize
-                );
+                // referencesRoot.resize(
+                  //   previousReferencesRootSize + dependOnIngestionJobKeysSize
+                // );
                 for (int index = previousReferencesRootSize - 1;
                      index >= dependenciesToBeAddedToReferencesAtIndex; index--)
                 {
@@ -1020,7 +1017,7 @@ void API::manageReferencesInput(
                         " to " + to_string(index)
                     );
 
-                    Json::Value referenceRoot;
+                    json referenceRoot;
                     string addedField = "ingestionJobKey";
                     referenceRoot[addedField] =
                         dependOnIngestionJobKeysOverallInput.at(
@@ -1036,7 +1033,7 @@ void API::manageReferencesInput(
             dependOnIngestionJobKeysOverallInput.size(); referenceIndex > 0;
             --referenceIndex)
             {
-                    Json::Value referenceRoot;
+                    json referenceRoot;
                     string addedField = "ingestionJobKey";
                     referenceRoot[addedField] =
             dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
@@ -1060,12 +1057,12 @@ void API::manageReferencesInput(
                  referenceIndex < dependOnIngestionJobKeysOverallInput.size();
                  ++referenceIndex)
             {
-                Json::Value referenceRoot;
+                json referenceRoot;
                 string addedField = "ingestionJobKey";
                 referenceRoot[addedField] =
                     dependOnIngestionJobKeysOverallInput.at(referenceIndex);
 
-                referencesRoot.append(referenceRoot);
+                referencesRoot.push_back(referenceRoot);
             }
         }
 
@@ -1112,7 +1109,7 @@ void API::manageReferencesInput(
 vector<int64_t> API::ingestionSingleTask(
     shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey,
     string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-    Json::Value &taskRoot,
+    json &taskRoot,
 
     // dependOnSuccess == 0 -> OnError
     // dependOnSuccess == 1 -> OnSuccess
@@ -1124,13 +1121,13 @@ vector<int64_t> API::ingestionSingleTask(
     vector<int64_t> dependOnIngestionJobKeysOverallInput,
 
     unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
-    /* string& responseBody, */ Json::Value &responseBodyTasksRoot
+    /* string& responseBody, */ json &responseBodyTasksRoot
 )
 #else
 vector<int64_t> API::ingestionSingleTask(
     shared_ptr<MySQLConnection> conn, int64_t userKey, string apiKey,
     shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-    Json::Value &taskRoot,
+    json &taskRoot,
 
     // dependOnSuccess == 0 -> OnError
     // dependOnSuccess == 1 -> OnSuccess
@@ -1142,7 +1139,7 @@ vector<int64_t> API::ingestionSingleTask(
     vector<int64_t> dependOnIngestionJobKeysOverallInput,
 
     unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
-    /* string& responseBody, */ Json::Value &responseBodyTasksRoot
+    /* string& responseBody, */ json &responseBodyTasksRoot
 )
 #endif
 {
@@ -1160,7 +1157,7 @@ vector<int64_t> API::ingestionSingleTask(
     );
 
     field = "parameters";
-    Json::Value parametersRoot;
+    json parametersRoot;
     bool parametersSectionPresent = false;
     if (JSONUtils::isMetadataPresent(taskRoot, field))
     {
@@ -1171,7 +1168,7 @@ vector<int64_t> API::ingestionSingleTask(
 
     // 2022-11-19: in case of Broadcaster, internalMMS already exist
     field = "internalMMS";
-    Json::Value internalMMSRoot;
+    json internalMMSRoot;
     if (JSONUtils::isMetadataPresent(parametersRoot, field))
         internalMMSRoot = parametersRoot[field];
 
@@ -1179,7 +1176,7 @@ vector<int64_t> API::ingestionSingleTask(
     // aggiunto solo per alcuni Task (i.e. il Live-Recorder), ora li aggiungo sempre perchè, in caso di external
     //encoder, 	questi parametri servono sempre
     {
-        Json::Value credentialsRoot;
+        json credentialsRoot;
         {
             field = "userKey";
             credentialsRoot[field] = userKey;
@@ -1263,10 +1260,11 @@ vector<int64_t> API::ingestionSingleTask(
                         );
 
                     {
-                        Json::Value removed;
-                        parametersRoot.removeMember(
-                            encodingProfilesSetKeyField, &removed
-                        );
+                        parametersRoot.erase(encodingProfilesSetKeyField);
+                        // json removed;
+                        // parametersRoot.removeMember(
+                          //   encodingProfilesSetKeyField, &removed
+                        // );
                     }
                 }
                 else // if (JSONUtils::isMetadataPresent(parametersRoot,
@@ -1283,12 +1281,7 @@ vector<int64_t> API::ingestionSingleTask(
                             workspace->_workspaceKey, encodingProfilesSetLabel
                         );
 
-                    {
-                        Json::Value removed;
-                        parametersRoot.removeMember(
-                            encodingProfilesSetLabelField, &removed
-                        );
-                    }
+                    parametersRoot.erase(encodingProfilesSetLabelField);
                 }
 
                 if (encodingProfilesSetKeys.size() == 0)
@@ -1308,7 +1301,7 @@ vector<int64_t> API::ingestionSingleTask(
             }
 
             // both, case 1 and case 2 could have multiple references
-            Json::Value multiReferencesRoot;
+            json multiReferencesRoot;
             if (JSONUtils::isMetadataPresent(parametersRoot, referencesField) &&
                 parametersRoot[referencesField].size() > 1)
             {
@@ -1316,10 +1309,7 @@ vector<int64_t> API::ingestionSingleTask(
 
                 multiReferencesRoot = parametersRoot[referencesField];
 
-                {
-                    Json::Value removed;
-                    parametersRoot.removeMember(referencesField, &removed);
-                }
+                parametersRoot.erase(referencesField);
             }
 
             if (!profilesSetPresent && !multiReferencesPresent)
@@ -1336,7 +1326,7 @@ vector<int64_t> API::ingestionSingleTask(
             // in case of profiles set, without the profiles set parameter
             // in case of multiple references, without the References parameter
 
-            Json::Value newTasksRoot(Json::arrayValue);
+            json newTasksRoot = json::array();
 
             if (profilesSetPresent && multiReferencesPresent)
             {
@@ -1346,7 +1336,7 @@ vector<int64_t> API::ingestionSingleTask(
                          referenceIndex < multiReferencesRoot.size();
                          referenceIndex++)
                     {
-                        Json::Value newTaskRoot;
+                        json newTaskRoot;
                         string localLabel =
                             taskLabel + " - EncodingProfileKey: " +
                             to_string(encodingProfileKey) +
@@ -1358,14 +1348,14 @@ vector<int64_t> API::ingestionSingleTask(
                         field = "type";
                         newTaskRoot[field] = "Encode";
 
-                        Json::Value newParametersRoot = parametersRoot;
+                        json newParametersRoot = parametersRoot;
 
                         field = "encodingProfileKey";
                         newParametersRoot[field] = encodingProfileKey;
 
                         {
-                            Json::Value newReferencesRoot(Json::arrayValue);
-                            newReferencesRoot.append(
+                            json newReferencesRoot = json::array();
+                            newReferencesRoot.push_back(
                                 multiReferencesRoot[referenceIndex]
                             );
 
@@ -1376,7 +1366,7 @@ vector<int64_t> API::ingestionSingleTask(
                         field = "parameters";
                         newTaskRoot[field] = newParametersRoot;
 
-                        newTasksRoot.append(newTaskRoot);
+                        newTasksRoot.push_back(newTaskRoot);
                     }
                 }
             }
@@ -1384,7 +1374,7 @@ vector<int64_t> API::ingestionSingleTask(
             {
                 for (int64_t encodingProfileKey : encodingProfilesSetKeys)
                 {
-                    Json::Value newTaskRoot;
+                    json newTaskRoot;
                     string localLabel = taskLabel + " - EncodingProfileKey: " +
                                         to_string(encodingProfileKey);
 
@@ -1394,7 +1384,7 @@ vector<int64_t> API::ingestionSingleTask(
                     field = "type";
                     newTaskRoot[field] = "Encode";
 
-                    Json::Value newParametersRoot = parametersRoot;
+                    json newParametersRoot = parametersRoot;
 
                     field = "encodingProfileKey";
                     newParametersRoot[field] = encodingProfileKey;
@@ -1402,7 +1392,7 @@ vector<int64_t> API::ingestionSingleTask(
                     field = "parameters";
                     newTaskRoot[field] = newParametersRoot;
 
-                    newTasksRoot.append(newTaskRoot);
+                    newTasksRoot.push_back(newTaskRoot);
                 }
             }
             else if (!profilesSetPresent && multiReferencesPresent)
@@ -1411,7 +1401,7 @@ vector<int64_t> API::ingestionSingleTask(
                      referenceIndex < multiReferencesRoot.size();
                      referenceIndex++)
                 {
-                    Json::Value newTaskRoot;
+                    json newTaskRoot;
                     string localLabel = taskLabel + " - referenceIndex: " +
                                         to_string(referenceIndex);
 
@@ -1421,11 +1411,11 @@ vector<int64_t> API::ingestionSingleTask(
                     field = "type";
                     newTaskRoot[field] = "Encode";
 
-                    Json::Value newParametersRoot = parametersRoot;
+                    json newParametersRoot = parametersRoot;
 
                     {
-                        Json::Value newReferencesRoot(Json::arrayValue);
-                        newReferencesRoot.append(
+                        json newReferencesRoot = json::array();
+                        newReferencesRoot.push_back(
                             multiReferencesRoot[referenceIndex]
                         );
 
@@ -1436,11 +1426,11 @@ vector<int64_t> API::ingestionSingleTask(
                     field = "parameters";
                     newTaskRoot[field] = newParametersRoot;
 
-                    newTasksRoot.append(newTaskRoot);
+                    newTasksRoot.push_back(newTaskRoot);
                 }
             }
 
-            Json::Value newParametersTasksGroupRoot;
+            json newParametersTasksGroupRoot;
 
             field = "executionType";
             newParametersTasksGroupRoot[field] = "parallel";
@@ -1448,7 +1438,7 @@ vector<int64_t> API::ingestionSingleTask(
             field = "tasks";
             newParametersTasksGroupRoot[field] = newTasksRoot;
 
-            Json::Value newTasksGroupRoot;
+            json newTasksGroupRoot;
 
             field = "type";
             newTasksGroupRoot[field] = "GroupOfTasks";
@@ -1517,19 +1507,16 @@ vector<int64_t> API::ingestionSingleTask(
             // we will replace the single Task with a GroupOfTasks where every
             // task is just for one reference
 
-            Json::Value multiReferencesRoot = parametersRoot[referencesField];
+            json multiReferencesRoot = parametersRoot[referencesField];
 
-            {
-                Json::Value removed;
-                parametersRoot.removeMember(referencesField, &removed);
-            }
+            parametersRoot.erase(referencesField);
 
-            Json::Value newTasksRoot(Json::arrayValue);
+            json newTasksRoot = json::array();
 
             for (int referenceIndex = 0;
                  referenceIndex < multiReferencesRoot.size(); referenceIndex++)
             {
-                Json::Value newTaskRoot;
+                json newTaskRoot;
                 string localLabel = taskLabel + " - referenceIndex: " +
                                     to_string(referenceIndex);
 
@@ -1539,11 +1526,11 @@ vector<int64_t> API::ingestionSingleTask(
                 field = "type";
                 newTaskRoot[field] = "Face-Recognition";
 
-                Json::Value newParametersRoot = parametersRoot;
+                json newParametersRoot = parametersRoot;
 
                 {
-                    Json::Value newReferencesRoot(Json::arrayValue);
-                    newReferencesRoot.append(multiReferencesRoot[referenceIndex]
+                    json newReferencesRoot = json::array();
+                    newReferencesRoot.push_back(multiReferencesRoot[referenceIndex]
                     );
 
                     field = "references";
@@ -1565,10 +1552,10 @@ vector<int64_t> API::ingestionSingleTask(
                 if (JSONUtils::isMetadataPresent(taskRoot, field))
                     newTaskRoot[field] = taskRoot[field];
 
-                newTasksRoot.append(newTaskRoot);
+                newTasksRoot.push_back(newTaskRoot);
             }
 
-            Json::Value newParametersTasksGroupRoot;
+            json newParametersTasksGroupRoot;
 
             field = "executionType";
             newParametersTasksGroupRoot[field] = "parallel";
@@ -1576,7 +1563,7 @@ vector<int64_t> API::ingestionSingleTask(
             field = "tasks";
             newParametersTasksGroupRoot[field] = newTasksRoot;
 
-            Json::Value newTasksGroupRoot;
+            json newTasksGroupRoot;
 
             field = "type";
             newTasksGroupRoot[field] = "GroupOfTasks";
@@ -1636,7 +1623,7 @@ vector<int64_t> API::ingestionSingleTask(
         // will be managed later in the Encoder when the workflow
         // for this event will be created
 
-        Json::Value eventsRoot;
+        json eventsRoot;
         {
             string onSuccessField = "onSuccess";
             string onErrorField = "onError";
@@ -1647,30 +1634,27 @@ vector<int64_t> API::ingestionSingleTask(
             {
                 if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
                 {
-                    Json::Value onSuccessRoot = taskRoot[onSuccessField];
+                    json onSuccessRoot = taskRoot[onSuccessField];
 
                     eventsRoot[onSuccessField] = onSuccessRoot;
 
-                    Json::Value removed;
-                    taskRoot.removeMember(onSuccessField, &removed);
+                    taskRoot.erase(onSuccessField);
                 }
                 if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
                 {
-                    Json::Value onErrorRoot = taskRoot[onErrorField];
+                    json onErrorRoot = taskRoot[onErrorField];
 
                     eventsRoot[onErrorField] = onErrorRoot;
 
-                    Json::Value removed;
-                    taskRoot.removeMember(onErrorField, &removed);
+                    taskRoot.erase(onErrorField);
                 }
                 if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
                 {
-                    Json::Value onCompleteRoot = taskRoot[onCompleteField];
+                    json onCompleteRoot = taskRoot[onCompleteField];
 
                     eventsRoot[onCompleteField] = onCompleteRoot;
 
-                    Json::Value removed;
-                    taskRoot.removeMember(onCompleteField, &removed);
+                    taskRoot.erase(onCompleteField);
                 }
             }
         }
@@ -1697,7 +1681,7 @@ vector<int64_t> API::ingestionSingleTask(
         // MMSEngineProcessor.cpp when the new workflow will be created
 
         /*
-Json::Value internalMMSRoot;
+json internalMMSRoot;
         {
                 string field = "userKey";
                 internalMMSRoot[field] = userKey;
@@ -1707,7 +1691,7 @@ Json::Value internalMMSRoot;
         }
         */
 
-        Json::Value eventsRoot;
+        json eventsRoot;
         {
             string onSuccessField = "onSuccess";
             string onErrorField = "onError";
@@ -1718,30 +1702,27 @@ Json::Value internalMMSRoot;
             {
                 if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
                 {
-                    Json::Value onSuccessRoot = taskRoot[onSuccessField];
+                    json onSuccessRoot = taskRoot[onSuccessField];
 
                     eventsRoot[onSuccessField] = onSuccessRoot;
 
-                    Json::Value removed;
-                    taskRoot.removeMember(onSuccessField, &removed);
+                    taskRoot.erase(onSuccessField);
                 }
                 if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
                 {
-                    Json::Value onErrorRoot = taskRoot[onErrorField];
+                    json onErrorRoot = taskRoot[onErrorField];
 
                     eventsRoot[onErrorField] = onErrorRoot;
 
-                    Json::Value removed;
-                    taskRoot.removeMember(onErrorField, &removed);
+                    taskRoot.erase(onErrorField);
                 }
                 if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
                 {
-                    Json::Value onCompleteRoot = taskRoot[onCompleteField];
+                    json onCompleteRoot = taskRoot[onCompleteField];
 
                     eventsRoot[onCompleteField] = onCompleteRoot;
 
-                    Json::Value removed;
-                    taskRoot.removeMember(onCompleteField, &removed);
+                    taskRoot.erase(onCompleteField);
                 }
             }
         }
@@ -1855,13 +1836,13 @@ Json::Value internalMMSRoot;
                 );
         }
 
-        Json::Value workflowLibraryRoot =
+        json workflowLibraryRoot =
             manageWorkflowVariables(workflowLibraryContent, parametersRoot);
 
         // create a GroupOfTasks and add the Root Task of the Library to the
         // newGroupOfTasks
 
-        Json::Value workflowLibraryTaskRoot;
+        json workflowLibraryTaskRoot;
         {
             string workflowRootTaskField = "task";
             if (!JSONUtils::isMetadataPresent(
@@ -1884,16 +1865,16 @@ Json::Value internalMMSRoot;
                 workflowLibraryRoot[workflowRootTaskField];
         }
 
-        Json::Value newGroupOfTasksRoot;
+        json newGroupOfTasksRoot;
         {
-            Json::Value newGroupOfTasksParametersRoot;
+            json newGroupOfTasksParametersRoot;
 
             field = "executionType";
             newGroupOfTasksParametersRoot[field] = "parallel";
 
             {
-                Json::Value newTasksRoot(Json::arrayValue);
-                newTasksRoot.append(workflowLibraryTaskRoot);
+                json newTasksRoot = json::array();
+                newTasksRoot.push_back(workflowLibraryTaskRoot);
 
                 field = "tasks";
                 newGroupOfTasksParametersRoot[field] = newTasksRoot;
@@ -1974,12 +1955,12 @@ JSONUtils::toString(parametersRoot)
         field = "waitFor";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
         {
-            Json::Value waitForRoot = parametersRoot[field];
+            json waitForRoot = parametersRoot[field];
 
             for (int waitForIndex = 0; waitForIndex < waitForRoot.size();
                  ++waitForIndex)
             {
-                Json::Value waitForLabelRoot = waitForRoot[waitForIndex];
+                json waitForLabelRoot = waitForRoot[waitForIndex];
 
                 field = "globalIngestionLabel";
                 if (JSONUtils::isMetadataPresent(waitForLabelRoot, field))
@@ -2089,12 +2070,12 @@ JSONUtils::toString(parametersRoot)
                         + "\"label\": \"" + taskLabel + "\" "
                         + "}");
         */
-        Json::Value localresponseBodyTaskRoot;
+        json localresponseBodyTaskRoot;
         localresponseBodyTaskRoot["ingestionJobKey"] =
             localDependOnIngestionJobKeyExecution;
         localresponseBodyTaskRoot["label"] = taskLabel;
         localresponseBodyTaskRoot["type"] = type;
-        responseBodyTasksRoot.append(localresponseBodyTaskRoot);
+        responseBodyTasksRoot.push_back(localresponseBodyTaskRoot);
     }
 
     vector<int64_t> localDependOnIngestionJobKeysForStarting;
@@ -2175,21 +2156,21 @@ JSONUtils::toString(parametersRoot)
 vector<int64_t> API::ingestionGroupOfTasks(
     shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey,
     string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-    Json::Value &groupOfTasksRoot,
+    json &groupOfTasksRoot,
     vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
     vector<int64_t> dependOnIngestionJobKeysOverallInput,
     unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
-    /* string& responseBody, */ Json::Value &responseBodyTasksRoot
+    /* string& responseBody, */ json &responseBodyTasksRoot
 )
 #else
 vector<int64_t> API::ingestionGroupOfTasks(
     shared_ptr<MySQLConnection> conn, int64_t userKey, string apiKey,
     shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-    Json::Value &groupOfTasksRoot,
+    json &groupOfTasksRoot,
     vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
     vector<int64_t> dependOnIngestionJobKeysOverallInput,
     unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
-    /* string& responseBody, */ Json::Value &responseBodyTasksRoot
+    /* string& responseBody, */ json &responseBodyTasksRoot
 )
 #endif
 {
@@ -2216,7 +2197,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 
         throw runtime_error(errorMessage);
     }
-    Json::Value &parametersRoot = groupOfTasksRoot[field];
+    json &parametersRoot = groupOfTasksRoot[field];
 
     bool parallelTasks;
 
@@ -2254,7 +2235,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 
         throw runtime_error(errorMessage);
     }
-    Json::Value &tasksRoot = parametersRoot[field];
+    json &tasksRoot = parametersRoot[field];
 
     /* 2021-02-20: A group that does not have any Task couls be a scenario,
      * so we do not have to raise an error. Same check commented in
@@ -2285,7 +2266,7 @@ GroupOfTasks item"; _logger->error(errorMessage);
     //-1 (OnComplete)
     for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
     {
-        Json::Value &taskRoot = tasksRoot[taskIndex];
+        json &taskRoot = tasksRoot[taskIndex];
 
         string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -2497,7 +2478,7 @@ GroupOfTasks item"; _logger->error(errorMessage);
     bool referencesOutputPresent = false;
     {
         // initialize referencesRoot
-        Json::Value referencesOutputRoot(Json::arrayValue);
+        json referencesOutputRoot = json::array();
 
         field = "referencesOutput";
         if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -2519,7 +2500,7 @@ GroupOfTasks item"; _logger->error(errorMessage);
             for (int referenceIndex = 0;
                  referenceIndex < referencesOutputRoot.size(); ++referenceIndex)
             {
-                Json::Value referenceOutputRoot =
+                json referenceOutputRoot =
                     referencesOutputRoot[referenceIndex];
 
                 field = "label";
@@ -2610,14 +2591,14 @@ GroupOfTasks item"; _logger->error(errorMessage);
                  newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size();
                  ++referenceIndex)
             {
-                Json::Value referenceOutputRoot;
+                json referenceOutputRoot;
                 field = "ingestionJobKey";
                 referenceOutputRoot[field] =
                     newDependOnIngestionJobKeysOverallInputBecauseOfTasks.at(
                         referenceIndex
                     );
 
-                referencesOutputRoot.append(referenceOutputRoot);
+                referencesOutputRoot.push_back(referenceOutputRoot);
 
                 referencesOutputIngestionJobKeys.push_back(
                     newDependOnIngestionJobKeysOverallInputBecauseOfTasks.at(
@@ -2781,12 +2762,12 @@ GroupOfTasks item"; _logger->error(errorMessage);
                         + "\"label\": \"" + groupOfTaskLabel + "\" "
                         + "}");
         */
-        Json::Value localresponseBodyTaskRoot;
+        json localresponseBodyTaskRoot;
         localresponseBodyTaskRoot["ingestionJobKey"] =
             localDependOnIngestionJobKeyExecution;
         localresponseBodyTaskRoot["label"] = groupOfTaskLabel;
         localresponseBodyTaskRoot["type"] = type;
-        responseBodyTasksRoot.append(localresponseBodyTaskRoot);
+        responseBodyTasksRoot.push_back(localresponseBodyTaskRoot);
     }
 
     /*
@@ -2894,25 +2875,25 @@ GroupOfTasks item"; _logger->error(errorMessage);
 void API::ingestionEvents(
     shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey,
     string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-    Json::Value &taskOrGroupOfTasksRoot,
+    json &taskOrGroupOfTasksRoot,
     vector<int64_t> dependOnIngestionJobKeysForStarting,
     vector<int64_t> dependOnIngestionJobKeysOverallInput,
     vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
     vector<int64_t> &referencesOutputIngestionJobKeys,
     unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
-    /* string& responseBody, */ Json::Value &responseBodyTasksRoot
+    /* string& responseBody, */ json &responseBodyTasksRoot
 )
 #else
 void API::ingestionEvents(
     shared_ptr<MySQLConnection> conn, int64_t userKey, string apiKey,
     shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-    Json::Value &taskOrGroupOfTasksRoot,
+    json &taskOrGroupOfTasksRoot,
     vector<int64_t> dependOnIngestionJobKeysForStarting,
     vector<int64_t> dependOnIngestionJobKeysOverallInput,
     vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
     vector<int64_t> &referencesOutputIngestionJobKeys,
     unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
-    /* string& responseBody, */ Json::Value &responseBodyTasksRoot
+    /* string& responseBody, */ json &responseBodyTasksRoot
 )
 #endif
 {
@@ -2920,7 +2901,7 @@ void API::ingestionEvents(
     string field = "onSuccess";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value &onSuccessRoot = taskOrGroupOfTasksRoot[field];
+        json &onSuccessRoot = taskOrGroupOfTasksRoot[field];
 
         field = "task";
         if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
@@ -2932,7 +2913,7 @@ void API::ingestionEvents(
 
             throw runtime_error(errorMessage);
         }
-        Json::Value &taskRoot = onSuccessRoot[field];
+        json &taskRoot = onSuccessRoot[field];
 
         string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -3049,7 +3030,7 @@ void API::ingestionEvents(
     field = "onError";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value &onErrorRoot = taskOrGroupOfTasksRoot[field];
+        json &onErrorRoot = taskOrGroupOfTasksRoot[field];
 
         field = "task";
         if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
@@ -3061,7 +3042,7 @@ void API::ingestionEvents(
 
             throw runtime_error(errorMessage);
         }
-        Json::Value &taskRoot = onErrorRoot[field];
+        json &taskRoot = onErrorRoot[field];
 
         string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -3189,7 +3170,7 @@ void API::ingestionEvents(
     field = "onComplete";
     if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value &onCompleteRoot = taskOrGroupOfTasksRoot[field];
+        json &onCompleteRoot = taskOrGroupOfTasksRoot[field];
 
         field = "task";
         if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
@@ -3201,7 +3182,7 @@ void API::ingestionEvents(
 
             throw runtime_error(errorMessage);
         }
-        Json::Value &taskRoot = onCompleteRoot[field];
+        json &taskRoot = onCompleteRoot[field];
 
         string field = "type";
         if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -3395,8 +3376,8 @@ void API::uploadedBinary(
             tie(ignore, ignore, ignore, parameters, ignore) =
                 ingestionJobDetails;
 
-            Json::Value parametersRoot =
-                JSONUtils::toJson(ingestionJobKey, -1, parameters);
+            json parametersRoot =
+                JSONUtils::toJson(parameters);
 
             string field = "fileFormat";
             if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -3859,7 +3840,7 @@ void API::fileUploadProgressCheck()
                 otherHeaders.push_back(hostHeader
                 ); // important for the nginx virtual host
                 int curlTimeoutInSeconds = 120;
-                Json::Value uploadProgressResponse = MMSCURL::httpGetJson(
+                json uploadProgressResponse = MMSCURL::httpGetJson(
                     _logger, itr->_ingestionJobKey, progressURL,
                     curlTimeoutInSeconds, "", "", otherHeaders
                 );
@@ -3902,7 +3883,7 @@ _logger->info(__FILEREF__ + "Call for upload progress response"
 
                 try
                 {
-                    // Json::Value uploadProgressResponse =
+                    // json uploadProgressResponse =
                     // JSONUtils::toJson(-1, -1, sResponse);
 
                     // { "state" : "uploading", "received" : 731195032, "size" :
@@ -4411,7 +4392,7 @@ void API::ingestionRootsStatus(
         }
 
         {
-            Json::Value ingestionStatusRoot =
+            json ingestionStatusRoot =
                 _mmsEngineDBFacade->getIngestionRootsStatus(
                     workspace, ingestionRootKey, mediaItemKey, start, rows,
                     // startAndEndIngestionDatePresent,
@@ -4779,7 +4760,7 @@ void API::ingestionJobsStatus(
         }
 
         {
-            Json::Value ingestionStatusRoot =
+            json ingestionStatusRoot =
                 _mmsEngineDBFacade->getIngestionJobsStatus(
                     workspace, ingestionJobKey, start, rows, label, labelLike,
                     /* startAndEndIngestionDatePresent, */ startIngestionDate,
@@ -5055,8 +5036,8 @@ void API::updateIngestionJob(
                 throw runtime_error(errorMessage);
             }
 
-            Json::Value metadataRoot =
-                JSONUtils::toJson(ingestionJobKey, -1, requestBody);
+            json metadataRoot =
+                JSONUtils::toJson(requestBody);
 
             string field = "IngestionType";
             if (!JSONUtils::isMetadataPresent(metadataRoot, field))
@@ -5189,7 +5170,7 @@ void API::updateIngestionJob(
                 }
             }
 
-            Json::Value responseRoot;
+            json responseRoot;
             responseRoot["status"] = string("success");
 
             string responseBody = JSONUtils::toString(responseRoot);
@@ -5305,13 +5286,13 @@ void API::changeLiveProxyPlaylist(
         string broadcastDefaultMediaType; // options: Stream, Media, Countdown,
                                           // Direct URL
         // used in case mediaType is Stream
-        Json::Value broadcastDefaultStreamInputRoot = Json::nullValue;
+        json broadcastDefaultStreamInputRoot = nullptr;
         // used in case mediaType is Media
-        Json::Value broadcastDefaultVodInputRoot = Json::nullValue;
+        json broadcastDefaultVodInputRoot = nullptr;
         // used in case mediaType is Countdown
-        Json::Value broadcastDefaultCountdownInputRoot = Json::nullValue;
+        json broadcastDefaultCountdownInputRoot = nullptr;
         // used in case mediaType is Direct URL
-        Json::Value broadcastDefaultDirectURLInputRoot = Json::nullValue;
+        json broadcastDefaultDirectURLInputRoot = nullptr;
         try
         {
             _logger->info(
@@ -5372,9 +5353,7 @@ void API::changeLiveProxyPlaylist(
                 throw runtime_error(errorMessage);
             }
 
-            Json::Value metadataContentRoot = JSONUtils::toJson(
-                broadcasterIngestionJobKey, -1, metaDataContent
-            );
+            json metadataContentRoot = JSONUtils::toJson(metaDataContent);
 
             string field = "internalMMS";
             if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
@@ -5387,7 +5366,7 @@ void API::changeLiveProxyPlaylist(
 
                 throw runtime_error(errorMessage);
             }
-            Json::Value internalMMSRoot = metadataContentRoot[field];
+            json internalMMSRoot = metadataContentRoot[field];
 
             field = "broadcaster";
             if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
@@ -5400,7 +5379,7 @@ void API::changeLiveProxyPlaylist(
 
                 throw runtime_error(errorMessage);
             }
-            Json::Value broadcasterRoot = internalMMSRoot[field];
+            json broadcasterRoot = internalMMSRoot[field];
 
             field = "broadcastIngestionJobKey";
             broadcastIngestionJobKey =
@@ -5429,7 +5408,7 @@ void API::changeLiveProxyPlaylist(
 
                 throw runtime_error(errorMessage);
             }
-            Json::Value proxyPeriodRoot = metadataContentRoot[field];
+            json proxyPeriodRoot = metadataContentRoot[field];
 
             field = "timePeriod";
             bool timePeriod =
@@ -5460,7 +5439,7 @@ void API::changeLiveProxyPlaylist(
             field = "broadcastDefaultPlaylistItem";
             if (JSONUtils::isMetadataPresent(broadcasterRoot, field))
             {
-                Json::Value broadcastDefaultPlaylistItemRoot =
+                json broadcastDefaultPlaylistItemRoot =
                     broadcasterRoot[field];
 
                 field = "mediaType";
@@ -5484,7 +5463,7 @@ void API::changeLiveProxyPlaylist(
                         string otherInputOptions;
 
                         field = "drawTextDetails";
-                        Json::Value drawTextDetailsRoot;
+                        json drawTextDetailsRoot;
                         if (JSONUtils::isMetadataPresent(
                                 broadcastDefaultPlaylistItemRoot, field
                             ))
@@ -5512,7 +5491,7 @@ void API::changeLiveProxyPlaylist(
                                 broadcastDefaultPlaylistItemRoot, field
                             ))
                         {
-                            Json::Value referencePhysicalPathKeysRoot =
+                            json referencePhysicalPathKeysRoot =
                                 broadcastDefaultPlaylistItemRoot[field];
 
                             for (int referencePhysicalPathKeyIndex = 0;
@@ -5520,7 +5499,7 @@ void API::changeLiveProxyPlaylist(
                                  referencePhysicalPathKeysRoot.size();
                                  referencePhysicalPathKeyIndex++)
                             {
-                                Json::Value referencePhysicalPathKeyRoot =
+                                json referencePhysicalPathKeyRoot =
                                     referencePhysicalPathKeysRoot
                                         [referencePhysicalPathKeyIndex];
 
@@ -5635,7 +5614,7 @@ void API::changeLiveProxyPlaylist(
                         }
 
                         field = "drawTextDetails";
-                        Json::Value drawTextDetailsRoot;
+                        json drawTextDetailsRoot;
                         if (JSONUtils::isMetadataPresent(
                                 broadcastDefaultPlaylistItemRoot, field
                             ))
@@ -5745,7 +5724,7 @@ void API::changeLiveProxyPlaylist(
                         }
 
                         field = "drawTextDetails";
-                        Json::Value drawTextDetailsRoot;
+                        json drawTextDetailsRoot;
                         if (!JSONUtils::isMetadataPresent(
                                 broadcastDefaultPlaylistItemRoot, field
                             ))
@@ -5784,7 +5763,7 @@ void API::changeLiveProxyPlaylist(
                         );
 
                         field = "drawTextDetails";
-                        Json::Value drawTextDetailsRoot;
+                        json drawTextDetailsRoot;
                         if (JSONUtils::isMetadataPresent(
                                 broadcastDefaultPlaylistItemRoot, field
                             ))
@@ -5863,11 +5842,10 @@ void API::changeLiveProxyPlaylist(
         }
 
         // check/build the new playlist
-        Json::Value newPlaylistRoot(Json::arrayValue);
+        json newPlaylistRoot = json::array();
         try
         {
-            Json::Value newReceivedPlaylistRoot =
-                JSONUtils::toJson(-1, -1, requestBody);
+            json newReceivedPlaylistRoot = JSONUtils::toJson(requestBody);
 
             // check the received playlist
             // in case of vodInput/countdownInput, the physicalPathKey is
@@ -5878,7 +5856,7 @@ void API::changeLiveProxyPlaylist(
                      newReceivedPlaylistIndex < newReceivedPlaylistRoot.size();
                      newReceivedPlaylistIndex++)
                 {
-                    Json::Value newReceivedPlaylistItemRoot =
+                    json newReceivedPlaylistItemRoot =
                         newReceivedPlaylistRoot[newReceivedPlaylistIndex];
                     {
                         string field = "vodInput";
@@ -5887,7 +5865,7 @@ void API::changeLiveProxyPlaylist(
                                 newReceivedPlaylistItemRoot, field
                             ))
                         {
-                            Json::Value vodInputRoot =
+                            json vodInputRoot =
                                 newReceivedPlaylistItemRoot[field];
                             MMSEngineDBFacade::ContentType vodContentType;
 
@@ -5907,7 +5885,7 @@ void API::changeLiveProxyPlaylist(
                                 throw runtime_error(errorMessage);
                             }
 
-                            Json::Value sourcesRoot = vodInputRoot[field];
+                            json sourcesRoot = vodInputRoot[field];
 
                             if (sourcesRoot.size() == 0)
                             {
@@ -5925,7 +5903,7 @@ void API::changeLiveProxyPlaylist(
                                  sourceIndex < sourcesRoot.size();
                                  sourceIndex++)
                             {
-                                Json::Value sourceRoot =
+                                json sourceRoot =
                                     sourcesRoot[sourceIndex];
 
                                 field = "physicalPathKey";
@@ -6057,7 +6035,7 @@ void API::changeLiveProxyPlaylist(
                                      newReceivedPlaylistItemRoot, fieldCountdown
                                  ))
                         {
-                            Json::Value countdownInputRoot =
+                            json countdownInputRoot =
                                 newReceivedPlaylistItemRoot[fieldCountdown];
 
                             field = "physicalPathKey";
@@ -6149,20 +6127,20 @@ void API::changeLiveProxyPlaylist(
             // ordinato,
             //		per sicurezza ordiniamo in base al campo start
             //		Per utilizzare 'sort' inizializziamo un vector
-            vector<Json::Value> vNewReceivedPlaylist;
+            vector<json> vNewReceivedPlaylist;
             {
                 for (int newReceivedPlaylistIndex = 0;
                      newReceivedPlaylistIndex < newReceivedPlaylistRoot.size();
                      newReceivedPlaylistIndex++)
                 {
-                    Json::Value newReceivedPlaylistItemRoot =
+                    json newReceivedPlaylistItemRoot =
                         newReceivedPlaylistRoot[newReceivedPlaylistIndex];
                     vNewReceivedPlaylist.push_back(newReceivedPlaylistItemRoot);
                 }
 
                 sort(
                     vNewReceivedPlaylist.begin(), vNewReceivedPlaylist.end(),
-                    [](Json::Value aRoot, Json::Value bRoot)
+                    [](json aRoot, json bRoot)
                     {
                         int64_t aUtcProxyPeriodStart =
                             JSONUtils::asInt64(aRoot, "utcScheduleStart", -1);
@@ -6191,7 +6169,7 @@ void API::changeLiveProxyPlaylist(
                      newReceivedPlaylistIndex < vNewReceivedPlaylist.size();
                      newReceivedPlaylistIndex++)
                 {
-                    Json::Value newReceivedPlaylistItemRoot =
+                    json newReceivedPlaylistItemRoot =
                         vNewReceivedPlaylist[newReceivedPlaylistIndex];
 
                     int64_t utcProxyPeriodStart = JSONUtils::asInt64(
@@ -6255,7 +6233,7 @@ void API::changeLiveProxyPlaylist(
                      newReceivedPlaylistIndex < vNewReceivedPlaylist.size();
                      newReceivedPlaylistIndex++)
                 {
-                    Json::Value newReceivedPlaylistItemRoot =
+                    json newReceivedPlaylistItemRoot =
                         vNewReceivedPlaylist[newReceivedPlaylistIndex];
 
                     // correct values have to be:
@@ -6326,11 +6304,11 @@ void API::changeLiveProxyPlaylist(
                     }
 
                     if (utcProxyPeriodStart == utcCurrentBroadcasterStart)
-                        newPlaylistRoot.append(newReceivedPlaylistItemRoot);
+                        newPlaylistRoot.push_back(newReceivedPlaylistItemRoot);
                     else // if (utcCurrentBroadcasterStart <
                          // utcProxyPeriodStart)
                     {
-                        Json::Value newdPlaylistItemToBeAddedRoot;
+                        json newdPlaylistItemToBeAddedRoot;
 
                         field = "defaultBroadcast";
                         newdPlaylistItemToBeAddedRoot[field] = true;
@@ -6349,7 +6327,7 @@ void API::changeLiveProxyPlaylist(
                         if (broadcastDefaultMediaType == "Stream")
                         {
                             if (broadcastDefaultStreamInputRoot !=
-                                Json::nullValue)
+                                nullptr)
                                 newdPlaylistItemToBeAddedRoot["streamInput"] =
                                     broadcastDefaultStreamInputRoot;
                             else
@@ -6367,7 +6345,7 @@ void API::changeLiveProxyPlaylist(
                         }
                         else if (broadcastDefaultMediaType == "Media")
                         {
-                            if (broadcastDefaultVodInputRoot != Json::nullValue)
+                            if (broadcastDefaultVodInputRoot != nullptr)
                                 newdPlaylistItemToBeAddedRoot["vodInput"] =
                                     broadcastDefaultVodInputRoot;
                             else
@@ -6386,7 +6364,7 @@ void API::changeLiveProxyPlaylist(
                         else if (broadcastDefaultMediaType == "Countdown")
                         {
                             if (broadcastDefaultCountdownInputRoot !=
-                                Json::nullValue)
+                                nullptr)
                                 newdPlaylistItemToBeAddedRoot
                                     ["countdownInput"] =
                                         broadcastDefaultCountdownInputRoot;
@@ -6406,7 +6384,7 @@ void API::changeLiveProxyPlaylist(
                         else if (broadcastDefaultMediaType == "Direct URL")
                         {
                             if (broadcastDefaultDirectURLInputRoot !=
-                                Json::nullValue)
+                                nullptr)
                                 newdPlaylistItemToBeAddedRoot
                                     ["directURLInput"] =
                                         broadcastDefaultDirectURLInputRoot;
@@ -6443,7 +6421,7 @@ void API::changeLiveProxyPlaylist(
                                 Tra l'altro newReceivedPlaylistRoot è ora in un
                         vector if (newPlaylistRoot.size() > 0)
                         {
-                                Json::Value newLastPlaylistRoot =
+                                json newLastPlaylistRoot =
                         newReceivedPlaylistRoot[ newPlaylistRoot.size() - 1];
 
                                 field = "utcProxyPeriodEnd";
@@ -6455,9 +6433,9 @@ void API::changeLiveProxyPlaylist(
                         }
                         */
 
-                        newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
+                        newPlaylistRoot.push_back(newdPlaylistItemToBeAddedRoot);
 
-                        newPlaylistRoot.append(newReceivedPlaylistItemRoot);
+                        newPlaylistRoot.push_back(newReceivedPlaylistItemRoot);
                     }
                     utcCurrentBroadcasterStart = utcProxyPeriodEnd;
                 }
@@ -6466,7 +6444,7 @@ void API::changeLiveProxyPlaylist(
                 {
                     // no items inside the playlist
 
-                    Json::Value newdPlaylistItemToBeAddedRoot;
+                    json newdPlaylistItemToBeAddedRoot;
 
                     string field = "defaultBroadcast";
                     newdPlaylistItemToBeAddedRoot[field] = true;
@@ -6482,7 +6460,7 @@ void API::changeLiveProxyPlaylist(
 
                     if (broadcastDefaultMediaType == "Stream")
                     {
-                        if (broadcastDefaultStreamInputRoot != Json::nullValue)
+                        if (broadcastDefaultStreamInputRoot != nullptr)
                             newdPlaylistItemToBeAddedRoot["streamInput"] =
                                 broadcastDefaultStreamInputRoot;
                         else
@@ -6499,7 +6477,7 @@ void API::changeLiveProxyPlaylist(
                     }
                     else if (broadcastDefaultMediaType == "Media")
                     {
-                        if (broadcastDefaultVodInputRoot != Json::nullValue)
+                        if (broadcastDefaultVodInputRoot != nullptr)
                             newdPlaylistItemToBeAddedRoot["vodInput"] =
                                 broadcastDefaultVodInputRoot;
                         else
@@ -6517,7 +6495,7 @@ void API::changeLiveProxyPlaylist(
                     else if (broadcastDefaultMediaType == "Countdown")
                     {
                         if (broadcastDefaultCountdownInputRoot !=
-                            Json::nullValue)
+                            nullptr)
                             newdPlaylistItemToBeAddedRoot["countdownInput"] =
                                 broadcastDefaultCountdownInputRoot;
                         else
@@ -6536,7 +6514,7 @@ void API::changeLiveProxyPlaylist(
                     else if (broadcastDefaultMediaType == "Direct URL")
                     {
                         if (broadcastDefaultDirectURLInputRoot !=
-                            Json::nullValue)
+                            nullptr)
                             newdPlaylistItemToBeAddedRoot["directURLInput"] =
                                 broadcastDefaultDirectURLInputRoot;
                         else
@@ -6566,13 +6544,13 @@ void API::changeLiveProxyPlaylist(
                         throw runtime_error(errorMessage);
                     }
 
-                    newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
+                    newPlaylistRoot.push_back(newdPlaylistItemToBeAddedRoot);
                 }
                 else if (utcCurrentBroadcasterStart < utcBroadcasterEnd)
                 {
                     // last period has to be added
 
-                    Json::Value newdPlaylistItemToBeAddedRoot;
+                    json newdPlaylistItemToBeAddedRoot;
 
                     string field = "defaultBroadcast";
                     newdPlaylistItemToBeAddedRoot[field] = true;
@@ -6589,7 +6567,7 @@ void API::changeLiveProxyPlaylist(
 
                     if (broadcastDefaultMediaType == "Stream")
                     {
-                        if (broadcastDefaultStreamInputRoot != Json::nullValue)
+                        if (broadcastDefaultStreamInputRoot != nullptr)
                             newdPlaylistItemToBeAddedRoot["streamInput"] =
                                 broadcastDefaultStreamInputRoot;
                         else
@@ -6606,7 +6584,7 @@ void API::changeLiveProxyPlaylist(
                     }
                     else if (broadcastDefaultMediaType == "Media")
                     {
-                        if (broadcastDefaultVodInputRoot != Json::nullValue)
+                        if (broadcastDefaultVodInputRoot != nullptr)
                             newdPlaylistItemToBeAddedRoot["vodInput"] =
                                 broadcastDefaultVodInputRoot;
                         else
@@ -6624,7 +6602,7 @@ void API::changeLiveProxyPlaylist(
                     else if (broadcastDefaultMediaType == "Countdown")
                     {
                         if (broadcastDefaultCountdownInputRoot !=
-                            Json::nullValue)
+                            nullptr)
                             newdPlaylistItemToBeAddedRoot["countdownInput"] =
                                 broadcastDefaultCountdownInputRoot;
                         else
@@ -6643,7 +6621,7 @@ void API::changeLiveProxyPlaylist(
                     else if (broadcastDefaultMediaType == "Direct URL")
                     {
                         if (broadcastDefaultDirectURLInputRoot !=
-                            Json::nullValue)
+                            nullptr)
                             newdPlaylistItemToBeAddedRoot["directURLInput"] =
                                 broadcastDefaultDirectURLInputRoot;
                         else
@@ -6679,7 +6657,7 @@ void API::changeLiveProxyPlaylist(
                                     Tra l'altro newReceivedPlaylistRoot è ora in
                     un vector if (newPlaylistRoot.size() > 0)
                     {
-                            Json::Value newLastPlaylistRoot =
+                            json newLastPlaylistRoot =
                     newReceivedPlaylistRoot[ newPlaylistRoot.size() - 1];
 
                             field = "utcProxyPeriodEnd";
@@ -6691,7 +6669,7 @@ void API::changeLiveProxyPlaylist(
                     }
                     */
 
-                    newPlaylistRoot.append(newdPlaylistItemToBeAddedRoot);
+                    newPlaylistRoot.push_back(newdPlaylistItemToBeAddedRoot);
                 }
             }
         }
@@ -6800,9 +6778,7 @@ void API::changeLiveProxyPlaylist(
             // because will be executed in the future
             if (broadcastEncodingJobKey != -1)
             {
-                Json::Value broadcastParametersRoot = JSONUtils::toJson(
-                    broadcastEncodingJobKey, -1, broadcastParameters
-                );
+                json broadcastParametersRoot = JSONUtils::toJson(broadcastParameters);
 
                 // update of the parameters
                 string field = "inputsRoot";
@@ -6832,7 +6808,7 @@ void API::changeLiveProxyPlaylist(
                         "?switchBehaviour=" + switchBehaviour;
 
                     vector<string> otherHeaders;
-                    Json::Value encoderResponse =
+                    json encoderResponse =
                         MMSCURL::httpPutStringAndGetJson(
                             _logger, broadcastIngestionJobKey, ffmpegEncoderURL,
                             _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser,
@@ -6854,13 +6830,11 @@ void API::changeLiveProxyPlaylist(
                     to_string(broadcastEncodingJobKey)
                 );
 
-                Json::Value metadataContentRoot = JSONUtils::toJson(
-                    broadcastIngestionJobKey, -1, metaDataContent
-                );
+                json metadataContentRoot = JSONUtils::toJson(metaDataContent);
 
                 // update of the parameters
-                Json::Value mmsInternalRoot;
-                Json::Value broadcasterRoot;
+                json mmsInternalRoot;
+                json broadcasterRoot;
 
                 string field = "internalMMS";
                 if (JSONUtils::isMetadataPresent(metadataContentRoot, field))

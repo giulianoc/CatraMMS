@@ -41,7 +41,6 @@
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-#include "json/value.h"
 #include <fstream>
 #include <sstream>
 
@@ -49,7 +48,7 @@
 
 FFMPEGEncoder::FFMPEGEncoder(
 
-	Json::Value configuration,
+	json configurationRoot,
 	// string encoderCapabilityConfigurationPathName,
 
 	mutex *fcgiAcceptMutex,
@@ -79,12 +78,12 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	shared_ptr<spdlog::logger> logger
 )
-	: FastCGIAPI(configuration, fcgiAcceptMutex)
+	: FastCGIAPI(configurationRoot, fcgiAcceptMutex)
 {
 
 	_logger = spdlog::default_logger();
 	_encodingCompletedRetentionInSeconds = JSONUtils::asInt(
-		_configuration["ffmpeg"], "encodingCompletedRetentionInSeconds", 0
+		_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0
 	);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
@@ -93,14 +92,14 @@ FFMPEGEncoder::FFMPEGEncoder(
 	);
 
 	_mmsAPITimeoutInSeconds =
-		JSONUtils::asInt(_configuration["api"], "timeoutInSeconds", 120);
+		JSONUtils::asInt(_configurationRoot["api"], "timeoutInSeconds", 120);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
 	);
 
 	_cpuUsageThresholdForEncoding = JSONUtils::asInt(
-		_configuration["ffmpeg"], "cpuUsageThresholdForEncoding", 50
+		_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50
 	);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
@@ -108,7 +107,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 		to_string(_cpuUsageThresholdForEncoding)
 	);
 	_cpuUsageThresholdForRecording = JSONUtils::asInt(
-		_configuration["ffmpeg"], "cpuUsageThresholdForRecording", 60
+		_configurationRoot["ffmpeg"], "cpuUsageThresholdForRecording", 60
 	);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
@@ -116,7 +115,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 		to_string(_cpuUsageThresholdForRecording)
 	);
 	_cpuUsageThresholdForProxy = JSONUtils::asInt(
-		_configuration["ffmpeg"], "cpuUsageThresholdForProxy", 70
+		_configurationRoot["ffmpeg"], "cpuUsageThresholdForProxy", 70
 	);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
@@ -125,7 +124,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 	);
 	_intervalInSecondsBetweenEncodingAcceptForInternalEncoder =
 		JSONUtils::asInt(
-			_configuration["ffmpeg"],
+			_configurationRoot["ffmpeg"],
 			"intervalInSecondsBetweenEncodingAcceptForInternalEncoder", 5
 		);
 	_logger->info(
@@ -137,7 +136,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 	);
 	_intervalInSecondsBetweenEncodingAcceptForExternalEncoder =
 		JSONUtils::asInt(
-			_configuration["ffmpeg"],
+			_configurationRoot["ffmpeg"],
 			"intervalInSecondsBetweenEncodingAcceptForExternalEncoder", 120
 		);
 	_logger->info(
@@ -149,13 +148,13 @@ FFMPEGEncoder::FFMPEGEncoder(
 	);
 
 	_encoderUser =
-		JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
+		JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", ffmpeg->encoderUser: " + _encoderUser
 	);
 	_encoderPassword =
-		JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
+		JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderPassword", "");
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", ffmpeg->encoderPassword: " + _encoderPassword
@@ -223,7 +222,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	{
 		try
 		{
-			Json::Value responseBodyRoot;
+			json responseBodyRoot;
 			responseBodyRoot["status"] = "Encoder up and running";
 
 			string responseBody = JSONUtils::toString(responseBodyRoot);
@@ -263,7 +262,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				}
 			}
 
-			Json::Value infoRoot;
+			json infoRoot;
 			infoRoot["status"] = "Encoder up and running";
 			infoRoot["cpuUsage"] = lastBiggerCpuUsage;
 
@@ -382,8 +381,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			try
 			{
-				Json::Value metadataRoot =
-					JSONUtils::toJson(-1, encodingJobKey, requestBody);
+				json metadataRoot = JSONUtils::toJson(requestBody);
 
 				bool externalEncoder =
 					JSONUtils::asBool(metadataRoot, "externalEncoder", false);
@@ -606,7 +604,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		try
 		{
-			Json::Value responseBodyRoot;
+			json responseBodyRoot;
 			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
@@ -827,7 +825,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		try
 		{
-			Json::Value responseBodyRoot;
+			json responseBodyRoot;
 			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
@@ -1105,7 +1103,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		try
 		{
-			Json::Value responseBodyRoot;
+			json responseBodyRoot;
 			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
@@ -1336,7 +1334,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			!encodingCompleted)
 		{
 			// it should never happen
-			Json::Value responseBodyRoot;
+			json responseBodyRoot;
 
 			string field = "ingestionJobKey";
 			responseBodyRoot[field] = ingestionJobKey;
@@ -1362,7 +1360,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			if (encodingCompleted)
 			{
-				Json::Value responseBodyRoot;
+				json responseBodyRoot;
 
 				string field = "ingestionJobKey";
 				responseBodyRoot[field] = ingestionJobKey;
@@ -1494,7 +1492,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					}
 				}
 
-				Json::Value responseBodyRoot;
+				json responseBodyRoot;
 
 				string field = "ingestionJobKey";
 				responseBodyRoot[field] = ingestionJobKey;
@@ -1528,7 +1526,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 											// accadere mai
 						responseBodyRoot[field] = 100.0;
 					else
-						responseBodyRoot[field] = Json::nullValue;
+						responseBodyRoot[field] = nullptr;
 				}
 				else
 					responseBodyRoot[field] = encodingProgress;
@@ -1537,7 +1535,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			}
 			else if (liveProxyFound)
 			{
-				Json::Value responseBodyRoot;
+				json responseBodyRoot;
 
 				string field = "ingestionJobKey";
 				responseBodyRoot[field] = selectedLiveProxy->_ingestionJobKey;
@@ -1566,13 +1564,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// 2020-06-11: it's a live, it does not have
 				// sense the encoding progress
 				field = "encodingProgress";
-				responseBodyRoot[field] = Json::nullValue;
+				responseBodyRoot[field] = nullptr;
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
 			else // if (liveRecording)
 			{
-				Json::Value responseBodyRoot;
+				json responseBodyRoot;
 
 				string field = "ingestionJobKey";
 				responseBodyRoot[field] =
@@ -1606,7 +1604,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				//	it is calculated in
 				// EncoderVideoAudioProxy.cpp
 				field = "encodingProgress";
-				responseBodyRoot[field] = Json::nullValue;
+				responseBodyRoot[field] = nullptr;
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1737,9 +1735,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		string workflowMetadata;
 		try
 		{
-			Json::Value ingestedParametersRoot =
+			json ingestedParametersRoot =
 				selectedLiveProxy->_ingestedParametersRoot;
-			Json::Value encodingParametersRoot =
+			json encodingParametersRoot =
 				selectedLiveProxy->_encodingParametersRoot;
 
 			workflowMetadata = buildFilterNotificationIngestionWorkflow(
@@ -1753,12 +1751,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					string field = "internalMMS";
 					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 					{
-						Json::Value internalMMSRoot = ingestedParametersRoot[field];
+						json internalMMSRoot = ingestedParametersRoot[field];
 
 						field = "credentials";
 						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 						{
-							Json::Value credentialsRoot = internalMMSRoot[field];
+							json credentialsRoot = internalMMSRoot[field];
 
 							field = "userKey";
 							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
@@ -1839,7 +1837,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		string responseBody;
 		{
 			// it should never happen
-			Json::Value responseBodyRoot;
+			json responseBodyRoot;
 
 			string field = "ingestionJobKey";
 			responseBodyRoot[field] = ingestionJobKey;
@@ -2075,7 +2073,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					+ "}";
 			*/
 
-			Json::Value responseBodyRoot;
+			json responseBodyRoot;
 
 			string field = "ingestionJobKey";
 			responseBodyRoot[field] = ingestionJobKey;
@@ -2139,10 +2137,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		bool encodingFound = false;
 
-		Json::Value newInputsRoot;
+		json newInputsRoot;
 		try
 		{
-			newInputsRoot = JSONUtils::toJson(-1, encodingJobKey, requestBody);
+			newInputsRoot = JSONUtils::toJson(requestBody);
 		}
 		catch (runtime_error &e)
 		{
@@ -2241,7 +2239,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		string responseBody;
 		{
-			Json::Value responseBodyRoot;
+			json responseBodyRoot;
 
 			string field = "encodingJobKey";
 			responseBodyRoot[field] = encodingJobKey;
@@ -2608,13 +2606,13 @@ bool FFMPEGEncoder::basicAuthenticationRequired(
 void FFMPEGEncoder::encodeContentThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		EncodeContent encodeContent(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		encodeContent.encodeContent(metadataRoot);
@@ -2651,13 +2649,13 @@ void FFMPEGEncoder::encodeContentThread(
 void FFMPEGEncoder::overlayImageOnVideoThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		OverlayImageOnVideo overlayImageOnVideo(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		overlayImageOnVideo.encodeContent(metadataRoot);
@@ -2689,13 +2687,13 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 void FFMPEGEncoder::overlayTextOnVideoThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		OverlayTextOnVideo overlayTextOnVideo(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		overlayTextOnVideo.encodeContent(metadataRoot);
@@ -2727,13 +2725,13 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 void FFMPEGEncoder::generateFramesThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		GenerateFrames generateFrames(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		generateFrames.encodeContent(metadataRoot);
@@ -2754,13 +2752,13 @@ void FFMPEGEncoder::generateFramesThread(
 
 void FFMPEGEncoder::slideShowThread(
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		SlideShow slideShow(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		slideShow.encodeContent(metadataRoot);
@@ -2782,13 +2780,13 @@ void FFMPEGEncoder::slideShowThread(
 void FFMPEGEncoder::videoSpeedThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		VideoSpeed videoSpeed(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		videoSpeed.encodeContent(metadataRoot);
@@ -2820,13 +2818,13 @@ void FFMPEGEncoder::videoSpeedThread(
 void FFMPEGEncoder::addSilentAudioThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		AddSilentAudio addSilentAudio(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		addSilentAudio.encodeContent(metadataRoot);
@@ -2858,13 +2856,13 @@ void FFMPEGEncoder::addSilentAudioThread(
 void FFMPEGEncoder::pictureInPictureThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		PictureInPicture pictureInPicture(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		pictureInPicture.encodeContent(metadataRoot);
@@ -2896,13 +2894,13 @@ void FFMPEGEncoder::pictureInPictureThread(
 void FFMPEGEncoder::introOutroOverlayThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		IntroOutroOverlay introOutroOverlay(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		introOutroOverlay.encodeContent(metadataRoot);
@@ -2934,13 +2932,13 @@ void FFMPEGEncoder::introOutroOverlayThread(
 void FFMPEGEncoder::cutFrameAccurateThread(
 	// FCGX_Request& request,
 	shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey,
-	int64_t encodingJobKey, Json::Value metadataRoot
+	int64_t encodingJobKey, json metadataRoot
 )
 {
 	try
 	{
 		CutFrameAccurate cutFrameAccurate(
-			encoding, ingestionJobKey, encodingJobKey, _configuration,
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		cutFrameAccurate.encodeContent(metadataRoot);
@@ -2978,7 +2976,7 @@ void FFMPEGEncoder::liveRecorderThread(
 	try
 	{
 		LiveRecorder liveRecorder(
-			liveRecording, ingestionJobKey, encodingJobKey, _configuration,
+			liveRecording, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger,
 			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset
 		);
@@ -3035,7 +3033,7 @@ void FFMPEGEncoder::liveProxyThread(
 	try
 	{
 		LiveProxy liveProxy(
-			liveProxyData, ingestionJobKey, encodingJobKey, _configuration,
+			liveProxyData, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger,
 			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset
 		);
@@ -3092,7 +3090,7 @@ void FFMPEGEncoder::liveGridThread(
 	try
 	{
 		LiveGrid liveGrid(
-			liveProxyData, ingestionJobKey, encodingJobKey, _configuration,
+			liveProxyData, ingestionJobKey, encodingJobKey, _configurationRoot,
 			_encodingCompletedMutex, _encodingCompletedMap, _logger
 		);
 		liveGrid.encodeContent(requestBody);
@@ -3241,7 +3239,7 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 			if
 	(FileIO::fileExisting(_encoderCapabilityConfigurationPathName))
 			{
-					Json::Value
+					json
 	encoderCapabilityConfiguration = APICommon::loadConfigurationFile(
 							_encoderCapabilityConfigurationPathName.c_str());
 
@@ -3346,7 +3344,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 			if
 	(FileIO::fileExisting(_encoderCapabilityConfigurationPathName))
 			{
-					Json::Value
+					json
 	encoderCapabilityConfiguration = APICommon::loadConfigurationFile(
 							_encoderCapabilityConfigurationPathName.c_str());
 
@@ -3415,7 +3413,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 
 string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(
 	int64_t ingestionJobKey, string filterName,
-	Json::Value ingestedParametersRoot
+	json ingestedParametersRoot
 )
 {
 	string workflowMetadata;
@@ -3429,17 +3427,17 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(
 		}
 		*/
 
-		Json::Value eventTaskRoot = Json::nullValue;
+		json eventTaskRoot = nullptr;
 		{
 			string field = "internalMMS";
 			if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
 			{
-				Json::Value internalMMSRoot = ingestedParametersRoot[field];
+				json internalMMSRoot = ingestedParametersRoot[field];
 
 				field = "events";
 				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
 				{
-					Json::Value eventsRoot = internalMMSRoot[field];
+					json eventsRoot = internalMMSRoot[field];
 
 					if (filterName == "blackdetect" ||
 						filterName == "blackframe" ||
@@ -3464,7 +3462,7 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(
 			}
 		}
 
-		if (eventTaskRoot == Json::nullValue)
+		if (eventTaskRoot == nullptr)
 		{
 			SPDLOG_ERROR(
 				"buildFilterNotificationIngestionWorkflow, no events found in "
@@ -3476,7 +3474,7 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(
 			return "";
 		}
 
-		Json::Value workflowRoot;
+		json workflowRoot;
 
 		string field = "label";
 		workflowRoot[field] = filterName;

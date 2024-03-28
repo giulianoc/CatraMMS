@@ -15,7 +15,7 @@
 
 EncodersLoadBalancer::EncodersLoadBalancer(
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-    Json::Value configuration,
+    json configuration,
     shared_ptr<spdlog::logger> logger
 )
 {
@@ -23,7 +23,7 @@ EncodersLoadBalancer::EncodersLoadBalancer(
 	_mmsEngineDBFacade	= mmsEngineDBFacade;
 
 	/*
-    Json::Value encodersPools = configuration["ffmpeg"]["hosts"];
+    json encodersPools = configuration["ffmpeg"]["hosts"];
     
     for (auto const& encodersPoolName : encodersPools.getMemberNames())
     {
@@ -36,7 +36,7 @@ EncodersLoadBalancer::EncodersLoadBalancer(
         encodersPoolDetails._lastEncoderUsed = -1;
         
 		// encodersPool will be "common" or "workspaceKey"
-        Json::Value encodersPool = encodersPools[encodersPoolName];
+        json encodersPool = encodersPools[encodersPoolName];
         
         for (int encoderPoolIndex = 0; encoderPoolIndex < encodersPool.size(); encoderPoolIndex++)
         {

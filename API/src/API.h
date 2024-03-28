@@ -39,7 +39,7 @@ public:
         vector<RequestData>   _filesUploadProgressToBeMonitored;
     };
     
-    API(bool noFileSystemAccess, Json::Value configuration, 
+    API(bool noFileSystemAccess, json configurationRoot, 
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 		shared_ptr<MMSStorage> mmsStorage,
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
@@ -88,7 +88,7 @@ shared_ptr<spdlog::logger>	_logger;
 	int					_expirationInDaysWorkspaceDefaultValue;
 
 	string				_sharedEncodersPoolLabel;
-	Json::Value			_sharedEncodersLabel;
+	json			_sharedEncodersLabel;
 	int					_defaultSharedHLSChannelsNumber;
 
     // unsigned long       _binaryBufferLength;
@@ -136,7 +136,7 @@ shared_ptr<spdlog::logger>	_logger;
 
 	string				_keyPairId;
 	string				_privateKeyPEMPathName;
-	Json::Value			_vodCloudFrontHostNamesRoot;
+	json			_vodCloudFrontHostNamesRoot;
 
 	string				_emailProviderURL;
 	string				_emailUserName;
@@ -376,11 +376,11 @@ shared_ptr<spdlog::logger>	_logger;
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-	Json::Value manageWorkflowVariables(string requestBody, Json::Value variablesValuesToBeUsedRoot);
+	json manageWorkflowVariables(string requestBody, json variablesValuesToBeUsedRoot);
 
 	void manageReferencesInput(int64_t ingestionRootKey,
-			string taskOrGroupOfTasksLabel, string ingestionType, Json::Value& taskOrGroupOfTasksRoot,
-			bool parametersSectionPresent, Json::Value& parametersRoot,
+			string taskOrGroupOfTasksLabel, string ingestionType, json& taskOrGroupOfTasksRoot,
+			bool parametersSectionPresent, json& parametersRoot,
 			vector<int64_t>& dependOnIngestionJobKeysForStarting,
 			vector<int64_t>& dependOnIngestionJobKeysOverallInput,
 			unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey);
@@ -389,62 +389,62 @@ shared_ptr<spdlog::logger>	_logger;
     vector<int64_t> ingestionSingleTask(shared_ptr<PostgresConnection> conn, work& trans,
 			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-            Json::Value& taskRoot, 
+            json& taskRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
             vector<int64_t> dependOnIngestionJobKeysOverallInput,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-            /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+            /* string& responseBody, */ json& responseBodyTasksRoot);
 	#else
     vector<int64_t> ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-            Json::Value& taskRoot, 
+            json& taskRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
             vector<int64_t> dependOnIngestionJobKeysOverallInput,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-            /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+            /* string& responseBody, */ json& responseBodyTasksRoot);
 	#endif
         
 	#ifdef __POSTGRES__
 	vector<int64_t> ingestionGroupOfTasks(shared_ptr<PostgresConnection> conn,
 		work& trans, int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-        Json::Value& groupOfTasksRoot, 
+        json& groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
         vector<int64_t> dependOnIngestionJobKeysOverallInput,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-		/* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+		/* string& responseBody, */ json& responseBodyTasksRoot);
 	#else
 	vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 		int64_t userKey, string apiKey,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-        Json::Value& groupOfTasksRoot, 
+        json& groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
         vector<int64_t> dependOnIngestionJobKeysOverallInput,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-		/* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+		/* string& responseBody, */ json& responseBodyTasksRoot);
 	#endif
 
 	#ifdef __POSTGRES__
     void ingestionEvents(shared_ptr<PostgresConnection> conn, work& trans,
 			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-            Json::Value& taskOrGroupOfTasksRoot, 
+            json& taskOrGroupOfTasksRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
             vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
             vector<int64_t>& referencesOutputIngestionJobKeys,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-            /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+            /* string& responseBody, */ json& responseBodyTasksRoot);
 	#else
     void ingestionEvents(shared_ptr<MySQLConnection> conn,
 			int64_t userKey, string apiKey,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-            Json::Value& taskOrGroupOfTasksRoot, 
+            json& taskOrGroupOfTasksRoot, 
             vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
             vector<int64_t> dependOnIngestionJobKeysOverallInputOnError,
             vector<int64_t>& referencesOutputIngestionJobKeys,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
-            /* string& responseBody, */ Json::Value& responseBodyTasksRoot);
+            /* string& responseBody, */ json& responseBodyTasksRoot);
 	#endif
 
     void uploadedBinary(

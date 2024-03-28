@@ -7,7 +7,7 @@
 
 
 void EncodeContent::encodeContent(
-	Json::Value metadataRoot)
+	json metadataRoot)
 {
     string api = "encodeContent";
 
@@ -23,28 +23,28 @@ void EncodeContent::encodeContent(
 	// int64_t ingestionJobKey = 1;
     try
     {
-        // Json::Value metadataRoot = JSONUtils::toJson(
+        // json metadataRoot = JSONUtils::toJson(
 		// 	-1, _encodingJobKey, requestBody);
 
 		// ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
-		Json::Value ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
-		Json::Value encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
         int videoTrackIndexToBeUsed = JSONUtils::asInt(ingestedParametersRoot,
 			"VideoTrackIndex", -1);
         int audioTrackIndexToBeUsed = JSONUtils::asInt(ingestedParametersRoot,
 			"AudioTrackIndex", -1);
 
-		Json::Value filtersRoot = Json::nullValue;
+		json filtersRoot = nullptr;
 		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "filters"))
 			filtersRoot = ingestedParametersRoot["filters"];
 
-		Json::Value sourcesToBeEncodedRoot = encodingParametersRoot["sourcesToBeEncoded"];
-		Json::Value sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
-		Json::Value encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
+		json sourcesToBeEncodedRoot = encodingParametersRoot["sourcesToBeEncoded"];
+		json sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
+		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
         int64_t durationInMilliSeconds = JSONUtils::asInt64(sourceToBeEncodedRoot,
 				"sourceDurationInMilliSecs", -1);
@@ -52,11 +52,11 @@ void EncodeContent::encodeContent(
 				JSONUtils::asString(encodingParametersRoot, "contentType", ""));
         int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
 
-		Json::Value videoTracksRoot;
+		json videoTracksRoot;
 		string field = "videoTracks";
         if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			videoTracksRoot = sourceToBeEncodedRoot[field];
-		Json::Value audioTracksRoot;
+		json audioTracksRoot;
 		field = "audioTracks";
         if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			audioTracksRoot = sourceToBeEncodedRoot[field];

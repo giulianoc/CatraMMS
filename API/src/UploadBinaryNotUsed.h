@@ -18,7 +18,7 @@
 
 class UploadBinary: public APICommon {
 public:
-    UploadBinary(Json::Value configuration, 
+    UploadBinary(json configurationRoot, 
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
         mutex* fcgiAcceptMutex,

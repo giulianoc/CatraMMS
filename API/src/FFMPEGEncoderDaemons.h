@@ -9,6 +9,7 @@
 #endif
 #include "spdlog/spdlog.h"
 #include "FFMpeg.h"
+#include <deque>
 #include "catralibraries/GetCpuUsage.h"
 #include <string>
 #include <chrono>
@@ -26,7 +27,7 @@ class FFMPEGEncoderDaemons: public FFMPEGEncoderBase {
 
 	public:
 		FFMPEGEncoderDaemons(
-			Json::Value configuration,
+			json configurationRoot,
 			mutex* liveRecordingMutex,                                                                            
 			vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>* liveRecordingsCapability,
 			mutex* liveProxyMutex,

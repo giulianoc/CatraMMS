@@ -18,16 +18,22 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "spdlog/spdlog.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include <fstream>
+#include <deque>
 #include <vector>
 
 using namespace std;
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
+
 
 #ifndef __FILEREF__
     #ifdef __APPLE__
@@ -96,7 +102,7 @@ public:
 		int secondsToWaitBeforeToRetry = 15
 	);
 
-	static Json::Value httpGetJson(
+	static json httpGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -148,7 +154,7 @@ public:
 		int secondsToWaitBeforeToRetry = 15
 	);
 
-	static Json::Value httpPostStringAndGetJson(
+	static json httpPostStringAndGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -162,7 +168,7 @@ public:
 		int secondsToWaitBeforeToRetry = 15
 	);
 
-	static Json::Value httpPutStringAndGetJson(
+	static json httpPutStringAndGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -206,7 +212,7 @@ public:
 		int64_t contentRangeEnd_Excluded = -1
 	);
 
-	static Json::Value httpPostFileAndGetJson(
+	static json httpPostFileAndGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -221,7 +227,7 @@ public:
 		int64_t contentRangeEnd_Excluded = -1
 	);
 
-	static Json::Value httpPutFileAndGetJson(
+	static json httpPutFileAndGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -269,7 +275,7 @@ public:
 		int secondsToWaitBeforeToRetry = 15
 	);
 
-	static Json::Value httpPostFormDataAndGetJson(
+	static json httpPostFormDataAndGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -279,7 +285,7 @@ public:
 		int secondsToWaitBeforeToRetry = 15
 	);
 
-	static Json::Value httpPutFormDataAndGetJson(
+	static json httpPutFormDataAndGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -319,7 +325,7 @@ public:
 		int64_t contentRangeEnd_Excluded = -1
 	);
 
-	static Json::Value httpPostFileByFormDataAndGetJson(
+	static json httpPostFileByFormDataAndGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
@@ -334,7 +340,7 @@ public:
 		int64_t contentRangeEnd_Excluded = -1
 	);
 
-	static Json::Value httpPutFileByFormDataAndGetJson(
+	static json httpPutFileByFormDataAndGetJson(
 		shared_ptr<spdlog::logger> logger,
 		int64_t ingestionJobKey,
 		string url,
