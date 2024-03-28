@@ -43,7 +43,6 @@ string JSONUtils::asString(json root, string field, string defaultValue)
 				return root.template get<string>();
 		}
 		else
-			return root.at(field);
 		{
 			if (root.type() == json::value_t::number_integer ||
 				root.type() == json::value_t::number_float)
