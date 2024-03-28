@@ -85,7 +85,8 @@ MMSEngineProcessor::MMSEngineProcessor(
 		to_string(_progressUpdatePeriodInSeconds)
 	);
 	_secondsWaitingAmongDownloadingAttempt = JSONUtils::asInt(
-		configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt", 5
+		configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt",
+		5
 	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
@@ -93,15 +94,16 @@ MMSEngineProcessor::MMSEngineProcessor(
 		to_string(_secondsWaitingAmongDownloadingAttempt)
 	);
 
-	_maxIngestionJobsPerEvent =
-		JSONUtils::asInt(configurationRoot["mms"], "maxIngestionJobsPerEvent", 5);
+	_maxIngestionJobsPerEvent = JSONUtils::asInt(
+		configurationRoot["mms"], "maxIngestionJobsPerEvent", 5
+	);
 	SPDLOG_INFO(
-		string() + "Configuration item" +
-		", mms->maxIngestionJobsPerEvent: " +
+		string() + "Configuration item" + ", mms->maxIngestionJobsPerEvent: " +
 		to_string(_maxIngestionJobsPerEvent)
 	);
-	_maxEncodingJobsPerEvent =
-		JSONUtils::asInt(configurationRoot["mms"], "maxEncodingJobsPerEvent", 5);
+	_maxEncodingJobsPerEvent = JSONUtils::asInt(
+		configurationRoot["mms"], "maxEncodingJobsPerEvent", 5
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent)
@@ -172,14 +174,16 @@ MMSEngineProcessor::MMSEngineProcessor(
 		", EmailNotification->cc: " + _emailCcsCommaSeparated
 	);
 
-	_facebookGraphAPIProtocol =
-		JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "protocol", "");
+	_facebookGraphAPIProtocol = JSONUtils::asString(
+		_configurationRoot["FacebookGraphAPI"], "protocol", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol
 	);
-	_facebookGraphAPIHostName =
-		JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "hostName", "");
+	_facebookGraphAPIHostName = JSONUtils::asString(
+		_configurationRoot["FacebookGraphAPI"], "hostName", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName
@@ -197,8 +201,9 @@ MMSEngineProcessor::MMSEngineProcessor(
 		string() + "Configuration item" +
 		", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort)
 	);
-	_facebookGraphAPIVersion =
-		JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "version", "");
+	_facebookGraphAPIVersion = JSONUtils::asString(
+		_configurationRoot["FacebookGraphAPI"], "version", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", FacebookGraphAPI->version: " + _facebookGraphAPIVersion
@@ -209,8 +214,9 @@ MMSEngineProcessor::MMSEngineProcessor(
 		string() + "Configuration item" + ", FacebookGraphAPI->timeout: " +
 		to_string(_facebookGraphAPITimeoutInSeconds)
 	);
-	_facebookGraphAPIClientId =
-		JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientId", "");
+	_facebookGraphAPIClientId = JSONUtils::asString(
+		_configurationRoot["FacebookGraphAPI"], "clientId", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId
@@ -244,14 +250,16 @@ MMSEngineProcessor::MMSEngineProcessor(
 		", FacebookGraphAPI->liveVideosURI: " + _facebookGraphAPILiveVideosURI
 	);
 
-	_youTubeDataAPIProtocol =
-		JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "protocol", "");
+	_youTubeDataAPIProtocol = JSONUtils::asString(
+		_configurationRoot["YouTubeDataAPI"], "protocol", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol
 	);
-	_youTubeDataAPIHostName =
-		JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "hostName", "");
+	_youTubeDataAPIHostName = JSONUtils::asString(
+		_configurationRoot["YouTubeDataAPI"], "hostName", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName
@@ -312,8 +320,9 @@ MMSEngineProcessor::MMSEngineProcessor(
 		", YouTubeDataAPI->timeoutForUploadVideo: " +
 		to_string(_youTubeDataAPITimeoutInSecondsForUploadVideo)
 	);
-	_youTubeDataAPIClientId =
-		JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "clientId", "");
+	_youTubeDataAPIClientId = JSONUtils::asString(
+		_configurationRoot["YouTubeDataAPI"], "clientId", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId
@@ -326,8 +335,9 @@ MMSEngineProcessor::MMSEngineProcessor(
 		", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret
 	);
 
-	_localCopyTaskEnabled =
-		JSONUtils::asBool(_configurationRoot["mms"], "localCopyTaskEnabled", false);
+	_localCopyTaskEnabled = JSONUtils::asBool(
+		_configurationRoot["mms"], "localCopyTaskEnabled", false
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled)
@@ -336,14 +346,12 @@ MMSEngineProcessor::MMSEngineProcessor(
 	string mmsAPIProtocol =
 		JSONUtils::asString(_configurationRoot["api"], "protocol", "");
 	SPDLOG_INFO(
-		string() + "Configuration item" +
-		", api->protocol: " + mmsAPIProtocol
+		string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol
 	);
 	string mmsAPIHostname =
 		JSONUtils::asString(_configurationRoot["api"], "hostname", "");
 	SPDLOG_INFO(
-		string() + "Configuration item" +
-		", api->hostname: " + mmsAPIHostname
+		string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname
 	);
 	int mmsAPIPort = JSONUtils::asInt(_configurationRoot["api"], "port", 0);
 	SPDLOG_INFO(
@@ -367,14 +375,16 @@ MMSEngineProcessor::MMSEngineProcessor(
 		string() + "Configuration item" +
 		", api->ingestionURI: " + mmsAPIIngestionURI
 	);
-	string mmsBinaryProtocol =
-		JSONUtils::asString(_configurationRoot["api"]["binary"], "protocol", "");
+	string mmsBinaryProtocol = JSONUtils::asString(
+		_configurationRoot["api"]["binary"], "protocol", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", api->binary->protocol: " + mmsBinaryProtocol
 	);
-	string mmsBinaryHostname =
-		JSONUtils::asString(_configurationRoot["api"]["binary"], "hostname", "");
+	string mmsBinaryHostname = JSONUtils::asString(
+		_configurationRoot["api"]["binary"], "hostname", ""
+	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", api->binary->hostname: " + mmsBinaryHostname
@@ -427,7 +437,8 @@ MMSEngineProcessor::MMSEngineProcessor(
 	);
 
 	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(
-		configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000
+		configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait",
+		60000
 	);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
@@ -1659,7 +1670,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 					try
 					{
-						Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+						Validator validator(
+							_logger, _mmsEngineDBFacade, _configurationRoot
+						);
 						if (ingestionType ==
 							MMSEngineDBFacade::IngestionType::GroupOfTasks)
 							validator.validateGroupOfTasksMetadata(
@@ -1957,8 +1970,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (runtime_error &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"getMediaSourceDetails failed" +
+									string() + "getMediaSourceDetails failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -2022,8 +2034,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"getMediaSourceDetails failed" +
+									string() + "getMediaSourceDetails failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -2532,8 +2543,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										string processorMMS = "";
 
 										SPDLOG_INFO(
-											string() +
-											"Update IngestionJob" +
+											string() + "Update IngestionJob" +
 											", _processorIdentifier: " +
 											to_string(_processorIdentifier) +
 											", ingestionJobKey: " +
@@ -3109,8 +3119,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (runtime_error &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"localCopyContentThread failed" +
+									string() + "localCopyContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3172,8 +3181,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"localCopyContentThread failed" +
+									string() + "localCopyContentThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3603,8 +3611,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (runtime_error &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"manageVideoSpeedTask failed" +
+									string() + "manageVideoSpeedTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -3668,8 +3675,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"manageVideoSpeedTask failed" +
+									string() + "manageVideoSpeedTask failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4238,8 +4244,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										string processorMMS = "";
 
 										SPDLOG_INFO(
-											string() +
-											"Update IngestionJob" +
+											string() + "Update IngestionJob" +
 											", _processorIdentifier: " +
 											to_string(_processorIdentifier) +
 											", ingestionJobKey: " +
@@ -4847,8 +4852,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (runtime_error &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"manageCutMediaThread failed" +
+									string() + "manageCutMediaThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -4910,8 +4914,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"manageCutMediaThread failed" +
+									string() + "manageCutMediaThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5901,8 +5904,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (runtime_error &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"checkStreamingThread failed" +
+									string() + "checkStreamingThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -5966,8 +5968,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"checkStreamingThread failed" +
+									string() + "checkStreamingThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6267,8 +6268,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (runtime_error &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"postOnFacebookThread failed" +
+									string() + "postOnFacebookThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -6330,8 +6330,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"postOnFacebookThread failed" +
+									string() + "postOnFacebookThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -8305,8 +8304,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (runtime_error &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"changeFileFormatThread failed" +
+									string() + "changeFileFormatThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -8368,8 +8366,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
-									string() +
-									"changeFileFormatThread failed" +
+									string() + "changeFileFormatThread failed" +
 									", _processorIdentifier: " +
 									to_string(_processorIdentifier) +
 									", ingestionJobKey: " +
@@ -8691,9 +8688,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() + "validateMetadata failed" +
-			", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " +
+			string() + "validateMetadata failed" + ", _processorIdentifier: " +
+			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", exception: " + e.what()
 		);
@@ -8802,7 +8798,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 				// cui, anche 			in questo caso,
 				// workspaceIngestionBinaryPathName è la directory
 				//<ingestionJobKey>_source 		2.2 In caso di <upload tramite
-				//PUSH>, abbiamo evitato che API::uploadedBinary
+				// PUSH>, abbiamo evitato che API::uploadedBinary
 				// chiamasse
 				// MMSStorage::manageTarFileInCaseOfIngestionOfSegments perchè
 				// manageTar... 			potrebbe impiegare anche parecchi
@@ -9027,9 +9023,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
-			string() + "validateMetadata failed" +
-			", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " +
+			string() + "validateMetadata failed" + ", _processorIdentifier: " +
+			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", localAssetIngestionEvent.getMetadataContent(): " +
 			localAssetIngestionEvent.getMetadataContent() +
@@ -9115,9 +9110,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() + "validateMetadata failed" +
-			", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " +
+			string() + "validateMetadata failed" + ", _processorIdentifier: " +
+			to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", exception: " + e.what()
 		);
@@ -9968,9 +9962,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -10058,9 +10051,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -10258,9 +10250,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -10349,9 +10340,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -10468,9 +10458,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -10560,9 +10549,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -10652,9 +10640,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -10744,9 +10731,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -10835,9 +10821,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -11071,8 +11056,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 		if (variantOfMediaItemKey == -1)
 		{
 			SPDLOG_INFO(
-				string() +
-				"_mmsEngineDBFacade->saveSourceContentMetadata..." +
+				string() + "_mmsEngineDBFacade->saveSourceContentMetadata..." +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11179,8 +11163,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			}
 
 			SPDLOG_INFO(
-				string() +
-				"_mmsEngineDBFacade->saveVariantContentMetadata.." +
+				string() + "_mmsEngineDBFacade->saveVariantContentMetadata.." +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", workspaceKey: " +
 				to_string(localAssetIngestionEvent.getWorkspace()->_workspaceKey
@@ -11240,9 +11223,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 			);
 
 			SPDLOG_INFO(
-				string() + "Update IngestionJob" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " +
+				string() + "Update IngestionJob" + ", _processorIdentifier: " +
+				to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_TaskSuccess" +
 				", errorMessage: " + ""
@@ -11426,8 +11408,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
-			string() +
-			"_mmsEngineDBFacade->saveSourceContentMetadata failed" +
+			string() + "_mmsEngineDBFacade->saveSourceContentMetadata failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -11508,8 +11489,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() +
-			"_mmsEngineDBFacade->saveSourceContentMetadata failed" +
+			string() + "_mmsEngineDBFacade->saveSourceContentMetadata failed" +
 			", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey())
@@ -12687,8 +12667,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				string() +
-				"No configured media to be used to extract a track" +
+				string() + "No configured media to be used to extract a track" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
@@ -13420,8 +13399,7 @@ void MMSEngineProcessor::httpCallbackThread(
 									callbackMedatada["title"] = localTitle;
 
 									if (userData == "")
-										callbackMedatada["userData"] =
-											nullptr;
+										callbackMedatada["userData"] = nullptr;
 									else
 									{
 										json userDataRoot =
@@ -13811,8 +13789,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				string() +
-				"No configured any media to be posted on Facebook" +
+				string() + "No configured any media to be posted on Facebook" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
@@ -14137,8 +14114,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		if (dependencies.size() == 0)
 		{
 			string errorMessage =
-				string() +
-				"No configured any media to be posted on YouTube" +
+				string() + "No configured any media to be posted on YouTube" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", dependencies.size: " + to_string(dependencies.size());
@@ -15493,8 +15469,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					catch (runtime_error &e)
 					{
 						SPDLOG_ERROR(
-							string() +
-							"handleLocalAssetIngestionEvent failed" +
+							string() + "handleLocalAssetIngestionEvent failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", exception: " + e.what()
@@ -15517,8 +15492,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					catch (exception &e)
 					{
 						SPDLOG_ERROR(
-							string() +
-							"handleLocalAssetIngestionEvent failed" +
+							string() + "handleLocalAssetIngestionEvent failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", exception: " + e.what()
@@ -16370,9 +16344,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "outputs";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
-			else if (JSONUtils::isMetadataPresent(
-						 parametersRoot, "Outputs"
-					 ))
+			else if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs"))
 				outputsRoot = parametersRoot["Outputs"];
 
 			if (JSONUtils::isMetadataPresent(
@@ -16779,7 +16751,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 						//	- In this case (PUSH of m3u8) there is the
 						// convention that 		the directory name has to be
 						// 'content' 		(see the
-						//TASK_01_Add_Content_JSON_Format.txt documentation)
+						// TASK_01_Add_Content_JSON_Format.txt documentation)
 						//	- the last part of the
 						// virtualVODTranscoderStagingContentsPath variable
 						// is used to name the m3u8 virtual vod directory
@@ -16999,7 +16971,8 @@ void MMSEngineProcessor::manageLiveProxy(
 			// EncodersPool override the one included in ChannelConf if present
 			string field = "encodersPool";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, field, "");
+				taskEncodersPoolLabel =
+					JSONUtils::asString(parametersRoot, field, "");
 
 			field = "defaultBroadcast";
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
@@ -17207,14 +17180,12 @@ void MMSEngineProcessor::manageLiveProxy(
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				drawTextDetailsRoot = parametersRoot[field];
 
-			json streamInputRoot =
-				_mmsEngineDBFacade->getStreamInputRoot(
-					workspace, ingestionJobKey, configurationLabel,
-					useVideoTrackFromPhysicalPathName,
-					useVideoTrackFromPhysicalDeliveryURL, maxWidth, userAgent,
-					otherInputOptions, taskEncodersPoolLabel,
-					drawTextDetailsRoot
-				);
+			json streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
+				workspace, ingestionJobKey, configurationLabel,
+				useVideoTrackFromPhysicalPathName,
+				useVideoTrackFromPhysicalDeliveryURL, maxWidth, userAgent,
+				otherInputOptions, taskEncodersPoolLabel, drawTextDetailsRoot
+			);
 
 			json inputRoot;
 			{
@@ -17456,8 +17427,7 @@ void MMSEngineProcessor::manageVODProxy(
 					stopIfReferenceProcessingError) = keyAndDependencyType;
 
 				SPDLOG_INFO(
-					string() + "manageVODProxy" +
-					", _processorIdentifier: " +
+					string() + "manageVODProxy" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", key: " + to_string(key)
 				);
@@ -17673,8 +17643,7 @@ void MMSEngineProcessor::manageVODProxy(
 
 void MMSEngineProcessor::manageCountdown(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
-	string ingestionDate, shared_ptr<Workspace> workspace,
-	json parametersRoot,
+	string ingestionDate, shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<
 		int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType,
 		bool>> &dependencies
@@ -17927,12 +17896,11 @@ void MMSEngineProcessor::manageCountdown(
 
 			// same json structure is used in
 			// API_Ingestion::changeLiveProxyPlaylist
-			json countdownInputRoot =
-				_mmsEngineDBFacade->getCountdownInputRoot(
-					mmsSourceVideoAssetPathName, mmsSourceVideoAssetDeliveryURL,
-					sourcePhysicalPathKey, videoDurationInMilliSeconds,
-					drawTextDetailsRoot
-				);
+			json countdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
+				mmsSourceVideoAssetPathName, mmsSourceVideoAssetDeliveryURL,
+				sourcePhysicalPathKey, videoDurationInMilliSeconds,
+				drawTextDetailsRoot
+			);
 
 			json inputRoot;
 			{
@@ -18005,8 +17973,8 @@ void MMSEngineProcessor::manageCountdown(
 }
 
 json MMSEngineProcessor::getReviewedOutputsRoot(
-	json outputsRoot, shared_ptr<Workspace> workspace,
-	int64_t ingestionJobKey, bool encodingProfileMandatory
+	json outputsRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+	bool encodingProfileMandatory
 )
 {
 	json localOutputsRoot = json::array();
@@ -18174,16 +18142,14 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 			tie(ignore, encodingProfileContentType, ignore,
 				jsonEncodingProfile) = encodingProfileDetails;
 
-			encodingProfileDetailsRoot =
-				JSONUtils::toJson(jsonEncodingProfile);
+			encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
 		}
 		else
 		{
 			if (encodingProfileMandatory)
 			{
 				string errorMessage =
-					string() +
-					"EncodingProfile is mandatory in case of Image" +
+					string() + "EncodingProfile is mandatory in case of Image" +
 					", ingestionJobKey: " + to_string(ingestionJobKey);
 				SPDLOG_ERROR(errorMessage);
 
@@ -18688,22 +18654,21 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
 				int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 				json responseFields = nullptr;
-				json mediaItemsListRoot =
-					_mmsEngineDBFacade->getMediaItemsList(
-						workspace->_workspaceKey, mediaItemKey, uniqueName,
-						physicalPathKey, otherMediaItemsKey, start, rows,
-						contentTypePresent, contentType,
-						// startAndEndIngestionDatePresent,
-						startIngestionDate, endIngestionDate, title,
-						liveRecordingChunk, recordingCode,
-						utcCutPeriodStartTimeInMilliSeconds,
-						utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
-						jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy,
-						responseFields, admin,
-						// 2022-12-18: MIKs potrebbero essere stati appena
-						// aggiunti
-						true
-					);
+				json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
+					workspace->_workspaceKey, mediaItemKey, uniqueName,
+					physicalPathKey, otherMediaItemsKey, start, rows,
+					contentTypePresent, contentType,
+					// startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate, title,
+					liveRecordingChunk, recordingCode,
+					utcCutPeriodStartTimeInMilliSeconds,
+					utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+					jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy,
+					responseFields, admin,
+					// 2022-12-18: MIKs potrebbero essere stati appena
+					// aggiunti
+					true
+				);
 
 				string field = "response";
 				json responseRoot = mediaItemsListRoot[field];
@@ -18740,8 +18705,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 							throw runtime_error(errorMessage);
 						}
 
-						userDataRoot =
-							JSONUtils::toJson(userData);
+						userDataRoot = JSONUtils::toJson(userData);
 					}
 
 					field = "mmsData";
@@ -18938,8 +18902,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				start += rows;
 
 				SPDLOG_INFO(
-					string() + "Retrieving chunk" +
-					", _processorIdentifier: " +
+					string() + "Retrieving chunk" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", start: " + to_string(start) +
@@ -19160,12 +19123,11 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 						//		(see Json::ValueType definition:
 						// http://jsoncpp.sourceforge.net/value_8h_source.html)
 
-                        json::value_t valueType =
+						json::value_t valueType =
 							liveCutParametersRoot[field].type();
 
 						SPDLOG_INFO(
-							string() +
-							"Preparing workflow to ingest... (2)" +
+							string() + "Preparing workflow to ingest... (2)" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -19585,22 +19547,21 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			do
 			{
 				json responseFields = nullptr;
-				json mediaItemsListRoot =
-					_mmsEngineDBFacade->getMediaItemsList(
-						workspace->_workspaceKey, mediaItemKey, uniqueName,
-						physicalPathKey, otherMediaItemsKey, start, rows,
-						contentTypePresent, contentType,
-						// startAndEndIngestionDatePresent,
-						startIngestionDate, endIngestionDate, title,
-						liveRecordingChunk, recordingCode,
-						utcCutPeriodStartTimeInMilliSeconds,
-						utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
-						jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy,
-						responseFields, admin,
-						// 2022-12-18: MIKs potrebbero essere stati appena
-						// aggiunti
-						true
-					);
+				json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
+					workspace->_workspaceKey, mediaItemKey, uniqueName,
+					physicalPathKey, otherMediaItemsKey, start, rows,
+					contentTypePresent, contentType,
+					// startAndEndIngestionDatePresent,
+					startIngestionDate, endIngestionDate, title,
+					liveRecordingChunk, recordingCode,
+					utcCutPeriodStartTimeInMilliSeconds,
+					utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+					jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy,
+					responseFields, admin,
+					// 2022-12-18: MIKs potrebbero essere stati appena
+					// aggiunti
+					true
+				);
 
 				string field = "response";
 				json responseRoot = mediaItemsListRoot[field];
@@ -19637,8 +19598,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							throw runtime_error(errorMessage);
 						}
 
-						userDataRoot =
-							JSONUtils::toJson(userData);
+						userDataRoot = JSONUtils::toJson(userData);
 					}
 
 					field = "mmsData";
@@ -19861,8 +19821,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				start += rows;
 
 				SPDLOG_INFO(
-					string() + "Retrieving chunk" +
-					", _processorIdentifier: " +
+					string() + "Retrieving chunk" + ", _processorIdentifier: " +
 					to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", start: " + to_string(start) +
@@ -20101,11 +20060,11 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						//		(see Json::ValueType definition:
 						// http://jsoncpp.sourceforge.net/value_8h_source.html)
 
-            json::value_t valueType = liveCutParametersRoot[field].type();
+						json::value_t valueType =
+							liveCutParametersRoot[field].type();
 
 						SPDLOG_INFO(
-							string() +
-							"Preparing workflow to ingest... (2)" +
+							string() + "Preparing workflow to ingest... (2)" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -22779,8 +22738,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 						generatedFrameIngestionFailed = true;
 
 						SPDLOG_ERROR(
-							string() +
-							"handleLocalAssetIngestionEvent failed" +
+							string() + "handleLocalAssetIngestionEvent failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", exception: " + e.what()
@@ -22791,8 +22749,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 						generatedFrameIngestionFailed = true;
 
 						SPDLOG_ERROR(
-							string() +
-							"handleLocalAssetIngestionEvent failed" +
+							string() + "handleLocalAssetIngestionEvent failed" +
 							", _processorIdentifier: " +
 							to_string(_processorIdentifier) +
 							", exception: " + e.what()
@@ -23828,14 +23785,12 @@ void MMSEngineProcessor::manageConcatThread(
 				if (lastUserData != "")
 				{
 					// try to retrieve time codes
-					json sourceUserDataRoot =
-						JSONUtils::toJson(lastUserData);
+					json sourceUserDataRoot = JSONUtils::toJson(lastUserData);
 
 					string field = "mmsData";
 					if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
 					{
-						json sourceMmsDataRoot =
-							sourceUserDataRoot[field];
+						json sourceMmsDataRoot = sourceUserDataRoot[field];
 
 						string utcStartTimeInMilliSecsField =
 							"utcStartTimeInMilliSecs";
@@ -23968,8 +23923,7 @@ void MMSEngineProcessor::manageConcatThread(
 			if (lastUserData != "")
 			{
 				// try to retrieve time codes
-				json sourceUserDataRoot =
-					JSONUtils::toJson(lastUserData);
+				json sourceUserDataRoot = JSONUtils::toJson(lastUserData);
 
 				string field = "mmsData";
 				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
@@ -24629,7 +24583,10 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				throw runtime_error(errorMessage);
 			}
+			int aaa = 0;
+			SPDLOG_INFO("aaa: {}, parametersRoot: {}", aaa++, JSONUtils::toString(parametersRoot));
 			startTime = JSONUtils::asString(parametersRoot, field, "");
+			SPDLOG_INFO("aaa: {}", aaa++);
 
 			field = "endTime";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -24654,7 +24611,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 			}
+			SPDLOG_INFO("aaa: {}", aaa++);
 			endTime = JSONUtils::asString(parametersRoot, field, "");
+			SPDLOG_INFO("aaa: {}", aaa++);
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 			{
@@ -24741,9 +24700,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 			field = "timesRelativeToMetaDataField";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
+				SPDLOG_INFO("aaa: {}", aaa++);
 				string timesRelativeToMetaDataField = JSONUtils::asString(
 					parametersRoot, field, timesRelativeToMetaDataField
 				);
+				SPDLOG_INFO("aaa: {}", aaa++);
 
 				string metaData;
 				{
@@ -24770,12 +24731,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 
-				json metaDataRoot =
-					JSONUtils::toJson(metaData);
+				json metaDataRoot = JSONUtils::toJson(metaData);
 
+				SPDLOG_INFO("aaa: {}", aaa++);
 				string timeCode = JSONUtils::asString(
 					metaDataRoot, timesRelativeToMetaDataField, ""
 				);
+				SPDLOG_INFO("aaa: {}", aaa++);
 				if (timeCode == "")
 				{
 					string errorMessage = fmt::format(
@@ -24996,8 +24958,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			if (framesNumber == -1 && userData != "")
 			{
 				// try to retrieve time codes
-				json sourceUserDataRoot =
-					JSONUtils::toJson(userData);
+				json sourceUserDataRoot = JSONUtils::toJson(userData);
 
 				int64_t utcStartTimeInMilliSecs = -1;
 				int64_t utcEndTimeInMilliSecs = -1;
@@ -25346,8 +25307,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				else
 				{
 					string errorMessage =
-						string() +
-						"Both fields are not present or it is null" +
+						string() + "Both fields are not present or it is null" +
 						", _processorIdentifier: " +
 						to_string(_processorIdentifier) +
 						", Field: " + keyField + ", Field: " + labelField;
@@ -25369,7 +25329,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 					tie(ignore, ignore, ignore, jsonEncodingProfile) =
 						encodingProfileDetails;
 
-					encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
+					encodingProfileDetailsRoot =
+						JSONUtils::toJson(jsonEncodingProfile);
 				}
 			}
 
@@ -25659,8 +25620,10 @@ void MMSEngineProcessor::manageEncodeTask(
 		// the RemoveContent task). 		This is not a good solution because,
 		// in case of the Encode task and in case of videos, 		every
 		// encoding would take a lot of time. Manage all these encodings
-		// sequentially 		is not what the User expect to see. 	Solution no.
-		//2: 		we can create one EncodingJob for each encoding. This is exactly
+		// sequentially 		is not what the User expect to see. 	Solution
+		// no.
+		// 2: 		we can create one EncodingJob for each encoding. This is
+		// exactly
 		// what the User expects 		because the encodings will run in
 		// parallel.
 		//
@@ -25677,11 +25640,12 @@ void MMSEngineProcessor::manageEncodeTask(
 		// sequentially. 	For video/audio we cannot manage it sequentially
 		// (like images) mainly because 	the encoder URL and the staging
 		// directory are saved into the database 	to manage the recovering in
-		// case of reboot of the Engine. 	This recovery is very important and I
-		//do not know how to manage it 	in case the task has in his queue a list
-		//of encodings to do!!! 	We should save into DB also the specific
-		//encoding it is doing?!?!??! 	Also che encoding progress would not have
-		//sense in the "sequential/queue" scenario
+		// case of reboot of the Engine. 	This recovery is very important and
+		// I
+		// do not know how to manage it 	in case the task has in his queue a
+		// list of encodings to do!!! 	We should save into DB also the specific
+		// encoding it is doing?!?!??! 	Also che encoding progress would not
+		// have sense in the "sequential/queue" scenario
 		json sourcesToBeEncodedRoot = json::array();
 		{
 			// 2022-12-10: next for and the sourcesToBeEncodedRoot structure
@@ -27640,8 +27604,7 @@ void MMSEngineProcessor::emailNotificationThread(
 				{
 					try
 					{
-						json referenceRoot =
-							referencesRoot[referenceIndex];
+						json referenceRoot = referencesRoot[referenceIndex];
 						field = "ingestionJobKey";
 						if (JSONUtils::isMetadataPresent(referenceRoot, field))
 						{
@@ -27683,7 +27646,8 @@ void MMSEngineProcessor::emailNotificationThread(
 								MMSEngineDBFacade::IngestionType::
 									CheckStreaming)
 							{
-								json parametersRoot = JSONUtils::toJson(parameters);
+								json parametersRoot =
+									JSONUtils::toJson(parameters);
 
 								string inputType;
 								field = "inputType";
@@ -28923,9 +28887,8 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
-			string() + "getEncodingJobs failed" +
-			", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", exception: " + e.what()
+			string() + "getEncodingJobs failed" + ", _processorIdentifier: " +
+			to_string(_processorIdentifier) + ", exception: " + e.what()
 		);
 
 		throw e;
@@ -28933,9 +28896,8 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() + "getEncodingJobs failed" +
-			", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", exception: " + e.what()
+			string() + "getEncodingJobs failed" + ", _processorIdentifier: " +
+			to_string(_processorIdentifier) + ", exception: " + e.what()
 		);
 
 		throw e;
@@ -29436,8 +29398,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			catch (runtime_error &e)
 			{
 				SPDLOG_ERROR(
-					string() +
-					"DBDataRetention: Delivery Autorization failed" +
+					string() + "DBDataRetention: Delivery Autorization failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -29448,8 +29409,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			catch (exception &e)
 			{
 				SPDLOG_ERROR(
-					string() +
-					"DBDataRetention: Delivery Autorization failed" +
+					string() + "DBDataRetention: Delivery Autorization failed" +
 					", _processorIdentifier: " +
 					to_string(_processorIdentifier) + ", exception: " + e.what()
 				);
@@ -29460,8 +29420,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			SPDLOG_INFO(
-				string() +
-				"DBDataRetention: Delivery Autorization finished" +
+				string() + "DBDataRetention: Delivery Autorization finished" +
 				", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", @MMS statistics@ - duration (secs): @" +
 				to_string(
@@ -31256,11 +31215,10 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			formData.push_back(make_pair("upload_phase", "start"));
 			formData.push_back(make_pair("file_size", to_string(sizeInBytes)));
 
-			json facebookResponseRoot =
-				MMSCURL::httpPostFormDataAndGetJson(
-					_logger, ingestionJobKey, facebookURL, formData,
-					_facebookGraphAPITimeoutInSeconds
-				);
+			json facebookResponseRoot = MMSCURL::httpPostFormDataAndGetJson(
+				_logger, ingestionJobKey, facebookURL, formData,
+				_facebookGraphAPITimeoutInSeconds
+			);
 
 			string field = "upload_session_id";
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
@@ -31419,11 +31377,10 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			formData.push_back(make_pair("upload_phase", "finish"));
 			formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
-			json facebookResponseRoot =
-				MMSCURL::httpPostFormDataAndGetJson(
-					_logger, ingestionJobKey, facebookURL, formData,
-					_facebookGraphAPITimeoutInSeconds
-				);
+			json facebookResponseRoot = MMSCURL::httpPostFormDataAndGetJson(
+				_logger, ingestionJobKey, facebookURL, formData,
+				_facebookGraphAPITimeoutInSeconds
+			);
 
 			string field = "success";
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
@@ -31907,8 +31864,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						 responseCode == 503 || responseCode == 504)
 				{
 					_logger->warn(
-						string() +
-						"youTube upload failed, trying to resume" +
+						string() + "youTube upload failed, trying to resume" +
 						", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", youTubeUploadURL: " + youTubeUploadURL +
 						", responseCode: " + to_string(responseCode)
@@ -32356,8 +32312,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 					  "&access_token=" + curlpp::escape(userAccessToken);
 
 		SPDLOG_INFO(
-			string() + "Retrieve page token" +
-			", facebookURL: " + facebookURL
+			string() + "Retrieve page token" + ", facebookURL: " + facebookURL
 		);
 
 		vector<string> otherHeaders;
@@ -32414,9 +32369,8 @@ string MMSEngineProcessor::getFacebookPageToken(
 void MMSEngineProcessor::userHttpCallback(
 	int64_t ingestionJobKey, string httpProtocol, string httpHostName,
 	int httpPort, string httpURI, string httpURLParameters, bool formData,
-	string httpMethod, long callbackTimeoutInSeconds,
-	json userHeadersRoot, string &httpBody, string userName,
-	string password, int maxRetries
+	string httpMethod, long callbackTimeoutInSeconds, json userHeadersRoot,
+	string &httpBody, string userName, string password, int maxRetries
 )
 {
 
@@ -32429,13 +32383,14 @@ void MMSEngineProcessor::userHttpCallback(
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
 			", httpProtocol: {}"
-            ", httpHostName: {}"
+			", httpHostName: {}"
 			", httpPort: {}"
 			", httpURI: {}"
 			", httpURLParameters: {}"
-            ", formData: {}"
-			", maxRetries: {}"
-            , _processorIdentifier, ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, httpURLParameters, formData, maxRetries
+			", formData: {}"
+			", maxRetries: {}",
+			_processorIdentifier, ingestionJobKey, httpProtocol, httpHostName,
+			httpPort, httpURI, httpURLParameters, formData, maxRetries
 		);
 
 		userURL = httpProtocol + "://" + httpHostName + ":" +
@@ -32458,13 +32413,11 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					json formDataParameters =
-						JSONUtils::toJson(httpBody);
+					json formDataParameters = JSONUtils::toJson(httpBody);
 					for (int paramIndex = 0;
 						 paramIndex < formDataParameters.size(); paramIndex++)
 					{
-						json formDataParameter =
-							formDataParameters[paramIndex];
+						json formDataParameter = formDataParameters[paramIndex];
 						string name =
 							JSONUtils::asString(formDataParameter, "name", "");
 						string value =
@@ -32499,13 +32452,11 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					json formDataParameters =
-						JSONUtils::toJson(httpBody);
+					json formDataParameters = JSONUtils::toJson(httpBody);
 					for (int paramIndex = 0;
 						 paramIndex < formDataParameters.size(); paramIndex++)
 					{
-						json formDataParameter =
-							formDataParameters[paramIndex];
+						json formDataParameter = formDataParameters[paramIndex];
 						string name =
 							JSONUtils::asString(formDataParameter, "name", "");
 						string value =

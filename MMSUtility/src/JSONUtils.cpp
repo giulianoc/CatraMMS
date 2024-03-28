@@ -1,6 +1,5 @@
-#include "spdlog/spdlog.h"
 #include "JSONUtils.h"
-
+#include "spdlog/spdlog.h"
 
 bool JSONUtils::isMetadataPresent(json root, string field)
 {
@@ -14,8 +13,11 @@ bool JSONUtils::isNull(json root, string field)
 {
 	if (root == nullptr)
 	{
-		string errorMessage = fmt::format("JSONUtils::isNull, root is null"
-			", field: {}", field);
+		string errorMessage = fmt::format(
+			"JSONUtils::isNull, root is null"
+			", field: {}",
+			field
+		);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -32,11 +34,25 @@ string JSONUtils::asString(json root, string field, string defaultValue)
 	try
 	{
 		if (field == "")
-			return root.template get<string>();
+		{
+			if (root.type() == json::value_t::number_integer)
+				return to_string(root.template get<int>());
+			else if (root.type() == json::value_t::number_float)
+				return to_string(root.template get<float>());
+			else
+				return root.template get<string>();
+		}
 		else
 			return root.at(field);
+		{
+			if (root.type() == json::value_t::number_integer ||
+				root.type() == json::value_t::number_float)
+				return to_string(root.at(field));
+			else
+				return root.at(field);
+		}
 	}
-	catch(json::out_of_range& e)
+	catch (json::out_of_range &e)
 	{
 		return defaultValue;
 	}
@@ -64,7 +80,7 @@ int JSONUtils::asInt(json root, string field, int defaultValue)
 				return root.at(field);
 		}
 	}
-	catch(json::out_of_range& e)
+	catch (json::out_of_range &e)
 	{
 		return defaultValue;
 	}
@@ -92,7 +108,7 @@ int64_t JSONUtils::asInt64(json root, string field, int64_t defaultValue)
 				return root.at(field);
 		}
 	}
-	catch(json::out_of_range& e)
+	catch (json::out_of_range &e)
 	{
 		return defaultValue;
 	}
@@ -120,7 +136,7 @@ double JSONUtils::asDouble(json root, string field, double defaultValue)
 				return root.at(field);
 		}
 	}
-	catch(json::out_of_range& e)
+	catch (json::out_of_range &e)
 	{
 		return defaultValue;
 	}
@@ -139,9 +155,14 @@ bool JSONUtils::asBool(json root, string field, bool defaultValue)
 			{
 				string sTrue = "true";
 
-				bool isEqual = asString(root, "", "").length() != sTrue.length() ? false :
-					equal(asString(root, "", "").begin(), asString(root, "", "").end(), sTrue.begin(),
-						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
+				bool isEqual = asString(root, "", "").length() != sTrue.length()
+								   ? false
+								   : equal(
+										 asString(root, "", "").begin(),
+										 asString(root, "", "").end(),
+										 sTrue.begin(), [](int c1, int c2)
+										 { return toupper(c1) == toupper(c2); }
+									 );
 
 				return isEqual ? true : false;
 			}
@@ -154,9 +175,15 @@ bool JSONUtils::asBool(json root, string field, bool defaultValue)
 			{
 				string sTrue = "true";
 
-				bool isEqual = asString(root, field, "").length() != sTrue.length() ? false :
-					equal(asString(root, field, "").begin(), asString(root, field, "").end(), sTrue.begin(),
-						[](int c1, int c2){ return toupper(c1) == toupper(c2); });
+				bool isEqual =
+					asString(root, field, "").length() != sTrue.length()
+						? false
+						: equal(
+							  asString(root, field, "").begin(),
+							  asString(root, field, "").end(), sTrue.begin(),
+							  [](int c1, int c2)
+							  { return toupper(c1) == toupper(c2); }
+						  );
 
 				return isEqual ? true : false;
 			}
@@ -164,7 +191,7 @@ bool JSONUtils::asBool(json root, string field, bool defaultValue)
 				return root.at(field);
 		}
 	}
-	catch(json::out_of_range& e)
+	catch (json::out_of_range &e)
 	{
 		return defaultValue;
 	}
@@ -179,11 +206,13 @@ json JSONUtils::toJson(string j, bool warningIfError)
 		else
 			return json::parse(j);
 	}
-	catch (json::parse_error& ex)
+	catch (json::parse_error &ex)
 	{
-		string errorMessage = fmt::format("failed to parse the json"
+		string errorMessage = fmt::format(
+			"failed to parse the json"
 			", json: {}"
-			", at byte: {}", j, ex.byte
+			", at byte: {}",
+			j, ex.byte
 		);
 		if (warningIfError)
 			SPDLOG_WARN(errorMessage);
@@ -200,12 +229,11 @@ string JSONUtils::toString(json root)
 		return "null";
 	else
 		return root.dump(-1, ' ', true);
-/*
-	Json::StreamWriterBuilder wbuilder;                                                               
-	wbuilder.settings_["emitUTF8"] = true;
-	wbuilder.settings_["indentation"] = "";
+	/*
+		Json::StreamWriterBuilder wbuilder;
+		wbuilder.settings_["emitUTF8"] = true;
+		wbuilder.settings_["indentation"] = "";
 
-	return Json::writeString(wbuilder, joValueRoot);
-*/
+		return Json::writeString(wbuilder, joValueRoot);
+	*/
 }
-
