@@ -24583,10 +24583,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				throw runtime_error(errorMessage);
 			}
-			int aaa = 0;
-			SPDLOG_INFO("aaa: {}, parametersRoot: {}", aaa++, JSONUtils::toString(parametersRoot));
 			startTime = JSONUtils::asString(parametersRoot, field, "");
-			SPDLOG_INFO("aaa: {}", aaa++);
 
 			field = "endTime";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -24611,9 +24608,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					throw runtime_error(errorMessage);
 				}
 			}
-			SPDLOG_INFO("aaa: {}", aaa++);
 			endTime = JSONUtils::asString(parametersRoot, field, "");
-			SPDLOG_INFO("aaa: {}", aaa++);
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 			{
@@ -24700,11 +24695,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			field = "timesRelativeToMetaDataField";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				SPDLOG_INFO("aaa: {}", aaa++);
-				string timesRelativeToMetaDataField = JSONUtils::asString(
-					parametersRoot, field, timesRelativeToMetaDataField
-				);
-				SPDLOG_INFO("aaa: {}", aaa++);
+				string timesRelativeToMetaDataField = JSONUtils::asString(parametersRoot, field, "");
 
 				string metaData;
 				{
@@ -24733,11 +24724,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				json metaDataRoot = JSONUtils::toJson(metaData);
 
-				SPDLOG_INFO("aaa: {}", aaa++);
 				string timeCode = JSONUtils::asString(
 					metaDataRoot, timesRelativeToMetaDataField, ""
 				);
-				SPDLOG_INFO("aaa: {}", aaa++);
 				if (timeCode == "")
 				{
 					string errorMessage = fmt::format(
@@ -31304,12 +31293,8 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				vector<pair<string, string>> formData;
 				formData.push_back(make_pair("access_token", facebookToken));
 				formData.push_back(make_pair("upload_phase", "transfer"));
-				formData.push_back(
-					make_pair("start_offset", to_string(startOffset))
-				);
-				formData.push_back(
-					make_pair("upload_session_id", uploadSessionId)
-				);
+				formData.push_back(make_pair("start_offset", to_string(startOffset)));
+				formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
 				json facebookResponseRoot =
 					MMSCURL::httpPostFileByFormDataAndGetJson(
@@ -32413,15 +32398,11 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					json formDataParameters = JSONUtils::toJson(httpBody);
-					for (int paramIndex = 0;
-						 paramIndex < formDataParameters.size(); paramIndex++)
+					json formDataParametersRoot = JSONUtils::toJson(httpBody);
+                    for (auto& [keyRoot, valRoot] : formDataParametersRoot.items())
 					{
-						json formDataParameter = formDataParameters[paramIndex];
-						string name =
-							JSONUtils::asString(formDataParameter, "name", "");
-						string value =
-							JSONUtils::asString(formDataParameter, "value", "");
+						string name = JSONUtils::asString(keyRoot, "", "");
+						string value = JSONUtils::asString(valRoot, "", "");
 
 						if (name != "")
 							formData.push_back(make_pair(name, value));
@@ -32452,15 +32433,11 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					json formDataParameters = JSONUtils::toJson(httpBody);
-					for (int paramIndex = 0;
-						 paramIndex < formDataParameters.size(); paramIndex++)
+					json formDataParametersRoot = JSONUtils::toJson(httpBody);
+                    for (auto& [keyRoot, valRoot] : formDataParametersRoot.items())
 					{
-						json formDataParameter = formDataParameters[paramIndex];
-						string name =
-							JSONUtils::asString(formDataParameter, "name", "");
-						string value =
-							JSONUtils::asString(formDataParameter, "value", "");
+						string name = JSONUtils::asString(keyRoot, "", "");
+						string value = JSONUtils::asString(valRoot, "", "");
 
 						if (name != "")
 							formData.push_back(make_pair(name, value));
