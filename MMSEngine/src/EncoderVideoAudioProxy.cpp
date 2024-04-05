@@ -9369,29 +9369,94 @@ tuple<bool, bool, bool, string, bool, bool, double, int>
         {
             // json encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
 
+      int aaa = 0;
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
+
 			string field = "completedWithError";
 			completedWithError = JSONUtils::asBool(encodeStatusResponse, field, false);
 
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
 			field = "errorMessage";
 			encoderErrorMessage = JSONUtils::asString(encodeStatusResponse, field, "");
 
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
 			field = "encodingFinished";
 			encodingFinished = JSONUtils::asBool(encodeStatusResponse, field, false);
 
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
 			field = "killedByUser";
 			killedByUser = JSONUtils::asBool(encodeStatusResponse, field, false);
 
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
 			field = "urlForbidden";
 			urlForbidden = JSONUtils::asBool(encodeStatusResponse, field, false);
 
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
 			field = "urlNotFound";
 			urlNotFound = JSONUtils::asBool(encodeStatusResponse, field, false);
 
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
 			field = "encodingProgress";
 			encodingProgress = JSONUtils::asDouble(encodeStatusResponse, field, 0.0);
 
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
 			field = "pid";
 			pid = JSONUtils::asInt(encodeStatusResponse, field, -1);
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", aaa: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              aaa++
+		);
         }
         catch(...)
         {
