@@ -153,8 +153,9 @@ FFMPEGEncoder::FFMPEGEncoder(
 		__FILEREF__ + "Configuration item" +
 		", ffmpeg->encoderUser: " + _encoderUser
 	);
-	_encoderPassword =
-		JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderPassword", "");
+	_encoderPassword = JSONUtils::asString(
+		_configurationRoot["ffmpeg"], "encoderPassword", ""
+	);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", ffmpeg->encoderPassword: " + _encoderPassword
@@ -1613,20 +1614,23 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		chrono::system_clock::time_point endEncodingStatus =
 			chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "encodingStatus" +
-			", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey) +
-			", encodingFound: " + to_string(encodingFound) +
-			", liveProxyFound: " + to_string(liveProxyFound) +
-			", liveRecordingFound: " + to_string(liveRecordingFound) +
-			", encodingCompleted: " + to_string(encodingCompleted) +
-			", @MMS statistics@ - duration encodingStatus (secs): @" +
+		SPDLOG_INFO(
+			"encodingStatus"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", encodingFound: {}"
+			", liveProxyFound: {}"
+			", liveRecordingFound: {}"
+			", encodingCompleted: {}"
+			", responseBody: {}"
+			", @MMS statistics@ - duration encodingStatus (secs): @{}@",
+			ingestionJobKey, encodingJobKey, encodingFound, liveProxyFound,
+			liveRecordingFound, encodingCompleted,
+			JSONUtils::toString(responseBody),
 			to_string(chrono::duration_cast<chrono::seconds>(
 						  endEncodingStatus - startEncodingStatus
 			)
-						  .count()) +
-			"@"
+						  .count())
 		);
 
 		sendSuccess(
@@ -1662,7 +1666,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
-        bool encodingCompleted = false;
+		bool encodingCompleted = false;
 		{
 			lock_guard<mutex> locker(*_encodingCompletedMutex);
 
@@ -1675,11 +1679,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (encodingCompleted)
 		{
-			string errorMessage = fmt::format("filterNotification, encoding is already finished"
+			string errorMessage = fmt::format(
+				"filterNotification, encoding is already finished"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
-				", encodingCompleted: {}"
-                                     , ingestionJobKey, ingestionJobKey, encodingCompleted);
+				", encodingCompleted: {}",
+				ingestionJobKey, ingestionJobKey, encodingCompleted
+			);
 
 			SPDLOG_ERROR(errorMessage);
 
@@ -1718,11 +1724,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!liveProxyFound)
 		{
-			string errorMessage = fmt::format("filterNotification, liveProxy not found"
+			string errorMessage = fmt::format(
+				"filterNotification, liveProxy not found"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
-				", liveProxyFound: {}"
-                                    , ingestionJobKey, ingestionJobKey, liveProxyFound);
+				", liveProxyFound: {}",
+				ingestionJobKey, ingestionJobKey, liveProxyFound
+			);
 
 			_logger->error(__FILEREF__ + errorMessage);
 
@@ -1749,20 +1757,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				string apiKey;
 				{
 					string field = "internalMMS";
-					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+					if (JSONUtils::isMetadataPresent(
+							ingestedParametersRoot, field
+						))
 					{
 						json internalMMSRoot = ingestedParametersRoot[field];
 
 						field = "credentials";
-						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+						if (JSONUtils::isMetadataPresent(
+								internalMMSRoot, field
+							))
 						{
 							json credentialsRoot = internalMMSRoot[field];
 
 							field = "userKey";
-							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+							userKey =
+								JSONUtils::asInt64(credentialsRoot, field, -1);
 
 							field = "apiKey";
-							string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+							string apiKeyEncrypted =
+								JSONUtils::asString(credentialsRoot, field, "");
 							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 						}
 					}
@@ -1770,7 +1784,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				{
 					string field = "mmsWorkflowIngestionURL";
-					if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+					if (!JSONUtils::isMetadataPresent(
+							encodingParametersRoot, field
+						))
 					{
 						string errorMessage =
 							__FILEREF__ + "Field is not present or it is null" +
@@ -1783,7 +1799,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 						throw runtime_error(errorMessage);
 					}
-					mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+					mmsWorkflowIngestionURL =
+						JSONUtils::asString(encodingParametersRoot, field, "");
 				}
 
 				vector<string> otherHeaders;
@@ -3412,8 +3429,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 }
 
 string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(
-	int64_t ingestionJobKey, string filterName,
-	json ingestedParametersRoot
+	int64_t ingestionJobKey, string filterName, json ingestedParametersRoot
 )
 {
 	string workflowMetadata;

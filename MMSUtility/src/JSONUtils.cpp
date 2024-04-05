@@ -44,6 +44,8 @@ string JSONUtils::asString(json root, string field, string defaultValue)
 		}
 		else
 		{
+			if (!JSONUtils::isMetadataPresent(root, field))
+				return defaultValue;
 			if (root.at(field).type() == json::value_t::number_integer ||
 				root.at(field).type() == json::value_t::number_float)
 				return to_string(root.at(field));
@@ -73,6 +75,8 @@ int JSONUtils::asInt(json root, string field, int defaultValue)
 		}
 		else
 		{
+			if (!JSONUtils::isMetadataPresent(root, field))
+				return defaultValue;
 			if (root.at(field).type() == json::value_t::string)
 				return strtol(asString(root, field, "0").c_str(), nullptr, 10);
 			else
@@ -101,6 +105,8 @@ int64_t JSONUtils::asInt64(json root, string field, int64_t defaultValue)
 		}
 		else
 		{
+			if (!JSONUtils::isMetadataPresent(root, field))
+				return defaultValue;
 			if (root.at(field).type() == json::value_t::string)
 				return strtoll(asString(root, field, "0").c_str(), nullptr, 10);
 			else
@@ -129,6 +135,8 @@ double JSONUtils::asDouble(json root, string field, double defaultValue)
 		}
 		else
 		{
+			if (!JSONUtils::isMetadataPresent(root, field))
+				return defaultValue;
 			if (root.at(field).type() == json::value_t::string)
 				return stod(asString(root, field, "0"), nullptr);
 			else
@@ -170,6 +178,8 @@ bool JSONUtils::asBool(json root, string field, bool defaultValue)
 		}
 		else
 		{
+			if (!JSONUtils::isMetadataPresent(root, field))
+				return defaultValue;
 			if (root.at(field).type() == json::value_t::string)
 			{
 				string sTrue = "true";

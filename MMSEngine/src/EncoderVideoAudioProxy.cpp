@@ -9357,11 +9357,12 @@ tuple<bool, bool, bool, string, bool, bool, double, int>
 			otherHeaders
 		);
 
-		_logger->info(__FILEREF__ + "getEncodingStatus"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-			+ ", response: " + regex_replace(JSONUtils::toString(encodeStatusResponse), regex("\n"), " ")
+		SPDLOG_INFO("getEncodingStatus"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", response: {}", _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+              regex_replace(JSONUtils::toString(encodeStatusResponse), regex("\n"), " ")
 		);
 
         try
@@ -9394,11 +9395,13 @@ tuple<bool, bool, bool, string, bool, bool, double, int>
         }
         catch(...)
         {
-            string errorMessage = string("getEncodingStatus. Response Body json is not well format")
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    // + ", sResponse: " + sResponse
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+            string errorMessage = fmt::format("getEncodingStatus. Response Body json is not well format"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			, _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+		);
+            SPDLOG_ERROR(errorMessage);
 
             throw runtime_error(errorMessage);
         }

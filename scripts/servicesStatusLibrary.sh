@@ -424,7 +424,7 @@ mms_service_running_by_healthCheckURL()
 	httpStatus=$(curl -k --output $outputHealthCheckURL -w "%{http_code}" --max-time 20 "$healthCheckURL")
 	if [ $httpStatus -ne 200 ]
 	then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): mms_service_running failed, serviceName: ${serviceName}, httpStatus: $httpStatus, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): mms_service_running failed, serviceName: ${serviceName}, healthCheckURL: $healthCheckURL, httpStatus: $httpStatus, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
 
 		failuresNumberFileName=/tmp/alarm_mms_${serviceName}_service_running.failuresNumber.txt
 		if [ -s $failuresNumberFileName ]
