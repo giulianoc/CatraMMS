@@ -27879,7 +27879,8 @@ void MMSEngineProcessor::emailNotificationThread(
 			", subject: {}"
 			", emailBody: {}"
 			// ", _emailPassword: {}"
-			, _processorIdentifier, ingestionJobKey, _emailProviderURL,
+			,
+			_processorIdentifier, ingestionJobKey, _emailProviderURL,
 			_emailUserName, subject, message //, _emailPassword
 		);
 		MMSCURL::sendEmail(
@@ -28026,12 +28027,12 @@ void MMSEngineProcessor::checkStreamingThread(
 
 			throw runtime_error(errorMessage);
 		}
-		string inputType = JSONUtils::asString(parametersRoot, field, "");
+		string inputType = JSONUtils::asString(parametersRoot, field, "Stream");
 
 		string streamingUrl;
-		if (inputType == "Channel")
+		if (inputType == "Stream")
 		{
-			string field = "channelConfigurationLabel";
+			string field = "configurationLabel";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
 				string errorMessage = string() +

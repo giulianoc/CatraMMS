@@ -6,14 +6,14 @@
 	"type": "Check-Streaming",
 
 	"parameters": {
-		// The Streaming to be checked could be specified using the Channel Configuration Label
+		// The Streaming to be checked could be specified using the Stream Configuration Label
 		// or specifying directly the Streaming Url to be checked
 		// mandatory
-		// Possible values: Channel or StreamingUrl
-		"inputType": "Channel",
+		// Possible values: Stream or URL
+		"inputType": "Stream",
 
-		// mandatory if InputType is Channel
-		"channelConfigurationLabel": "Channel A",
+		// mandatory if InputType is Stream
+		"configurationLabel": "Stream A",
 
 		// mandatory if InputType is StreamingUrl
 		"streamingName": "Streaming A",

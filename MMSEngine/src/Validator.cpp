@@ -2879,10 +2879,10 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 	string field = "inputType";
 	string inputType = JSONUtils::asString(parametersRoot, field, "");
 
-	if (inputType == "Channel")
+	if (inputType == "Stream")
 	{
 		vector<string> mandatoryFields = {
-			"channelConfigurationLabel"
+			"configurationLabel"
 		};
 		for (string mandatoryField: mandatoryFields)
 		{
@@ -2901,7 +2901,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 			}
 		}
 	}
-	else if (inputType == "StreamingUrl")
+	else if (inputType == "URL")
 	{
 		vector<string> mandatoryFields = {
 			"streamingName",
@@ -2928,7 +2928,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage = __FILEREF__ + "inputType Field is wrong, it is neither channel nor streamingUrl"
+		string errorMessage = __FILEREF__ + "inputType Field is wrong, it is neither Stream nor URL"
 			+ ", inputType: " + inputType
 			+ ", sParametersRoot: " + sParametersRoot
 			+ ", label: " + label
