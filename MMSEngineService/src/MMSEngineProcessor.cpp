@@ -155,7 +155,6 @@ MMSEngineProcessor::MMSEngineProcessor(
 		string() + "Configuration item" +
 		", EmailNotification->userName: " + _emailUserName
 	);
-	string _emailPassword;
 	{
 		string encryptedPassword = JSONUtils::asString(
 			_configurationRoot["EmailNotification"], "password", ""
@@ -27879,9 +27878,9 @@ void MMSEngineProcessor::emailNotificationThread(
 			", _emailUserName: {}"
 			", subject: {}"
 			", emailBody: {}"
-			", _emailPassword: {}",
-			_processorIdentifier, ingestionJobKey, _emailProviderURL,
-			_emailUserName, subject, message, _emailPassword
+			// ", _emailPassword: {}"
+			, _processorIdentifier, ingestionJobKey, _emailProviderURL,
+			_emailUserName, subject, message //, _emailPassword
 		);
 		MMSCURL::sendEmail(
 			_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
