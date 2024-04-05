@@ -29,8 +29,8 @@
 #include <sstream>
 // #include "EMailSender.h"
 #include "Magick++.h"
-#include "spdlog/spdlog.h"
 // #include <openssl/md5.h>
+#include "spdlog/spdlog.h"
 #include <openssl/evp.h>
 
 #define MD5BUFFERSIZE 16384
@@ -24695,7 +24695,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 			field = "timesRelativeToMetaDataField";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string timesRelativeToMetaDataField = JSONUtils::asString(parametersRoot, field, "");
+				string timesRelativeToMetaDataField =
+					JSONUtils::asString(parametersRoot, field, "");
 
 				string metaData;
 				{
@@ -27803,9 +27804,10 @@ void MMSEngineProcessor::emailNotificationThread(
 		else
 		{
 			SPDLOG_INFO(
-				string() + "NO User substitution" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey)
+				"NO User substitution"
+				", ingestionJobKey: {}"
+				", _processorIdentifier: {}",
+				ingestionJobKey, _processorIdentifier
 			);
 		}
 
@@ -27869,6 +27871,18 @@ void MMSEngineProcessor::emailNotificationThread(
 		vector<string> emailBody;
 		emailBody.push_back(message);
 
+		SPDLOG_INFO(
+			"Sending email..."
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", _emailProviderURL: {}"
+			", _emailUserName: {}"
+			", subject: {}"
+			", emailBody: {}"
+			", _emailPassword: {}",
+			_processorIdentifier, ingestionJobKey, _emailProviderURL,
+			_emailUserName, subject, message, _emailPassword
+		);
 		MMSCURL::sendEmail(
 			_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 			_emailUserName,	   // i.e.: info@catramms-cloud.com
@@ -31293,8 +31307,12 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				vector<pair<string, string>> formData;
 				formData.push_back(make_pair("access_token", facebookToken));
 				formData.push_back(make_pair("upload_phase", "transfer"));
-				formData.push_back(make_pair("start_offset", to_string(startOffset)));
-				formData.push_back(make_pair("upload_session_id", uploadSessionId));
+				formData.push_back(
+					make_pair("start_offset", to_string(startOffset))
+				);
+				formData.push_back(
+					make_pair("upload_session_id", uploadSessionId)
+				);
 
 				json facebookResponseRoot =
 					MMSCURL::httpPostFileByFormDataAndGetJson(
@@ -32399,7 +32417,8 @@ void MMSEngineProcessor::userHttpCallback(
 				vector<pair<string, string>> formData;
 				{
 					json formDataParametersRoot = JSONUtils::toJson(httpBody);
-                    for (auto& [keyRoot, valRoot] : formDataParametersRoot.items())
+					for (auto &[keyRoot, valRoot] :
+						 formDataParametersRoot.items())
 					{
 						string name = JSONUtils::asString(keyRoot, "", "");
 						string value = JSONUtils::asString(valRoot, "", "");
@@ -32434,7 +32453,8 @@ void MMSEngineProcessor::userHttpCallback(
 				vector<pair<string, string>> formData;
 				{
 					json formDataParametersRoot = JSONUtils::toJson(httpBody);
-                    for (auto& [keyRoot, valRoot] : formDataParametersRoot.items())
+					for (auto &[keyRoot, valRoot] :
+						 formDataParametersRoot.items())
 					{
 						string name = JSONUtils::asString(keyRoot, "", "");
 						string value = JSONUtils::asString(valRoot, "", "");
