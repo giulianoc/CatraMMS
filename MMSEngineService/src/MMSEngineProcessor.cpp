@@ -24526,10 +24526,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 								stoi(forcedAvgFrameRate.substr(0, index));
 							int seconds =
 								stoi(forcedAvgFrameRate.substr(index + 1));
-							if (seconds != 0)
+							if (seconds != 0) // I saw: 0/0
 								framesPerSecond = frames / seconds;
-							else
-								framesPerSecond = frames;
 							SPDLOG_INFO(
 								"forcedAvgFrameRate: {}"
 								"frames: {}"
