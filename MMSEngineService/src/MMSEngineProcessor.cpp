@@ -24522,14 +24522,22 @@ void MMSEngineProcessor::manageCutMediaThread(
 							framesPerSecond = stoi(forcedAvgFrameRate);
 						else
 						{
-							SPDLOG_INFO(
-								"forcedAvgFrameRate: {}", forcedAvgFrameRate
-							);
 							int frames =
 								stoi(forcedAvgFrameRate.substr(0, index));
 							int seconds =
 								stoi(forcedAvgFrameRate.substr(index + 1));
-							framesPerSecond = frames / seconds;
+							if (seconds != 0)
+								framesPerSecond = frames / seconds;
+							else
+								framesPerSecond = frames;
+							SPDLOG_INFO(
+								"forcedAvgFrameRate: {}"
+								"frames: {}"
+								"seconds: {}"
+								"framesPerSecond: {}",
+								forcedAvgFrameRate, frames, seconds,
+								framesPerSecond
+							);
 						}
 					}
 				}
