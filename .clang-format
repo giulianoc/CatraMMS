@@ -1,6 +1,7 @@
 ---
 Language: Cpp
 BreakBeforeBraces: Allman
+ColumnLimit: 150
 AlignAfterOpenBracket: BlockIndent
 UseTab: Always
 IndentWidth: 4
