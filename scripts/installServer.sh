@@ -631,7 +631,7 @@ install-mms-packages()
 
 	packageName=ffmpeg
 	echo ""
-	ffmpegVersion=5.1
+	ffmpegVersion=7.0
 	echo -n "$packageName version (i.e.: $ffmpegVersion)? "
 	read version
 	if [ "$version" == "" ]; then
