@@ -691,9 +691,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
 						int maxMilliSecondsToWait = 3000;
-						if (!sourceLiveProxy->_ffmpeg->isFrameIncreasing(maxMilliSecondsToWait))
+						if (!sourceLiveProxy->_ffmpeg->isSizeOrFrameIncreasing(maxMilliSecondsToWait))
 						{
-							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy size/frame is not increasing'. LiveProxy (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 								+ ", configurationLabel: " + configurationLabel
@@ -702,12 +702,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							liveProxyWorking = false;
 
-							localErrorMessage = " restarted because of 'frame is not increasing'";
+							localErrorMessage = " restarted because of 'size/frame is not increasing'";
 						}
 					}
 					catch(FFMpegEncodingStatusNotAvailable& e)
 					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) size/frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -716,7 +716,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch(runtime_error& e)
 					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) size/frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -725,7 +725,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch(exception& e)
 					{
-						string errorMessage = string ("liveProxyMonitor (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveProxyMonitor (rtmp) size/frame increasing check failed")
 							+ ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey)
 							+ ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -1632,7 +1632,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (liveRecorderWorking && copiedLiveRecording->_monitoringFrameIncreasingEnabled) // && rtmpOutputFound)
 				{
-					_logger->info(__FILEREF__ + "liveRecordingMonitor. isFrameIncreasing check"
+					_logger->info(__FILEREF__ + "liveRecordingMonitor. isSizeOrFrameIncreasing check"
 						+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 						+ ", channelLabel: " + copiedLiveRecording->_channelLabel
@@ -1642,10 +1642,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
 						int maxMilliSecondsToWait = 3000;
-						if (!sourceLiveRecording->_ffmpeg->isFrameIncreasing(
+						if (!sourceLiveRecording->_ffmpeg->isSizeOrFrameIncreasing(
 							maxMilliSecondsToWait))
 						{
-							_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecorderMonitor (rtmp). Live Recorder frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
+							_logger->error(__FILEREF__ + "liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecorderMonitor (rtmp). Live Recorder size/frame is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again"
 								+ ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 								+ ", channelLabel: " + copiedLiveRecording->_channelLabel
@@ -1654,12 +1654,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							liveRecorderWorking = false;
 
-							localErrorMessage = " restarted because of 'frame is not increasing'";
+							localErrorMessage = " restarted because of 'size/frame is not increasing'";
 						}
 					}
 					catch(FFMpegEncodingStatusNotAvailable& e)
 					{
-						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveRecorderMonitor (rtmp) size/frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -1668,7 +1668,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch(runtime_error& e)
 					{
-						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveRecorderMonitor (rtmp) size/frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()
@@ -1677,7 +1677,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch(exception& e)
 					{
-						string errorMessage = string ("liveRecorderMonitor (rtmp) frame increasing check failed")
+						string errorMessage = string ("liveRecorderMonitor (rtmp) size/frame increasing check failed")
 							+ ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey)
 							+ ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey)
 							+ ", e.what(): " + e.what()

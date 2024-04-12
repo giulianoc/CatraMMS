@@ -45,10 +45,10 @@ struct FFMpegEncodingStatusNotAvailable: public exception {
     }; 
 };
 
-struct FFMpegFrameInfoNotAvailable: public exception {
+struct FFMpegSizeOrFrameInfoNotAvailable: public exception {
     char const* what() const throw() 
     {
-        return "Frame Info not available";
+        return "SizeOrFrame Info not available";
     }; 
 };
 
@@ -249,7 +249,7 @@ public:
 
 	bool nonMonotonousDTSInOutputLog();
 	bool forbiddenErrorInOutputLog();
-	bool isFrameIncreasing(int maxMilliSecondsToWait);
+	bool isSizeOrFrameIncreasing(int maxMilliSecondsToWait);
 
 	tuple<int64_t, long, json> getMediaInfo(int64_t ingestionJobKey,
 		bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,
@@ -722,6 +722,7 @@ private:
         string pathFileName, int lastCharsToBeRead);
     
 	long getFrameByOutputLog(string ffmpegEncodingStatus);
+	long getSizeByOutputLog(string ffmpegEncodingStatus);
 
 	void addToIncrontab(
 		int64_t ingestionJobKey,
