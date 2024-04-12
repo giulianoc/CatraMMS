@@ -342,7 +342,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 						// First health check (rtmp), looks the log and check there is no message like
 						//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to
-						//95383372. This may result in incorrect timestamps in the output file. 	This message causes proxy not working
+						// 95383372. This may result in incorrect timestamps in the output file. 	This message causes proxy not working
 						if (sourceLiveProxy->_ffmpeg->nonMonotonousDTSInOutputLog())
 						{
 							liveProxyWorking = false;
@@ -665,7 +665,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveProxyWorking) // && rtmpOutputFound)
+				if (liveProxyWorking || copiedLiveProxy->_monitoringFrameIncreasingEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(
 						__FILEREF__ + "liveProxyMonitor isFrameIncreasing check" +
@@ -677,7 +677,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						int maxMilliSecondsToWait = 3000;
+						int maxMilliSecondsToWait = 5000;
 						if (!sourceLiveProxy->_ffmpeg->isSizeOrFrameIncreasing(maxMilliSecondsToWait, increasingErrorMessage))
 						{
 							_logger->error(
@@ -686,6 +686,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								"increasing'. LiveProxy (ffmpeg) is killed in order to be started again" +
 								", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
 								", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
+								", increasingErrorMessage: " + increasingErrorMessage +
 								", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
 							);
 
@@ -1005,7 +1006,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				// First health check
 				//		kill if 1840699_408620.liveRecorder.list file does not exist or was not updated in the last (2 * segment duration in secs)
-				//seconds
+				// seconds
 				if (liveRecorderWorking)
 				{
 					_logger->info(
@@ -1263,7 +1264,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 						// First health check (rtmp), looks the log and check there is no message like
 						//	[flv @ 0x562afdc507c0] Non-monotonous DTS in output stream 0:1; previous: 95383372, current: 1163825; changing to
-						//95383372. This may result in incorrect timestamps in the output file. 	This message causes proxy not working
+						// 95383372. This may result in incorrect timestamps in the output file. 	This message causes proxy not working
 						if (sourceLiveRecording->_ffmpeg->nonMonotonousDTSInOutputLog())
 						{
 							liveRecorderWorking = false;
@@ -1598,16 +1599,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						int maxMilliSecondsToWait = 3000;
+						int maxMilliSecondsToWait = 5000;
 						if (!sourceLiveRecording->_ffmpeg->isSizeOrFrameIncreasing(maxMilliSecondsToWait, increasingErrorMessage))
 						{
 							_logger->error(
 								__FILEREF__ +
 								"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecorderMonitor (rtmp). Live Recorder size/frame "
 								"is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again" +
-								", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-								", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-								", channelLabel: " + copiedLiveRecording->_channelLabel + ", _childPid: " + to_string(copiedLiveRecording->_childPid)
+								", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
+								to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
+								", increasingErrorMessage: " + increasingErrorMessage + ", _childPid: " + to_string(copiedLiveRecording->_childPid)
 							);
 
 							liveRecorderWorking = false;

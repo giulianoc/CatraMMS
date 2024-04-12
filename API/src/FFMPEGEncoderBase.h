@@ -40,6 +40,8 @@ class FFMPEGEncoderBase {
 			// string					_liveGridOutputType;	// only for LiveGrid
 			json				_outputsRoot;
 
+			bool					_monitoringFrameIncreasingEnabled;
+
 			int64_t					_ingestionJobKey;
 			json				_encodingParametersRoot;
 			json				_ingestedParametersRoot;
@@ -56,6 +58,7 @@ class FFMPEGEncoderBase {
 
 				liveProxyAndGrid->_available = _available;
 				liveProxyAndGrid->_childPid = _childPid;
+				liveProxyAndGrid->_monitoringFrameIncreasingEnabled = _monitoringFrameIncreasingEnabled;
 				liveProxyAndGrid->_encodingJobKey = _encodingJobKey;
 				liveProxyAndGrid->_method = _method;
 				liveProxyAndGrid->_ffmpeg = _ffmpeg;

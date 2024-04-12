@@ -70,6 +70,9 @@ void LiveProxy::encodeContent(
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
+		_liveProxyData->_monitoringFrameIncreasingEnabled = JSONUtils::asBool(
+			_liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+
 		_liveProxyData->_outputsRoot = encodingParametersRoot["outputsRoot"];
 		{
 			for(int outputIndex = 0; outputIndex < _liveProxyData->_outputsRoot.size(); outputIndex++)
