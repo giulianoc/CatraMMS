@@ -14909,7 +14909,7 @@ bool FFMpeg::forbiddenErrorInOutputLog()
 	}
 }
 
-bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait)
+bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait, string& errorMessage)
 {
 
 	bool isIncreasing = true;
@@ -14917,6 +14917,8 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait)
 	chrono::system_clock::time_point startCheck = chrono::system_clock::now();
 	try
 	{
+        errorMessage = "";
+        
 		long minutesSinceBeginningPassed = chrono::duration_cast<chrono::minutes>(startCheck - _startFFMpegMethod).count();
 		if (minutesSinceBeginningPassed <= _startCheckingFrameInfoInMinutes)
 		{
@@ -14942,6 +14944,8 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait)
 				_currentStagingEncodedAssetPathName + ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
 			);
 
+            errorMessage = "Encoding status not available";
+
 			throw FFMpegEncodingStatusNotAvailable();
 		}
 
@@ -14964,6 +14968,8 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait)
 					_currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName +
 					", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
 				);
+
+                errorMessage = "Failure reading the encoding status file";
 
 				throw FFMpegEncodingStatusNotAvailable();
 			}
@@ -15032,6 +15038,8 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait)
 						", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
 					);
 
+                errorMessage = "Failure reading the encoding status file";
+
 					throw FFMpegEncodingStatusNotAvailable();
 				}
 
@@ -15056,6 +15064,8 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait)
 						to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
 					);
 
+                  errorMessage = "Frame info not available (2)";
+
 					return isIncreasing;
 					// throw FFMpegEncodingStatusNotAvailable();
 				}
@@ -15076,6 +15086,9 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait)
 			", numberOfChecksDone: " + to_string(numberOfChecksDone) + ", isSizeOrFrameIncreasing elapsed (millisecs): " +
 			to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
 		);
+
+        if (!isIncreasing)
+          errorMessage = fmt::format("size/frame is not increasing, firstValue: {}, secondValue: {}", firstValue, secondValue);
 	}
 	catch (FFMpegEncodingStatusNotAvailable &e)
 	{
@@ -15098,6 +15111,8 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait)
 			", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", isSizeOrFrameIncreasing elapsed (millisecs): " +
 			to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
 		);
+
+        errorMessage = fmt::format("exception: {}", e.what());
 
 		throw e;
 	}

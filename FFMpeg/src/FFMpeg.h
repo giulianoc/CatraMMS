@@ -249,7 +249,7 @@ public:
 
 	bool nonMonotonousDTSInOutputLog();
 	bool forbiddenErrorInOutputLog();
-	bool isSizeOrFrameIncreasing(int maxMilliSecondsToWait);
+	bool isSizeOrFrameIncreasing(int maxMilliSecondsToWait, string& errorMessage);
 
 	tuple<int64_t, long, json> getMediaInfo(int64_t ingestionJobKey,
 		bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,
