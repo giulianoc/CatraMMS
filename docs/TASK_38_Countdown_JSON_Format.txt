@@ -42,6 +42,12 @@
 		// a specific encoders pool has to be used
 		"encodersPool": "",
 
+		// The system, during the countdown, checks if the frames number is always increasing and,
+		//	in case of issue, it might restart the countdown.
+		// This check can be disabled setting this flag to false.
+		// Default is true
+		"monitoringFrameIncreasingEnabled": true,
+
 		// This json array lists all the Outputs the Live-Proxy task has to generate.
 		//	At least one Output has to be present
 		"outputs" = [

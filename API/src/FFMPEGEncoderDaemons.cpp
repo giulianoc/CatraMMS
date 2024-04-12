@@ -665,7 +665,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveProxyWorking || copiedLiveProxy->_monitoringFrameIncreasingEnabled) // && rtmpOutputFound)
+				if (liveProxyWorking && copiedLiveProxy->_monitoringFrameIncreasingEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(
 						__FILEREF__ + "liveProxyMonitor isFrameIncreasing check" +
