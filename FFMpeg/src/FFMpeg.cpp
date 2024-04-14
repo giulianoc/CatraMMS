@@ -15186,16 +15186,18 @@ tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog(string ffmpegEncodi
 				int iHours = atoi(hours.c_str());
 				int iMinutes = atoi(minutes.c_str());
 				int iSeconds = atoi(seconds.c_str());
-				int iCentsOfSeconds = atoi(centsOfSeconds.c_str());
+				double iCentsOfSeconds = atoi(centsOfSeconds.c_str());
 
 				timeInMilliSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iCentsOfSeconds / 100);
+        double a = 1.234;
 		SPDLOG_INFO(
 			"areRealTimeInfoChanged"
           ", ingestionJobKey: {}"
 			", encodingJobKey: {}"
 			", value: {}"
 			", timeInMilliSeconds: {}"
-          , _currentIngestionJobKey, _currentEncodingJobKey, value, timeInMilliSeconds
+			", a: {}"
+          , _currentIngestionJobKey, _currentEncodingJobKey, value, timeInMilliSeconds, a
 		);
 				timeInMilliSeconds *= 1000;
 			}
