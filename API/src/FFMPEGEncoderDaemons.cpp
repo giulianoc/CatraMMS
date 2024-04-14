@@ -667,7 +667,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveProxyWorking && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
+				if (liveProxyWorking) // && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(
 						__FILEREF__ + "liveProxyMonitor getRealTimeInfoByOutputLog check" +
@@ -679,6 +679,17 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
 						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds] = copiedLiveProxy->_ffmpeg->getRealTimeInfoByOutputLog();
+_logger->info(
+__FILEREF__ + "liveProxyMonitor getRealTimeInfoByOutputLog check" +
+", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
+", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
+", sourceLiveProxy->_realTimeFrame: " + to_string(sourceLiveProxy->_realTimeFrame) +
+", sourceLiveProxy->_realTimeSize: " + to_string(sourceLiveProxy->_realTimeSize) +
+", sourceLiveProxy->_realTimeTimeInMilliSeconds: " + to_string(sourceLiveProxy->_realTimeTimeInMilliSeconds) +
+", realTimeFrame: " + to_string(realTimeFrame) +
+", realTimeSize: " + to_string(realTimeSize) +
+", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds)
+);
 						sourceLiveProxy->_realTimeFrame = realTimeFrame;
 						sourceLiveProxy->_realTimeSize = realTimeSize;
 						sourceLiveProxy->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
