@@ -496,7 +496,7 @@ class FFMpeg
 	int64_t _currentEncodingJobKey;
 
 	chrono::system_clock::time_point _startFFMpegMethod;
-	int _startCheckingFrameInfoInMinutes;
+	// int _startCheckingFrameInfoInMinutes;
 
 	int _waitingNFSSync_maxMillisecondsToWait;
 	int _waitingNFSSync_milliSecondsWaitingBetweenChecks;

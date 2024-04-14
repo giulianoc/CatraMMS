@@ -53,7 +53,7 @@ FFMpeg::FFMpeg(json configuration, shared_ptr<spdlog::logger> logger)
 	);
 	*/
 
-	_startCheckingFrameInfoInMinutes = JSONUtils::asInt(configuration["ffmpeg"], "startCheckingFrameInfoInMinutes", 5);
+	// _startCheckingFrameInfoInMinutes = JSONUtils::asInt(configuration["ffmpeg"], "startCheckingFrameInfoInMinutes", 5);
 
 	_charsToBeReadFromFfmpegErrorOutput = 1024 * 3;
 
@@ -14672,7 +14672,7 @@ double FFMpeg::getEncodingProgress()
 				string hours;
 				string minutes;
 				string seconds;
-				string roughMicroSeconds; // microseconds???
+				string centsOfSeconds;
 				char delim = ':';
 
 				getline(ss, hours, delim);
@@ -14680,14 +14680,15 @@ double FFMpeg::getEncodingProgress()
 
 				delim = '.';
 				getline(ss, seconds, delim);
-				getline(ss, roughMicroSeconds, delim);
+				getline(ss, centsOfSeconds, delim);
 
 				int iHours = atoi(hours.c_str());
 				int iMinutes = atoi(minutes.c_str());
 				int iSeconds = atoi(seconds.c_str());
-				int iRoughMicroSeconds = atoi(roughMicroSeconds.c_str());
+				double dCentsOfSeconds = atoi(centsOfSeconds.c_str());
 
-				double encodingSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iRoughMicroSeconds / 100);
+				// dCentsOfSeconds deve essere double altrimenti (dCentsOfSeconds / 100) sarà arrotontado ai secondi
+				double encodingSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (dCentsOfSeconds / 100);
 				double currentTimeInMilliSeconds = (encodingSeconds * 1000) + (_currentlyAtSecondPass ? _currentDurationInMilliSeconds : 0);
 				//  encodingSeconds : _encodingItem->videoOrAudioDurationInMilliSeconds = x : 100
 
@@ -14917,29 +14918,32 @@ bool FFMpeg::areRealTimeInfoChanged(int maxMilliSecondsToWait)
 	chrono::system_clock::time_point startCheck = chrono::system_clock::now();
 	try
 	{
-		long minutesSinceBeginningPassed = chrono::duration_cast<chrono::minutes>(startCheck - _startFFMpegMethod).count();
-		if (minutesSinceBeginningPassed <= _startCheckingFrameInfoInMinutes)
-		{
-			_logger->info(
-				__FILEREF__ + "areRealTimeInfoChanged: too early to check frame/size/time increasing" +
-				", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
-				", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
-				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", minutesSinceBeginningPassed: " +
-				to_string(minutesSinceBeginningPassed) + ", _startCheckingFrameInfoInMinutes: " + to_string(_startCheckingFrameInfoInMinutes) +
-				", isSizeOrFrameIncreasing elapsed (millisecs): " +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
-			);
+		/*
+		  long minutesSinceBeginningPassed = chrono::duration_cast<chrono::minutes>(startCheck - _startFFMpegMethod).count();
+		  if (minutesSinceBeginningPassed <= _startCheckingFrameInfoInMinutes)
+		  {
+			  _logger->info(
+				  __FILEREF__ + "areRealTimeInfoChanged: too early to check frame/size/time increasing" +
+				  ", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
+				  ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+		  +
+				  ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", minutesSinceBeginningPassed: " +
+				  to_string(minutesSinceBeginningPassed) + ", _startCheckingFrameInfoInMinutes: " + to_string(_startCheckingFrameInfoInMinutes) +
+				  ", isSizeOrFrameIncreasing elapsed (millisecs): " +
+				  to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
+			  );
 
-			return areChanged;
-		}
+			  return areChanged;
+		  }
+		  */
 
 		if (!fs::exists(_outputFfmpegPathFileName.c_str()))
 		{
 			_logger->info(
 				__FILEREF__ + "areRealTimeInfoChanged: Encoding status not available" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
 				", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-				_currentStagingEncodedAssetPathName + ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
+				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
 			);
 
 			throw FFMpegEncodingStatusNotAvailable();
@@ -14962,8 +14966,7 @@ bool FFMpeg::areRealTimeInfoChanged(int maxMilliSecondsToWait)
 					__FILEREF__ + "areRealTimeInfoChanged: Failure reading the encoding status file" +
 					", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
 					", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " +
-					_currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName +
-					", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+					_currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
 				);
 
 				throw FFMpegEncodingStatusNotAvailable();
@@ -14978,8 +14981,8 @@ bool FFMpeg::areRealTimeInfoChanged(int maxMilliSecondsToWait)
 			_logger->error(
 				__FILEREF__ + "areRealTimeInfoChanged: no real time info found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
 				", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-				_currentStagingEncodedAssetPathName + ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
+				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
 			);
 
 			return areChanged;
@@ -15008,8 +15011,7 @@ bool FFMpeg::areRealTimeInfoChanged(int maxMilliSecondsToWait)
 						__FILEREF__ + "isSizeOrFrameIncreasing: Failure reading the encoding status file" +
 						", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
 						", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " +
-						_currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName +
-						", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+						_currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
 					);
 
 					throw FFMpegEncodingStatusNotAvailable();
@@ -15029,11 +15031,10 @@ bool FFMpeg::areRealTimeInfoChanged(int maxMilliSecondsToWait)
 			__FILEREF__ + "areRealTimeInfoChanged" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
 			", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
 			", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
-			", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-            + ", firstFrame: " + to_string(firstFrame) + ", secondFrame: " + to_string(secondFrame)
-            + ", firstSize: " + to_string(firstSize) + ", secondSize: " + to_string(secondSize)
-			+ ", firstTimeInMilliSeconds: " + to_string(firstTimeInMilliSeconds) + ", secondTimeInMilliSeconds: " + to_string(secondTimeInMilliSeconds)
-			+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed) + ", areChanged: " + to_string(areChanged) +
+			", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", firstFrame: " + to_string(firstFrame) +
+			", secondFrame: " + to_string(secondFrame) + ", firstSize: " + to_string(firstSize) + ", secondSize: " + to_string(secondSize) +
+			", firstTimeInMilliSeconds: " + to_string(firstTimeInMilliSeconds) +
+			", secondTimeInMilliSeconds: " + to_string(secondTimeInMilliSeconds) + ", areChanged: " + to_string(areChanged) +
 			", numberOfChecksDone: " + to_string(numberOfChecksDone) + ", areRealTimeInfoChanged elapsed (millisecs): " +
 			to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
 		);
@@ -15186,33 +15187,15 @@ tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog(string ffmpegEncodi
 				int iHours = atoi(hours.c_str());
 				int iMinutes = atoi(minutes.c_str());
 				int iSeconds = atoi(seconds.c_str());
-				double iCentsOfSeconds = atoi(centsOfSeconds.c_str());
+				double dCentsOfSeconds = atoi(centsOfSeconds.c_str());
 
-				timeInMilliSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iCentsOfSeconds / 100);
-        double a = 1.234;
-		SPDLOG_INFO(
-			"areRealTimeInfoChanged"
-          ", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", value: {}"
-			", timeInMilliSeconds: {}"
-			", a: {}"
-          , _currentIngestionJobKey, _currentEncodingJobKey, value, timeInMilliSeconds, a
-		);
+				// dCentsOfSeconds deve essere double altrimenti (dCentsOfSeconds / 100) sarà arrotontado ai secondi
+				timeInMilliSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (dCentsOfSeconds / 100);
 				timeInMilliSeconds *= 1000;
 			}
 		}
 	}
 
-		SPDLOG_INFO(
-			"areRealTimeInfoChanged"
-          ", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", frame: {}"
-			", size: {}"
-			", timeInMilliSeconds: {}"
-          , _currentIngestionJobKey, _currentEncodingJobKey, frame, size, timeInMilliSeconds
-		);
 	return make_tuple(frame, size, timeInMilliSeconds);
 }
 

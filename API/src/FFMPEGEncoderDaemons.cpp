@@ -668,7 +668,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (liveProxyWorking) // && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(
-						__FILEREF__ + "liveProxyMonitor isFrameIncreasing check" +
+						__FILEREF__ + "liveProxyMonitor areRealTimeInfoChanged check" +
 						", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
 						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel
 					);
@@ -676,7 +676,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						int maxMilliSecondsToWait = 5000;
+						int maxMilliSecondsToWait = 3000;
 						if (!sourceLiveProxy->_ffmpeg->areRealTimeInfoChanged(maxMilliSecondsToWait))
 						{
 							_logger->error(
@@ -1596,7 +1596,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						int maxMilliSecondsToWait = 5000;
+						int maxMilliSecondsToWait = 3000;
 						if (!sourceLiveRecording->_ffmpeg->areRealTimeInfoChanged(maxMilliSecondsToWait))
 						{
 							_logger->error(
