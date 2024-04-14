@@ -697,6 +697,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								int realTimeInfoNotChangedSince =
 									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastMonitor)
 										.count();
+                SPDLOG_INFO("AAAAAAAAA: {}", realTimeInfoNotChangedSince);
 								if (realTimeInfoNotChangedSince > _maxRealTimeInfoNotChangedToleranceInSeconds)
 								{
 									_logger->error(
