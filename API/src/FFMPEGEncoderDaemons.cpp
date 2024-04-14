@@ -682,7 +682,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						sourceLiveProxy->_realTimeFrame = realTimeFrame;
 						sourceLiveProxy->_realTimeSize = realTimeSize;
 						sourceLiveProxy->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
-						sourceLiveProxy->_realTimeLastMonitor = chrono::system_clock::now();
 
 						if (copiedLiveProxy->_realTimeFrame != -1 || copiedLiveProxy->_realTimeSize != -1 ||
 							copiedLiveProxy->_realTimeTimeInMilliSeconds != -1.0)
@@ -691,7 +690,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							// recupero dei dati
 
 							int elapsedInSecondsSinceLastCheck =
-								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastMonitor).count();
+								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
 							if (copiedLiveProxy->_realTimeFrame == realTimeFrame && copiedLiveProxy->_realTimeSize == realTimeSize &&
 								copiedLiveProxy->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
@@ -732,6 +731,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							else
 							{
+								sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
+
 								_logger->info(
 									__FILEREF__ +
 									"liveProxyMonitor. Live Proxy real time info is changed"
@@ -744,6 +745,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								);
 							}
 						}
+						else
+							sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
@@ -1649,7 +1652,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						sourceLiveRecording->_realTimeFrame = realTimeFrame;
 						sourceLiveRecording->_realTimeSize = realTimeSize;
 						sourceLiveRecording->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
-						sourceLiveRecording->_realTimeLastMonitor = chrono::system_clock::now();
 
 						if (copiedLiveRecording->_realTimeFrame != -1 || copiedLiveRecording->_realTimeSize != -1 ||
 							copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
@@ -1658,7 +1660,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							// recupero dei dati
 
 							int elapsedInSecondsSinceLastCheck =
-								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastMonitor)
+								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
 									.count();
 
 							if (copiedLiveRecording->_realTimeFrame == realTimeFrame && copiedLiveRecording->_realTimeSize == realTimeSize &&
@@ -1701,6 +1703,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							else
 							{
+								sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
+
 								_logger->info(
 									__FILEREF__ +
 									"liveRecordingMonitor. Live Recorder real time info is changed"
@@ -1713,6 +1717,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								);
 							}
 						}
+						else
+							sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
