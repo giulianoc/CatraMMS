@@ -716,19 +716,19 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 									localErrorMessage = " restarted because of 'real time info not changing'";
 								}
-							else
-							{
-								_logger->info(
-									__FILEREF__ +
-									"liveProxyMonitor. Live Proxy real time info is not changed within the tolerance"
-									", ingestionJobKey: " +
-									to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-									to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-									", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
-									", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
+								else
+								{
+									_logger->info(
+										__FILEREF__ +
+										"liveProxyMonitor. Live Proxy real time info is not changed within the tolerance"
+										", ingestionJobKey: " +
+										to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
+										to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
+										", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
+										", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
 										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
-								);
-							}
+									);
+								}
 							}
 							else
 							{
@@ -740,7 +740,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
 									", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
 									", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
-										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
+									", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 								);
 							}
 						}
@@ -1658,7 +1658,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							// recupero dei dati
 
 							int elapsedInSecondsSinceLastCheck =
-								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastMonitor).count();
+								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastMonitor)
+									.count();
 
 							if (copiedLiveRecording->_realTimeFrame == realTimeFrame && copiedLiveRecording->_realTimeSize == realTimeSize &&
 								copiedLiveRecording->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
@@ -1684,19 +1685,19 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 									localErrorMessage = " restarted because of 'real time info not changing'";
 								}
-							else
-							{
-								_logger->info(
-									__FILEREF__ +
-									"liveRecordingMonitor. Live Recorder real time info is not changed but within the tolerance"
-									", ingestionJobKey: " +
-									to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-									to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-									", _childPid: " + to_string(copiedLiveRecording->_childPid) +
-									", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
-									", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
-								);
-							}
+								else
+								{
+									_logger->info(
+										__FILEREF__ +
+										"liveRecordingMonitor. Live Recorder real time info is not changed but within the tolerance"
+										", ingestionJobKey: " +
+										to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
+										to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
+										", _childPid: " + to_string(copiedLiveRecording->_childPid) +
+										", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
+										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
+									);
+								}
 							}
 							else
 							{

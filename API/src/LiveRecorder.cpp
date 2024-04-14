@@ -181,6 +181,10 @@ void LiveRecorder::encodeContent(
 			_liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
 		_liveRecording->_monitoringRealTimeInfoEnabled = JSONUtils::asBool(
 			_liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+        _liveRecording->_realTimeFrame = -1;
+        _liveRecording->_realTimeSize = -1;
+        _liveRecording->_realTimeTimeInMilliSeconds = -1.0;
+        _liveRecording->_realTimeLastMonitor = chrono::system_clock::now();
 
 		_liveRecording->_channelLabel = JSONUtils::asString(_liveRecording->_ingestedParametersRoot,
 			"configurationLabel", "");
