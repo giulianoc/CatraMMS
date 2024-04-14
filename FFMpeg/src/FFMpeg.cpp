@@ -15169,39 +15169,48 @@ tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog(string ffmpegEncodi
 			else
 			{
 				value = value.substr(0, endIndex);
-				frame = stol(value);
 
 				// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x
 				stringstream ss(value);
 				string hours;
 				string minutes;
 				string seconds;
-				string roughMicroSeconds; // microseconds???
+				string centsOfSeconds;
 				char delim = ':';
 				getline(ss, hours, delim);
 				getline(ss, minutes, delim);
 				delim = '.';
 				getline(ss, seconds, delim);
-				getline(ss, roughMicroSeconds, delim);
+				getline(ss, centsOfSeconds, delim);
 
 				int iHours = atoi(hours.c_str());
 				int iMinutes = atoi(minutes.c_str());
 				int iSeconds = atoi(seconds.c_str());
-				int iRoughMicroSeconds = atoi(roughMicroSeconds.c_str());
+				int iCentsOfSeconds = atoi(centsOfSeconds.c_str());
 
-				timeInMilliSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iRoughMicroSeconds / 100);
+				timeInMilliSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iCentsOfSeconds / 100);
+		SPDLOG_INFO(
+			"areRealTimeInfoChanged"
+          ", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", value: {}"
+			", timeInMilliSeconds: {}"
+          , _currentIngestionJobKey, _currentEncodingJobKey, value, timeInMilliSeconds
+		);
 				timeInMilliSeconds *= 1000;
 			}
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "getRealTimeInfoByOutputLog" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-		", encodingJobKey: " + to_string(_currentEncodingJobKey)
-           + ", frame: " + to_string(frame) + ", size: " + to_string(size)
-           + ", timeInMilliSeconds: " + to_string(timeInMilliSeconds)
-	);
-
+		SPDLOG_INFO(
+			"areRealTimeInfoChanged"
+          ", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", frame: {}"
+			", size: {}"
+			", timeInMilliSeconds: {}"
+          , _currentIngestionJobKey, _currentEncodingJobKey, frame, size, timeInMilliSeconds
+		);
 	return make_tuple(frame, size, timeInMilliSeconds);
 }
 
