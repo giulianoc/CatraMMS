@@ -679,17 +679,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
 						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds] = copiedLiveProxy->_ffmpeg->getRealTimeInfoByOutputLog();
-_logger->info(
-__FILEREF__ + "liveProxyMonitor getRealTimeInfoByOutputLog check" +
-", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-", sourceLiveProxy->_realTimeFrame: " + to_string(sourceLiveProxy->_realTimeFrame) +
-", sourceLiveProxy->_realTimeSize: " + to_string(sourceLiveProxy->_realTimeSize) +
-", sourceLiveProxy->_realTimeTimeInMilliSeconds: " + to_string(sourceLiveProxy->_realTimeTimeInMilliSeconds) +
-", realTimeFrame: " + to_string(realTimeFrame) +
-", realTimeSize: " + to_string(realTimeSize) +
-", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds)
-);
 						sourceLiveProxy->_realTimeFrame = realTimeFrame;
 						sourceLiveProxy->_realTimeSize = realTimeSize;
 						sourceLiveProxy->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
@@ -698,6 +687,9 @@ __FILEREF__ + "liveProxyMonitor getRealTimeInfoByOutputLog check" +
 						if (copiedLiveProxy->_realTimeFrame != -1 || copiedLiveProxy->_realTimeSize != -1 ||
 							copiedLiveProxy->_realTimeTimeInMilliSeconds != -1.0)
 						{
+							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
+							// recupero dei dati
+
 							if (copiedLiveProxy->_realTimeFrame == realTimeFrame && copiedLiveProxy->_realTimeSize == realTimeSize &&
 								copiedLiveProxy->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
@@ -707,7 +699,6 @@ __FILEREF__ + "liveProxyMonitor getRealTimeInfoByOutputLog check" +
 										.count();
 								if (realTimeInfoNotChangedSince > _maxRealTimeInfoNotChangedToleranceInSeconds)
 								{
-
 									_logger->error(
 										__FILEREF__ +
 										"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
@@ -1637,6 +1628,9 @@ __FILEREF__ + "liveProxyMonitor getRealTimeInfoByOutputLog check" +
 						if (copiedLiveRecording->_realTimeFrame != -1 || copiedLiveRecording->_realTimeSize != -1 ||
 							copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
 						{
+							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
+							// recupero dei dati
+							//
 							if (copiedLiveRecording->_realTimeFrame == realTimeFrame && copiedLiveRecording->_realTimeSize == realTimeSize &&
 								copiedLiveRecording->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
