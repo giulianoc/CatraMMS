@@ -31,6 +31,8 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 
 		_monitorCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds));
+
+		_maxRealTimeInfoNotChangedToleranceInSeconds = 30;
 	}
 	catch (runtime_error &e)
 	{
@@ -665,10 +667,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveProxyWorking) // && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
+				if (liveProxyWorking && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(
-						__FILEREF__ + "liveProxyMonitor areRealTimeInfoChanged check" +
+						__FILEREF__ + "liveProxyMonitor getRealTimeInfoByOutputLog check" +
 						", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
 						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel
 					);
@@ -676,45 +678,64 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						int maxMilliSecondsToWait = 3000;
-						if (!sourceLiveProxy->_ffmpeg->areRealTimeInfoChanged(maxMilliSecondsToWait))
+						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds] = copiedLiveProxy->_ffmpeg->getRealTimeInfoByOutputLog();
+						sourceLiveProxy->_realTimeFrame = realTimeFrame;
+						sourceLiveProxy->_realTimeSize = realTimeSize;
+						sourceLiveProxy->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
+						sourceLiveProxy->_realTimeLastMonitor = chrono::system_clock::now();
+
+						if (copiedLiveProxy->_realTimeFrame != -1 || copiedLiveProxy->_realTimeSize != -1 ||
+							copiedLiveProxy->_realTimeTimeInMilliSeconds != -1.0)
 						{
-							_logger->error(
-								__FILEREF__ +
-								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy size/frame is not "
-								"increasing'. LiveProxy (ffmpeg) is killed in order to be started again" +
-								", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-								", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-								", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
-							);
+							if (copiedLiveProxy->_realTimeFrame == realTimeFrame && copiedLiveProxy->_realTimeSize == realTimeSize &&
+								copiedLiveProxy->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
+							{
+								// real time info not changed
+								int realTimeInfoNotChangedSince =
+									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastMonitor)
+										.count();
+								if (realTimeInfoNotChangedSince > _maxRealTimeInfoNotChangedToleranceInSeconds)
+								{
 
-							// liveProxyWorking = false;
+									_logger->error(
+										__FILEREF__ +
+										"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
+										"info "
+										"are not changing. "
+										"LiveProxy (ffmpeg) is killed in order to be started again" +
+										", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
+										to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
+										", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
+										", realTimeInfoNotChangedSince: " + to_string(realTimeInfoNotChangedSince) +
+										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
+									);
 
-							localErrorMessage = " restarted because of 'real time info not changing'";
+									// liveProxyWorking = false;
+
+									localErrorMessage = " restarted because of 'real time info not changing'";
+								}
+							}
 						}
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) size/frame increasing check failed") +
+						string errorMessage = string("liveProxyMonitor (rtmp) real time info check failed") +
 											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", e.what(): " + e.what();
+											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", e.what(): " + e.what();
 						_logger->warn(__FILEREF__ + errorMessage);
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) size/frame increasing check failed") +
+						string errorMessage = string("liveProxyMonitor (rtmp) real time info check failed") +
 											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", e.what(): " + e.what();
+											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", e.what(): " + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) size/frame increasing check failed") +
+						string errorMessage = string("liveProxyMonitor (rtmp) real time info check failed") +
 											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", e.what(): " + e.what();
+											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", e.what(): " + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 				}
@@ -1596,45 +1617,64 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						int maxMilliSecondsToWait = 3000;
-						if (!sourceLiveRecording->_ffmpeg->areRealTimeInfoChanged(maxMilliSecondsToWait))
+						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds] = copiedLiveRecording->_ffmpeg->getRealTimeInfoByOutputLog();
+						sourceLiveRecording->_realTimeFrame = realTimeFrame;
+						sourceLiveRecording->_realTimeSize = realTimeSize;
+						sourceLiveRecording->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
+						sourceLiveRecording->_realTimeLastMonitor = chrono::system_clock::now();
+
+						if (copiedLiveRecording->_realTimeFrame != -1 || copiedLiveRecording->_realTimeSize != -1 ||
+							copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
 						{
-							_logger->error(
-								__FILEREF__ +
-								"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecorderMonitor (rtmp). Live Recorder size/frame "
-								"is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again" +
-								", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-								to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-								", _childPid: " + to_string(copiedLiveRecording->_childPid)
-							);
+							if (copiedLiveRecording->_realTimeFrame == realTimeFrame && copiedLiveRecording->_realTimeSize == realTimeSize &&
+								copiedLiveRecording->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
+							{
+								// real time info not changed
+								int realTimeInfoNotChangedSince =
+									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastMonitor)
+										.count();
+								if (realTimeInfoNotChangedSince > _maxRealTimeInfoNotChangedToleranceInSeconds)
+								{
+									_logger->error(
+										__FILEREF__ +
+										"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live Recorder "
+										"real time "
+										"info "
+										"are not changing. "
+										"LiveRecorder (ffmpeg) is killed in order to be started again" +
+										", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
+										to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
+										", _childPid: " + to_string(copiedLiveRecording->_childPid) +
+										", realTimeInfoNotChangedSince: " + to_string(realTimeInfoNotChangedSince) +
+										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
+									);
 
-							liveRecorderWorking = false;
+									liveRecorderWorking = false;
 
-							localErrorMessage = " restarted because of 'real time info are not changing'";
+									localErrorMessage = " restarted because of 'real time info not changing'";
+								}
+							}
 						}
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
-						string errorMessage = string("liveRecorderMonitor (rtmp) size/frame increasing check failed") +
+						string errorMessage = string("liveRecorderMonitor (rtmp) real time info check failed") +
 											  ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
+											  ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", e.what(): " + e.what();
 						_logger->warn(__FILEREF__ + errorMessage);
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveRecorderMonitor (rtmp) size/frame increasing check failed") +
+						string errorMessage = string("liveRecorderMonitor (rtmp) real time info check failed") +
 											  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
+											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", e.what(): " + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("liveRecorderMonitor (rtmp) size/frame increasing check failed") +
+						string errorMessage = string("liveRecorderMonitor (rtmp) real time info check failed") +
 											  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
+											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", e.what(): " + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 				}

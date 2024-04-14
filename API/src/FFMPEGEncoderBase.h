@@ -41,6 +41,10 @@ class FFMPEGEncoderBase
 		json _outputsRoot;
 
 		bool _monitoringRealTimeInfoEnabled;  // frame/size/time
+        long _realTimeFrame;
+        long _realTimeSize;
+        double _realTimeTimeInMilliSeconds;
+		chrono::system_clock::time_point _realTimeLastMonitor;
 
 		int64_t _ingestionJobKey;
 		json _encodingParametersRoot;
@@ -58,6 +62,10 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_available = _available;
 			liveProxyAndGrid->_childPid = _childPid;
 			liveProxyAndGrid->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
+			liveProxyAndGrid->_realTimeFrame = _realTimeFrame;
+			liveProxyAndGrid->_realTimeSize = _realTimeSize;
+			liveProxyAndGrid->_realTimeTimeInMilliSeconds = _realTimeTimeInMilliSeconds;
+			liveProxyAndGrid->_realTimeLastMonitor = _realTimeLastMonitor;
 			liveProxyAndGrid->_encodingJobKey = _encodingJobKey;
 			liveProxyAndGrid->_method = _method;
 			liveProxyAndGrid->_ffmpeg = _ffmpeg;
@@ -85,6 +93,10 @@ class FFMPEGEncoderBase
 		bool _monitoringEnabled;
 
 		bool _monitoringRealTimeInfoEnabled;  // frame/size/time
+        long _realTimeFrame;
+        long _realTimeSize;
+        double _realTimeTimeInMilliSeconds;
+		chrono::system_clock::time_point _realTimeLastMonitor;
 
 		int64_t _ingestionJobKey;
 		bool _externalEncoder;
@@ -116,6 +128,10 @@ class FFMPEGEncoderBase
 			liveRecording->_childPid = _childPid;
 			liveRecording->_monitoringEnabled = _monitoringEnabled;
 			liveRecording->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
+			liveRecording->_realTimeFrame = _realTimeFrame;
+			liveRecording->_realTimeSize = _realTimeSize;
+			liveRecording->_realTimeTimeInMilliSeconds = _realTimeTimeInMilliSeconds;
+			liveRecording->_realTimeLastMonitor = _realTimeLastMonitor;
 			liveRecording->_encodingJobKey = _encodingJobKey;
 			liveRecording->_externalEncoder = _externalEncoder;
 			liveRecording->_ffmpeg = _ffmpeg;

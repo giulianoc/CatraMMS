@@ -178,7 +178,8 @@ class FFMpeg
 
 	bool nonMonotonousDTSInOutputLog();
 	bool forbiddenErrorInOutputLog();
-	bool areRealTimeInfoChanged(int maxMilliSecondsToWait);
+	// bool areRealTimeInfoChanged(int maxMilliSecondsToWait);
+	tuple<long, long, double> getRealTimeInfoByOutputLog();
 
 	tuple<int64_t, long, json> getMediaInfo(
 		int64_t ingestionJobKey, bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,
@@ -547,7 +548,6 @@ class FFMpeg
 
 	// long getFrameByOutputLog(string ffmpegEncodingStatus);
 	// long getSizeByOutputLog(string ffmpegEncodingStatus);
-	tuple<long, long, double> getRealTimeInfoByOutputLog(string ffmpegEncodingStatus);
 
 	void addToIncrontab(int64_t ingestionJobKey, int64_t encodingJobKey, string directoryToBeMonitored);
 

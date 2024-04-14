@@ -72,6 +72,10 @@ void LiveProxy::encodeContent(
 
 		_liveProxyData->_monitoringRealTimeInfoEnabled = JSONUtils::asBool(
 			_liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+        _liveProxyData->_realTimeFrame = -1;
+        _liveProxyData->_realTimeSize = -1;
+        _liveProxyData->_realTimeTimeInMilliSeconds = -1.0;
+        _liveProxyData->_realTimeLastMonitor = chrono::system_clock::now();
 
 		_liveProxyData->_outputsRoot = encodingParametersRoot["outputsRoot"];
 		{
