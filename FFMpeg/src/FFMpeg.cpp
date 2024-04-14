@@ -14949,7 +14949,7 @@ bool FFMpeg::areRealTimeInfoChanged(int maxMilliSecondsToWait)
 
 		long firstFrame;
 		long firstSize;
-		long firstTimeInMilliSeconds;
+		double firstTimeInMilliSeconds;
 		{
 			string ffmpegEncodingStatus;
 			try
@@ -15194,6 +15194,13 @@ tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog(string ffmpegEncodi
 			}
 		}
 	}
+
+	_logger->info(
+		__FILEREF__ + "getRealTimeInfoByOutputLog" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+		", encodingJobKey: " + to_string(_currentEncodingJobKey)
+           + ", frame: " + to_string(frame) + ", size: " + to_string(size)
+           + ", timeInMilliSeconds: " + to_string(timeInMilliSeconds)
+	);
 
 	return make_tuple(frame, size, timeInMilliSeconds);
 }
