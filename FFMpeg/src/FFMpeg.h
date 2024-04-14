@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   FFMPEGEncoder.h
  * Author: giuliano
  *
@@ -14,21 +14,21 @@
 #ifndef FFMpeg_h
 #define FFMpeg_h
 
-#include <string>
-#include <filesystem>
 #include <chrono>
+#include <filesystem>
+#include <string>
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
-#include "spdlog/spdlog.h"
 #include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
 #ifndef __FILEREF__
-    #ifdef __APPLE__
-        #define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
-    #else
-        #define __FILEREF__ string("[") + basename((char *) __FILE__) + ":" + to_string(__LINE__) + "] "
-    #endif
+#ifdef __APPLE__
+#define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
+#else
+#define __FILEREF__ string("[") + basename((char *)__FILE__) + ":" + to_string(__LINE__) + "] "
+#endif
 #endif
 
 using namespace std;
@@ -38,173 +38,112 @@ using json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
 
-struct FFMpegEncodingStatusNotAvailable: public exception {
-    char const* what() const throw() 
-    {
-        return "Encoding status not available";
-    }; 
+struct FFMpegEncodingStatusNotAvailable : public exception
+{
+	char const *what() const throw() { return "Encoding status not available"; };
 };
 
-struct FFMpegSizeOrFrameInfoNotAvailable: public exception {
-    char const* what() const throw() 
-    {
-        return "SizeOrFrame Info not available";
-    }; 
+struct FFMpegSizeOrFrameInfoNotAvailable : public exception
+{
+	char const *what() const throw() { return "SizeOrFrame Info not available"; };
 };
 
-struct FFMpegEncodingKilledByUser: public exception {
-    char const* what() const throw() 
-    {
-        return "Encoding was killed by the User";
-    }; 
+struct FFMpegEncodingKilledByUser : public exception
+{
+	char const *what() const throw() { return "Encoding was killed by the User"; };
 };
 
-struct FFMpegURLForbidden: public exception {
-    char const* what() const throw() 
-    {
-        return "URL Forbidden";
-    }; 
+struct FFMpegURLForbidden : public exception
+{
+	char const *what() const throw() { return "URL Forbidden"; };
 };
 
-struct FFMpegURLNotFound: public exception {
-    char const* what() const throw() 
-    {
-        return "URL Not Found";
-    }; 
+struct FFMpegURLNotFound : public exception
+{
+	char const *what() const throw() { return "URL Not Found"; };
 };
 
-struct NoEncodingJobKeyFound: public exception {
-    char const* what() const throw() 
-    {
-        return "No encoding job key found";
-    }; 
+struct NoEncodingJobKeyFound : public exception
+{
+	char const *what() const throw() { return "No encoding job key found"; };
 };
 
-struct NoEncodingAvailable: public exception {
-    char const* what() const throw() 
-    {
-        return "No encoding available";
-    }; 
+struct NoEncodingAvailable : public exception
+{
+	char const *what() const throw() { return "No encoding available"; };
 };
 
-struct MaxConcurrentJobsReached: public exception {
-    char const* what() const throw() 
-    {
-        return "Encoder reached the max number of concurrent jobs";
-    }; 
+struct MaxConcurrentJobsReached : public exception
+{
+	char const *what() const throw() { return "Encoder reached the max number of concurrent jobs"; };
 };
 
-struct EncodingIsAlreadyRunning: public exception {
-    char const* what() const throw() 
-    {
-        return "Encoding is already running";
-    }; 
+struct EncodingIsAlreadyRunning : public exception
+{
+	char const *what() const throw() { return "Encoding is already running"; };
 };
 
-class FFMpeg {
-public:
-    FFMpeg(json configuration,
-            shared_ptr<spdlog::logger> logger);
-    
-    ~FFMpeg();
+class FFMpeg
+{
+  public:
+	FFMpeg(json configuration, shared_ptr<spdlog::logger> logger);
 
-    void encodeContent(
-        string mmsSourceAssetPathName,
-        int64_t durationInMilliSeconds,
-        string stagingEncodedAssetPathName,
-        json encodingProfileDetailsRoot,
-        bool isVideo,   // if false it means is audio
-		json videoTracksRoot,
-		json audioTracksRoot,
-		int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed,
-		json filtersRoot,
-        int64_t physicalPathKey,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid);
-    
-    void overlayImageOnVideo(
-		bool externalEncoder,
-        string mmsSourceVideoAssetPathName,
-        int64_t videoDurationInMilliSeconds,
-        string mmsSourceImageAssetPathName,
-        string imagePosition_X_InPixel,
-        string imagePosition_Y_InPixel,
-        // string encodedFileName,
-        string stagingEncodedAssetPathName,
-		json encodingProfileDetailsRoot,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid);
+	~FFMpeg();
 
+	void encodeContent(
+		string mmsSourceAssetPathName, int64_t durationInMilliSeconds, string stagingEncodedAssetPathName, json encodingProfileDetailsRoot,
+		bool isVideo, // if false it means is audio
+		json videoTracksRoot, json audioTracksRoot, int videoTrackIndexToBeUsed, int audioTrackIndexToBeUsed, json filtersRoot,
+		int64_t physicalPathKey, int64_t encodingJobKey, int64_t ingestionJobKey, pid_t *pChildPid
+	);
+
+	void overlayImageOnVideo(
+		bool externalEncoder, string mmsSourceVideoAssetPathName, int64_t videoDurationInMilliSeconds, string mmsSourceImageAssetPathName,
+		string imagePosition_X_InPixel, string imagePosition_Y_InPixel,
+		// string encodedFileName,
+		string stagingEncodedAssetPathName, json encodingProfileDetailsRoot, int64_t encodingJobKey, int64_t ingestionJobKey, pid_t *pChildPid
+	);
 
 	void overlayTextOnVideo(
-		string mmsSourceVideoAssetPathName,
-		int64_t videoDurationInMilliSeconds,
+		string mmsSourceVideoAssetPathName, int64_t videoDurationInMilliSeconds,
 
-		json drawTextDetailsRoot,
-		json encodingProfileDetailsRoot,
-		string stagingEncodedAssetPathName,
-		int64_t encodingJobKey,
-		int64_t ingestionJobKey,
-		pid_t* pChildPid);
+		json drawTextDetailsRoot, json encodingProfileDetailsRoot, string stagingEncodedAssetPathName, int64_t encodingJobKey,
+		int64_t ingestionJobKey, pid_t *pChildPid
+	);
 
 	void videoSpeed(
-        string mmsSourceVideoAssetPathName,
-        int64_t videoDurationInMilliSeconds,
+		string mmsSourceVideoAssetPathName, int64_t videoDurationInMilliSeconds,
 
-        string videoSpeedType,
-        int videoSpeedSize,
+		string videoSpeedType, int videoSpeedSize,
 
 		json encodingProfileDetailsRoot,
 
-        string stagingEncodedAssetPathName,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid);
+		string stagingEncodedAssetPathName, int64_t encodingJobKey, int64_t ingestionJobKey, pid_t *pChildPid
+	);
 
 	void pictureInPicture(
-        string mmsMainVideoAssetPathName,
-        int64_t mainVideoDurationInMilliSeconds,
-        string mmsOverlayVideoAssetPathName,
-        int64_t overlayVideoDurationInMilliSeconds,
-        bool soundOfMain,
-        string overlayPosition_X_InPixel,
-        string overlayPosition_Y_InPixel,
-        string overlay_Width_InPixel,
-        string overlay_Height_InPixel,
-		json encodingProfileDetailsRoot,
-        string stagingEncodedAssetPathName,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid);
+		string mmsMainVideoAssetPathName, int64_t mainVideoDurationInMilliSeconds, string mmsOverlayVideoAssetPathName,
+		int64_t overlayVideoDurationInMilliSeconds, bool soundOfMain, string overlayPosition_X_InPixel, string overlayPosition_Y_InPixel,
+		string overlay_Width_InPixel, string overlay_Height_InPixel, json encodingProfileDetailsRoot, string stagingEncodedAssetPathName,
+		int64_t encodingJobKey, int64_t ingestionJobKey, pid_t *pChildPid
+	);
 
 	void introOutroOverlay(
-        string introVideoAssetPathName,
-        int64_t introVideoDurationInMilliSeconds,
-        string mainVideoAssetPathName,
-        int64_t mainVideoDurationInMilliSeconds,
-        string outroVideoAssetPathName,
-        int64_t outroVideoDurationInMilliSeconds,
+		string introVideoAssetPathName, int64_t introVideoDurationInMilliSeconds, string mainVideoAssetPathName,
+		int64_t mainVideoDurationInMilliSeconds, string outroVideoAssetPathName, int64_t outroVideoDurationInMilliSeconds,
 
-		int64_t introOverlayDurationInSeconds,
-		int64_t outroOverlayDurationInSeconds,
+		int64_t introOverlayDurationInSeconds, int64_t outroOverlayDurationInSeconds,
 
-		bool muteIntroOverlay,
-		bool muteOutroOverlay,
+		bool muteIntroOverlay, bool muteOutroOverlay,
 
 		json encodingProfileDetailsRoot,
 
-        string stagingEncodedAssetPathName,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid);
+		string stagingEncodedAssetPathName, int64_t encodingJobKey, int64_t ingestionJobKey, pid_t *pChildPid
+	);
 
 	void introOverlay(
-        string introVideoAssetPathName,
-        int64_t introVideoDurationInMilliSeconds,
-        string mainVideoAssetPathName,
-        int64_t mainVideoDurationInMilliSeconds,
+		string introVideoAssetPathName, int64_t introVideoDurationInMilliSeconds, string mainVideoAssetPathName,
+		int64_t mainVideoDurationInMilliSeconds,
 
 		int64_t introOverlayDurationInSeconds,
 
@@ -212,16 +151,12 @@ public:
 
 		json encodingProfileDetailsRoot,
 
-        string stagingEncodedAssetPathName,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid);
+		string stagingEncodedAssetPathName, int64_t encodingJobKey, int64_t ingestionJobKey, pid_t *pChildPid
+	);
 
 	void outroOverlay(
-        string mainVideoAssetPathName,
-        int64_t mainVideoDurationInMilliSeconds,
-        string outroVideoAssetPathName,
-        int64_t outroVideoDurationInMilliSeconds,
+		string mainVideoAssetPathName, int64_t mainVideoDurationInMilliSeconds, string outroVideoAssetPathName,
+		int64_t outroVideoDurationInMilliSeconds,
 
 		int64_t outroOverlayDurationInSeconds,
 
@@ -229,359 +164,259 @@ public:
 
 		json encodingProfileDetailsRoot,
 
-        string stagingEncodedAssetPathName,
-        int64_t encodingJobKey,
-        int64_t ingestionJobKey,
-		pid_t* pChildPid);
+		string stagingEncodedAssetPathName, int64_t encodingJobKey, int64_t ingestionJobKey, pid_t *pChildPid
+	);
 
 	void silentAudio(
-		string videoAssetPathName,
-		int64_t videoDurationInMilliSeconds,
-		string addType,	// entireTrack, begin, end
-		int seconds,
-		json encodingProfileDetailsRoot,
-		string stagingEncodedAssetPathName,
-		int64_t encodingJobKey,
-		int64_t ingestionJobKey,
-		pid_t* pChildPid);
+		string videoAssetPathName, int64_t videoDurationInMilliSeconds,
+		string addType, // entireTrack, begin, end
+		int seconds, json encodingProfileDetailsRoot, string stagingEncodedAssetPathName, int64_t encodingJobKey, int64_t ingestionJobKey,
+		pid_t *pChildPid
+	);
 
-    double getEncodingProgress();
+	double getEncodingProgress();
 
 	bool nonMonotonousDTSInOutputLog();
 	bool forbiddenErrorInOutputLog();
-	bool isSizeOrFrameIncreasing(int maxMilliSecondsToWait, string& errorMessage);
+	bool areRealTimeInfoChanged(int maxMilliSecondsToWait);
 
-	tuple<int64_t, long, json> getMediaInfo(int64_t ingestionJobKey,
-		bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,
-		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks);
+	tuple<int64_t, long, json> getMediaInfo(
+		int64_t ingestionJobKey, bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,
+		vector<tuple<int, int64_t, string, string, int, int, string, long>> &videoTracks,
+		vector<tuple<int, int64_t, string, long, int, long, string>> &audioTracks
+	);
 
 	string getNearestKeyFrameTime(
-		int64_t ingestionJobKey,
-		string mediaSource,
-		string readIntervals,	// intervallo dove cercare il key frame piu vicino
+		int64_t ingestionJobKey, string mediaSource,
+		string readIntervals, // intervallo dove cercare il key frame piu vicino
 		double keyFrameTime
 	);
 
-	int probeChannel(
-		int64_t ingestionJobKey,
-		string url);
+	int probeChannel(int64_t ingestionJobKey, string url);
 
-	void muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName,
-		string destinationPathName);
+	void muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName, string destinationPathName);
 
 	void getLiveStreamingInfo(
-		string liveURL,
-		string userAgent,
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		vector<tuple<int, string, string, string, string, int, int>>& videoTracks,
-		vector<tuple<int, string, string, string, int, bool>>& audioTracks
+		string liveURL, string userAgent, int64_t ingestionJobKey, int64_t encodingJobKey,
+		vector<tuple<int, string, string, string, string, int, int>> &videoTracks, vector<tuple<int, string, string, string, int, bool>> &audioTracks
 	);
 
 	void generateFrameToIngest(
-		int64_t ingestionJobKey,
-		string mmsAssetPathName,
-		int64_t videoDurationInMilliSeconds,
-		double startTimeInSeconds,
-		string frameAssetPathName,
-		int imageWidth,
-		int imageHeight,
-		pid_t* pChildPid);
+		int64_t ingestionJobKey, string mmsAssetPathName, int64_t videoDurationInMilliSeconds, double startTimeInSeconds, string frameAssetPathName,
+		int imageWidth, int imageHeight, pid_t *pChildPid
+	);
 
-    void generateFramesToIngest(
-        int64_t ingestionJobKey,
-        int64_t encodingJobKey,
-        string imageDirectory,
-        string imageBaseFileName,
-        double startTimeInSeconds,
-        int framesNumber,
-        string videoFilter,
-        int periodInSeconds,
-        bool mjpeg,
-        int imageWidth,
-        int imageHeight,
-        string mmsAssetPathName,
-        int64_t videoDurationInMilliSeconds,
-		pid_t* pChildPid);
+	void generateFramesToIngest(
+		int64_t ingestionJobKey, int64_t encodingJobKey, string imageDirectory, string imageBaseFileName, double startTimeInSeconds, int framesNumber,
+		string videoFilter, int periodInSeconds, bool mjpeg, int imageWidth, int imageHeight, string mmsAssetPathName,
+		int64_t videoDurationInMilliSeconds, pid_t *pChildPid
+	);
 
-    void concat(
-        int64_t ingestionJobKey,
-		bool isVideo,
-        vector<string>& sourcePhysicalPaths,
-        string concatenatedMediaPathName);
+	void concat(int64_t ingestionJobKey, bool isVideo, vector<string> &sourcePhysicalPaths, string concatenatedMediaPathName);
 
 	void splitVideoInChunks(
-		int64_t ingestionJobKey,
-		string sourcePhysicalPath,
-		long chunksDurationInSeconds,
-		string chunksDirectory,
-		string chunkBaseFileName);
+		int64_t ingestionJobKey, string sourcePhysicalPath, long chunksDurationInSeconds, string chunksDirectory, string chunkBaseFileName
+	);
 
 	void slideShow(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		float durationOfEachSlideInSeconds, 
-		string frameRateMode,
-		json encodingProfileDetailsRoot,
-		vector<string>& imagesSourcePhysicalPaths,
-		vector<string>& audiosSourcePhysicalPaths,
-		float shortestAudioDurationInSeconds,	// the shortest duration among the audios
-		string encodedStagingAssetPathName,
-		pid_t* pChildPid);
+		int64_t ingestionJobKey, int64_t encodingJobKey, float durationOfEachSlideInSeconds, string frameRateMode, json encodingProfileDetailsRoot,
+		vector<string> &imagesSourcePhysicalPaths, vector<string> &audiosSourcePhysicalPaths,
+		float shortestAudioDurationInSeconds, // the shortest duration among the audios
+		string encodedStagingAssetPathName, pid_t *pChildPid
+	);
 
 	void cutWithoutEncoding(
-		int64_t ingestionJobKey,
-		string sourcePhysicalPath,
-		bool isVideo,
-		string cutType,	// KeyFrameSeeking (input seeking), FrameAccurateWithoutEncoding, KeyFrameSeekingInterval
-		string startKeyFramesSeekingInterval,
-		string endKeyFramesSeekingInterval,
-		string startTime,
-		string endTime,
-		int framesNumber,
-		string cutMediaPathName);
+		int64_t ingestionJobKey, string sourcePhysicalPath, bool isVideo,
+		string cutType, // KeyFrameSeeking (input seeking), FrameAccurateWithoutEncoding, KeyFrameSeekingInterval
+		string startKeyFramesSeekingInterval, string endKeyFramesSeekingInterval, string startTime, string endTime, int framesNumber,
+		string cutMediaPathName
+	);
 
 	void cutFrameAccurateWithEncoding(
-		int64_t ingestionJobKey,
-		string sourceVideoAssetPathName,
+		int64_t ingestionJobKey, string sourceVideoAssetPathName,
 		// no keyFrameSeeking needs reencoding otherwise the key frame is always used
 		// If you re-encode your video when you cut/trim, then you get a frame-accurate cut
 		// because FFmpeg will re-encode the video and start with an I-frame.
-		int64_t encodingJobKey,
-		json encodingProfileDetailsRoot,
-		string startTime,
-		string endTime,
-		int framesNumber,
-		string stagingEncodedAssetPathName,
-		pid_t* pChildPid);
+		int64_t encodingJobKey, json encodingProfileDetailsRoot, string startTime, string endTime, int framesNumber,
+		string stagingEncodedAssetPathName, pid_t *pChildPid
+	);
 
-    void extractTrackMediaToIngest(
-        int64_t ingestionJobKey,
-        string sourcePhysicalPath,
-        vector<pair<string,int>>& tracksToBeExtracted,
-        string extractTrackMediaPathName);
+	void extractTrackMediaToIngest(
+		int64_t ingestionJobKey, string sourcePhysicalPath, vector<pair<string, int>> &tracksToBeExtracted, string extractTrackMediaPathName
+	);
 
 	void liveRecorder(
-        int64_t ingestionJobKey,
-        int64_t encodingJobKey,
-		bool externalEncoder,
-		string segmentListPathName,
-		string recordedFileNamePrefix,
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string segmentListPathName, string recordedFileNamePrefix,
 
 		string otherInputOptions,
 
-		string streamSourceType,
-        string liveURL,
-		int listenTimeoutInSeconds,
-		int captureLive_videoDeviceNumber,
-		string captureLive_videoInputFormat,
-		int captureLive_frameRate,
-		int captureLive_width,
-		int captureLive_height,
-		int captureLive_audioDeviceNumber,
-		int captureLive_channelsNumber,
+		string streamSourceType, string liveURL, int listenTimeoutInSeconds, int captureLive_videoDeviceNumber, string captureLive_videoInputFormat,
+		int captureLive_frameRate, int captureLive_width, int captureLive_height, int captureLive_audioDeviceNumber, int captureLive_channelsNumber,
 
-		string userAgent,
-        time_t utcRecordingPeriodStart, 
-        time_t utcRecordingPeriodEnd, 
+		string userAgent, time_t utcRecordingPeriodStart, time_t utcRecordingPeriodEnd,
 
-        int segmentDurationInSeconds,
-        string outputFileFormat,
-		string segmenterType,
+		int segmentDurationInSeconds, string outputFileFormat, string segmenterType,
 
 		json outputsRoot,
 
 		json picturePathNamesToBeDetectedRoot,
 
-		pid_t* pChildPid,
-		chrono::system_clock::time_point* pRecordingStart);
+		pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart
+	);
 
 	void liveRecorder2(
-        int64_t ingestionJobKey,
-        int64_t encodingJobKey,
-		bool externalEncoder,
-		string segmentListPathName,
-		string recordedFileNamePrefix,
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string segmentListPathName, string recordedFileNamePrefix,
 
 		string otherInputOptions,
 
-		string streamSourceType,
-        string liveURL,
-		int listenTimeoutInSeconds,
-		int captureLive_videoDeviceNumber,
-		string captureLive_videoInputFormat,
-		int captureLive_frameRate,
-		int captureLive_width,
-		int captureLive_height,
-		int captureLive_audioDeviceNumber,
-		int captureLive_channelsNumber,
+		string streamSourceType, string liveURL, int listenTimeoutInSeconds, int captureLive_videoDeviceNumber, string captureLive_videoInputFormat,
+		int captureLive_frameRate, int captureLive_width, int captureLive_height, int captureLive_audioDeviceNumber, int captureLive_channelsNumber,
 
-		string userAgent,
-        time_t utcRecordingPeriodStart, 
-        time_t utcRecordingPeriodEnd, 
+		string userAgent, time_t utcRecordingPeriodStart, time_t utcRecordingPeriodEnd,
 
-        int segmentDurationInSeconds,
-        string outputFileFormat,
-		string segmenterType,
+		int segmentDurationInSeconds, string outputFileFormat, string segmenterType,
 
 		json outputsRoot,
 
 		json picturePathNamesToBeDetectedRoot,
 
-		pid_t* pChildPid,
-		chrono::system_clock::time_point* pRecordingStart);
+		pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart
+	);
 
 	void liveProxy2(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		bool externalEncoder,
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
 
-		mutex* inputsRootMutex,
-		json* inputsRoot,
+		mutex *inputsRootMutex, json *inputsRoot,
 
 		json outputsRoot,
 
-		pid_t* pChildPid,
-		chrono::system_clock::time_point* pProxyStart
+		pid_t *pChildPid, chrono::system_clock::time_point *pProxyStart
 	);
 
 	void liveGrid(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		bool externalEncoder,
-		string userAgent,
-		json inputChannelsRoot,	// name,url
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string userAgent,
+		json inputChannelsRoot, // name,url
 		int gridColumns,
 		int gridWidth,	// i.e.: 1024
 		int gridHeight, // i.e.: 578
 
 		json outputsRoot,
 
-		pid_t* pChildPid);
+		pid_t *pChildPid
+	);
 
 	void changeFileFormat(
-		int64_t ingestionJobKey,
-		int64_t physicalPathKey,
-		string sourcePhysicalPath,
-		vector<tuple<int64_t, int, int64_t, int, int, string, string, long,
-			string>>& sourceVideoTracks,
-		vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& sourceAudioTracks,
-		string destinationPathName,
-		string outputFileFormat);
+		int64_t ingestionJobKey, int64_t physicalPathKey, string sourcePhysicalPath,
+		vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> &sourceVideoTracks,
+		vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> &sourceAudioTracks, string destinationPathName, string outputFileFormat
+	);
 
-	void streamingToFile(
-		int64_t ingestionJobKey,
-		bool regenerateTimestamps,
-		string sourceReferenceURL,
-		string destinationPathName);
+	void streamingToFile(int64_t ingestionJobKey, bool regenerateTimestamps, string sourceReferenceURL, string destinationPathName);
 
-    static void encodingVideoCodecValidation(string codec,
-        shared_ptr<spdlog::logger> logger);
+	static void encodingVideoCodecValidation(string codec, shared_ptr<spdlog::logger> logger);
 
-	pair<string, string> retrieveStreamingYouTubeURL(
-		int64_t ingestionJobKey,
-		string youTubeURL);
+	pair<string, string> retrieveStreamingYouTubeURL(int64_t ingestionJobKey, string youTubeURL);
 
 	static bool isNumber(int64_t ingestionJobKey, string number);
 	static pair<double, long> timeToSeconds(int64_t ingestionJobKey, string time);
 	static string secondsToTime(int64_t ingestionJobKey, double dSeconds);
 	static string centsOfSecondsToTime(int64_t ingestionJobKey, long centsOfSeconds);
 
-private:
-	enum class APIName {
-		EncodeContent					= 0,
-		OverlayImageOnVideo				= 1,
-		OverlayTextOnVideo				= 2,
-		VideoSpeed						= 3,
-		PictureInPicture				= 4,
-		IntroOutroOverlay				= 5,
-		GetMediaInfo					= 6,
-		ProbeChannel					= 7,
-		MuxAllFiles						= 8,
-		GenerateFrameToIngest			= 9,
-		GenerateFramesToIngest			= 10,
-		Concat							= 11,
-		CutWithoutEncoding				= 12,
-		CutFrameAccurateWithEncoding	= 13,
-		SlideShow						= 14,
-		ExtractTrackMediaToIngest		= 15,
-		LiveRecorder					= 16,
-		LiveProxy						= 17,
-		LiveGrid						= 18,
-		ChangeFileFormat				= 19,
-		StreamingToFile					= 20,
-		SilentAudio						= 21,
-		IntroOverlay					= 22,
-		OutroOverlay					= 23,
-		NearestKeyFrameTime				= 24,
-		SplitVideoInChunks				= 25
+  private:
+	enum class APIName
+	{
+		EncodeContent = 0,
+		OverlayImageOnVideo = 1,
+		OverlayTextOnVideo = 2,
+		VideoSpeed = 3,
+		PictureInPicture = 4,
+		IntroOutroOverlay = 5,
+		GetMediaInfo = 6,
+		ProbeChannel = 7,
+		MuxAllFiles = 8,
+		GenerateFrameToIngest = 9,
+		GenerateFramesToIngest = 10,
+		Concat = 11,
+		CutWithoutEncoding = 12,
+		CutFrameAccurateWithEncoding = 13,
+		SlideShow = 14,
+		ExtractTrackMediaToIngest = 15,
+		LiveRecorder = 16,
+		LiveProxy = 17,
+		LiveGrid = 18,
+		ChangeFileFormat = 19,
+		StreamingToFile = 20,
+		SilentAudio = 21,
+		IntroOverlay = 22,
+		OutroOverlay = 23,
+		NearestKeyFrameTime = 24,
+		SplitVideoInChunks = 25
 	};
-	static const char* toString(const APIName& apiName)
+	static const char *toString(const APIName &apiName)
 	{
 		switch (apiName)
 		{
-			case APIName::EncodeContent:
-				return "EncodeContent";
-			case APIName::OverlayImageOnVideo:
-				return "OverlayImageOnVideo";
-			case APIName::OverlayTextOnVideo:
-				return "OverlayTextOnVideo";
-			case APIName::VideoSpeed:
-				return "VideoSpeed";
-			case APIName::PictureInPicture:
-				return "PictureInPicture";
-			case APIName::IntroOutroOverlay:
-				return "IntroOutroOverlay";
-			case APIName::GetMediaInfo:
-				return "GetMediaInfo";
-			case APIName::ProbeChannel:
-				return "ProbeChannel";
-			case APIName::MuxAllFiles:
-				return "MuxAllFiles";
-			case APIName::GenerateFrameToIngest:
-				return "GenerateFrameToIngest";
-			case APIName::GenerateFramesToIngest:
-				return "GenerateFramesToIngest";
-			case APIName::Concat:
-				return "Concat";
-			case APIName::CutWithoutEncoding:
-				return "CutWithoutEncoding";
-			case APIName::CutFrameAccurateWithEncoding:
-				return "CutFrameAccurateWithEncoding";
-			case APIName::SlideShow:
-				return "SlideShow";
-			case APIName::ExtractTrackMediaToIngest:
-				return "ExtractTrackMediaToIngest";
-			case APIName::LiveRecorder:
-				return "LiveRecorder";
-			case APIName::LiveProxy:
-				return "LiveProxy";
-			case APIName::LiveGrid:
-				return "LiveGrid";
-			case APIName::ChangeFileFormat:
-				return "ChangeFileFormat";
-			case APIName::StreamingToFile:
-				return "StreamingToFile";
-			case APIName::SilentAudio:
-				return "SilentAudio";
-			case APIName::IntroOverlay:
-				return "IntroOverlay";
-			case APIName::OutroOverlay:
-				return "OutroOverlay";
-			case APIName::NearestKeyFrameTime:
-				return "NearestKeyFrameTime";
-			case APIName::SplitVideoInChunks:
-				return "SplitVideoInChunks";
-			default:
-				throw runtime_error(string("Wrong APIName"));
+		case APIName::EncodeContent:
+			return "EncodeContent";
+		case APIName::OverlayImageOnVideo:
+			return "OverlayImageOnVideo";
+		case APIName::OverlayTextOnVideo:
+			return "OverlayTextOnVideo";
+		case APIName::VideoSpeed:
+			return "VideoSpeed";
+		case APIName::PictureInPicture:
+			return "PictureInPicture";
+		case APIName::IntroOutroOverlay:
+			return "IntroOutroOverlay";
+		case APIName::GetMediaInfo:
+			return "GetMediaInfo";
+		case APIName::ProbeChannel:
+			return "ProbeChannel";
+		case APIName::MuxAllFiles:
+			return "MuxAllFiles";
+		case APIName::GenerateFrameToIngest:
+			return "GenerateFrameToIngest";
+		case APIName::GenerateFramesToIngest:
+			return "GenerateFramesToIngest";
+		case APIName::Concat:
+			return "Concat";
+		case APIName::CutWithoutEncoding:
+			return "CutWithoutEncoding";
+		case APIName::CutFrameAccurateWithEncoding:
+			return "CutFrameAccurateWithEncoding";
+		case APIName::SlideShow:
+			return "SlideShow";
+		case APIName::ExtractTrackMediaToIngest:
+			return "ExtractTrackMediaToIngest";
+		case APIName::LiveRecorder:
+			return "LiveRecorder";
+		case APIName::LiveProxy:
+			return "LiveProxy";
+		case APIName::LiveGrid:
+			return "LiveGrid";
+		case APIName::ChangeFileFormat:
+			return "ChangeFileFormat";
+		case APIName::StreamingToFile:
+			return "StreamingToFile";
+		case APIName::SilentAudio:
+			return "SilentAudio";
+		case APIName::IntroOverlay:
+			return "IntroOverlay";
+		case APIName::OutroOverlay:
+			return "OutroOverlay";
+		case APIName::NearestKeyFrameTime:
+			return "NearestKeyFrameTime";
+		case APIName::SplitVideoInChunks:
+			return "SplitVideoInChunks";
+		default:
+			throw runtime_error(string("Wrong APIName"));
 		}
 	}
-	static APIName toAPIName(const string& apiName)
+	static APIName toAPIName(const string &apiName)
 	{
 		string lowerCase;
 		lowerCase.resize(apiName.size());
-		transform(apiName.begin(), apiName.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+		transform(apiName.begin(), apiName.end(), lowerCase.begin(), [](unsigned char c) { return tolower(c); });
 
 		if (lowerCase == "encodecontent")
 			return APIName::EncodeContent;
@@ -636,48 +471,42 @@ private:
 		else if (lowerCase == "splitvideoinchunks")
 			return APIName::SplitVideoInChunks;
 		else
-			throw runtime_error(string("Wrong APIName")
-				+ ", current apiName: " + apiName
-			);
+			throw runtime_error(string("Wrong APIName") + ", current apiName: " + apiName);
 	}
 
-    shared_ptr<spdlog::logger>  _logger;
-    string          _ffmpegPath;
-    string          _ffmpegTempDir;
-    string			_ffmpegEndlessRecursivePlaylistDir;
-    string          _ffmpegTtfFontDir;
-    int             _charsToBeReadFromFfmpegErrorOutput;
-    bool            _twoPasses;
-    string          _outputFfmpegPathFileName;
-    bool            _currentlyAtSecondPass;
-    
-	string			_youTubeDlPath;
-	string			_pythonPathName;
+	shared_ptr<spdlog::logger> _logger;
+	string _ffmpegPath;
+	string _ffmpegTempDir;
+	string _ffmpegEndlessRecursivePlaylistDir;
+	string _ffmpegTtfFontDir;
+	int _charsToBeReadFromFfmpegErrorOutput;
+	bool _twoPasses;
+	string _outputFfmpegPathFileName;
+	bool _currentlyAtSecondPass;
 
-	APIName			_currentApiName;
+	string _youTubeDlPath;
+	string _pythonPathName;
 
-    int64_t         _currentDurationInMilliSeconds;
-    string          _currentMMSSourceAssetPathName;
-    string          _currentStagingEncodedAssetPathName;
-    int64_t         _currentIngestionJobKey;
-    int64_t         _currentEncodingJobKey;
+	APIName _currentApiName;
 
-	chrono::system_clock::time_point	_startFFMpegMethod;
-	int				_startCheckingFrameInfoInMinutes;
+	int64_t _currentDurationInMilliSeconds;
+	string _currentMMSSourceAssetPathName;
+	string _currentStagingEncodedAssetPathName;
+	int64_t _currentIngestionJobKey;
+	int64_t _currentEncodingJobKey;
 
-    int				_waitingNFSSync_maxMillisecondsToWait;
-    int				_waitingNFSSync_milliSecondsWaitingBetweenChecks;
+	chrono::system_clock::time_point _startFFMpegMethod;
+	int _startCheckingFrameInfoInMinutes;
 
-	string			_incrontabConfigurationDirectory;
-	string			_incrontabConfigurationFileName;
-	string			_incrontabBinary;
+	int _waitingNFSSync_maxMillisecondsToWait;
+	int _waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
+	string _incrontabConfigurationDirectory;
+	string _incrontabConfigurationFileName;
+	string _incrontabBinary;
 
 	void setStatus(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey = -1,
-		int64_t durationInMilliSeconds = -1,
-		string mmsSourceAssetPathName = "",
+		int64_t ingestionJobKey, int64_t encodingJobKey = -1, int64_t durationInMilliSeconds = -1, string mmsSourceAssetPathName = "",
 		string stagingEncodedAssetPathName = ""
 	);
 
@@ -693,59 +522,43 @@ private:
 		int64_t streamingDurationInSeconds);
 	*/
 
-	int getNextLiveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey,
-		json* inputsRoot, mutex* inputsRootMutex,
-		int currentInputIndex, bool timedInput, json* newInputRoot);
+	int getNextLiveProxyInput(
+		int64_t ingestionJobKey, int64_t encodingJobKey, json *inputsRoot, mutex *inputsRootMutex, int currentInputIndex, bool timedInput,
+		json *newInputRoot
+	);
 
-	tuple<long, string, string, int, int64_t, json
+	tuple<
+		long, string, string, int, int64_t, json
 		// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
 		// vector<tuple<int, int64_t, string, long, int, long, string>>
 		>
-		liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
-		json inputRoot, vector<string>& ffmpegInputArgumentList);
+	liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, vector<string> &ffmpegInputArgumentList);
 
-	void outputsRootToFfmpeg(int64_t ingestionJobKey, int64_t encodingJobKey,
-		bool externalEncoder,
-		string otherOutputOptionsBecauseOfMaxWidth,
+	void outputsRootToFfmpeg(
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string otherOutputOptionsBecauseOfMaxWidth,
 		json inputDrawTextDetailsRoot,
 		// vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
 		// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
-		long streamingDurationInSeconds,
-		json outputsRoot,
-		vector<string>& ffmpegOutputArgumentList);
-	void outputsRootToFfmpeg_clean(
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json outputsRoot,
-		bool externalEncoder);
+		long streamingDurationInSeconds, json outputsRoot, vector<string> &ffmpegOutputArgumentList
+	);
+	void outputsRootToFfmpeg_clean(int64_t ingestionJobKey, int64_t encodingJobKey, json outputsRoot, bool externalEncoder);
 
-    string getLastPartOfFile(
-        string pathFileName, int lastCharsToBeRead);
-    
-	long getFrameByOutputLog(string ffmpegEncodingStatus);
-	long getSizeByOutputLog(string ffmpegEncodingStatus);
+	string getLastPartOfFile(string pathFileName, int lastCharsToBeRead);
 
-	void addToIncrontab(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		string directoryToBeMonitored);
+	// long getFrameByOutputLog(string ffmpegEncodingStatus);
+	// long getSizeByOutputLog(string ffmpegEncodingStatus);
+	tuple<long, long, double> getRealTimeInfoByOutputLog(string ffmpegEncodingStatus);
 
-	void removeFromIncrontab(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		string directoryToBeMonitored);
+	void addToIncrontab(int64_t ingestionJobKey, int64_t encodingJobKey, string directoryToBeMonitored);
+
+	void removeFromIncrontab(int64_t ingestionJobKey, int64_t encodingJobKey, string directoryToBeMonitored);
 
 	int progressDownloadCallback(
-		int64_t ingestionJobKey,
-		chrono::system_clock::time_point& lastTimeProgressUpdate, 
-		double& lastPercentageUpdated,
-		double dltotal, double dlnow,
-		double ultotal, double ulnow);
+		int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, double dltotal,
+		double dlnow, double ultotal, double ulnow
+	);
 
-	void renameOutputFfmpegPathFileName(
-		int64_t ingestionJobKey,
-		int64_t encodingJobKey,
-		string outputFfmpegPathFileName);
+	void renameOutputFfmpegPathFileName(int64_t ingestionJobKey, int64_t encodingJobKey, string outputFfmpegPathFileName);
 };
 
 #endif
-

@@ -14909,21 +14909,19 @@ bool FFMpeg::forbiddenErrorInOutputLog()
 	}
 }
 
-bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait, string& errorMessage)
+bool FFMpeg::areRealTimeInfoChanged(int maxMilliSecondsToWait)
 {
 
-	bool isIncreasing = true;
+	bool areChanged = true;
 
 	chrono::system_clock::time_point startCheck = chrono::system_clock::now();
 	try
 	{
-        errorMessage = "";
-        
 		long minutesSinceBeginningPassed = chrono::duration_cast<chrono::minutes>(startCheck - _startFFMpegMethod).count();
 		if (minutesSinceBeginningPassed <= _startCheckingFrameInfoInMinutes)
 		{
 			_logger->info(
-				__FILEREF__ + "isSizeOrFrameIncreasing: too early to check size/frame increasing" +
+				__FILEREF__ + "areRealTimeInfoChanged: too early to check frame/size/time increasing" +
 				", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
 				", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
 				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", minutesSinceBeginningPassed: " +
@@ -14932,27 +14930,26 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait, string& errorMes
 				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
 			);
 
-			return isIncreasing;
+			return areChanged;
 		}
 
 		if (!fs::exists(_outputFfmpegPathFileName.c_str()))
 		{
 			_logger->info(
-				__FILEREF__ + "isSizeOrFrameIncreasing: Encoding status not available" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+				__FILEREF__ + "areRealTimeInfoChanged: Encoding status not available" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
 				", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
 				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
 				_currentStagingEncodedAssetPathName + ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
 			);
-
-            errorMessage = "Encoding status not available";
 
 			throw FFMpegEncodingStatusNotAvailable();
 		}
 
 		int lastCharsToBeReadToGetInfo = 10000;
 
-		long firstValue;
-		bool sizeFound = true;
+		long firstFrame;
+		long firstSize;
+		long firstTimeInMilliSeconds;
 		{
 			string ffmpegEncodingStatus;
 			try
@@ -14962,60 +14959,37 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait, string& errorMes
 			catch (exception &e)
 			{
 				_logger->error(
-					__FILEREF__ + "isSizeOrFrameIncreasing: Failure reading the encoding status file" +
+					__FILEREF__ + "areRealTimeInfoChanged: Failure reading the encoding status file" +
 					", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
 					", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " +
 					_currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName +
 					", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
 				);
 
-                errorMessage = "Failure reading the encoding status file";
-
 				throw FFMpegEncodingStatusNotAvailable();
 			}
 
-			try
-			{
-				firstValue = getSizeByOutputLog(ffmpegEncodingStatus);
-			}
-			catch (FFMpegSizeOrFrameInfoNotAvailable &e)
-			{
-				try
-				{
-					sizeFound = false;
-					firstValue = getFrameByOutputLog(ffmpegEncodingStatus);
-				}
-				catch (FFMpegSizeOrFrameInfoNotAvailable &e)
-				{
-					// in alcuni casi le informazioni sul frame is not written by ffmpeg. In this case we will just
-					// skip the check and we will set frameIncreasing to true to avoid the process is killed
-					isIncreasing = true;
-
-					SPDLOG_WARN(
-						"isSizeOrFrameIncreasing: frame monitoring. Frame info not available (1)"
-						", ingestionJobKey: {}"
-						", encodingJobKey: {}"
-						", _outputFfmpegPathFileName: {}"
-						", _currentMMSSourceAssetPathName: {}"
-						", _currentStagingEncodedAssetPathName: {}"
-						", minutesSinceBeginningPassed: {}"
-						", ffmpegEncodingStatus: {}"
-						", frameIncreasing: {}"
-						", isSizeOrFrameIncreasing elapsed (millisecs): {}",
-						_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
-						_currentStagingEncodedAssetPathName, minutesSinceBeginningPassed, ffmpegEncodingStatus, isIncreasing,
-						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count()
-					);
-
-					return isIncreasing;
-					// throw FFMpegEncodingStatusNotAvailable();
-				}
-			}
+			tie(firstFrame, firstSize, firstTimeInMilliSeconds) = getRealTimeInfoByOutputLog(ffmpegEncodingStatus);
 		}
 
-		int millisecondsToWaitAmongChecks = 300;
+		if (firstFrame == -1 && firstSize == -1 && firstTimeInMilliSeconds == -1.0)
+		{
+			// nel caso in cui non abbiamo alcuna informazione consideriamo come se il check ha avuto successo
+			_logger->error(
+				__FILEREF__ + "areRealTimeInfoChanged: no real time info found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+				", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
+				_currentStagingEncodedAssetPathName + ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
+			);
+
+			return areChanged;
+		}
+		int millisecondsToWaitAmongChecks = 500;
 		int numberOfChecksDone = 0;
-		long secondValue = firstValue;
+
+		long secondFrame = firstFrame;
+		long secondSize = firstSize;
+		double secondTimeInMilliSeconds = firstTimeInMilliSeconds;
 
 		while (chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count() < maxMilliSecondsToWait)
 		{
@@ -15038,62 +15012,36 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait, string& errorMes
 						", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed)
 					);
 
-                errorMessage = "Failure reading the encoding status file";
-
 					throw FFMpegEncodingStatusNotAvailable();
 				}
 
-				try
-				{
-					if (sizeFound)
-						secondValue = getSizeByOutputLog(ffmpegEncodingStatus);
-					else
-						secondValue = getFrameByOutputLog(ffmpegEncodingStatus);
-				}
-				catch (FFMpegSizeOrFrameInfoNotAvailable &e)
-				{
-					isIncreasing = false;
-
-					_logger->error(
-						__FILEREF__ + "isSizeOrFrameIncreasing. Frame info not available (2)" +
-						", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
-						", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " +
-						_currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName +
-						", sizeFound: " + to_string(sizeFound) + ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed) +
-						", isIncreasing: " + to_string(isIncreasing) + ", isSizeOrFrameIncreasing elapsed (millisecs): " +
-						to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
-					);
-
-                  errorMessage = "Frame info not available (2)";
-
-					return isIncreasing;
-					// throw FFMpegEncodingStatusNotAvailable();
-				}
+				tie(secondFrame, secondSize, secondTimeInMilliSeconds) = getRealTimeInfoByOutputLog(ffmpegEncodingStatus);
 			}
 
-			if (firstValue != secondValue)
+			if (firstFrame != secondFrame || firstSize != secondSize || firstTimeInMilliSeconds != secondTimeInMilliSeconds)
 				break;
 		}
 
-		isIncreasing = (firstValue == secondValue ? false : true);
+		if (firstFrame == secondFrame && firstSize == secondSize && firstTimeInMilliSeconds == secondTimeInMilliSeconds)
+			areChanged = false;
 
 		_logger->info(
-			__FILEREF__ + "isSizeOrFrameIncreasing" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+			__FILEREF__ + "areRealTimeInfoChanged" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
 			", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-			", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-			_currentStagingEncodedAssetPathName + ", firstValue: " + to_string(firstValue) + ", secondValue: " + to_string(secondValue) +
-			", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed) + ", isIncreasing: " + to_string(isIncreasing) +
-			", numberOfChecksDone: " + to_string(numberOfChecksDone) + ", isSizeOrFrameIncreasing elapsed (millisecs): " +
+			", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
+			", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", firstFrame: " + to_string(firstFrame) + ", secondFrame: " + to_string(secondFrame)
+            + ", firstSize: " + to_string(firstSize) + ", secondSize: " + to_string(secondSize)
+			+ ", firstTimeInMilliSeconds: " + to_string(firstTimeInMilliSeconds) + ", secondTimeInMilliSeconds: " + to_string(secondTimeInMilliSeconds)
+			+ ", minutesSinceBeginningPassed: " + to_string(minutesSinceBeginningPassed) + ", areChanged: " + to_string(areChanged) +
+			", numberOfChecksDone: " + to_string(numberOfChecksDone) + ", areRealTimeInfoChanged elapsed (millisecs): " +
 			to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
 		);
-
-        if (!isIncreasing)
-          errorMessage = fmt::format("size/frame is not increasing, firstValue: {}, secondValue: {}", firstValue, secondValue);
 	}
 	catch (FFMpegEncodingStatusNotAvailable &e)
 	{
 		_logger->info(
-			__FILEREF__ + "isSizeOrFrameIncreasing failed" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+			__FILEREF__ + "areRealTimeInfoChanged failed" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
 			", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
 			", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
 			", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", isSizeOrFrameIncreasing elapsed (millisecs): " +
@@ -15105,21 +15053,152 @@ bool FFMpeg::isSizeOrFrameIncreasing(int maxMilliSecondsToWait, string& errorMes
 	catch (exception &e)
 	{
 		_logger->error(
-			__FILEREF__ + "isSizeOrFrameIncreasing failed" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+			__FILEREF__ + "areRealTimeInfoChanged failed" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
 			", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
 			", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
 			", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", isSizeOrFrameIncreasing elapsed (millisecs): " +
 			to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startCheck).count())
 		);
 
-        errorMessage = fmt::format("exception: {}", e.what());
-
 		throw e;
 	}
 
-	return isIncreasing;
+	return areChanged;
 }
 
+tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog(string ffmpegEncodingStatus)
+{
+	// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x
+
+	long frame = -1;
+	long size = -1;
+	double timeInMilliSeconds = -1.0;
+
+	{
+		string toSearch = "frame=";
+		size_t startIndex = ffmpegEncodingStatus.rfind(toSearch);
+		if (startIndex == string::npos)
+		{
+			_logger->warn(
+				__FILEREF__ + "ffmpeg: frame info was not found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+				", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
+				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+			);
+		}
+		else
+		{
+			string value = ffmpegEncodingStatus.substr(startIndex + toSearch.size());
+			value = StringUtils::ltrim(value);
+			size_t endIndex = value.find(" ");
+			if (endIndex == string::npos)
+			{
+				_logger->error(
+					__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+					", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+					", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
+					_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+				);
+			}
+			else
+			{
+				value = value.substr(0, endIndex);
+				frame = stol(value);
+			}
+		}
+	}
+	{
+		string toSearch = "size=";
+		size_t startIndex = ffmpegEncodingStatus.rfind(toSearch);
+		if (startIndex == string::npos)
+		{
+			_logger->warn(
+				__FILEREF__ + "ffmpeg: size info was not found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+				", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
+				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+			);
+		}
+		else
+		{
+			string value = ffmpegEncodingStatus.substr(startIndex + toSearch.size());
+			value = StringUtils::ltrim(value);
+			size_t endIndex = value.find(" ");
+			if (endIndex == string::npos)
+			{
+				_logger->error(
+					__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+					", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+					", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
+					_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+				);
+			}
+			else
+			{
+				value = value.substr(0, endIndex);
+				size = stol(value);
+			}
+		}
+	}
+	{
+		string toSearch = "time=";
+		size_t startIndex = ffmpegEncodingStatus.rfind(toSearch);
+		if (startIndex == string::npos)
+		{
+			_logger->warn(
+				__FILEREF__ + "ffmpeg: time info was not found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+				", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+				", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
+				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+			);
+		}
+		else
+		{
+			string value = ffmpegEncodingStatus.substr(startIndex + toSearch.size());
+			value = StringUtils::ltrim(value);
+			size_t endIndex = value.find(" ");
+			if (endIndex == string::npos)
+			{
+				_logger->error(
+					__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+					", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+					", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
+					_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+				);
+			}
+			else
+			{
+				value = value.substr(0, endIndex);
+				frame = stol(value);
+
+				// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x
+				stringstream ss(value);
+				string hours;
+				string minutes;
+				string seconds;
+				string roughMicroSeconds; // microseconds???
+				char delim = ':';
+				getline(ss, hours, delim);
+				getline(ss, minutes, delim);
+				delim = '.';
+				getline(ss, seconds, delim);
+				getline(ss, roughMicroSeconds, delim);
+
+				int iHours = atoi(hours.c_str());
+				int iMinutes = atoi(minutes.c_str());
+				int iSeconds = atoi(seconds.c_str());
+				int iRoughMicroSeconds = atoi(roughMicroSeconds.c_str());
+
+				timeInMilliSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iRoughMicroSeconds / 100);
+				timeInMilliSeconds *= 1000;
+			}
+		}
+	}
+
+	return make_tuple(frame, size, timeInMilliSeconds);
+}
+
+/*
 long FFMpeg::getFrameByOutputLog(string ffmpegEncodingStatus)
 {
 	// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x
@@ -15188,9 +15267,7 @@ long FFMpeg::getSizeByOutputLog(string ffmpegEncodingStatus)
 	}
 	string sSize = ffmpegEncodingStatus.substr(0, endIndex);
 	// ffmpegEncodingStatus = StringUtils::trim(ffmpegEncodingStatus);
-	sSize.erase(
-		remove_if(sSize.begin(), sSize.end(), [](unsigned char c) { return !isdigit(c); }), sSize.end()
-	);
+	sSize.erase(remove_if(sSize.begin(), sSize.end(), [](unsigned char c) { return !isdigit(c); }), sSize.end());
 
 	if (sSize == "")
 	{
@@ -15206,6 +15283,7 @@ long FFMpeg::getSizeByOutputLog(string ffmpegEncodingStatus)
 
 	return stol(sSize);
 }
+*/
 
 string FFMpeg::getLastPartOfFile(string pathFileName, int lastCharsToBeRead)
 {
@@ -15840,7 +15918,8 @@ from the left.
 						regex("days_counter"), "%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}");
 					ffmpegText = regex_replace(ffmpegText,
 						regex("hours_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/3600),24))" + escape + ":d" + escape +
-":2}"); ffmpegText = regex_replace(ffmpegText, regex("mins_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/60),60))" + escape +
+":2}"); ffmpegText = regex_replace(ffmpegText, regex("mins_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/60),60))" +
+escape +
 ":d" + escape + ":2}"); ffmpegText = regex_replace(ffmpegText, regex("secs_counter"), "%{eif" + escape + ":trunc(mod(countDownDurationInSecs-t" +
 escape + ",60))" + escape + ":d" + escape + ":2}"); ffmpegText = regex_replace(ffmpegText, regex("cents_counter"), "%{eif" + escape +
 ":(mod(countDownDurationInSecs-t" + escape + ",1)*pow(10,2))" + escape + ":d" + escape + ":2}"); ffmpegText = regex_replace(ffmpegText,

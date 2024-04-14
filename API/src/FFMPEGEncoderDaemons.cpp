@@ -665,7 +665,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveProxyWorking && copiedLiveProxy->_monitoringFrameIncreasingEnabled) // && rtmpOutputFound)
+				if (liveProxyWorking && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(
 						__FILEREF__ + "liveProxyMonitor isFrameIncreasing check" +
@@ -673,12 +673,11 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel
 					);
 
-					string increasingErrorMessage;
 					try
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
 						int maxMilliSecondsToWait = 5000;
-						if (!sourceLiveProxy->_ffmpeg->isSizeOrFrameIncreasing(maxMilliSecondsToWait, increasingErrorMessage))
+						if (!sourceLiveProxy->_ffmpeg->areRealTimeInfoChanged(maxMilliSecondsToWait))
 						{
 							_logger->error(
 								__FILEREF__ +
@@ -686,13 +685,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								"increasing'. LiveProxy (ffmpeg) is killed in order to be started again" +
 								", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
 								", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-								", increasingErrorMessage: " + increasingErrorMessage +
 								", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
 							);
 
-							liveProxyWorking = false;
+							// liveProxyWorking = false;
 
-							localErrorMessage = fmt::format(" restarted because of 'size/frame is not increasing' ({})", increasingErrorMessage);
+							localErrorMessage = " restarted because of 'real time info not changing'";
 						}
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
@@ -700,7 +698,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						string errorMessage = string("liveProxyMonitor (rtmp) size/frame increasing check failed") +
 											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
 											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", increasingErrorMessage: " + increasingErrorMessage + ", e.what(): " + e.what();
+											  ", e.what(): " + e.what();
 						_logger->warn(__FILEREF__ + errorMessage);
 					}
 					catch (runtime_error &e)
@@ -708,7 +706,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						string errorMessage = string("liveProxyMonitor (rtmp) size/frame increasing check failed") +
 											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
 											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", increasingErrorMessage: " + increasingErrorMessage + ", e.what(): " + e.what();
+											  ", e.what(): " + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 					catch (exception &e)
@@ -716,7 +714,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						string errorMessage = string("liveProxyMonitor (rtmp) size/frame increasing check failed") +
 											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
 											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", increasingErrorMessage: " + increasingErrorMessage + ", e.what(): " + e.what();
+											  ", e.what(): " + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 				}
@@ -1587,20 +1585,19 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveRecorderWorking && copiedLiveRecording->_monitoringFrameIncreasingEnabled) // && rtmpOutputFound)
+				if (liveRecorderWorking && copiedLiveRecording->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. isSizeOrFrameIncreasing check" + ", ingestionJobKey: " +
+						__FILEREF__ + "liveRecordingMonitor. areRealTimeInfoChanged check" + ", ingestionJobKey: " +
 						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
 						", channelLabel: " + copiedLiveRecording->_channelLabel
 					);
 
-					string increasingErrorMessage;
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
 						int maxMilliSecondsToWait = 5000;
-						if (!sourceLiveRecording->_ffmpeg->isSizeOrFrameIncreasing(maxMilliSecondsToWait, increasingErrorMessage))
+						if (!sourceLiveRecording->_ffmpeg->areRealTimeInfoChanged(maxMilliSecondsToWait))
 						{
 							_logger->error(
 								__FILEREF__ +
@@ -1608,12 +1605,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								"is not increasing'. LiveRecorder (ffmpeg) is killed in order to be started again" +
 								", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
 								to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-								", increasingErrorMessage: " + increasingErrorMessage + ", _childPid: " + to_string(copiedLiveRecording->_childPid)
+								", _childPid: " + to_string(copiedLiveRecording->_childPid)
 							);
 
 							liveRecorderWorking = false;
 
-							localErrorMessage = fmt::format(" restarted because of 'size/frame is not increasing' ({})", increasingErrorMessage);
+							localErrorMessage = " restarted because of 'real time info are not changing'";
 						}
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
@@ -1621,7 +1618,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						string errorMessage = string("liveRecorderMonitor (rtmp) size/frame increasing check failed") +
 											  ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
 											  ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", increasingErrorMessage: " + increasingErrorMessage + ", e.what(): " + e.what();
+											  ", e.what(): " + e.what();
 						_logger->warn(__FILEREF__ + errorMessage);
 					}
 					catch (runtime_error &e)
@@ -1629,7 +1626,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						string errorMessage = string("liveRecorderMonitor (rtmp) size/frame increasing check failed") +
 											  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
 											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", increasingErrorMessage: " + increasingErrorMessage + ", e.what(): " + e.what();
+											  ", e.what(): " + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 					catch (exception &e)
@@ -1637,7 +1634,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						string errorMessage = string("liveRecorderMonitor (rtmp) size/frame increasing check failed") +
 											  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
 											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", increasingErrorMessage: " + increasingErrorMessage + ", e.what(): " + e.what();
+											  ", e.what(): " + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
 					}
 				}

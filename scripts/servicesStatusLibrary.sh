@@ -618,7 +618,7 @@ mms_api_timing_check_service()
           method=$4;  \
           duration=$8;  \
           if (duration > maxAPIDuration)  \
-            warningMessage=warningMessage""datetime" - "method" - "duration"/"maxAPIDurationx"\n";  \
+            warningMessage=warningMessage""datetime" - "method" - "duration"/"maxAPIDuration"\n";  \
         } \
       } \
       END \

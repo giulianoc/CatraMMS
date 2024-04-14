@@ -179,7 +179,7 @@ void LiveRecorder::encodeContent(
 
 		_liveRecording->_monitoringEnabled = JSONUtils::asBool(
 			_liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
-		_liveRecording->_monitoringFrameIncreasingEnabled = JSONUtils::asBool(
+		_liveRecording->_monitoringRealTimeInfoEnabled = JSONUtils::asBool(
 			_liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
 
 		_liveRecording->_channelLabel = JSONUtils::asString(_liveRecording->_ingestedParametersRoot,
