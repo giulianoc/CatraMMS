@@ -15075,7 +15075,7 @@ tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog()
 		string ffmpegEncodingStatus;
 		try
 		{
-			int lastCharsToBeReadToGetInfo = 10000;
+			int lastCharsToBeReadToGetInfo = 50000;
 			ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeReadToGetInfo);
 		}
 		catch (exception &e)

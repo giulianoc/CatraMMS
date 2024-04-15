@@ -32,7 +32,7 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_monitorCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds));
 
-		_maxRealTimeInfoNotChangedToleranceInSeconds = 30;
+		_maxRealTimeInfoNotChangedToleranceInSeconds = 120;
 	}
 	catch (runtime_error &e)
 	{
@@ -707,6 +707,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
 										to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
 										", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
+										", realTimeFrame: " + to_string(realTimeFrame) +
+										", realTimeSize: " + to_string(realTimeSize) +
+										", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds) +
 										", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
 										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 									);
@@ -1679,6 +1682,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
 										to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
 										", _childPid: " + to_string(copiedLiveRecording->_childPid) +
+										", realTimeFrame: " + to_string(realTimeFrame) +
+										", realTimeSize: " + to_string(realTimeSize) +
+										", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds) +
 										", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
 										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 									);
