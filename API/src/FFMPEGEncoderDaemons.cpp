@@ -32,7 +32,7 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_monitorCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds));
 
-		_maxRealTimeInfoNotChangedToleranceInSeconds = 120;
+		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
 	}
 	catch (runtime_error &e)
 	{
@@ -689,14 +689,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
 							// recupero dei dati
 
-							int elapsedInSecondsSinceLastCheck =
+							int elapsedInSecondsSinceLastChange =
 								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
 							if (copiedLiveProxy->_realTimeFrame == realTimeFrame && copiedLiveProxy->_realTimeSize == realTimeSize &&
 								copiedLiveProxy->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
 								// real time info not changed
-								if (elapsedInSecondsSinceLastCheck > _maxRealTimeInfoNotChangedToleranceInSeconds)
+								if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 								{
 									_logger->error(
 										__FILEREF__ +
@@ -710,7 +710,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										", realTimeFrame: " + to_string(realTimeFrame) +
 										", realTimeSize: " + to_string(realTimeSize) +
 										", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds) +
-										", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
+										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
 										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 									);
 
@@ -727,7 +727,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
 										to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
 										", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
-										", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
+										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
 										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 									);
 								}
@@ -743,7 +743,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
 									to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
 									", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
-									", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
+									", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
 									", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 								);
 							}
@@ -1662,7 +1662,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
 							// recupero dei dati
 
-							int elapsedInSecondsSinceLastCheck =
+							int elapsedInSecondsSinceLastChange =
 								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
 									.count();
 
@@ -1670,7 +1670,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								copiedLiveRecording->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
 								// real time info not changed
-								if (elapsedInSecondsSinceLastCheck > _maxRealTimeInfoNotChangedToleranceInSeconds)
+								if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 								{
 									_logger->error(
 										__FILEREF__ +
@@ -1685,7 +1685,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										", realTimeFrame: " + to_string(realTimeFrame) +
 										", realTimeSize: " + to_string(realTimeSize) +
 										", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds) +
-										", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
+										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
 										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 									);
 
@@ -1702,7 +1702,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
 										to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
 										", _childPid: " + to_string(copiedLiveRecording->_childPid) +
-										", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
+										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
 										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 									);
 								}
@@ -1718,7 +1718,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
 									to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
 									", _childPid: " + to_string(copiedLiveRecording->_childPid) +
-									", elapsedInSecondsSinceLastCheck: " + to_string(elapsedInSecondsSinceLastCheck) +
+									", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
 									", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
 								);
 							}
