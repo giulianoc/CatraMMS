@@ -3,16 +3,14 @@
 debugFilename=/tmp/servicesStatus.log
 debug=1
 
-if [ ! -f "$debugFilename" ]; then
-	echo "" > $debugFilename
-else
-	filesize=$(stat -c %s $debugFilename)
-	if [ $filesize -gt 50000000 ]
-	then
-		echo "" > $debugFilename
-	fi
+if [ ! -f "$debugFilename" ]; then 
+  echo "" > $debugFilename
+else 
+  filesize=$(stat -c %s $debugFilename) 
+  if [ $filesize -gt 50000000]; then 
+    echo "" > $debugFilename 
+  fi 
 fi
-
 
 getAlarmDescription()
 {
@@ -70,31 +68,31 @@ getAlarmDescription()
 
 #getIngestionJobLabelByIngestionJobKey()
 #{
-	#ingestionJobKey=$1
+#ingestionJobKey = $1
 
 	##dominio da essere cambiato con catramms-cloud
-	#apiIngestionJobDetailsURL="https://mms-api.cibortv-mms.com:443/catramms/1.0.1/ingestionJob/__INGESTIONJOBKEY__?ingestionJobOutputs=true&fromMaster=false"
+    #apiIngestionJobDetailsURL="https://mms-api.cibortv-mms.com:443/catramms/1.0.1/ingestionJob/__INGESTIONJOBKEY__?ingestionJobOutputs=true&fromMaster=false"
 	##custom key
-	#basicAuthentication="MTpITlZPb1ZoSHgweW9XTkl4RnUtVGhCQTF2QVBFS1dzeG5lR2d6ZTZlb2RkRXY5YUIxeHA5TnpzQktEQkRNRUZO"
-	#maxTime=5
-	#apiIngestionJobDetailsURL=${apiIngestionJobDetailsURL/__INGESTIONJOBKEY__/$ingestionJobKey}
-	#ingestionJobKeyPathName=/tmp/$ingestionJobKey.json
-	#start=$(date +%s)
-	#curl -k --silent --output $ingestionJobKeyPathName --max-time $maxTime -H 'accept:: application/json' -H "Authorization: Basic $basicAuthentication" -X 'GET' "$apiIngestionJobDetailsURL"
-	#end=$(date +%s)
-	#ingestionJobLabel=""
-	#if [ -f "$ingestionJobKeyPathName" ]; then
-		#fileSize=$(stat -c%s "$ingestionJobKeyPathName")
-		#if [ $fileSize -gt 1000 ]; then
-			#ingestionJobLabel=$(cat $ingestionJobKeyPathName | jq '.response.ingestionJobs[0].label')
-			#echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, ingestionJobLabel: $ingestionJobLabel, elapsed: $((end-start)) secs" >> $debugFilename
-		#else
-			#echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, $ingestionJobKeyPathName size: $(stat -c%s "$ingestionJobKeyPathName"), elapsed: $((end-start)) secs" >> $debugFilename
-		#fi
-	#else
-		#echo "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, elapsed: $((end-start)) secs" >> $debugFilename
-	#fi
-	#rm -f $ingestionJobKeyPathName
+    #basicAuthentication = "MTpITlZPb1ZoSHgweW9XTkl4RnUtVGhCQTF2QVBFS1dzeG5lR2d6ZTZlb2RkRXY5YUIxeHA5TnpzQktEQkRNRUZO"
+#maxTime = 5
+#apiIngestionJobDetailsURL = ${apiIngestionJobDetailsURL / __INGESTIONJOBKEY__ / $ingestionJobKey }
+#ingestionJobKeyPathName = / tmp / $ingestionJobKey.json
+#start = $(date + % s)
+#curl - k-- silent-- output $ingestionJobKeyPathName-- max - time $maxTime - H 'accept:: application/json' -                                     \ H "Authorization: Basic $basicAuthentication" - X 'GET' "$apiIngestionJobDetailsURL"
+#end = $(date + % s)
+#ingestionJobLabel = ""
+#if[-f "$ingestionJobKeyPathName"]; then
+#fileSize = $(stat - c % s "$ingestionJobKeyPathName")
+#if[$fileSize - gt 1000]; then
+#ingestionJobLabel = $(cat $ingestionJobKeyPathName | jq '.response.ingestionJobs[0].label')
+#echo                                                                                                                                                                                                   \ "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, ingestionJobLabel: $ingestionJobLabel, elapsed: $((end-start)) secs">> \ $debugFilename
+#else
+#echo                                                                                                                                                                                                  \ "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, $ingestionJobKeyPathName size: $(stat -c%s " $ingestionJobKeyPathName \ "), elapsed: $((end-start)) secs">> $debugFilename
+#fi
+#else
+#echo                                                                                                                                                            \ "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, elapsed: $((end-start)) secs">> \ $debugFilename
+#fi
+#rm - f $ingestionJobKeyPathName
 #}
 
 notify()
@@ -108,7 +106,7 @@ notify()
 
 	alarmNotificationPathFileName="/tmp/$notifyFileName"
 
-	#controllo se è troppo presto per rimandare l'allarme
+    #controllo se è troppo presto per rimandare l'allarme
 	if [ -f "$alarmNotificationPathFileName" ]; then
 		lastNotificationTime=$(date -r "$alarmNotificationPathFileName" +%s)
 		now=$(date +%s)
@@ -142,45 +140,45 @@ notify()
 
 sql_slave_off()
 {
-	#Questo controllo si applica solamente nel caso si tratta di uno slave
+  #Questo controllo si applica solamente nel caso si tratta di uno slave
 
-	#replication_connection_status.service_state (Slave_IO_Running) ON indica che è stato eseguito il comando SQL: start slave.
-	#Nello scenario in cui abbiamo un problema, replication_connection_status.service_state rimane ON mentre
-	#replication_applier_status_by_coordinator.service_state (Slave_SQL_Running) è OFF
-	isMysqlSlave=$(echo "select service_state from performance_schema.replication_connection_status" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
-	if [ "$isMysqlSlave" == "ON" ]; then
+  #replication_connection_status.service_state(Slave_IO_Running) ON indica che è stato eseguito il comando SQL : start slave.
+  #Nello scenario in cui abbiamo un problema, replication_connection_status.service_state rimane ON mentre
+  #replication_applier_status_by_coordinator.service_state(Slave_SQL_Running) è OFF
+  isMysqlSlave=$(echo "select service_state from performance_schema.replication_connection_status" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
+  if [ "$isMysqlSlave" == "ON" ]; then
 
-		#solo se è uno slave verifico il suo stato
-		mysqlSlaveStatus=$(echo "select service_state from performance_schema.replication_applier_status_by_coordinator" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
-		if [ "$mysqlSlaveStatus" == "ON" ]; then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, slave is working fine" >> $debugFilename
+    #solo se è uno slave verifico il suo stato
+	mysqlSlaveStatus=$(echo "select service_state from performance_schema.replication_applier_status_by_coordinator" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
+	if [ "$mysqlSlaveStatus" == "ON" ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, slave is working fine" >> $debugFilename
 
-			alarmNotificationPathFileName="/tmp/alarm_sql_slave_off"
-			if [ -f "$alarmNotificationPathFileName" ]; then
-				rm -f $alarmNotificationPathFileName
-			fi
-
-			return 0
-		else
-			alarmNotificationPeriod=$((60 * 15))		#15 minuti
-			notify "$(hostname)" "alarm_sql_slave_off" "alarm_sql_slave_off" $alarmNotificationPeriod "isMysqlSlave: $isMysqlSlave, mysqlSlaveStatus: $mysqlSlaveStatus"
-			return 1
+		alarmNotificationPathFileName="/tmp/alarm_sql_slave_off"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
 		fi
-	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, it is not a slave. isMysqlSlave: $isMysqlSlave" >> $debugFilename
 
 		return 0
+	else
+		alarmNotificationPeriod=$((60 * 15))		#15 minuti
+		notify "$(hostname)" "alarm_sql_slave_off" "alarm_sql_slave_off" $alarmNotificationPeriod "isMysqlSlave: $isMysqlSlave, mysqlSlaveStatus: $mysqlSlaveStatus"
+		return 1
 	fi
+  else
+	echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, it is not a slave. isMysqlSlave: $isMysqlSlave" >> $debugFilename
+
+	return 0
+  fi
 }
 
 postgres_replication_check()
 {
 	isSlave=$(echo "select pg_is_in_recovery()" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
-	#true(t) indica slave, false(f) indica master
+    #true(t) indica slave, false(f) indica master
 	if [ "$isSlave" == "t" ]; then
-		#in case of slave
-		status=$(echo "SELECT status FROM pg_stat_wal_receiver" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
-		if [ "$status" == "streaming" ]; then
+      #in case of slave
+	  status=$(echo "SELECT status FROM pg_stat_wal_receiver" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+	  if [ "$status" == "streaming" ]; then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication slave is working fine" >> $debugFilename
 
 			alarmNotificationPathFileName="/tmp/alarm_postgres_replication_check"
@@ -189,30 +187,30 @@ postgres_replication_check()
 			fi
 
 			return 0
-		else
+	  else
 			alarmNotificationPeriod=$((60 * 15))		#15 minuti
 			notify "$(hostname)" "alarm_postgres_replication_check" "alarm_postgres_replication_check" $alarmNotificationPeriod "replication slave is not working, status: $status"
 			return 1
-		fi
+	  fi
 	elif [ "$isSlave" == "f" ]; then
-		#in case of master
-		#in questo caso avremo una riga per ogni slave connesso. In caso di funzionamento corretto,
-		#il campo state di ogni riga deve essere 'streaming'
-		count=$(echo "SELECT count(*) FROM pg_stat_replication where state != 'streaming'" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
-		if [ $count -eq 0 ]; then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication master is working fine" >> $debugFilename
+      #in case of master
+      #in questo caso avremo una riga per ogni slave connesso.In caso di funzionamento corretto,
+      #il campo state di ogni riga deve essere 'streaming'
+	  count=$(echo "SELECT count(*) FROM pg_stat_replication where state != 'streaming'" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
+	  if [ $count -eq 0 ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication master is working fine" >> $debugFilename
 
-			alarmNotificationPathFileName="/tmp/alarm_postgres_replication_check"
-			if [ -f "$alarmNotificationPathFileName" ]; then
-				rm -f $alarmNotificationPathFileName
-			fi
+		alarmNotificationPathFileName="/tmp/alarm_postgres_replication_check"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
 
-			return 0
-		else
+		return 0
+	  else
 			alarmNotificationPeriod=$((60 * 15))		#15 minuti
 			notify "$(hostname)" "alarm_postgres_replication_check" "alarm_postgres_replication_check" $alarmNotificationPeriod "replication master: at least one communication with slave is not working, count: $count"
 			return 1
-		fi
+	  fi
 	else
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, it is not a slave neither a master. isSlave: $isSlave" >> $debugFilename
 
@@ -224,11 +222,11 @@ sql_check()
 {
 	count=$(echo "select count(*) from MMS_Code" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
 
-	#check if it is a number
+    #check if it is a number
 	regularExpression='^[0-9]+$'
 	if [[ $count =~ $regularExpression ]] ; then
 
-		# it is a number
+        #it is a number
 
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check. sql is working fine" >> $debugFilename
 
@@ -251,11 +249,11 @@ postgres_check()
 {
 	count=$(echo "select count(*) from MMS_TestConnection" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@postgres-localhost:5432/${DB_DBNAME}")
 
-	#check if it is a number
+    #check if it is a number
 	regularExpression='^[0-9]+$'
 	if [[ $count =~ $regularExpression ]] ; then
 
-		# it is a number
+        #it is a number
 
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_check. postgres is working fine" >> $debugFilename
 
@@ -362,7 +360,7 @@ nginx_error()
 {
 	serviceName=$1
 
-	#aggiungo la data/ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+#aggiungo la data / ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
 	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-${serviceName}.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
 
@@ -395,7 +393,7 @@ mms_service_running_by_processName()
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
 		notify "$(hostname)" "alarm_mms_service_running" "alarm_mms_${serviceName}_service_running" $alarmNotificationPeriod ""
 
-		#fix management
+#fix management
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_service_running, ${serviceName} service is restarted" >> $debugFilename
 
 		~/mmsStopALL.sh
@@ -429,7 +427,7 @@ mms_service_running_by_healthCheckURL()
 		failuresNumberFileName=/tmp/alarm_mms_${serviceName}_service_running.failuresNumber.txt
 		if [ -s $failuresNumberFileName ]
 		then
-			#exist and is not empty
+#exist and is not empty
 			failuresNumber=$(cat $failuresNumberFileName)
 		else
 			failuresNumber=0
@@ -438,7 +436,7 @@ mms_service_running_by_healthCheckURL()
 		alarmNotificationPeriod=$((60 * 1))		#1 minuti
 		notify "$(hostname)" "alarm_mms_service_running" "alarm_mms_${serviceName}_service_running" $alarmNotificationPeriod "serviceName: ${serviceName}, healthCheckURL: $healthCheckURL"
 
-		#fix management
+        #fix management
 		if [ $failuresNumber -ge $maxFailuresNumber ]
 		then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_service_running, ${serviceName} service is restarted" >> $debugFilename
@@ -465,7 +463,7 @@ mms_service_running_by_healthCheckURL()
 			rm -f $alarmNotificationPathFileName
 		fi
 
-		#fix management
+        #fix management
 		failuresNumberFileName=/tmp/alarm_mms_${serviceName}_service_running.failuresNumber.txt
 		if [ -f "$failuresNumberFileName" ]; then
 			rm -f $failuresNumberFileName
@@ -482,7 +480,7 @@ ffmpeg_filter_detect()
 	encoderFilterNotificationURLUser=$3
 	encoderFilterNotificationURLPassword=$4
 
-	#2880: 2 giorni
+    # 2880 : 2 giorni
 	find /tmp -maxdepth 1 -name "alarm_${filterName}_*" -mmin +2880 -type f -delete
 
     folders=( /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/liveRecorder_*.log /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/liveProxy_*.log )
@@ -496,16 +494,16 @@ ffmpeg_filter_detect()
 		if [ $filterCount -eq 0 ]; then
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, logFile: $logFile" >> $debugFilename
 
-			#2023-08-31: remove non funzionante perchè, dopo che nel log saranno trovati i filtri, filterCount non sarà mai 0
-			#	Per questo motivo è stato aggiunto il find -delete sopra
-			#if [ -f "$alarmNotificationPathFileName" ]; then
-			#	rm -f $alarmNotificationPathFileName
-			#fi
-			#if [ -f "$infoPathFileName" ]; then
-			#	rm -f $infoPathFileName
-			#fi
+            # 2023 - 08 - 31 : remove non funzionante perchè, dopo che nel log saranno trovati i filtri, filterCount non sarà mai 0
+            #Per questo motivo è stato aggiunto il find - delete sopra
+            #if[-f "$alarmNotificationPathFileName"]; then
+            #rm - f $alarmNotificationPathFileName
+            #fi
+            #if[-f "$infoPathFileName"]; then
+            #rm - f $infoPathFileName
+            #fi
 		else
-			#controllo il contatore precedente per verificare che è aumentato
+            #controllo il contatore precedente per verificare che è aumentato
 			counterIncreased=0
 			if [ -f "$infoPathFileName" ]; then
 				previousFilterCount=$(cat $infoPathFileName)
@@ -521,12 +519,12 @@ ffmpeg_filter_detect()
 			if [ $counterIncreased -eq 1 ]; then
 				alarmNotificationPeriod=$((60 * 15))		#15 minuti
 
-				#fileName: liveProxy_6595960_1431305_2024-03-25-11-24-52.0.log
+                #fileName : liveProxy_6595960_1431305_2024 - 03 - 25 - 11 - 24 - 52.0.log
 				array=(${fileName//_/ })
 				ingestionJobKey=${array[1]}
 				encodingJobKey=${array[2]}
 
-                #http://10.0.1.7:8088/catramms/v1/encoder/filterNotification/6565093/1424493?filterName=freezeDetect
+                #http: // 10.0.1.7:8088/catramms/v1/encoder/filterNotification/6565093/1424493?filterName=freezeDetect
                 encoderFilterNotificationURL="$baseEncoderURL/filterNotification/$ingestionJobKey/$encodingJobKey?filterName=$filterName"
 
 	            maxTime=5
@@ -540,14 +538,14 @@ ffmpeg_filter_detect()
                 fi
 
 				##inizializza ingestionJobLabel
-				#getIngestionJobLabelByIngestionJobKey $ingestionJobKey
+                #getIngestionJobLabelByIngestionJobKey $ingestionJobKey
 
-				#notify "$(hostname)" "alarm_${filterName}" "alarm_${filterName}_${fileName}" $alarmNotificationPeriod "got ${filterCount} times on file $fileName, ingestionJob: $ingestionJobKey - $ingestionJobLabel"
-				#status=$?
-				#if [ $status -eq 0 ]; then
-				#	#status 0 means alarm was sent
+                #notify "$(hostname)" "alarm_${filterName}" "alarm_${filterName}_${fileName}" $alarmNotificationPeriod "got ${filterCount} times on file $fileName, ingestionJob: $ingestionJobKey - $ingestionJobLabel"
+                #status = $ ?
+                #if[$status - eq 0]; then
+                # #status 0 means alarm was sent
 					echo "$filterCount" > $infoPathFileName
-				#fi
+                #fi
 			fi
 		fi
 	done
@@ -617,7 +615,12 @@ mms_api_timing_check_service()
           datetime=substr($0, 2, 23); \
           method=$4;  \
           duration=$8;  \
-          if (duration > maxAPIDuration)  \
+			maxDuration = maxAPIDuration;	\
+			// custom max duration
+			if (method == "killOrCancelEncodingJob"	\
+			)	\
+				maxDuration = 6000;	\
+          if (duration > maxDuration)  \
             warningMessage=warningMessage""datetime" - "method" - "duration"/"maxAPIDuration"\n";  \
         } \
       } \

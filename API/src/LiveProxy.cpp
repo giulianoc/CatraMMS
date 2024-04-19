@@ -245,8 +245,7 @@ void LiveProxy::encodeContent(
 
 					if (streamSourceType == "IP_PUSH")
 					{
-						int pushListenTimeout = JSONUtils::asInt(
-							streamInputRoot, "pushListenTimeout", -1);
+						int pushListenTimeout = JSONUtils::asInt(streamInputRoot, "pushListenTimeout", -1);
 
 						if (utcProxyPeriodStart != -1)
 						{

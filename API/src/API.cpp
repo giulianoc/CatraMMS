@@ -2062,6 +2062,11 @@ defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
         streamList(sThreadId, requestIdentifier, responseBodyCompressed,
 			request, workspace, queryParameters);
     }
+    else if (method == "streamFreePushEncoderPort")
+    {
+        streamFreePushEncoderPort(sThreadId, requestIdentifier, responseBodyCompressed,
+			request, workspace, queryParameters);
+    }
     else if (method == "addSourceTVStream")
     {
         if (!admin)

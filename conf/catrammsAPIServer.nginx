@@ -241,6 +241,7 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/?([0-9]*)/?$ /api?version=$1&method=tiktokConfList&confKey=$2 last;
 		}
 
+#stream
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?$ /api?version=$1&method=addStream last;
 		}
@@ -252,6 +253,7 @@
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?version=$1&method=streamList&liveURLKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/freePushEncoderPort/?([0-9]*)/?$ /api?version=$1&method=streamFreePushEncoderPort&encoderKey=$2 last;
 		}
 
 #Source TV Channels
