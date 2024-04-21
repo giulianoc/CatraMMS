@@ -310,7 +310,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"url						text NULL,"	// pull
 				"pushProtocol				text NULL,"
 				"pushEncoderKey				bigint NULL,"
-				"pushServerName				text NULL,"
+				"pushPublicEncoderName		boolean NULL,"
 				"pushServerPort				integer NULL,"
 				"pushUri					text NULL,"
 				"pushListenTimeout			smallint NULL,"	// seconds

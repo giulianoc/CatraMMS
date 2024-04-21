@@ -5485,7 +5485,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	string configurationLabel, int64_t confKey, string liveURL, string encodersPoolLabel,
 	EncodingPriority encodingPriority,
 
-	int pushListenTimeout, int64_t pushEncoderKey, string pushServerName,
+	int pushListenTimeout, int64_t pushEncoderKey, string pushEncoderName,
 	json captureRoot,
 	json tvRoot,
 
@@ -5559,8 +5559,8 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 				field = "pushEncoderKey";
 				parametersRoot[field] = pushEncoderKey;
 
-				field = "pushServerName";
-				parametersRoot[field] = pushServerName;
+				field = "pushEncoderName";
+				parametersRoot[field] = pushEncoderName;
 
 				field = "capture";
 				parametersRoot[field] = captureRoot;

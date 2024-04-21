@@ -1561,7 +1561,7 @@ void API::addStream(
 		string url;
 		string pushProtocol;
 		int64_t pushEncoderKey;
-		string pushServerName;
+		bool pushPublicEncoderName;
 		int pushServerPort;
 		string pushUri;
 		int pushListenTimeout;
@@ -1620,8 +1620,8 @@ void API::addStream(
 			field = "pushEncoderKey";
 			pushEncoderKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
 
-			field = "pushServerName";
-			pushServerName = JSONUtils::asString(requestBodyRoot, field, "");
+			field = "pushPublicEncoderName";
+			pushPublicEncoderName = JSONUtils::asBool(requestBodyRoot, field, false);
 
 			field = "pushServerPort";
 			pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);
@@ -1703,10 +1703,10 @@ void API::addStream(
 		try
 		{
 			json streamRoot = _mmsEngineDBFacade->addStream(
-				workspace->_workspaceKey, label, sourceType, encodersPoolKey, url, pushProtocol, pushEncoderKey, pushServerName, pushServerPort,
-				pushUri, pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth,
-				captureLiveHeight, captureLiveAudioDeviceNumber, captureLiveChannelsNumber, tvSourceTVConfKey, type, description, name, region,
-				country, imageMediaItemKey, imageUniqueName, position, userData
+				workspace->_workspaceKey, label, sourceType, encodersPoolKey, url, pushProtocol, pushEncoderKey, pushPublicEncoderName,
+				pushServerPort, pushUri, pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, captureLiveFrameRate,
+				captureLiveWidth, captureLiveHeight, captureLiveAudioDeviceNumber, captureLiveChannelsNumber, tvSourceTVConfKey, type, description,
+				name, region, country, imageMediaItemKey, imageUniqueName, position, userData
 			);
 
 			sResponse = JSONUtils::toString(streamRoot);
@@ -1770,7 +1770,7 @@ void API::modifyStream(
 		string url;
 		string pushProtocol;
 		int64_t pushEncoderKey;
-		string pushServerName;
+		bool pushPublicEncoderName;
 		int pushServerPort;
 		string pushUri;
 		int pushListenTimeout;
@@ -1799,7 +1799,7 @@ void API::modifyStream(
 		bool urlToBeModified;
 		bool pushProtocolToBeModified;
 		bool pushEncoderKeyToBeModified;
-		bool pushServerNameToBeModified;
+		bool pushPublicEncoderNameToBeModified;
 		bool pushServerPortToBeModified;
 		bool pushUriToBeModified;
 		bool pushListenTimeoutToBeModified;
@@ -1872,12 +1872,12 @@ void API::modifyStream(
 				pushEncoderKeyToBeModified = true;
 			}
 
-			pushServerNameToBeModified = false;
-			field = "pushServerName";
+			pushPublicEncoderNameToBeModified = false;
+			field = "pushPublicEncoderName";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				pushServerName = JSONUtils::asString(requestBodyRoot, field, "");
-				pushServerNameToBeModified = true;
+				pushPublicEncoderName = JSONUtils::asBool(requestBodyRoot, field, false);
+				pushPublicEncoderNameToBeModified = true;
 			}
 
 			pushServerPortToBeModified = false;
@@ -2097,14 +2097,14 @@ void API::modifyStream(
 			json streamRoot = _mmsEngineDBFacade->modifyStream(
 				confKey, labelKey, workspace->_workspaceKey, labelToBeModified, label, sourceTypeToBeModified, sourceType,
 				encodersPoolKeyToBeModified, encodersPoolKey, urlToBeModified, url, pushProtocolToBeModified, pushProtocol,
-				pushEncoderKeyToBeModified, pushEncoderKey, pushServerNameToBeModified, pushServerName, pushServerPortToBeModified, pushServerPort,
-				pushUriToBeModified, pushUri, pushListenTimeoutToBeModified, pushListenTimeout, captureLiveVideoDeviceNumberToBeModified,
-				captureLiveVideoDeviceNumber, captureLiveVideoInputFormatToBeModified, captureLiveVideoInputFormat, captureLiveFrameRateToBeModified,
-				captureLiveFrameRate, captureLiveWidthToBeModified, captureLiveWidth, captureLiveHeightToBeModified, captureLiveHeight,
-				captureLiveAudioDeviceNumberToBeModified, captureLiveAudioDeviceNumber, captureLiveChannelsNumberToBeModified,
-				captureLiveChannelsNumber, tvSourceTVConfKeyToBeModified, tvSourceTVConfKey, typeToBeModified, type, descriptionToBeModified,
-				description, nameToBeModified, name, regionToBeModified, region, countryToBeModified, country, imageToBeModified, imageMediaItemKey,
-				imageUniqueName, positionToBeModified, position, userDataToBeModified, userData
+				pushEncoderKeyToBeModified, pushEncoderKey, pushPublicEncoderNameToBeModified, pushPublicEncoderName, pushServerPortToBeModified,
+				pushServerPort, pushUriToBeModified, pushUri, pushListenTimeoutToBeModified, pushListenTimeout,
+				captureLiveVideoDeviceNumberToBeModified, captureLiveVideoDeviceNumber, captureLiveVideoInputFormatToBeModified,
+				captureLiveVideoInputFormat, captureLiveFrameRateToBeModified, captureLiveFrameRate, captureLiveWidthToBeModified, captureLiveWidth,
+				captureLiveHeightToBeModified, captureLiveHeight, captureLiveAudioDeviceNumberToBeModified, captureLiveAudioDeviceNumber,
+				captureLiveChannelsNumberToBeModified, captureLiveChannelsNumber, tvSourceTVConfKeyToBeModified, tvSourceTVConfKey, typeToBeModified,
+				type, descriptionToBeModified, description, nameToBeModified, name, regionToBeModified, region, countryToBeModified, country,
+				imageToBeModified, imageMediaItemKey, imageUniqueName, positionToBeModified, position, userDataToBeModified, userData
 			);
 
 			sResponse = JSONUtils::toString(streamRoot);

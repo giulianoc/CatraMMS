@@ -665,7 +665,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string configurationLabel = JSONUtils::asString(ingestionJobRoot, field, "");
 
 				bool warningIfMissing = false;
-				tuple<int64_t, string, string, string, string, int64_t, string, int, string, int,
+				tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int,
 					int, string, int, int, int, int, int, int64_t> streamDetails
 					= _mmsEngineDBFacade->getStreamDetails(
 					requestWorkspace->_workspaceKey,

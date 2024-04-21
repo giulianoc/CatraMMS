@@ -1690,7 +1690,7 @@ class MMSEngineDBFacade
 		// bool highAvailability,
 		string configurationLabel, int64_t confKey, string url, string encodersPoolLabel, EncodingPriority encodingPriority,
 
-		int pushListenTimeout, int64_t pushEncoderKey, string pushServerName, json captureRoot, json tvRoot,
+		int pushListenTimeout, int64_t pushEncoderKey, string pushEncoderName, json captureRoot, json tvRoot,
 
 		bool monitorHLS, bool liveRecorderVirtualVOD, int monitorVirtualVODOutputRootIndex,
 
@@ -1937,7 +1937,7 @@ class MMSEngineDBFacade
 
 	json addStream(
 		int64_t workspaceKey, string label, string sourceType, int64_t encodersPoolKey, string url, string pushProtocol, int64_t pushEncoderKey,
-		string pushServerName, int pushServerPort, string pushUri, int pushListenTimeout, int captureVideoDeviceNumber,
+		bool pushPublicEncoderName, int pushServerPort, string pushUri, int pushListenTimeout, int captureVideoDeviceNumber,
 		string captureVideoInputFormat, int captureFrameRate, int captureWidth, int captureHeight, int captureAudioDeviceNumber,
 		int captureChannelsNumber, int64_t tvSourceTVConfKey, string type, string description, string name, string region, string country,
 		int64_t imageMediaItemKey, string imageUniqueName, int position, json userData
@@ -1946,7 +1946,7 @@ class MMSEngineDBFacade
 	json modifyStream(
 		int64_t confKey, string labelKey, int64_t workspaceKey, bool labelToBeModified, string label, bool sourceTypeToBeModified, string sourceType,
 		bool encodersPoolKeyToBeModified, int64_t encodersPoolKey, bool urlToBeModified, string url, bool pushProtocolToBeModified,
-		string pushProtocol, bool pushEncoderKeyToBeModified, int64_t pushEncoderKey, bool pushServerNameToBeModified, string pushServerName,
+		string pushProtocol, bool pushEncoderKeyToBeModified, int64_t pushEncoderKey, bool pushPublicEncoderNameToBeModified, bool pushPublicEncoderName,
 		bool pushServerPortToBeModified, int pushServerPort, bool pushUriToBeModified, string pushUri, bool pushListenTimeoutToBeModified,
 		int pushListenTimeout, bool captureVideoDeviceNumberToBeModified, int captureVideoDeviceNumber, bool captureVideoInputFormatToBeModified,
 		string captureVideoInputFormat, bool captureFrameRateToBeModified, int captureFrameRate, bool captureWidthToBeModified, int captureWidth,
@@ -1975,7 +1975,7 @@ class MMSEngineDBFacade
 	json getStreamFreePushEncoderPort(int64_t encoderKey, bool fromMaster = false);
 #endif
 
-	tuple<int64_t, string, string, string, string, int64_t, string, int, string, int, int, string, int, int, int, int, int, int64_t>
+	tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 	getStreamDetails(int64_t workspaceKey, string label, bool warningIfMissing);
 
 	tuple<string, string, string> getStreamDetails(int64_t workspaceKey, int64_t confKey);

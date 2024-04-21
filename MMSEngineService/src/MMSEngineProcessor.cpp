@@ -11232,7 +11232,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string pullUrl;
 		string pushProtocol;
 		int64_t pushEncoderKey = -1;
-		string pushServerName;
+		string pushEncoderName;
 		int pushServerPort = -1;
 		string pushUri;
 		int pushListenTimeout = -1;
@@ -11280,13 +11280,23 @@ void MMSEngineProcessor::manageLiveRecorder(
 				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 				{
+					bool pushPublicEncoderName = false;
 					bool warningIfMissing = false;
-					tuple<int64_t, string, string, string, string, int64_t, string, int, string, int, int, string, int, int, int, int, int, int64_t>
+					tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri,
-						pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight,
+					tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort,
+						pushUri, pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight,
 						captureAudioDeviceNumber, captureChannelsNumber, tvSourceTVConfKey) = channelConfDetails;
 
+					if (pushEncoderKey >= 0)
+					{
+						auto [pushEncoderLabel, publicServerName, internalServerName] = _mmsEngineDBFacade->getEncoderDetails(pushEncoderKey);
+
+						if (pushPublicEncoderName)
+							pushEncoderName = publicServerName;
+						else
+							pushEncoderName = internalServerName;
+					}
 					// default is IP_PULL
 					if (streamSourceType == "")
 						streamSourceType = "IP_PULL";
@@ -11522,7 +11532,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 		else if (streamSourceType == "IP_PUSH")
 		{
-			liveURL = pushProtocol + "://" + pushServerName + ":" + to_string(pushServerPort) + pushUri;
+			liveURL = pushProtocol + "://" + pushEncoderName + ":" + to_string(pushServerPort) + pushUri;
 		}
 		else if (streamSourceType == "TV")
 		{
@@ -11844,7 +11854,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			encodingPriority,
 
-			pushListenTimeout, pushEncoderKey, pushServerName, captureRoot,
+			pushListenTimeout, pushEncoderKey, pushEncoderName, captureRoot,
 
 			tvRoot,
 
@@ -11939,7 +11949,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 				{
 					bool warningIfMissing = false;
-					tuple<int64_t, string, string, string, string, int64_t, string, int, string, int, int, string, int, int, int, int, int, int64_t>
+					tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(ignore, streamSourceType, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
 						ignore, ignore, ignore, ignore) = channelConfDetails;
@@ -13067,7 +13077,7 @@ void MMSEngineProcessor::manageLiveGrid(
 				string configurationLabel = JSONUtils::asString(inputChannelsRoot[inputChannelIndex]);
 
 				bool warningIfMissing = false;
-				tuple<int64_t, string, string, string, string, int64_t, string, int, string, int, int, string, int, int, int, int, int, int64_t>
+				tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 					confKeyAndChannelURL = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
 
 				int64_t confKey;
@@ -20574,8 +20584,8 @@ void MMSEngineProcessor::emailNotificationThread(
 
 										bool warningIfMissing = false;
 										tuple<
-											int64_t, string, string, string, string, int64_t, string, int, string, int, int, string, int, int, int,
-											int, int, int64_t>
+											int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int,
+											int, int64_t>
 											channelDetails = _mmsEngineDBFacade->getStreamDetails(
 												workspace->_workspaceKey, checkStreaming_streamingName, warningIfMissing
 											);
@@ -20851,7 +20861,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			string configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 			bool warningIfMissing = false;
-			tuple<int64_t, string, string, string, string, int64_t, string, int, string, int, int, string, int, int, int, int, int, int64_t>
+			tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 				ipChannelDetails = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
 			string streamSourceType;
 			tie(ignore, streamSourceType, ignore, streamingUrl, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,

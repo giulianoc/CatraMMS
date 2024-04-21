@@ -3104,7 +3104,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 
 json MMSEngineDBFacade::addStream(
 	int64_t workspaceKey, string label, string sourceType, int64_t encodersPoolKey, string url, string pushProtocol, int64_t pushEncoderKey,
-	string pushServerName, // indica il nome del server (public or internal)
+	bool pushPublicEncoderName, // indica se deve essere usato l'encoder pubblico (true) o quello privato (false)
 	int pushServerPort, string pushUri, int pushListenTimeout, int captureLiveVideoDeviceNumber, string captureLiveVideoInputFormat,
 	int captureLiveFrameRate, int captureLiveWidth, int captureLiveHeight, int captureLiveAudioDeviceNumber, int captureLiveChannelsNumber,
 	int64_t tvSourceTVConfKey, string type, string description, string name, string region, string country, int64_t imageMediaItemKey,
@@ -3129,19 +3129,17 @@ json MMSEngineDBFacade::addStream(
 			string sqlStatement = fmt::format(
 				"insert into MMS_Conf_Stream(workspaceKey, label, sourceType, "
 				"encodersPoolKey, url, "
-				"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
+				"pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, "
 				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
 				"captureLiveAudioDeviceNumber, captureLiveChannelsNumber, "
 				"tvSourceTVConfKey, "
-				"type, description, name, "
-				"region, country, imageMediaItemKey, imageUniqueName, "
 				"position, userData) values ("
 				"{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "
 				"{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
 				workspaceKey, trans.quote(label), trans.quote(sourceType), encodersPoolKey == -1 ? "null" : to_string(encodersPoolKey),
 				url == "" ? "null" : trans.quote(url), pushProtocol == "" ? "null" : trans.quote(pushProtocol),
-				pushEncoderKey == -1 ? "null" : to_string(pushEncoderKey), pushServerName == "" ? "null" : trans.quote(pushServerName),
+				pushEncoderKey == -1 ? "null" : to_string(pushEncoderKey), pushEncoderKey == -1 ? "null" : to_string(pushPublicEncoderName),
 				pushServerPort == -1 ? "null" : to_string(pushServerPort), pushUri == "" ? "null" : trans.quote(pushUri),
 				pushListenTimeout == -1 ? "null" : to_string(pushListenTimeout),
 				captureLiveVideoDeviceNumber == -1 ? "null" : to_string(captureLiveVideoDeviceNumber),
@@ -3312,13 +3310,13 @@ json MMSEngineDBFacade::modifyStream(
 	int64_t confKey, string labelKey, int64_t workspaceKey, bool labelToBeModified, string label,
 
 	bool sourceTypeToBeModified, string sourceType, bool encodersPoolKeyToBeModified, int64_t encodersPoolKey, bool urlToBeModified, string url,
-	bool pushProtocolToBeModified, string pushProtocol, bool pushEncoderKeyToBeModified, int64_t pushEncoderKey, bool pushServerNameToBeModified,
-	string pushServerName, bool pushServerPortToBeModified, int pushServerPort, bool pushUriToBeModified, string pushUri,
-	bool pushListenTimeoutToBeModified, int pushListenTimeout, bool captureLiveVideoDeviceNumberToBeModified, int captureLiveVideoDeviceNumber,
-	bool captureLiveVideoInputFormatToBeModified, string captureLiveVideoInputFormat, bool captureLiveFrameRateToBeModified, int captureLiveFrameRate,
-	bool captureLiveWidthToBeModified, int captureLiveWidth, bool captureLiveHeightToBeModified, int captureLiveHeight,
-	bool captureLiveAudioDeviceNumberToBeModified, int captureLiveAudioDeviceNumber, bool captureLiveChannelsNumberToBeModified,
-	int captureLiveChannelsNumber, bool tvSourceTVConfKeyToBeModified, int64_t tvSourceTVConfKey,
+	bool pushProtocolToBeModified, string pushProtocol, bool pushEncoderKeyToBeModified, int64_t pushEncoderKey,
+	bool pushPublicEncoderNameToBeModified, bool pushPublicEncoderName, bool pushServerPortToBeModified, int pushServerPort, bool pushUriToBeModified,
+	string pushUri, bool pushListenTimeoutToBeModified, int pushListenTimeout, bool captureLiveVideoDeviceNumberToBeModified,
+	int captureLiveVideoDeviceNumber, bool captureLiveVideoInputFormatToBeModified, string captureLiveVideoInputFormat,
+	bool captureLiveFrameRateToBeModified, int captureLiveFrameRate, bool captureLiveWidthToBeModified, int captureLiveWidth,
+	bool captureLiveHeightToBeModified, int captureLiveHeight, bool captureLiveAudioDeviceNumberToBeModified, int captureLiveAudioDeviceNumber,
+	bool captureLiveChannelsNumberToBeModified, int captureLiveChannelsNumber, bool tvSourceTVConfKeyToBeModified, int64_t tvSourceTVConfKey,
 
 	bool typeToBeModified, string type, bool descriptionToBeModified, string description, bool nameToBeModified, string name, bool regionToBeModified,
 	string region, bool countryToBeModified, string country, bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
@@ -3389,11 +3387,11 @@ json MMSEngineDBFacade::modifyStream(
 				oneParameterPresent = true;
 			}
 
-			if (pushServerNameToBeModified)
+			if (pushPublicEncoderNameToBeModified)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("pushServerName = " + (pushServerName == "" ? "null" : trans.quote(pushServerName)));
+				setSQL += ("pushPublicEncoderName = " + to_string(pushPublicEncoderName));
 				oneParameterPresent = true;
 			}
 
@@ -4153,7 +4151,7 @@ json MMSEngineDBFacade::getStreamList(
 
 			string sqlStatement = fmt::format(
 				"select confKey, label, sourceType, encodersPoolKey, url, "
-				"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
+				"pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, "
 				"captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, "
 				"captureLiveHeight, captureLiveAudioDeviceNumber, "
@@ -4225,9 +4223,24 @@ json MMSEngineDBFacade::getStreamList(
 					else
 						streamRoot[field] = row["pushProtocol"].as<string>();
 
+					bool pushPublicEncoderName = false;
+					if (!row["pushPublicEncoderName"].is_null())
+						pushPublicEncoderName = row["pushPublicEncoderName"].as<bool>();
+
 					field = "pushEncoderKey";
 					if (row["pushEncoderKey"].is_null())
+					{
 						streamRoot[field] = nullptr;
+
+						field = "pushPublicEncoderName";
+						streamRoot[field] = nullptr;
+
+						field = "pushEncoderLabel";
+						streamRoot[field] = nullptr;
+
+						field = "pushEncoderName";
+						streamRoot[field] = nullptr;
+					}
 					else
 					{
 						int64_t pushEncoderKey = row["pushEncoderKey"].as<int64_t>();
@@ -4237,13 +4250,19 @@ json MMSEngineDBFacade::getStreamList(
 						{
 							try
 							{
-								tuple<string, string, string> encoderDetails = getEncoderDetails(pushEncoderKey);
+								field = "pushPublicEncoderName";
+								streamRoot[field] = pushPublicEncoderName;
 
-								string pushEncoderLabel;
-								tie(pushEncoderLabel, ignore, ignore) = encoderDetails;
+								auto [pushEncoderLabel, publicServerName, internalServerName] = getEncoderDetails(pushEncoderKey);
 
 								field = "pushEncoderLabel";
 								streamRoot[field] = pushEncoderLabel;
+
+								field = "pushEncoderName";
+								if (pushPublicEncoderName)
+									streamRoot[field] = publicServerName;
+								else
+									streamRoot[field] = internalServerName;
 							}
 							catch (exception &e)
 							{
@@ -4251,12 +4270,6 @@ json MMSEngineDBFacade::getStreamList(
 							}
 						}
 					}
-
-					field = "pushServerName";
-					if (row["pushServerName"].is_null())
-						streamRoot[field] = nullptr;
-					else
-						streamRoot[field] = row["pushServerName"].as<string>();
 
 					field = "pushServerPort";
 					if (row["pushServerPort"].is_null())
@@ -4579,7 +4592,7 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 	}
 }
 
-tuple<int64_t, string, string, string, string, int64_t, string, int, string, int, int, string, int, int, int, int, int, int64_t>
+tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool warningIfMissing)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -4602,7 +4615,7 @@ MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool war
 		string url;
 		string pushProtocol;
 		int64_t pushEncoderKey = -1;
-		string pushServerName; // indica il nome del server (public or internal)
+		bool pushPublicEncoderName = false;
 		int pushServerPort = -1;
 		string pushUri;
 		int pushListenTimeout = -1;
@@ -4618,7 +4631,7 @@ MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool war
 			string sqlStatement = fmt::format(
 				"select confKey, sourceType, "
 				"encodersPoolKey, url, "
-				"pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, "
+				"pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, "
 				"captureLiveVideoInputFormat, "
 				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
@@ -4673,8 +4686,8 @@ MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool war
 				pushProtocol = res[0]["pushProtocol"].as<string>();
 			if (!res[0]["pushEncoderKey"].is_null())
 				pushEncoderKey = res[0]["pushEncoderKey"].as<int64_t>();
-			if (!res[0]["pushServerName"].is_null())
-				pushServerName = res[0]["pushServerName"].as<string>();
+			if (!res[0]["pushPublicEncoderName"].is_null())
+				pushPublicEncoderName = res[0]["pushPublicEncoderName"].as<bool>();
 			if (!res[0]["pushServerPort"].is_null())
 				pushServerPort = res[0]["pushServerPort"].as<int>();
 			if (!res[0]["pushUri"].is_null())
@@ -4704,8 +4717,8 @@ MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool war
 		conn = nullptr;
 
 		return make_tuple(
-			confKey, sourceType, encodersPoolLabel, url, pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri, pushListenTimeout,
-			captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, captureLiveHeight,
+			confKey, sourceType, encodersPoolLabel, url, pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri,
+			pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, captureLiveHeight,
 			captureLiveAudioDeviceNumber, captureLiveChannelsNumber, tvSourceTVConfKey
 		);
 	}
@@ -12739,7 +12752,7 @@ json MMSEngineDBFacade::getStreamInputRoot(
 		string pullUrl;
 		string pushProtocol;
 		int64_t pushEncoderKey = -1;
-		string pushServerName; // indica il nome del server (public or internal)
+		string pushEncoderName;
 		int pushServerPort = -1;
 		string pushUri;
 		int pushListenTimeout = -1;
@@ -12753,13 +12766,22 @@ json MMSEngineDBFacade::getStreamInputRoot(
 		int64_t tvSourceTVConfKey = -1;
 
 		{
+			bool pushPublicEncoderName = false;
 			bool warningIfMissing = false;
-			tuple<int64_t, string, string, string, string, int64_t, string, int, string, int, int, string, int, int, int, int, int, int64_t>
+			tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 				channelConfDetails = getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
-			tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushProtocol, pushEncoderKey, pushServerName, pushServerPort, pushUri,
+			tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri,
 				pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight,
 				captureAudioDeviceNumber, captureChannelsNumber, tvSourceTVConfKey) = channelConfDetails;
 
+			if (pushEncoderKey >= 0)
+			{
+				auto [pushEncoderLabel, publicServerName, internalServerName] = getEncoderDetails(pushEncoderKey);
+				if (pushPublicEncoderName)
+					pushEncoderName = publicServerName;
+				else
+					pushEncoderName = internalServerName;
+			}
 			// default is IP_PULL
 			if (streamSourceType == "")
 				streamSourceType = "IP_PULL";
@@ -12790,9 +12812,9 @@ json MMSEngineDBFacade::getStreamInputRoot(
 		else if (streamSourceType == "IP_PUSH")
 		{
 			if (pushProtocol == "srt")
-				liveURL = pushProtocol + "://" + pushServerName + ":" + to_string(pushServerPort) + "?mode=listener";
+				liveURL = pushProtocol + "://" + pushEncoderName + ":" + to_string(pushServerPort) + "?mode=listener";
 			else
-				liveURL = pushProtocol + "://" + pushServerName + ":" + to_string(pushServerPort) + pushUri;
+				liveURL = pushProtocol + "://" + pushEncoderName + ":" + to_string(pushServerPort) + pushUri;
 		}
 		else if (streamSourceType == "TV")
 		{
@@ -12821,8 +12843,8 @@ json MMSEngineDBFacade::getStreamInputRoot(
 		field = "pushEncoderKey";
 		streamInputRoot[field] = pushEncoderKey;
 
-		field = "pushServerName";
-		streamInputRoot[field] = pushServerName;
+		field = "pushEncoderName";
+		streamInputRoot[field] = pushEncoderName;
 
 		// The taskEncodersPoolLabel (parameter of the Task/IngestionJob) overrides the one included
 		// in ChannelConf if present
@@ -13397,8 +13419,8 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 		string pushProtocol;
 		bool pushEncoderKeyToBeModified = false;
 		int64_t pushEncoderKey = -1;
-		bool pushServerNameToBeModified = false;
-		string pushServerName;
+		bool pushPublicEncoderNameToBeModified = false;
+		bool pushPublicEncoderName;
 		bool pushServerPortToBeModified = false;
 		int pushServerPort = -1;
 		bool pushUriToBeModified = false;
@@ -13441,7 +13463,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 		modifyStream(
 			confKey, "", workspace->_workspaceKey, labelToBeModified, label, sourceTypeToBeModified, sourceType, encodersPoolToBeModified,
 			encodersPoolKey, urlToBeModified, url, pushProtocolToBeModified, pushProtocol, pushEncoderKeyToBeModified, pushEncoderKey,
-			pushServerNameToBeModified, pushServerName, pushServerPortToBeModified, pushServerPort, pushUriToBeModified, pushUri,
+			pushPublicEncoderNameToBeModified, pushPublicEncoderName, pushServerPortToBeModified, pushServerPort, pushUriToBeModified, pushUri,
 			pushListenTimeoutToBeModified, pushListenTimeout, captureVideoDeviceNumberToBeModified, captureVideoDeviceNumber,
 			captureVideoInputFormatToBeModified, captureVideoInputFormat, captureFrameRateToBeModified, captureFrameRate, captureWidthToBeModified,
 			captureWidth, captureHeightToBeModified, captureHeight, captureAudioDeviceNumberToBeModified, captureAudioDeviceNumber,
