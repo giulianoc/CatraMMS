@@ -3134,6 +3134,7 @@ json MMSEngineDBFacade::addStream(
 				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
 				"captureLiveAudioDeviceNumber, captureLiveChannelsNumber, "
 				"tvSourceTVConfKey, "
+				"type, description, name, region, country, imageMediaItemKey, imageUniqueName, "
 				"position, userData) values ("
 				"{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "
 				"{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
