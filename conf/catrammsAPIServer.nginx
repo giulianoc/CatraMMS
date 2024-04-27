@@ -3,8 +3,10 @@
 	error_log    /var/catramms/logs/nginx/mms-api.error.log error;
 
 	#defines the shared memory zone used for storing the cache keys and other metadata
-	proxy_cache api_cache;
+	fastcgi_cache api_cache;
 	fastcgi_cache_key $scheme://$host$uri$is_args$query_string;
+	#default: GET HEAD
+	#proxy_cache_methods GET HEAD POST;
 
 	location /catramms/latest {
 		rewrite .* /catramms/1.0.1/$request_uri redirect;
@@ -402,7 +404,7 @@
 		#       If the first request comes at time T0 minutes and next request comes at T6 minutes. Even though the cache has not expired,
 		#               the data is deleted from the disk so it needs to be fetched from backend service again.
 		#Quindi inactive determina quando la cache viene eliminata, Cache non acceduta nel periodo specificato da inactive, viene eliminata
-		fastcgi_cache_valid 200 10m;
+		fastcgi_cache_valid 200 1m;
 
 		#When the backend service is down or takes too long to respond (proxy_connect_timeout default 60s), we can configure Nginx to serve stale responses instead
 		#error - use stale if backend can’t be reached
