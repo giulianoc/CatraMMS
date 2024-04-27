@@ -1,58 +1,51 @@
 
-#include <deque>
-#include <vector>
-#include <sstream>
-#include <fstream>
-#include <regex>
-#include <iostream>
-#include <sys/utsname.h>
 #include "Compressor.h"
+#include <deque>
+#include <fstream>
+#include <iostream>
+#include <regex>
+#include <sstream>
+#include <sys/utsname.h>
+#include <vector>
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
-#include "spdlog/spdlog.h"
 #include "JSONUtils.h"
-#include "FastCGIAPI.h"
+#include "spdlog/spdlog.h"
+#include "FastCGIAPI.h" // has to be the last one otherwise errors...
 
-extern char** environ;
+extern char **environ;
 
-
-FastCGIAPI::FastCGIAPI(
-	json configurationRoot,
-	mutex* fcgiAcceptMutex)
-{
-	init(configurationRoot, fcgiAcceptMutex);
-}
-
+FastCGIAPI::FastCGIAPI(json configurationRoot, mutex *fcgiAcceptMutex) { init(configurationRoot, fcgiAcceptMutex); }
 
 FastCGIAPI::~FastCGIAPI() = default;
 
-void FastCGIAPI::init(
-	json configurationRoot,
-	mutex* fcgiAcceptMutex)
+void FastCGIAPI::init(json configurationRoot, mutex *fcgiAcceptMutex)
 {
-	_shutdown				= false;
-	_configurationRoot		= configurationRoot;
-	_fcgiAcceptMutex		= fcgiAcceptMutex;
+	_shutdown = false;
+	_configurationRoot = configurationRoot;
+	_fcgiAcceptMutex = fcgiAcceptMutex;
 
-	_fcgxFinishDone			= false;
+	_fcgxFinishDone = false;
 
 	{
 		struct utsname unUtsname;
-		if (uname (&unUtsname) != -1)
-			_hostName = unUtsname. nodename;
+		if (uname(&unUtsname) != -1)
+			_hostName = unUtsname.nodename;
 	}
 
 	_requestIdentifier = 0;
 
-  loadConfiguration();
+	loadConfiguration();
 }
 
 void FastCGIAPI::loadConfiguration()
 {
 	_maxAPIContentLength = JSONUtils::asInt64(_configurationRoot["api"], "maxContentLength", 0);
-	SPDLOG_DEBUG("Configuration item"
-		", api->maxContentLength: {}", _maxAPIContentLength
+	SPDLOG_DEBUG(
+		"Configuration item"
+		", api->maxContentLength: {}",
+		_maxAPIContentLength
 	);
 }
 
@@ -74,7 +67,8 @@ int FastCGIAPI::operator()()
 	// The nginx process is configured to proxy the requests to 127.0.0.1:<port>
 	// specified by spawn-fcgi
 	int sock_fd = 0;
-	SPDLOG_DEBUG("FastCGIAPI::FCGX_OpenSocket"
+	SPDLOG_DEBUG(
+		"FastCGIAPI::FCGX_OpenSocket"
 		", threadId: {}"
 		", sock_fd: {}",
 		sThreadId, sock_fd
@@ -87,14 +81,16 @@ int FastCGIAPI::operator()()
 
 		int returnAcceptCode;
 		{
-			SPDLOG_DEBUG("FastCGIAPI::ready"
+			SPDLOG_DEBUG(
+				"FastCGIAPI::ready"
 				", _requestIdentifier: {}"
 				", threadId: {}",
 				_requestIdentifier, sThreadId
 			);
 			lock_guard<mutex> locker(*_fcgiAcceptMutex);
 
-			SPDLOG_DEBUG("FastCGIAPI::listen"
+			SPDLOG_DEBUG(
+				"FastCGIAPI::listen"
 				", _requestIdentifier: {}"
 				", threadId: {}",
 				_requestIdentifier, sThreadId
@@ -105,7 +101,8 @@ int FastCGIAPI::operator()()
 
 			returnAcceptCode = FCGX_Accept_r(&request);
 		}
-		SPDLOG_DEBUG("FCGX_Accept_r"
+		SPDLOG_DEBUG(
+			"FCGX_Accept_r"
 			", _requestIdentifier: {}"
 			", threadId: {}"
 			", returnAcceptCode: {}",
@@ -123,16 +120,17 @@ int FastCGIAPI::operator()()
 
 		_fcgxFinishDone = false;
 
-		SPDLOG_DEBUG("Request to be managed"
+		SPDLOG_DEBUG(
+			"Request to be managed"
 			", _requestIdentifier: {}"
 			", threadId: {}",
 			_requestIdentifier, sThreadId
-		);        
+		);
 
 		unordered_map<string, string> requestDetails;
 		unordered_map<string, string> queryParameters;
-		string          requestBody;
-		unsigned long   contentLength = 0;
+		string requestBody;
+		unsigned long contentLength = 0;
 		try
 		{
 			fillEnvironmentDetails(request.envp, requestDetails);
@@ -147,245 +145,243 @@ int FastCGIAPI::operator()()
 
 			{
 				unordered_map<string, string>::iterator it;
-				if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end() &&
-					(it->second == "POST" || it->second == "PUT"))
-				{                
+				if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end() && (it->second == "POST" || it->second == "PUT"))
+				{
 					if ((it = requestDetails.find("CONTENT_LENGTH")) != requestDetails.end())
 					{
-                        if (it->second != "")
-                        {
-                            contentLength = stol(it->second);
-                            if (contentLength > _maxAPIContentLength)
-                            {
-                                string errorMessage = string("ContentLength too long")
-									+ ", _requestIdentifier: " + to_string(_requestIdentifier)
-									+ ", threadId: " + sThreadId
-                                    + ", contentLength: " + to_string(contentLength)
-                                    + ", _maxAPIContentLength: " + to_string(_maxAPIContentLength)
-                                ;
+						if (it->second != "")
+						{
+							contentLength = stol(it->second);
+							if (contentLength > _maxAPIContentLength)
+							{
+								string errorMessage = string("ContentLength too long") + ", _requestIdentifier: " + to_string(_requestIdentifier) +
+													  ", threadId: " + sThreadId + ", contentLength: " + to_string(contentLength) +
+													  ", _maxAPIContentLength: " + to_string(_maxAPIContentLength);
 
-                                SPDLOG_ERROR(errorMessage);
-            
-                                throw runtime_error(errorMessage);
-                            }
-                        }
-                        else
-                        {
-                            contentLength = 0;
-                        }
-                    }
-                    else
-                    {
-                        contentLength = 0;
-                    }
+								SPDLOG_ERROR(errorMessage);
 
-                    if (contentLength > 0)
-                    {
-                        char* content = new char[contentLength];
+								throw runtime_error(errorMessage);
+							}
+						}
+						else
+						{
+							contentLength = 0;
+						}
+					}
+					else
+					{
+						contentLength = 0;
+					}
 
-                        contentLength = FCGX_GetStr(content, contentLength, request.in);
+					if (contentLength > 0)
+					{
+						char *content = new char[contentLength];
 
-                        requestBody.assign(content, contentLength);
+						contentLength = FCGX_GetStr(content, contentLength, request.in);
 
-                        delete [] content;
-                    }
-                }
-            }
-        }
-        catch(runtime_error& e)
-        {
-            SPDLOG_ERROR(e.what());
+						requestBody.assign(content, contentLength);
 
-            sendError(request, 500, e.what());
+						delete[] content;
+					}
+				}
+			}
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(e.what());
+
+			sendError(request, 500, e.what());
 
 			if (!_fcgxFinishDone)
 				FCGX_Finish_r(&request);
-            
-            // throw runtime_error(errorMessage);
-            continue;
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("Internal server error");
-            SPDLOG_ERROR(errorMessage);
 
-            sendError(request, 500, errorMessage);
+			// throw runtime_error(errorMessage);
+			continue;
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string("Internal server error");
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 500, errorMessage);
 
 			if (!_fcgxFinishDone)
 				FCGX_Finish_r(&request);
-            
-            // throw runtime_error(errorMessage);
-            continue;
-        }
 
-        string requestURI;
-        {
-            unordered_map<string, string>::iterator it;
+			// throw runtime_error(errorMessage);
+			continue;
+		}
 
-            if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
-                requestURI = it->second;
-        }
+		string requestURI;
+		{
+			unordered_map<string, string>::iterator it;
 
-        json permissionsRoot;
-        bool authorizationPresent = basicAuthenticationRequired(requestURI, queryParameters);
+			if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
+				requestURI = it->second;
+		}
+
+		json permissionsRoot;
+		bool authorizationPresent = basicAuthenticationRequired(requestURI, queryParameters);
 		string userName;
 		string password;
-        if (authorizationPresent)
-        {
-            try
-            {
-                unordered_map<string, string>::iterator it;
+		if (authorizationPresent)
+		{
+			try
+			{
+				unordered_map<string, string>::iterator it;
 
-                if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
-                {
-                    SPDLOG_ERROR("No 'Basic' authorization is present into the request");
-
-                    throw CheckAuthorizationFailed();
-                }
-
-                string authorizationPrefix = "Basic ";
-				if (!(it->second.size() >= authorizationPrefix.size()
-					&& 0 == it->second.compare(0, authorizationPrefix.size(), authorizationPrefix)))
+				if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
 				{
-                    SPDLOG_ERROR("No 'Basic' authorization is present into the request"
+					SPDLOG_ERROR("No 'Basic' authorization is present into the request");
+
+					throw CheckAuthorizationFailed();
+				}
+
+				string authorizationPrefix = "Basic ";
+				if (!(it->second.size() >= authorizationPrefix.size() && 0 == it->second.compare(0, authorizationPrefix.size(), authorizationPrefix)))
+				{
+					SPDLOG_ERROR(
+						"No 'Basic' authorization is present into the request"
 						", _requestIdentifier: {}"
 						", threadId: {}"
-                        ", Authorization: {}",
+						", Authorization: {}",
 						_requestIdentifier, sThreadId, it->second
-                    );
+					);
 
-                    throw CheckAuthorizationFailed();
-                }
+					throw CheckAuthorizationFailed();
+				}
 
-                string usernameAndPasswordBase64 = it->second.substr(authorizationPrefix.length());
-                string usernameAndPassword = base64_decode(usernameAndPasswordBase64);
-                size_t userNameSeparator = usernameAndPassword.find(":");
-                if (userNameSeparator == string::npos)
-                {
-                    SPDLOG_ERROR("Wrong Authorization format"
+				string usernameAndPasswordBase64 = it->second.substr(authorizationPrefix.length());
+				string usernameAndPassword = base64_decode(usernameAndPasswordBase64);
+				size_t userNameSeparator = usernameAndPassword.find(":");
+				if (userNameSeparator == string::npos)
+				{
+					SPDLOG_ERROR(
+						"Wrong Authorization format"
 						", _requestIdentifier: {}"
 						", threadId: {}"
-                        ", usernameAndPasswordBase64: {}"
-                        ", usernameAndPassword: {}",
+						", usernameAndPasswordBase64: {}"
+						", usernameAndPassword: {}",
 						_requestIdentifier, sThreadId, usernameAndPasswordBase64, usernameAndPassword
-                    );
+					);
 
-                    throw CheckAuthorizationFailed();
-                }
+					throw CheckAuthorizationFailed();
+				}
 
-                userName = usernameAndPassword.substr(0, userNameSeparator);
-                password = usernameAndPassword.substr(userNameSeparator + 1);
+				userName = usernameAndPassword.substr(0, userNameSeparator);
+				password = usernameAndPassword.substr(userNameSeparator + 1);
 
 				checkAuthorization(sThreadId, userName, password);
-            }
-            catch(CheckAuthorizationFailed& e)
-            {
-                SPDLOG_ERROR("checkAuthorization failed"
-					", _requestIdentifier: {}"
-					", threadId: {}" 
-                    ", e.what(): {}",
-					_requestIdentifier, sThreadId, e.what()
-                );
-
-                string errorMessage = e.what();
-                SPDLOG_ERROR(errorMessage);
-
-                sendError(request, 401, errorMessage);   // unauthorized
-
-				if (!_fcgxFinishDone)
-					FCGX_Finish_r(&request);
-
-                //  throw runtime_error(errorMessage);
-                continue;
-            }
-            catch(runtime_error& e)
-            {
-                SPDLOG_ERROR("checkAuthorization failed"
+			}
+			catch (CheckAuthorizationFailed &e)
+			{
+				SPDLOG_ERROR(
+					"checkAuthorization failed"
 					", _requestIdentifier: {}"
 					", threadId: {}"
-                    ", e.what(): {}",
+					", e.what(): {}",
 					_requestIdentifier, sThreadId, e.what()
-                );
+				);
 
-                string errorMessage = string("Internal server error");
-                SPDLOG_ERROR(errorMessage);
+				string errorMessage = e.what();
+				SPDLOG_ERROR(errorMessage);
 
-                sendError(request, 500, errorMessage);
-
-				if (!_fcgxFinishDone)
-					FCGX_Finish_r(&request);
-
-                // throw runtime_error(errorMessage);
-                continue;
-            }
-            catch(exception& e)
-            {
-                SPDLOG_ERROR("checkAuthorization failed"
-					", _requestIdentifier: {}"
-					", threadId: {}"
-                    ", e.what(): {}",
-					_requestIdentifier, sThreadId, e.what()
-                );
-
-                string errorMessage = string("Internal server error");
-                SPDLOG_ERROR(errorMessage);
-
-                sendError(request, 500, errorMessage);
+				sendError(request, 401, errorMessage); // unauthorized
 
 				if (!_fcgxFinishDone)
 					FCGX_Finish_r(&request);
 
 				//  throw runtime_error(errorMessage);
 				continue;
-            }
-        }
+			}
+			catch (runtime_error &e)
+			{
+				SPDLOG_ERROR(
+					"checkAuthorization failed"
+					", _requestIdentifier: {}"
+					", threadId: {}"
+					", e.what(): {}",
+					_requestIdentifier, sThreadId, e.what()
+				);
+
+				string errorMessage = string("Internal server error");
+				SPDLOG_ERROR(errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				if (!_fcgxFinishDone)
+					FCGX_Finish_r(&request);
+
+				// throw runtime_error(errorMessage);
+				continue;
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"checkAuthorization failed"
+					", _requestIdentifier: {}"
+					", threadId: {}"
+					", e.what(): {}",
+					_requestIdentifier, sThreadId, e.what()
+				);
+
+				string errorMessage = string("Internal server error");
+				SPDLOG_ERROR(errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				if (!_fcgxFinishDone)
+					FCGX_Finish_r(&request);
+
+				//  throw runtime_error(errorMessage);
+				continue;
+			}
+		}
 
 		chrono::system_clock::time_point startManageRequest = chrono::system_clock::now();
-        try
-        {
-            unordered_map<string, string>::iterator it;
+		try
+		{
+			unordered_map<string, string>::iterator it;
 
-            string requestMethod;
-            if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
+			string requestMethod;
+			if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
 				requestMethod = it->second;
 
 			bool responseBodyCompressed = false;
 			{
 				unordered_map<string, string>::iterator it;
 
-				if ((it = requestDetails.find("HTTP_X_RESPONSEBODYCOMPRESSED"))
-					!= requestDetails.end()
-					&& it->second == "true")
+				if ((it = requestDetails.find("HTTP_X_RESPONSEBODYCOMPRESSED")) != requestDetails.end() && it->second == "true")
 				{
 					responseBodyCompressed = true;
 				}
 			}
 
 			manageRequestAndResponse(
-				sThreadId, _requestIdentifier, responseBodyCompressed,
-				request, requestURI, requestMethod, queryParameters,
-				authorizationPresent,
-				userName, password,
-				contentLength, requestBody, requestDetails);            
-        }
-        catch(runtime_error& e)
-        {
-            SPDLOG_ERROR("manageRequestAndResponse failed"
+				sThreadId, _requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, queryParameters, authorizationPresent,
+				userName, password, contentLength, requestBody, requestDetails
+			);
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"manageRequestAndResponse failed"
 				", _requestIdentifier: {}"
 				", threadId: {}"
-                ", e: {}",
+				", e: {}",
 				_requestIdentifier, sThreadId, e.what()
-            );
-        }
-        catch(exception& e)
-        {
-            SPDLOG_ERROR("manageRequestAndResponse failed"
-				", _requestIdentifier: {}" 
+			);
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"manageRequestAndResponse failed"
+				", _requestIdentifier: {}"
 				", threadId: {}"
-                ", e: {}",
+				", e: {}",
 				_requestIdentifier, sThreadId, e.what()
-            );
-        }
+			);
+		}
 		{
 			string method;
 
@@ -396,7 +392,8 @@ int FastCGIAPI::operator()()
 			string clientIPAddress = getClientIPAddress(requestDetails);
 
 			chrono::system_clock::time_point endManageRequest = chrono::system_clock::now();
-			SPDLOG_INFO("manageRequestAndResponse"
+			SPDLOG_INFO(
+				"manageRequestAndResponse"
 				", _requestIdentifier: {}"
 				", threadId: {}"
 				", clientIPAddress: @{}@"
@@ -409,67 +406,61 @@ int FastCGIAPI::operator()()
 			);
 		}
 
-        SPDLOG_DEBUG("FastCGIAPI::request finished"
+		SPDLOG_DEBUG(
+			"FastCGIAPI::request finished"
 			", _requestIdentifier: {}"
-            ", threadId: {}", _requestIdentifier, sThreadId
-        );
+			", threadId: {}",
+			_requestIdentifier, sThreadId
+		);
 
 		if (!_fcgxFinishDone)
 			FCGX_Finish_r(&request);
 
-         // Note: the fcgi_streambuf destructor will auto flush
-    }
+		// Note: the fcgi_streambuf destructor will auto flush
+	}
 
-	SPDLOG_INFO("FastCGIAPI shutdown"
-		", threadId: {}", sThreadId
+	SPDLOG_INFO(
+		"FastCGIAPI shutdown"
+		", threadId: {}",
+		sThreadId
 	);
 
-
-    return 0;
+	return 0;
 }
 
-void FastCGIAPI::stopFastcgi()
-{
-	_shutdown	= true;
-}
+void FastCGIAPI::stopFastcgi() { _shutdown = true; }
 
-bool FastCGIAPI::basicAuthenticationRequired(
-    string requestURI,
-    unordered_map<string, string> queryParameters
-)
+bool FastCGIAPI::basicAuthenticationRequired(string requestURI, unordered_map<string, string> queryParameters)
 {
-    bool        basicAuthenticationRequired = true;
-    
+	bool basicAuthenticationRequired = true;
+
 	/*
-    auto methodIt = queryParameters.find("method");
-    if (methodIt == queryParameters.end())
-    {
-        string errorMessage = string("The 'method' parameter is not found");
-        SPDLOG_ERROR(errorMessage);
+	auto methodIt = queryParameters.find("method");
+	if (methodIt == queryParameters.end())
+	{
+		string errorMessage = string("The 'method' parameter is not found");
+		SPDLOG_ERROR(errorMessage);
 
-        // throw runtime_error(errorMessage);
+		// throw runtime_error(errorMessage);
 		return basicAuthenticationRequired;
-    }
-    string method = methodIt->second;
+	}
+	string method = methodIt->second;
 
-    if (method == "status"	// often used as healthy check
+	if (method == "status"	// often used as healthy check
 	)
-    {
-        basicAuthenticationRequired = false;
-    }
+	{
+		basicAuthenticationRequired = false;
+	}
 	*/
 
-    return basicAuthenticationRequired;
+	return basicAuthenticationRequired;
 }
 
 void FastCGIAPI::sendSuccess(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	string requestURI, string requestMethod,
-	int htmlResponseCode,
-	string responseBody, string contentType,
-	string cookieName, string cookieValue, string cookiePath,
-	bool enableCorsGETHeader, string originHeader)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestURI, string requestMethod,
+	int htmlResponseCode, string responseBody, string contentType, string cookieName, string cookieValue, string cookiePath, bool enableCorsGETHeader,
+	string originHeader
+)
 {
 	if (_fcgxFinishDone)
 	{
@@ -477,7 +468,8 @@ void FastCGIAPI::sendSuccess(
 		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
 		// request.out è stato resettato nella prima chiamata
 		// Questo controllo è una protezione rispetto al segmentation fault
-		SPDLOG_ERROR("response was already done"
+		SPDLOG_ERROR(
+			"response was already done"
 			", requestIdentifier: {}"
 			", threadId: {}"
 			", requestURI: {}"
@@ -489,13 +481,12 @@ void FastCGIAPI::sendSuccess(
 		return;
 	}
 
-    string endLine = "\r\n";
-    
-    string httpStatus = fmt::format("Status: {} {}{}",
-		htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+	string endLine = "\r\n";
 
-    string localContentType;
-    if (responseBody != "")
+	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+
+	string localContentType;
+	if (responseBody != "")
 	{
 		if (contentType == "")
 			localContentType = fmt::format("Content-Type: application/json; charset=utf-8{}", endLine);
@@ -521,12 +512,14 @@ void FastCGIAPI::sendSuccess(
 		if (originHeader != "")
 			origin = originHeader;
 
-		corsGETHeader = fmt::format("Access-Control-Allow-Origin: {}{}"
+		corsGETHeader = fmt::format(
+			"Access-Control-Allow-Origin: {}{}"
 			"Access-Control-Allow-Methods: GET, POST, OPTIONS{}"
 			"Access-Control-Allow-Credentials: true{}"
 			"Access-Control-Allow-Headers: DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range{}"
 			"Access-Control-Expose-Headers: Content-Length,Content-Range{}",
-			origin, endLine, endLine, endLine, endLine, endLine);
+			origin, endLine, endLine, endLine, endLine, endLine
+		);
 	}
 
 	if (responseBodyCompressed)
@@ -543,18 +536,13 @@ void FastCGIAPI::sendSuccess(
 			"Content-Length: {}{}"
 			"X-CompressedBody: true{}"
 			"{}",
-			httpStatus,
-			localContentType,
-			cookieHeader,
-			corsGETHeader,
-			contentLength, endLine,
-			endLine,
-			endLine
+			httpStatus, localContentType, cookieHeader, corsGETHeader, contentLength, endLine, endLine, endLine
 		);
 
 		FCGX_FPrintF(request.out, headResponse.c_str());
 
-		SPDLOG_INFO("sendSuccess"
+		SPDLOG_INFO(
+			"sendSuccess"
 			", requestIdentifier: {}"
 			", threadId: {}"
 			", requestURI: {}"
@@ -562,14 +550,12 @@ void FastCGIAPI::sendSuccess(
 			", headResponse.size: {}"
 			", responseBody.size: @{}@"
 			", compressedResponseBody.size: @{}@",
-			requestIdentifier, sThreadId, requestURI, requestMethod,
-			headResponse.size(), responseBody.size(), contentLength
+			requestIdentifier, sThreadId, requestURI, requestMethod, headResponse.size(), responseBody.size(), contentLength
 		);
 
-		FCGX_PutStr(compressedResponseBody.data(), compressedResponseBody.size(),
-			request.out);
-    }
-    else
+		FCGX_PutStr(compressedResponseBody.data(), compressedResponseBody.size(), request.out);
+	}
+	else
 	{
 		string completeHttpResponse;
 
@@ -582,8 +568,7 @@ void FastCGIAPI::sendSuccess(
 		{
 			string toBeSearched = "%";
 			string replacedWith = "%%";
-			string newResponseBody = regex_replace(
-				responseBody, regex(toBeSearched), replacedWith);
+			string newResponseBody = regex_replace(responseBody, regex(toBeSearched), replacedWith);
 
 			completeHttpResponse = fmt::format(
 				"{}"
@@ -593,11 +578,8 @@ void FastCGIAPI::sendSuccess(
 				"Content-Length: {}{}"
 				"{}"
 				"{}",
-				httpStatus, localContentType, cookieHeader,
-				corsGETHeader,
-				contentLength, endLine,
-				endLine,
-				newResponseBody);
+				httpStatus, localContentType, cookieHeader, corsGETHeader, contentLength, endLine, endLine, newResponseBody
+			);
 		}
 		else
 		{
@@ -609,19 +591,19 @@ void FastCGIAPI::sendSuccess(
 				"Content-Length: {}{}"
 				"{}"
 				"{}",
-				httpStatus, localContentType, cookieHeader,
-				corsGETHeader,
-				contentLength, endLine,
-				endLine, responseBody);
+				httpStatus, localContentType, cookieHeader, corsGETHeader, contentLength, endLine, endLine, responseBody
+			);
 		}
 
-		SPDLOG_INFO("sendSuccess"
+		SPDLOG_INFO(
+			"sendSuccess"
 			", requestIdentifier: {}"
 			", threadId: {}"
 			", requestURI: {}"
 			", requestMethod: {}"
-			", responseBody.size: @{}@",
-			requestIdentifier, sThreadId, requestURI, requestMethod, responseBody.size()
+			", responseBody.size: @{}@"
+			", completeHttpResponse: {}",
+			requestIdentifier, sThreadId, requestURI, requestMethod, responseBody.size(), completeHttpResponse
 		);
 
 		// si potrebbe usare anche FCGX_PutStr, in questo caso
@@ -634,7 +616,7 @@ void FastCGIAPI::sendSuccess(
 	_fcgxFinishDone = true;
 }
 
-void FastCGIAPI::sendRedirect(FCGX_Request& request, string locationURL)
+void FastCGIAPI::sendRedirect(FCGX_Request &request, string locationURL)
 {
 	if (_fcgxFinishDone)
 	{
@@ -647,25 +629,29 @@ void FastCGIAPI::sendRedirect(FCGX_Request& request, string locationURL)
 		return;
 	}
 
-    string endLine = "\r\n";
-    
-    int htmlResponseCode = 301;
-    
-    string completeHttpResponse = fmt::format("Status: {} {}{}"
+	string endLine = "\r\n";
+
+	int htmlResponseCode = 301;
+
+	string completeHttpResponse = fmt::format(
+		"Status: {} {}{}"
 		"Location: {}{}{}",
-		htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine, locationURL, endLine, endLine);
+		htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine, locationURL, endLine, endLine
+	);
 
-    SPDLOG_INFO("HTTP Success"
-		", response: {}", completeHttpResponse
-    );
+	SPDLOG_INFO(
+		"HTTP Success"
+		", response: {}",
+		completeHttpResponse
+	);
 
-    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
+	FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 
 	FCGX_Finish_r(&request);
 	_fcgxFinishDone = true;
 }
 
-void FastCGIAPI::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize)
+void FastCGIAPI::sendHeadSuccess(FCGX_Request &request, int htmlResponseCode, unsigned long fileSize)
 {
 	if (_fcgxFinishDone)
 	{
@@ -678,20 +664,23 @@ void FastCGIAPI::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, un
 		return;
 	}
 
-    string endLine = "\r\n";
-    
-    string httpStatus = fmt::format("Status: {} {}{}",
-		htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+	string endLine = "\r\n";
 
-    string completeHttpResponse = fmt::format("{}"
+	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+
+	string completeHttpResponse = fmt::format(
+		"{}"
 		"Content-Range: bytes 0-{}{}{}",
-		httpStatus, fileSize, endLine, endLine);
+		httpStatus, fileSize, endLine, endLine
+	);
 
-    SPDLOG_INFO("HTTP HEAD Success"
-		", response: {}", completeHttpResponse
-    );
+	SPDLOG_INFO(
+		"HTTP HEAD Success"
+		", response: {}",
+		completeHttpResponse
+	);
 
-    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
+	FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 
 	FCGX_Finish_r(&request);
 	_fcgxFinishDone = true;
@@ -699,24 +688,25 @@ void FastCGIAPI::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, un
 
 void FastCGIAPI::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
 {
-    string endLine = "\r\n";
-    
-    string httpStatus = fmt::format(
-            "Status: {} {}{}",
-            htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+	string endLine = "\r\n";
 
-    string completeHttpResponse = fmt::format(
-			"{}"
-            "X-CatraMMS-Resume: {}{}"
-			"{}",
-            httpStatus, fileSize, endLine, endLine);
+	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
-    SPDLOG_INFO("HTTP HEAD Success"
-		", response: {}", completeHttpResponse
-    );
+	string completeHttpResponse = fmt::format(
+		"{}"
+		"X-CatraMMS-Resume: {}{}"
+		"{}",
+		httpStatus, fileSize, endLine, endLine
+	);
+
+	SPDLOG_INFO(
+		"HTTP HEAD Success"
+		", response: {}",
+		completeHttpResponse
+	);
 }
 
-void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string errorMessage)
+void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage)
 {
 	if (_fcgxFinishDone)
 	{
@@ -729,11 +719,11 @@ void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string e
 		return;
 	}
 
-    string endLine = "\r\n";
+	string endLine = "\r\n";
 
 	long contentLength;
 
-    string responseBody;
+	string responseBody;
 	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
 	if (errorMessage.find("%") != string::npos)
 	{
@@ -749,8 +739,7 @@ void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string e
 
 		string toBeSearched = "%";
 		string replacedWith = "%%";
-		responseBody = regex_replace(
-			temporaryResponseBody, regex(toBeSearched), replacedWith);
+		responseBody = regex_replace(temporaryResponseBody, regex(toBeSearched), replacedWith);
 	}
 	else
 	{
@@ -764,24 +753,25 @@ void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string e
 		// because for FCGX_FPrintF (below used) %% is just one character
 		contentLength = responseBody.length();
 	}
-    
-    string httpStatus = fmt::format(
-            "Status: {} {}{}",
-            htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
-    string completeHttpResponse = fmt::format(
-			"{}"
-            "Content-Type: application/json; charset=utf-8{}"
-            "Content-Length: {}{}"
-			"{}"
-			"{}",
-            httpStatus, endLine, contentLength, endLine, endLine, responseBody);
-    
-    SPDLOG_INFO("HTTP Error"
-		", response: {}", completeHttpResponse
-    );
+	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
-    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
+	string completeHttpResponse = fmt::format(
+		"{}"
+		"Content-Type: application/json; charset=utf-8{}"
+		"Content-Length: {}{}"
+		"{}"
+		"{}",
+		httpStatus, endLine, contentLength, endLine, endLine, responseBody
+	);
+
+	SPDLOG_INFO(
+		"HTTP Error"
+		", response: {}",
+		completeHttpResponse
+	);
+
+	FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 
 	FCGX_Finish_r(&request);
 	_fcgxFinishDone = true;
@@ -789,11 +779,11 @@ void FastCGIAPI::sendError(FCGX_Request& request, int htmlResponseCode, string e
 
 void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 {
-    string endLine = "\r\n";
+	string endLine = "\r\n";
 
 	long contentLength;
 
-    string responseBody;
+	string responseBody;
 	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
 	if (errorMessage.find("%") != string::npos)
 	{
@@ -809,8 +799,7 @@ void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 
 		string toBeSearched = "%";
 		string replacedWith = "%%";
-		responseBody = regex_replace(
-			temporaryResponseBody, regex(toBeSearched), replacedWith);
+		responseBody = regex_replace(temporaryResponseBody, regex(toBeSearched), replacedWith);
 	}
 	else
 	{
@@ -824,27 +813,26 @@ void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 		// because for FCGX_FPrintF (below used) %% is just one character
 		contentLength = responseBody.length();
 	}
-    
-    string httpStatus = fmt::format(
-            "Status: {} {}{}",
-            htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
-    string completeHttpResponse = fmt::format(
-			"{}"
-            "Content-Type: application/json; charset=utf-8{}"
-            "Content-Length: {}{}"
-			"{}"
-			"{}",
-            httpStatus, endLine, contentLength, endLine, endLine, responseBody);
-    
-    SPDLOG_INFO("HTTP Error"
-		", response: {}", completeHttpResponse
-    );
+	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+
+	string completeHttpResponse = fmt::format(
+		"{}"
+		"Content-Type: application/json; charset=utf-8{}"
+		"Content-Length: {}{}"
+		"{}"
+		"{}",
+		httpStatus, endLine, contentLength, endLine, endLine, responseBody
+	);
+
+	SPDLOG_INFO(
+		"HTTP Error"
+		", response: {}",
+		completeHttpResponse
+	);
 }
 
-string FastCGIAPI::getClientIPAddress(
-	unordered_map<string, string>& requestDetails
-)
+string FastCGIAPI::getClientIPAddress(unordered_map<string, string> &requestDetails)
 {
 
 	string clientIPAddress;
@@ -860,144 +848,159 @@ string FastCGIAPI::getClientIPAddress(
 
 string FastCGIAPI::getHtmlStandardMessage(int htmlResponseCode)
 {
-    switch(htmlResponseCode)
-    {
-        case 200:
-            return string("OK");
-        case 201:
-            return string("Created");
-        case 301:
-            return string("Moved Permanently");
-        case 302:
-            return string("Found");
-        case 307:
-            return string("Temporary Redirect");
-        case 403:
-            return string("Forbidden");
-        case 400:
-            return string("Bad Request");
-        case 401:
-            return string("Unauthorized");
-        case 500:
-            return string("Internal Server Error");
-        default:
-            string errorMessage = fmt::format("HTTP status code not managed"
-                ", htmlResponseCode: {}", htmlResponseCode);
-            SPDLOG_ERROR(errorMessage);
-            
-            throw runtime_error(errorMessage);
-    }
-    
-}
-
-void FastCGIAPI::fillEnvironmentDetails(
-        const char * const * envp, 
-        unordered_map<string, string>& requestDetails)
-{
-
-    int valueIndex;
-
-    for ( ; *envp; ++envp)
-    {
-        string environmentKeyValue = *envp;
-
-        if ((valueIndex = environmentKeyValue.find("=")) == string::npos)
-        {
-            SPDLOG_ERROR("Unexpected environment variable"
-				", environmentKeyValue: {}", environmentKeyValue
-            );
-            
-            continue;
-        }
-
-        string key = environmentKeyValue.substr(0, valueIndex);
-        string value = environmentKeyValue.substr(valueIndex + 1);
-        
-        requestDetails[key] = value;
-
-        if (key == "REQUEST_URI")
-            SPDLOG_DEBUG("Environment variable"
-				", key/Name: {}={}", key, value
-            );
-        else
-            SPDLOG_DEBUG("Environment variable"
-				", key/Name: {}={}", key, value
-            );
-    }
-}
-
-void FastCGIAPI::fillQueryString(
-        string queryString,
-        unordered_map<string, string>& queryParameters)
-{
-
-    stringstream ss(queryString);
-    string token;
-    char delim = '&';
-    while (getline(ss, token, delim)) 
-    {
-        if (!token.empty())
-        {
-            size_t keySeparator;
-            
-            if ((keySeparator = token.find("=")) == string::npos)
-            {
-                SPDLOG_ERROR("Wrong query parameter format"
-					", token: {}", token
-                );
-                
-                continue;
-            }
-
-            string key = token.substr(0, keySeparator);
-            string value = token.substr(keySeparator + 1);
-            
-            queryParameters[key] = value;
-
-            SPDLOG_DEBUG("Query parameter"
-				", key/Name: {}={}", key, value
-            );
-        }
-    }    
-}
-
-json FastCGIAPI::loadConfigurationFile(const char* configurationPathName)
-{
-    try
-    {
-        ifstream configurationFile(configurationPathName, ifstream::binary);
-
-		return json::parse(configurationFile,
-			nullptr,	// callback
-			true,		// allow exceptions
-			true		// ignore_comments
+	switch (htmlResponseCode)
+	{
+	case 200:
+		return string("OK");
+	case 201:
+		return string("Created");
+	case 301:
+		return string("Moved Permanently");
+	case 302:
+		return string("Found");
+	case 307:
+		return string("Temporary Redirect");
+	case 403:
+		return string("Forbidden");
+	case 400:
+		return string("Bad Request");
+	case 401:
+		return string("Unauthorized");
+	case 500:
+		return string("Internal Server Error");
+	default:
+		string errorMessage = fmt::format(
+			"HTTP status code not managed"
+			", htmlResponseCode: {}",
+			htmlResponseCode
 		);
-    }
-    catch(...)
-    {
-		string errorMessage = fmt::format("wrong json configuration format"
-			", configurationPathName: {}", configurationPathName
+		SPDLOG_ERROR(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+void FastCGIAPI::fillEnvironmentDetails(const char *const *envp, unordered_map<string, string> &requestDetails)
+{
+
+	int valueIndex;
+
+	for (; *envp; ++envp)
+	{
+		string environmentKeyValue = *envp;
+
+		if ((valueIndex = environmentKeyValue.find("=")) == string::npos)
+		{
+			SPDLOG_ERROR(
+				"Unexpected environment variable"
+				", environmentKeyValue: {}",
+				environmentKeyValue
+			);
+
+			continue;
+		}
+
+		string key = environmentKeyValue.substr(0, valueIndex);
+		string value = environmentKeyValue.substr(valueIndex + 1);
+
+		requestDetails[key] = value;
+
+		if (key == "REQUEST_URI")
+			SPDLOG_DEBUG(
+				"Environment variable"
+				", key/Name: {}={}",
+				key, value
+			);
+		else
+			SPDLOG_DEBUG(
+				"Environment variable"
+				", key/Name: {}={}",
+				key, value
+			);
+	}
+}
+
+void FastCGIAPI::fillQueryString(string queryString, unordered_map<string, string> &queryParameters)
+{
+
+	stringstream ss(queryString);
+	string token;
+	char delim = '&';
+	while (getline(ss, token, delim))
+	{
+		if (!token.empty())
+		{
+			size_t keySeparator;
+
+			if ((keySeparator = token.find("=")) == string::npos)
+			{
+				SPDLOG_ERROR(
+					"Wrong query parameter format"
+					", token: {}",
+					token
+				);
+
+				continue;
+			}
+
+			string key = token.substr(0, keySeparator);
+			string value = token.substr(keySeparator + 1);
+
+			queryParameters[key] = value;
+
+			SPDLOG_DEBUG(
+				"Query parameter"
+				", key/Name: {}={}",
+				key, value
+			);
+		}
+	}
+}
+
+json FastCGIAPI::loadConfigurationFile(const char *configurationPathName)
+{
+	try
+	{
+		ifstream configurationFile(configurationPathName, ifstream::binary);
+
+		return json::parse(
+			configurationFile,
+			nullptr, // callback
+			true,	 // allow exceptions
+			true	 // ignore_comments
+		);
+	}
+	catch (...)
+	{
+		string errorMessage = fmt::format(
+			"wrong json configuration format"
+			", configurationPathName: {}",
+			configurationPathName
 		);
 
 		throw runtime_error(errorMessage);
-    }
+	}
 }
 
-string FastCGIAPI::base64_encode(const string& in)
+string FastCGIAPI::base64_encode(const string &in)
 {
 	string out;
 
-	int val=0, valb=-6;
-	for (unsigned char c : in) {
-		val = (val<<8) + c;
+	int val = 0, valb = -6;
+	for (unsigned char c : in)
+	{
+		val = (val << 8) + c;
 		valb += 8;
-		while (valb>=0) {
-			out.push_back("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(val>>valb)&0x3F]);
-			valb-=6;
+		while (valb >= 0)
+		{
+			out.push_back("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(val >> valb) & 0x3F]);
+			valb -= 6;
 		}
 	}
-	if (valb>-6) out.push_back("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[((val<<8)>>(valb+8))&0x3F]);
-	while (out.size()%4) out.push_back('=');
+	if (valb > -6)
+		out.push_back("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[((val << 8) >> (valb + 8)) & 0x3F]);
+	while (out.size() % 4)
+		out.push_back('=');
 	return out;
 }
 
@@ -1005,19 +1008,22 @@ string FastCGIAPI::base64_decode(const string &in)
 {
 	string out;
 
-	vector<int> T(256,-1);
-	for (int i=0; i<64; i++) T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i;
+	vector<int> T(256, -1);
+	for (int i = 0; i < 64; i++)
+		T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i;
 
-	int val=0, valb=-8;
-	for (unsigned char c : in) {
-		if (T[c] == -1) break;
-		val = (val<<6) + T[c];
+	int val = 0, valb = -8;
+	for (unsigned char c : in)
+	{
+		if (T[c] == -1)
+			break;
+		val = (val << 6) + T[c];
 		valb += 6;
-		if (valb>=0) {
-			out.push_back(char((val>>valb)&0xFF));
-			valb-=8;
+		if (valb >= 0)
+		{
+			out.push_back(char((val >> valb) & 0xFF));
+			valb -= 8;
 		}
 	}
 	return out;
 }
-
