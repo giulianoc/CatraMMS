@@ -549,8 +549,9 @@ void FastCGIAPI::sendSuccess(
 			", requestMethod: {}"
 			", headResponse.size: {}"
 			", responseBody.size: @{}@"
-			", compressedResponseBody.size: @{}@",
-			requestIdentifier, sThreadId, requestURI, requestMethod, headResponse.size(), responseBody.size(), contentLength
+			", compressedResponseBody.size: @{}@"
+			", headResponse: {}",
+			requestIdentifier, sThreadId, requestURI, requestMethod, headResponse.size(), responseBody.size(), contentLength, headResponse
 		);
 
 		FCGX_PutStr(compressedResponseBody.data(), compressedResponseBody.size(), request.out);

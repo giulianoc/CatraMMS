@@ -2247,11 +2247,11 @@ void API::streamList(
 
 	try
 	{
-		int64_t liveURLKey = -1;
-		auto liveURLKeyIt = queryParameters.find("liveURLKey");
-		if (liveURLKeyIt != queryParameters.end() && liveURLKeyIt->second != "")
+		int64_t confKey = -1;
+		auto confKeyIt = queryParameters.find("confKey");
+		if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
 		{
-			liveURLKey = stoll(liveURLKeyIt->second);
+			confKey = stoll(confKeyIt->second);
 			// 2020-01-31: it was sent 0, it should return no rows but, since we have the below check and
 			//	it is changed to -1, the return is all the rows. Because of that it was commented
 			// if (liveURLKey == 0)
@@ -2412,7 +2412,7 @@ void API::streamList(
 		{
 
 			json streamListRoot = _mmsEngineDBFacade->getStreamList(
-				workspace->_workspaceKey, liveURLKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
+				workspace->_workspaceKey, confKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
 			);
 
 			string responseBody = JSONUtils::toString(streamListRoot);

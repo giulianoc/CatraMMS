@@ -4,6 +4,7 @@
 
 	#defines the shared memory zone used for storing the cache keys and other metadata
 	proxy_cache api_cache;
+	fastcgi_cache_key $scheme://$host$uri$is_args$query_string;
 
 	location /catramms/latest {
 		rewrite .* /catramms/1.0.1/$request_uri redirect;
@@ -255,7 +256,7 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?version=$1&method=removeStream&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?version=$1&method=streamList&liveURLKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?version=$1&method=streamList&confKey=$2 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/freePushEncoderPort/?([0-9]*)/?$ /api?version=$1&method=streamFreePushEncoderPort&encoderKey=$2 last;
 		}
 
@@ -388,12 +389,9 @@
 		#the api fastcgi listen to 8010 port (see scripts/mmsApi.sh)
 		fastcgi_pass   127.0.0.1:8010;
 
-		#caching key
-		proxy_cache_key $scheme://$host$uri$is_args$query_string;
-
 		#If the request is sent with ?should_bypass_cache=true query param, then the cache would be bypassed.
 		#You can also use cookies or HTTP headers instead of query params
-		proxy_cache_bypass $arg_should_bypass_cache;
+		fastcgi_cache_bypass $arg_should_bypass_cache;
 
 		#specifies cache expiry, which can also be configured dynamically by sending cache headers from your backend service
 		#valid and inactive
@@ -404,13 +402,16 @@
 		#       If the first request comes at time T0 minutes and next request comes at T6 minutes. Even though the cache has not expired,
 		#               the data is deleted from the disk so it needs to be fetched from backend service again.
 		#Quindi inactive determina quando la cache viene eliminata, Cache non acceduta nel periodo specificato da inactive, viene eliminata
-		proxy_cache_valid 200 10m;
+		fastcgi_cache_valid 200 10m;
 
 		#When the backend service is down or takes too long to respond (proxy_connect_timeout default 60s), we can configure Nginx to serve stale responses instead
 		#error - use stale if backend can’t be reached
 		#timeout - use stale if backend takes too long to respond
 		#http_xxx - use stale if backend returns these status codes
-		proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504 http_429;
+		fastcgi_cache_use_stale error timeout http_500 http_503 http_429;
+
+		#add a “X-Cache” header to the response, indicating if the cache was missed or hit
+		add_header X-Cache $upstream_cache_status;
 
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
