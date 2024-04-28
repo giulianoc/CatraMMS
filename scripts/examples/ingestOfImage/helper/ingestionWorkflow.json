@@ -1,0 +1,33 @@
+
+{
+	"label": "ingestionContent ${title}",
+	"type": "Workflow",
+	"task":
+	{
+		"label": "ingestionContent ${title}",
+		"type": "Add-Content",
+		"parameters":
+		{
+			"allowUniqueNameOverride": false,
+			"fileFormat": "${fileFormat}",
+			"ingester": "${ingester}",
+			"retention": "${retention}",
+			"tags": [ "${tag}" ],
+			"title": "${title}"
+		},
+		"onSuccess":
+		{
+			"task":
+			{
+				"label": "Encode ${title}",
+				"type": "Encode",
+				"parameters":
+				{
+					"EncodingProfilesSetLabel": "${profileSet}",
+					"contentType": "image",
+					"encodingPriority": "Low"
+				}
+			}
+		}
+	}
+}

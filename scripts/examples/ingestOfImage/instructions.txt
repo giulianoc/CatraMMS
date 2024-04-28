@@ -1,0 +1,21 @@
+
+The ingestOfImage.sh script ingest an image file into the MMS.
+It implements two steps:
+1.  ingest the Workflow containing the Add-Content Task
+2.	ingest the binary image
+
+A prerequisite is the installation of jq
+	- i.e.: sudo apt-get -y install jq
+
+Usage: ./ingestOfImage.sh <mmsUserKey> <mmsAPIKey> <title> <ingester> <retention> <binaryFilePathName> [<continueFromIndex>]
+
+<mmsUserKey>: the mms key identifying the user
+<mmsAPIKey>: the mms key identifying the user and the workspace
+<title>: the title of the content
+<ingester>: the ingester of the content
+<retention>: the retention of the content (i.e.: 10d means 10 days, 3M means 3 months, 1y means 1 year)
+<binaryFilePathName>: pathname of the content to be ingested
+
+Examples:
+./ingestOfImage.sh 10 HNVsOoVhHx0WNIxFu-ThBA1vAPEKWsxneGgze6TodfCj8pNouN2apCURJyaGdNz VTS_01_4_4k pippo 10y ../VTS_01_4_4k.mkv
+

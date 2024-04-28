@@ -417,26 +417,26 @@ create-directory()
 		fi
 	fi
 
-	ln -s /mnt/logs /var/catramms/logs
+	ln -s /mnt/local-data/logs /var/catramms/logs
 
 	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
-		mkdir /mnt/logs/tomcat-gui
-		mkdir -p /mnt/logs/tomcatWorkDir/work
-		mkdir -p /mnt/logs/tomcatWorkDir/temp
+		mkdir /mnt/local-data/logs/tomcat-gui
+		mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
+		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
 	fi
 	if [ "$moduleType" == "api" ]; then
-		mkdir /mnt/logs/mmsAPI
+		mkdir /mnt/local-data/logs/mmsAPI
 	fi
 	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-		mkdir -p /mnt/logs/mmsEncoder
+		mkdir -p /mnt/local-data/logs/mmsEncoder
 	fi
 	if [ "$moduleType" == "engine" ]; then
-		mkdir /mnt/logs/mmsEngineService
+		mkdir /mnt/local-data/logs/mmsEngineService
 	fi
 	if [ "$moduleType" == "api" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "integration" ]; then
-		mkdir -p /mnt/logs/nginx
+		mkdir -p /mnt/local-data/logs/nginx
 	fi
-	chown -R mms:mms /mnt/logs
+	chown -R mms:mms /mnt/local-data/logs
 
 
 	if [ "$moduleType" != "integration" ]; then
@@ -494,6 +494,14 @@ create-directory()
 		then
 			mkdir /mnt/mmsStorage/commonConfiguration
 		fi
+	fi
+
+	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
+		if [ ! -d "/mnt/local-data/cache/nginx" ];
+		then
+			mkdir -p /mnt/local-data/cache/nginx
+		fi
+		ln -s /mnt/local-data/cache /var/catramms/cache
 	fi
 
 	if [ "$moduleType" == "externalEncoder" ]; then
@@ -1040,7 +1048,7 @@ read -n 1 -s -r -p "reboot of the server to apply the new network configuration.
 echo ""
 echo ""
 
-echo "se c'è un mount per /mnt/logs, /mnt/mmsStorage, /mnt/mmsRepository000?, /mnt/MMSTranscoderWorkingAreaRepository (for encoder) aggiungere in /etc/fstab"
+echo "se c'è un mount per /mnt/local-data/logs, /mnt/mmsStorage, /mnt/mmsRepository000?, /mnt/MMSTranscoderWorkingAreaRepository (for encoder) aggiungere in /etc/fstab"
 echo "e creare la directory"
 echo "10.0.0.12:/mnt/mmsStorage /mnt/mmsStorage       nfs     nolock,hard     0       1"
 echo "//u313562.your-storagebox.de/backup	/mnt/mmsRepository0000	cifs	username=u313562,password=vae3zh8wFVtooRiN,file_mode=0664,dir_mode=0775,uid=1000,gid=1000	0	0"
