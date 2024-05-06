@@ -181,17 +181,18 @@ void FFMpeg::encodeContent(
 		// In this case we will create:
 		//  - one m3u8 for each track (video and audio)
 		//  - one main m3u8 having a group for AUDIO
-		string mp4Suffix = ".mp4";
-		string tsSuffix = ".ts";
+		// string mp4Suffix = ".mp4";
+		// string tsSuffix = ".ts";
 		if (
 			// input is mp4
-			(
-			(mmsSourceAssetPathName.size() >= mp4Suffix.size()
-			&& 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-mp4Suffix.size(), mp4Suffix.size(), mp4Suffix))
+			( StringUtils::endWith(mmsSourceAssetPathName, ".mp4")
+			// (mmsSourceAssetPathName.size() >= mp4Suffix.size()
+			// && 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-mp4Suffix.size(), mp4Suffix.size(), mp4Suffix))
 			||
 			// input is ts
-			(mmsSourceAssetPathName.size() >= tsSuffix.size()
-			&& 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix))
+			StringUtils::endWith(mmsSourceAssetPathName, ".ts")
+			// (mmsSourceAssetPathName.size() >= tsSuffix.size()
+			// && 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix))
 			)
 
 			// output is hls

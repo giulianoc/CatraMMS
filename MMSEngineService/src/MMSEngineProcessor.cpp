@@ -16,6 +16,7 @@
 #include "catralibraries/Convert.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
+#include "catralibraries/StringUtils.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/System.h"
 #include <curlpp/Easy.hpp>
@@ -6556,11 +6557,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 					if (!entry.is_regular_file())
 						continue;
 
-					string m3u8Suffix(".m3u8");
-					if (entry.path().filename().string().size() >= m3u8Suffix.size() &&
-						0 == entry.path().filename().string().compare(
-								 entry.path().filename().string().size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix
-							 ))
+					// string m3u8Suffix(".m3u8");
+					// if (entry.path().filename().string().size() >= m3u8Suffix.size() &&
+					// 	0 == entry.path().filename().string().compare(
+						// 		 entry.path().filename().string().size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix
+							//  ))
+					if (StringUtils::endWith(entry.path().filename().string(), ".m3u8"))
 					{
 						m3u8FileName = entry.path().filename().string();
 
@@ -11522,10 +11524,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 		{
 			liveURL = pullUrl;
 
-			string youTubePrefix1("https://www.youtube.com/");
-			string youTubePrefix2("https://youtu.be/");
-			if ((liveURL.size() >= youTubePrefix1.size() && 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
-				(liveURL.size() >= youTubePrefix2.size() && 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
+			// string youTubePrefix1("https://www.youtube.com/");
+			// string youTubePrefix2("https://youtu.be/");
+			// if ((liveURL.size() >= youTubePrefix1.size() && 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
+			// 	(liveURL.size() >= youTubePrefix2.size() && 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
+			if (StringUtils::startWith(liveURL, "https://www.youtube.com/")
+			|| StringUtils::startWith(liveURL, "https://youtu.be/")
+				)
 			{
 				liveURL = _mmsEngineDBFacade->getStreamingYouTubeLiveURL(workspace, ingestionJobKey, confKey, liveURL);
 			}
@@ -13098,10 +13103,13 @@ void MMSEngineProcessor::manageLiveGrid(
 
 				// bisognerebbe verificare streamSourceType
 
-				string youTubePrefix1("https://www.youtube.com/");
-				string youTubePrefix2("https://youtu.be/");
-				if ((liveURL.size() >= youTubePrefix1.size() && 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
-					(liveURL.size() >= youTubePrefix2.size() && 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
+				// string youTubePrefix1("https://www.youtube.com/");
+				// string youTubePrefix2("https://youtu.be/");
+				// if ((liveURL.size() >= youTubePrefix1.size() && 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
+				// 	(liveURL.size() >= youTubePrefix2.size() && 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
+			if (StringUtils::startWith(liveURL, "https://www.youtube.com/")
+			|| StringUtils::startWith(liveURL, "https://youtu.be/")
+				)
 				{
 					liveURL = _mmsEngineDBFacade->getStreamingYouTubeLiveURL(workspace, ingestionJobKey, confKey, liveURL);
 				}
@@ -16552,8 +16560,9 @@ void MMSEngineProcessor::copyContent(int64_t ingestionJobKey, string mmsAssetPat
 				}
 
 				string suffix = "." + fileFormat;
-				if (cleanedFileName.size() >= suffix.size() &&
-					0 == cleanedFileName.compare(cleanedFileName.size() - suffix.size(), suffix.size(), suffix))
+				//if (cleanedFileName.size() >= suffix.size() &&
+				//	0 == cleanedFileName.compare(cleanedFileName.size() - suffix.size(), suffix.size(), suffix))
+				if (StringUtils::endWith(cleanedFileName, suffix))
 					;
 				else
 					cleanedFileName += suffix;
@@ -22244,34 +22253,46 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool> MMS
 		field = "fileFormat";
 		mediaFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
-		string httpPrefix("http://");
-		string httpsPrefix("https://");
-		string ftpPrefix("ftp://");
-		string ftpsPrefix("ftps://");
-		string movePrefix("move://"); // move:///dir1/dir2/.../file
-		string mvPrefix("mv://");
-		string copyPrefix("copy://");
-		string cpPrefix("cp://");
-		string externalStoragePrefix("externalStorage://");
-		if ((mediaSourceURL.size() >= httpPrefix.size() && 0 == mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix)) ||
-			(mediaSourceURL.size() >= httpsPrefix.size() && 0 == mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix)) ||
-			(mediaSourceURL.size() >= ftpPrefix.size() && 0 == mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix)) ||
-			(mediaSourceURL.size() >= ftpsPrefix.size() && 0 == mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix)))
+		// string httpPrefix("http://");
+		// string httpsPrefix("https://");
+		// // string ftpPrefix("ftp://");
+		// string ftpsPrefix("ftps://");
+		// string movePrefix("move://"); // move:///dir1/dir2/.../file
+		// string mvPrefix("mv://");
+		// string copyPrefix("copy://");
+		// string cpPrefix("cp://");
+		// string externalStoragePrefix("externalStorage://");
+		// if ((mediaSourceURL.size() >= httpPrefix.size() && 0 == mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix)) ||
+		// 	(mediaSourceURL.size() >= httpsPrefix.size() && 0 == mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix)) ||
+		// 	(mediaSourceURL.size() >= ftpPrefix.size() && 0 == mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix)) ||
+		// 	(mediaSourceURL.size() >= ftpsPrefix.size() && 0 == mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix)))
+		if (StringUtils::startWith(mediaSourceURL, "http://")
+			|| StringUtils::startWith(mediaSourceURL, "https://")
+			|| StringUtils::startWith(mediaSourceURL, "ftp://")
+			|| StringUtils::startWith(mediaSourceURL, "ftps://")
+			)
 		{
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress;
 		}
-		else if ((mediaSourceURL.size() >= movePrefix.size() && 0 == mediaSourceURL.compare(0, movePrefix.size(), movePrefix)) ||
-				 (mediaSourceURL.size() >= mvPrefix.size() && 0 == mediaSourceURL.compare(0, mvPrefix.size(), mvPrefix)))
+		else if (StringUtils::startWith(mediaSourceURL, "move://")
+			|| StringUtils::startWith(mediaSourceURL, "mv://")
+			)
 		{
+		// else if ((mediaSourceURL.size() >= movePrefix.size() && 0 == mediaSourceURL.compare(0, movePrefix.size(), movePrefix)) ||
+			// 	 (mediaSourceURL.size() >= mvPrefix.size() && 0 == mediaSourceURL.compare(0, mvPrefix.size(), mvPrefix)))
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress;
 		}
-		else if ((mediaSourceURL.size() >= copyPrefix.size() && 0 == mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix)) ||
-				 (mediaSourceURL.size() >= cpPrefix.size() && 0 == mediaSourceURL.compare(0, cpPrefix.size(), cpPrefix)))
+		else if (StringUtils::startWith(mediaSourceURL, "copy://")
+			|| StringUtils::startWith(mediaSourceURL, "cp://")
+			)
+		// else if ((mediaSourceURL.size() >= copyPrefix.size() && 0 == mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix)) ||
+			// 	 (mediaSourceURL.size() >= cpPrefix.size() && 0 == mediaSourceURL.compare(0, cpPrefix.size(), cpPrefix)))
 		{
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress;
 		}
-		else if (mediaSourceURL.size() >= externalStoragePrefix.size() &&
-				 0 == mediaSourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix))
+		else if (StringUtils::startWith(mediaSourceURL, "externalStorage://"))
+		// else if (mediaSourceURL.size() >= externalStoragePrefix.size() &&
+			// 	 0 == mediaSourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix))
 		{
 			externalReadOnlyStorage = true;
 		}
@@ -22580,10 +22601,13 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	int localM3u8TarGzOrM3u8Streaming = m3u8TarGzOrM3u8Streaming;
 	// in case of youtube url, the real URL to be used has to be calcolated
 	{
-		string youTubePrefix1("https://www.youtube.com/");
-		string youTubePrefix2("https://youtu.be/");
-		if ((sourceReferenceURL.size() >= youTubePrefix1.size() && 0 == sourceReferenceURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
-			(sourceReferenceURL.size() >= youTubePrefix2.size() && 0 == sourceReferenceURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
+			if (StringUtils::startWith(sourceReferenceURL, "https://www.youtube.com/")
+			|| StringUtils::startWith(sourceReferenceURL, "https://youtu.be/")
+		)
+		// string youTubePrefix1("https://www.youtube.com/");
+		// string youTubePrefix2("https://youtu.be/");
+		// if ((sourceReferenceURL.size() >= youTubePrefix1.size() && 0 == sourceReferenceURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
+		// 	(sourceReferenceURL.size() >= youTubePrefix2.size() && 0 == sourceReferenceURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
 		{
 			try
 			{
@@ -22784,9 +22808,10 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					// 'password' contenga '@', questo deve essere encodato con
 					// %40
 					request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
-					string httpsPrefix("https");
-					if (localSourceReferenceURL.size() >= httpsPrefix.size() &&
-						0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(localSourceReferenceURL, "https"))
+					// string httpsPrefix("https");
+					// if (localSourceReferenceURL.size() >= httpsPrefix.size() &&
+					// 	0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
 					{
 						// disconnect if we can't validate server's cert
 						bool bSslVerifyPeer = false;
@@ -22869,9 +22894,10 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 					// Setting the URL to retrive.
 					request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
-					string httpsPrefix("https");
-					if (localSourceReferenceURL.size() >= httpsPrefix.size() &&
-						0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+					// string httpsPrefix("https");
+					// if (localSourceReferenceURL.size() >= httpsPrefix.size() &&
+					// 	0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(localSourceReferenceURL, "https"))
 					{
 						SPDLOG_INFO(string() + "Setting SslEngineDefault" + ", _processorIdentifier: " + to_string(_processorIdentifier));
 						request.setOpt(new curlpp::options::SslEngineDefault());
@@ -24422,8 +24448,11 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 
 		string movePrefix("move://");
 		string mvPrefix("mv://");
-		if (!(sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix)) &&
-			!(sourceReferenceURL.size() >= mvPrefix.size() && 0 == sourceReferenceURL.compare(0, mvPrefix.size(), mvPrefix)))
+		// if (!(sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix)) &&
+		// 	!(sourceReferenceURL.size() >= mvPrefix.size() && 0 == sourceReferenceURL.compare(0, mvPrefix.size(), mvPrefix)))
+			if (!StringUtils::startWith(sourceReferenceURL, movePrefix)
+			&& !StringUtils::startWith(sourceReferenceURL, mvPrefix)
+			)
 		{
 			string errorMessage = string("sourceReferenceURL is not a move reference") +
 								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -24434,7 +24463,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 			throw runtime_error(errorMessage);
 		}
 		string sourcePathName;
-		if (sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix))
+			if (StringUtils::startWith(sourceReferenceURL, movePrefix))
+		// if (sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix))
 			sourcePathName = sourceReferenceURL.substr(movePrefix.length());
 		else
 			sourcePathName = sourceReferenceURL.substr(mvPrefix.length());

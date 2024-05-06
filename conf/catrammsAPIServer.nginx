@@ -410,7 +410,7 @@
 		#error - use stale if backend can’t be reached
 		#timeout - use stale if backend takes too long to respond
 		#http_xxx - use stale if backend returns these status codes
-		fastcgi_cache_use_stale error timeout http_500 http_503 http_429;
+		fastcgi_cache_use_stale error timeout http_500 http_502 http_503 http_429;
 
 		#add a “X-Cache” header to the response, indicating if the cache was missed or hit
 		add_header X-Cache $upstream_cache_status;

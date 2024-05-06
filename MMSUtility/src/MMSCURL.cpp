@@ -15,6 +15,7 @@
 
 #include "JSONUtils.h"
 #include "catralibraries/Convert.h"
+#include "catralibraries/StringUtils.h"
 #include <regex>
 #include <sstream>
 
@@ -29,15 +30,12 @@
 // https://curl.se/libcurl/c/CURLOPT_POST.html
 
 json MMSCURL::httpGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, vector<string> otherHeaders,
-	int maxRetryNumber, int secondsToWaitBeforeToRetry
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string response = MMSCURL::httpGet(
-		logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser,
-		basicAuthenticationPassword, otherHeaders, maxRetryNumber,
+		logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, otherHeaders, maxRetryNumber,
 		secondsToWaitBeforeToRetry
 	);
 
@@ -47,38 +45,32 @@ json MMSCURL::httpGetJson(
 }
 
 pair<string, string> MMSCURL::httpPostString(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
 	string basicAuthenticationPassword, string body,
 	string contentType, // i.e.: application/json
-	vector<string> otherHeaders, int maxRetryNumber,
-	int secondsToWaitBeforeToRetry
+	vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string requestType = "POST";
 
 	return MMSCURL::httpPostPutString(
-		logger, ingestionJobKey, url, requestType, timeoutInSeconds,
-		basicAuthenticationUser, basicAuthenticationPassword, body,
+		logger, ingestionJobKey, url, requestType, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, body,
 		contentType, // i.e.: application/json
 		otherHeaders, maxRetryNumber, secondsToWaitBeforeToRetry
 	);
 }
 
 string MMSCURL::httpPutString(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
 	string basicAuthenticationPassword, string body,
 	string contentType, // i.e.: application/json
-	vector<string> otherHeaders, int maxRetryNumber,
-	int secondsToWaitBeforeToRetry
+	vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string requestType = "PUT";
 
 	pair<string, string> responseDetails = MMSCURL::httpPostPutString(
-		logger, ingestionJobKey, url, requestType, timeoutInSeconds,
-		basicAuthenticationUser, basicAuthenticationPassword, body,
+		logger, ingestionJobKey, url, requestType, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, body,
 		contentType, // i.e.: application/json
 		otherHeaders, maxRetryNumber, secondsToWaitBeforeToRetry
 	);
@@ -87,19 +79,15 @@ string MMSCURL::httpPutString(
 }
 
 json MMSCURL::httpPostStringAndGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
 	string basicAuthenticationPassword, string body,
 	string contentType, // i.e.: application/json
-	vector<string> otherHeaders, int maxRetryNumber,
-	int secondsToWaitBeforeToRetry
+	vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string response = MMSCURL::httpPostString(
-						  logger, ingestionJobKey, url, timeoutInSeconds,
-						  basicAuthenticationUser, basicAuthenticationPassword,
-						  body, contentType, otherHeaders, maxRetryNumber,
-						  secondsToWaitBeforeToRetry
+						  logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, body, contentType,
+						  otherHeaders, maxRetryNumber, secondsToWaitBeforeToRetry
 	)
 						  .second;
 
@@ -109,17 +97,14 @@ json MMSCURL::httpPostStringAndGetJson(
 }
 
 json MMSCURL::httpPutStringAndGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
 	string basicAuthenticationPassword, string body,
 	string contentType, // i.e.: application/json
-	vector<string> otherHeaders, int maxRetryNumber,
-	int secondsToWaitBeforeToRetry
+	vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string response = MMSCURL::httpPutString(
-		logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser,
-		basicAuthenticationPassword, body, contentType, otherHeaders,
+		logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, body, contentType, otherHeaders,
 		maxRetryNumber, secondsToWaitBeforeToRetry
 	);
 
@@ -129,54 +114,42 @@ json MMSCURL::httpPutStringAndGetJson(
 }
 
 string MMSCURL::httpPostFile(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, string pathFileName, int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string requestType = "POST";
 
 	return MMSCURL::httpPostPutFile(
-		logger, ingestionJobKey, url, requestType, timeoutInSeconds,
-		basicAuthenticationUser, basicAuthenticationPassword, pathFileName,
-		fileSizeInBytes, maxRetryNumber, secondsToWaitBeforeToRetry,
-		contentRangeStart, contentRangeEnd_Excluded
+		logger, ingestionJobKey, url, requestType, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName,
+		fileSizeInBytes, maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 }
 
 string MMSCURL::httpPutFile(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, string pathFileName, int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string requestType = "PUT";
 
 	return MMSCURL::httpPostPutFile(
-		logger, ingestionJobKey, url, requestType, timeoutInSeconds,
-		basicAuthenticationUser, basicAuthenticationPassword, pathFileName,
-		fileSizeInBytes, maxRetryNumber, secondsToWaitBeforeToRetry,
-		contentRangeStart, contentRangeEnd_Excluded
+		logger, ingestionJobKey, url, requestType, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName,
+		fileSizeInBytes, maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 }
 
 json MMSCURL::httpPostFileAndGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, string pathFileName, int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string response = MMSCURL::httpPostFile(
-		logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser,
-		basicAuthenticationPassword, pathFileName, fileSizeInBytes,
-		maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart,
-		contentRangeEnd_Excluded
+		logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes,
+		maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 
 	json jsonRoot = JSONUtils::toJson(response);
@@ -185,18 +158,14 @@ json MMSCURL::httpPostFileAndGetJson(
 }
 
 json MMSCURL::httpPutFileAndGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, string pathFileName, int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string response = MMSCURL::httpPutFile(
-		logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser,
-		basicAuthenticationPassword, pathFileName, fileSizeInBytes,
-		maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart,
-		contentRangeEnd_Excluded
+		logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes,
+		maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 
 	json jsonRoot = JSONUtils::toJson(response);
@@ -205,19 +174,16 @@ json MMSCURL::httpPutFileAndGetJson(
 }
 
 string MMSCURL::httpPostFileSplittingInChunks(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, string pathFileName, int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	int64_t chunkSize = 100 * 1000 * 1000;
 
 	if (fileSizeInBytes <= chunkSize)
 		return httpPostFile(
-			logger, ingestionJobKey, url, timeoutInSeconds,
-			basicAuthenticationUser, basicAuthenticationPassword, pathFileName,
-			fileSizeInBytes, maxRetryNumber, secondsToWaitBeforeToRetry
+			logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes,
+			maxRetryNumber, secondsToWaitBeforeToRetry
 		);
 
 	int chunksNumber = fileSizeInBytes / chunkSize;
@@ -228,9 +194,7 @@ string MMSCURL::httpPostFileSplittingInChunks(
 	for (int chunkIndex = 0; chunkIndex < chunksNumber; chunkIndex++)
 	{
 		int64_t contentRangeStart = chunkIndex * chunkSize;
-		int64_t contentRangeEnd_Excluded = chunkIndex + 1 < chunksNumber
-											   ? (chunkIndex + 1) * chunkSize
-											   : fileSizeInBytes;
+		int64_t contentRangeEnd_Excluded = chunkIndex + 1 < chunksNumber ? (chunkIndex + 1) * chunkSize : fileSizeInBytes;
 
 		/*
 		Commentato perchè ho fissato il problema. Prima impiegava troppo tempo
@@ -267,11 +231,8 @@ string MMSCURL::httpPostFileSplittingInChunks(
 		*/
 		{
 			lastHttpReturn = httpPostFile(
-				logger, ingestionJobKey, url, timeoutInSeconds,
-				basicAuthenticationUser, basicAuthenticationPassword,
-				pathFileName, fileSizeInBytes, maxRetryNumber,
-				secondsToWaitBeforeToRetry, contentRangeStart,
-				contentRangeEnd_Excluded
+				logger, ingestionJobKey, url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes,
+				maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 			);
 		}
 	}
@@ -280,43 +241,35 @@ string MMSCURL::httpPostFileSplittingInChunks(
 }
 
 string MMSCURL::httpPostFormData(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData, long timeoutInSeconds,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData, long timeoutInSeconds,
 	int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string requestType = "POST";
 
 	return MMSCURL::httpPostPutFormData(
-		logger, ingestionJobKey, url, formData, requestType, timeoutInSeconds,
-		maxRetryNumber, secondsToWaitBeforeToRetry
+		logger, ingestionJobKey, url, formData, requestType, timeoutInSeconds, maxRetryNumber, secondsToWaitBeforeToRetry
 	);
 }
 
 string MMSCURL::httpPutFormData(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData, long timeoutInSeconds,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData, long timeoutInSeconds,
 	int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string requestType = "PUT";
 
 	return MMSCURL::httpPostPutFormData(
-		logger, ingestionJobKey, url, formData, requestType, timeoutInSeconds,
-		maxRetryNumber, secondsToWaitBeforeToRetry
+		logger, ingestionJobKey, url, formData, requestType, timeoutInSeconds, maxRetryNumber, secondsToWaitBeforeToRetry
 	);
 }
 
 json MMSCURL::httpPostFormDataAndGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData, long timeoutInSeconds,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData, long timeoutInSeconds,
 	int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
-	string response = MMSCURL::httpPostFormData(
-		logger, ingestionJobKey, url, formData, timeoutInSeconds,
-		maxRetryNumber, secondsToWaitBeforeToRetry
-	);
+	string response = MMSCURL::httpPostFormData(logger, ingestionJobKey, url, formData, timeoutInSeconds, maxRetryNumber, secondsToWaitBeforeToRetry);
 
 	json jsonRoot = JSONUtils::toJson(response);
 
@@ -324,15 +277,11 @@ json MMSCURL::httpPostFormDataAndGetJson(
 }
 
 json MMSCURL::httpPutFormDataAndGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData, long timeoutInSeconds,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData, long timeoutInSeconds,
 	int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
-	string response = MMSCURL::httpPutFormData(
-		logger, ingestionJobKey, url, formData, timeoutInSeconds,
-		maxRetryNumber, secondsToWaitBeforeToRetry
-	);
+	string response = MMSCURL::httpPutFormData(logger, ingestionJobKey, url, formData, timeoutInSeconds, maxRetryNumber, secondsToWaitBeforeToRetry);
 
 	json jsonRoot = JSONUtils::toJson(response);
 
@@ -340,50 +289,41 @@ json MMSCURL::httpPutFormDataAndGetJson(
 }
 
 string MMSCURL::httpPostFileByFormData(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData, long timeoutInSeconds,
-	string pathFileName, int64_t fileSizeInBytes, string mediaContentType,
-	int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData, long timeoutInSeconds,
+	string pathFileName, int64_t fileSizeInBytes, string mediaContentType, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string requestType = "POST";
 
 	return MMSCURL::httpPostPutFileByFormData(
-		logger, ingestionJobKey, url, formData, requestType, timeoutInSeconds,
-		pathFileName, fileSizeInBytes, mediaContentType, maxRetryNumber,
+		logger, ingestionJobKey, url, formData, requestType, timeoutInSeconds, pathFileName, fileSizeInBytes, mediaContentType, maxRetryNumber,
 		secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 }
 
 string MMSCURL::httpPutFileByFormData(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData, long timeoutInSeconds,
-	string pathFileName, int64_t fileSizeInBytes, string mediaContentType,
-	int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData, long timeoutInSeconds,
+	string pathFileName, int64_t fileSizeInBytes, string mediaContentType, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string requestType = "PUT";
 
 	return MMSCURL::httpPostPutFileByFormData(
-		logger, ingestionJobKey, url, formData, requestType, timeoutInSeconds,
-		pathFileName, fileSizeInBytes, mediaContentType, maxRetryNumber,
+		logger, ingestionJobKey, url, formData, requestType, timeoutInSeconds, pathFileName, fileSizeInBytes, mediaContentType, maxRetryNumber,
 		secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 }
 
 json MMSCURL::httpPostFileByFormDataAndGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData, long timeoutInSeconds,
-	string pathFileName, int64_t fileSizeInBytes, string mediaContentType,
-	int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData, long timeoutInSeconds,
+	string pathFileName, int64_t fileSizeInBytes, string mediaContentType, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string response = MMSCURL::httpPostFileByFormData(
-		logger, ingestionJobKey, url, formData, timeoutInSeconds, pathFileName,
-		fileSizeInBytes, mediaContentType, maxRetryNumber,
+		logger, ingestionJobKey, url, formData, timeoutInSeconds, pathFileName, fileSizeInBytes, mediaContentType, maxRetryNumber,
 		secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 
@@ -393,16 +333,13 @@ json MMSCURL::httpPostFileByFormDataAndGetJson(
 }
 
 json MMSCURL::httpPutFileByFormDataAndGetJson(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData, long timeoutInSeconds,
-	string pathFileName, int64_t fileSizeInBytes, string mediaContentType,
-	int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData, long timeoutInSeconds,
+	string pathFileName, int64_t fileSizeInBytes, string mediaContentType, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string response = MMSCURL::httpPutFileByFormData(
-		logger, ingestionJobKey, url, formData, timeoutInSeconds, pathFileName,
-		fileSizeInBytes, mediaContentType, maxRetryNumber,
+		logger, ingestionJobKey, url, formData, timeoutInSeconds, pathFileName, fileSizeInBytes, mediaContentType, maxRetryNumber,
 		secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 
@@ -413,24 +350,17 @@ json MMSCURL::httpPutFileByFormDataAndGetJson(
 
 size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 {
-	MMSCURL::CurlDownloadData *curlDownloadData =
-		(MMSCURL::CurlDownloadData *)f;
+	MMSCURL::CurlDownloadData *curlDownloadData = (MMSCURL::CurlDownloadData *)f;
 
 	auto logger = spdlog::get(curlDownloadData->loggerName);
 
 	if (curlDownloadData->currentChunkNumber == 0)
 	{
-		(curlDownloadData->mediaSourceFileStream)
-			.open(
-				curlDownloadData->destBinaryPathName,
-				ofstream::binary | ofstream::trunc
-			);
+		(curlDownloadData->mediaSourceFileStream).open(curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::trunc);
 		if (!curlDownloadData->mediaSourceFileStream)
 		{
-			string message =
-				__FILEREF__ + "open file failed" + ", ingestionJobKey: " +
-				to_string(curlDownloadData->ingestionJobKey) +
-				", destBinaryPathName: " + curlDownloadData->destBinaryPathName;
+			string message = __FILEREF__ + "open file failed" + ", ingestionJobKey: " + to_string(curlDownloadData->ingestionJobKey) +
+							 ", destBinaryPathName: " + curlDownloadData->destBinaryPathName;
 			logger->error(message);
 
 			// throw runtime_error(message);
@@ -438,37 +368,23 @@ size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		curlDownloadData->currentChunkNumber += 1;
 
 		logger->info(
-			__FILEREF__ + "Opening binary file" +
-			", curlDownloadData -> destBinaryPathName: " +
-			curlDownloadData->destBinaryPathName +
-			", curlDownloadData->currentChunkNumber: " +
-			to_string(curlDownloadData->currentChunkNumber) +
-			", curlDownloadData->currentTotalSize: " +
-			to_string(curlDownloadData->currentTotalSize) +
-			", curlDownloadData->maxChunkFileSize: " +
-			to_string(curlDownloadData->maxChunkFileSize)
+			__FILEREF__ + "Opening binary file" + ", curlDownloadData -> destBinaryPathName: " + curlDownloadData->destBinaryPathName +
+			", curlDownloadData->currentChunkNumber: " + to_string(curlDownloadData->currentChunkNumber) + ", curlDownloadData->currentTotalSize: " +
+			to_string(curlDownloadData->currentTotalSize) + ", curlDownloadData->maxChunkFileSize: " + to_string(curlDownloadData->maxChunkFileSize)
 		);
 	}
-	else if (curlDownloadData->currentTotalSize >=
-			 curlDownloadData->currentChunkNumber *
-				 curlDownloadData->maxChunkFileSize)
+	else if (curlDownloadData->currentTotalSize >= curlDownloadData->currentChunkNumber * curlDownloadData->maxChunkFileSize)
 	{
 		if (curlDownloadData->mediaSourceFileStream)
 			(curlDownloadData->mediaSourceFileStream).close();
 
 		// (curlDownloadData->mediaSourceFileStream).open(localPathFileName,
 		// ios::binary | ios::out | ios::trunc);
-		(curlDownloadData->mediaSourceFileStream)
-			.open(
-				curlDownloadData->destBinaryPathName,
-				ofstream::binary | ofstream::app
-			);
+		(curlDownloadData->mediaSourceFileStream).open(curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::app);
 		if (!curlDownloadData->mediaSourceFileStream)
 		{
-			string message =
-				__FILEREF__ + "open file failed" + ", ingestionJobKey: " +
-				to_string(curlDownloadData->ingestionJobKey) +
-				", destBinaryPathName: " + curlDownloadData->destBinaryPathName;
+			string message = __FILEREF__ + "open file failed" + ", ingestionJobKey: " + to_string(curlDownloadData->ingestionJobKey) +
+							 ", destBinaryPathName: " + curlDownloadData->destBinaryPathName;
 			logger->error(message);
 
 			// throw runtime_error(message);
@@ -476,15 +392,9 @@ size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		curlDownloadData->currentChunkNumber += 1;
 
 		logger->info(
-			__FILEREF__ + "Opening binary file" +
-			", curlDownloadData->destBinaryPathName: " +
-			curlDownloadData->destBinaryPathName +
-			", curlDownloadData->currentChunkNumber: " +
-			to_string(curlDownloadData->currentChunkNumber) +
-			", curlDownloadData->currentTotalSize: " +
-			to_string(curlDownloadData->currentTotalSize) +
-			", curlDownloadData->maxChunkFileSize: " +
-			to_string(curlDownloadData->maxChunkFileSize)
+			__FILEREF__ + "Opening binary file" + ", curlDownloadData->destBinaryPathName: " + curlDownloadData->destBinaryPathName +
+			", curlDownloadData->currentChunkNumber: " + to_string(curlDownloadData->currentChunkNumber) + ", curlDownloadData->currentTotalSize: " +
+			to_string(curlDownloadData->currentTotalSize) + ", curlDownloadData->maxChunkFileSize: " + to_string(curlDownloadData->maxChunkFileSize)
 		);
 	}
 
@@ -513,13 +423,10 @@ size_t curlUploadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 	);
 	*/
 
-	if (currentFilePosition + (size * nmemb) <=
-		curlUploadData->upToByte_Excluded)
+	if (currentFilePosition + (size * nmemb) <= curlUploadData->upToByte_Excluded)
 		curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
 	else
-		curlUploadData->mediaSourceFileStream.read(
-			ptr, curlUploadData->upToByte_Excluded - currentFilePosition
-		);
+		curlUploadData->mediaSourceFileStream.read(ptr, curlUploadData->upToByte_Excluded - currentFilePosition);
 
 	int64_t charsRead = curlUploadData->mediaSourceFileStream.gcount();
 
@@ -532,18 +439,15 @@ size_t curlUploadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 
 size_t curlUploadFormDataCallback(char *ptr, size_t size, size_t nmemb, void *f)
 {
-	MMSCURL::CurlUploadFormData *curlUploadFormData =
-		(MMSCURL::CurlUploadFormData *)f;
+	MMSCURL::CurlUploadFormData *curlUploadFormData = (MMSCURL::CurlUploadFormData *)f;
 
 	auto logger = spdlog::get(curlUploadFormData->loggerName);
 
-	int64_t currentFilePosition =
-		curlUploadFormData->mediaSourceFileStream.tellg();
+	int64_t currentFilePosition = curlUploadFormData->mediaSourceFileStream.tellg();
 
 	// Docs: Returning 0 will signal end-of-file to the library and cause it to
 	// stop the current transfer
-	if (curlUploadFormData->endOfFormDataSent &&
-		currentFilePosition == curlUploadFormData->upToByte_Excluded)
+	if (curlUploadFormData->endOfFormDataSent && currentFilePosition == curlUploadFormData->upToByte_Excluded)
 		return 0;
 
 	if (!curlUploadFormData->formDataSent)
@@ -551,19 +455,11 @@ size_t curlUploadFormDataCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		if (curlUploadFormData->formData.size() > size * nmemb)
 		{
 			logger->error(
-				__FILEREF__ + "Not enougth memory!!!" +
-				", curlUploadFormData->formDataSent: " +
-				to_string(curlUploadFormData->formDataSent) +
-				", curlUploadFormData->formData: " +
-				curlUploadFormData->formData +
-				", curlUploadFormData->endOfFormDataSent: " +
-				to_string(curlUploadFormData->endOfFormDataSent) +
-				", curlUploadFormData->endOfFormData: " +
-				curlUploadFormData->endOfFormData +
-				", curlUploadFormData->upToByte_Excluded: " +
-				to_string(curlUploadFormData->upToByte_Excluded) +
-				", curlUploadFormData->formData.size(): " +
-				to_string(curlUploadFormData->formData.size()) +
+				__FILEREF__ + "Not enougth memory!!!" + ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent) +
+				", curlUploadFormData->formData: " + curlUploadFormData->formData + ", curlUploadFormData->endOfFormDataSent: " +
+				to_string(curlUploadFormData->endOfFormDataSent) + ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData +
+				", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded) +
+				", curlUploadFormData->formData.size(): " + to_string(curlUploadFormData->formData.size()) +
 				", size * nmemb: " + to_string(size * nmemb)
 			);
 
@@ -594,19 +490,11 @@ size_t curlUploadFormDataCallback(char *ptr, size_t size, size_t nmemb, void *f)
 			if (curlUploadFormData->endOfFormData.size() > size * nmemb)
 			{
 				logger->error(
-					__FILEREF__ + "Not enougth memory!!!" +
-					", curlUploadFormData->formDataSent: " +
-					to_string(curlUploadFormData->formDataSent) +
-					", curlUploadFormData->formData: " +
-					curlUploadFormData->formData +
-					", curlUploadFormData->endOfFormDataSent: " +
-					to_string(curlUploadFormData->endOfFormDataSent) +
-					", curlUploadFormData->endOfFormData: " +
-					curlUploadFormData->endOfFormData +
-					", curlUploadFormData->upToByte_Excluded: " +
-					to_string(curlUploadFormData->upToByte_Excluded) +
-					", curlUploadFormData->endOfFormData.size(): " +
-					to_string(curlUploadFormData->endOfFormData.size()) +
+					__FILEREF__ + "Not enougth memory!!!" + ", curlUploadFormData->formDataSent: " + to_string(curlUploadFormData->formDataSent) +
+					", curlUploadFormData->formData: " + curlUploadFormData->formData + ", curlUploadFormData->endOfFormDataSent: " +
+					to_string(curlUploadFormData->endOfFormDataSent) + ", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData +
+					", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded) +
+					", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size()) +
 					", size * nmemb: " + to_string(size * nmemb)
 				);
 
@@ -633,32 +521,22 @@ size_t curlUploadFormDataCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		else
 		{
 			logger->error(
-				__FILEREF__ + "This scenario should never happen" +
-				", curlUploadFormData->formDataSent: " +
-				to_string(curlUploadFormData->formDataSent) +
-				", curlUploadFormData->formData: " +
-				curlUploadFormData->formData +
-				", curlUploadFormData->endOfFormDataSent: " +
-				to_string(curlUploadFormData->endOfFormDataSent) +
-				", curlUploadFormData->endOfFormData: " +
-				curlUploadFormData->endOfFormData +
-				", curlUploadFormData->upToByte_Excluded: " +
-				to_string(curlUploadFormData->upToByte_Excluded) +
-				", curlUploadFormData->endOfFormData.size(): " +
-				to_string(curlUploadFormData->endOfFormData.size())
+				__FILEREF__ + "This scenario should never happen" + ", curlUploadFormData->formDataSent: " +
+				to_string(curlUploadFormData->formDataSent) + ", curlUploadFormData->formData: " + curlUploadFormData->formData +
+				", curlUploadFormData->endOfFormDataSent: " + to_string(curlUploadFormData->endOfFormDataSent) +
+				", curlUploadFormData->endOfFormData: " + curlUploadFormData->endOfFormData +
+				", curlUploadFormData->upToByte_Excluded: " + to_string(curlUploadFormData->upToByte_Excluded) +
+				", curlUploadFormData->endOfFormData.size(): " + to_string(curlUploadFormData->endOfFormData.size())
 			);
 
 			return CURL_READFUNC_ABORT;
 		}
 	}
 
-	if (currentFilePosition + (size * nmemb) <=
-		curlUploadFormData->upToByte_Excluded)
+	if (currentFilePosition + (size * nmemb) <= curlUploadFormData->upToByte_Excluded)
 		curlUploadFormData->mediaSourceFileStream.read(ptr, size * nmemb);
 	else
-		curlUploadFormData->mediaSourceFileStream.read(
-			ptr, curlUploadFormData->upToByte_Excluded - currentFilePosition
-		);
+		curlUploadFormData->mediaSourceFileStream.read(ptr, curlUploadFormData->upToByte_Excluded - currentFilePosition);
 
 	int64_t charsRead = curlUploadFormData->mediaSourceFileStream.gcount();
 
@@ -677,10 +555,8 @@ size_t curlUploadFormDataCallback(char *ptr, size_t size, size_t nmemb, void *f)
 };
 
 string MMSCURL::httpGet(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, vector<string> otherHeaders,
-	int maxRetryNumber, int secondsToWaitBeforeToRetry
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string sResponse;
@@ -698,20 +574,14 @@ string MMSCURL::httpGet(
 			curlpp::Easy request;
 
 			list<string> headers;
-			if (basicAuthenticationUser != "" &&
-				basicAuthenticationPassword != "")
+			if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
 			{
-				string userPasswordEncoded = Convert::base64_encode(
-					basicAuthenticationUser + ":" + basicAuthenticationPassword
-				);
-				string basicAuthorization =
-					string("Authorization: Basic ") + userPasswordEncoded;
+				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
 				headers.push_back(basicAuthorization);
 			}
-			headers.insert(
-				headers.end(), otherHeaders.begin(), otherHeaders.end()
-			);
+			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
 
 			request.setOpt(new curlpp::options::Url(url));
 
@@ -719,9 +589,10 @@ string MMSCURL::httpGet(
 			// (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
 
-			string httpsPrefix("https");
-			if (url.size() >= httpsPrefix.size() &&
-				0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() &&
+			// 	0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(url, "https"))
 			{
 				/*
 				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD>
@@ -781,14 +652,10 @@ string MMSCURL::httpGet(
 
 				// disconnect if we can't validate server's cert
 				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(
-					bSslVerifyPeer
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
 				request.setOpt(sslVerifyPeer);
 
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(
-					0L
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
 				request.setOpt(sslVerifyHost);
 
 				// request.setOpt(new curlpp::options::SslEngineDefault());
@@ -798,10 +665,7 @@ string MMSCURL::httpGet(
 
 			request.setOpt(new curlpp::options::WriteStream(&response));
 
-			logger->info(
-				__FILEREF__ + "HTTP GET" + ", ingestionJobKey: " +
-				to_string(ingestionJobKey) + ", url: " + url
-			);
+			logger->info(__FILEREF__ + "HTTP GET" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url);
 
 			// store response headers in the response
 			// You simply have to set next option to prefix the header to the
@@ -809,44 +673,28 @@ string MMSCURL::httpGet(
 			// curlpp::options::Header(true));
 
 			responseInitialized = true;
-			chrono::system_clock::time_point start =
-				chrono::system_clock::now();
+			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
 			sResponse = response.str();
 			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 &&
-				   (sResponse.back() == 10 || sResponse.back() == 13))
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 				sResponse.pop_back();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 			if (responseCode == 200)
 			{
-				string message =
-					__FILEREF__ + "httpGet" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sResponse: " +
-					regex_replace(sResponse, regex("\n"), " ");
+				string message = __FILEREF__ + "httpGet" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@" + ", sResponse: " + regex_replace(sResponse, regex("\n"), " ");
 				logger->info(message);
 			}
 			else
 			{
-				string message =
-					__FILEREF__ + "httpGet failed, wrong return status" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sResponse: " + sResponse +
-					", responseCode: " + to_string(responseCode);
+				string message = __FILEREF__ + "httpGet failed, wrong return status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@" + ", sResponse: " + sResponse + ", responseCode: " + to_string(responseCode);
 				logger->error(message);
 
 				throw runtime_error(message);
@@ -858,25 +706,18 @@ string MMSCURL::httpGet(
 		catch (curlpp::LogicError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpGet failed (LogicError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpGet failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
@@ -884,55 +725,39 @@ string MMSCURL::httpGet(
 		catch (curlpp::RuntimeError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpGet failed (RuntimeError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpGet failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
 		}
 		catch (runtime_error e)
 		{
-			if (responseInitialized &&
-				response.str().find("502 Bad Gateway") != string::npos)
+			if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
 			{
 				logger->error(
-					__FILEREF__ + "Server is not reachable, is it down?" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", url: " + url + ", exception: " + e.what() +
-					", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "Server is not reachable, is it down?" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+					", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw ServerNotReachable();
@@ -940,26 +765,18 @@ string MMSCURL::httpGet(
 			else
 			{
 				logger->error(
-					__FILEREF__ + "httpGet failed (exception)" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", url: " + url + ", exception: " + e.what() +
-					", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "httpGet failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+					", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw e;
@@ -968,25 +785,18 @@ string MMSCURL::httpGet(
 		catch (exception e)
 		{
 			logger->error(
-				__FILEREF__ + "httpGet failed (exception)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpGet failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -997,10 +807,8 @@ string MMSCURL::httpGet(
 }
 
 string MMSCURL::httpDelete(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, vector<string> otherHeaders,
-	int maxRetryNumber, int secondsToWaitBeforeToRetry
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string sResponse;
@@ -1018,20 +826,14 @@ string MMSCURL::httpDelete(
 			curlpp::Easy request;
 
 			list<string> headers;
-			if (basicAuthenticationUser != "" &&
-				basicAuthenticationPassword != "")
+			if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
 			{
-				string userPasswordEncoded = Convert::base64_encode(
-					basicAuthenticationUser + ":" + basicAuthenticationPassword
-				);
-				string basicAuthorization =
-					string("Authorization: Basic ") + userPasswordEncoded;
+				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
 				headers.push_back(basicAuthorization);
 			}
-			headers.insert(
-				headers.end(), otherHeaders.begin(), otherHeaders.end()
-			);
+			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
 
 			request.setOpt(new curlpp::options::Url(url));
 			request.setOpt(new curlpp::options::CustomRequest("DELETE"));
@@ -1040,9 +842,9 @@ string MMSCURL::httpDelete(
 			// (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
 
-			string httpsPrefix("https");
-			if (url.size() >= httpsPrefix.size() &&
-				0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(url, "https"))
 			{
 				/*
 				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD>
@@ -1102,14 +904,10 @@ string MMSCURL::httpDelete(
 
 				// disconnect if we can't validate server's cert
 				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(
-					bSslVerifyPeer
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
 				request.setOpt(sslVerifyPeer);
 
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(
-					0L
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
 				request.setOpt(sslVerifyHost);
 
 				// request.setOpt(new curlpp::options::SslEngineDefault());
@@ -1119,10 +917,7 @@ string MMSCURL::httpDelete(
 
 			request.setOpt(new curlpp::options::WriteStream(&response));
 
-			logger->info(
-				__FILEREF__ + "HTTP GET" + ", ingestionJobKey: " +
-				to_string(ingestionJobKey) + ", url: " + url
-			);
+			logger->info(__FILEREF__ + "HTTP GET" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url);
 
 			// store response headers in the response
 			// You simply have to set next option to prefix the header to the
@@ -1130,43 +925,28 @@ string MMSCURL::httpDelete(
 			// curlpp::options::Header(true));
 
 			responseInitialized = true;
-			chrono::system_clock::time_point start =
-				chrono::system_clock::now();
+			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
 			sResponse = response.str();
 			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 &&
-				   (sResponse.back() == 10 || sResponse.back() == 13))
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 				sResponse.pop_back();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 			if (responseCode == 200)
 			{
-				string message =
-					__FILEREF__ + "httpDelete" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sResponse: " + sResponse;
+				string message = __FILEREF__ + "httpDelete" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@" + ", sResponse: " + sResponse;
 				logger->info(message);
 			}
 			else
 			{
-				string message =
-					__FILEREF__ + "httpDelete failed, wrong return status" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sResponse: " + sResponse +
-					", responseCode: " + to_string(responseCode);
+				string message = __FILEREF__ + "httpDelete failed, wrong return status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@" + ", sResponse: " + sResponse + ", responseCode: " + to_string(responseCode);
 				logger->error(message);
 
 				throw runtime_error(message);
@@ -1178,25 +958,18 @@ string MMSCURL::httpDelete(
 		catch (curlpp::LogicError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpDelete failed (LogicError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpDelete failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
@@ -1204,55 +977,39 @@ string MMSCURL::httpDelete(
 		catch (curlpp::RuntimeError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpDelete failed (RuntimeError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpDelete failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
 		}
 		catch (runtime_error e)
 		{
-			if (responseInitialized &&
-				response.str().find("502 Bad Gateway") != string::npos)
+			if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
 			{
 				logger->error(
-					__FILEREF__ + "Server is not reachable, is it down?" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", url: " + url + ", exception: " + e.what() +
-					", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "Server is not reachable, is it down?" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+					", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw ServerNotReachable();
@@ -1260,26 +1017,18 @@ string MMSCURL::httpDelete(
 			else
 			{
 				logger->error(
-					__FILEREF__ + "httpDelete failed (exception)" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", url: " + url + ", exception: " + e.what() +
-					", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "httpDelete failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+					", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw e;
@@ -1288,25 +1037,18 @@ string MMSCURL::httpDelete(
 		catch (exception e)
 		{
 			logger->error(
-				__FILEREF__ + "httpDelete failed (exception)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpDelete failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -1319,11 +1061,9 @@ string MMSCURL::httpDelete(
 pair<string, string> MMSCURL::httpPostPutString(
 	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
 	string requestType, // POST or PUT
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, string body,
+	long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string body,
 	string contentType, // i.e.: application/json
-	vector<string> otherHeaders, int maxRetryNumber,
-	int secondsToWaitBeforeToRetry
+	vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string sHeaderResponse;
@@ -1344,22 +1084,16 @@ pair<string, string> MMSCURL::httpPostPutString(
 			list<string> headers;
 			if (contentType != "")
 				headers.push_back(string("Content-Type: ") + contentType);
-			if (basicAuthenticationUser != "" &&
-				basicAuthenticationPassword != "")
+			if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
 			{
 				// string userPasswordEncoded =
 				// Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-				string userPasswordEncoded = Convert::base64_encode(
-					basicAuthenticationUser + ":" + basicAuthenticationPassword
-				);
-				string basicAuthorization =
-					string("Authorization: Basic ") + userPasswordEncoded;
+				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
 				headers.push_back(basicAuthorization);
 			}
-			headers.insert(
-				headers.end(), otherHeaders.begin(), otherHeaders.end()
-			);
+			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
 
 			request.setOpt(new curlpp::options::Url(url));
 
@@ -1367,19 +1101,15 @@ pair<string, string> MMSCURL::httpPostPutString(
 			// (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
 
-			string httpsPrefix("https");
-			if (url.size() >= httpsPrefix.size() &&
-				0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(url, "https"))
 			{
 				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(
-					bSslVerifyPeer
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
 				request.setOpt(sslVerifyPeer);
 
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(
-					0L
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
 				request.setOpt(sslVerifyHost);
 			}
 
@@ -1392,10 +1122,8 @@ pair<string, string> MMSCURL::httpPostPutString(
 			request.setOpt(new curlpp::options::WriteStream(&response));
 
 			logger->info(
-				__FILEREF__ + "httpPostPutString (" + requestType + ")" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", url: " + url + ", contentType: " + contentType +
-				", body: " + regex_replace(body, regex("\n"), " ")
+				__FILEREF__ + "httpPostPutString (" + requestType + ")" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", contentType: " + contentType + ", body: " + regex_replace(body, regex("\n"), " ")
 			);
 
 			// store response headers in the response
@@ -1404,8 +1132,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 			request.setOpt(new curlpp::options::Header(true));
 
 			responseInitialized = true;
-			chrono::system_clock::time_point start =
-				chrono::system_clock::now();
+			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
@@ -1414,80 +1141,52 @@ pair<string, string> MMSCURL::httpPostPutString(
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 			if (responseCode != 200 && responseCode != 201)
 			{
-				string message =
-					__FILEREF__ +
-					"httpPostPutString failed, wrong return status" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", url: " + url + ", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", response.str(): " +
-					regex_replace(response.str(), regex("\n"), " ") +
-					", responseCode: " + to_string(responseCode);
+				string message = __FILEREF__ + "httpPostPutString failed, wrong return status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", url: " + url + ", @MMS statistics@ - elapsed (secs): @" +
+								 to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@" +
+								 ", response.str(): " + regex_replace(response.str(), regex("\n"), " ") +
+								 ", responseCode: " + to_string(responseCode);
 				logger->error(message);
 
 				throw runtime_error(message);
 			}
 
 			{
-				string message =
-					__FILEREF__ + "httpPostPutString success" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sHeaderAndBodyResponse: " + sHeaderAndBodyResponse;
+				string message = __FILEREF__ + "httpPostPutString success" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@" + ", sHeaderAndBodyResponse: " + sHeaderAndBodyResponse;
 				logger->info(message);
 			}
 
 			// 2023-01-09: eventuali HTTP/1.1 100 Continue\r\n\r\n vengono
 			// scartati
 			string prefix("HTTP/1.1 100 Continue\r\n\r\n");
-			while (sHeaderAndBodyResponse.size() >= prefix.size() &&
-				   0 == sHeaderAndBodyResponse.compare(0, prefix.size(), prefix)
-			)
+			// while (sHeaderAndBodyResponse.size() >= prefix.size() && 0 == sHeaderAndBodyResponse.compare(0, prefix.size(), prefix))
+			while (StringUtils::startWith(sHeaderAndBodyResponse, prefix))
 			{
-				sHeaderAndBodyResponse =
-					sHeaderAndBodyResponse.substr(prefix.size());
+				sHeaderAndBodyResponse = sHeaderAndBodyResponse.substr(prefix.size());
 			}
 
 			size_t beginOfHeaderBodySeparatorIndex;
-			if ((beginOfHeaderBodySeparatorIndex =
-					 sHeaderAndBodyResponse.find("\r\n\r\n")) == string::npos)
+			if ((beginOfHeaderBodySeparatorIndex = sHeaderAndBodyResponse.find("\r\n\r\n")) == string::npos)
 			{
-				string errorMessage =
-					__FILEREF__ + "response is wrong" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", url: " + url +
-					", sHeaderAndBodyResponse: " + sHeaderAndBodyResponse;
+				string errorMessage = __FILEREF__ + "response is wrong" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+									  ", sHeaderAndBodyResponse: " + sHeaderAndBodyResponse;
 				logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			sHeaderResponse = sHeaderAndBodyResponse.substr(
-				0, beginOfHeaderBodySeparatorIndex
-			);
-			sBodyResponse = sHeaderAndBodyResponse.substr(
-				beginOfHeaderBodySeparatorIndex + 4
-			);
+			sHeaderResponse = sHeaderAndBodyResponse.substr(0, beginOfHeaderBodySeparatorIndex);
+			sBodyResponse = sHeaderAndBodyResponse.substr(beginOfHeaderBodySeparatorIndex + 4);
 
 			// LF and CR create problems to the json parser...
-			while (sBodyResponse.size() > 0 &&
-				   (sBodyResponse.back() == 10 || sBodyResponse.back() == 13))
+			while (sBodyResponse.size() > 0 && (sBodyResponse.back() == 10 || sBodyResponse.back() == 13))
 				sBodyResponse.pop_back();
 
 			{
-				string message =
-					__FILEREF__ + "httpPostPutString success test" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", sHeaderResponse: " +
-					regex_replace(sHeaderResponse, regex("\n"), " ") +
-					", sBodyResponse: " +
-					regex_replace(sBodyResponse, regex("\n"), " ");
+				string message = __FILEREF__ + "httpPostPutString success test" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", sHeaderResponse: " + regex_replace(sHeaderResponse, regex("\n"), " ") +
+								 ", sBodyResponse: " + regex_replace(sBodyResponse, regex("\n"), " ");
 				logger->info(message);
 			}
 
@@ -1496,25 +1195,18 @@ pair<string, string> MMSCURL::httpPostPutString(
 		catch (curlpp::LogicError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutString failed (LogicError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutString failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
@@ -1522,76 +1214,52 @@ pair<string, string> MMSCURL::httpPostPutString(
 		catch (curlpp::RuntimeError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutString failed (RuntimeError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutString failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
 		}
 		catch (runtime_error e)
 		{
-			if (responseInitialized &&
-				response.str().find("502 Bad Gateway") != string::npos)
+			if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
 			{
-				logger->error(
-					__FILEREF__ + "Server is not reachable, is it down?" +
-					", exception: " + e.what()
-				);
+				logger->error(__FILEREF__ + "Server is not reachable, is it down?" + ", exception: " + e.what());
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw ServerNotReachable();
 			}
 			else
 			{
-				logger->error(
-					__FILEREF__ + "httpPostPutString failed" +
-					", exception: " + e.what()
-				);
+				logger->error(__FILEREF__ + "httpPostPutString failed" + ", exception: " + e.what());
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw e;
@@ -1600,25 +1268,18 @@ pair<string, string> MMSCURL::httpPostPutString(
 		catch (exception e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutString failed" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " +
-				url + ", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutString failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -1631,10 +1292,8 @@ pair<string, string> MMSCURL::httpPostPutString(
 string MMSCURL::httpPostPutFile(
 	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
 	string requestType, // POST or PUT
-	long timeoutInSeconds, string basicAuthenticationUser,
-	string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, int maxRetryNumber, int secondsToWaitBeforeToRetry,
-	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
+	long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string pathFileName, int64_t fileSizeInBytes,
+	int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string sResponse;
@@ -1650,23 +1309,17 @@ string MMSCURL::httpPostPutFile(
 		{
 			CurlUploadData curlUploadData;
 			curlUploadData.loggerName = logger->name();
-			curlUploadData.mediaSourceFileStream.open(
-				pathFileName, ios::binary
-			);
+			curlUploadData.mediaSourceFileStream.open(pathFileName, ios::binary);
 			if (!curlUploadData.mediaSourceFileStream)
 			{
 				string message =
-					__FILEREF__ + "open file failed" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", pathFileName: " + pathFileName;
+					__FILEREF__ + "open file failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", pathFileName: " + pathFileName;
 				logger->error(message);
 
 				throw runtime_error(message);
 			}
 			if (contentRangeStart > 0)
-				curlUploadData.mediaSourceFileStream.seekg(
-					contentRangeStart, ios::beg
-				);
+				curlUploadData.mediaSourceFileStream.seekg(contentRangeStart, ios::beg);
 			curlUploadData.payloadBytesSent = 0;
 			if (contentRangeEnd_Excluded > 0)
 				curlUploadData.upToByte_Excluded = contentRangeEnd_Excluded;
@@ -1677,10 +1330,8 @@ string MMSCURL::httpPostPutFile(
 			curlpp::Easy request;
 
 			{
-				curlpp::options::ReadFunctionCurlFunction
-					curlUploadCallbackFunction(curlUploadCallback);
-				curlpp::OptionTrait<void *, CURLOPT_READDATA>
-					curlUploadDataData(&curlUploadData);
+				curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadCallback);
+				curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
 				request.setOpt(curlUploadCallbackFunction);
 				request.setOpt(curlUploadDataData);
 
@@ -1696,40 +1347,29 @@ string MMSCURL::httpPostPutFile(
 				// Content-Range: bytes
 				// $contentRangeStart-$contentRangeEnd/$binaryFileSize
 
-				contentLengthOrRangeHeader =
-					string("Content-Range: bytes ") +
-					to_string(contentRangeStart) + "-" +
-					to_string(contentRangeEnd_Excluded - 1) + "/" +
-					to_string(fileSizeInBytes);
+				contentLengthOrRangeHeader = string("Content-Range: bytes ") + to_string(contentRangeStart) + "-" +
+											 to_string(contentRangeEnd_Excluded - 1) + "/" + to_string(fileSizeInBytes);
 			}
 			else
 			{
-				contentLengthOrRangeHeader =
-					string("Content-Length: ") + to_string(fileSizeInBytes);
+				contentLengthOrRangeHeader = string("Content-Length: ") + to_string(fileSizeInBytes);
 			}
 			header.push_back(contentLengthOrRangeHeader);
 
 			{
 				// string userPasswordEncoded =
 				// Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
-				string userPasswordEncoded = Convert::base64_encode(
-					basicAuthenticationUser + ":" + basicAuthenticationPassword
-				);
-				string basicAuthorization =
-					string("Authorization: Basic ") + userPasswordEncoded;
+				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
 				header.push_back(basicAuthorization);
 			}
 
 			request.setOpt(new curlpp::options::CustomRequest(requestType));
 			if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
-				request.setOpt(new curlpp::options::PostFieldSizeLarge(
-					contentRangeEnd_Excluded - contentRangeStart
-				));
+				request.setOpt(new curlpp::options::PostFieldSizeLarge(contentRangeEnd_Excluded - contentRangeStart));
 			else
-				request.setOpt(
-					new curlpp::options::PostFieldSizeLarge(fileSizeInBytes)
-				);
+				request.setOpt(new curlpp::options::PostFieldSizeLarge(fileSizeInBytes));
 
 			// Setting the URL to retrive.
 			request.setOpt(new curlpp::options::Url(url));
@@ -1738,19 +1378,15 @@ string MMSCURL::httpPostPutFile(
 			// (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
 
-			string httpsPrefix("https");
-			if (url.size() >= httpsPrefix.size() &&
-				0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(url, "https"))
 			{
 				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(
-					bSslVerifyPeer
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
 				request.setOpt(sslVerifyPeer);
 
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(
-					0L
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
 				request.setOpt(sslVerifyHost);
 			}
 
@@ -1759,11 +1395,8 @@ string MMSCURL::httpPostPutFile(
 			request.setOpt(new curlpp::options::WriteStream(&response));
 
 			logger->info(
-				__FILEREF__ + "httpPostPutFile (" + requestType + ")" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", url: " + url +
-				", contentLengthOrRangeHeader: " + contentLengthOrRangeHeader +
-				", timeoutInSeconds: " + to_string(timeoutInSeconds) +
+				__FILEREF__ + "httpPostPutFile (" + requestType + ")" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", contentLengthOrRangeHeader: " + contentLengthOrRangeHeader + ", timeoutInSeconds: " + to_string(timeoutInSeconds) +
 				", pathFileName: " + pathFileName
 			);
 
@@ -1773,8 +1406,7 @@ string MMSCURL::httpPostPutFile(
 			// curlpp::options::Header(true));
 
 			responseInitialized = true;
-			chrono::system_clock::time_point start =
-				chrono::system_clock::now();
+			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
@@ -1782,38 +1414,22 @@ string MMSCURL::httpPostPutFile(
 
 			sResponse = response.str();
 			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 &&
-				   (sResponse.back() == 10 || sResponse.back() == 13))
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 				sResponse.pop_back();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 			if (responseCode == 201)
 			{
-				string message =
-					__FILEREF__ + "httpPostPutFile success" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", responseCode: " + to_string(responseCode) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sResponse: " + sResponse;
+				string message = __FILEREF__ + "httpPostPutFile success" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", responseCode: " + to_string(responseCode) + ", @MMS statistics@ - elapsed (secs): @" +
+								 to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@" + ", sResponse: " + sResponse;
 				logger->info(message);
 			}
 			else
 			{
-				string message =
-					__FILEREF__ +
-					"httpPostPutFile failed, wrong return status" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sResponse: " + sResponse +
-					", responseCode: " + to_string(responseCode);
+				string message = __FILEREF__ + "httpPostPutFile failed, wrong return status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@" + ", sResponse: " + sResponse + ", responseCode: " + to_string(responseCode);
 				logger->error(message);
 
 				throw runtime_error(message);
@@ -1825,26 +1441,18 @@ string MMSCURL::httpPostPutFile(
 		catch (curlpp::LogicError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed (LogicError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+				requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
@@ -1852,56 +1460,39 @@ string MMSCURL::httpPostPutFile(
 		catch (curlpp::RuntimeError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed (RuntimeError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+				requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
 		}
 		catch (runtime_error e)
 		{
-			if (responseInitialized &&
-				response.str().find("502 Bad Gateway") != string::npos)
+			if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
 			{
 				logger->error(
-					__FILEREF__ + "Server is not reachable, is it down?" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", requestType: " + requestType + ", url: " + url +
-					", exception: " + e.what() + ", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "Server is not reachable, is it down?" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+					requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw ServerNotReachable();
@@ -1909,26 +1500,18 @@ string MMSCURL::httpPostPutFile(
 			else
 			{
 				logger->error(
-					__FILEREF__ + "httpPostPutFile failed" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", requestType: " + requestType + ", url: " + url +
-					", exception: " + e.what() + ", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "httpPostPutFile failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " + requestType +
+					", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw e;
@@ -1937,26 +1520,18 @@ string MMSCURL::httpPostPutFile(
 		catch (exception e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " + requestType +
+				", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -1967,8 +1542,7 @@ string MMSCURL::httpPostPutFile(
 }
 
 string MMSCURL::httpPostPutFormData(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData,
 	string requestType, // POST or PUT
 	long timeoutInSeconds, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
@@ -1985,9 +1559,7 @@ string MMSCURL::httpPostPutFormData(
 		try
 		{
 			// we could apply md5 to utc time
-			string boundary = to_string(
-				chrono::system_clock::to_time_t(chrono::system_clock::now())
-			);
+			string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
 
 			string endOfLine = "\r\n";
 
@@ -1996,9 +1568,7 @@ string MMSCURL::httpPostPutFormData(
 			for (pair<string, string> data : formData)
 			{
 				sFormData += ("--" + boundary + endOfLine);
-				sFormData +=
-					("Content-Disposition: form-data; name=\"" + data.first +
-					 "\"" + endOfLine + endOfLine + data.second + endOfLine);
+				sFormData += ("Content-Disposition: form-data; name=\"" + data.first + "\"" + endOfLine + endOfLine + data.second + endOfLine);
 			}
 			sFormData += ("--" + boundary + "--" + endOfLine + endOfLine);
 
@@ -2006,10 +1576,7 @@ string MMSCURL::httpPostPutFormData(
 			curlpp::Easy request;
 
 			list<string> headers;
-			headers.push_back(
-				"Content-Type: multipart/form-data; boundary=\"" + boundary +
-				"\""
-			);
+			headers.push_back("Content-Type: multipart/form-data; boundary=\"" + boundary + "\"");
 
 			request.setOpt(new curlpp::options::Url(url));
 
@@ -2017,19 +1584,15 @@ string MMSCURL::httpPostPutFormData(
 			// (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
 
-			string httpsPrefix("https");
-			if (url.size() >= httpsPrefix.size() &&
-				0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(url, "https"))
 			{
 				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(
-					bSslVerifyPeer
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
 				request.setOpt(sslVerifyPeer);
 
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(
-					0L
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
 				request.setOpt(sslVerifyHost);
 			}
 
@@ -2037,15 +1600,13 @@ string MMSCURL::httpPostPutFormData(
 
 			request.setOpt(new curlpp::options::CustomRequest(requestType));
 			request.setOpt(new curlpp::options::PostFields(sFormData));
-			request.setOpt(new curlpp::options::PostFieldSize(sFormData.length()
-			));
+			request.setOpt(new curlpp::options::PostFieldSize(sFormData.length()));
 
 			request.setOpt(new curlpp::options::WriteStream(&response));
 
 			logger->info(
-				__FILEREF__ + "httpPostPutFile (" + requestType + ")" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", url: " + url + ", sFormData: " + sFormData
+				__FILEREF__ + "httpPostPutFile (" + requestType + ")" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", sFormData: " + sFormData
 			);
 
 			// store response headers in the response
@@ -2054,46 +1615,29 @@ string MMSCURL::httpPostPutFormData(
 			// curlpp::options::Header(true));
 
 			responseInitialized = true;
-			chrono::system_clock::time_point start =
-				chrono::system_clock::now();
+			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
 			sResponse = response.str();
 			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 &&
-				   (sResponse.back() == 10 || sResponse.back() == 13))
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 				sResponse.pop_back();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 			if (responseCode == 200 || responseCode == 201)
 			{
-				string message =
-					__FILEREF__ + "httpPostPutFile success" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", responseCode: " + to_string(responseCode) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sFormData: " + sFormData +
-					", sResponse: " + sResponse;
+				string message = __FILEREF__ + "httpPostPutFile success" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", responseCode: " + to_string(responseCode) + ", @MMS statistics@ - elapsed (secs): @" +
+								 to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@" + ", sFormData: " + sFormData +
+								 ", sResponse: " + sResponse;
 				logger->info(message);
 			}
 			else
 			{
-				string message =
-					__FILEREF__ +
-					"httpPostPutFile failed, wrong return status" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", sResponse: " + sResponse +
-					", responseCode: " + to_string(responseCode);
+				string message = __FILEREF__ + "httpPostPutFile failed, wrong return status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@" + ", sResponse: " + sResponse + ", responseCode: " + to_string(responseCode);
 				logger->error(message);
 
 				throw runtime_error(message);
@@ -2105,26 +1649,18 @@ string MMSCURL::httpPostPutFormData(
 		catch (curlpp::LogicError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed (LogicError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+				requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
@@ -2132,56 +1668,39 @@ string MMSCURL::httpPostPutFormData(
 		catch (curlpp::RuntimeError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed (RuntimeError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+				requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
 		}
 		catch (runtime_error e)
 		{
-			if (responseInitialized &&
-				response.str().find("502 Bad Gateway") != string::npos)
+			if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
 			{
 				logger->error(
-					__FILEREF__ + "Server is not reachable, is it down?" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", requestType: " + requestType + ", url: " + url +
-					", exception: " + e.what() + ", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "Server is not reachable, is it down?" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+					requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw ServerNotReachable();
@@ -2189,26 +1708,18 @@ string MMSCURL::httpPostPutFormData(
 			else
 			{
 				logger->error(
-					__FILEREF__ + "httpPostPutFile failed" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", requestType: " + requestType + ", url: " + url +
-					", exception: " + e.what() + ", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "httpPostPutFile failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " + requestType +
+					", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw e;
@@ -2217,26 +1728,18 @@ string MMSCURL::httpPostPutFormData(
 		catch (exception e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " + requestType +
+				", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -2247,11 +1750,9 @@ string MMSCURL::httpPostPutFormData(
 }
 
 string MMSCURL::httpPostPutFileByFormData(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	vector<pair<string, string>> formData,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, vector<pair<string, string>> formData,
 	string requestType, // POST or PUT
-	long timeoutInSeconds, string pathFileName, int64_t fileSizeInBytes,
-	string mediaContentType, int maxRetryNumber, int secondsToWaitBeforeToRetry,
+	long timeoutInSeconds, string pathFileName, int64_t fileSizeInBytes, string mediaContentType, int maxRetryNumber, int secondsToWaitBeforeToRetry,
 	int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
@@ -2269,23 +1770,17 @@ string MMSCURL::httpPostPutFileByFormData(
 		{
 			CurlUploadFormData curlUploadFormData;
 			curlUploadFormData.loggerName = logger->name();
-			curlUploadFormData.mediaSourceFileStream.open(
-				pathFileName, ios::binary
-			);
+			curlUploadFormData.mediaSourceFileStream.open(pathFileName, ios::binary);
 			if (!curlUploadFormData.mediaSourceFileStream)
 			{
 				string message =
-					__FILEREF__ + "open file failed" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", pathFileName: " + pathFileName;
+					__FILEREF__ + "open file failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", pathFileName: " + pathFileName;
 				logger->error(message);
 
 				throw runtime_error(message);
 			}
 			if (contentRangeStart > 0)
-				curlUploadFormData.mediaSourceFileStream.seekg(
-					contentRangeStart, ios::beg
-				);
+				curlUploadFormData.mediaSourceFileStream.seekg(contentRangeStart, ios::beg);
 			curlUploadFormData.payloadBytesSent = 0;
 			if (contentRangeEnd_Excluded > 0)
 				curlUploadFormData.upToByte_Excluded = contentRangeEnd_Excluded;
@@ -2295,9 +1790,7 @@ string MMSCURL::httpPostPutFileByFormData(
 			curlUploadFormData.endOfFormDataSent = false;
 
 			// we could apply md5 to utc time
-			string boundary = to_string(
-				chrono::system_clock::to_time_t(chrono::system_clock::now())
-			);
+			string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
 
 			string endOfLine = "\r\n";
 
@@ -2305,53 +1798,38 @@ string MMSCURL::httpPostPutFileByFormData(
 			{
 				for (pair<string, string> data : formData)
 				{
+					curlUploadFormData.formData += ("--" + boundary + endOfLine);
 					curlUploadFormData.formData +=
-						("--" + boundary + endOfLine);
-					curlUploadFormData.formData +=
-						("Content-Disposition: form-data; name=\"" +
-						 data.first + "\"" + endOfLine + endOfLine +
-						 data.second + endOfLine);
+						("Content-Disposition: form-data; name=\"" + data.first + "\"" + endOfLine + endOfLine + data.second + endOfLine);
 				}
 
 				if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
 				{
-					curlUploadFormData.formData +=
-						("--" + boundary + endOfLine);
+					curlUploadFormData.formData += ("--" + boundary + endOfLine);
 					// 2023-01-06: il caricamento del video su facebook fallisce
 					// senza il campo filename
 					curlUploadFormData.formData +=
 						("Content-Disposition: form-data; "
 						 "name=\"video_file_chunk\"; filename=\"" +
-						 to_string(contentRangeStart) + "\"" + endOfLine +
-						 "Content-Type: " + mediaContentType + endOfLine +
-						 "Content-Length: " +
-						 (to_string(
-							 contentRangeEnd_Excluded - contentRangeStart
-						 )) +
-						 endOfLine + endOfLine);
+						 to_string(contentRangeStart) + "\"" + endOfLine + "Content-Type: " + mediaContentType + endOfLine +
+						 "Content-Length: " + (to_string(contentRangeEnd_Excluded - contentRangeStart)) + endOfLine + endOfLine);
 				}
 				else
 				{
+					curlUploadFormData.formData += ("--" + boundary + endOfLine);
 					curlUploadFormData.formData +=
-						("--" + boundary + endOfLine);
-					curlUploadFormData.formData +=
-						("Content-Disposition: form-data; name=\"source\"" +
-						 endOfLine + "Content-Type: " + mediaContentType +
-						 endOfLine + "Content-Length: " +
-						 (to_string(fileSizeInBytes)) + endOfLine + endOfLine);
+						("Content-Disposition: form-data; name=\"source\"" + endOfLine + "Content-Type: " + mediaContentType + endOfLine +
+						 "Content-Length: " + (to_string(fileSizeInBytes)) + endOfLine + endOfLine);
 				}
 			}
-			curlUploadFormData.endOfFormData =
-				endOfLine + "--" + boundary + "--" + endOfLine + endOfLine;
+			curlUploadFormData.endOfFormData = endOfLine + "--" + boundary + "--" + endOfLine + endOfLine;
 
 			curlpp::Cleanup cleaner;
 			curlpp::Easy request;
 
 			{
-				curlpp::options::ReadFunctionCurlFunction
-					curlUploadCallbackFunction(curlUploadFormDataCallback);
-				curlpp::OptionTrait<void *, CURLOPT_READDATA>
-					curlUploadDataData(&curlUploadFormData);
+				curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadFormDataCallback);
+				curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadFormData);
 				request.setOpt(curlUploadCallbackFunction);
 				request.setOpt(curlUploadDataData);
 
@@ -2362,20 +1840,15 @@ string MMSCURL::httpPostPutFileByFormData(
 			request.setOpt(new curlpp::options::CustomRequest(requestType));
 			int64_t postSize;
 			if (contentRangeStart >= 0 && contentRangeEnd_Excluded > 0)
-				postSize = (contentRangeEnd_Excluded - contentRangeStart) +
-						   curlUploadFormData.formData.size() +
-						   curlUploadFormData.endOfFormData.size();
+				postSize =
+					(contentRangeEnd_Excluded - contentRangeStart) + curlUploadFormData.formData.size() + curlUploadFormData.endOfFormData.size();
 			else
-				postSize = fileSizeInBytes +
-						   curlUploadFormData.formData.size() +
-						   curlUploadFormData.endOfFormData.size();
+				postSize = fileSizeInBytes + curlUploadFormData.formData.size() + curlUploadFormData.endOfFormData.size();
 			request.setOpt(new curlpp::options::PostFieldSizeLarge(postSize));
 
 			list<string> header;
 
-			string contentTypeHeader =
-				"Content-Type: multipart/form-data; boundary=\"" + boundary +
-				"\"";
+			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
 			header.push_back(contentTypeHeader);
 
 			// Setting the URL to retrive.
@@ -2385,19 +1858,15 @@ string MMSCURL::httpPostPutFileByFormData(
 			// (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
 
-			string httpsPrefix("https");
-			if (url.size() >= httpsPrefix.size() &&
-				0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(url, "https"))
 			{
 				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(
-					bSslVerifyPeer
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
 				request.setOpt(sslVerifyPeer);
 
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(
-					0L
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
 				request.setOpt(sslVerifyHost);
 			}
 
@@ -2406,14 +1875,9 @@ string MMSCURL::httpPostPutFileByFormData(
 			request.setOpt(new curlpp::options::WriteStream(&response));
 
 			logger->info(
-				__FILEREF__ + "httpPostPutFile (" + requestType + ")" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", url: " + url + ", pathFileName: " + pathFileName +
-				", postSize: " + to_string(postSize) +
-				", curlUploadFormData.formData: " +
-				curlUploadFormData.formData +
-				", curlUploadFormData.endOfFormData: " +
-				curlUploadFormData.endOfFormData
+				__FILEREF__ + "httpPostPutFile (" + requestType + ")" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", pathFileName: " + pathFileName + ", postSize: " + to_string(postSize) + ", curlUploadFormData.formData: " +
+				curlUploadFormData.formData + ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData
 			);
 
 			// store response headers in the response
@@ -2422,8 +1886,7 @@ string MMSCURL::httpPostPutFileByFormData(
 			// curlpp::options::Header(true));
 
 			responseInitialized = true;
-			chrono::system_clock::time_point start =
-				chrono::system_clock::now();
+			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
@@ -2431,49 +1894,31 @@ string MMSCURL::httpPostPutFileByFormData(
 
 			sResponse = response.str();
 			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 &&
-				   (sResponse.back() == 10 || sResponse.back() == 13))
+			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 				sResponse.pop_back();
 
 			long responseCode = curlpp::infos::ResponseCode::get(request);
 			if (responseCode == 200 || responseCode == 201)
 			{
-				string message =
-					__FILEREF__ + "httpPostPutFile success" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", responseCode: " + to_string(responseCode) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@"
-					// + ", curlUploadFormData.formData: " +
-					// curlUploadFormData.formData
-					// + ", curlUploadFormData.endOfFormData: " +
-					// curlUploadFormData.endOfFormData
-					+ ", curlUploadFormData.payloadBytesSent: " +
-					to_string(curlUploadFormData.payloadBytesSent) +
-					", sResponse: " + sResponse;
+				string message = __FILEREF__ + "httpPostPutFile success" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", responseCode: " + to_string(responseCode) + ", @MMS statistics@ - elapsed (secs): @" +
+								 to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@"
+								 // + ", curlUploadFormData.formData: " +
+								 // curlUploadFormData.formData
+								 // + ", curlUploadFormData.endOfFormData: " +
+								 // curlUploadFormData.endOfFormData
+								 + ", curlUploadFormData.payloadBytesSent: " + to_string(curlUploadFormData.payloadBytesSent) +
+								 ", sResponse: " + sResponse;
 				logger->info(message);
 			}
 			else
 			{
-				string message =
-					__FILEREF__ +
-					"httpPostPutFile failed, wrong return status" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", @MMS statistics@ - elapsed (secs): @" +
-					to_string(
-						chrono::duration_cast<chrono::seconds>(end - start)
-							.count()
-					) +
-					"@" + ", curlUploadFormData.formData: " +
-					curlUploadFormData.formData +
-					", curlUploadFormData.endOfFormData: " +
-					curlUploadFormData.endOfFormData +
-					", sResponse: " + sResponse +
-					", responseCode: " + to_string(responseCode);
+				string message = __FILEREF__ + "httpPostPutFile failed, wrong return status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
+								 "@" + ", curlUploadFormData.formData: " + curlUploadFormData.formData +
+								 ", curlUploadFormData.endOfFormData: " + curlUploadFormData.endOfFormData + ", sResponse: " + sResponse +
+								 ", responseCode: " + to_string(responseCode);
 				logger->error(message);
 
 				throw runtime_error(message);
@@ -2485,26 +1930,18 @@ string MMSCURL::httpPostPutFileByFormData(
 		catch (curlpp::LogicError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed (LogicError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+				requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
@@ -2512,56 +1949,39 @@ string MMSCURL::httpPostPutFileByFormData(
 		catch (curlpp::RuntimeError &e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed (RuntimeError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+				requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw runtime_error(e.what());
 		}
 		catch (runtime_error e)
 		{
-			if (responseInitialized &&
-				response.str().find("502 Bad Gateway") != string::npos)
+			if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
 			{
 				logger->error(
-					__FILEREF__ + "Server is not reachable, is it down?" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", requestType: " + requestType + ", url: " + url +
-					", exception: " + e.what() + ", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "Server is not reachable, is it down?" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " +
+					requestType + ", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw ServerNotReachable();
@@ -2569,26 +1989,18 @@ string MMSCURL::httpPostPutFileByFormData(
 			else
 			{
 				logger->error(
-					__FILEREF__ + "httpPostPutFile failed" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", requestType: " + requestType + ", url: " + url +
-					", exception: " + e.what() + ", response.str(): " +
-					(responseInitialized ? response.str() : "")
+					__FILEREF__ + "httpPostPutFile failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " + requestType +
+					", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 				);
 
 				if (retryNumber < maxRetryNumber)
 				{
 					logger->info(
-						__FILEREF__ + "sleep before trying again" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) +
-						", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " +
-						to_string(secondsToWaitBeforeToRetry)
+						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 					);
-					this_thread::sleep_for(
-						chrono::seconds(secondsToWaitBeforeToRetry)
-					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
 					throw e;
@@ -2597,26 +2009,18 @@ string MMSCURL::httpPostPutFileByFormData(
 		catch (exception e)
 		{
 			logger->error(
-				__FILEREF__ + "httpPostPutFile failed" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", requestType: " + requestType + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " +
-				(responseInitialized ? response.str() : "")
+				__FILEREF__ + "httpPostPutFile failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", requestType: " + requestType +
+				", url: " + url + ", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -2627,8 +2031,7 @@ string MMSCURL::httpPostPutFileByFormData(
 }
 
 void MMSCURL::downloadFile(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
-	string destBinaryPathName, curlpp::types::ProgressFunctionFunctor functor,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, string destBinaryPathName, curlpp::types::ProgressFunctionFunctor functor,
 	int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
@@ -2651,8 +2054,7 @@ void MMSCURL::downloadFile(
 			curlDownloadData.currentChunkNumber = 0;
 			curlDownloadData.currentTotalSize = 0;
 			curlDownloadData.destBinaryPathName = destBinaryPathName;
-			curlDownloadData.maxChunkFileSize =
-				downloadChunkSizeInMegaBytes * 1000000;
+			curlDownloadData.maxChunkFileSize = downloadChunkSizeInMegaBytes * 1000000;
 
 			// fstream mediaSourceFileStream(destBinaryPathName, ios::binary |
 			// ios::out); mediaSourceFileStream.exceptions(ios::badbit |
@@ -2671,30 +2073,23 @@ void MMSCURL::downloadFile(
 			// request.setOpt(new
 			// curlpp::options::Timeout(curlTimeoutInSeconds));
 
-			curlpp::options::WriteFunctionCurlFunction
-				curlDownloadCallbackFunction(curlDownloadCallback);
-			curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(
-				&curlDownloadData
-			);
+			curlpp::options::WriteFunctionCurlFunction curlDownloadCallbackFunction(curlDownloadCallback);
+			curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
 			request.setOpt(curlDownloadCallbackFunction);
 			request.setOpt(curlDownloadDataData);
 
 			// Setting the URL to retrive.
 			request.setOpt(new curlpp::options::Url(url));
-			string httpsPrefix("https");
-			if (url.size() >= httpsPrefix.size() &&
-				0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (StringUtils::startWith(url, "https"))
 			{
 				// disconnect if we can't validate server's cert
 				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(
-					bSslVerifyPeer
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
 				request.setOpt(sslVerifyPeer);
 
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(
-					0L
-				);
+				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
 				request.setOpt(sslVerifyHost);
 			}
 
@@ -2705,16 +2100,12 @@ void MMSCURL::downloadFile(
 			// 	ingestionJobKey, lastProgressUpdate, lastPercentageUpdated,
 			// downloadingStoppedByUser, 	placeholders::_1, placeholders::_2,
 			// placeholders::_3, placeholders::_4);
-			request.setOpt(new curlpp::options::ProgressFunction(
-				curlpp::types::ProgressFunctionFunctor(functor)
-			));
+			request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
 			request.setOpt(new curlpp::options::NoProgress(0L));
 
 			logger->info(
-				__FILEREF__ + "Downloading media file" + ", ingestionJobKey: " +
-				to_string(ingestionJobKey) + ", url: " + url +
-				", destBinaryPathName: " + destBinaryPathName +
-				", retryNumber: " + to_string(retryNumber)
+				__FILEREF__ + "Downloading media file" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", destBinaryPathName: " + destBinaryPathName + ", retryNumber: " + to_string(retryNumber)
 			);
 
 			// store response headers in the response
@@ -2722,21 +2113,14 @@ void MMSCURL::downloadFile(
 			// normal body output. request.setOpt(new
 			// curlpp::options::Header(true));
 
-			chrono::system_clock::time_point start =
-				chrono::system_clock::now();
+			chrono::system_clock::time_point start = chrono::system_clock::now();
 			request.perform();
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 
 			(curlDownloadData.mediaSourceFileStream).close();
 
-			string message =
-				__FILEREF__ + "download finished" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", @MMS statistics@ - elapsed (secs): @" +
-				to_string(
-					chrono::duration_cast<chrono::seconds>(end - start).count()
-				) +
-				"@";
+			string message = __FILEREF__ + "download finished" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+							 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@";
 			logger->info(message);
 
 			break;
@@ -2744,24 +2128,18 @@ void MMSCURL::downloadFile(
 		catch (curlpp::LogicError &e)
 		{
 			logger->error(
-				__FILEREF__ + "Download failed (LogicError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", url: " + url + ", exception: " + e.what()
+				__FILEREF__ + "Download failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what()
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -2769,24 +2147,18 @@ void MMSCURL::downloadFile(
 		catch (curlpp::RuntimeError &e)
 		{
 			logger->error(
-				__FILEREF__ + "Download failed (RuntimeError)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", url: " + url + ", exception: " + e.what()
+				__FILEREF__ + "Download failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what()
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -2794,24 +2166,18 @@ void MMSCURL::downloadFile(
 		catch (runtime_error e)
 		{
 			logger->error(
-				__FILEREF__ + "Download failed (runtime_error)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", url: " + url + ", exception: " + e.what()
+				__FILEREF__ + "Download failed (runtime_error)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what()
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -2819,24 +2185,18 @@ void MMSCURL::downloadFile(
 		catch (exception e)
 		{
 			logger->error(
-				__FILEREF__ + "Download failed (exception)" +
-				", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", url: " + url + ", exception: " + e.what()
+				__FILEREF__ + "Download failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+				", exception: " + e.what()
 			);
 
 			if (retryNumber < maxRetryNumber)
 			{
 				logger->info(
-					__FILEREF__ + "sleep before trying again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) +
-					", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " +
-					to_string(secondsToWaitBeforeToRetry)
+					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
 				);
-				this_thread::sleep_for(
-					chrono::seconds(secondsToWaitBeforeToRetry)
-				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
 				throw e;
@@ -2845,10 +2205,8 @@ void MMSCURL::downloadFile(
 }
 
 void MMSCURL::ftpFile(
-	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey,
-	string filePathName, string fileName, int64_t sizeInBytes, string ftpServer,
-	int ftpPort, string ftpUserName, string ftpPassword,
-	string ftpRemoteDirectory, string ftpRemoteFileName,
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string filePathName, string fileName, int64_t sizeInBytes, string ftpServer,
+	int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDirectory, string ftpRemoteFileName,
 	curlpp::types::ProgressFunctionFunctor functor
 )
 {
@@ -2858,14 +2216,9 @@ void MMSCURL::ftpFile(
 
 	try
 	{
-		logger->info(
-			__FILEREF__ + "ftpFile" +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
-		);
+		logger->info(__FILEREF__ + "ftpFile" + ", ingestionJobKey: " + to_string(ingestionJobKey));
 
-		string ftpUrl = "ftp://" + ftpUserName + ":" + ftpPassword + "@" +
-						ftpServer + ":" + to_string(ftpPort) +
-						ftpRemoteDirectory;
+		string ftpUrl = "ftp://" + ftpUserName + ":" + ftpPassword + "@" + ftpServer + ":" + to_string(ftpPort) + ftpRemoteDirectory;
 
 		if (ftpRemoteDirectory.size() == 0 || ftpRemoteDirectory.back() != '/')
 			ftpUrl += "/";
@@ -2876,8 +2229,7 @@ void MMSCURL::ftpFile(
 			ftpUrl += ftpRemoteFileName;
 
 		logger->info(
-			__FILEREF__ + "FTP Uploading" + ", ingestionJobKey: " +
-			to_string(ingestionJobKey) + ", filePathName: " + filePathName +
+			__FILEREF__ + "FTP Uploading" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", filePathName: " + filePathName +
 			", sizeInBytes: " + to_string(sizeInBytes) + ", ftpUrl: " + ftpUrl
 		);
 
@@ -2928,8 +2280,7 @@ void MMSCURL::ftpFile(
 		// request.setOpt(new curlpp::options::Timeout(curlTimeoutInSeconds));
 
 		request.setOpt(new curlpp::options::ReadStream(&mmsAssetStream));
-		request.setOpt(new curlpp::options::InfileSizeLarge((curl_off_t
-		)sizeInBytes));
+		request.setOpt(new curlpp::options::InfileSizeLarge((curl_off_t)sizeInBytes));
 
 		bool bFtpUseEpsv = false;
 		curlpp::OptionTrait<bool, CURLOPT_FTP_USE_EPSV> ftpUseEpsv(bFtpUseEpsv);
@@ -2942,13 +2293,12 @@ void MMSCURL::ftpFile(
 		// timeout (CURLOPT_FTP_RESPONSE_TIMEOUT)
 
 		bool bCreatingMissingDir = true;
-		curlpp::OptionTrait<bool, CURLOPT_FTP_CREATE_MISSING_DIRS>
-			creatingMissingDir(bCreatingMissingDir);
+		curlpp::OptionTrait<bool, CURLOPT_FTP_CREATE_MISSING_DIRS> creatingMissingDir(bCreatingMissingDir);
 		request.setOpt(creatingMissingDir);
 
-		string ftpsPrefix("ftps");
-		if (ftpUrl.size() >= ftpsPrefix.size() &&
-			0 == ftpUrl.compare(0, ftpsPrefix.size(), ftpsPrefix))
+		// string ftpsPrefix("ftps");
+		// if (ftpUrl.size() >= ftpsPrefix.size() && 0 == ftpUrl.compare(0, ftpsPrefix.size(), ftpsPrefix))
+		if (StringUtils::startWith(ftpUrl, "ftps"))
 		{
 			/* Next statements is in case we want ftp protocol to use SSL or TLS
 			 * google CURLOPT_FTPSSLAUTH and CURLOPT_FTP_SSL
@@ -2976,45 +2326,36 @@ void MMSCURL::ftpFile(
 		// uploadingStoppedByUser, 	placeholders::_1, placeholders::_2,
 		// placeholders::_3, placeholders::_4);
 		{
-			request.setOpt(new curlpp::options::ProgressFunction(
-				curlpp::types::ProgressFunctionFunctor(functor)
-			));
+			request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
 			request.setOpt(new curlpp::options::NoProgress(0L));
 		}
 
 		logger->info(
-			__FILEREF__ + "FTP Uploading media file" + ", ingestionJobKey: " +
-			to_string(ingestionJobKey) + ", filePathName: " + filePathName +
+			__FILEREF__ + "FTP Uploading media file" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", filePathName: " + filePathName +
 			", sizeInBytes: " + to_string(sizeInBytes)
 		);
 		request.perform();
 	}
 	catch (curlpp::LogicError &e)
 	{
-		string errorMessage =
-			__FILEREF__ + "Download failed (LogicError)" +
-			", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", filePathName: " + filePathName + ", exception: " + e.what();
+		string errorMessage = __FILEREF__ + "Download failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+							  ", filePathName: " + filePathName + ", exception: " + e.what();
 		logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (curlpp::RuntimeError &e)
 	{
-		string errorMessage =
-			__FILEREF__ + "Download failed (RuntimeError)" +
-			", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", filePathName: " + filePathName + ", exception: " + e.what();
+		string errorMessage = __FILEREF__ + "Download failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+							  ", filePathName: " + filePathName + ", exception: " + e.what();
 		logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (exception e)
 	{
-		string errorMessage =
-			__FILEREF__ + "Download failed (exception)" +
-			", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", filePathName: " + filePathName + ", exception: " + e.what();
+		string errorMessage = __FILEREF__ + "Download failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+							  ", filePathName: " + filePathName + ", exception: " + e.what();
 		logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -3023,8 +2364,7 @@ void MMSCURL::ftpFile(
 
 size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *f)
 {
-	MMSCURL::CurlUploadEmailData *curlUploadEmailData =
-		(MMSCURL::CurlUploadEmailData *)f;
+	MMSCURL::CurlUploadEmailData *curlUploadEmailData = (MMSCURL::CurlUploadEmailData *)f;
 
 	if ((size == 0) || (nmemb == 0) || ((size * nmemb) < 1))
 	{
@@ -3052,8 +2392,7 @@ size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *f)
 void MMSCURL::sendEmail(
 	string emailServerURL, // i.e.: smtps://smtppro.zoho.eu:465
 	string from,		   // i.e.: info@catramms-cloud.com
-	string tosCommaSeparated, string ccsCommaSeparated, string subject,
-	vector<string> &emailBody,
+	string tosCommaSeparated, string ccsCommaSeparated, string subject, vector<string> &emailBody,
 	// 2023-02-18: usiamo 'from' come username perchè, mi è sembrato che ZOHO
 	// blocca l'email
 	//	se username e from sono diversi
@@ -3071,9 +2410,7 @@ void MMSCURL::sendEmail(
 
 	{
 		// add From
-		curlUploadEmailData.emailLines.push_back(
-			string("From: <") + from + ">" + "\r\n"
-		);
+		curlUploadEmailData.emailLines.push_back(string("From: <") + from + ">" + "\r\n");
 
 		// add To
 		{
@@ -3093,9 +2430,7 @@ void MMSCURL::sendEmail(
 				}
 			}
 
-			curlUploadEmailData.emailLines.push_back(
-				string("To: ") + addresses + "\r\n"
-			);
+			curlUploadEmailData.emailLines.push_back(string("To: ") + addresses + "\r\n");
 		}
 
 		// add Cc
@@ -3117,23 +2452,13 @@ void MMSCURL::sendEmail(
 				}
 			}
 
-			curlUploadEmailData.emailLines.push_back(
-				string("Cc: ") + addresses + "\r\n"
-			);
+			curlUploadEmailData.emailLines.push_back(string("Cc: ") + addresses + "\r\n");
 		}
 
-		curlUploadEmailData.emailLines.push_back(
-			string("Subject: ") + subject + "\r\n"
-		);
-		curlUploadEmailData.emailLines.push_back(
-			string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n"
-		);
-		curlUploadEmailData.emailLines.push_back("\r\n"
-		); // empty line to divide headers from body, see RFC5322
-		curlUploadEmailData.emailLines.insert(
-			curlUploadEmailData.emailLines.end(), emailBody.begin(),
-			emailBody.end()
-		);
+		curlUploadEmailData.emailLines.push_back(string("Subject: ") + subject + "\r\n");
+		curlUploadEmailData.emailLines.push_back(string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n");
+		curlUploadEmailData.emailLines.push_back("\r\n"); // empty line to divide headers from body, see RFC5322
+		curlUploadEmailData.emailLines.insert(curlUploadEmailData.emailLines.end(), emailBody.begin(), emailBody.end());
 	}
 
 	CURL *curl;
@@ -3172,8 +2497,7 @@ void MMSCURL::sendEmail(
 				while (getline(ssAddresses, address, delim))
 				{
 					if (!address.empty())
-						recipients =
-							curl_slist_append(recipients, address.c_str());
+						recipients = curl_slist_append(recipients, address.c_str());
 				}
 			}
 			if (ccsCommaSeparated != "")
@@ -3184,8 +2508,7 @@ void MMSCURL::sendEmail(
 				while (getline(ssAddresses, address, delim))
 				{
 					if (!address.empty())
-						recipients =
-							curl_slist_append(recipients, address.c_str());
+						recipients = curl_slist_append(recipients, address.c_str());
 				}
 			}
 
@@ -3216,8 +2539,7 @@ void MMSCURL::sendEmail(
 				", cc: {}"
 				", subject: {}"
 				", body: {}",
-				emailServerURL, from, tosCommaSeparated, ccsCommaSeparated,
-				subject, body
+				emailServerURL, from, tosCommaSeparated, ccsCommaSeparated, subject, body
 			);
 		}
 

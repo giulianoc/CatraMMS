@@ -1,13 +1,11 @@
 
-#include "MMSEngineDBFacade.h"
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "catralibraries/StringUtils.h"
 
-
 void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
-        string processorMMS,
-        vector<tuple<shared_ptr<Workspace>,int64_t, int64_t>>& mediaItemKeyOrPhysicalPathKeyToBeRemoved,
-        int maxEntriesNumber)
+	string processorMMS, vector<tuple<shared_ptr<Workspace>, int64_t, int64_t>> &mediaItemKeyOrPhysicalPathKeyToBeRemoved, int maxEntriesNumber
+)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -15,146 +13,137 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		// 2021-09-23: I removed TRANSACTION and FOR UPDATE because I saw we may have deadlock when a MediaItem is added
 
-		_logger->info(__FILEREF__
-			+ "getExpiredMediaItemKeysCheckingDependencies (MediaItemKeys expired)"
-			+ ", processorMMS: " + processorMMS
-			+ ", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: "
-				+ to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size())
-			+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		_logger->info(
+			__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies (MediaItemKeys expired)" + ", processorMMS: " + processorMMS +
+			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: " + to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size()) +
+			", maxEntriesNumber: " + to_string(maxEntriesNumber)
 		);
 
 		// 1. MediaItemKeys expired
-        int start = 0;
-        bool noMoreRowsReturned = false;
-        while (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() < maxEntriesNumber &&
-                !noMoreRowsReturned)
-        {
-            string sqlStatement = fmt::format( 
+		int start = 0;
+		bool noMoreRowsReturned = false;
+		while (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() < maxEntriesNumber && !noMoreRowsReturned)
+		{
+			string sqlStatement = fmt::format(
 				"select workspaceKey, mediaItemKey, ingestionJobKey, retentionInMinutes, title, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate "
 				"from MMS_MediaItem where "
 				"willBeRemovedAt_virtual < NOW() at time zone 'utc' "
 				"and processorMMSForRetention is null "
-				"limit {} offset {}",	// for update"; see comment marked as 2021-09-23
-				maxEntriesNumber, start);
+				"limit {} offset {}", // for update"; see comment marked as 2021-09-23
+				maxEntriesNumber, start
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			chrono::milliseconds internalSqlDuration (0);
+			chrono::milliseconds internalSqlDuration(0);
 			result res = trans.exec(sqlStatement);
-            noMoreRowsReturned = true;
-            start += maxEntriesNumber;
-			for (auto row: res)
-            {
-                noMoreRowsReturned = false;
-                
-                int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
-                int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
-                int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
-                int64_t retentionInMinutes = row["retentionInMinutes"].as<int64_t>();
-                string ingestionDate = row["ingestionDate"].as<string>();
-                string title = row["title"].as<string>();
-                
-                // check if there is still an ingestion depending on the ingestionJobKey
+			noMoreRowsReturned = true;
+			start += maxEntriesNumber;
+			for (auto row : res)
+			{
+				noMoreRowsReturned = false;
+
+				int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+				int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
+				int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
+				int64_t retentionInMinutes = row["retentionInMinutes"].as<int64_t>();
+				string ingestionDate = row["ingestionDate"].as<string>();
+				string title = row["title"].as<string>();
+
+				// check if there is still an ingestion depending on the ingestionJobKey
 				chrono::system_clock::time_point startMethod = chrono::system_clock::now();
-                bool ingestionDependingOnMediaItemKey = false;
-				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, trans, ingestionJobKey)
-						> 0)
+				bool ingestionDependingOnMediaItemKey = false;
+				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, trans, ingestionJobKey) > 0)
 					ingestionDependingOnMediaItemKey = true;
-				chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
-					chrono::system_clock::now() - startMethod);
+				chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 				internalSqlDuration += sqlDuration;
 
-                if (!ingestionDependingOnMediaItemKey)
-                {
-                    {
-                        string sqlStatement = fmt::format( 
-                            "WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
+				if (!ingestionDependingOnMediaItemKey)
+				{
+					{
+						string sqlStatement = fmt::format(
+							"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
 							"where mediaItemKey = {} and processorMMSForRetention is null "
 							"returning 1) select count(*) from rows",
-							trans.quote(processorMMS), mediaItemKey);
+							trans.quote(processorMMS), mediaItemKey
+						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
-							chrono::system_clock::now() - startSql);
+						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 						internalSqlDuration += sqlDuration;
-						SPDLOG_INFO("SQL statement"
+						SPDLOG_INFO(
+							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
 							sqlStatement, conn->getConnectionId(), sqlDuration.count()
 						);
-                        if (rowsUpdated != 1)
-                        {
+						if (rowsUpdated != 1)
+						{
 							// may be another processor doing the same activity updates it
 							// Really it should never happen because of the 'for update'
 							// 2021-09-23: we do not have for update anymore
 
 							continue;
 							/*
-                            string errorMessage = __FILEREF__ + "no update was done"
-                                    + ", processorMMS: " + processorMMS
-                                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                                    + ", rowsUpdated: " + to_string(rowsUpdated)
-                                    + ", sqlStatement: " + sqlStatement
-                            ;
-                            _logger->error(errorMessage);
+							string errorMessage = __FILEREF__ + "no update was done"
+									+ ", processorMMS: " + processorMMS
+									+ ", mediaItemKey: " + to_string(mediaItemKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", sqlStatement: " + sqlStatement
+							;
+							_logger->error(errorMessage);
 
-                            throw runtime_error(errorMessage);
+							throw runtime_error(errorMessage);
 							*/
-                        }
-                    }
+						}
+					}
 
-                    shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+					shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-                    tuple<shared_ptr<Workspace>,int64_t, int64_t> workspaceMediaItemKeyAndPhysicalPathKey =
-                            make_tuple(workspace, mediaItemKey, -1);
+					tuple<shared_ptr<Workspace>, int64_t, int64_t> workspaceMediaItemKeyAndPhysicalPathKey = make_tuple(workspace, mediaItemKey, -1);
 
-                    mediaItemKeyOrPhysicalPathKeyToBeRemoved.push_back(workspaceMediaItemKeyAndPhysicalPathKey);
-                }
-                else
-                {
-                    _logger->info(__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him. Content details: "
-                        + "ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", workspaceKey: " + to_string(workspaceKey)
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
-                        + ", title: " + title
-                        + ", ingestionDate: " + ingestionDate
-                        + ", retentionInMinutes: " + to_string(retentionInMinutes)
-                    );
-                }
-            }
-			SPDLOG_INFO("SQL statement"
+					mediaItemKeyOrPhysicalPathKeyToBeRemoved.push_back(workspaceMediaItemKeyAndPhysicalPathKey);
+				}
+				else
+				{
+					_logger->info(
+						__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him. Content details: " +
+						"ingestionJobKey: " + to_string(ingestionJobKey) + ", workspaceKey: " + to_string(workspaceKey) +
+						", mediaItemKey: " + to_string(mediaItemKey) + ", title: " + title + ", ingestionDate: " + ingestionDate +
+						", retentionInMinutes: " + to_string(retentionInMinutes)
+					);
+				}
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(
-					(chrono::system_clock::now() - startSql) - internalSqlDuration).count()
+				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 			);
-        }
+		}
 
-		_logger->info(__FILEREF__
-			+ "getExpiredMediaItemKeysCheckingDependencies (PhysicalPathKeys expired)"
-			+ ", processorMMS: " + processorMMS
-			+ ", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: "
-				+ to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size())
-			+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		_logger->info(
+			__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies (PhysicalPathKeys expired)" + ", processorMMS: " + processorMMS +
+			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: " + to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size()) +
+			", maxEntriesNumber: " + to_string(maxEntriesNumber)
 		);
 
 		// 1. PhysicalPathKeys expired
-        start = 0;
-        noMoreRowsReturned = false;
-        while (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() < maxEntriesNumber &&
-                !noMoreRowsReturned)
-        {
-            string sqlStatement = fmt::format( 
+		start = 0;
+		noMoreRowsReturned = false;
+		while (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() < maxEntriesNumber && !noMoreRowsReturned)
+		{
+			string sqlStatement = fmt::format(
 				"select mi.workspaceKey, mi.mediaItemKey, p.physicalPathKey, mi.ingestionJobKey, "
 				"p.retentionInMinutes, mi.title, "
 				"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate "
@@ -166,111 +155,110 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				// MediaItemKey not expired
 				"and mi.willBeRemovedAt_virtual > NOW() at time zone 'utc' "
 				"and processorMMSForRetention is null "
-				"limit {} offset {}",	// for update"; see comment marked as 2021-09-23
-				maxEntriesNumber, start);
+				"limit {} offset {}", // for update"; see comment marked as 2021-09-23
+				maxEntriesNumber, start
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-            noMoreRowsReturned = true;
-            start += maxEntriesNumber;
-			for (auto row: res)
-            {
-                noMoreRowsReturned = false;
-                
-                int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
-                int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
-                int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
-                int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
-                int64_t physicalPathKeyRetentionInMinutes = row["retentionInMinutes"].as<int64_t>();
-                string ingestionDate = row["ingestionDate"].as<string>();
-                string title = row["title"].as<string>();
-                
-                // check if there is still an ingestion depending on the ingestionJobKey
-                bool ingestionDependingOnMediaItemKey = false;
-				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, trans, ingestionJobKey)
-						> 0)
+			noMoreRowsReturned = true;
+			start += maxEntriesNumber;
+			for (auto row : res)
+			{
+				noMoreRowsReturned = false;
+
+				int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+				int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
+				int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
+				int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
+				int64_t physicalPathKeyRetentionInMinutes = row["retentionInMinutes"].as<int64_t>();
+				string ingestionDate = row["ingestionDate"].as<string>();
+				string title = row["title"].as<string>();
+
+				// check if there is still an ingestion depending on the ingestionJobKey
+				bool ingestionDependingOnMediaItemKey = false;
+				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, trans, ingestionJobKey) > 0)
 					ingestionDependingOnMediaItemKey = true;
 
-                if (!ingestionDependingOnMediaItemKey)
-                {
-                    {
-                        string sqlStatement = fmt::format( 
-                            "WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
+				if (!ingestionDependingOnMediaItemKey)
+				{
+					{
+						string sqlStatement = fmt::format(
+							"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
 							"where mediaItemKey = {} and processorMMSForRetention is null "
 							"returning 1) select count(*) from rows",
-							trans.quote(processorMMS), mediaItemKey);
+							trans.quote(processorMMS), mediaItemKey
+						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-						SPDLOG_INFO("SQL statement"
+						SPDLOG_INFO(
+							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
 							sqlStatement, conn->getConnectionId(),
 							chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 						);
-                        if (rowsUpdated != 1)
-                        {
+						if (rowsUpdated != 1)
+						{
 							// may be another processor doing the same activity updates it
 							// Really it should never happen because of the 'for update'
 							// 2021-09-23: we do not have for update anymore
 
 							continue;
 							/*
-                            string errorMessage = __FILEREF__ + "no update was done"
-                                    + ", processorMMS: " + processorMMS
-                                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                                    + ", rowsUpdated: " + to_string(rowsUpdated)
-                                    + ", sqlStatement: " + sqlStatement
-                            ;
-                            _logger->error(errorMessage);
+							string errorMessage = __FILEREF__ + "no update was done"
+									+ ", processorMMS: " + processorMMS
+									+ ", mediaItemKey: " + to_string(mediaItemKey)
+									+ ", rowsUpdated: " + to_string(rowsUpdated)
+									+ ", sqlStatement: " + sqlStatement
+							;
+							_logger->error(errorMessage);
 
-                            throw runtime_error(errorMessage);
+							throw runtime_error(errorMessage);
 							*/
-                        }
-                    }
+						}
+					}
 
-                    shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+					shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-                    tuple<shared_ptr<Workspace>,int64_t, int64_t> workspaceMediaItemKeyAndPhysicalPathKey =
-                            make_tuple(workspace, mediaItemKey, physicalPathKey);
+					tuple<shared_ptr<Workspace>, int64_t, int64_t> workspaceMediaItemKeyAndPhysicalPathKey =
+						make_tuple(workspace, mediaItemKey, physicalPathKey);
 
-                    mediaItemKeyOrPhysicalPathKeyToBeRemoved.push_back(workspaceMediaItemKeyAndPhysicalPathKey);
-                }
-                else
-                {
-                    _logger->info(__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him. Content details: "
-                        + "ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", workspaceKey: " + to_string(workspaceKey)
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
-                        + ", title: " + title
-                        + ", ingestionDate: " + ingestionDate
-                        + ", physicalPathKeyRetentionInMinutes: " + to_string(physicalPathKeyRetentionInMinutes)
-                    );
-                }
-            }
-			SPDLOG_INFO("SQL statement"
+					mediaItemKeyOrPhysicalPathKeyToBeRemoved.push_back(workspaceMediaItemKeyAndPhysicalPathKey);
+				}
+				else
+				{
+					_logger->info(
+						__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him. Content details: " +
+						"ingestionJobKey: " + to_string(ingestionJobKey) + ", workspaceKey: " + to_string(workspaceKey) +
+						", mediaItemKey: " + to_string(mediaItemKey) + ", title: " + title + ", ingestionDate: " + ingestionDate +
+						", physicalPathKeyRetentionInMinutes: " + to_string(physicalPathKeyRetentionInMinutes)
+					);
+				}
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-		_logger->info(__FILEREF__
-			+ "getExpiredMediaItemKeysCheckingDependencies"
-			+ ", processorMMS: " + processorMMS
-			+ ", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: "
-				+ to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size())
-			+ ", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		_logger->info(
+			__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies" + ", processorMMS: " + processorMMS +
+			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: " + to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size()) +
+			", maxEntriesNumber: " + to_string(maxEntriesNumber)
 		);
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -281,9 +269,10 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -296,9 +285,10 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -308,9 +298,10 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -321,12 +312,12 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -335,9 +326,10 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -348,16 +340,13 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
 
-int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-	int64_t ingestionJobKey, bool fromMaster
-)
+int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKey(int64_t ingestionJobKey, bool fromMaster)
 {
-    int			dependenciesNumber;
+	int dependenciesNumber;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
@@ -368,22 +357,22 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-		dependenciesNumber = getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-			conn, trans, ingestionJobKey);
+	try
+	{
+		dependenciesNumber = getNotFinishedIngestionDependenciesNumberByIngestionJobKey(conn, trans, ingestionJobKey);
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -394,9 +383,10 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -409,9 +399,10 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -421,9 +412,10 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -434,12 +426,12 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -448,9 +440,10 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -461,43 +454,43 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 
-    return dependenciesNumber;
+	return dependenciesNumber;
 }
 
 int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKey(
-	shared_ptr<PostgresConnection> conn, nontransaction& trans,
-	int64_t ingestionJobKey
+	shared_ptr<PostgresConnection> conn, nontransaction &trans, int64_t ingestionJobKey
 )
 {
-    int			dependenciesNumber;
+	int dependenciesNumber;
 
-    try
-    {
+	try
+	{
 		{
-			string sqlStatement = fmt::format( 
+			string sqlStatement = fmt::format(
 				"select count(*) from MMS_IngestionJobDependency ijd, MMS_IngestionJob ij where "
 				"ijd.ingestionJobKey = ij.ingestionJobKey "
 				"and ijd.dependOnIngestionJobKey = {} "
 				"and ij.status not like 'End_%'",
-				ingestionJobKey);
+				ingestionJobKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			dependenciesNumber = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -506,9 +499,10 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -516,46 +510,41 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
 	}
-    
-    return dependenciesNumber;
+
+	return dependenciesNumber;
 }
 
-json MMSEngineDBFacade::updateMediaItem (
-	int64_t workspaceKey,
-	int64_t mediaItemKey,
-	bool titleModified, string newTitle,
-	bool userDataModified, string newUserData,
-	bool retentionInMinutesModified, int64_t newRetentionInMinutes,
-	bool tagsModified, json tagsRoot,
-	bool uniqueNameModified, string newUniqueName,
-	json crossReferencesRoot,
-	bool admin
-	)
+json MMSEngineDBFacade::updateMediaItem(
+	int64_t workspaceKey, int64_t mediaItemKey, bool titleModified, string newTitle, bool userDataModified, string newUserData,
+	bool retentionInMinutesModified, int64_t newRetentionInMinutes, bool tagsModified, json tagsRoot, bool uniqueNameModified, string newUniqueName,
+	json crossReferencesRoot, bool admin
+)
 {
-    json mediaItemRoot;
+	json mediaItemRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	work trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		if (titleModified || userDataModified || retentionInMinutesModified || tagsModified)
-        {
+		{
 			string setSQL;
 
 			if (titleModified)
@@ -591,7 +580,7 @@ json MMSEngineDBFacade::updateMediaItem (
 
 			setSQL = "set " + setSQL + " ";
 
-			string sqlStatement = fmt::format( 
+			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_MediaItem {} "
 				"where mediaItemKey = {} "
 				// 2021-02: in case the user is not the owner and it is a shared workspace
@@ -601,45 +590,44 @@ json MMSEngineDBFacade::updateMediaItem (
 				//		So let's add again the below sql condition
 				"and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
-				setSQL, mediaItemKey, workspaceKey);
+				setSQL, mediaItemKey, workspaceKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			/*
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = __FILEREF__ + "no update was done"
 						+ ", workspaceKey: " + to_string(workspaceKey)
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
-                        + ", newTitle: " + newTitle
+						+ ", mediaItemKey: " + to_string(mediaItemKey)
+						+ ", newTitle: " + newTitle
 						+ ", newUserData: " + newUserData
 						+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->warn(errorMessage);
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", sqlStatement: " + sqlStatement
+				;
+				_logger->warn(errorMessage);
 
-                // throw runtime_error(errorMessage);
-            }
+				// throw runtime_error(errorMessage);
+			}
 			*/
 		}
 
 		if (uniqueNameModified)
-        {
+		{
 			bool allowUniqueNameOverride = false;
 
 			manageExternalUniqueName(
-				conn, &trans, workspaceKey,
-				mediaItemKey,
+				conn, &trans, workspaceKey, mediaItemKey,
 
-				allowUniqueNameOverride,
-				newUniqueName
+				allowUniqueNameOverride, newUniqueName
 			);
 		}
 
@@ -649,10 +637,11 @@ json MMSEngineDBFacade::updateMediaItem (
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -663,9 +652,10 @@ json MMSEngineDBFacade::updateMediaItem (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -678,9 +668,10 @@ json MMSEngineDBFacade::updateMediaItem (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -690,9 +681,10 @@ json MMSEngineDBFacade::updateMediaItem (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -703,12 +695,12 @@ json MMSEngineDBFacade::updateMediaItem (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -717,9 +709,10 @@ json MMSEngineDBFacade::updateMediaItem (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -730,10 +723,9 @@ json MMSEngineDBFacade::updateMediaItem (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
+
 	string uniqueName;
 	int64_t physicalPathKey = -1;
 	vector<int64_t> otherMediaItemsKey;
@@ -756,88 +748,75 @@ json MMSEngineDBFacade::updateMediaItem (
 	string jsonOrderBy;
 	json responseFields = nullptr;
 
-	json mediaItemsListRoot = getMediaItemsList (
-		workspaceKey, mediaItemKey, uniqueName, physicalPathKey,
-		otherMediaItemsKey,
-        start, rows,
-        contentTypePresent, contentType,
-        // startAndEndIngestionDatePresent,
-		startIngestionDate, endIngestionDate,
-        title, liveRecordingChunk,
-		recordingCode,
-		utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
-		jsonCondition,
-		tagsIn, tagsNotIn,
-        orderBy,
-		jsonOrderBy,
-		responseFields,
-		admin,
+	json mediaItemsListRoot = getMediaItemsList(
+		workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
+		// startAndEndIngestionDatePresent,
+		startIngestionDate, endIngestionDate, title, liveRecordingChunk, recordingCode, utcCutPeriodStartTimeInMilliSeconds,
+		utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy, responseFields, admin,
 		// 2022-12-18: MIK is just updated, let's take from master
-		true);
+		true
+	);
 
-    return mediaItemsListRoot;
+	return mediaItemsListRoot;
 }
 
-json MMSEngineDBFacade::updatePhysicalPath (
-	int64_t workspaceKey,
-	int64_t mediaItemKey,
-	int64_t physicalPathKey,
-	int64_t newRetentionInMinutes,
-	bool admin
-	)
+json MMSEngineDBFacade::updatePhysicalPath(
+	int64_t workspaceKey, int64_t mediaItemKey, int64_t physicalPathKey, int64_t newRetentionInMinutes, bool admin
+)
 {
-    json mediaItemRoot;
+	json mediaItemRoot;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        {
-            string sqlStatement = fmt::format( 
-                "WITH rows AS (update MMS_PhysicalPath set retentionInMinutes = {} "
-                "where physicalPathKey = {} and mediaItemKey = {} "
+	try
+	{
+		{
+			string sqlStatement = fmt::format(
+				"WITH rows AS (update MMS_PhysicalPath set retentionInMinutes = {} "
+				"where physicalPathKey = {} and mediaItemKey = {} "
 				"returning 1) select count(*) from rows",
-				newRetentionInMinutes == -1 ? "null" : to_string(newRetentionInMinutes),
-				physicalPathKey, mediaItemKey);
+				newRetentionInMinutes == -1 ? "null" : to_string(newRetentionInMinutes), physicalPathKey, mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			/*
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", physicalPathKey: " + to_string(physicalPathKey)
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = __FILEREF__ + "no update was done"
+						+ ", physicalPathKey: " + to_string(physicalPathKey)
 						+ ", newRetentionInMinutes: " + to_string(newRetentionInMinutes)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->warn(errorMessage);
+						+ ", rowsUpdated: " + to_string(rowsUpdated)
+						+ ", sqlStatement: " + sqlStatement
+				;
+				_logger->warn(errorMessage);
 
-                // throw runtime_error(errorMessage);
-            }
+				// throw runtime_error(errorMessage);
+			}
 			*/
-        }
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -848,9 +827,10 @@ json MMSEngineDBFacade::updatePhysicalPath (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -863,9 +843,10 @@ json MMSEngineDBFacade::updatePhysicalPath (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -875,9 +856,10 @@ json MMSEngineDBFacade::updatePhysicalPath (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -888,12 +870,12 @@ json MMSEngineDBFacade::updatePhysicalPath (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -902,9 +884,10 @@ json MMSEngineDBFacade::updatePhysicalPath (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -915,10 +898,9 @@ json MMSEngineDBFacade::updatePhysicalPath (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
+
 	string uniqueName;
 	int64_t localPhysicalPathKey = -1;
 	vector<int64_t> otherMediaItemsKey;
@@ -941,48 +923,31 @@ json MMSEngineDBFacade::updatePhysicalPath (
 	string jsonOrderBy;
 	json responseFields = nullptr;
 
-	json mediaItemsListRoot = getMediaItemsList (
-		workspaceKey, mediaItemKey, uniqueName, localPhysicalPathKey,
-		otherMediaItemsKey,
-        start, rows,
-        contentTypePresent, contentType,
-        // startAndEndIngestionDatePresent,
-		startIngestionDate, endIngestionDate,
-        title, liveRecordingChunk,
-		recordingCode,
-		utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
-		jsonCondition,
-		tagsIn, tagsNotIn,
-        orderBy,
-		jsonOrderBy,
-        responseFields,
-		admin,
+	json mediaItemsListRoot = getMediaItemsList(
+		workspaceKey, mediaItemKey, uniqueName, localPhysicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
+		// startAndEndIngestionDatePresent,
+		startIngestionDate, endIngestionDate, title, liveRecordingChunk, recordingCode, utcCutPeriodStartTimeInMilliSeconds,
+		utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy, responseFields, admin,
 		// 2022-12-18: MIK is just updated, let's take from master
-		true);
+		true
+	);
 
-    return mediaItemsListRoot;
+	return mediaItemsListRoot;
 }
 
-json MMSEngineDBFacade::getMediaItemsList (
-        int64_t workspaceKey, int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey,
-		vector<int64_t>& otherMediaItemsKey,
-        int start, int rows,
-        bool contentTypePresent, ContentType contentType,
-        // bool startAndEndIngestionDatePresent,
-		string startIngestionDate, string endIngestionDate,
-        string title, int liveRecordingChunk,
-		int64_t recordingCode,
-		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
-		string jsonCondition,
-		vector<string>& tagsIn, vector<string>& tagsNotIn,
-        string orderBy,			// i.e.: "", mi.ingestionDate desc, mi.title asc
-		string jsonOrderBy,		// i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
-        json responseFields,
-		bool admin,
-		bool fromMaster
+json MMSEngineDBFacade::getMediaItemsList(
+	int64_t workspaceKey, int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey, vector<int64_t> &otherMediaItemsKey, int start, int rows,
+	bool contentTypePresent, ContentType contentType,
+	// bool startAndEndIngestionDatePresent,
+	string startIngestionDate, string endIngestionDate, string title, int liveRecordingChunk, int64_t recordingCode,
+	int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, string jsonCondition, vector<string> &tagsIn,
+	vector<string> &tagsNotIn,
+	string orderBy,		// i.e.: "", mi.ingestionDate desc, mi.title asc
+	string jsonOrderBy, // i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
+	json responseFields, bool admin, bool fromMaster
 )
 {
-    json mediaItemsListRoot;
+	json mediaItemsListRoot;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -994,182 +959,171 @@ json MMSEngineDBFacade::getMediaItemsList (
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        string field;
-        
-        _logger->info(__FILEREF__ + "getMediaItemsList"
-            + ", workspaceKey: " + to_string(workspaceKey)
-            + ", mediaItemKey: " + to_string(mediaItemKey)
-            + ", uniqueName: " + uniqueName
-            + ", physicalPathKey: " + to_string(physicalPathKey)
-            + ", start: " + to_string(start)
-            + ", rows: " + to_string(rows)
-            + ", contentTypePresent: " + to_string(contentTypePresent)
-            + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
-            // + ", startAndEndIngestionDatePresent: " + to_string(startAndEndIngestionDatePresent)
-            + ", startIngestionDate: " + startIngestionDate
-            + ", endIngestionDate: " + endIngestionDate
-            + ", title: " + title
-            + ", tagsIn.size(): " + to_string(tagsIn.size())
-            + ", tagsNotIn.size(): " + to_string(tagsNotIn.size())
-            + ", otherMediaItemsKey.size(): " + to_string(otherMediaItemsKey.size())
-            + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
-            + ", recordingCode: " + to_string(recordingCode)
-            + ", jsonCondition: " + jsonCondition
-            + ", orderBy: " + orderBy
-            + ", jsonOrderBy: " + jsonOrderBy
-        );
-        
-        {
-            json requestParametersRoot;
-            
-            field = "start";
-            requestParametersRoot[field] = start;
+	try
+	{
+		string field;
 
-            field = "rows";
-            requestParametersRoot[field] = rows;
-            
-            if (mediaItemKey != -1)
-            {
-                field = "mediaItemKey";
-                requestParametersRoot[field] = mediaItemKey;
-            }
-            
-            if (uniqueName != "")
-            {
-                field = "uniqueName";
-                requestParametersRoot[field] = uniqueName;
-            }
-            
-            if (physicalPathKey != -1)
-            {
-                field = "physicalPathKey";
-                requestParametersRoot[field] = physicalPathKey;
-            }
+		_logger->info(
+			__FILEREF__ + "getMediaItemsList" + ", workspaceKey: " + to_string(workspaceKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
+			", uniqueName: " + uniqueName + ", physicalPathKey: " + to_string(physicalPathKey) + ", start: " + to_string(start) +
+			", rows: " + to_string(rows) + ", contentTypePresent: " + to_string(contentTypePresent) + ", contentType: " +
+			(contentTypePresent ? toString(contentType) : "")
+			// + ", startAndEndIngestionDatePresent: " + to_string(startAndEndIngestionDatePresent)
+			+ ", startIngestionDate: " + startIngestionDate + ", endIngestionDate: " + endIngestionDate + ", title: " + title +
+			", tagsIn.size(): " + to_string(tagsIn.size()) + ", tagsNotIn.size(): " + to_string(tagsNotIn.size()) +
+			", otherMediaItemsKey.size(): " + to_string(otherMediaItemsKey.size()) + ", liveRecordingChunk: " + to_string(liveRecordingChunk) +
+			", recordingCode: " + to_string(recordingCode) + ", jsonCondition: " + jsonCondition + ", orderBy: " + orderBy +
+			", jsonOrderBy: " + jsonOrderBy
+		);
 
-            if (contentTypePresent)
-            {
-                field = "contentType";
-                requestParametersRoot[field] = toString(contentType);
-            }
-            
-            if (startIngestionDate != "")
-            {
-                field = "startIngestionDate";
-                requestParametersRoot[field] = startIngestionDate;
-            }
-            if (endIngestionDate != "")
-            {
-                field = "endIngestionDate";
-                requestParametersRoot[field] = endIngestionDate;
-            }
-            
-            if (title != "")
-            {
-                field = "title";
-                requestParametersRoot[field] = title;
-            }
+		{
+			json requestParametersRoot;
 
-            if (tagsIn.size() > 0)
+			field = "start";
+			requestParametersRoot[field] = start;
+
+			field = "rows";
+			requestParametersRoot[field] = rows;
+
+			if (mediaItemKey != -1)
+			{
+				field = "mediaItemKey";
+				requestParametersRoot[field] = mediaItemKey;
+			}
+
+			if (uniqueName != "")
+			{
+				field = "uniqueName";
+				requestParametersRoot[field] = uniqueName;
+			}
+
+			if (physicalPathKey != -1)
+			{
+				field = "physicalPathKey";
+				requestParametersRoot[field] = physicalPathKey;
+			}
+
+			if (contentTypePresent)
+			{
+				field = "contentType";
+				requestParametersRoot[field] = toString(contentType);
+			}
+
+			if (startIngestionDate != "")
+			{
+				field = "startIngestionDate";
+				requestParametersRoot[field] = startIngestionDate;
+			}
+			if (endIngestionDate != "")
+			{
+				field = "endIngestionDate";
+				requestParametersRoot[field] = endIngestionDate;
+			}
+
+			if (title != "")
+			{
+				field = "title";
+				requestParametersRoot[field] = title;
+			}
+
+			if (tagsIn.size() > 0)
 			{
 				json tagsRoot = json::array();
 
 				for (int tagIndex = 0; tagIndex < tagsIn.size(); tagIndex++)
 					tagsRoot.push_back(tagsIn[tagIndex]);
 
-                field = "tagsIn";
-                requestParametersRoot[field] = tagsRoot;
+				field = "tagsIn";
+				requestParametersRoot[field] = tagsRoot;
 			}
 
-            if (tagsNotIn.size() > 0)
+			if (tagsNotIn.size() > 0)
 			{
 				json tagsRoot = json::array();
 
 				for (int tagIndex = 0; tagIndex < tagsNotIn.size(); tagIndex++)
 					tagsRoot.push_back(tagsNotIn[tagIndex]);
 
-                field = "tagsNotIn";
-                requestParametersRoot[field] = tagsRoot;
+				field = "tagsNotIn";
+				requestParametersRoot[field] = tagsRoot;
 			}
 
-            if (otherMediaItemsKey.size() > 0)
+			if (otherMediaItemsKey.size() > 0)
 			{
 				json otherMediaItemsKeyRoot = json::array();
 
 				for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
 					otherMediaItemsKeyRoot.push_back(otherMediaItemsKey[mediaItemIndex]);
 
-                field = "otherMediaItemsKey";
-                requestParametersRoot[field] = otherMediaItemsKeyRoot;
+				field = "otherMediaItemsKey";
+				requestParametersRoot[field] = otherMediaItemsKeyRoot;
 			}
 
-            if (liveRecordingChunk != -1)
-            {
-                field = "liveRecordingChunk";
-                requestParametersRoot[field] = liveRecordingChunk;
-            }
+			if (liveRecordingChunk != -1)
+			{
+				field = "liveRecordingChunk";
+				requestParametersRoot[field] = liveRecordingChunk;
+			}
 
-            if (jsonCondition != "")
-            {
-                field = "jsonCondition";
-                requestParametersRoot[field] = jsonCondition;
-            }
+			if (jsonCondition != "")
+			{
+				field = "jsonCondition";
+				requestParametersRoot[field] = jsonCondition;
+			}
 
-            if (recordingCode != -1)
-            {
-                field = "recordingCode";
-                requestParametersRoot[field] = recordingCode;
-            }
+			if (recordingCode != -1)
+			{
+				field = "recordingCode";
+				requestParametersRoot[field] = recordingCode;
+			}
 
-            if (orderBy != "")
-            {
-                field = "orderBy";
-                requestParametersRoot[field] = orderBy;
-            }
+			if (orderBy != "")
+			{
+				field = "orderBy";
+				requestParametersRoot[field] = orderBy;
+			}
 
-            if (jsonOrderBy != "")
-            {
-                field = "jsonOrderBy";
-                requestParametersRoot[field] = jsonOrderBy;
-            }
+			if (jsonOrderBy != "")
+			{
+				field = "jsonOrderBy";
+				requestParametersRoot[field] = jsonOrderBy;
+			}
 
-            field = "requestParameters";
-            mediaItemsListRoot[field] = requestParametersRoot;
-        }
-        
-        int64_t newMediaItemKey = mediaItemKey;
-        if (mediaItemKey == -1)
-        {
+			field = "requestParameters";
+			mediaItemsListRoot[field] = requestParametersRoot;
+		}
+
+		int64_t newMediaItemKey = mediaItemKey;
+		if (mediaItemKey == -1)
+		{
 			if (physicalPathKey != -1)
 			{
-				string sqlStatement = fmt::format( 
-					"select mediaItemKey from MMS_PhysicalPath where physicalPathKey = {}",
-					physicalPathKey);
+				string sqlStatement = fmt::format("select mediaItemKey from MMS_PhysicalPath where physicalPathKey = {}", physicalPathKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.exec(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 				if (!empty(res))
 					newMediaItemKey = res[0]["mediaItemKey"].as<int64_t>();
 				else
 				{
-					string errorMessage (__FILEREF__ + "getMediaItemsList: requested physicalPathKey does not exist"
-						+ ", physicalPathKey: " + to_string(physicalPathKey)
-						);
+					string errorMessage(
+						__FILEREF__ + "getMediaItemsList: requested physicalPathKey does not exist" +
+						", physicalPathKey: " + to_string(physicalPathKey)
+					);
 					_logger->error(errorMessage);
 
 					// throw runtime_error(errorMessage);
-					newMediaItemKey = 0;	// let's force a MIK that does not exist
+					newMediaItemKey = 0; // let's force a MIK that does not exist
 				}
 			}
 			else if (uniqueName != "")
@@ -1177,35 +1131,36 @@ json MMSEngineDBFacade::getMediaItemsList (
 				string sqlStatement = fmt::format(
 					"select mediaItemKey from MMS_ExternalUniqueName "
 					"where workspaceKey = {} and uniqueName = {}",
-					workspaceKey, trans.quote(uniqueName));
+					workspaceKey, trans.quote(uniqueName)
+				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.exec(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 				if (!empty(res))
 					newMediaItemKey = res[0]["mediaItemKey"].as<int64_t>();
 				else
 				{
-					string errorMessage (__FILEREF__ + "getMediaItemsList: requested uniqueName does not exist"
-						+ ", workspaceKey: " + to_string(workspaceKey)
-						+ ", uniqueName: " + uniqueName
-						);
+					string errorMessage(
+						__FILEREF__ + "getMediaItemsList: requested uniqueName does not exist" + ", workspaceKey: " + to_string(workspaceKey) +
+						", uniqueName: " + uniqueName
+					);
 					_logger->error(errorMessage);
 
 					// throw runtime_error(errorMessage);
-					newMediaItemKey = 0;	// let's force a MIK that does not exist
+					newMediaItemKey = 0; // let's force a MIK that does not exist
 				}
 			}
-        }
+		}
 
-        string sqlWhere;
+		string sqlWhere;
 		sqlWhere = fmt::format("where mi.workspaceKey = {} and mi.markedAsRemoved = false ", workspaceKey);
-        if (newMediaItemKey != -1)
+		if (newMediaItemKey != -1)
 		{
 			if (otherMediaItemsKey.size() > 0)
 			{
@@ -1218,29 +1173,29 @@ json MMSEngineDBFacade::getMediaItemsList (
 			else
 				sqlWhere += fmt::format("and mi.mediaItemKey = {} ", newMediaItemKey);
 		}
-        if (contentTypePresent)
-            sqlWhere += fmt::format("and mi.contentType = {} ", trans.quote(toString(contentType)));
-        if (startIngestionDate != "")
-            sqlWhere += fmt::format("and mi.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
-				trans.quote(startIngestionDate));
-        if (endIngestionDate != "")
-            sqlWhere += fmt::format("and mi.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
-				trans.quote(endIngestionDate));
-        if (title != "")
-            sqlWhere += fmt::format("and LOWER(mi.title) like LOWER({}) ", trans.quote("%" + title + "%"));		// LOWER was used because the column is using utf8_bin that is case sensitive
+		if (contentTypePresent)
+			sqlWhere += fmt::format("and mi.contentType = {} ", trans.quote(toString(contentType)));
+		if (startIngestionDate != "")
+			sqlWhere += fmt::format("and mi.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
+		if (endIngestionDate != "")
+			sqlWhere += fmt::format("and mi.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
+		if (title != "")
+			sqlWhere += fmt::format(
+				"and LOWER(mi.title) like LOWER({}) ", trans.quote("%" + title + "%")
+			); // LOWER was used because the column is using utf8_bin that is case sensitive
 		/*
 		 * liveRecordingChunk:
 		 * -1: no condition in select
 		 *  0: look for NO liveRecordingChunk
 		 *  1: look for liveRecordingChunk
 		 */
-        if (contentTypePresent && contentType == ContentType::Video && liveRecordingChunk != -1)
+		if (contentTypePresent && contentType == ContentType::Video && liveRecordingChunk != -1)
 		{
 			if (liveRecordingChunk == 0)
 				sqlWhere += ("and liveRecordingChunk_virtual = false ");
 			else if (liveRecordingChunk == 1)
 				sqlWhere += ("and liveRecordingChunk_virtual = true ");
-				// sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
+			// sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 		}
 		if (recordingCode != -1)
 			sqlWhere += fmt::format("and mi.recordingCode_virtual = {} ", recordingCode);
@@ -1251,27 +1206,33 @@ json MMSEngineDBFacade::getMediaItemsList (
 			// PS: Playout Start, PE: Playout End
 			// --------------SC--------------SC--------------SC--------------SC
 			//                       PS-------------------------------PE
-			
+
 			sqlWhere += ("and ( ");
 
 			// first chunk of the cut
 			// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodStartTimeInMilliSeconds
-			sqlWhere += fmt::format("(mi.utcStartTimeInMilliSecs_virtual <= {} and {} < mi.utcEndTimeInMilliSecs_virtual) ",
-				utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodStartTimeInMilliSeconds);
+			sqlWhere += fmt::format(
+				"(mi.utcStartTimeInMilliSecs_virtual <= {} and {} < mi.utcEndTimeInMilliSecs_virtual) ", utcCutPeriodStartTimeInMilliSeconds,
+				utcCutPeriodStartTimeInMilliSeconds
+			);
 
 			sqlWhere += ("or ");
 
 			// internal chunk of the cut
 			// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
-			sqlWhere += fmt::format("({} <= mi.utcStartTimeInMilliSecs_virtual and mi.utcEndTimeInMilliSecs_virtual <= {}) ",
-				utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+			sqlWhere += fmt::format(
+				"({} <= mi.utcStartTimeInMilliSecs_virtual and mi.utcEndTimeInMilliSecs_virtual <= {}) ", utcCutPeriodStartTimeInMilliSeconds,
+				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+			);
 
 			sqlWhere += ("or ");
 
 			// last chunk of the cut
 			// utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
-			sqlWhere += fmt::format("(mi.utcStartTimeInMilliSecs_virtual < {} and {} <= mi.utcEndTimeInMilliSecs_virtual) ",
-				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond);
+			sqlWhere += fmt::format(
+				"(mi.utcStartTimeInMilliSecs_virtual < {} and {} <= mi.utcEndTimeInMilliSecs_virtual) ",
+				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+			);
 
 			sqlWhere += (") ");
 		}
@@ -1291,18 +1252,16 @@ json MMSEngineDBFacade::getMediaItemsList (
 			sqlWhere += ("and " + jsonCondition + " ");
 
 		int64_t numFound;
-        {
-			string sqlStatement = fmt::format( 
-				"select count(*) from MMS_MediaItem mi {}",
-				sqlWhere);
+		{
+			string sqlStatement = fmt::format("select count(*) from MMS_MediaItem mi {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			numFound = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 
@@ -1316,7 +1275,7 @@ json MMSEngineDBFacade::getMediaItemsList (
 		else // if (orderBy != "" && jsonOrderBy != "")
 			orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 
-		string sqlStatement = fmt::format( 
+		string sqlStatement = fmt::format(
 			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, "
 			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedIngestionDate, "
 			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedStartPublishing, "
@@ -1324,31 +1283,31 @@ json MMSEngineDBFacade::getMediaItemsList (
 			"to_char(mi.willBeRemovedAt_virtual, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedWillBeRemovedAt, "
 			"mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {} "
 			"limit {} offset {}",
-			sqlWhere, orderByCondition, rows, start);
+			sqlWhere, orderByCondition, rows, start
+		);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		result res = trans.exec(sqlStatement);
 
-        json responseRoot;
-        {
+		json responseRoot;
+		{
 			field = "numFound";
 			responseRoot[field] = numFound;
-        }
+		}
 
-        json mediaItemsRoot = json::array();
-        {
+		json mediaItemsRoot = json::array();
+		{
 			chrono::system_clock::time_point startSqlResultSet = chrono::system_clock::now();
-			chrono::milliseconds internalSqlDuration (0);
-			for (auto row: res)
-            {
-                json mediaItemRoot;
+			chrono::milliseconds internalSqlDuration(0);
+			for (auto row : res)
+			{
+				json mediaItemRoot;
 
 				int64_t localMediaItemKey = row["mediaItemKey"].as<int64_t>();
 
-                field = "mediaItemKey";
-                mediaItemRoot[field] = localMediaItemKey;
+				field = "mediaItemKey";
+				mediaItemRoot[field] = localMediaItemKey;
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "title"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "title"))
 				{
 					string localTitle = row["title"].as<string>();
 
@@ -1363,8 +1322,7 @@ json MMSEngineDBFacade::getMediaItemsList (
 					mediaItemRoot[field] = localTitle;
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "deliveryFileName"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "deliveryFileName"))
 				{
 					field = "deliveryFileName";
 					if (row["deliveryFileName"].is_null())
@@ -1373,8 +1331,7 @@ json MMSEngineDBFacade::getMediaItemsList (
 						mediaItemRoot[field] = row["deliveryFileName"].as<string>();
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "ingester"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "ingester"))
 				{
 					field = "ingester";
 					if (row["ingester"].is_null())
@@ -1383,8 +1340,7 @@ json MMSEngineDBFacade::getMediaItemsList (
 						mediaItemRoot[field] = row["ingester"].as<string>();
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "userData"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "userData"))
 				{
 					field = "userData";
 					if (row["userData"].is_null())
@@ -1393,51 +1349,43 @@ json MMSEngineDBFacade::getMediaItemsList (
 						mediaItemRoot[field] = row["userData"].as<string>();
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "ingestionDate"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "ingestionDate"))
 				{
 					field = "ingestionDate";
 					mediaItemRoot[field] = row["formattedIngestionDate"].as<string>();
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "startPublishing"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "startPublishing"))
 				{
 					field = "startPublishing";
 					mediaItemRoot[field] = row["formattedStartPublishing"].as<string>();
 				}
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "endPublishing"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "endPublishing"))
 				{
 					field = "endPublishing";
 					mediaItemRoot[field] = row["formattedEndPublishing"].as<string>();
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "willBeRemovedAt"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "willBeRemovedAt"))
 				{
 					field = "willBeRemovedAt";
 					mediaItemRoot[field] = row["formattedWillBeRemovedAt"].as<string>();
 				}
 
-				ContentType contentType = MMSEngineDBFacade::toContentType(
-					row["contentType"].as<string>());
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "contentType"))
+				ContentType contentType = MMSEngineDBFacade::toContentType(row["contentType"].as<string>());
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "contentType"))
 				{
 					field = "contentType";
 					mediaItemRoot[field] = row["contentType"].as<string>();
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "retentionInMinutes"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "retentionInMinutes"))
 				{
 					field = "retentionInMinutes";
 					mediaItemRoot[field] = row["retentionInMinutes"].as<int64_t>();
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "tags"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "tags"))
 				{
 					json mediaItemTagsRoot = json::array();
 
@@ -1450,28 +1398,27 @@ json MMSEngineDBFacade::getMediaItemsList (
 							elem = tagsArray.get_next();
 							if (elem.first == pqxx::array_parser::juncture::string_value)
 								mediaItemTagsRoot.push_back(elem.second);
-						}
-						while (elem.first != pqxx::array_parser::juncture::done);
+						} while (elem.first != pqxx::array_parser::juncture::done);
 					}
-                   
+
 					field = "tags";
 					mediaItemRoot[field] = mediaItemTagsRoot;
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "uniqueName"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "uniqueName"))
 				{
 					{
-						string sqlStatement = fmt::format( 
+						string sqlStatement = fmt::format(
 							"select uniqueName from MMS_ExternalUniqueName "
 							"where workspaceKey = {} and mediaItemKey = {}",
-							workspaceKey, localMediaItemKey);
+							workspaceKey, localMediaItemKey
+						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						result res = trans.exec(sqlStatement);
-						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
-							chrono::system_clock::now() - startSql);
+						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 						internalSqlDuration += sqlDuration;
-						SPDLOG_INFO("SQL statement"
+						SPDLOG_INFO(
+							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
@@ -1491,23 +1438,23 @@ json MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				// CrossReferences
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "crossReferences"))
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "crossReferences"))
 				{
 					// if (contentType == ContentType::Video)
 					{
 						json mediaItemReferencesRoot = json::array();
-                    
+
 						{
-							string sqlStatement = fmt::format( 
+							string sqlStatement = fmt::format(
 								"select sourceMediaItemKey, type, parameters "
 								"from MMS_CrossReference "
 								"where targetMediaItemKey = {}",
 								// "where type = 'imageOfVideo' and targetMediaItemKey = ?";
-								localMediaItemKey);
+								localMediaItemKey
+							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							result res = trans.exec(sqlStatement);
-							for (auto row: res)
+							for (auto row : res)
 							{
 								json crossReferenceRoot;
 
@@ -1522,8 +1469,7 @@ json MMSEngineDBFacade::getMediaItemsList (
 									string crossReferenceParameters = row["parameters"].as<string>();
 									if (crossReferenceParameters != "")
 									{
-										json crossReferenceParametersRoot
-											= JSONUtils::toJson(crossReferenceParameters);
+										json crossReferenceParametersRoot = JSONUtils::toJson(crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;
@@ -1532,27 +1478,28 @@ json MMSEngineDBFacade::getMediaItemsList (
 
 								mediaItemReferencesRoot.push_back(crossReferenceRoot);
 							}
-							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
-								chrono::system_clock::now() - startSql);
+							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 							internalSqlDuration += sqlDuration;
-							SPDLOG_INFO("SQL statement"
+							SPDLOG_INFO(
+								"SQL statement"
 								", sqlStatement: @{}@"
 								", getConnectionId: @{}@"
 								", elapsed (millisecs): @{}@",
 								sqlStatement, conn->getConnectionId(), sqlDuration.count()
 							);
 						}
-                    
+
 						{
-							string sqlStatement = fmt::format( 
+							string sqlStatement = fmt::format(
 								"select type, targetMediaItemKey, parameters "
 								"from MMS_CrossReference "
 								"where sourceMediaItemKey = {}",
 								// "where type = 'imageOfVideo' and targetMediaItemKey = ?";
-								localMediaItemKey);
+								localMediaItemKey
+							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							result res = trans.exec(sqlStatement);
-							for (auto row: res)
+							for (auto row : res)
 							{
 								json crossReferenceRoot;
 
@@ -1567,8 +1514,7 @@ json MMSEngineDBFacade::getMediaItemsList (
 									string crossReferenceParameters = row["parameters"].as<string>();
 									if (crossReferenceParameters != "")
 									{
-										json crossReferenceParametersRoot
-											= JSONUtils::toJson(crossReferenceParameters);
+										json crossReferenceParametersRoot = JSONUtils::toJson(crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;
@@ -1577,10 +1523,10 @@ json MMSEngineDBFacade::getMediaItemsList (
 
 								mediaItemReferencesRoot.push_back(crossReferenceRoot);
 							}
-							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
-								chrono::system_clock::now() - startSql);
+							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 							internalSqlDuration += sqlDuration;
-							SPDLOG_INFO("SQL statement"
+							SPDLOG_INFO(
+								"SQL statement"
 								", sqlStatement: @{}@"
 								", getConnectionId: @{}@"
 								", elapsed (millisecs): @{}@",
@@ -1598,49 +1544,49 @@ json MMSEngineDBFacade::getMediaItemsList (
 					*/
 				}
 
-				if (responseFields == nullptr
-					|| JSONUtils::isMetadataPresent(responseFields, "physicalPaths"))
-                {
-                    json mediaItemProfilesRoot = json::array();
-                    
-                    string sqlStatement = fmt::format( 
-                        "select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage, "
+				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "physicalPaths"))
+				{
+					json mediaItemProfilesRoot = json::array();
+
+					string sqlStatement = fmt::format(
+						"select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage, "
 						"deliveryInfo ->> 'externalDeliveryTechnology' as externalDeliveryTechnology, "
 						"deliveryInfo ->> 'externalDeliveryURL' as externalDeliveryURL, "
 						"metaData, fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, retentionInMinutes, "
 						"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
-                        "from MMS_PhysicalPath where mediaItemKey = {}",
-						localMediaItemKey);
+						"from MMS_PhysicalPath where mediaItemKey = {}",
+						localMediaItemKey
+					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
-					for (auto row: res)
-                    {
-                        json profileRoot;
-                        
-                        int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
+					for (auto row : res)
+					{
+						json profileRoot;
 
-                        field = "physicalPathKey";
-                        profileRoot[field] = physicalPathKey;
+						int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
 
-                        field = "durationInMilliSeconds";
+						field = "physicalPathKey";
+						profileRoot[field] = physicalPathKey;
+
+						field = "durationInMilliSeconds";
 						if (row["durationInMilliSeconds"].is_null())
 							profileRoot[field] = nullptr;
 						else
 							profileRoot[field] = row["durationInMilliSeconds"].as<int64_t>();
 
-                        field = "bitRate";
+						field = "bitRate";
 						if (row["bitRate"].is_null())
 							profileRoot[field] = nullptr;
 						else
 							profileRoot[field] = row["bitRate"].as<int64_t>();
 
-                        field = "fileFormat";
-                        string fileName = row["fileName"].as<string>();
-                        size_t extensionIndex = fileName.find_last_of(".");
+						field = "fileFormat";
+						string fileName = row["fileName"].as<string>();
+						size_t extensionIndex = fileName.find_last_of(".");
 						string fileExtension;
-                        if (extensionIndex == string::npos)
-                            profileRoot[field] = nullptr;
-                        else
+						if (extensionIndex == string::npos)
+							profileRoot[field] = nullptr;
+						else
 						{
 							fileExtension = fileName.substr(extensionIndex + 1);
 							if (fileExtension == "m3u8")
@@ -1672,30 +1618,29 @@ json MMSEngineDBFacade::getMediaItemsList (
 
 						field = "externalDeliveryTechnology";
 						string externalDeliveryTechnology;
-                        if (row["externalDeliveryTechnology"].is_null())
-                            profileRoot[field] = nullptr;
-                        else
+						if (row["externalDeliveryTechnology"].is_null())
+							profileRoot[field] = nullptr;
+						else
 						{
 							externalDeliveryTechnology = row["externalDeliveryTechnology"].as<string>();
-                            profileRoot[field] = externalDeliveryTechnology;
+							profileRoot[field] = externalDeliveryTechnology;
 						}
 
 						field = "externalDeliveryURL";
-                        if (row["externalDeliveryURL"].is_null())
-                            profileRoot[field] = nullptr;
-                        else
-                            profileRoot[field] = row["externalDeliveryURL"].as<string>();
+						if (row["externalDeliveryURL"].is_null())
+							profileRoot[field] = nullptr;
+						else
+							profileRoot[field] = row["externalDeliveryURL"].as<string>();
 
-                        field = "encodingProfileKey";
-                        if (row["encodingProfileKey"].is_null())
+						field = "encodingProfileKey";
+						if (row["encodingProfileKey"].is_null())
 						{
-                            profileRoot[field] = nullptr;
+							profileRoot[field] = nullptr;
 
 							field = "deliveryTechnology";
 							if (externalDeliveryTechnology == "hls")
 							{
-								profileRoot[field] =
-									MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming);
+								profileRoot[field] = MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming);
 							}
 							else
 							{
@@ -1705,66 +1650,62 @@ json MMSEngineDBFacade::getMediaItemsList (
 							}
 
 							field = "encodingProfileLabel";
-                            profileRoot[field] = nullptr;
+							profileRoot[field] = nullptr;
 						}
-                        else
+						else
 						{
 							int64_t encodingProfileKey = row["encodingProfileKey"].as<int64_t>();
 
-                            profileRoot[field] = encodingProfileKey;
+							profileRoot[field] = encodingProfileKey;
 
 							string label;
 							MMSEngineDBFacade::ContentType contentType;
 							MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
-                            tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
-                                encodingProfileDetails = getEncodingProfileDetailsByKey(workspaceKey, encodingProfileKey);
-							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
-								chrono::system_clock::now() - startMethod);
+							tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string> encodingProfileDetails =
+								getEncodingProfileDetailsByKey(workspaceKey, encodingProfileKey);
+							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 
-                            tie(label, contentType, deliveryTechnology, ignore) = encodingProfileDetails;
+							tie(label, contentType, deliveryTechnology, ignore) = encodingProfileDetails;
 
 							field = "deliveryTechnology";
-                            profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
+							profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
 
 							field = "encodingProfileLabel";
-                            profileRoot[field] = label;
+							profileRoot[field] = label;
 						}
 
-                        field = "sizeInBytes";
-                        profileRoot[field] = row["sizeInBytes"].as<int64_t>();
+						field = "sizeInBytes";
+						profileRoot[field] = row["sizeInBytes"].as<int64_t>();
 
-                        field = "creationDate";
-                        profileRoot[field] = row["creationDate"].as<string>();
+						field = "creationDate";
+						profileRoot[field] = row["creationDate"].as<string>();
 
-                        field = "retentionInMinutes";
+						field = "retentionInMinutes";
 						if (row["retentionInMinutes"].is_null())
 							profileRoot[field] = nullptr;
 						else
 							profileRoot[field] = row["retentionInMinutes"].as<int64_t>();
 
-                        if (contentType == ContentType::Video)
-                        {
+						if (contentType == ContentType::Video)
+						{
 							vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
 							vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
-							getVideoDetails(localMediaItemKey, physicalPathKey, fromMaster,
-								videoTracks, audioTracks);
-							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
-								chrono::system_clock::now() - startMethod);
-                            _logger->info(__FILEREF__ + "getVideoDetails"
-                                + ", mediaItemKey: " + to_string(localMediaItemKey)
-                                + ", physicalPathKey: " + to_string(physicalPathKey)
-                                + ", videoTracks.size: " + to_string(videoTracks.size())
-                                + ", audioTracks.size: " + to_string(audioTracks.size())
+							getVideoDetails(localMediaItemKey, physicalPathKey, fromMaster, videoTracks, audioTracks);
+							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
+							_logger->info(
+								__FILEREF__ + "getVideoDetails" + ", mediaItemKey: " + to_string(localMediaItemKey) +
+								", physicalPathKey: " + to_string(physicalPathKey) + ", videoTracks.size: " + to_string(videoTracks.size()) +
+								", audioTracks.size: " + to_string(audioTracks.size())
 							);
 
 							{
 								json videoTracksRoot = json::array();
 
-								for(tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack: videoTracks)
+								for (tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack : videoTracks)
 								{
 									int64_t videoTrackKey;
 									int trackIndex;
@@ -1776,8 +1717,8 @@ json MMSEngineDBFacade::getMediaItemsList (
 									long bitRate;
 									string profile;
 
-									tie(videoTrackKey, trackIndex, durationInMilliSeconds, width, height,
-										avgFrameRate, codecName, bitRate, profile) = videoTrack;
+									tie(videoTrackKey, trackIndex, durationInMilliSeconds, width, height, avgFrameRate, codecName, bitRate, profile) =
+										videoTrack;
 
 									json videoTrackRoot;
 
@@ -1803,7 +1744,7 @@ json MMSEngineDBFacade::getMediaItemsList (
 									videoTrackRoot[field] = codecName;
 
 									field = "bitRate";
-									videoTrackRoot[field] = (int64_t) bitRate;
+									videoTrackRoot[field] = (int64_t)bitRate;
 
 									field = "profile";
 									videoTrackRoot[field] = profile;
@@ -1818,7 +1759,7 @@ json MMSEngineDBFacade::getMediaItemsList (
 							{
 								json audioTracksRoot = json::array();
 
-								for(tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack: audioTracks)
+								for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack : audioTracks)
 								{
 									int64_t audioTrackKey;
 									int trackIndex;
@@ -1829,8 +1770,8 @@ json MMSEngineDBFacade::getMediaItemsList (
 									int channels;
 									string language;
 
-									tie(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate, codecName,
-										sampleRate, channels, language) = audioTrack;
+									tie(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate, codecName, sampleRate, channels, language) =
+										audioTrack;
 
 									json audioTrackRoot;
 
@@ -1844,16 +1785,16 @@ json MMSEngineDBFacade::getMediaItemsList (
 									audioTrackRoot[field] = durationInMilliSeconds;
 
 									field = "bitRate";
-									audioTrackRoot[field] = (int64_t) bitRate;
+									audioTrackRoot[field] = (int64_t)bitRate;
 
 									field = "codecName";
 									audioTrackRoot[field] = codecName;
 
 									field = "sampleRate";
-									audioTrackRoot[field] = (int64_t) sampleRate;
+									audioTrackRoot[field] = (int64_t)sampleRate;
 
 									field = "channels";
-									audioTrackRoot[field] = (int64_t) channels;
+									audioTrackRoot[field] = (int64_t)channels;
 
 									field = "language";
 									audioTrackRoot[field] = language;
@@ -1864,21 +1805,19 @@ json MMSEngineDBFacade::getMediaItemsList (
 								field = "audioTracks";
 								profileRoot[field] = audioTracksRoot;
 							}
-                        }
-                        else if (contentType == ContentType::Audio)
-                        {
+						}
+						else if (contentType == ContentType::Audio)
+						{
 							vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
 							getAudioDetails(localMediaItemKey, physicalPathKey, fromMaster, audioTracks);
-							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
-								chrono::system_clock::now() - startMethod);
+							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 
 							{
 								json audioTracksRoot = json::array();
 
-								for(tuple<int64_t, int, int64_t, long, string, long, int, string>
-									audioTrack: audioTracks)
+								for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack : audioTracks)
 								{
 									int64_t audioTrackKey;
 									int trackIndex;
@@ -1889,8 +1828,8 @@ json MMSEngineDBFacade::getMediaItemsList (
 									int channels;
 									string language;
 
-									tie(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate,
-										codecName, sampleRate, channels, language) = audioTrack;
+									tie(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate, codecName, sampleRate, channels, language) =
+										audioTrack;
 
 									json audioTrackRoot;
 
@@ -1904,16 +1843,16 @@ json MMSEngineDBFacade::getMediaItemsList (
 									audioTrackRoot[field] = durationInMilliSeconds;
 
 									field = "bitRate";
-									audioTrackRoot[field] = (int64_t) bitRate;
+									audioTrackRoot[field] = (int64_t)bitRate;
 
 									field = "codecName";
 									audioTrackRoot[field] = codecName;
 
 									field = "sampleRate";
-									audioTrackRoot[field] = (int64_t) sampleRate;
+									audioTrackRoot[field] = (int64_t)sampleRate;
 
 									field = "channels";
-									audioTrackRoot[field] = (int64_t) channels;
+									audioTrackRoot[field] = (int64_t)channels;
 
 									field = "language";
 									audioTrackRoot[field] = language;
@@ -1924,92 +1863,88 @@ json MMSEngineDBFacade::getMediaItemsList (
 								field = "audioTracks";
 								profileRoot[field] = audioTracksRoot;
 							}
-                        }
-                        else if (contentType == ContentType::Image)
-                        {
-                            int width;
-                            int height;
-                            string format;
-                            int quality;
+						}
+						else if (contentType == ContentType::Image)
+						{
+							int width;
+							int height;
+							string format;
+							int quality;
 
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
-                            tuple<int,int,string,int> imageDetails = getImageDetails(localMediaItemKey,
-								physicalPathKey, fromMaster);
-							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(                       
-								chrono::system_clock::now() - startMethod);
+							tuple<int, int, string, int> imageDetails = getImageDetails(localMediaItemKey, physicalPathKey, fromMaster);
+							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 
-                            tie(width, height, format, quality) = imageDetails;
+							tie(width, height, format, quality) = imageDetails;
 
-                            json imageDetailsRoot;
+							json imageDetailsRoot;
 
-                            field = "width";
-                            imageDetailsRoot[field] = width;
+							field = "width";
+							imageDetailsRoot[field] = width;
 
-                            field = "height";
-                            imageDetailsRoot[field] = height;
+							field = "height";
+							imageDetailsRoot[field] = height;
 
-                            field = "format";
-                            imageDetailsRoot[field] = format;
+							field = "format";
+							imageDetailsRoot[field] = format;
 
-                            field = "quality";
-                            imageDetailsRoot[field] = quality;
+							field = "quality";
+							imageDetailsRoot[field] = quality;
 
+							field = "imageDetails";
+							profileRoot[field] = imageDetailsRoot;
+						}
+						else
+						{
+							string errorMessage = __FILEREF__ + "ContentType unmanaged" + ", mediaItemKey: " + to_string(localMediaItemKey) +
+												  ", sqlStatement: " + sqlStatement;
+							_logger->error(errorMessage);
 
-                            field = "imageDetails";
-                            profileRoot[field] = imageDetailsRoot;
-                        }
-                        else
-                        {
-                            string errorMessage = __FILEREF__ + "ContentType unmanaged"
-                                + ", mediaItemKey: " + to_string(localMediaItemKey)
-                                + ", sqlStatement: " + sqlStatement
-                            ;
-                            _logger->error(errorMessage);
+							throw runtime_error(errorMessage);
+						}
 
-                            throw runtime_error(errorMessage);  
-                        }
-
-                        mediaItemProfilesRoot.push_back(profileRoot);
-                    }
-					chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
-                        chrono::system_clock::now() - startSql);
+						mediaItemProfilesRoot.push_back(profileRoot);
+					}
+					chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 					internalSqlDuration += sqlDuration;
-					SPDLOG_INFO("SQL statement"
+					SPDLOG_INFO(
+						"SQL statement"
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
 						", elapsed (millisecs): @{}@",
 						sqlStatement, conn->getConnectionId(), sqlDuration.count()
 					);
-                    
-                    field = "physicalPaths";
-                    mediaItemRoot[field] = mediaItemProfilesRoot;
-                }
 
-                mediaItemsRoot.push_back(mediaItemRoot);
-            }
-			SPDLOG_INFO("SQL statement"
+					field = "physicalPaths";
+					mediaItemRoot[field] = mediaItemProfilesRoot;
+				}
+
+				mediaItemsRoot.push_back(mediaItemRoot);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(
-					(chrono::system_clock::now() - startSql) - internalSqlDuration).count()
+				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 			);
-        }
+		}
 
-        field = "mediaItems";
-        responseRoot[field] = mediaItemsRoot;
+		field = "mediaItems";
+		responseRoot[field] = mediaItemsRoot;
 
-        field = "response";
-        mediaItemsListRoot[field] = responseRoot;
+		field = "response";
+		mediaItemsListRoot[field] = responseRoot;
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2020,9 +1955,10 @@ json MMSEngineDBFacade::getMediaItemsList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2035,9 +1971,10 @@ json MMSEngineDBFacade::getMediaItemsList (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2047,9 +1984,10 @@ json MMSEngineDBFacade::getMediaItemsList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2060,12 +1998,12 @@ json MMSEngineDBFacade::getMediaItemsList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2074,9 +2012,10 @@ json MMSEngineDBFacade::getMediaItemsList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2087,21 +2026,20 @@ json MMSEngineDBFacade::getMediaItemsList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 
-    return mediaItemsListRoot;
+	return mediaItemsListRoot;
 }
 
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(
-    int64_t referenceMediaItemKey,
-	// encodingProfileKey == -1 means it is requested the source file (the one having 'ts' file format and bigger size in case there are more than one)
-	int64_t encodingProfileKey,
-	bool warningIfMissing, bool fromMaster
+	int64_t referenceMediaItemKey,
+	// encodingProfileKey == -1 means it is requested the source file (the one having 'ts' file format and bigger size in case there are more than
+	// one)
+	int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster
 )
 {
-    int64_t physicalPathKey = -1;
+	int64_t physicalPathKey = -1;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2113,45 +2051,44 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		if (encodingProfileKey != -1)
-        {
+		{
 			string sqlStatement = fmt::format(
 				"select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} "
 				"and encodingProfileKey = {}",
-				referenceMediaItemKey, encodingProfileKey);
+				referenceMediaItemKey, encodingProfileKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-                physicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
+				physicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
 
 			if (physicalPathKey == -1)
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found"
-                    + ", mediaItemKey: " + to_string(referenceMediaItemKey)
-                    + ", encodingProfileKey: " + to_string(encodingProfileKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
+			{
+				string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found" +
+									  ", mediaItemKey: " + to_string(referenceMediaItemKey) +
+									  ", encodingProfileKey: " + to_string(encodingProfileKey) + ", sqlStatement: " + sqlStatement;
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }
-        }
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
 		else
 		{
 			tuple<int64_t, int, string, string, uint64_t, bool, int64_t> sourcePhysicalPathDetails =
@@ -2162,10 +2099,11 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2176,9 +2114,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2191,16 +2130,18 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-        if (warningIfMissing)
-			SPDLOG_WARN("MediaItemKeyNotFound SQL exception"
+		if (warningIfMissing)
+			SPDLOG_WARN(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
-        else
-			SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		else
+			SPDLOG_ERROR(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2210,9 +2151,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2225,9 +2167,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2237,9 +2180,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2250,12 +2194,12 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2264,9 +2208,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2277,22 +2222,17 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 
-    return physicalPathKey;
+	return physicalPathKey;
 }
 
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(
-        int64_t workspaceKey,
-        int64_t mediaItemKey, ContentType contentType,
-        string encodingProfileLabel,
-		bool warningIfMissing,
-		bool fromMaster
+	int64_t workspaceKey, int64_t mediaItemKey, ContentType contentType, string encodingProfileLabel, bool warningIfMissing, bool fromMaster
 )
 {
-    int64_t physicalPathKey = -1;
+	int64_t physicalPathKey = -1;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2304,83 +2244,80 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        int64_t encodingProfileKey = -1;
-        {
-            string sqlStatement = fmt::format( 
-                "select encodingProfileKey from MMS_EncodingProfile "
+	try
+	{
+		int64_t encodingProfileKey = -1;
+		{
+			string sqlStatement = fmt::format(
+				"select encodingProfileKey from MMS_EncodingProfile "
 				"where (workspaceKey = {} or workspaceKey is null) and "
 				"contentType = {} and label = {}",
-				workspaceKey, trans.quote(toString(contentType)), trans.quote(encodingProfileLabel));
+				workspaceKey, trans.quote(toString(contentType)), trans.quote(encodingProfileLabel)
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-                encodingProfileKey = res[0]["encodingProfileKey"].as<int64_t>();
-            else
-            {
-                string errorMessage = __FILEREF__ + "encodingProfileKey is not found"
-                    + ", workspaceKey: " + to_string(workspaceKey)
-                    + ", contentType: " + toString(contentType)
-                    + ", encodingProfileLabel: " + encodingProfileLabel
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
+				encodingProfileKey = res[0]["encodingProfileKey"].as<int64_t>();
+			else
+			{
+				string errorMessage = __FILEREF__ + "encodingProfileKey is not found" + ", workspaceKey: " + to_string(workspaceKey) +
+									  ", contentType: " + toString(contentType) + ", encodingProfileLabel: " + encodingProfileLabel +
+									  ", sqlStatement: " + sqlStatement;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }            
-        }
+				throw runtime_error(errorMessage);
+			}
+		}
 
-        {
-            string sqlStatement = fmt::format( 
-                "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} "
+		{
+			string sqlStatement = fmt::format(
+				"select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} "
 				"and encodingProfileKey = {}",
-				mediaItemKey, encodingProfileKey);
+				mediaItemKey, encodingProfileKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-                physicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", encodingProfileKey: " + to_string(encodingProfileKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
+				physicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
+			else
+			{
+				string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found" + ", mediaItemKey: " + to_string(mediaItemKey) +
+									  ", encodingProfileKey: " + to_string(encodingProfileKey) + ", sqlStatement: " + sqlStatement;
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }            
-        }
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2391,9 +2328,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2406,16 +2344,18 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-        if (warningIfMissing)
-			SPDLOG_WARN("MediaItemKeyNotFound SQL exception"
+		if (warningIfMissing)
+			SPDLOG_WARN(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
-        else
-			SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		else
+			SPDLOG_ERROR(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2425,9 +2365,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2440,9 +2381,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2452,9 +2394,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2465,12 +2408,12 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2479,9 +2422,10 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2492,17 +2436,13 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
-    return physicalPathKey;
+
+	return physicalPathKey;
 }
 
-string MMSEngineDBFacade::getPhysicalPathDetails(
-	int64_t physicalPathKey, bool warningIfMissing,
-	bool fromMaster
-)
+string MMSEngineDBFacade::getPhysicalPathDetails(int64_t physicalPathKey, bool warningIfMissing, bool fromMaster)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2514,57 +2454,57 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		string metaData;
 		{
 			string sqlStatement = fmt::format(
-                "select metaData "
+				"select metaData "
 				"from MMS_PhysicalPath p "
-                "where physicalPathKey = {}",
-				physicalPathKey);
+				"where physicalPathKey = {}",
+				physicalPathKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-            {
+			{
 				if (!res[0]["metaData"].is_null())
 					metaData = res[0]["metaData"].as<string>();
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "physicalPathKey is not found"
-                    + ", physicalPathKey: " + to_string(physicalPathKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "physicalPathKey is not found" + ", physicalPathKey: " + to_string(physicalPathKey) +
+									  ", sqlStatement: " + sqlStatement;
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }
-        }
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return metaData;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2575,9 +2515,10 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2590,16 +2531,18 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-        if (warningIfMissing)
-			SPDLOG_WARN("MediaItemKeyNotFound SQL exception"
+		if (warningIfMissing)
+			SPDLOG_WARN(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
-        else
-			SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		else
+			SPDLOG_ERROR(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2609,9 +2552,10 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2624,9 +2568,10 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2636,9 +2581,10 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2649,12 +2595,12 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2663,9 +2609,10 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2676,14 +2623,12 @@ string MMSEngineDBFacade::getPhysicalPathDetails(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
 
-tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::getSourcePhysicalPath(
-    int64_t mediaItemKey, bool warningIfMissing, bool fromMaster
-)
+tuple<int64_t, int, string, string, uint64_t, bool, int64_t>
+MMSEngineDBFacade::getSourcePhysicalPath(int64_t mediaItemKey, bool warningIfMissing, bool fromMaster)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2695,37 +2640,37 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		int64_t physicalPathKeyWithEncodingProfile = -1;
 		int64_t physicalPathKeyWithoutEncodingProfile = -1;
 
-        int mmsPartitionNumberWithEncodingProfile;
-        int mmsPartitionNumberWithoutEncodingProfile;
+		int mmsPartitionNumberWithEncodingProfile;
+		int mmsPartitionNumberWithoutEncodingProfile;
 
-        bool externalReadOnlyStorageWithEncodingProfile;
-        bool externalReadOnlyStorageWithoutEncodingProfile;
+		bool externalReadOnlyStorageWithEncodingProfile;
+		bool externalReadOnlyStorageWithoutEncodingProfile;
 
-        string relativePathWithEncodingProfile;
-        string relativePathWithoutEncodingProfile;
+		string relativePathWithEncodingProfile;
+		string relativePathWithoutEncodingProfile;
 
-        string fileNameWithEncodingProfile;
-        string fileNameWithoutEncodingProfile;
+		string fileNameWithEncodingProfile;
+		string fileNameWithoutEncodingProfile;
 
-        uint64_t sizeInBytesWithEncodingProfile;
-        uint64_t sizeInBytesWithoutEncodingProfile;
+		uint64_t sizeInBytesWithEncodingProfile;
+		uint64_t sizeInBytesWithoutEncodingProfile;
 
-        int64_t durationInMilliSecondsWithEncodingProfile = 0;
-        int64_t durationInMilliSecondsWithoutEncodingProfile = 0;
+		int64_t durationInMilliSecondsWithEncodingProfile = 0;
+		int64_t durationInMilliSecondsWithoutEncodingProfile = 0;
 
 		uint64_t maxSizeInBytesWithEncodingProfile = -1;
 		uint64_t maxSizeInBytesWithoutEncodingProfile = -1;
 
-        {
+		{
 			// 2023-01-23: l'ultima modifica fatta permette di inserire 'source content' specificando
 			//	l'encoding profile (questo quando siamo sicuri che sia stato generato
 			//	con uno specifico profilo). In questo nuovo scenario, molti 'source content' hanno specificato
@@ -2740,13 +2685,14 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 				"select physicalPathKey, sizeInBytes, fileName, relativePath, partitionNumber, "
 				"externalReadOnlyStorage, durationInMilliSeconds, encodingProfileKey "
 				"from MMS_PhysicalPath where mediaItemKey = {}",
-				mediaItemKey);
+				mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			string selectedFileFormatWithEncodingProfile;
 			string selectedFileFormatWithoutEncodingProfile;
-			for (auto row: res)
-            {
+			for (auto row : res)
+			{
 				uint64_t localSizeInBytes = row["sizeInBytes"].as<uint64_t>();
 
 				string localFileName = row["fileName"].as<string>();
@@ -2835,29 +2781,27 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 					maxSizeInBytesWithEncodingProfile = localSizeInBytes;
 					selectedFileFormatWithEncodingProfile = localFileFormat;
 				}
-            }
-			SPDLOG_INFO("SQL statement"
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
 			if (maxSizeInBytesWithoutEncodingProfile == -1 && maxSizeInBytesWithEncodingProfile == -1)
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
+			{
+				string errorMessage =
+					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }
-        }
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
@@ -2865,19 +2809,22 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 
 		// senza encoding profile ha priorità rispetto a 'con encoding profile'
 		if (maxSizeInBytesWithoutEncodingProfile != -1)
-			return make_tuple(physicalPathKeyWithoutEncodingProfile, mmsPartitionNumberWithoutEncodingProfile,
-				relativePathWithoutEncodingProfile, fileNameWithoutEncodingProfile,
-				sizeInBytesWithoutEncodingProfile, externalReadOnlyStorageWithoutEncodingProfile,
-				durationInMilliSecondsWithoutEncodingProfile);
+			return make_tuple(
+				physicalPathKeyWithoutEncodingProfile, mmsPartitionNumberWithoutEncodingProfile, relativePathWithoutEncodingProfile,
+				fileNameWithoutEncodingProfile, sizeInBytesWithoutEncodingProfile, externalReadOnlyStorageWithoutEncodingProfile,
+				durationInMilliSecondsWithoutEncodingProfile
+			);
 		else
-			return make_tuple(physicalPathKeyWithEncodingProfile, mmsPartitionNumberWithEncodingProfile,
-				relativePathWithEncodingProfile, fileNameWithEncodingProfile,
-				sizeInBytesWithEncodingProfile, externalReadOnlyStorageWithEncodingProfile,
-				durationInMilliSecondsWithEncodingProfile);
-    }
-	catch(sql_error const &e)
+			return make_tuple(
+				physicalPathKeyWithEncodingProfile, mmsPartitionNumberWithEncodingProfile, relativePathWithEncodingProfile,
+				fileNameWithEncodingProfile, sizeInBytesWithEncodingProfile, externalReadOnlyStorageWithEncodingProfile,
+				durationInMilliSecondsWithEncodingProfile
+			);
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2888,9 +2835,10 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2903,16 +2851,18 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-        if (warningIfMissing)
-			SPDLOG_WARN("MediaItemKeyNotFound SQL exception"
+		if (warningIfMissing)
+			SPDLOG_WARN(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
-        else
-			SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		else
+			SPDLOG_ERROR(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2922,9 +2872,10 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2937,9 +2888,10 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2949,9 +2901,10 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2962,12 +2915,12 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2976,9 +2929,10 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2988,20 +2942,15 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-
 
 		throw e;
 	}
 }
 
 tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-	MMSEngineDBFacade::getMediaItemKeyDetails(
-    int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing,
-	bool fromMaster
-)
+MMSEngineDBFacade::getMediaItemKeyDetails(int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing, bool fromMaster)
 {
-    tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-		contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+	tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t> contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -3013,75 +2962,75 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        {
-            string sqlStatement = fmt::format( 
-                "select contentType, title, userData, ingestionJobKey, "
+	try
+	{
+		{
+			string sqlStatement = fmt::format(
+				"select contentType, title, userData, ingestionJobKey, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
 				"EXTRACT(EPOCH FROM (willBeRemovedAt_virtual - NOW() at time zone 'utc')) as willBeRemovedInSeconds "
 				"from MMS_MediaItem where workspaceKey = {} and mediaItemKey = {}",
-				workspaceKey, mediaItemKey);
+				workspaceKey, mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-            {
-                MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
+			{
+				MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
 
-                string title;
-                if (!res[0]["title"].is_null())
-                    title = res[0]["title"].as<string>();
-                
-                string userData;
-                if (!res[0]["userData"].is_null())
-                    userData = res[0]["userData"].as<string>();
+				string title;
+				if (!res[0]["title"].is_null())
+					title = res[0]["title"].as<string>();
 
-                int64_t ingestionJobKey = res[0]["ingestionJobKey"].as<int64_t>();
+				string userData;
+				if (!res[0]["userData"].is_null())
+					userData = res[0]["userData"].as<string>();
 
-                string ingestionDate;
-                if (!res[0]["ingestionDate"].is_null())
-                    ingestionDate = res[0]["ingestionDate"].as<string>();
+				int64_t ingestionJobKey = res[0]["ingestionJobKey"].as<int64_t>();
 
-                int64_t willBeRemovedInSeconds = res[0]["willBeRemovedInSeconds"].as<float>();
+				string ingestionDate;
+				if (!res[0]["ingestionDate"].is_null())
+					ingestionDate = res[0]["ingestionDate"].as<string>();
 
-                contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
+				int64_t willBeRemovedInSeconds = res[0]["willBeRemovedInSeconds"].as<float>();
+
+				contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey =
 					make_tuple(contentType, title, userData, ingestionDate, willBeRemovedInSeconds, ingestionJobKey);
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
+			}
+			else
+			{
+				string errorMessage =
+					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }
-        }
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 
-        return contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
-    }
-	catch(sql_error const &e)
+		return contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -3092,9 +3041,10 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3107,16 +3057,18 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-        if (warningIfMissing)
-			SPDLOG_WARN("MediaItemKeyNotFound SQL exception"
+		if (warningIfMissing)
+			SPDLOG_WARN(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
-        else
-			SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		else
+			SPDLOG_ERROR(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -3126,9 +3078,10 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3141,9 +3094,10 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -3153,9 +3107,10 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3166,12 +3121,12 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -3180,9 +3135,10 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3192,21 +3148,15 @@ tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-
 
 		throw e;
 	}
 }
 
-tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
-	string, string, int64_t>
-	MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
-	int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing,
-	bool fromMaster
-)
+tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string, int64_t>
+MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(int64_t workspaceKey, int64_t physicalPathKey, bool warningIfMissing, bool fromMaster)
 {
-    tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
-		string, string, int64_t> mediaItemDetails;
+	tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string, int64_t> mediaItemDetails;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -3218,84 +3168,83 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        {
-            string sqlStatement = fmt::format( 
-                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, "
+	try
+	{
+		{
+			string sqlStatement = fmt::format(
+				"select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, "
 				"mi.ingestionJobKey, p.fileName, p.relativePath, p.durationInMilliSeconds, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate "
 				"from MMS_MediaItem mi, MMS_PhysicalPath p "
-                "where mi.workspaceKey = {} and mi.mediaItemKey = p.mediaItemKey "
+				"where mi.workspaceKey = {} and mi.mediaItemKey = p.mediaItemKey "
 				"and p.physicalPathKey = {}",
-				workspaceKey, physicalPathKey);
+				workspaceKey, physicalPathKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-            {
-                int64_t mediaItemKey = res[0]["mediaItemKey"].as<int64_t>();
-                MMSEngineDBFacade::ContentType contentType
-					= MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
+			{
+				int64_t mediaItemKey = res[0]["mediaItemKey"].as<int64_t>();
+				MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
 
-                string userData;
-                if (!res[0]["userData"].is_null())
-                    userData = res[0]["userData"].as<string>();
-                
-                string title;
-                if (!res[0]["title"].is_null())
-                    title = res[0]["title"].as<string>();
+				string userData;
+				if (!res[0]["userData"].is_null())
+					userData = res[0]["userData"].as<string>();
 
-                string fileName = res[0]["fileName"].as<string>();
-                string relativePath = res[0]["relativePath"].as<string>();
+				string title;
+				if (!res[0]["title"].is_null())
+					title = res[0]["title"].as<string>();
 
-                string ingestionDate;
-                if (!res[0]["ingestionDate"].is_null())
-                    ingestionDate = res[0]["ingestionDate"].as<string>();
+				string fileName = res[0]["fileName"].as<string>();
+				string relativePath = res[0]["relativePath"].as<string>();
 
-                int64_t ingestionJobKey = res[0]["ingestionJobKey"].as<int64_t>();
+				string ingestionDate;
+				if (!res[0]["ingestionDate"].is_null())
+					ingestionDate = res[0]["ingestionDate"].as<string>();
+
+				int64_t ingestionJobKey = res[0]["ingestionJobKey"].as<int64_t>();
 				int64_t durationInMilliSeconds = 0;
 				if (!res[0]["durationInMilliSeconds"].is_null())
 					durationInMilliSeconds = res[0]["durationInMilliSeconds"].as<int64_t>();
 
-                mediaItemDetails = make_tuple(mediaItemKey, contentType, title,
-					userData, ingestionDate, ingestionJobKey, fileName, relativePath,
-					durationInMilliSeconds);
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", physicalPathKey: " + to_string(physicalPathKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
+				mediaItemDetails = make_tuple(
+					mediaItemKey, contentType, title, userData, ingestionDate, ingestionJobKey, fileName, relativePath, durationInMilliSeconds
+				);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "MediaItemKey is not found" + ", physicalPathKey: " + to_string(physicalPathKey) +
+									  ", sqlStatement: " + sqlStatement;
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }            
-        }
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 
-        return mediaItemDetails;
-    }
-	catch(sql_error const &e)
+		return mediaItemDetails;
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -3306,9 +3255,10 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3321,16 +3271,18 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-        if (warningIfMissing)
-			SPDLOG_WARN("MediaItemKeyNotFound SQL exception"
+		if (warningIfMissing)
+			SPDLOG_WARN(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
-        else
-			SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		else
+			SPDLOG_ERROR(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -3340,9 +3292,10 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3355,9 +3308,10 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -3367,9 +3321,10 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3380,12 +3335,12 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -3394,9 +3349,10 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3406,17 +3362,14 @@ tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t,
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-
 
 		throw e;
 	}
 }
 
 void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
-	int64_t workspaceKey, int64_t referenceIngestionJobKey, 
-	int maxLastMediaItemsToBeReturned,
-	vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
-	bool warningIfMissing, bool fromMaster
+	int64_t workspaceKey, int64_t referenceIngestionJobKey, int maxLastMediaItemsToBeReturned,
+	vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> &mediaItemsDetails, bool warningIfMissing, bool fromMaster
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -3429,46 +3382,45 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		IngestionType ingestionType;
-        {
+		{
 			string sqlStatement = fmt::format(
 				"select ingestionType from MMS_IngestionJob "
 				"where ingestionJobKey = {} ",
-				referenceIngestionJobKey);
+				referenceIngestionJobKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-				ingestionType     = MMSEngineDBFacade::toIngestionType(res[0]["ingestionType"].as<string>());
+				ingestionType = MMSEngineDBFacade::toIngestionType(res[0]["ingestionType"].as<string>());
 			else
 			{
-				string errorMessage = __FILEREF__ + "IngestionJob is not found"
-					+ ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-					+ ", sqlStatement: " + sqlStatement
-				;
+				string errorMessage = __FILEREF__ + "IngestionJob is not found" +
+									  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) + ", sqlStatement: " + sqlStatement;
 				_logger->error(errorMessage);
 
-				throw MediaItemKeyNotFound(errorMessage);                    
+				throw MediaItemKeyNotFound(errorMessage);
 			}
 		}
 
-        {
-            // order by in the next select is important  to have the right order in case of dependency in a workflow
+		{
+			// order by in the next select is important  to have the right order in case of dependency in a workflow
 			/*
-            lastSQLCommand = 
-                "select ijo.mediaItemKey, ijo.physicalPathKey from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
+			lastSQLCommand =
+				"select ijo.mediaItemKey, ijo.physicalPathKey from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
 				"where ijo.mediaItemKey = mi.mediaItemKey and ijo.ingestionJobKey = ? and "
 				"(JSON_EXTRACT(userData, '$.mmsData.validated') is null or "	// in case of no live chunk MIK
 					"JSON_EXTRACT(userData, '$.mmsData.validated') = true) "	// in case of live chunk MIK, we get only the one validated
@@ -3499,7 +3451,8 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				"from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
 				"where mi.workspaceKey = {} and ijo.mediaItemKey = mi.mediaItemKey "
 				"and ijo.ingestionJobKey = {} {} ",
-				workspaceKey, referenceIngestionJobKey, orderBy);
+				workspaceKey, referenceIngestionJobKey, orderBy
+			);
 			if (maxLastMediaItemsToBeReturned != -1)
 				sqlStatement += ("limit " + to_string(maxLastMediaItemsToBeReturned));
 			/*
@@ -3510,19 +3463,18 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			*/
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
-                int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
+			for (auto row : res)
+			{
+				int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
+				int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
 
-                ContentType contentType;
-                {
-                    string sqlStatement = fmt::format(
-                        "select contentType from MMS_MediaItem where mediaItemKey = {}",
-						mediaItemKey);
+				ContentType contentType;
+				{
+					string sqlStatement = fmt::format("select contentType from MMS_MediaItem where mediaItemKey = {}", mediaItemKey);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
-					SPDLOG_INFO("SQL statement"
+					SPDLOG_INFO(
+						"SQL statement"
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
 						", elapsed (millisecs): @{}@",
@@ -3530,52 +3482,50 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 					);
 					if (!empty(res))
-                        contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
-                    else
-                    {
-                        string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                            + ", mediaItemKey: " + to_string(mediaItemKey)
-                            + ", sqlStatement: " + sqlStatement
-                        ;
-                        if (warningIfMissing)
+						contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
+					else
+					{
+						string errorMessage = __FILEREF__ + "MediaItemKey is not found" +
+											  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
+											  ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+						if (warningIfMissing)
 						{
-                            _logger->warn(errorMessage);
+							_logger->warn(errorMessage);
 
 							continue;
 						}
-                        else
+						else
 						{
-                            _logger->error(errorMessage);
+							_logger->error(errorMessage);
 
-							throw MediaItemKeyNotFound(errorMessage);                    
+							throw MediaItemKeyNotFound(errorMessage);
 						}
-                    }
-                }
+					}
+				}
 
-				tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType 
-					= make_tuple(mediaItemKey, physicalPathKey, contentType);
+				tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType =
+					make_tuple(mediaItemKey, physicalPathKey, contentType);
 				// 2024-01-05: sostituito mediaItemsDetails.begin() con mediaItemsDetails.end() per rispottare
 				//	l'ordine del campo position di ingestionJobOutput
-				mediaItemsDetails.insert(mediaItemsDetails.end(),
-					mediaItemKeyPhysicalPathKeyAndContentType);
-            }
-			SPDLOG_INFO("SQL statement"
+				mediaItemsDetails.insert(mediaItemsDetails.end(), mediaItemKeyPhysicalPathKeyAndContentType);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -3586,9 +3536,10 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3601,16 +3552,18 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-        if (warningIfMissing)
-			SPDLOG_WARN("MediaItemKeyNotFound SQL exception"
+		if (warningIfMissing)
+			SPDLOG_WARN(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
-        else
-			SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		else
+			SPDLOG_ERROR(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -3620,9 +3573,10 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3635,9 +3589,10 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -3647,9 +3602,10 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3660,12 +3616,12 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -3674,9 +3630,10 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3687,18 +3644,14 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
 
-pair<int64_t,MMSEngineDBFacade::ContentType>
-	MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(
-    int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing,
-	bool fromMaster
-)
+pair<int64_t, MMSEngineDBFacade::ContentType>
+MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing, bool fromMaster)
 {
-    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
+	pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -3710,56 +3663,55 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        {
-            string sqlStatement = fmt::format( 
-                "select mi.mediaItemKey, mi.contentType "
+	try
+	{
+		{
+			string sqlStatement = fmt::format(
+				"select mi.mediaItemKey, mi.contentType "
 				"from MMS_MediaItem mi, MMS_ExternalUniqueName eun "
-                "where mi.mediaItemKey = eun.mediaItemKey "
-                "and eun.workspaceKey = {} and eun.uniqueName = {}",
-				workspaceKey, trans.quote(referenceUniqueName));
+				"where mi.mediaItemKey = eun.mediaItemKey "
+				"and eun.workspaceKey = {} and eun.uniqueName = {}",
+				workspaceKey, trans.quote(referenceUniqueName)
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-            {
-                mediaItemKeyAndContentType.first = res[0]["mediaItemKey"].as<int64_t>();
-                mediaItemKeyAndContentType.second = MMSEngineDBFacade::toContentType(
-					res[0]["contentType"].as<string>());
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", referenceUniqueName: " + referenceUniqueName
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
+			{
+				mediaItemKeyAndContentType.first = res[0]["mediaItemKey"].as<int64_t>();
+				mediaItemKeyAndContentType.second = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
+			}
+			else
+			{
+				string errorMessage =
+					__FILEREF__ + "MediaItemKey is not found" + ", referenceUniqueName: " + referenceUniqueName + ", sqlStatement: " + sqlStatement;
+				if (warningIfMissing)
+					_logger->warn(errorMessage);
+				else
+					_logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }            
-        }
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -3770,9 +3722,10 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3785,16 +3738,18 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-        if (warningIfMissing)
-			SPDLOG_WARN("MediaItemKeyNotFound SQL exception"
+		if (warningIfMissing)
+			SPDLOG_WARN(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
-        else
-			SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		else
+			SPDLOG_ERROR(
+				"MediaItemKeyNotFound SQL exception"
 				", exceptionMessage: {}"
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -3804,9 +3759,10 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3819,9 +3775,10 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -3831,9 +3788,10 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3844,12 +3802,12 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -3858,9 +3816,10 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3871,18 +3830,15 @@ pair<int64_t,MMSEngineDBFacade::ContentType>
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
-    return mediaItemKeyAndContentType;
+
+	return mediaItemKeyAndContentType;
 }
 
 int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 	// mediaItemKey or physicalPathKey has to be initialized, the other has to be -1
-	int64_t mediaItemKey,
-	int64_t physicalPathKey,
-	bool fromMaster
+	int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster
 )
 {
 	int64_t durationInMilliSeconds;
@@ -3897,105 +3853,100 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        if (physicalPathKey == -1)
-        {
-            string sqlStatement = fmt::format( 
-                "select durationInMilliSeconds "
+	try
+	{
+		if (physicalPathKey == -1)
+		{
+			string sqlStatement = fmt::format(
+				"select durationInMilliSeconds "
 				"from MMS_PhysicalPath "
 				"where mediaItemKey = {} and encodingProfileKey is null",
-				mediaItemKey);
+				mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-            {
-                IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(res[0]["status"].as<string>());
+			{
+				IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(res[0]["status"].as<string>());
 				if (res[0]["durationInMilliSeconds"].is_null())
 				{
-					string errorMessage = __FILEREF__ + "duration is not found"
-						+ ", mediaItemKey: " + to_string(mediaItemKey)
-						+ ", sqlStatement: " + sqlStatement
-					;
+					string errorMessage =
+						__FILEREF__ + "duration is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
 					_logger->error(errorMessage);
 
-					throw runtime_error(errorMessage);                    
+					throw runtime_error(errorMessage);
 				}
 
 				durationInMilliSeconds = res[0]["durationInMilliSeconds"].as<int64_t>();
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
+			}
+			else
+			{
+				string errorMessage =
+					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        else
-        {
-            string sqlStatement = fmt::format( 
+				throw runtime_error(errorMessage);
+			}
+		}
+		else
+		{
+			string sqlStatement = fmt::format(
 				"select durationInMilliSeconds "
 				"from MMS_PhysicalPath "
 				"where physicalPathKey = {}",
-				physicalPathKey);
+				physicalPathKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-            {
+			{
 				if (res[0]["durationInMilliSeconds"].is_null())
 				{
-					string errorMessage = __FILEREF__ + "duration is not found"
-						+ ", physicalPathKey: " + to_string(physicalPathKey)
-						+ ", sqlStatement: " + sqlStatement
-					;
+					string errorMessage = __FILEREF__ + "duration is not found" + ", physicalPathKey: " + to_string(physicalPathKey) +
+										  ", sqlStatement: " + sqlStatement;
 					_logger->error(errorMessage);
 
-					throw runtime_error(errorMessage);                    
+					throw runtime_error(errorMessage);
 				}
 
 				durationInMilliSeconds = res[0]["durationInMilliSeconds"].as<int64_t>();
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "physicalPathKey is not found"
-					+ ", physicalPathKey: " + to_string(physicalPathKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "physicalPathKey is not found" + ", physicalPathKey: " + to_string(physicalPathKey) +
+									  ", sqlStatement: " + sqlStatement;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }
-        }
+				throw runtime_error(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -4006,9 +3957,10 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -4021,9 +3973,10 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-		SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		SPDLOG_ERROR(
+			"MediaItemKeyNotFound SQL exception"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -4033,9 +3986,10 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -4048,9 +4002,10 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -4060,9 +4015,10 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -4073,12 +4029,12 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -4087,9 +4043,10 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -4099,7 +4056,6 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-
 
 		throw e;
 	}
@@ -4108,504 +4064,9 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 }
 
 void MMSEngineDBFacade::getVideoDetails(
-	int64_t mediaItemKey, int64_t physicalPathKey,
-	bool fromMaster,
-	vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>>& videoTracks,
-	vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& audioTracks
-	)
-{
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
-	nontransaction trans{*(conn->_sqlConnection)};
-
-    try
-    {
-        int64_t localPhysicalPathKey;
-        
-        if (physicalPathKey == -1)
-        {
-            string sqlStatement = fmt::format( 
-                "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null",
-				mediaItemKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (!empty(res))
-                localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }            
-        }
-        else
-        {
-            localPhysicalPathKey = physicalPathKey;
-        }
-        
-		videoTracks.clear();
-		audioTracks.clear();
-
-        {
-            string sqlStatement = fmt::format( 
-                "select videoTrackKey, trackIndex, durationInMilliSeconds, width, height, avgFrameRate, "
-                "codecName, profile, bitRate "
-                "from MMS_VideoTrack where physicalPathKey = {}",
-				localPhysicalPathKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                int64_t videoTrackKey = row["videoTrackKey"].as<int64_t>();
-                int trackIndex = -1;
-				if (!row["trackIndex"].is_null())
-					trackIndex = row["trackIndex"].as<int>();
-                int64_t durationInMilliSeconds = -1;
-				if (!row["durationInMilliSeconds"].is_null())
-					durationInMilliSeconds = row["durationInMilliSeconds"].as<int64_t>();
-                long bitRate = -1;
-				if (!row["bitRate"].is_null())
-					bitRate = row["bitRate"].as<int>();
-                string codecName;
-				if (!row["codecName"].is_null())
-					codecName = row["codecName"].as<string>();
-                string profile;
-				if (!row["profile"].is_null())
-					profile = row["profile"].as<string>();
-                int width = -1;
-				if (!row["width"].is_null())
-					width = row["width"].as<int>();
-                int height = -1;
-				if (!row["height"].is_null())
-					height = row["height"].as<int>();
-                string avgFrameRate;
-				if (!row["avgFrameRate"].is_null())
-					avgFrameRate = row["avgFrameRate"].as<string>();
-
-				videoTracks.push_back(make_tuple(videoTrackKey, trackIndex, durationInMilliSeconds, width, height,
-					avgFrameRate, codecName, bitRate, profile));
-            }
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-        }
-
-        {
-            string sqlStatement = fmt::format( 
-                "select audioTrackKey, trackIndex, durationInMilliSeconds, codecName, bitRate, sampleRate, channels, language "
-                "from MMS_AudioTrack where physicalPathKey = {}",
-				localPhysicalPathKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                int64_t audioTrackKey = row["audioTrackKey"].as<int64_t>();
-                int trackIndex;
-				if (!row["trackIndex"].is_null())
-					trackIndex = row["trackIndex"].as<int>();
-                int64_t durationInMilliSeconds;
-				if (!row["durationInMilliSeconds"].is_null())
-					durationInMilliSeconds = row["durationInMilliSeconds"].as<int64_t>();
-                long bitRate = -1;
-				if (!row["bitRate"].is_null())
-					bitRate = row["bitRate"].as<int>();
-                string codecName;
-				if (!row["codecName"].is_null())
-					codecName = row["codecName"].as<string>();
-                long sampleRate = -1;
-				if (!row["sampleRate"].is_null())
-					sampleRate = row["sampleRate"].as<int>();
-                int channels = -1;
-				if (!row["channels"].is_null())
-					channels = row["channels"].as<int>();
-                string language;
-				if (!row["language"].is_null())
-					language = row["language"].as<string>();
-
-				audioTracks.push_back(make_tuple(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate, codecName, sampleRate, channels, language));
-            }
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-        }
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-	catch(sql_error const &e)
-	{
-		SPDLOG_ERROR("SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-    catch(MediaItemKeyNotFound& e)
-	{
-		SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch(runtime_error& e)
-	{
-		SPDLOG_ERROR("runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-
-		throw e;
-	}
-	catch(exception& e)
-	{
-		SPDLOG_ERROR("exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-
-		throw e;
-	}
-}
-
-void MMSEngineDBFacade::getAudioDetails(
-	int64_t mediaItemKey, int64_t physicalPathKey,
-	bool fromMaster,
-	vector<tuple<int64_t, int, int64_t, long, string, long, int, string>>& audioTracks
-	)
-{
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
-	nontransaction trans{*(conn->_sqlConnection)};
-
-    try
-    {
-        int64_t localPhysicalPathKey;
-        
-        if (physicalPathKey == -1)
-        {
-            string sqlStatement = fmt::format(
-                "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null",
-				mediaItemKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (!empty(res))
-                localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }            
-        }
-        else
-        {
-            localPhysicalPathKey = physicalPathKey;
-        }
-        
-		audioTracks.clear();
-
-        {
-            string sqlStatement = fmt::format( 
-                "select audioTrackKey, trackIndex, durationInMilliSeconds, "
-				"codecName, bitRate, sampleRate, channels, language "
-                "from MMS_AudioTrack where physicalPathKey = {}",
-				localPhysicalPathKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (!empty(res))
-            {
-                int64_t audioTrackKey = res[0]["audioTrackKey"].as<int64_t>();
-                int trackIndex;
-				if (!res[0]["trackIndex"].is_null())
-					trackIndex = res[0]["trackIndex"].as<int>();
-                int64_t durationInMilliSeconds;
-				if (!res[0]["durationInMilliSeconds"].is_null())
-					durationInMilliSeconds = res[0]["durationInMilliSeconds"].as<int64_t>();
-                long bitRate = -1;
-				if (!res[0]["bitRate"].is_null())
-					bitRate = res[0]["bitRate"].as<int>();
-                string codecName;
-				if (!res[0]["codecName"].is_null())
-					codecName = res[0]["codecName"].as<string>();
-                long sampleRate = -1;
-				if (!res[0]["sampleRate"].is_null())
-					sampleRate = res[0]["sampleRate"].as<int>();
-                int channels = -1;
-				if (!res[0]["channels"].is_null())
-					channels = res[0]["channels"].as<int>();
-                string language;
-				if (!res[0]["language"].is_null())
-					language = res[0]["language"].as<string>();
-
-				audioTracks.push_back(make_tuple(audioTrackKey, trackIndex, durationInMilliSeconds,
-					bitRate, codecName, sampleRate, channels, language));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", localPhysicalPathKey: " + to_string(localPhysicalPathKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
-
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }            
-        }
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-    }
-	catch(sql_error const &e)
-	{
-		SPDLOG_ERROR("SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-    catch(MediaItemKeyNotFound& e)
-	{
-		SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch(runtime_error& e)
-	{
-		SPDLOG_ERROR("runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-
-		throw e;
-	}
-	catch(exception& e)
-	{
-		SPDLOG_ERROR("exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-
-		throw e;
-	}
-}
-
-tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
-    int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster
+	int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster,
+	vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> &videoTracks,
+	vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> &audioTracks
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -4618,93 +4079,150 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        int64_t localPhysicalPathKey;
-        
-        if (physicalPathKey == -1)
-        {
-            string sqlStatement = fmt::format( 
-                "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null",
-				mediaItemKey);
+	try
+	{
+		int64_t localPhysicalPathKey;
+
+		if (physicalPathKey == -1)
+		{
+			string sqlStatement =
+				fmt::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-                localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
+				localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
+			else
+			{
+				string errorMessage =
+					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }            
-        }
-        else
-        {
-            localPhysicalPathKey = physicalPathKey;
-        }
-        
-        int width;
-        int height;
-        string format;
-        int quality;
+				throw runtime_error(errorMessage);
+			}
+		}
+		else
+		{
+			localPhysicalPathKey = physicalPathKey;
+		}
 
-        {
-            string sqlStatement = fmt::format( 
-                "select width, height, format, quality "
-                "from MMS_ImageItemProfile where physicalPathKey = {}",
-				localPhysicalPathKey);
+		videoTracks.clear();
+		audioTracks.clear();
+
+		{
+			string sqlStatement = fmt::format(
+				"select videoTrackKey, trackIndex, durationInMilliSeconds, width, height, avgFrameRate, "
+				"codecName, profile, bitRate "
+				"from MMS_VideoTrack where physicalPathKey = {}",
+				localPhysicalPathKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			for (auto row : res)
+			{
+				int64_t videoTrackKey = row["videoTrackKey"].as<int64_t>();
+				int trackIndex = -1;
+				if (!row["trackIndex"].is_null())
+					trackIndex = row["trackIndex"].as<int>();
+				int64_t durationInMilliSeconds = -1;
+				if (!row["durationInMilliSeconds"].is_null())
+					durationInMilliSeconds = row["durationInMilliSeconds"].as<int64_t>();
+				long bitRate = -1;
+				if (!row["bitRate"].is_null())
+					bitRate = row["bitRate"].as<int>();
+				string codecName;
+				if (!row["codecName"].is_null())
+					codecName = row["codecName"].as<string>();
+				string profile;
+				if (!row["profile"].is_null())
+					profile = row["profile"].as<string>();
+				int width = -1;
+				if (!row["width"].is_null())
+					width = row["width"].as<int>();
+				int height = -1;
+				if (!row["height"].is_null())
+					height = row["height"].as<int>();
+				string avgFrameRate;
+				if (!row["avgFrameRate"].is_null())
+					avgFrameRate = row["avgFrameRate"].as<string>();
+
+				videoTracks.push_back(
+					make_tuple(videoTrackKey, trackIndex, durationInMilliSeconds, width, height, avgFrameRate, codecName, bitRate, profile)
+				);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-			if (!empty(res))
-            {
-                width = res[0]["width"].as<int>();
-                height = res[0]["height"].as<int>();
-                format = res[0]["format"].as<string>();
-                quality = res[0]["quality"].as<int>();
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                    + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->error(errorMessage);
+		}
 
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }            
-        }
+		{
+			string sqlStatement = fmt::format(
+				"select audioTrackKey, trackIndex, durationInMilliSeconds, codecName, bitRate, sampleRate, channels, language "
+				"from MMS_AudioTrack where physicalPathKey = {}",
+				localPhysicalPathKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			for (auto row : res)
+			{
+				int64_t audioTrackKey = row["audioTrackKey"].as<int64_t>();
+				int trackIndex;
+				if (!row["trackIndex"].is_null())
+					trackIndex = row["trackIndex"].as<int>();
+				int64_t durationInMilliSeconds;
+				if (!row["durationInMilliSeconds"].is_null())
+					durationInMilliSeconds = row["durationInMilliSeconds"].as<int64_t>();
+				long bitRate = -1;
+				if (!row["bitRate"].is_null())
+					bitRate = row["bitRate"].as<int>();
+				string codecName;
+				if (!row["codecName"].is_null())
+					codecName = row["codecName"].as<string>();
+				long sampleRate = -1;
+				if (!row["sampleRate"].is_null())
+					sampleRate = row["sampleRate"].as<int>();
+				int channels = -1;
+				if (!row["channels"].is_null())
+					channels = row["channels"].as<int>();
+				string language;
+				if (!row["language"].is_null())
+					language = row["language"].as<string>();
+
+				audioTracks.push_back(
+					make_tuple(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate, codecName, sampleRate, channels, language)
+				);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-
-        return make_tuple(width, height, format, quality);
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -4715,9 +4233,10 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -4730,9 +4249,10 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 
 		throw e;
 	}
-    catch(MediaItemKeyNotFound& e)
+	catch (MediaItemKeyNotFound &e)
 	{
-		SPDLOG_ERROR("MediaItemKeyNotFound SQL exception"
+		SPDLOG_ERROR(
+			"MediaItemKeyNotFound SQL exception"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -4742,9 +4262,10 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -4757,9 +4278,10 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -4769,9 +4291,10 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -4782,12 +4305,12 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -4796,9 +4319,10 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -4809,35 +4333,462 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 			conn = nullptr;
 		}
 
+		throw e;
+	}
+}
+
+void MMSEngineDBFacade::getAudioDetails(
+	int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster, vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> &audioTracks
+)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
+	if (fromMaster)
+		connectionPool = _masterPostgresConnectionPool;
+	else
+		connectionPool = _slavePostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	nontransaction trans{*(conn->_sqlConnection)};
+
+	try
+	{
+		int64_t localPhysicalPathKey;
+
+		if (physicalPathKey == -1)
+		{
+			string sqlStatement =
+				fmt::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (!empty(res))
+				localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
+			else
+			{
+				string errorMessage =
+					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		else
+		{
+			localPhysicalPathKey = physicalPathKey;
+		}
+
+		audioTracks.clear();
+
+		{
+			string sqlStatement = fmt::format(
+				"select audioTrackKey, trackIndex, durationInMilliSeconds, "
+				"codecName, bitRate, sampleRate, channels, language "
+				"from MMS_AudioTrack where physicalPathKey = {}",
+				localPhysicalPathKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (!empty(res))
+			{
+				int64_t audioTrackKey = res[0]["audioTrackKey"].as<int64_t>();
+				int trackIndex;
+				if (!res[0]["trackIndex"].is_null())
+					trackIndex = res[0]["trackIndex"].as<int>();
+				int64_t durationInMilliSeconds;
+				if (!res[0]["durationInMilliSeconds"].is_null())
+					durationInMilliSeconds = res[0]["durationInMilliSeconds"].as<int64_t>();
+				long bitRate = -1;
+				if (!res[0]["bitRate"].is_null())
+					bitRate = res[0]["bitRate"].as<int>();
+				string codecName;
+				if (!res[0]["codecName"].is_null())
+					codecName = res[0]["codecName"].as<string>();
+				long sampleRate = -1;
+				if (!res[0]["sampleRate"].is_null())
+					sampleRate = res[0]["sampleRate"].as<int>();
+				int channels = -1;
+				if (!res[0]["channels"].is_null())
+					channels = res[0]["channels"].as<int>();
+				string language;
+				if (!res[0]["language"].is_null())
+					language = res[0]["language"].as<string>();
+
+				audioTracks.push_back(
+					make_tuple(audioTrackKey, trackIndex, durationInMilliSeconds, bitRate, codecName, sampleRate, channels, language)
+				);
+			}
+			else
+			{
+				string errorMessage = __FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) +
+									  ", localPhysicalPathKey: " + to_string(localPhysicalPathKey) + ", sqlStatement: " + sqlStatement;
+				_logger->error(errorMessage);
+
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (MediaItemKeyNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"MediaItemKeyNotFound SQL exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
 
 		throw e;
 	}
 }
 
-pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
-        shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,
-        bool ingestionRowToBeUpdatedAsSuccess,        
-        MMSEngineDBFacade::ContentType contentType,
-		int64_t encodingProfileKey,
-        json parametersRoot,
-		bool externalReadOnlyStorage,
-        string relativePath,
-        string mediaSourceFileName,
-        int mmsPartitionIndexUsed,
-        unsigned long sizeInBytes,
+tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
 
-        // video-audio
-		tuple<int64_t, long, json>& mediaInfoDetails,
-		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
+	if (fromMaster)
+		connectionPool = _masterPostgresConnectionPool;
+	else
+		connectionPool = _slavePostgresConnectionPool;
 
-        // image
-        int imageWidth,
-        int imageHeight,
-        string imageFormat,
-        int imageQuality
-        )
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	nontransaction trans{*(conn->_sqlConnection)};
+
+	try
+	{
+		int64_t localPhysicalPathKey;
+
+		if (physicalPathKey == -1)
+		{
+			string sqlStatement =
+				fmt::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (!empty(res))
+				localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
+			else
+			{
+				string errorMessage =
+					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+		else
+		{
+			localPhysicalPathKey = physicalPathKey;
+		}
+
+		int width;
+		int height;
+		string format;
+		int quality;
+
+		{
+			string sqlStatement = fmt::format(
+				"select width, height, format, quality "
+				"from MMS_ImageItemProfile where physicalPathKey = {}",
+				localPhysicalPathKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (!empty(res))
+			{
+				width = res[0]["width"].as<int>();
+				height = res[0]["height"].as<int>();
+				format = res[0]["format"].as<string>();
+				quality = res[0]["quality"].as<int>();
+			}
+			else
+			{
+				string errorMessage =
+					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				_logger->error(errorMessage);
+
+				throw MediaItemKeyNotFound(errorMessage);
+			}
+		}
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return make_tuple(width, height, format, quality);
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (MediaItemKeyNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"MediaItemKeyNotFound SQL exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+}
+
+pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
+	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, bool ingestionRowToBeUpdatedAsSuccess, MMSEngineDBFacade::ContentType contentType,
+	int64_t encodingProfileKey, json parametersRoot, bool externalReadOnlyStorage, string relativePath, string mediaSourceFileName,
+	int mmsPartitionIndexUsed, unsigned long sizeInBytes,
+
+	// video-audio
+	tuple<int64_t, long, json> &mediaInfoDetails, vector<tuple<int, int64_t, string, string, int, int, string, long>> &videoTracks,
+	vector<tuple<int, int64_t, string, long, int, long, string>> &audioTracks,
+
+	// image
+	int imageWidth, int imageHeight, string imageFormat, int imageQuality
+)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -4845,108 +4796,102 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	work trans{*(conn->_sqlConnection)};
 
-	pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey;
+	pair<int64_t, int64_t> mediaItemKeyAndPhysicalPathKey;
 	string title = "";
-    try
-    {
-        _logger->info(__FILEREF__ + "Insert into MMS_MediaItem");
-        int64_t mediaItemKey;
-        {
-            string ingester = "";
-            string userData = "";
-            string deliveryFileName = "";
-            string sContentType;
-            int64_t retentionInMinutes = _contentRetentionInMinutesDefaultValue;
-            // string encodingProfilesSet;
+	try
+	{
+		_logger->info(__FILEREF__ + "Insert into MMS_MediaItem");
+		int64_t mediaItemKey;
+		{
+			string ingester = "";
+			string userData = "";
+			string deliveryFileName = "";
+			string sContentType;
+			int64_t retentionInMinutes = _contentRetentionInMinutesDefaultValue;
+			// string encodingProfilesSet;
 
-            string field = "title";
-            title = JSONUtils::asString(parametersRoot, field, "");
-            
-            field = "ingester";
+			string field = "title";
+			title = JSONUtils::asString(parametersRoot, field, "");
+
+			field = "ingester";
 			ingester = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "userData";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
+			field = "userData";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
 				if ((parametersRoot[field]).type() == json::value_t::string)
 					userData = JSONUtils::asString(parametersRoot, field, "");
 				else
 					userData = JSONUtils::toString(parametersRoot[field]);
-            }
+			}
 
-            field = "deliveryFileName";
+			field = "deliveryFileName";
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "retention";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string retention = JSONUtils::asString(parametersRoot, field, "1d");
+			field = "retention";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string retention = JSONUtils::asString(parametersRoot, field, "1d");
 				retentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
-            }
+			}
 
-            string startPublishing = "NOW";
-            string endPublishing = "FOREVER";
-            {
-                field = "publishing";
-                if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                {
-                    json publishingRoot = parametersRoot[field];
+			string startPublishing = "NOW";
+			string endPublishing = "FOREVER";
+			{
+				field = "publishing";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					json publishingRoot = parametersRoot[field];
 
-                    field = "startPublishing";
+					field = "startPublishing";
 					startPublishing = JSONUtils::asString(publishingRoot, field, "NOW");
 
-                    field = "endPublishing";
+					field = "endPublishing";
 					endPublishing = JSONUtils::asString(publishingRoot, field, "FOREVER");
-                }
-                
-                if (startPublishing == "NOW")
-                {
-                    tm          tmDateTime;
-                    char        strUtcDateTime [64];
+				}
 
-                    chrono::system_clock::time_point now = chrono::system_clock::now();
-                    time_t utcTime = chrono::system_clock::to_time_t(now);
+				if (startPublishing == "NOW")
+				{
+					tm tmDateTime;
+					char strUtcDateTime[64];
 
-                	gmtime_r (&utcTime, &tmDateTime);
+					chrono::system_clock::time_point now = chrono::system_clock::now();
+					time_t utcTime = chrono::system_clock::to_time_t(now);
 
-                    sprintf (strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-                            tmDateTime. tm_year + 1900,
-                            tmDateTime. tm_mon + 1,
-                            tmDateTime. tm_mday,
-                            tmDateTime. tm_hour,
-                            tmDateTime. tm_min,
-                            tmDateTime. tm_sec);
+					gmtime_r(&utcTime, &tmDateTime);
 
-                    startPublishing = strUtcDateTime;
-                }
+					sprintf(
+						strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+						tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+					);
 
-                if (endPublishing == "FOREVER")
-                {
-                    tm          tmDateTime;
-                    char        strUtcDateTime [64];
+					startPublishing = strUtcDateTime;
+				}
 
-                    chrono::system_clock::time_point forever = chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
+				if (endPublishing == "FOREVER")
+				{
+					tm tmDateTime;
+					char strUtcDateTime[64];
 
-                    time_t utcTime = chrono::system_clock::to_time_t(forever);
+					chrono::system_clock::time_point forever = chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
 
-                	gmtime_r (&utcTime, &tmDateTime);
+					time_t utcTime = chrono::system_clock::to_time_t(forever);
 
-                    sprintf (strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-                            tmDateTime. tm_year + 1900,
-                            tmDateTime. tm_mon + 1,
-                            tmDateTime. tm_mday,
-                            tmDateTime. tm_hour,
-                            tmDateTime. tm_min,
-                            tmDateTime. tm_sec);
+					gmtime_r(&utcTime, &tmDateTime);
 
-                    endPublishing = strUtcDateTime;
-                }
-            }
+					sprintf(
+						strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+						tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+					);
+
+					endPublishing = strUtcDateTime;
+				}
+			}
 
 			string tags;
 			{
@@ -4957,80 +4902,73 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				tags = getPostgresArray(tagsRoot, true, &trans);
 			}
 
-            string sqlStatement = fmt::format( 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, " 
-                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
+			string sqlStatement = fmt::format(
+				"insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, "
+				"deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
 				"startPublishing, endPublishing, "
 				"retentionInMinutes, tags, markedAsRemoved, processorMMSForRetention) values ("
-                                           "DEFAULT,      {},           {},     {},      {}, "
+				"DEFAULT,      {},           {},     {},      {}, "
 				"{},               {},              NOW() at time zone 'utc', {}, "
-                "to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
-                "{},                 {},   false,           NULL) returning mediaItemKey",
-				workspace->_workspaceKey, trans.quote(title),
-				ingester == "" ? "null" : trans.quote(ingester),
-				userData == "" ? "null" : trans.quote(userData),
-				deliveryFileName == "" ? "null" : trans.quote(deliveryFileName),
-				ingestionJobKey, trans.quote(toString(contentType)),
-				trans.quote(startPublishing), trans.quote(endPublishing), retentionInMinutes,
-				tags
+				"to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
+				"{},                 {},   false,           NULL) returning mediaItemKey",
+				workspace->_workspaceKey, trans.quote(title), ingester == "" ? "null" : trans.quote(ingester),
+				userData == "" ? "null" : trans.quote(userData), deliveryFileName == "" ? "null" : trans.quote(deliveryFileName), ingestionJobKey,
+				trans.quote(toString(contentType)), trans.quote(startPublishing), trans.quote(endPublishing), retentionInMinutes, tags
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			mediaItemKey = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-        {
-            string uniqueName;
-            if (JSONUtils::isMetadataPresent(parametersRoot, "uniqueName"))
-                uniqueName = JSONUtils::asString(parametersRoot, "uniqueName", "");
+		{
+			string uniqueName;
+			if (JSONUtils::isMetadataPresent(parametersRoot, "uniqueName"))
+				uniqueName = JSONUtils::asString(parametersRoot, "uniqueName", "");
 
-            if (uniqueName != "")
-            {
+			if (uniqueName != "")
+			{
 				bool allowUniqueNameOverride = false;
-				allowUniqueNameOverride =
-					JSONUtils::asBool(parametersRoot, "allowUniqueNameOverride", false);
+				allowUniqueNameOverride = JSONUtils::asBool(parametersRoot, "allowUniqueNameOverride", false);
 
-				manageExternalUniqueName(conn, &trans, workspace->_workspaceKey, mediaItemKey,
-					allowUniqueNameOverride, uniqueName);
-            }
-        }
+				manageExternalUniqueName(conn, &trans, workspace->_workspaceKey, mediaItemKey, allowUniqueNameOverride, uniqueName);
+			}
+		}
 
 		// cross references
 		{
 			string field = "crossReferences";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-                json crossReferencesRoot = parametersRoot[field];
+				json crossReferencesRoot = parametersRoot[field];
 
-				manageCrossReferences(conn, &trans, ingestionJobKey,
-					workspace->_workspaceKey, mediaItemKey, crossReferencesRoot);
+				manageCrossReferences(conn, &trans, ingestionJobKey, workspace->_workspaceKey, mediaItemKey, crossReferencesRoot);
 			}
 		}
 
 		string externalDeliveryTechnology;
 		string externalDeliveryURL;
 		{
-            string field = "externalDeliveryTechnology";
+			string field = "externalDeliveryTechnology";
 			externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
 
-            field = "externalDeliveryURL";
+			field = "externalDeliveryURL";
 			externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
 		}
 
 		int64_t physicalItemRetentionInMinutes = -1;
 		{
-            string field = "physicalItemRetention";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
-            {
-                string retention = JSONUtils::asString(parametersRoot, field, "1d");
+			string field = "physicalItemRetention";
+			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			{
+				string retention = JSONUtils::asString(parametersRoot, field, "1d");
 				physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
-            }
+			}
 		}
 
 		int64_t physicalPathKey = -1;
@@ -5050,13 +4988,13 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			//	- sourceIngestionJobKey: è il Job iniziale che ha richiesto la generazione del MediaItem (es: Live-Recorder, Live-Cut, ...)
 
 			{
-                string field = "userData";
-                if (JSONUtils::isMetadataPresent(parametersRoot, field))
-                {
-                    json userDataRoot = parametersRoot[field];
+				string field = "userData";
+				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				{
+					json userDataRoot = parametersRoot[field];
 
-                    field = "mmsData";
-                    if (JSONUtils::isMetadataPresent(userDataRoot, field))
+					field = "mmsData";
+					if (JSONUtils::isMetadataPresent(userDataRoot, field))
 					{
 						json mmsDataRoot = userDataRoot[field];
 
@@ -5074,167 +5012,147 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 
 			physicalPathKey = saveVariantContentMetadata(
-				conn,
-				trans,
+				conn, trans,
 
-				workspace->_workspaceKey,
-				ingestionJobKey,
-				sourceIngestionJobKey,
-				mediaItemKey,
-				externalReadOnlyStorage,
-				externalDeliveryTechnology,
-				externalDeliveryURL,
-				mediaSourceFileName,
-				relativePath,
-				mmsPartitionIndexUsed,
-				sizeInBytes,
-				encodingProfileKey,
+				workspace->_workspaceKey, ingestionJobKey, sourceIngestionJobKey, mediaItemKey, externalReadOnlyStorage, externalDeliveryTechnology,
+				externalDeliveryURL, mediaSourceFileName, relativePath, mmsPartitionIndexUsed, sizeInBytes, encodingProfileKey,
 				physicalItemRetentionInMinutes,
 
 				// video-audio
-				mediaInfoDetails,
-				videoTracks,
-				audioTracks,
+				mediaInfoDetails, videoTracks, audioTracks,
 
 				// image
-				imageWidth,
-				imageHeight,
-				imageFormat,
-				imageQuality
+				imageWidth, imageHeight, imageFormat, imageQuality
 			);
 		}
 
-        {
-            int currentDirLevel1;
-            int currentDirLevel2;
-            int currentDirLevel3;
+		{
+			int currentDirLevel1;
+			int currentDirLevel2;
+			int currentDirLevel3;
 
-            {
-                string sqlStatement = fmt::format( 
-                    "select currentDirLevel1, currentDirLevel2, currentDirLevel3 "
-                    "from MMS_WorkspaceMoreInfo where workspaceKey = {}",
-					workspace->_workspaceKey);
+			{
+				string sqlStatement = fmt::format(
+					"select currentDirLevel1, currentDirLevel2, currentDirLevel3 "
+					"from MMS_WorkspaceMoreInfo where workspaceKey = {}",
+					workspace->_workspaceKey
+				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.exec(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 				if (!empty(res))
-                {
-                    currentDirLevel1 = res[0]["currentDirLevel1"].as<int>();
-                    currentDirLevel2 = res[0]["currentDirLevel2"].as<int>();
-                    currentDirLevel3 = res[0]["currentDirLevel3"].as<int>();
-                }
-                else
-                {
-                    string errorMessage = __FILEREF__ + "Workspace is not present/configured"
-                        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                        + ", sqlStatement: " + sqlStatement
-                    ;
-                    _logger->error(errorMessage);
+				{
+					currentDirLevel1 = res[0]["currentDirLevel1"].as<int>();
+					currentDirLevel2 = res[0]["currentDirLevel2"].as<int>();
+					currentDirLevel3 = res[0]["currentDirLevel3"].as<int>();
+				}
+				else
+				{
+					string errorMessage = __FILEREF__ + "Workspace is not present/configured" +
+										  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", sqlStatement: " + sqlStatement;
+					_logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);                    
-                }            
-            }
+					throw runtime_error(errorMessage);
+				}
+			}
 
-            if (currentDirLevel3 >= 999)
-            {
-                currentDirLevel3		= 0;
+			if (currentDirLevel3 >= 999)
+			{
+				currentDirLevel3 = 0;
 
-                if (currentDirLevel2 >= 999)
-                {
-                    currentDirLevel2		= 0;
+				if (currentDirLevel2 >= 999)
+				{
+					currentDirLevel2 = 0;
 
-                    if (currentDirLevel1 >= 999)
-                    {
-                        currentDirLevel1		= 0;
-                    }
-                    else
-                    {
-                        currentDirLevel1++;
-                    }
-                }
-                else
-                {
-                    currentDirLevel2++;
-                }
-            }
-            else
-            {
-                currentDirLevel3++;
-            }
+					if (currentDirLevel1 >= 999)
+					{
+						currentDirLevel1 = 0;
+					}
+					else
+					{
+						currentDirLevel1++;
+					}
+				}
+				else
+				{
+					currentDirLevel2++;
+				}
+			}
+			else
+			{
+				currentDirLevel3++;
+			}
 
-            {
-                string sqlStatement = fmt::format(
-                    "WITH rows AS (update MMS_WorkspaceMoreInfo set currentDirLevel1 = {}, currentDirLevel2 = {}, "
-                    "currentDirLevel3 = {}, currentIngestionsNumber = currentIngestionsNumber + 1 "
-                    "where workspaceKey = {} "
+			{
+				string sqlStatement = fmt::format(
+					"WITH rows AS (update MMS_WorkspaceMoreInfo set currentDirLevel1 = {}, currentDirLevel2 = {}, "
+					"currentDirLevel3 = {}, currentIngestionsNumber = currentIngestionsNumber + 1 "
+					"where workspaceKey = {} "
 					"returning 1) select count(*) from rows",
-					currentDirLevel1, currentDirLevel2, currentDirLevel3, workspace->_workspaceKey);
+					currentDirLevel1, currentDirLevel2, currentDirLevel3, workspace->_workspaceKey
+				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
-                if (rowsUpdated != 1)
-                {
-                    string errorMessage = __FILEREF__ + "no update was done"
-                            + ", currentDirLevel1: " + to_string(currentDirLevel1)
-                            + ", currentDirLevel2: " + to_string(currentDirLevel2)
-                            + ", currentDirLevel3: " + to_string(currentDirLevel3)
-                            + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                            + ", rowsUpdated: " + to_string(rowsUpdated)
-                            + ", sqlStatement: " + sqlStatement
-                    ;
-                    _logger->error(errorMessage);
+				if (rowsUpdated != 1)
+				{
+					string errorMessage = __FILEREF__ + "no update was done" + ", currentDirLevel1: " + to_string(currentDirLevel1) +
+										  ", currentDirLevel2: " + to_string(currentDirLevel2) +
+										  ", currentDirLevel3: " + to_string(currentDirLevel3) +
+										  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
+										  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
+					_logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);                    
-                }
-            }
-        }
-        
-        {
-            if (ingestionRowToBeUpdatedAsSuccess)
-            {
-                // we can have two scenarios:
-                //  1. this ingestion will generate just one output file (most of the cases)
-                //      in this case we will 
-                //          update the ingestionJobKey with the status
-                //          will add the row in MMS_IngestionJobOutput
-                //          will call manageIngestionJobStatusUpdate
-                //  2. this ingestion will generate multiple files (i.e. Periodical-Frames task)
-                IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
 
-                string errorMessage;
-                string processorMMS;
-                _logger->info(__FILEREF__ + "Update IngestionJob"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", IngestionStatus: " + toString(newIngestionStatus)
-                    + ", errorMessage: " + errorMessage
-                    + ", processorMMS: " + processorMMS
-                );                            
-                updateIngestionJob (conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
-            }
-        }
+		{
+			if (ingestionRowToBeUpdatedAsSuccess)
+			{
+				// we can have two scenarios:
+				//  1. this ingestion will generate just one output file (most of the cases)
+				//      in this case we will
+				//          update the ingestionJobKey with the status
+				//          will add the row in MMS_IngestionJobOutput
+				//          will call manageIngestionJobStatusUpdate
+				//  2. this ingestion will generate multiple files (i.e. Periodical-Frames task)
+				IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
+
+				string errorMessage;
+				string processorMMS;
+				_logger->info(
+					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				);
+				updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 
-        mediaItemKeyAndPhysicalPathKey.first = mediaItemKey;
-        mediaItemKeyAndPhysicalPathKey.second = physicalPathKey;
-    }
-	catch(sql_error const &e)
+		mediaItemKeyAndPhysicalPathKey.first = mediaItemKey;
+		mediaItemKeyAndPhysicalPathKey.second = physicalPathKey;
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -5245,9 +5163,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -5260,9 +5179,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 		throw e;
 	}
-    catch(DeadlockFound& e)
+	catch (DeadlockFound &e)
 	{
-		SPDLOG_ERROR("SQL (Deadlock) exception"
+		SPDLOG_ERROR(
+			"SQL (Deadlock) exception"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -5272,9 +5192,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -5287,9 +5208,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -5299,9 +5221,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -5312,12 +5235,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -5326,9 +5249,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -5339,11 +5263,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 
-    return mediaItemKeyAndPhysicalPathKey;
+	return mediaItemKeyAndPhysicalPathKey;
 }
 
 int64_t MMSEngineDBFacade::parseRetention(string retention)
@@ -5358,30 +5281,30 @@ int64_t MMSEngineDBFacade::parseRetention(string retention)
 	{
 		switch (localRetention.back())
 		{
-			case 's':   // seconds
-				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) / 60;
+		case 's': // seconds
+			retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) / 60;
 
-				break;
-			case 'm':   // minutes
-				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1));
+			break;
+		case 'm': // minutes
+			retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1));
 
-				break;
-			case 'h':   // hours
-				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * 60;
+			break;
+		case 'h': // hours
+			retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * 60;
 
-				break;
-			case 'd':   // days
-				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * 1440;
+			break;
+		case 'd': // days
+			retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * 1440;
 
-				break;
-			case 'M':   // month
-				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * (1440 * 30);
+			break;
+		case 'M': // month
+			retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * (1440 * 30);
 
-				break;
-			case 'y':   // year
-				retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * (1440 * 365);
+			break;
+		case 'y': // year
+			retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * (1440 * 365);
 
-				break;
+			break;
 		}
 	}
 
@@ -5389,13 +5312,9 @@ int64_t MMSEngineDBFacade::parseRetention(string retention)
 }
 
 void MMSEngineDBFacade::manageExternalUniqueName(
-	shared_ptr<PostgresConnection> conn,
-	transaction_base* trans,
-	int64_t workspaceKey,
-	int64_t mediaItemKey,
+	shared_ptr<PostgresConnection> conn, transaction_base *trans, int64_t workspaceKey, int64_t mediaItemKey,
 
-	bool allowUniqueNameOverride,
-	string uniqueName
+	bool allowUniqueNameOverride, string uniqueName
 )
 {
 	try
@@ -5413,19 +5332,20 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 			// delete it if present
 			{
-				string sqlStatement = fmt::format( 
+				string sqlStatement = fmt::format(
 					"WITH rows AS (delete from MMS_ExternalUniqueName "
 					"where workspaceKey = {} and mediaItemKey = {} "
 					"returning 1) select count(*) from rows",
-					workspaceKey, mediaItemKey);
+					workspaceKey, mediaItemKey
+				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 			}
 
@@ -5435,18 +5355,19 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 		// look if it is an insert (we do NOT have one) or an update (we already have one)
 		string currentUniqueName;
 		{
-			string sqlStatement = fmt::format( 
+			string sqlStatement = fmt::format(
 				"select uniqueName from MMS_ExternalUniqueName "
 				"where workspaceKey = {} and mediaItemKey = {}",
-				workspaceKey, mediaItemKey);
+				workspaceKey, mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans->exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
 				currentUniqueName = res[0]["uniqueName"].as<string>();
@@ -5458,34 +5379,36 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 			if (allowUniqueNameOverride)
 			{
-				string sqlStatement = fmt::format( 
+				string sqlStatement = fmt::format(
 					"select mediaItemKey from MMS_ExternalUniqueName "
 					"where workspaceKey = {} and uniqueName = {}",
-					workspaceKey, trans->quote(uniqueName));
+					workspaceKey, trans->quote(uniqueName)
+				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans->exec(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 				if (!empty(res))
 				{
 					int64_t mediaItemKeyOfCurrentUniqueName = res[0]["mediaItemKey"].as<int64_t>();
 
 					{
-						string sqlStatement = fmt::format( 
+						string sqlStatement = fmt::format(
 							"WITH rows AS (update MMS_ExternalUniqueName "
 							"set uniqueName = uniqueName || '-' || '{}' || '-' || '{}' "
 							"where workspaceKey = {} and uniqueName = {} "
 							"returning 1) select count(*) from rows",
-							mediaItemKey, chrono::system_clock::now().time_since_epoch().count(),
-							workspaceKey, trans->quote(uniqueName));
+							mediaItemKey, chrono::system_clock::now().time_since_epoch().count(), workspaceKey, trans->quote(uniqueName)
+						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
-						SPDLOG_INFO("SQL statement"
+						SPDLOG_INFO(
+							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
@@ -5495,15 +5418,17 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					}
 
 					{
-						string sqlStatement = fmt::format( 
+						string sqlStatement = fmt::format(
 							"WITH rows AS (update MMS_MediaItem "
 							"set markedAsRemoved = true "
 							"where workspaceKey = {} and mediaItemKey = {} "
 							"returning 1) select count(*) from rows",
-							workspaceKey, mediaItemKeyOfCurrentUniqueName);
+							workspaceKey, mediaItemKeyOfCurrentUniqueName
+						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
-						SPDLOG_INFO("SQL statement"
+						SPDLOG_INFO(
+							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
@@ -5515,18 +5440,19 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 			}
 
 			{
-				string sqlStatement = fmt::format( 
+				string sqlStatement = fmt::format(
 					"insert into MMS_ExternalUniqueName (workspaceKey, mediaItemKey, uniqueName) "
-					"values ({}, {}, {})", workspaceKey, mediaItemKey, trans->quote(uniqueName)
+					"values ({}, {}, {})",
+					workspaceKey, mediaItemKey, trans->quote(uniqueName)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				trans->exec0(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 			}
 		}
@@ -5536,18 +5462,19 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 			if (allowUniqueNameOverride)
 			{
-				string sqlStatement = fmt::format( 
+				string sqlStatement = fmt::format(
 					"select mediaItemKey from MMS_ExternalUniqueName "
 					"where workspaceKey = {} and uniqueName = {}",
-					workspaceKey, trans->quote(uniqueName));
+					workspaceKey, trans->quote(uniqueName)
+				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans->exec(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 				if (!empty(res))
 				{
@@ -5556,16 +5483,17 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					if (mediaItemKeyOfCurrentUniqueName != mediaItemKey)
 					{
 						{
-							string sqlStatement = fmt::format( 
+							string sqlStatement = fmt::format(
 								"WITH rows AS (update MMS_ExternalUniqueName "
 								"set uniqueName = uniqueName || '-' || '{}' || '-' || '{}' "
 								"where workspaceKey = {} and uniqueName = {} "
 								"returning 1) select count(*) from rows",
-								mediaItemKey, chrono::system_clock::now().time_since_epoch().count(),
-								workspaceKey, trans->quote(uniqueName));
+								mediaItemKey, chrono::system_clock::now().time_since_epoch().count(), workspaceKey, trans->quote(uniqueName)
+							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
-							SPDLOG_INFO("SQL statement"
+							SPDLOG_INFO(
+								"SQL statement"
 								", sqlStatement: @{}@"
 								", getConnectionId: @{}@"
 								", elapsed (millisecs): @{}@",
@@ -5575,15 +5503,17 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 						}
 
 						{
-							string sqlStatement = fmt::format( 
+							string sqlStatement = fmt::format(
 								"WITH rows AS (update MMS_MediaItem "
 								"set markedAsRemoved = true "
 								"where workspaceKey = {} and mediaItemKey = {} "
 								"returning 1) select count(*) from rows",
-								workspaceKey, mediaItemKeyOfCurrentUniqueName);
+								workspaceKey, mediaItemKeyOfCurrentUniqueName
+							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
-							SPDLOG_INFO("SQL statement"
+							SPDLOG_INFO(
+								"SQL statement"
 								", sqlStatement: @{}@"
 								", getConnectionId: @{}@"
 								", elapsed (millisecs): @{}@",
@@ -5596,27 +5526,29 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 			}
 
 			{
-				string sqlStatement = fmt::format( 
+				string sqlStatement = fmt::format(
 					"WITH rows AS (update MMS_ExternalUniqueName "
 					"set uniqueName = {} "
 					"where workspaceKey = {} and mediaItemKey = {} "
 					"returning 1) select count(*) from rows",
-					trans->quote(uniqueName), workspaceKey, mediaItemKey);
+					trans->quote(uniqueName), workspaceKey, mediaItemKey
+				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 			}
 		}
 	}
-	catch(sql_error const &e)
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -5625,9 +5557,10 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -5635,9 +5568,10 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -5647,81 +5581,53 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 }
 
 int64_t MMSEngineDBFacade::saveVariantContentMetadata(
-        int64_t workspaceKey,
-		int64_t ingestionJobKey,
-		int64_t sourceIngestionJobKey,
-        int64_t mediaItemKey,
-		bool externalReadOnlyStorage,
-		string externalDeliveryTechnology,
-		string externalDeliveryURL,
-        string encodedFileName,
-        string relativePath,
-        int mmsPartitionIndexUsed,
-        unsigned long long sizeInBytes,
-        int64_t encodingProfileKey,
-		int64_t physicalItemRetentionPeriodInMinutes,
-        
-        // video-audio
-		tuple<int64_t, long, json>& mediaInfoDetails,
-		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
+	int64_t workspaceKey, int64_t ingestionJobKey, int64_t sourceIngestionJobKey, int64_t mediaItemKey, bool externalReadOnlyStorage,
+	string externalDeliveryTechnology, string externalDeliveryURL, string encodedFileName, string relativePath, int mmsPartitionIndexUsed,
+	unsigned long long sizeInBytes, int64_t encodingProfileKey, int64_t physicalItemRetentionPeriodInMinutes,
 
-        // image
-        int imageWidth,
-        int imageHeight,
-        string imageFormat,
-        int imageQuality
+	// video-audio
+	tuple<int64_t, long, json> &mediaInfoDetails, vector<tuple<int, int64_t, string, string, int, int, string, long>> &videoTracks,
+	vector<tuple<int, int64_t, string, long, int, long, string>> &audioTracks,
+
+	// image
+	int imageWidth, int imageHeight, string imageFormat, int imageQuality
 )
 {
-	int64_t     physicalPathKey;
+	int64_t physicalPathKey;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	work trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        physicalPathKey = saveVariantContentMetadata(
-            conn, trans,
+	try
+	{
+		physicalPathKey = saveVariantContentMetadata(
+			conn, trans,
 
-            workspaceKey,
-			ingestionJobKey,
-			sourceIngestionJobKey,
-            mediaItemKey,
-			externalReadOnlyStorage,
-			externalDeliveryTechnology,
-			externalDeliveryURL,
-            encodedFileName,
-            relativePath,
-            mmsPartitionIndexUsed,
-            sizeInBytes,
-            encodingProfileKey,
+			workspaceKey, ingestionJobKey, sourceIngestionJobKey, mediaItemKey, externalReadOnlyStorage, externalDeliveryTechnology,
+			externalDeliveryURL, encodedFileName, relativePath, mmsPartitionIndexUsed, sizeInBytes, encodingProfileKey,
 			physicalItemRetentionPeriodInMinutes,
 
-            // video-audio
-			mediaInfoDetails,
-			videoTracks,
-			audioTracks,
+			// video-audio
+			mediaInfoDetails, videoTracks, audioTracks,
 
-            // image
-            imageWidth,
-            imageHeight,
-            imageFormat,
-            imageQuality
-        );
+			// image
+			imageWidth, imageHeight, imageFormat, imageQuality
+		);
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -5732,9 +5638,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -5747,9 +5654,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -5759,9 +5667,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -5772,12 +5681,12 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -5786,9 +5695,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -5799,73 +5709,53 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
-    return physicalPathKey;
+
+	return physicalPathKey;
 }
 
 int64_t MMSEngineDBFacade::saveVariantContentMetadata(
-        shared_ptr<PostgresConnection> conn,
-		work& trans,
+	shared_ptr<PostgresConnection> conn, work &trans,
 
-        int64_t workspaceKey,
-		int64_t ingestionJobKey,
-		int64_t sourceIngestionJobKey,
-        int64_t mediaItemKey,
-		bool externalReadOnlyStorage,
-		string externalDeliveryTechnology,
-		string externalDeliveryURL,
-        string encodedFileName,
-        string relativePath,
-        int mmsPartitionIndexUsed,
-        unsigned long long sizeInBytes,
-        int64_t encodingProfileKey,
-		int64_t physicalItemRetentionPeriodInMinutes,
-        
-        // video-audio
-		tuple<int64_t, long, json>& mediaInfoDetails,
-		vector<tuple<int, int64_t, string, string, int, int, string, long>>& videoTracks,
-		vector<tuple<int, int64_t, string, long, int, long, string>>& audioTracks,
+	int64_t workspaceKey, int64_t ingestionJobKey, int64_t sourceIngestionJobKey, int64_t mediaItemKey, bool externalReadOnlyStorage,
+	string externalDeliveryTechnology, string externalDeliveryURL, string encodedFileName, string relativePath, int mmsPartitionIndexUsed,
+	unsigned long long sizeInBytes, int64_t encodingProfileKey, int64_t physicalItemRetentionPeriodInMinutes,
 
-        // image
-        int imageWidth,
-        int imageHeight,
-        string imageFormat,
-        int imageQuality
+	// video-audio
+	tuple<int64_t, long, json> &mediaInfoDetails, vector<tuple<int, int64_t, string, string, int, int, string, long>> &videoTracks,
+	vector<tuple<int, int64_t, string, long, int, long, string>> &audioTracks,
+
+	// image
+	int imageWidth, int imageHeight, string imageFormat, int imageQuality
 )
 {
-    int64_t     physicalPathKey;
+	int64_t physicalPathKey;
 
-    try
-    {
-        MMSEngineDBFacade::ContentType contentType;
-        {
-            string sqlStatement = fmt::format( 
-                "select contentType from MMS_MediaItem where mediaItemKey = {}",
-				mediaItemKey);
+	try
+	{
+		MMSEngineDBFacade::ContentType contentType;
+		{
+			string sqlStatement = fmt::format("select contentType from MMS_MediaItem where mediaItemKey = {}", mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
-                contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
-            else
-            {
-                string errorMessage = __FILEREF__ + "no ContentType returned"
-                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                ;
-                _logger->error(errorMessage);
+				contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
+			else
+			{
+				string errorMessage = __FILEREF__ + "no ContentType returned" + ", mediaItemKey: " + to_string(mediaItemKey);
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }            
-        }
+				throw runtime_error(errorMessage);
+			}
+		}
 
 		string deliveryInfo;
 		{
@@ -5879,12 +5769,12 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				field = "externalDeliveryURL";
 				deliveryInfoRoot[field] = externalDeliveryURL;
 
-                deliveryInfo = JSONUtils::toString(deliveryInfoRoot);                        
+				deliveryInfo = JSONUtils::toString(deliveryInfoRoot);
 			}
 		}
 
-        int64_t durationInMilliSeconds;
-        long bitRate;
+		int64_t durationInMilliSeconds;
+		long bitRate;
 		json metaDataRoot;
 		string metaData;
 
@@ -5892,46 +5782,40 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		if (metaDataRoot != nullptr)
 			metaData = JSONUtils::toString(metaDataRoot);
 
-        {
-            int drm = 0;
+		{
+			int drm = 0;
 
-			_logger->info(__FILEREF__ + "insert into MMS_PhysicalPath"
-					+ ", mediaItemKey: " + to_string(mediaItemKey)
-					+ ", relativePath: " + relativePath
-					+ ", encodedFileName: " + encodedFileName
-					+ ", encodingProfileKey: " + to_string(encodingProfileKey)
-					+ ", deliveryInfo: " + deliveryInfo
-					+ ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
-					);
-            string sqlStatement = fmt::format( 
-                "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
+			_logger->info(
+				__FILEREF__ + "insert into MMS_PhysicalPath" + ", mediaItemKey: " + to_string(mediaItemKey) + ", relativePath: " + relativePath +
+				", encodedFileName: " + encodedFileName + ", encodingProfileKey: " + to_string(encodingProfileKey) +
+				", deliveryInfo: " + deliveryInfo + ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
+			);
+			string sqlStatement = fmt::format(
+				"insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
 				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
 				"durationInMilliSeconds, bitRate, deliveryInfo, metaData, creationDate, retentionInMinutes) values ("
-                "DEFAULT, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', {}) returning physicalPathKey",
-				mediaItemKey, drm, externalReadOnlyStorage, trans.quote(encodedFileName),
-				trans.quote(relativePath), mmsPartitionIndexUsed, sizeInBytes,
-				encodingProfileKey == -1 ? "null" : to_string(encodingProfileKey),
-				durationInMilliSeconds == -1 ? "null" : to_string(durationInMilliSeconds),
-				bitRate == -1 ? "null" : to_string(bitRate),
-				deliveryInfo == "" ? "null" : trans.quote(deliveryInfo),
-				metaData == "" ? "null" : trans.quote(metaData),
+				"DEFAULT, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', {}) returning physicalPathKey",
+				mediaItemKey, drm, externalReadOnlyStorage, trans.quote(encodedFileName), trans.quote(relativePath), mmsPartitionIndexUsed,
+				sizeInBytes, encodingProfileKey == -1 ? "null" : to_string(encodingProfileKey),
+				durationInMilliSeconds == -1 ? "null" : to_string(durationInMilliSeconds), bitRate == -1 ? "null" : to_string(bitRate),
+				deliveryInfo == "" ? "null" : trans.quote(deliveryInfo), metaData == "" ? "null" : trans.quote(metaData),
 				physicalItemRetentionPeriodInMinutes == -1 ? "null" : to_string(physicalItemRetentionPeriodInMinutes)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			physicalPathKey = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 
 		if (contentType == ContentType::Video || contentType == ContentType::Audio)
-        {
-			for (tuple<int, int64_t, string, string, int, int, string, long> videoTrack: videoTracks)
-            {
+		{
+			for (tuple<int, int64_t, string, string, int, int, string, long> videoTrack : videoTracks)
+			{
 				int videoTrackIndex;
 				int64_t videoDurationInMilliSeconds;
 				string videoCodecName;
@@ -5941,37 +5825,33 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				string videoAvgFrameRate;
 				long videoBitRate;
 
-				tie(videoTrackIndex, videoDurationInMilliSeconds, videoCodecName, videoProfile,
-					videoWidth, videoHeight, videoAvgFrameRate, videoBitRate) = videoTrack;
+				tie(videoTrackIndex, videoDurationInMilliSeconds, videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate,
+					videoBitRate) = videoTrack;
 
-                string sqlStatement = fmt::format( 
-                    "insert into MMS_VideoTrack (videoTrackKey, physicalPathKey, "
+				string sqlStatement = fmt::format(
+					"insert into MMS_VideoTrack (videoTrackKey, physicalPathKey, "
 					"trackIndex, durationInMilliSeconds, width, height, avgFrameRate, "
 					"codecName, bitRate, profile) values ("
-                    "DEFAULT, {}, {}, {}, {}, {}, {}, {}, {}, {})",
-					physicalPathKey,
-					videoTrackIndex == -1 ? "null" : to_string(videoTrackIndex),
+					"DEFAULT, {}, {}, {}, {}, {}, {}, {}, {}, {})",
+					physicalPathKey, videoTrackIndex == -1 ? "null" : to_string(videoTrackIndex),
 					videoDurationInMilliSeconds == -1 ? "null" : to_string(videoDurationInMilliSeconds),
-					videoWidth == -1 ? "null" : to_string(videoWidth),
-					videoHeight == -1 ? "null" : to_string(videoHeight),
-					videoAvgFrameRate == "" ? "null" : trans.quote(videoAvgFrameRate),
-					videoCodecName == "" ? "null" : trans.quote(videoCodecName),
-					videoBitRate == -1 ? "null" : to_string(videoBitRate),
-					videoProfile == "" ? "null" : trans.quote(videoProfile)
+					videoWidth == -1 ? "null" : to_string(videoWidth), videoHeight == -1 ? "null" : to_string(videoHeight),
+					videoAvgFrameRate == "" ? "null" : trans.quote(videoAvgFrameRate), videoCodecName == "" ? "null" : trans.quote(videoCodecName),
+					videoBitRate == -1 ? "null" : to_string(videoBitRate), videoProfile == "" ? "null" : trans.quote(videoProfile)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				trans.exec0(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
-            }
+			}
 
-			for(tuple<int, int64_t, string, long, int, long, string> audioTrack: audioTracks)
-            {
+			for (tuple<int, int64_t, string, long, int, long, string> audioTrack : audioTracks)
+			{
 				int audioTrackIndex;
 				int64_t audioDurationInMilliSeconds;
 				string audioCodecName;
@@ -5980,37 +5860,33 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				long audioBitRate;
 				string language;
 
+				tie(audioTrackIndex, audioDurationInMilliSeconds, audioCodecName, audioSampleRate, audioChannels, audioBitRate, language) =
+					audioTrack;
 
-				tie(audioTrackIndex, audioDurationInMilliSeconds, audioCodecName, audioSampleRate,
-					audioChannels, audioBitRate, language) = audioTrack;
-
-                string sqlStatement = fmt::format( 
-                    "insert into MMS_AudioTrack (audioTrackKey, physicalPathKey, "
+				string sqlStatement = fmt::format(
+					"insert into MMS_AudioTrack (audioTrackKey, physicalPathKey, "
 					"trackIndex, durationInMilliSeconds, codecName, bitRate, sampleRate, channels, language) values ("
-                    "DEFAULT, {}, {}, {}, {}, {}, {}, {}, {})",
-					physicalPathKey,
-					audioTrackIndex == -1 ? "null" : to_string(audioTrackIndex),
+					"DEFAULT, {}, {}, {}, {}, {}, {}, {}, {})",
+					physicalPathKey, audioTrackIndex == -1 ? "null" : to_string(audioTrackIndex),
 					audioDurationInMilliSeconds == -1 ? "null" : to_string(audioDurationInMilliSeconds),
-					audioCodecName == "" ? "null" : trans.quote(audioCodecName),
-					audioBitRate == -1 ? "null" : to_string(audioBitRate),
-					audioSampleRate == -1 ? "null" : to_string(audioSampleRate),
-					audioChannels == -1 ? "null" : to_string(audioChannels),
+					audioCodecName == "" ? "null" : trans.quote(audioCodecName), audioBitRate == -1 ? "null" : to_string(audioBitRate),
+					audioSampleRate == -1 ? "null" : to_string(audioSampleRate), audioChannels == -1 ? "null" : to_string(audioChannels),
 					language == "" ? "null" : trans.quote(language)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				trans.exec0(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
-            }
+			}
 		}
 		else if (contentType == ContentType::Image)
-        {
-			string sqlStatement = fmt::format( 
+		{
+			string sqlStatement = fmt::format(
 				"insert into MMS_ImageItemProfile (physicalPathKey, width, height, format, "
 				"quality) values ("
 				"{}, {}, {}, {}, {})",
@@ -6018,30 +5894,28 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 		else
 		{
-			string errorMessage = __FILEREF__ + "ContentType is wrong"
-				+ ", contentType: " + MMSEngineDBFacade::toString(contentType)
-			;
+			string errorMessage = __FILEREF__ + "ContentType is wrong" + ", contentType: " + MMSEngineDBFacade::toString(contentType);
 			_logger->error(errorMessage);
 
-			throw runtime_error(errorMessage);                    
-		}            
+			throw runtime_error(errorMessage);
+		}
 
-		addIngestionJobOutput(conn, &trans, ingestionJobKey, mediaItemKey, physicalPathKey,
-			sourceIngestionJobKey);
-    }
-	catch(sql_error const &e)
+		addIngestionJobOutput(conn, &trans, ingestionJobKey, mediaItemKey, physicalPathKey, sourceIngestionJobKey);
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -6050,9 +5924,10 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6060,37 +5935,39 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		throw e;
 	}
-    
-    return physicalPathKey;
+
+	return physicalPathKey;
 }
 
 void MMSEngineDBFacade::manageCrossReferences(
-    shared_ptr<PostgresConnection> conn, transaction_base* trans,
-	int64_t ingestionJobKey,
-	int64_t workspaceKey, int64_t mediaItemKey, json crossReferencesRoot)
+	shared_ptr<PostgresConnection> conn, transaction_base *trans, int64_t ingestionJobKey, int64_t workspaceKey, int64_t mediaItemKey,
+	json crossReferencesRoot
+)
 {
 	try
 	{
 		// make sure the mediaitemkey belong to the workspace
 		{
-			string sqlStatement = fmt::format( 
+			string sqlStatement = fmt::format(
 				"select mediaItemKey from MMS_MediaItem "
 				"where workspaceKey = {} and mediaItemKey = {}",
-				workspaceKey, mediaItemKey);
+				workspaceKey, mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans->exec(sqlStatement);
-			chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(                       
-				chrono::system_clock::now() - startSql);
-			SPDLOG_INFO("SQL statement"
+			chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
@@ -6098,26 +5975,29 @@ void MMSEngineDBFacade::manageCrossReferences(
 			);
 			if (empty(res))
 			{
-				string errorMessage = fmt::format("cross references cannot be updated because mediaItemKey does not belong to the workspace"
+				string errorMessage = fmt::format(
+					"cross references cannot be updated because mediaItemKey does not belong to the workspace"
 					", workspaceKey: {}"
 					", mediaItemKey: {}",
 					workspaceKey, mediaItemKey
 				);
 				SPDLOG_ERROR(errorMessage);
 
-				throw runtime_error(errorMessage);                    
+				throw runtime_error(errorMessage);
 			}
 		}
 
 		{
-			string sqlStatement = fmt::format( 
+			string sqlStatement = fmt::format(
 				"WITH rows AS (delete from MMS_CrossReference "
 				"where sourceMediaItemKey = {} or targetMediaItemKey = {} "
 				"returning 1) select count(*) from rows",
-				mediaItemKey, mediaItemKey);
+				mediaItemKey, mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", rowsUpdated: {}"
 				", getConnectionId: @{}@"
@@ -6125,9 +6005,9 @@ void MMSEngineDBFacade::manageCrossReferences(
 				sqlStatement, rowsUpdated, conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-		for(int crossReferenceIndex = 0; crossReferenceIndex < crossReferencesRoot.size(); crossReferenceIndex++)
+		for (int crossReferenceIndex = 0; crossReferenceIndex < crossReferencesRoot.size(); crossReferenceIndex++)
 		{
 			json crossReferenceRoot = crossReferencesRoot[crossReferenceIndex];
 
@@ -6186,13 +6066,13 @@ void MMSEngineDBFacade::manageCrossReferences(
 			if (JSONUtils::isMetadataPresent(crossReferenceRoot, field))
 				crossReferenceParametersRoot = crossReferenceRoot[field];
 
-			addCrossReference (conn, trans, ingestionJobKey,
-				sourceMediaItemKey, crossReferenceType, targetMediaItemKey, crossReferenceParametersRoot);
+			addCrossReference(conn, trans, ingestionJobKey, sourceMediaItemKey, crossReferenceType, targetMediaItemKey, crossReferenceParametersRoot);
 		}
 	}
-	catch(sql_error const &e)
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -6201,9 +6081,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6211,9 +6092,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -6222,11 +6104,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 	}
 }
 
-void MMSEngineDBFacade::addCrossReference (
-	int64_t ingestionJobKey,
-	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
-	int64_t targetMediaItemKey,
-	json crossReferenceParametersRoot)
+void MMSEngineDBFacade::addCrossReference(
+	int64_t ingestionJobKey, int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
+	json crossReferenceParametersRoot
+)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -6234,23 +6115,22 @@ void MMSEngineDBFacade::addCrossReference (
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-		addCrossReference (conn, &trans, ingestionJobKey,
-			sourceMediaItemKey, crossReferenceType, targetMediaItemKey,
-			crossReferenceParametersRoot);
+	try
+	{
+		addCrossReference(conn, &trans, ingestionJobKey, sourceMediaItemKey, crossReferenceType, targetMediaItemKey, crossReferenceParametersRoot);
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -6261,9 +6141,10 @@ void MMSEngineDBFacade::addCrossReference (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6276,9 +6157,10 @@ void MMSEngineDBFacade::addCrossReference (
 
 		throw e;
 	}
-    catch(DeadlockFound& e)
+	catch (DeadlockFound &e)
 	{
-		SPDLOG_ERROR("SQL (deadlock) exception"
+		SPDLOG_ERROR(
+			"SQL (deadlock) exception"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6288,9 +6170,10 @@ void MMSEngineDBFacade::addCrossReference (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6303,9 +6186,10 @@ void MMSEngineDBFacade::addCrossReference (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6315,9 +6199,10 @@ void MMSEngineDBFacade::addCrossReference (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6328,12 +6213,12 @@ void MMSEngineDBFacade::addCrossReference (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -6342,9 +6227,10 @@ void MMSEngineDBFacade::addCrossReference (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6355,54 +6241,52 @@ void MMSEngineDBFacade::addCrossReference (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
 
-void MMSEngineDBFacade::addCrossReference (
-    shared_ptr<PostgresConnection> conn, transaction_base* trans,
-	int64_t ingestionJobKey,
-	int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
-	json crossReferenceParametersRoot)
+void MMSEngineDBFacade::addCrossReference(
+	shared_ptr<PostgresConnection> conn, transaction_base *trans, int64_t ingestionJobKey, int64_t sourceMediaItemKey,
+	CrossReferenceType crossReferenceType, int64_t targetMediaItemKey, json crossReferenceParametersRoot
+)
 {
-    
-    try
-    {
+
+	try
+	{
 		string crossReferenceParameters;
 		{
-            crossReferenceParameters = JSONUtils::toString(crossReferenceParametersRoot);
+			crossReferenceParameters = JSONUtils::toString(crossReferenceParametersRoot);
 		}
 
-        {
+		{
 			string sqlStatement;
 			if (crossReferenceParameters != "")
 				sqlStatement = fmt::format(
 					"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey, parameters) "
 					"values ({}, {}, {}, {})",
-					sourceMediaItemKey, trans->quote(toString(crossReferenceType)), targetMediaItemKey,
-					trans->quote(crossReferenceParameters)
+					sourceMediaItemKey, trans->quote(toString(crossReferenceType)), targetMediaItemKey, trans->quote(crossReferenceParameters)
 				);
 			else
-				sqlStatement = fmt::format( 
+				sqlStatement = fmt::format(
 					"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey, parameters) "
 					"values ({}, {}, {}, NULL)",
 					sourceMediaItemKey, trans->quote(toString(crossReferenceType)), targetMediaItemKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans->exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
-    }
-	catch(sql_error const &e)
+		}
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -6413,11 +6297,12 @@ void MMSEngineDBFacade::addCrossReference (
 		// 	string::npos)
 		// 	throw DeadlockFound(exceptionMessage);
 		// else
-			throw e;
+		throw e;
 	}
-    catch(DeadlockFound& e)
+	catch (DeadlockFound &e)
 	{
-		SPDLOG_ERROR("SQL (deadlock) exception"
+		SPDLOG_ERROR(
+			"SQL (deadlock) exception"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6425,9 +6310,10 @@ void MMSEngineDBFacade::addCrossReference (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6435,9 +6321,10 @@ void MMSEngineDBFacade::addCrossReference (
 
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -6446,8 +6333,7 @@ void MMSEngineDBFacade::addCrossReference (
 	}
 }
 
-void MMSEngineDBFacade::removePhysicalPath (
-	int64_t physicalPathKey)
+void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -6455,48 +6341,47 @@ void MMSEngineDBFacade::removePhysicalPath (
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        {
-            string sqlStatement = fmt::format( 
-                "WITH rows AS (delete from MMS_PhysicalPath "
+	try
+	{
+		{
+			string sqlStatement = fmt::format(
+				"WITH rows AS (delete from MMS_PhysicalPath "
 				"where physicalPathKey = {} "
 				"returning 1) select count(*) from rows",
-				physicalPathKey);
+				physicalPathKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-            if (rowsUpdated != 1)
-            {
-                // probable because encodingPercentage was already the same in the table
-                string errorMessage = __FILEREF__ + "no delete was done"
-                        + ", physicalPathKey: " + to_string(physicalPathKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->warn(errorMessage);
+			if (rowsUpdated != 1)
+			{
+				// probable because encodingPercentage was already the same in the table
+				string errorMessage = __FILEREF__ + "no delete was done" + ", physicalPathKey: " + to_string(physicalPathKey) +
+									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
+				_logger->warn(errorMessage);
 
-                // throw runtime_error(errorMessage);                    
-            }
-        }
+				// throw runtime_error(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -6507,9 +6392,10 @@ void MMSEngineDBFacade::removePhysicalPath (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6522,9 +6408,10 @@ void MMSEngineDBFacade::removePhysicalPath (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6534,9 +6421,10 @@ void MMSEngineDBFacade::removePhysicalPath (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6547,12 +6435,12 @@ void MMSEngineDBFacade::removePhysicalPath (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -6561,9 +6449,10 @@ void MMSEngineDBFacade::removePhysicalPath (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6574,13 +6463,11 @@ void MMSEngineDBFacade::removePhysicalPath (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
 
-void MMSEngineDBFacade::removeMediaItem (
-        int64_t mediaItemKey)
+void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -6588,47 +6475,46 @@ void MMSEngineDBFacade::removeMediaItem (
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        {
-            string sqlStatement = fmt::format( 
-                "WITH rows AS (delete from MMS_MediaItem "
+	try
+	{
+		{
+			string sqlStatement = fmt::format(
+				"WITH rows AS (delete from MMS_MediaItem "
 				"where mediaItemKey = {} "
 				"returning 1) select count(*) from rows",
-				mediaItemKey);
+				mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no delete was done"
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", sqlStatement: " + sqlStatement
-                ;
-                _logger->warn(errorMessage);
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = __FILEREF__ + "no delete was done" + ", mediaItemKey: " + to_string(mediaItemKey) +
+									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
+				_logger->warn(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }
-        }
+				throw runtime_error(errorMessage);
+			}
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -6639,9 +6525,10 @@ void MMSEngineDBFacade::removeMediaItem (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6654,9 +6541,10 @@ void MMSEngineDBFacade::removeMediaItem (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6666,9 +6554,10 @@ void MMSEngineDBFacade::removeMediaItem (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6679,12 +6568,12 @@ void MMSEngineDBFacade::removeMediaItem (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -6693,9 +6582,10 @@ void MMSEngineDBFacade::removeMediaItem (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6706,15 +6596,13 @@ void MMSEngineDBFacade::removeMediaItem (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
 
-json MMSEngineDBFacade::getTagsList (
-	int64_t workspaceKey, int start, int rows,
-	int liveRecordingChunk, bool contentTypePresent, ContentType contentType,
-	string tagNameFilter, bool fromMaster
+json MMSEngineDBFacade::getTagsList(
+	int64_t workspaceKey, int start, int rows, int liveRecordingChunk, bool contentTypePresent, ContentType contentType, string tagNameFilter,
+	bool fromMaster
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -6727,126 +6615,123 @@ json MMSEngineDBFacade::getTagsList (
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    json tagsListRoot;
-    try
-    {
-        string field;
-        
-        _logger->info(__FILEREF__ + "getTagsList"
-            + ", workspaceKey: " + to_string(workspaceKey)
-            + ", start: " + to_string(start)
-            + ", rows: " + to_string(rows)
-            + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
-            + ", contentTypePresent: " + to_string(contentTypePresent)
-            + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
-            + ", tagNameFilter: " + tagNameFilter
-        );
-        
-        {
-            json requestParametersRoot;
+	json tagsListRoot;
+	try
+	{
+		string field;
 
-            field = "start";
-            requestParametersRoot[field] = start;
+		_logger->info(
+			__FILEREF__ + "getTagsList" + ", workspaceKey: " + to_string(workspaceKey) + ", start: " + to_string(start) + ", rows: " +
+			to_string(rows) + ", liveRecordingChunk: " + to_string(liveRecordingChunk) + ", contentTypePresent: " + to_string(contentTypePresent) +
+			", contentType: " + (contentTypePresent ? toString(contentType) : "") + ", tagNameFilter: " + tagNameFilter
+		);
 
-            field = "rows";
-            requestParametersRoot[field] = rows;
-            
-            field = "liveRecordingChunk";
-            requestParametersRoot[field] = liveRecordingChunk;
+		{
+			json requestParametersRoot;
 
-            if (contentTypePresent)
-            {
-                field = "contentType";
-                requestParametersRoot[field] = toString(contentType);
-            }
+			field = "start";
+			requestParametersRoot[field] = start;
 
-            if (tagNameFilter != "")
-            {
-                field = "tagNameFilter";
-                requestParametersRoot[field] = tagNameFilter;
-            }
-            
-            field = "requestParameters";
-            tagsListRoot[field] = requestParametersRoot;
-        }
+			field = "rows";
+			requestParametersRoot[field] = rows;
+
+			field = "liveRecordingChunk";
+			requestParametersRoot[field] = liveRecordingChunk;
+
+			if (contentTypePresent)
+			{
+				field = "contentType";
+				requestParametersRoot[field] = toString(contentType);
+			}
+
+			if (tagNameFilter != "")
+			{
+				field = "tagNameFilter";
+				requestParametersRoot[field] = tagNameFilter;
+			}
+
+			field = "requestParameters";
+			tagsListRoot[field] = requestParametersRoot;
+		}
 
 		string tagNameFilterLowerCase;
 		if (tagNameFilter != "")
 		{
 			tagNameFilterLowerCase.resize(tagNameFilter.size());
-			transform(tagNameFilter.begin(), tagNameFilter.end(), tagNameFilterLowerCase.begin(),
-				[](unsigned char c){return tolower(c); } );
+			transform(tagNameFilter.begin(), tagNameFilter.end(), tagNameFilterLowerCase.begin(), [](unsigned char c) { return tolower(c); });
 		}
 
-        string sqlWhere;
+		string sqlWhere;
 		sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
-        if (contentTypePresent)
-            sqlWhere += fmt::format("and contentType = {} ", trans.quote(toString(contentType)));
+		if (contentTypePresent)
+			sqlWhere += fmt::format("and contentType = {} ", trans.quote(toString(contentType)));
 		if (liveRecordingChunk == 0)
 			sqlWhere += ("and userData -> 'mmsData' ->> 'liveRecordingChunk' is NULL ");
 		else if (liveRecordingChunk == 1)
 			sqlWhere += ("and userData -> 'mmsData' ->> 'liveRecordingChunk' is not NULL ");
 
-        json responseRoot;
-        {
+		json responseRoot;
+		{
 			string sqlStatement = fmt::format(
 				"select count(distinct tagName) from ("
 				"select unnest(tags) as tagName from MMS_MediaItem {}) t ",
-				sqlWhere);
+				sqlWhere
+			);
 			if (tagNameFilter != "")
-				sqlStatement += fmt::format("where lower(tagName) like {} ",
-					trans.quote("%" + tagNameFilterLowerCase + "%"));
+				sqlStatement += fmt::format("where lower(tagName) like {} ", trans.quote("%" + tagNameFilterLowerCase + "%"));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 
-        json tagsRoot = json::array();
-        {
-			string sqlStatement = fmt::format( 
+		json tagsRoot = json::array();
+		{
+			string sqlStatement = fmt::format(
 				"select distinct tagName from ("
 				"select unnest(tags) as tagName from MMS_MediaItem {}) t ",
-				sqlWhere);
+				sqlWhere
+			);
 			if (tagNameFilter != "")
 				sqlStatement += fmt::format("where lower(tagName) like {} ", trans.quote("%" + tagNameFilterLowerCase + "%"));
 			sqlStatement += fmt::format("order by tagName limit {} offset {}", rows, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-                tagsRoot.push_back(static_cast<string>(row["tagName"].as<string>()));
-			SPDLOG_INFO("SQL statement"
+			for (auto row : res)
+				tagsRoot.push_back(static_cast<string>(row["tagName"].as<string>()));
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-        field = "tags";
-        responseRoot[field] = tagsRoot;
+		field = "tags";
+		responseRoot[field] = tagsRoot;
 
-        field = "response";
-        tagsListRoot[field] = responseRoot;
+		field = "response";
+		tagsListRoot[field] = responseRoot;
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -6857,9 +6742,10 @@ json MMSEngineDBFacade::getTagsList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6872,9 +6758,10 @@ json MMSEngineDBFacade::getTagsList (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -6884,9 +6771,10 @@ json MMSEngineDBFacade::getTagsList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6897,12 +6785,12 @@ json MMSEngineDBFacade::getTagsList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -6911,9 +6799,10 @@ json MMSEngineDBFacade::getTagsList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -6924,17 +6813,13 @@ json MMSEngineDBFacade::getTagsList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
-    return tagsListRoot;
+
+	return tagsListRoot;
 }
 
-void MMSEngineDBFacade::updateMediaItem(
-		int64_t mediaItemKey,
-        string processorMMSForRetention
-        )
+void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMMSForRetention)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -6942,53 +6827,50 @@ void MMSEngineDBFacade::updateMediaItem(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-	_logger->info(__FILEREF__ + "updateMediaItem"
-			+ ", mediaItemKey: " + to_string(mediaItemKey)
-			+ ", processorMMSForRetention: " + processorMMSForRetention
-			);
-    try
-    {
-        {
-            string sqlStatement = fmt::format( 
-                "WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
+	_logger->info(
+		__FILEREF__ + "updateMediaItem" + ", mediaItemKey: " + to_string(mediaItemKey) + ", processorMMSForRetention: " + processorMMSForRetention
+	);
+	try
+	{
+		{
+			string sqlStatement = fmt::format(
+				"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
 				"where mediaItemKey = {} "
 				"returning 1) select count(*) from rows",
-				processorMMSForRetention == "" ? "null" : trans.quote(processorMMSForRetention),
-				mediaItemKey);
+				processorMMSForRetention == "" ? "null" : trans.quote(processorMMSForRetention), mediaItemKey
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done"
-					+ ", mediaItemKey: " + to_string(mediaItemKey)
-					+ ", processorMMSForRetention: " + processorMMSForRetention
-					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", sqlStatement: " + sqlStatement
-				;
+				string errorMessage = __FILEREF__ + "no update was done" + ", mediaItemKey: " + to_string(mediaItemKey) +
+									  ", processorMMSForRetention: " + processorMMSForRetention + ", rowsUpdated: " + to_string(rowsUpdated) +
+									  ", sqlStatement: " + sqlStatement;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-        }
+		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -6999,9 +6881,10 @@ void MMSEngineDBFacade::updateMediaItem(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -7014,9 +6897,10 @@ void MMSEngineDBFacade::updateMediaItem(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -7026,9 +6910,10 @@ void MMSEngineDBFacade::updateMediaItem(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -7039,12 +6924,12 @@ void MMSEngineDBFacade::updateMediaItem(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -7053,9 +6938,10 @@ void MMSEngineDBFacade::updateMediaItem(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -7066,8 +6952,6 @@ void MMSEngineDBFacade::updateMediaItem(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
-
