@@ -60,7 +60,7 @@ PORT=8010
 
 if [ "$command" == "start" ]
 then
-	spawn-fcgi -p $PORT -P $PIDFILE $FORK_OPTION $CatraMMS_PATH/CatraMMS/bin/cgi/api.fcgi NoFileSystem
+	spawn-fcgi -p $PORT -P $PIDFILE $FORK_OPTION $CatraMMS_PATH/CatraMMS/bin/cgi/api.fcgi
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep "api.fcgi" | grep -v grep | grep -v status

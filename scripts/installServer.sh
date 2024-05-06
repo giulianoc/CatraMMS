@@ -207,9 +207,7 @@ install-packages()
 	apt install -y dvb-tools
 	apt install -y dvblast
 
-	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
-
-		#api should have GUI as well
+	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
 
 		echo ""
 		read -n 1 -s -r -p "install jre..."
@@ -223,8 +221,6 @@ install-packages()
 	fi
 
 	if [ "$moduleType" == "engine" ]; then
-
-		#api should have GUI as well
 
 		#MYSQL
 		echo ""
@@ -419,12 +415,12 @@ create-directory()
 
 	ln -s /mnt/local-data/logs /var/catramms/logs
 
-	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
+	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
 		mkdir /mnt/local-data/logs/tomcat-gui
 		mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
 		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
 	fi
-	if [ "$moduleType" == "api" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" ]; then
 		mkdir /mnt/local-data/logs/mmsAPI
 	fi
 	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
@@ -433,7 +429,7 @@ create-directory()
 	if [ "$moduleType" == "engine" ]; then
 		mkdir /mnt/local-data/logs/mmsEngineService
 	fi
-	if [ "$moduleType" == "api" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "integration" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "integration" ]; then
 		mkdir -p /mnt/local-data/logs/nginx
 	fi
 	chown -R mms:mms /mnt/local-data/logs
@@ -496,7 +492,9 @@ create-directory()
 		fi
 	fi
 
-	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
+	#cache: anche se solo api, webapi e integration usano la cache, bisogna creare la dir anche per encoder, delivery perchè
+	#path proxy_cache_path sono configurati in nginx.conf (globale a tutti gli nginx)
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "integration" ]; then
 		if [ ! -d "/mnt/local-data/cache/nginx" ];
 		then
 			mkdir -p /mnt/local-data/cache/nginx
@@ -545,7 +543,10 @@ create-directory()
 	ln -s /home/mms/mms/scripts/mmsStopALL.sh /home/mms
 	ln -s /opt/catramms/CatraMMS/scripts/nginx.sh /home/mms
 	ln -s /opt/catramms/CatraMMS/scripts/mmsEncoder.sh /home/mms
+
 	ln -s /opt/catramms/CatraMMS/scripts/mmsApi.sh /home/mms
+	ln -s /opt/catramms/CatraMMS/scripts/mmsDelivery.sh /home/mms
+
 	ln -s /opt/catramms/CatraMMS/scripts/mmsEngineService.sh /home/mms
 	ln -s /opt/catramms/CatraMMS/scripts/mmsTail.sh /home/mms
 	ln -s /opt/catramms/CatraMMS/scripts/tomcat.sh /home/mms
@@ -691,9 +692,7 @@ install-mms-packages()
 	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
 	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
 
-	if [ "$moduleType" == "api" -o "$moduleType" == "integration" ]; then
-
-		#api should have GUI as well
+	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
 
 		echo ""
 		tomcatVersion=9.0.74
@@ -886,7 +885,7 @@ install-mms-packages()
 
 		chown -R mms:mms ~mms/mms
 	fi
-	if [ "$moduleType" == "api" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" ]; then
 		packageName=apiMmsConf
 		echo ""
 		package=$packageName
@@ -943,7 +942,7 @@ firewall-rules()
 		ufw allow 30000:31000/tcp
 		#connection srt from public
 		ufw allow 30000:31000/udp
-	elif [ "$moduleType" == "api" ]; then
+	elif [ "$moduleType" == "api" -o "$moduleType" == "delivery" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""
 		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
@@ -1023,7 +1022,7 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleType (load-balancer or engine or api or encoder or externalEncoder or storage or integration)>"
+	echo "usage $0 <moduleType (load-balancer or engine or api or delivery (se è sia api che delivery scrivere delivery) or encoder or externalEncoder or storage or integration)>"
 
 	exit
 fi
