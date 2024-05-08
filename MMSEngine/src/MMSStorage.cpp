@@ -1783,7 +1783,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			// if (!(sourcePathName.size() >= suffix.size() && 0 == sourcePathName.compare(sourcePathName.size() - suffix.size(), suffix.size(),
 			// suffix)
 			// ))
-			if (StringUtils::endWith(sourcePathName, suffix))
+			if (!StringUtils::endWith(sourcePathName, suffix))
 			{
 				string errorMessage = fmt::format(
 					"sourcePathName does not end with '{}'"
