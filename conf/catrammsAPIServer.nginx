@@ -139,9 +139,10 @@
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?([0-9]*)/?$ /api?version=$1&method=mediaItemsList&mediaItemKey=$2 last;
 		}
-		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?$ /api?version=$1&method=mediaItemsList last;
-		}
+		#togliere il metodo POST quando AWS cibortv verrà dismesso (i campi del body sono stati aggiunti alla GET)
+		#if ($request_method = POST) {
+		#	rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?$ /api?version=$1&method=mediaItemsList last;
+		#}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/([0-9]+)/?$ /api?version=$1&method=updateMediaItem&mediaItemKey=$2 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=updatePhysicalPath&mediaItemKey=$2&physicalPathKey=$3 last;

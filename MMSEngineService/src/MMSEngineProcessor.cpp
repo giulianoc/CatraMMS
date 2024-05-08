@@ -13411,7 +13411,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			{
 				int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
 				int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
-				json responseFields = nullptr;
+				set<string> responseFields;
 				json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent,
 					contentType,
@@ -14142,7 +14142,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			json mediaItemsRoot;
 			do
 			{
-				json responseFields = nullptr;
+				set<string> responseFields;
 				json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent,
 					contentType,

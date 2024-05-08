@@ -1516,7 +1516,8 @@ class MMSEngineDBFacade
 		// bool startAndEndIngestionDatePresent,
 		string startIngestionDate, string endIngestionDate, string title, int liveRecordingChunk, int64_t recordingCode,
 		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, string jsonCondition,
-		vector<string> &tagsIn, vector<string> &tagsNotIn, string orderBy, string jsonOrderBy, json responseFields, bool admin, bool fromMaster
+		vector<string> &tagsIn, vector<string> &tagsNotIn, string orderBy, string jsonOrderBy, set<string> &responseFields, bool admin,
+		bool fromMaster
 	);
 
 	json getTagsList(
@@ -1946,15 +1947,15 @@ class MMSEngineDBFacade
 	json modifyStream(
 		int64_t confKey, string labelKey, int64_t workspaceKey, bool labelToBeModified, string label, bool sourceTypeToBeModified, string sourceType,
 		bool encodersPoolKeyToBeModified, int64_t encodersPoolKey, bool urlToBeModified, string url, bool pushProtocolToBeModified,
-		string pushProtocol, bool pushEncoderKeyToBeModified, int64_t pushEncoderKey, bool pushPublicEncoderNameToBeModified, bool pushPublicEncoderName,
-		bool pushServerPortToBeModified, int pushServerPort, bool pushUriToBeModified, string pushUri, bool pushListenTimeoutToBeModified,
-		int pushListenTimeout, bool captureVideoDeviceNumberToBeModified, int captureVideoDeviceNumber, bool captureVideoInputFormatToBeModified,
-		string captureVideoInputFormat, bool captureFrameRateToBeModified, int captureFrameRate, bool captureWidthToBeModified, int captureWidth,
-		bool captureHeightToBeModified, int captureHeight, bool captureAudioDeviceNumberToBeModified, int captureAudioDeviceNumber,
-		bool captureChannelsNumberToBeModified, int captureChannelsNumber, bool tvSourceTVConfKeyToBeModified, int64_t tvSourceTVConfKey,
-		bool typeToBeModified, string type, bool descriptionToBeModified, string description, bool nameToBeModified, string name,
-		bool regionToBeModified, string region, bool countryToBeModified, string country, bool imageToBeModified, int64_t imageMediaItemKey,
-		string imageUniqueName, bool positionToBeModified, int position, bool userDataToBeModified, json userData
+		string pushProtocol, bool pushEncoderKeyToBeModified, int64_t pushEncoderKey, bool pushPublicEncoderNameToBeModified,
+		bool pushPublicEncoderName, bool pushServerPortToBeModified, int pushServerPort, bool pushUriToBeModified, string pushUri,
+		bool pushListenTimeoutToBeModified, int pushListenTimeout, bool captureVideoDeviceNumberToBeModified, int captureVideoDeviceNumber,
+		bool captureVideoInputFormatToBeModified, string captureVideoInputFormat, bool captureFrameRateToBeModified, int captureFrameRate,
+		bool captureWidthToBeModified, int captureWidth, bool captureHeightToBeModified, int captureHeight, bool captureAudioDeviceNumberToBeModified,
+		int captureAudioDeviceNumber, bool captureChannelsNumberToBeModified, int captureChannelsNumber, bool tvSourceTVConfKeyToBeModified,
+		int64_t tvSourceTVConfKey, bool typeToBeModified, string type, bool descriptionToBeModified, string description, bool nameToBeModified,
+		string name, bool regionToBeModified, string region, bool countryToBeModified, string country, bool imageToBeModified,
+		int64_t imageMediaItemKey, string imageUniqueName, bool positionToBeModified, int position, bool userDataToBeModified, json userData
 	);
 
 	void removeStream(int64_t workspaceKey, int64_t confKey, string label);

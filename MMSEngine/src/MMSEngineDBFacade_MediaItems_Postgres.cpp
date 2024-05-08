@@ -746,7 +746,7 @@ json MMSEngineDBFacade::updateMediaItem(
 	vector<string> tagsNotIn;
 	string orderBy;
 	string jsonOrderBy;
-	json responseFields = nullptr;
+	set<string> responseFields;
 
 	json mediaItemsListRoot = getMediaItemsList(
 		workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
@@ -921,7 +921,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 	vector<string> tagsNotIn;
 	string orderBy;
 	string jsonOrderBy;
-	json responseFields = nullptr;
+	set<string> responseFields;
 
 	json mediaItemsListRoot = getMediaItemsList(
 		workspaceKey, mediaItemKey, uniqueName, localPhysicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
@@ -944,7 +944,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 	vector<string> &tagsNotIn,
 	string orderBy,		// i.e.: "", mi.ingestionDate desc, mi.title asc
 	string jsonOrderBy, // i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
-	json responseFields, bool admin, bool fromMaster
+	set<string> &responseFields, bool admin, bool fromMaster
 )
 {
 	json mediaItemsListRoot;
@@ -1307,7 +1307,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				field = "mediaItemKey";
 				mediaItemRoot[field] = localMediaItemKey;
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "title"))
+				if (responseFields.empty() || responseFields.find("title") != responseFields.end())
 				{
 					string localTitle = row["title"].as<string>();
 
@@ -1322,7 +1322,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					mediaItemRoot[field] = localTitle;
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "deliveryFileName"))
+				if (responseFields.empty() || responseFields.find("deliveryFileName") != responseFields.end())
 				{
 					field = "deliveryFileName";
 					if (row["deliveryFileName"].is_null())
@@ -1331,7 +1331,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						mediaItemRoot[field] = row["deliveryFileName"].as<string>();
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "ingester"))
+				if (responseFields.empty() || responseFields.find("ingester") != responseFields.end())
 				{
 					field = "ingester";
 					if (row["ingester"].is_null())
@@ -1340,7 +1340,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						mediaItemRoot[field] = row["ingester"].as<string>();
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "userData"))
+				if (responseFields.empty() || responseFields.find("userData") != responseFields.end())
 				{
 					field = "userData";
 					if (row["userData"].is_null())
@@ -1349,43 +1349,43 @@ json MMSEngineDBFacade::getMediaItemsList(
 						mediaItemRoot[field] = row["userData"].as<string>();
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "ingestionDate"))
+				if (responseFields.empty() || responseFields.find("ingestionDate") != responseFields.end())
 				{
 					field = "ingestionDate";
 					mediaItemRoot[field] = row["formattedIngestionDate"].as<string>();
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "startPublishing"))
+				if (responseFields.empty() || responseFields.find("startPublishing") != responseFields.end())
 				{
 					field = "startPublishing";
 					mediaItemRoot[field] = row["formattedStartPublishing"].as<string>();
 				}
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "endPublishing"))
+				if (responseFields.empty() || responseFields.find("endPublishing") != responseFields.end())
 				{
 					field = "endPublishing";
 					mediaItemRoot[field] = row["formattedEndPublishing"].as<string>();
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "willBeRemovedAt"))
+				if (responseFields.empty() || responseFields.find("willBeRemovedAt") != responseFields.end())
 				{
 					field = "willBeRemovedAt";
 					mediaItemRoot[field] = row["formattedWillBeRemovedAt"].as<string>();
 				}
 
 				ContentType contentType = MMSEngineDBFacade::toContentType(row["contentType"].as<string>());
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "contentType"))
+				if (responseFields.empty() || responseFields.find("contentType") != responseFields.end())
 				{
 					field = "contentType";
 					mediaItemRoot[field] = row["contentType"].as<string>();
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "retentionInMinutes"))
+				if (responseFields.empty() || responseFields.find("retentionInMinutes") != responseFields.end())
 				{
 					field = "retentionInMinutes";
 					mediaItemRoot[field] = row["retentionInMinutes"].as<int64_t>();
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "tags"))
+				if (responseFields.empty() || responseFields.find("tags") != responseFields.end())
 				{
 					json mediaItemTagsRoot = json::array();
 
@@ -1405,7 +1405,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					mediaItemRoot[field] = mediaItemTagsRoot;
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "uniqueName"))
+				if (responseFields.empty() || responseFields.find("uniqueName") != responseFields.end())
 				{
 					{
 						string sqlStatement = fmt::format(
@@ -1438,7 +1438,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				}
 
 				// CrossReferences
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "crossReferences"))
+				if (responseFields.empty() || responseFields.find("crossReferences") != responseFields.end())
 				{
 					// if (contentType == ContentType::Video)
 					{
@@ -1544,7 +1544,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					*/
 				}
 
-				if (responseFields == nullptr || JSONUtils::isMetadataPresent(responseFields, "physicalPaths"))
+				if (responseFields.empty() || responseFields.find("physicalPaths") != responseFields.end())
 				{
 					json mediaItemProfilesRoot = json::array();
 

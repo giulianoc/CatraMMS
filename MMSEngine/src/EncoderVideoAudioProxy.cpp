@@ -6062,7 +6062,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		string jsonCondition;
 		string orderBy;
 		string jsonOrderBy;
-		json responseFields = nullptr;
+		set<string> responseFields;
 		bool admin = true;
 
 		int start = 0;
