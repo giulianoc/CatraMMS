@@ -9,6 +9,7 @@
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/fmt.h"
 #include <sstream>
 
 LiveRecorderDaemons::LiveRecorderDaemons(
@@ -2175,10 +2176,13 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				size_t endOfPathIndex = stagingLiveRecorderVirtualVODPathName.find_last_of("/");
 				if (endOfPathIndex == string::npos)
 				{
-					string errorMessage = string("No stagingLiveRecorderVirtualVODPathName found") +
-										  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-										  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-										  ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName;
+					string errorMessage = fmt::format(
+						"buildAndIngestVirtualVOD. No stagingLiveRecorderVirtualVODPathName found"
+						", liveRecorderIngestionJobKey: {}"
+						", liveRecorderEncodingJobKey: {}"
+						", stagingLiveRecorderVirtualVODPathName: {}",
+						liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, stagingLiveRecorderVirtualVODPathName
+					);
 					_logger->error(__FILEREF__ + errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -2195,7 +2199,11 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 			if (stagingLiveRecorderVirtualVODPathName != "" && fs::exists(stagingLiveRecorderVirtualVODPathName))
 			{
-				_logger->info(__FILEREF__ + "Remove directory" + ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName);
+				SPDLOG_INFO(
+					"buildAndIngestVirtualVOD. Remove directory "
+					", stagingLiveRecorderVirtualVODPathName: {}",
+					stagingLiveRecorderVirtualVODPathName
+				);
 				fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 			}
 		}
@@ -2203,9 +2211,13 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		string sourceManifestPathFileName = sourceSegmentsDirectoryPathName + "/" + sourceManifestFileName;
 		if (!fs::exists(sourceManifestPathFileName.c_str()))
 		{
-			string errorMessage = string("manifest file not existing") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-								  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-								  ", sourceManifestPathFileName: " + sourceManifestPathFileName;
+			string errorMessage = fmt::format(
+				"buildAndIngestVirtualVOD. manifest file not existing"
+				", liveRecorderIngestionJobKey: {}"
+				", liveRecorderEncodingJobKey: {}"
+				", sourceManifestPathFileName: {}",
+				liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, sourceManifestPathFileName
+			);
 			_logger->error(__FILEREF__ + errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2279,10 +2291,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		{
 			if (!fs::exists(stagingLiveRecorderVirtualVODPathName))
 			{
-				_logger->info(
-					__FILEREF__ + "Creating directory" + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-					", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-					", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+				SPDLOG_INFO(
+					"buildAndIngestVirtualVOD. Creating directory"
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", stagingLiveRecorderVirtualVODPathName: {}",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, stagingLiveRecorderVirtualVODPathName
 				);
 				fs::create_directories(stagingLiveRecorderVirtualVODPathName);
 				fs::permissions(
@@ -2293,10 +2307,13 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				);
 			}
 
-			_logger->info(
-				__FILEREF__ + "Coping" + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-				", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-				", sourceManifestPathFileName: " + sourceManifestPathFileName + ", tmpManifestPathFileName: " + tmpManifestPathFileName
+			SPDLOG_INFO(
+				"buildAndIngestVirtualVOD. Coping"
+				", liveRecorderIngestionJobKey: {}"
+				", liveRecorderEncodingJobKey: {}"
+				", sourceManifestPathFileName: {}"
+				", tmpManifestPathFileName: {}",
+				liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, sourceManifestPathFileName, tmpManifestPathFileName
 			);
 			fs::copy(sourceManifestPathFileName, tmpManifestPathFileName);
 		}
@@ -2321,9 +2338,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		double lastSegmentDuration = -1.0;
 		int64_t lastSegmentUtcStartTimeInMillisecs = -1;
 		{
-			_logger->info(
-				__FILEREF__ + "Reading copied manifest file" + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-				", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", tmpManifestPathFileName: " + tmpManifestPathFileName
+			SPDLOG_INFO(
+				"buildAndIngestVirtualVOD. Reading copied manifest file"
+				", liveRecorderIngestionJobKey: {}"
+				", liveRecorderEncodingJobKey: {}"
+				", tmpManifestPathFileName: {}",
+				liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, tmpManifestPathFileName
 			);
 
 			ifstream ifManifestFile(tmpManifestPathFileName);
@@ -2386,10 +2406,13 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				// liveRecorder_760504_1653579715.ts
 				// ...
 
-				_logger->info(
-					__FILEREF__ + "manifestLine" + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-					", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", manifestLine: " + manifestLine +
-					", segmentsNumber: " + to_string(segmentsNumber)
+				SPDLOG_INFO(
+					"buildAndIngestVirtualVOD. manifestLine"
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", manifestLine: {}"
+					", segmentsNumber: {}",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, manifestLine, segmentsNumber
 				);
 
 				string extInfPrefix("#EXTINF:");
@@ -2418,10 +2441,13 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 					try
 					{
-						_logger->info(
-							__FILEREF__ + "Coping" + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-							", sourceTSPathFileName: " + sourceTSPathFileName + ", copiedTSPathFileName: " + copiedTSPathFileName
+						SPDLOG_INFO(
+							"buildAndIngestVirtualVOD. Coping"
+							", liveRecorderIngestionJobKey: {}"
+							", liveRecorderEncodingJobKey: {}"
+							", sourceTSPathFileName: {}"
+							", copiedTSPathFileName: {}",
+							liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, sourceTSPathFileName, copiedTSPathFileName
 						);
 						fs::copy(sourceTSPathFileName, copiedTSPathFileName);
 					}
@@ -2469,10 +2495,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 		// add end list to manifest file
 		{
-			_logger->info(
-				__FILEREF__ + "Add end manifest line to copied manifest file" +
-				", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-				", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", tmpManifestPathFileName: " + tmpManifestPathFileName
+			SPDLOG_INFO(
+				"buildAndIngestVirtualVOD. Add end manifest line to copied manifest file"
+				", liveRecorderIngestionJobKey: {}"
+				", liveRecorderEncodingJobKey: {}"
+				", tmpManifestPathFileName: {}",
+				liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, tmpManifestPathFileName
 			);
 
 			// string endLine = "\n";
@@ -2522,17 +2550,27 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				// I guess this is due because of the copy of the ts files among
 				// different file systems For this reason I added this sleep
 				long secondsToSleep = 3;
-				_logger->info(
-					__FILEREF__ + "Start tar command " + ", executeCommand: " + executeCommand + ", secondsToSleep: " + to_string(secondsToSleep)
+				SPDLOG_INFO(
+					"buildAndIngestVirtualVOD. Start tar command "
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", executeCommand: {}"
+					", secondsToSleep: {}",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, executeCommand, secondsToSleep
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToSleep));
 
 				chrono::system_clock::time_point startTar = chrono::system_clock::now();
 				int executeCommandStatus = ProcessUtility::execute(executeCommand);
 				chrono::system_clock::time_point endTar = chrono::system_clock::now();
-				_logger->info(
-					__FILEREF__ + "End tar command " + ", executeCommand: " + executeCommand + ", @MMS statistics@ - tarDuration (millisecs): @" +
-					to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count()) + "@"
+				SPDLOG_INFO(
+					"buildAndIngestVirtualVOD. End tar command "
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", executeCommand: {}"
+					", @MMS statistics@ - tarDuration (millisecs): @{}@",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, executeCommand,
+					to_string(chrono::duration_cast<chrono::milliseconds>(endTar - startTar).count())
 				);
 				if (executeCommandStatus != 0)
 				{
@@ -2546,8 +2584,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				}
 
 				{
-					_logger->info(
-						__FILEREF__ + "Remove directory" + ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
+					SPDLOG_INFO(
+						"buildAndIngestVirtualVOD. Remove directory"
+						", liveRecorderIngestionJobKey: {}"
+						", liveRecorderEncodingJobKey: {}"
+						", stagingLiveRecorderVirtualVODPathName: {}",
+						liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, stagingLiveRecorderVirtualVODPathName
 					);
 					fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 				}
