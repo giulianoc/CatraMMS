@@ -1785,8 +1785,12 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			// ))
 			if (StringUtils::endWith(sourcePathName, suffix))
 			{
-				string errorMessage = __FILEREF__ + "sourcePathName does not end with " + suffix +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourcePathName: " + sourcePathName;
+				string errorMessage = fmt::format(
+					"sourcePathName does not end with '{}'"
+					", ingestionJobKey: {}"
+					", sourcePathName: '{}'",
+					suffix, ingestionJobKey, sourcePathName
+				);
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
