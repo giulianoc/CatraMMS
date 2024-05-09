@@ -692,6 +692,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							int elapsedInSecondsSinceLastChange =
 								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
+							long diffRealTimeFrame = -1;
+							if (realTimeFrame != -1 && copiedLiveProxy->_realTimeFrame != -1)
+								diffRealTimeFrame = realTimeFrame - copiedLiveProxy->_realTimeFrame;
+							long diffRealTimeSize = -1;
+							if (realTimeSize != -1 && copiedLiveProxy->_realTimeSize != -1)
+								diffRealTimeSize = realTimeSize - copiedLiveProxy->_realTimeSize;
+							double diffRealTimeTimeInMilliSeconds = -1.0;
+							if (realTimeTimeInMilliSeconds != -1.0 && copiedLiveProxy->_realTimeTimeInMilliSeconds != -1.0)
+								diffRealTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds - copiedLiveProxy->_realTimeTimeInMilliSeconds;
+
 							if (copiedLiveProxy->_realTimeFrame == realTimeFrame && copiedLiveProxy->_realTimeSize == realTimeSize &&
 								copiedLiveProxy->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
@@ -707,8 +717,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
 										to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
 										", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
-										", realTimeFrame: " + to_string(realTimeFrame) +
-										", realTimeSize: " + to_string(realTimeSize) +
+										", realTimeFrame: " + to_string(realTimeFrame) + ", realTimeSize: " + to_string(realTimeSize) +
 										", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds) +
 										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
 										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
@@ -736,15 +745,20 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							{
 								sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 
-								_logger->info(
-									__FILEREF__ +
+								SPDLOG_INFO(
 									"liveProxyMonitor. Live Proxy real time info is changed"
-									", ingestionJobKey: " +
-									to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-									to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-									", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
-									", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
-									", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", configurationLabel: {}"
+									", _childPid: {}"
+									", elapsedInSecondsSinceLastChange: {}"
+									", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+									", diff real time frame: {}"
+									", diff real time size: {}"
+									", diff real time time in millisecs: {}",
+									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+									copiedLiveProxy->_childPid, elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
+									diffRealTimeFrame, diffRealTimeSize, diffRealTimeTimeInMilliSeconds
 								);
 							}
 						}
@@ -1666,6 +1680,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
 									.count();
 
+							long diffRealTimeFrame = -1;
+							if (realTimeFrame != -1 && copiedLiveRecording->_realTimeFrame != -1)
+								diffRealTimeFrame = realTimeFrame - copiedLiveRecording->_realTimeFrame;
+							long diffRealTimeSize = -1;
+							if (realTimeSize != -1 && copiedLiveRecording->_realTimeSize != -1)
+								diffRealTimeSize = realTimeSize - copiedLiveRecording->_realTimeSize;
+							double diffRealTimeTimeInMilliSeconds = -1.0;
+							if (realTimeTimeInMilliSeconds != -1.0 && copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
+								diffRealTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds - copiedLiveRecording->_realTimeTimeInMilliSeconds;
+
 							if (copiedLiveRecording->_realTimeFrame == realTimeFrame && copiedLiveRecording->_realTimeSize == realTimeSize &&
 								copiedLiveRecording->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
@@ -1681,8 +1705,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										"LiveRecorder (ffmpeg) is killed in order to be started again" +
 										", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
 										to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-										", _childPid: " + to_string(copiedLiveRecording->_childPid) +
-										", realTimeFrame: " + to_string(realTimeFrame) +
+										", _childPid: " + to_string(copiedLiveRecording->_childPid) + ", realTimeFrame: " + to_string(realTimeFrame) +
 										", realTimeSize: " + to_string(realTimeSize) +
 										", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds) +
 										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
@@ -1711,15 +1734,20 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							{
 								sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 
-								_logger->info(
-									__FILEREF__ +
-									"liveRecordingMonitor. Live Recorder real time info is changed"
-									", ingestionJobKey: " +
-									to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-									to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-									", _childPid: " + to_string(copiedLiveRecording->_childPid) +
-									", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
-									", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
+								SPDLOG_INFO(
+									"liveRecordingMonitor. Live Recording real time info is changed"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", configurationLabel: {}"
+									", _childPid: {}"
+									", elapsedInSecondsSinceLastChange: {}"
+									", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+									", diff real time frame: {}"
+									", diff real time size: {}"
+									", diff real time time in millisecs: {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+									copiedLiveRecording->_childPid, elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
+									diffRealTimeFrame, diffRealTimeSize, diffRealTimeTimeInMilliSeconds
 								);
 							}
 						}

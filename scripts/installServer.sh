@@ -413,6 +413,7 @@ create-directory()
 		fi
 	fi
 
+	mkdir /mnt/local-data/logs
 	ln -s /mnt/local-data/logs /var/catramms/logs
 
 	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
@@ -436,11 +437,12 @@ create-directory()
 
 
 	if [ "$moduleType" != "integration" ]; then
-		if [[ ! -d "/mnt/mmsRepository0000" ]]
-		then
-			mkdir /mnt/mmsRepository0000
-			chown mms:mms /mnt/mmsRepository0000
-		fi
+		#if [[ ! -d "/mnt/mmsRepository0000" ]]
+		#then
+		#	mkdir /mnt/mmsRepository0000
+		#	chown mms:mms /mnt/mmsRepository0000
+		#fi
+		sudo ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000
 
 		if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]
 		then
@@ -456,16 +458,18 @@ create-directory()
 		read -n 1 -s -r -p "links..."
 		echo ""
 
-		if [[ ! -d "/mnt/mmsStorage" ]]
-		then
-			mkdir /mnt/mmsStorage
-			chown mms:mms /mnt/mmsStorage
-		fi
-		if [ ! -d "/mnt/mmsIngestionRepository" ];
-		then
-			mkdir /mnt/mmsIngestionRepository
-			chown mms:mms /mnt/mmsIngestionRepository
-		fi
+		#if [[ ! -d "/mnt/mmsStorage" ]]
+		#then
+		#	mkdir /mnt/mmsStorage
+		#	chown mms:mms /mnt/mmsStorage
+		#fi
+		sudo ln -s /mnt/mmsStorage-1 /mnt/mmsStorage
+		#if [ ! -d "/mnt/mmsIngestionRepository" ];
+		#then
+		#	mkdir /mnt/mmsIngestionRepository
+		#	chown mms:mms /mnt/mmsIngestionRepository
+		#fi
+		sudo ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
 		if [ ! -d "/mnt/mmsStorage/MMSGUI" ];
 		then
 			mkdir /mnt/mmsStorage/MMSGUI
@@ -500,6 +504,7 @@ create-directory()
 			mkdir -p /mnt/local-data/cache/nginx
 		fi
 		ln -s /mnt/local-data/cache /var/catramms/cache
+		chown -R mms:mms /mnt/local-data/cache
 	fi
 
 	if [ "$moduleType" == "externalEncoder" ]; then
@@ -603,6 +608,7 @@ install-mms-packages()
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
 
+	#DA ELIMINARE, NON PENSO SERVE PIU
 	if [ "$moduleType" != "integration" ]; then
 		package=jsoncpp
 		read -n 1 -s -r -p "Downloading $package..."
@@ -695,7 +701,7 @@ install-mms-packages()
 	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
 
 		echo ""
-		tomcatVersion=9.0.74
+		tomcatVersion=9.0.89
 		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat: "
 		read VERSION
 		if [ "$VERSION" == "" ]; then
@@ -808,7 +814,7 @@ install-mms-packages()
 	if [ "$moduleType" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		catraLibrariesVersion=1.0.1670
+		catraLibrariesVersion=1.0.1820
 		echo -n "$packageName version (i.e.: $catraLibrariesVersion)? "
 		read version
 		if [ "$version" == "" ]; then
@@ -824,7 +830,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.5552
+	catraMMSVersion=1.0.5975
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -885,8 +891,18 @@ install-mms-packages()
 
 		chown -R mms:mms ~mms/mms
 	fi
-	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" ]; then
+	if [ "$moduleType" == "api" ]; then
 		packageName=apiMmsConf
+		echo ""
+		package=$packageName
+		echo "Downloading $package..."
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+		tar xvfz ~/$package.tar.gz -C ~mms
+
+		chown -R mms:mms ~mms/mms
+	fi
+	if [ "$moduleType" == "delivery" ]; then
+		packageName=deliveryMmsConf
 		echo ""
 		package=$packageName
 		echo "Downloading $package..."
@@ -1077,6 +1093,10 @@ fi
 firewall-rules $moduleType
 
 read -n 1 -s -r -p "verificare ~/mms/conf/* e attivare il crontab -u mms ~/mms/conf/crontab.txt"
+echo ""
+echo ""
+
+read -n 1 -s -r -p "verificare /etc/hosts"
 echo ""
 echo ""
 
