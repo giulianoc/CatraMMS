@@ -15051,13 +15051,14 @@ bool FFMpeg::areRealTimeInfoChanged(int maxMilliSecondsToWait)
 }
 */
 
-tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog()
+tuple<long, long, double, double> FFMpeg::getRealTimeInfoByOutputLog()
 {
 	// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x
 
 	long frame = -1;
 	long size = -1;
 	double timeInMilliSeconds = -1.0;
+	double bitRate = -1.0;
 
 	try
 	{
@@ -15211,6 +15212,39 @@ tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog()
 				}
 			}
 		}
+		{
+			string toSearch = "bitrate=";
+			size_t startIndex = ffmpegEncodingStatus.rfind(toSearch);
+			if (startIndex == string::npos)
+			{
+				_logger->warn(
+					__FILEREF__ + "ffmpeg: bitrate info was not found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+					", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+					", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
+					_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+				);
+			}
+			else
+			{
+				string value = ffmpegEncodingStatus.substr(startIndex + toSearch.size());
+				value = StringUtils::ltrim(value);
+				size_t endIndex = value.find("kbits/s");
+				if (endIndex == string::npos)
+				{
+					_logger->error(
+						__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+						", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+						", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
+						_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+					);
+				}
+				else
+				{
+					value = value.substr(0, endIndex);
+					bitRate = stof(value);
+				}
+			}
+		}
 	}
 	catch (FFMpegEncodingStatusNotAvailable &e)
 	{
@@ -15235,7 +15269,7 @@ tuple<long, long, double> FFMpeg::getRealTimeInfoByOutputLog()
 		throw e;
 	}
 
-	return make_tuple(frame, size, timeInMilliSeconds);
+	return make_tuple(frame, size, timeInMilliSeconds, bitRate);
 }
 
 /*

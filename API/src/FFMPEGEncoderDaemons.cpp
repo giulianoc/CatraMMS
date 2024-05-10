@@ -678,10 +678,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds] = copiedLiveProxy->_ffmpeg->getRealTimeInfoByOutputLog();
+						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds, bitRate] =
+							copiedLiveProxy->_ffmpeg->getRealTimeInfoByOutputLog();
 						sourceLiveProxy->_realTimeFrame = realTimeFrame;
 						sourceLiveProxy->_realTimeSize = realTimeSize;
 						sourceLiveProxy->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
+						sourceLiveProxy->_realTimeBitRate = bitRate;
 
 						if (copiedLiveProxy->_realTimeFrame != -1 || copiedLiveProxy->_realTimeSize != -1 ||
 							copiedLiveProxy->_realTimeTimeInMilliSeconds != -1.0)
@@ -700,10 +702,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							long diffRealTimeSize = -1;
 							if (realTimeSize != -1 && copiedLiveProxy->_realTimeSize != -1)
-							{
 								diffRealTimeSize = realTimeSize - copiedLiveProxy->_realTimeSize;
-								sourceLiveProxy->_realTimeBitRate = diffRealTimeSize / elapsedInSecondsSinceLastChange;
-							}
 							double diffRealTimeTimeInMilliSeconds = -1.0;
 							if (realTimeTimeInMilliSeconds != -1.0 && copiedLiveProxy->_realTimeTimeInMilliSeconds != -1.0)
 								diffRealTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds - copiedLiveProxy->_realTimeTimeInMilliSeconds;
@@ -1671,10 +1670,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds] = copiedLiveRecording->_ffmpeg->getRealTimeInfoByOutputLog();
+						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds, bitRate] =
+							copiedLiveRecording->_ffmpeg->getRealTimeInfoByOutputLog();
 						sourceLiveRecording->_realTimeFrame = realTimeFrame;
 						sourceLiveRecording->_realTimeSize = realTimeSize;
 						sourceLiveRecording->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
+						sourceLiveRecording->_realTimeBitRate = bitRate;
 
 						if (copiedLiveRecording->_realTimeFrame != -1 || copiedLiveRecording->_realTimeSize != -1 ||
 							copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
@@ -1694,10 +1695,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							long diffRealTimeSize = -1;
 							if (realTimeSize != -1 && copiedLiveRecording->_realTimeSize != -1)
-							{
 								diffRealTimeSize = realTimeSize - copiedLiveRecording->_realTimeSize;
-								sourceLiveRecording->_realTimeBitRate = diffRealTimeSize / elapsedInSecondsSinceLastChange;
-							}
 							double diffRealTimeTimeInMilliSeconds = -1.0;
 							if (realTimeTimeInMilliSeconds != -1.0 && copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
 								diffRealTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds - copiedLiveRecording->_realTimeTimeInMilliSeconds;
