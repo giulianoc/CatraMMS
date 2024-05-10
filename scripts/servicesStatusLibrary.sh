@@ -365,7 +365,7 @@ nginx_error()
 	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-${serviceName}.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_error, nginx ${serviceName} error is fine: $nginxErrorsCount" >> $debugFilename
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_error, nginx ${serviceName} is fine: $nginxErrorsCount" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_nginx_${serviceName}_error"
 		if [ -f "$alarmNotificationPathFileName" ]; then

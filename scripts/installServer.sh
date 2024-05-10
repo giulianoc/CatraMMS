@@ -609,13 +609,13 @@ install-mms-packages()
 	echo ""
 
 	#DA ELIMINARE, NON PENSO SERVE PIU
-	if [ "$moduleType" != "integration" ]; then
-		package=jsoncpp
-		read -n 1 -s -r -p "Downloading $package..."
-		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	fi
+	#if [ "$moduleType" != "integration" ]; then
+	#	package=jsoncpp
+	#	read -n 1 -s -r -p "Downloading $package..."
+	#	echo ""
+	#	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	#	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	#fi
 
 
 	if [ "$moduleType" != "integration" ]; then
