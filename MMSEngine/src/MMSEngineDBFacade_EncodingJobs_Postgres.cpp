@@ -1929,7 +1929,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress(int64_t encodingJobKey, double
 	}
 }
 
-void MMSEngineDBFacade::updateEncodingRealTimeInfo(int64_t encodingJobKey, int encodingPid, long realTimeFrameRate, long realTimeBitRate)
+void MMSEngineDBFacade::updateEncodingRealTimeInfo(int64_t encodingJobKey, int encodingPid, long realTimeFrameRate, double realTimeBitRate)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -3684,9 +3684,9 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 
 				field = "realTimeBitRate";
 				if (row["realTimeBitRate"].is_null())
-					encodingJobRoot[field] = -1;
+					encodingJobRoot[field] = -1.0;
 				else
-					encodingJobRoot[field] = row["realTimeBitRate"].as<int64_t>();
+					encodingJobRoot[field] = row["realTimeBitRate"].as<float>();
 
 				field = "failuresNumber";
 				encodingJobRoot[field] = row["failuresNumber"].as<int>();

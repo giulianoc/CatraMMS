@@ -2090,7 +2090,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "encoderKey					bigint NULL,"
 								  "encodingPid				integer NULL,"
 								  "realTimeFrameRate				integer NULL,"
-								  "realTimeBitRate				integer NULL,"
+								  "realTimeBitRate				numeric(5,1) NULL,"
 								  "stagingEncodedAssetPathName text NULL,"
 								  "failuresNumber           	smallint NOT NULL,"
 								  "isKilled					boolean NULL,"

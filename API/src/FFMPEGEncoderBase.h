@@ -44,7 +44,7 @@ class FFMPEGEncoderBase
 		long _realTimeFrame;
 		long _realTimeSize;
 		long _realTimeFrameRate;
-		long _realTimeBitRate;
+		double _realTimeBitRate;
 		double _realTimeTimeInMilliSeconds;
 		chrono::system_clock::time_point _realTimeLastChange;
 
@@ -100,7 +100,7 @@ class FFMPEGEncoderBase
 		long _realTimeFrame;
 		long _realTimeSize;
 		long _realTimeFrameRate;
-		long _realTimeBitRate;
+		double _realTimeBitRate;
 		double _realTimeTimeInMilliSeconds;
 		chrono::system_clock::time_point _realTimeLastChange;
 
