@@ -2089,6 +2089,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "processorMMS               text NULL,"
 								  "encoderKey					bigint NULL,"
 								  "encodingPid				integer NULL,"
+								  "realTimeFrameRate				integer NULL,"
+								  "realTimeBitRate				integer NULL,"
 								  "stagingEncodedAssetPathName text NULL,"
 								  "failuresNumber           	smallint NOT NULL,"
 								  "isKilled					boolean NULL,"

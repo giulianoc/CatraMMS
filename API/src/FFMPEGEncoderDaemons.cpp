@@ -694,10 +694,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							long diffRealTimeFrame = -1;
 							if (realTimeFrame != -1 && copiedLiveProxy->_realTimeFrame != -1)
+							{
 								diffRealTimeFrame = realTimeFrame - copiedLiveProxy->_realTimeFrame;
+								sourceLiveProxy->_realTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
+							}
 							long diffRealTimeSize = -1;
 							if (realTimeSize != -1 && copiedLiveProxy->_realTimeSize != -1)
+							{
 								diffRealTimeSize = realTimeSize - copiedLiveProxy->_realTimeSize;
+								sourceLiveProxy->_realTimeBitRate = diffRealTimeSize / elapsedInSecondsSinceLastChange;
+							}
 							double diffRealTimeTimeInMilliSeconds = -1.0;
 							if (realTimeTimeInMilliSeconds != -1.0 && copiedLiveProxy->_realTimeTimeInMilliSeconds != -1.0)
 								diffRealTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds - copiedLiveProxy->_realTimeTimeInMilliSeconds;
@@ -1682,10 +1688,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							long diffRealTimeFrame = -1;
 							if (realTimeFrame != -1 && copiedLiveRecording->_realTimeFrame != -1)
+							{
 								diffRealTimeFrame = realTimeFrame - copiedLiveRecording->_realTimeFrame;
+								sourceLiveRecording->_realTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
+							}
 							long diffRealTimeSize = -1;
 							if (realTimeSize != -1 && copiedLiveRecording->_realTimeSize != -1)
+							{
 								diffRealTimeSize = realTimeSize - copiedLiveRecording->_realTimeSize;
+								sourceLiveRecording->_realTimeBitRate = diffRealTimeSize / elapsedInSecondsSinceLastChange;
+							}
 							double diffRealTimeTimeInMilliSeconds = -1.0;
 							if (realTimeTimeInMilliSeconds != -1.0 && copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
 								diffRealTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds - copiedLiveRecording->_realTimeTimeInMilliSeconds;

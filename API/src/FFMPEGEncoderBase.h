@@ -40,10 +40,12 @@ class FFMPEGEncoderBase
 		// string					_liveGridOutputType;	// only for LiveGrid
 		json _outputsRoot;
 
-		bool _monitoringRealTimeInfoEnabled;  // frame/size/time
-        long _realTimeFrame;
-        long _realTimeSize;
-        double _realTimeTimeInMilliSeconds;
+		bool _monitoringRealTimeInfoEnabled; // frame/size/time
+		long _realTimeFrame;
+		long _realTimeSize;
+		long _realTimeFrameRate;
+		long _realTimeBitRate;
+		double _realTimeTimeInMilliSeconds;
 		chrono::system_clock::time_point _realTimeLastChange;
 
 		int64_t _ingestionJobKey;
@@ -64,6 +66,8 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveProxyAndGrid->_realTimeFrame = _realTimeFrame;
 			liveProxyAndGrid->_realTimeSize = _realTimeSize;
+			liveProxyAndGrid->_realTimeFrameRate = _realTimeFrameRate;
+			liveProxyAndGrid->_realTimeBitRate = _realTimeBitRate;
 			liveProxyAndGrid->_realTimeTimeInMilliSeconds = _realTimeTimeInMilliSeconds;
 			liveProxyAndGrid->_realTimeLastChange = _realTimeLastChange;
 			liveProxyAndGrid->_encodingJobKey = _encodingJobKey;
@@ -92,10 +96,12 @@ class FFMPEGEncoderBase
 
 		bool _monitoringEnabled;
 
-		bool _monitoringRealTimeInfoEnabled;  // frame/size/time
-        long _realTimeFrame;
-        long _realTimeSize;
-        double _realTimeTimeInMilliSeconds;
+		bool _monitoringRealTimeInfoEnabled; // frame/size/time
+		long _realTimeFrame;
+		long _realTimeSize;
+		long _realTimeFrameRate;
+		long _realTimeBitRate;
+		double _realTimeTimeInMilliSeconds;
 		chrono::system_clock::time_point _realTimeLastChange;
 
 		int64_t _ingestionJobKey;
@@ -130,6 +136,8 @@ class FFMPEGEncoderBase
 			liveRecording->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveRecording->_realTimeFrame = _realTimeFrame;
 			liveRecording->_realTimeSize = _realTimeSize;
+			liveRecording->_realTimeFrameRate = _realTimeFrameRate;
+			liveRecording->_realTimeBitRate = _realTimeBitRate;
 			liveRecording->_realTimeTimeInMilliSeconds = _realTimeTimeInMilliSeconds;
 			liveRecording->_realTimeLastChange = _realTimeLastChange;
 			liveRecording->_encodingJobKey = _encodingJobKey;

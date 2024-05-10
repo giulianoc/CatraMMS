@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   EnodingsManager.h
  * Author: giuliano
  *
@@ -14,107 +14,99 @@
 #ifndef ActiveEncodingsManager_h
 #define ActiveEncodingsManager_h
 
-#include <chrono>
-#include <vector>
-#include <condition_variable>
-#include "EncoderVideoAudioProxy.h"
+#include "EncoderProxy.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
+#include <chrono>
+#include <condition_variable>
+#include <vector>
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
-#include "spdlog/spdlog.h"
 #include "Magick++.h"
+#include "spdlog/spdlog.h"
 
-#define MAXHIGHENCODINGSTOBEMANAGED     200
-#define MAXMEDIUMENCODINGSTOBEMANAGED  200
-#define MAXLOWENCODINGSTOBEMANAGED      200
+#define MAXHIGHENCODINGSTOBEMANAGED 200
+#define MAXMEDIUMENCODINGSTOBEMANAGED 200
+#define MAXLOWENCODINGSTOBEMANAGED 200
 
-struct MaxEncodingsManagerCapacityReached: public exception {    
-    char const* what() const throw() 
-    {
-        return "Max Encoding Manager capacity reached";
-    }; 
+struct MaxEncodingsManagerCapacityReached : public exception
+{
+	char const *what() const throw() { return "Max Encoding Manager capacity reached"; };
 };
 
-class ActiveEncodingsManager {
-public:
-    ActiveEncodingsManager(       
-            json configuration,
-            shared_ptr<MultiEventsSet> multiEventsSet,
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
-            shared_ptr<spdlog::logger> logger);
+class ActiveEncodingsManager
+{
+  public:
+	ActiveEncodingsManager(
+		json configuration, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		shared_ptr<MMSStorage> mmsStorage, shared_ptr<spdlog::logger> logger
+	);
 
-    virtual ~ActiveEncodingsManager();
-    
-    void operator ()();
+	virtual ~ActiveEncodingsManager();
 
-    unsigned long addEncodingItems (
-		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& vEncodingItems);
-    
-    // static void encodingImageFormatValidation(string newFormat);
-    // static Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
+	void operator()();
 
-private:
-    struct EncodingJob
-    {
-		EncoderVideoAudioProxy::EncodingJobStatus			_status;
-        chrono::system_clock::time_point	_encodingJobStart;
+	unsigned long addEncodingItems(vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &vEncodingItems);
 
-        shared_ptr<MMSEngineDBFacade::EncodingItem>	_encodingItem;
-        EncoderVideoAudioProxy                  _encoderVideoAudioProxy;
-        
-        EncodingJob()
-        {
-            _status         = EncoderVideoAudioProxy::EncodingJobStatus::Free;
-        }
-    };
+	// static void encodingImageFormatValidation(string newFormat);
+	// static Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 
-    shared_ptr<spdlog::logger>                  _logger;
-    json                                 _configuration;
-    shared_ptr<MMSEngineDBFacade>               _mmsEngineDBFacade;
-    shared_ptr<MMSStorage>                      _mmsStorage;
-    shared_ptr<EncodersLoadBalancer>            _encodersLoadBalancer;
-	string										_hostName;
-    
-	int											_maxSecondsToWaitUpdateEncodingJobLock;
+  private:
+	struct EncodingJob
+	{
+		EncoderProxy::EncodingJobStatus _status;
+		chrono::system_clock::time_point _encodingJobStart;
 
-    condition_variable                          _cvAddedEncodingJob;
-    mutex                                       _mtEncodingJobs;
+		shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
+		EncoderProxy _encoderProxy;
 
-    EncodingJob     _highPriorityEncodingJobs[MAXHIGHENCODINGSTOBEMANAGED];
-    EncodingJob     _mediumPriorityEncodingJobs[MAXMEDIUMENCODINGSTOBEMANAGED];
-    EncodingJob     _lowPriorityEncodingJobs[MAXLOWENCODINGSTOBEMANAGED];
+		EncodingJob() { _status = EncoderProxy::EncodingJobStatus::Free; }
+	};
 
-    #ifdef __LOCALENCODER__
-        int                 _runningEncodingsNumber;
-    #endif
+	shared_ptr<spdlog::logger> _logger;
+	json _configuration;
+	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
+	shared_ptr<MMSStorage> _mmsStorage;
+	shared_ptr<EncodersLoadBalancer> _encodersLoadBalancer;
+	string _hostName;
+
+	int _maxSecondsToWaitUpdateEncodingJobLock;
+
+	condition_variable _cvAddedEncodingJob;
+	mutex _mtEncodingJobs;
+
+	EncodingJob _highPriorityEncodingJobs[MAXHIGHENCODINGSTOBEMANAGED];
+	EncodingJob _mediumPriorityEncodingJobs[MAXMEDIUMENCODINGSTOBEMANAGED];
+	EncodingJob _lowPriorityEncodingJobs[MAXLOWENCODINGSTOBEMANAGED];
+
+#ifdef __LOCALENCODER__
+	int _runningEncodingsNumber;
+#endif
 
 	// void getEncodingsProgressThread();
 
 	bool isProcessorShutdown();
 
-    void processEncodingJob(EncodingJob* encodingJob);
-    void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
+	void processEncodingJob(EncodingJob *encodingJob);
+	void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
 	/*
-    string encodeContentImage(
-        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
-    int64_t processEncodedImage(
-        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem, 
-        string stagingEncodedAssetPathName);
+	string encodeContentImage(
+		shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
+	int64_t processEncodedImage(
+		shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
+		string stagingEncodedAssetPathName);
 
-    void readingImageProfile(
-        string jsonProfile,
-        string& newFormat,
-        int& newWidth,
-        int& newHeight,
-        bool& newAspect,
-        string& sNewInterlaceType,
-        Magick::InterlaceType& newInterlaceType
-    );
+	void readingImageProfile(
+		string jsonProfile,
+		string& newFormat,
+		int& newWidth,
+		int& newHeight,
+		bool& newAspect,
+		string& sNewInterlaceType,
+		Magick::InterlaceType& newInterlaceType
+	);
 	*/
 };
 
 #endif
-

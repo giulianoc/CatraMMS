@@ -1317,6 +1317,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "pid";
 				responseBodyRoot[field] = selectedLiveProxy->_childPid;
 
+				field = "realTimeFrameRate";
+				responseBodyRoot[field] = selectedLiveProxy->_realTimeFrameRate;
+
+				field = "realTimeBitRate";
+				responseBodyRoot[field] = selectedLiveProxy->_realTimeBitRate;
+
 				field = "killedByUser";
 				responseBodyRoot[field] = false;
 
@@ -1351,6 +1357,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				field = "pid";
 				responseBodyRoot[field] = selectedLiveRecording->_childPid;
+
+				field = "realTimeFrameRate";
+				responseBodyRoot[field] = selectedLiveRecording->_realTimeFrameRate;
+
+				field = "realTimeBitRate";
+				responseBodyRoot[field] = selectedLiveRecording->_realTimeBitRate;
 
 				field = "killedByUser";
 				responseBodyRoot[field] = false;
