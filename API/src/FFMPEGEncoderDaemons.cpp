@@ -169,16 +169,18 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
+				int64_t liveProxyLiveTimeInSeconds;
 				{
 					// copiedLiveProxy->_proxyStart could be a bit in the future
-					int64_t liveProxyLiveTimeInMinutes;
 					if (now > copiedLiveProxy->_proxyStart)
-						liveProxyLiveTimeInMinutes = chrono::duration_cast<chrono::minutes>(now - copiedLiveProxy->_proxyStart).count();
+						liveProxyLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - copiedLiveProxy->_proxyStart).count();
 					else // it will be negative
-						liveProxyLiveTimeInMinutes = chrono::duration_cast<chrono::minutes>(now - copiedLiveProxy->_proxyStart).count();
+						liveProxyLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - copiedLiveProxy->_proxyStart).count();
 
 					// checks are done after 3 minutes LiveProxy started,
 					// in order to be sure the manifest file was already created
+					// Commentato alcuni controlli possono essere fatti anche da subito. Aggiunto questo controllo per il caso specifico del manifest
+					/*
 					if (liveProxyLiveTimeInMinutes <= 3)
 					{
 						_logger->info(
@@ -189,6 +191,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 						continue;
 					}
+					*/
 				}
 
 				if (sourceLiveProxy->_childPid == 0 || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
@@ -209,8 +212,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// First health check
 				//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
 				//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
+				// Inoltre questo controllo viene fatto se sono passati almeno 3 minuti da quando live proxy è partito,
+				// in order to be sure the manifest file was already created
 				bool rtmpOutputFound = false;
-				if (liveProxyWorking)
+				if (liveProxyWorking && liveProxyLiveTimeInSeconds > 3 * 60)
 				{
 					_logger->info(
 						__FILEREF__ + "liveProxyMonitor manifest check" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
@@ -404,7 +409,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				//						This is already implemented by the HLS parameters (into the ffmpeg command)
 				//						We do it for the DASH option and in case ffmpeg does not work
 				//		rtmp(Proxy)/SRT(Grid):		frame increasing check
-				if (liveProxyWorking)
+				// Inoltre questo controllo viene fatto se sono passati almeno 3 minuti da quando live proxy è partito,
+				// in order to be sure the manifest file was already created
+				if (liveProxyWorking && liveProxyLiveTimeInSeconds > 3 * 60)
 				{
 					_logger->info(
 						__FILEREF__ + "liveProxyMonitor segments check" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
@@ -1037,29 +1044,32 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				}
 
 				// copiedLiveRecording->_recordingStart could be a bit in the future
-				int64_t liveRecordingLiveTimeInMinutes;
+				int64_t liveRecordingLiveTimeInSeconds;
 				if (now > copiedLiveRecording->_recordingStart)
-					liveRecordingLiveTimeInMinutes = chrono::duration_cast<chrono::minutes>(now - copiedLiveRecording->_recordingStart).count();
-				else
-					liveRecordingLiveTimeInMinutes = 0;
+					liveRecordingLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - copiedLiveRecording->_recordingStart).count();
+				else // it will be negative
+					liveRecordingLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - copiedLiveRecording->_recordingStart).count();
 
 				string field = "segmentDuration";
 				int segmentDurationInSeconds = JSONUtils::asInt(copiedLiveRecording->_ingestedParametersRoot, field, -1);
 
 				// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
 				// in order to be sure the file was already created
-				if (liveRecordingLiveTimeInMinutes <= (segmentDurationInSeconds / 60) + 5)
-				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. Checks are not done because too early" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel +
-						", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes) +
-						", (segmentDurationInSeconds / 60) + 5: " + to_string((segmentDurationInSeconds / 60) + 5)
-					);
+				// Commentato alcuni controlli possono essere fatti anche da subito. Aggiunto questo controllo per il caso specifico del manifest
+				/*
+			if (liveRecordingLiveTimeInMinutes <= (segmentDurationInSeconds / 60) + 5)
+			{
+				_logger->info(
+					__FILEREF__ + "liveRecordingMonitor. Checks are not done because too early" + ", ingestionJobKey: " +
+					to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
+					", channelLabel: " + copiedLiveRecording->_channelLabel +
+					", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes) +
+					", (segmentDurationInSeconds / 60) + 5: " + to_string((segmentDurationInSeconds / 60) + 5)
+				);
 
-					continue;
-				}
+				continue;
+			}
+			*/
 
 				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
@@ -1079,7 +1089,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// First health check
 				//		kill if 1840699_408620.liveRecorder.list file does not exist or was not updated in the last (2 * segment duration in secs)
 				// seconds
-				if (liveRecorderWorking)
+				// Inoltre questo controllo viene fatto se sono passati almeno 3 minuti da quando live recording è partito,
+				// in order to be sure the manifest file was already created
+				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
 					_logger->info(
 						__FILEREF__ + "liveRecordingMonitor. liveRecorder.list check" + ", ingestionJobKey: " +
@@ -1107,7 +1119,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist, let's check again" +
 									", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
 									", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-									", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes) +
+									", liveRecordingLiveTimeInSeconds: " + to_string(liveRecordingLiveTimeInSeconds) +
 									", segmentListPathName: " + segmentListPathName + ", sleepTimeInSeconds: " + to_string(sleepTimeInSeconds)
 								);
 
@@ -1123,8 +1135,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								_logger->error(
 									__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist" +
 									", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-									", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", liveRecordingLiveTimeInMinutes: " +
-									to_string(liveRecordingLiveTimeInMinutes) + ", segmentListPathName: " + segmentListPathName
+									", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", liveRecordingLiveTimeInSeconds: " +
+									to_string(liveRecordingLiveTimeInSeconds) + ", segmentListPathName: " + segmentListPathName
 								);
 
 								localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
@@ -1152,7 +1164,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										to_string(maxLastSegmentListFileUpdateInSeconds) + " seconds" +
 										", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
 										", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-										", liveRecordingLiveTimeInMinutes: " + to_string(liveRecordingLiveTimeInMinutes) +
+										", liveRecordingLiveTimeInSeconds: " + to_string(liveRecordingLiveTimeInSeconds) +
 										", segmentListPathName: " + segmentListPathName +
 										", lastSegmentListFileUpdateInSeconds: " + to_string(lastSegmentListFileUpdateInSeconds) + " seconds ago" +
 										", maxLastSegmentListFileUpdateInSeconds: " + to_string(maxLastSegmentListFileUpdateInSeconds)
@@ -1202,8 +1214,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
 				//		rtmp(Proxy):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
 				//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
+				// Inoltre questo controllo viene fatto se sono passati almeno 3 minuti da quando live recording è partito,
+				// in order to be sure the manifest file was already created
 				bool rtmpOutputFound = false;
-				if (liveRecorderWorking)
+				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
 					_logger->info(
 						__FILEREF__ + "liveRecordingMonitor. manifest check" + ", ingestionJobKey: " +
@@ -1394,7 +1408,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				//						We do it for the DASH option and in case ffmpeg does not work
 				//		rtmp(Proxy):		frame increasing check
 				//			This check has to be done just once (not for each outputRoot) in case we have at least one rtmp output
-				if (liveRecorderWorking)
+				// Inoltre questo controllo viene fatto se sono passati almeno 3 minuti da quando live recording è partito,
+				// in order to be sure the manifest file was already created
+				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
 					_logger->info(
 						__FILEREF__ + "liveRecordingMonitor. segment check" + ", ingestionJobKey: " +
@@ -1794,8 +1810,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor. Live Recording is not working (segment "
 						"list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again" +
 						", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", liveRecordingLiveTimeInMinutes: " +
-						to_string(liveRecordingLiveTimeInMinutes) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
+						", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", liveRecordingLiveTimeInSeconds: " +
+						to_string(liveRecordingLiveTimeInSeconds) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
 						", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
 					);
 
