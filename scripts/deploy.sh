@@ -67,7 +67,7 @@ cd /opt/catramms
 echo "rm -f CatraMMS"
 rm -f CatraMMS
 
-sleep 1
+sleep 2
 
 #echo "tar xvfz CatraMMS-$version-$linuxName.tar.gz"
 #tar xvfz CatraMMS-$version-$linuxName.tar.gz
@@ -77,11 +77,17 @@ tar xvfz CatraMMS-$version.tar.gz
 echo "ln -s CatraMMS-$version CatraMMS"
 ln -s CatraMMS-$version CatraMMS
 
-sleep 1
+#per il transcoder serve un po piuu di tempo
+sleep 2
 
 cd
 
 mmsStatusALL.sh
+
+echo ""
+
+#per il transcoder serve un po piuu di tempo
+sleep 2
 
 mmsStatusALL.sh
 
