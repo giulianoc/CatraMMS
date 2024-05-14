@@ -4,6 +4,8 @@
 
 	root /var/catramms/storage/MMSRepository-free/;
 
+	#https://www.keycdn.com/support/nginx-location-directive
+	#match qualunque URL o URI che inizia con /
 	location / {
 		#coda molto piccola per le richieste free e senza nodelay
 		#Nota: parliamo dello stesso IP.

@@ -4,6 +4,8 @@
 
 	root /var/catramms/storage/MMSRepository/;
 
+	#https://www.keycdn.com/support/nginx-location-directive
+	#match qualunque URL o URI che inizia con /healthy.txt
 	location /healthy.txt {
 		return 200;
 	}
@@ -11,6 +13,7 @@
 	#1a
 	#authorization through parameter
 	#next location manages .m3u8 request (authorize request and add token parameter to each line of the manifest)
+	#match qualsiasi URL o URI che termina con m3u8 o mpd
 	location ~ .(m3u8|mpd)$ {
 		#Uso una coda abbondante per gestire le richieste contemporanee.
 		#Consideriamo che solo la pagina mediaItems.xhtml genera 50 richieste contemporanee
@@ -64,6 +67,7 @@
 	}
 
 	#2b
+	#match esattamente l'url /catramms/delivery/checkAuthorizationThroughParameter
 	location = /catramms/delivery/checkAuthorizationThroughParameter {
 		internal;
 
@@ -74,10 +78,15 @@
 		proxy_set_header Content-Length "";
 		#proxy_set_header X-Original-METHOD $request_method;
 		proxy_set_header X-Original-METHOD $token;
+		#request_uri:
+		# per https://www.webhosting24.com/understanding-nginx-request_uri/, $request_uri viene popolata come /understanding-nginx-request_uri/
+		# per https://www.webhosting24.com/cp/cart.php?a=add&domain=register, $request_uri viene popolata come /cp/cart.php?a=add&domain=register
+		# per https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.2, $request_uri viene popolata come /Protocols/rfc2616/rfc2616-sec3.html
 		proxy_set_header X-Original-URI $request_uri;
 	}
 
 	#3b
+	#match qualunque url che inizia con /catramms/delivery/authorizationThroughParameter
 	location /catramms/delivery/authorizationThroughParameter {
 		allow 127.0.0.1;
 		deny all;
@@ -88,6 +97,7 @@
 
 	#2a o 4b
 	#common part
+	#match qualunque url che inizia con /api
 	location /api {
 		internal;
 
@@ -98,6 +108,7 @@
 		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 
+	#match qualunque URL o URI che inizia con /
 	location / {
 		return 403;
 		break;

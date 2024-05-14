@@ -21,6 +21,8 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
+	#https://www.keycdn.com/support/nginx-location-directive
+	#match qualunque URL o URI che inizia con /
 	location / {
 		proxy_pass http://api;
 		proxy_http_version 1.1;
@@ -52,6 +54,7 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
+	#match qualunque URL o URI che inizia con /
 	location / {
 		proxy_pass http://gui;
 		proxy_http_version 1.1;
@@ -83,6 +86,7 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
+	#match qualunque URL o URI che inizia con /
 	location / {
 		proxy_pass http://delivery;
 		proxy_http_version 1.1;
@@ -114,6 +118,7 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
+	#match qualunque URL o URI che inizia con /
 	location / {
 		proxy_pass http://delivery-f;
 		proxy_http_version 1.1;
@@ -145,6 +150,7 @@ server {
 	#ssl_trusted_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
 	#include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
+	#match qualunque URL o URI che inizia con /
 	location / {
 		proxy_pass http://binary;
 		proxy_http_version 1.1;

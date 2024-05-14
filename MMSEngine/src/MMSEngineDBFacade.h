@@ -25,6 +25,7 @@
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
 #define DBCONNECTIONPOOL_LOG
+#include "PostgresHelper.h"
 #include "catralibraries/MySQLConnection.h"
 #include "catralibraries/PostgresConnection.h"
 
@@ -2242,6 +2243,7 @@ class MMSEngineDBFacade
   private:
 	shared_ptr<spdlog::logger> _logger;
 	json _configuration;
+	PostgresHelper _postgresHelper;
 
 #ifdef __POSTGRES__
 #else
@@ -2307,6 +2309,7 @@ class MMSEngineDBFacade
 	int _geoServiceTimeoutInSeconds;
 
 #ifdef __POSTGRES__
+	void loadSqlColumnsSchema();
 	string getPostgresArray(vector<string> &arrayElements, bool emptyElementToBeRemoved, transaction_base *trans);
 	string getPostgresArray(json arrayRoot, bool emptyElementToBeRemoved, transaction_base *trans);
 	bool isTimezoneValid(string timezone);

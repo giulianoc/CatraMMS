@@ -3,6 +3,10 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen 80;
 
+	#request_uri:
+	# per https://www.webhosting24.com/understanding-nginx-request_uri/, $request_uri viene popolata come /understanding-nginx-request_uri/
+	# per https://www.webhosting24.com/cp/cart.php?a=add&domain=register, $request_uri viene popolata come /cp/cart.php?a=add&domain=register
+	# per https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.2, $request_uri viene popolata come /Protocols/rfc2616/rfc2616-sec3.html
 	return 301 https://mms.catrasoft.cloud$request_uri;
 }
 
@@ -35,6 +39,10 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen mms-api-1.catrasoft.cloud:80;
 
+	#request_uri:
+	# per https://www.webhosting24.com/understanding-nginx-request_uri/, $request_uri viene popolata come /understanding-nginx-request_uri/
+	# per https://www.webhosting24.com/cp/cart.php?a=add&domain=register, $request_uri viene popolata come /cp/cart.php?a=add&domain=register
+	# per https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.2, $request_uri viene popolata come /Protocols/rfc2616/rfc2616-sec3.html
 	return 301 https://mms-api.catrasoft.cloud$request_uri;
 }
 
@@ -193,6 +201,10 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
+	#request_uri:
+	# per https://www.webhosting24.com/understanding-nginx-request_uri/, $request_uri viene popolata come /understanding-nginx-request_uri/
+	# per https://www.webhosting24.com/cp/cart.php?a=add&domain=register, $request_uri viene popolata come /cp/cart.php?a=add&domain=register
+	# per https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.2, $request_uri viene popolata come /Protocols/rfc2616/rfc2616-sec3.html
 	return 301 http://mms-binary.catrasoft.cloud$request_uri;
 }
 
@@ -233,6 +245,10 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen mms-gui-1.restream.ovh:80;
 
+	#request_uri:
+	# per https://www.webhosting24.com/understanding-nginx-request_uri/, $request_uri viene popolata come /understanding-nginx-request_uri/
+	# per https://www.webhosting24.com/cp/cart.php?a=add&domain=register, $request_uri viene popolata come /cp/cart.php?a=add&domain=register
+	# per https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.2, $request_uri viene popolata come /Protocols/rfc2616/rfc2616-sec3.html
 	return 301 https://mms-gui-1.catrasoft.cloud$request_uri;
 }
 

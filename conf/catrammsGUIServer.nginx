@@ -10,6 +10,8 @@
 	#proxy_cache one;
 
 	#scenario client url: https://mms-gui.catramms-cloud.com
+	#https://www.keycdn.com/support/nginx-location-directive
+	#match qualunque URL o URI che inizia con /
 	location / {
 		rewrite .* https://$host/catramms/ redirect;
 	}
@@ -22,6 +24,7 @@
 	#	Questo perchè il load balancer gira a nginx l'url usando http e 8089
 	#	Quindi anche in questo caso eseguo una redirect senza mandare
 	#	la richiesta a tomcat
+	#match qualunque URL o URI che inizia con /catramms
 	location /catramms {
 		rewrite .* https://$host/catramms/ redirect;
 	}
@@ -30,6 +33,7 @@
 	#	questo tipo di url puo essere girata a tomcat perchè, anche il caso
 	#		https://mms-gui.catramms-cloud.com/catramms/
 	#	viene gestito da tomcat con il file index.html
+	#match qualunque URL o URI che inizia con /catramms/
 	location /catramms/ {
 		#Uso una coda "minima" per gestire le richieste contemporanee.
 		#Non userei il nodelay in modo che le richieste vengono evase secondo il rate indicato in nginx.conf

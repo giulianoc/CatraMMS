@@ -2,6 +2,8 @@
 	access_log   /var/catramms/logs/nginx/mms-encoder.access.log main;
 	error_log    /var/catramms/logs/nginx/mms-encoder.error.log error;
 
+	#https://www.keycdn.com/support/nginx-location-directive
+	#match qualunque URL o URI che inizia con /catramms
 	location /catramms {
 		#Uso una coda "minima" per gestire le richieste contemporanee.
 		#Non userei il nodelay in modo che le richieste vengono evase secondo il rate indicato in nginx.conf
@@ -72,6 +74,7 @@
 		}
 	}
 
+	#match qualunque URL o URI che inizia con /encoder
 	location /encoder {
 		internal;
 

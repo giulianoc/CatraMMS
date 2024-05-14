@@ -104,6 +104,7 @@ execute_process(
 
 include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories("${PROJECT_SOURCE_DIR}/FFMpeg/src")
+include_directories("${PROJECT_SOURCE_DIR}/PostgresHelper/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")

@@ -714,6 +714,23 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							if (realTimeTimeInMilliSeconds != -1.0 && copiedLiveProxy->_realTimeTimeInMilliSeconds != -1.0)
 								diffRealTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds - copiedLiveProxy->_realTimeTimeInMilliSeconds;
 
+							SPDLOG_INFO(
+								"liveProxyMonitor. Live Proxy real time info"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", configurationLabel: {}"
+								", _childPid: {}"
+								", elapsedInSecondsSinceLastChange: {}"
+								", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+								", diff real time frame: {}"
+								", diff real time size: {}"
+								", diff real time time in millisecs: {}"
+								", realTimeBitRate: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, copiedLiveProxy->_childPid,
+								elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds, diffRealTimeFrame, diffRealTimeSize,
+								diffRealTimeTimeInMilliSeconds, sourceLiveProxy->_realTimeBitRate
+							);
+
 							if (copiedLiveProxy->_realTimeFrame == realTimeFrame && copiedLiveProxy->_realTimeSize == realTimeSize &&
 								copiedLiveProxy->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
@@ -756,22 +773,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							else
 							{
 								sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
-
-								SPDLOG_INFO(
-									"liveProxyMonitor. Live Proxy real time info is changed"
-									", ingestionJobKey: {}"
-									", encodingJobKey: {}"
-									", configurationLabel: {}"
-									", _childPid: {}"
-									", elapsedInSecondsSinceLastChange: {}"
-									", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-									", diff real time frame: {}"
-									", diff real time size: {}"
-									", diff real time time in millisecs: {}",
-									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-									copiedLiveProxy->_childPid, elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
-									diffRealTimeFrame, diffRealTimeSize, diffRealTimeTimeInMilliSeconds
-								);
 							}
 						}
 						else

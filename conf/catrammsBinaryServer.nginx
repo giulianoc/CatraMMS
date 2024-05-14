@@ -13,6 +13,8 @@
 	#Il metodo uploadedBinary si preoccupa di gestire il file caricato da nginx
 
 	#1
+	#https://www.keycdn.com/support/nginx-location-directive
+	#match qualunque URL o URI che inizia con /catramms
 	location /catramms {
 		#Uso una coda "minima" per gestire le richieste contemporanee.
 		#Non userei il nodelay in modo che le richieste vengono evase secondo il rate indicato in nginx.conf
@@ -35,6 +37,7 @@
 	}
 
 	#2
+	#match qualunque URL o URI che inizia o finisce con l'espressione regolare sotto
 	location ~ /catramms/([0-9]+.[0-9]+.[0-9]+)/binary {
 		limit_req zone=mmsBinaryLimit burst=20;
 
@@ -45,6 +48,7 @@
 	}
 
 	#3
+	#match qualunque URL o URI che inizia con /catramms/binary/toBeAuthorized
 	location /catramms/binary/toBeAuthorized {
 		internal;
 
@@ -92,6 +96,7 @@
 	}
 
 	#4
+	#match se corrisponde esattamente a /catramms/binary/checkAuthorization
 	location = /catramms/binary/checkAuthorization {
 		internal;
 
@@ -102,10 +107,15 @@
 		proxy_set_header Content-Length "";
 		#proxy_set_header X-Original-METHOD $request_method;
 		proxy_set_header X-Original-METHOD $XProgressID;
+		#request_uri:
+		# per https://www.webhosting24.com/understanding-nginx-request_uri/, $request_uri viene popolata come /understanding-nginx-request_uri/
+		# per https://www.webhosting24.com/cp/cart.php?a=add&domain=register, $request_uri viene popolata come /cp/cart.php?a=add&domain=register
+		# per https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.2, $request_uri viene popolata come /Protocols/rfc2616/rfc2616-sec3.html
 		proxy_set_header X-Original-URI $request_uri;
 	}
 
 	#5
+	#match qualunque URL o URI che inizia con /catramms/binary/authorization
 	location /catramms/binary/authorization {
 		allow 127.0.0.1;
 		deny all;
@@ -115,6 +125,7 @@
 	}
 
 	#6
+	#^~ Assuming this block is the best non-RE match, a carat followed by a tilde modifier means that RE matching will not take place.
 	location ^~ /catramms/binary/uploadProgress {
 		allow 127.0.0.1;
 		deny all;
@@ -123,6 +134,7 @@
 	}
 
 	#7
+	#match qualunque URL o URI che inizia con /api
 	location /api {
 		internal;
 

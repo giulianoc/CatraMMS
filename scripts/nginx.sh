@@ -56,8 +56,12 @@ then
 	#sudo pkill nginx
 elif [ "$command" == "reload" ]
 then
-	#LD_LIBRARY_PATH with ffmpeg was set because I guess it could be used by nginx-vod-module
-	$sudoToBeUsed LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -s reload
-	#sudo sh -c 'export CatraMMS_PATH=/opt/catramms && export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 && $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx -s reload'
+	if [ "$sudoToBeUsed" == "sudo" ]
+	then
+		sudo LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -s reload
+	else
+		export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
+		$CatraMMS_PATH/nginx/sbin/nginx -s reload
+	fi
 fi
 
