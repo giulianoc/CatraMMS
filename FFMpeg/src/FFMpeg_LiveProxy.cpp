@@ -1829,9 +1829,12 @@ void FFMpeg::outputsRootToFfmpeg(
 )
 {
 
-	_logger->info(
-		__FILEREF__ + "Received outputsRootToFfmpeg" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", encodingJobKey: " + to_string(encodingJobKey) + ", outputsRoot: " + JSONUtils::toString(outputsRoot)
+	SPDLOG_INFO(
+		"Received outputsRootToFfmpeg"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", outputsRoot: {}",
+		ingestionJobKey, encodingJobKey, JSONUtils::toString(outputsRoot)
 	);
 
 	FFMpegFilters ffmpegFilters(_ffmpegTtfFontDir);
@@ -1845,7 +1848,7 @@ void FFMpeg::outputsRootToFfmpeg(
 	//		Nello scenario in cui serve un drawTextDetails solamente per un inputRoot, non è possibile
 	//		utilizzare outputRoot altrimenti avremmo il draw text anche per gli altri item della playlist.
 	//		In particolare, il parametro inputDrawTextDetailsRoot arriva inizializzato solamente se
-	//		siamo nello scenario di un inputRoot che richiede il suo drawtext.
+	//		siamo nello scenario di un solo inputRoot che richiede il suo drawtext.
 	//		Per questo motivo, il prossimo if, gestisce il caso di drawTextDetails solo per un input root,
 	string ffmpegDrawTextFilter;
 	if (inputDrawTextDetailsRoot != nullptr)
@@ -1891,7 +1894,39 @@ void FFMpeg::outputsRootToFfmpeg(
 
 		json filtersRoot = nullptr;
 		if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
+		{
 			filtersRoot = outputRoot["filters"];
+
+			// in caso di drawtext filter, set textFilePathName sicuramente se è presente reloadAtFrameInterval
+			if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
+			{
+				json videoFiltersRoot = filtersRoot["video"];
+				for (int filterIndex = 0; filterIndex < videoFiltersRoot.size(); filterIndex++)
+				{
+					json videoFilterRoot = videoFiltersRoot[filterIndex];
+					if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "drawtext")
+					{
+						int reloadAtFrameInterval = JSONUtils::asInt(videoFilterRoot, "reloadAtFrameInterval", -1);
+						if (reloadAtFrameInterval > 0)
+						{
+							string overlayText = JSONUtils::asString(videoFilterRoot, "text", "");
+							string textTemporaryFileName;
+							{
+								textTemporaryFileName =
+									fmt::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
+								ofstream of(textTemporaryFileName, ofstream::trunc);
+								of << overlayText;
+								of.flush();
+							}
+
+							videoFilterRoot["textFilePathName"] = textTemporaryFileName;
+							videoFiltersRoot[filterIndex] = videoFilterRoot;
+							filtersRoot["video"] = videoFiltersRoot;
+						}
+					}
+				}
+			}
+		}
 
 		json encodingProfileDetailsRoot = nullptr;
 		if (JSONUtils::isMetadataPresent(outputRoot, "encodingProfileDetails"))
@@ -2481,6 +2516,30 @@ void FFMpeg::outputsRootToFfmpeg_clean(int64_t ingestionJobKey, int64_t encoding
 			{
 				_logger->info(__FILEREF__ + "Remove" + ", textTemporaryFileName: " + textTemporaryFileName);
 				fs::remove_all(textTemporaryFileName);
+			}
+		}
+
+		if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
+		{
+			json filtersRoot = outputRoot["filters"];
+
+			if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
+			{
+				json videoFiltersRoot = filtersRoot["video"];
+				for (int filterIndex = 0; filterIndex < videoFiltersRoot.size(); filterIndex++)
+				{
+					json videoFilterRoot = videoFiltersRoot[filterIndex];
+					if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "drawtext")
+					{
+						string textTemporaryFileName =
+							fmt::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
+						if (fs::exists(textTemporaryFileName))
+						{
+							_logger->info(__FILEREF__ + "Remove" + ", textTemporaryFileName: " + textTemporaryFileName);
+							fs::remove_all(textTemporaryFileName);
+						}
+					}
+				}
 			}
 		}
 	}
