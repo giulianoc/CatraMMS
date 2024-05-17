@@ -5513,41 +5513,39 @@ void API::changeLiveProxyPlaylist(
 			string responseBody;
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (curlpp::LogicError &e)
+		catch (runtime_error e)
 		{
-			_logger->error(
-				__FILEREF__ + "changeLiveProxyPlaylist URL failed (LogicError)" + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-				", exception: " + e.what() + ", response.str(): " + response.str()
+			SPDLOG_ERROR(
+				"{} failed"
+				", ffmpegEncoderURL: {}"
+				", response.str: {}"
+				", e.what(): {}",
+				api, ffmpegEncoderURL, response.str(), e.what()
 			);
 
-			throw e;
-		}
-		catch (curlpp::RuntimeError &e)
-		{
-			string errorMessage = string("changeLiveProxyPlaylist URL failed (RuntimeError)") + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-								  ", exception: " + e.what() + ", response.str(): " + response.str();
-
+			string errorMessage = string("Internal server error");
 			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-		catch (runtime_error e)
-		{
-			_logger->error(
-				__FILEREF__ + "changeLiveProxyPlaylist URL failed (runtime_error)" + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-				", exception: " + e.what() + ", response.str(): " + response.str()
-			);
-
-			throw e;
-		}
 		catch (exception e)
 		{
-			_logger->error(
-				__FILEREF__ + "changeLiveProxyPlaylist URL failed (exception)" + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-				", exception: " + e.what() + ", response.str(): " + response.str()
+			SPDLOG_ERROR(
+				"{} failed"
+				", ffmpegEncoderURL: {}"
+				", response.str: {}"
+				", e.what(): {}",
+				api, ffmpegEncoderURL, response.str(), e.what()
 			);
 
-			throw e;
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 	}
 	catch (runtime_error &e)
@@ -5563,7 +5561,7 @@ void API::changeLiveProxyPlaylist(
 		string errorMessage = string("Internal server error");
 		_logger->error(__FILEREF__ + errorMessage);
 
-		sendError(request, 500, errorMessage);
+		// sendError(request, 500, errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5711,6 +5709,9 @@ void API::changeLiveProxyOverlayText(
 
 			throw runtime_error(errorMessage);
 		}
+
+		string responseBody;
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (runtime_error &e)
 	{
