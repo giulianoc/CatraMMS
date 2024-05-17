@@ -3247,7 +3247,7 @@ void MMSEngineDBFacade::encodingJobQuery(
 
 			string sqlStatement = fmt::format(
 				"select {} "
-				"from , MMS_EncodingJob "
+				"from MMS_EncodingJob "
 				"{} "
 				"{} "
 				"{} ",
