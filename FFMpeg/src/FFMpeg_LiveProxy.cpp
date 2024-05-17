@@ -1856,9 +1856,8 @@ void FFMpeg::outputsRootToFfmpeg(
 		{
 			string text = JSONUtils::asString(inputDrawTextDetailsRoot, "text", "");
 
-			string textTemporaryFileName;
+			string textTemporaryFileName = getDrawTextTemporaryPathName(ingestionJobKey, encodingJobKey);
 			{
-				textTemporaryFileName = _ffmpegTempDir + "/" + to_string(ingestionJobKey) + "_" + to_string(encodingJobKey) + ".overlayText";
 				ofstream of(textTemporaryFileName, ofstream::trunc);
 				of << text;
 				of.flush();
@@ -1910,10 +1909,8 @@ void FFMpeg::outputsRootToFfmpeg(
 						if (reloadAtFrameInterval > 0)
 						{
 							string overlayText = JSONUtils::asString(videoFilterRoot, "text", "");
-							string textTemporaryFileName;
+							string textTemporaryFileName = getDrawTextTemporaryPathName(ingestionJobKey, encodingJobKey, outputIndex);
 							{
-								textTemporaryFileName =
-									fmt::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
 								ofstream of(textTemporaryFileName, ofstream::trunc);
 								of << overlayText;
 								of.flush();
@@ -1944,10 +1941,8 @@ void FFMpeg::outputsRootToFfmpeg(
 
 			string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
 
-			string textTemporaryFileName;
+			string textTemporaryFileName = getDrawTextTemporaryPathName(ingestionJobKey, encodingJobKey, outputIndex);
 			{
-				textTemporaryFileName = _ffmpegTempDir + "/" + to_string(ingestionJobKey) + "_" + to_string(encodingJobKey) + "_" +
-										to_string(outputIndex) + ".overlayText";
 				ofstream of(textTemporaryFileName, ofstream::trunc);
 				of << text;
 				of.flush();

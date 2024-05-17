@@ -3211,6 +3211,164 @@ MMSEngineDBFacade::getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster
 	}
 }
 
+void MMSEngineDBFacade::encodingJobQuery(
+	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey,
+	int64_t ingestionJobKey, bool fromMaster
+)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	nontransaction trans{*(conn->_sqlConnection)};
+	try
+	{
+		{
+			bool whereIsPresent = false;
+			bool firstParameterDone = false;
+			string encodingJobKeyQuery;
+			if (encodingJobKey != -1)
+			{
+				encodingJobKeyQuery += fmt::format("{} encodingJobKey = {} ", firstParameterDone ? "and" : "", encodingJobKey);
+				whereIsPresent = true;
+				firstParameterDone = true;
+			}
+			string ingestionJobKeyQuery;
+			if (ingestionJobKey != -1)
+			{
+				ingestionJobKeyQuery += fmt::format("{} ingestionJobKey = {} ", firstParameterDone ? "and" : "", ingestionJobKey);
+				whereIsPresent = true;
+				firstParameterDone = true;
+			}
+
+			string sqlStatement = fmt::format(
+				"select {} "
+				"from , MMS_EncodingJob "
+				"{} "
+				"{} "
+				"{} ",
+				_postgresHelper.buildQueryColumns(requestedColumns), whereIsPresent ? "where " : "", encodingJobKeyQuery, ingestionJobKeyQuery
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (empty(res) && encodingJobKey != -1)
+			{
+				string errorMessage = fmt::format(
+					"encodingJob not found"
+					", encodingJobKey: {}",
+					encodingJobKey
+				);
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			_postgresHelper.buildResult(res, sqlResultSet);
+		}
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+}
+
 tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngestionJobKey(int64_t ingestionJobKey, bool fromMaster)
 {
 	int64_t encoderKey = -1;

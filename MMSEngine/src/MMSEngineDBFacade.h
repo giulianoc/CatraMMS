@@ -139,7 +139,7 @@ class MMSEngineDBFacade
 		case CodeType::UserRegistrationComingFromShareWorkspace:
 			return "UserRegistrationComingFromShareWorkspace";
 		default:
-			throw runtime_error(string("Wrong CodeType"));
+			throw runtime_error("toString with a wrong CodeType");
 		}
 	}
 	static CodeType toCodeType(const string &codeType)
@@ -155,7 +155,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "userregistrationcomingfromshareworkspace")
 			return CodeType::UserRegistrationComingFromShareWorkspace;
 		else
-			throw runtime_error(string("Wrong CodeType") + ", current codeType: " + codeType);
+			throw runtime_error(fmt::format(
+				"toCodeType with a wrong CodeType"
+				", codeType: {}",
+				codeType
+			));
 	}
 
 	enum class LockType
@@ -172,7 +176,7 @@ class MMSEngineDBFacade
 		case LockType::Encoding:
 			return "Encoding";
 		default:
-			throw runtime_error(string("Wrong LockType"));
+			throw runtime_error("toString with a wrong LockType");
 		}
 	}
 	static LockType toLockType(const string &lockType)
@@ -186,7 +190,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "encoding")
 			return LockType::Encoding;
 		else
-			throw runtime_error(string("Wrong LockType") + ", current lockType: " + lockType);
+			throw runtime_error(fmt::format(
+				"toLockType with a wrong LockType"
+				", lockType: {}",
+				lockType
+			));
 	}
 
 	enum class OncePerDayType
@@ -203,7 +211,7 @@ class MMSEngineDBFacade
 		case OncePerDayType::GEOInfo:
 			return "GEOInfo";
 		default:
-			throw runtime_error(string("Wrong OncePerDayType"));
+			throw runtime_error("toString with a wrong OncePerDayType");
 		}
 	}
 	static OncePerDayType toOncePerDayType(const string &oncePerDayType)
@@ -217,7 +225,11 @@ class MMSEngineDBFacade
 		if (lowerCase == "geoinfo")
 			return OncePerDayType::GEOInfo;
 		else
-			throw runtime_error(string("Wrong OncePerDayType") + ", current oncePerDayType: " + oncePerDayType);
+			throw runtime_error(fmt::format(
+				"toOncePerDayType with a wrong OncePerDayType"
+				", oncePerDayType: {}",
+				oncePerDayType
+			));
 	}
 
 	enum class ContentType
@@ -241,7 +253,7 @@ class MMSEngineDBFacade
 		case ContentType::Image:
 			return "Image";
 		default:
-			throw runtime_error(string("Wrong ContentType"));
+			throw runtime_error("toString with a wrong ContentType");
 		}
 	}
 	static ContentType toContentType(const string &contentType)
@@ -257,7 +269,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "image")
 			return ContentType::Image;
 		else
-			throw runtime_error(string("Wrong ContentType (correct value: video, audio or image") + ", current contentType: " + contentType);
+			throw runtime_error(fmt::format(
+				"toContentType with a wrong ContentType"
+				", contentType: {}",
+				contentType
+			));
 	}
 
 	enum class EncodingPriority
@@ -277,7 +293,7 @@ class MMSEngineDBFacade
 		case EncodingPriority::High:
 			return "High";
 		default:
-			throw runtime_error(string("Wrong EncodingPriority"));
+			throw runtime_error("toString with a wrong EncodingPriority");
 		}
 	}
 	static EncodingPriority toEncodingPriority(const string &priority)
@@ -293,7 +309,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "high")
 			return EncodingPriority::High;
 		else
-			throw runtime_error(string("Wrong EncodingPriority") + ", priority: " + priority);
+			throw runtime_error(fmt::format(
+				"toEncodingPriority with a wrong EncodingPriority"
+				", encodingPriority: {}",
+				priority
+			));
 	}
 
 	enum class EncodingStatus
@@ -325,7 +345,7 @@ class MMSEngineDBFacade
 		case EncodingStatus::End_CanceledByMMS:
 			return "End_CanceledByMMS";
 		default:
-			throw runtime_error(string("Wrong EncodingStatus: ") + to_string(static_cast<int>(encodingStatus)));
+			throw runtime_error(fmt::format("toString with a wrong EncodingStatus: {}", static_cast<int>(encodingStatus)));
 		}
 	}
 	static EncodingStatus toEncodingStatus(const string &encodingStatus)
@@ -349,7 +369,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "end_canceledbymms")
 			return EncodingStatus::End_CanceledByMMS;
 		else
-			throw runtime_error(string("Wrong EncodingStatus") + ", encodingStatus: " + encodingStatus);
+			throw runtime_error(fmt::format(
+				"toEncodingStatus with a wrong EncodingStatus"
+				", encodingStatus: {}",
+				encodingStatus
+			));
 	}
 
 	enum class EncodingType
@@ -414,7 +438,7 @@ class MMSEngineDBFacade
 		case EncodingType::AddSilentAudio:
 			return "AddSilentAudio";
 		default:
-			throw runtime_error(string("Wrong EncodingType"));
+			throw runtime_error("toString with a wrong EncodingType");
 		}
 	}
 	static EncodingType toEncodingType(const string &encodingType)
@@ -460,7 +484,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "addsilentaudio")
 			return EncodingType::AddSilentAudio;
 		else
-			throw runtime_error(string("Wrong EncodingType") + ", encodingType: " + encodingType);
+			throw runtime_error(fmt::format(
+				"toEncodingType with a wrong EncodingType"
+				", encodingType: {}",
+				encodingType
+			));
 	}
 
 	enum class EncodingError
@@ -492,7 +520,7 @@ class MMSEngineDBFacade
 		case EncodingError::CanceledByMMS:
 			return "CanceledByMMS";
 		default:
-			throw runtime_error(string("Wrong EncodingError"));
+			throw runtime_error("toString with a wrong EncodingError");
 		}
 	}
 	static EncodingError toEncodingError(const string &encodingError)
@@ -516,7 +544,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "canceledbymms")
 			return EncodingError::CanceledByMMS;
 		else
-			throw runtime_error(string("Wrong EncodingError") + ", encodingError: " + encodingError);
+			throw runtime_error(fmt::format(
+				"toEncodingError with a wrong EncodingError"
+				", encodingError: {}",
+				encodingError
+			));
 	}
 
 	enum class DeliveryTechnology
@@ -539,7 +571,7 @@ class MMSEngineDBFacade
 		case DeliveryTechnology::HTTPStreaming:
 			return "HTTPStreaming";
 		default:
-			throw runtime_error(string("Wrong deliveryTechnology"));
+			throw runtime_error("toString with a wrong deliveryTechnology");
 		}
 	}
 	static DeliveryTechnology toDeliveryTechnology(const string &deliveryTechnology)
@@ -555,7 +587,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "httpstreaming")
 			return DeliveryTechnology::HTTPStreaming;
 		else
-			throw runtime_error(string("Wrong DeliveryTechnology") + ", deliveryTechnology: " + deliveryTechnology);
+			throw runtime_error(fmt::format(
+				"toDeliveryTechnology with a wrong DeliveryTechnology"
+				", deliveryTechnology: {}",
+				deliveryTechnology
+			));
 	}
 
 	enum class EncodingPeriod
@@ -578,7 +614,7 @@ class MMSEngineDBFacade
 		case EncodingPeriod::Yearly:
 			return "Yearly";
 		default:
-			throw runtime_error(string("Wrong EncodingPeriod"));
+			throw runtime_error("toString with a wrong EncodingPeriod");
 		}
 	}
 	static EncodingPeriod toEncodingPeriod(const string &encodingPeriod)
@@ -596,7 +632,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "yearly")
 			return EncodingPeriod::Yearly;
 		else
-			throw runtime_error(string("Wrong EncodingPeriod") + ", encodingPeriod: " + encodingPeriod);
+			throw runtime_error(fmt::format(
+				"toEncodingPeriod with a wrong EncodingPeriod"
+				", encodingPeriod: {}",
+				encodingPeriod
+			));
 	}
 
 	enum class VideoSpeedType
@@ -613,7 +653,7 @@ class MMSEngineDBFacade
 		case VideoSpeedType::SpeedUp:
 			return "SpeedUp";
 		default:
-			throw runtime_error(string("Wrong VideoSpeedType"));
+			throw runtime_error("toString with a wrong VideoSpeedType");
 		}
 	}
 	static VideoSpeedType toVideoSpeedType(const string &videoSpeedType)
@@ -627,7 +667,11 @@ class MMSEngineDBFacade
 		else if (lowerCase == "speedup")
 			return VideoSpeedType::SpeedUp;
 		else
-			throw runtime_error(string("Wrong VideoSpeedType") + ", videoSpeedType: " + videoSpeedType);
+			throw runtime_error(fmt::format(
+				"toVideoSpeedType with a wrong VideoSpeedType"
+				", videoSpeedType: {}",
+				videoSpeedType
+			));
 	}
 
 	struct EncodingItem
@@ -795,7 +839,7 @@ class MMSEngineDBFacade
 			return "GroupOfTasks";
 
 		default:
-			throw runtime_error(string("Wrong IngestionType"));
+			throw runtime_error(string("toString with a wrong IngestionType"));
 		}
 	}
 	static IngestionType toIngestionType(const string &ingestionType)
@@ -891,7 +935,11 @@ class MMSEngineDBFacade
 			return IngestionType::GroupOfTasks;
 
 		else
-			throw runtime_error(string("Wrong IngestionType") + ", ingestionType: " + ingestionType);
+			throw runtime_error(fmt::format(
+				"toIngestionType with a wrong IngestionType"
+				", ingestionType: {}",
+				ingestionType
+			));
 	}
 
 	enum class IngestionStatus
@@ -1472,6 +1520,11 @@ class MMSEngineDBFacade
 	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
 	getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 
+	void ingestionJobQuery(
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey,
+		int64_t ingestionJobKey, bool fromMaster
+	);
+
 	json getIngestionRootsStatus(
 		shared_ptr<Workspace> workspace, int64_t ingestionRootKey, int64_t mediaItemKey, int start, int rows,
 		// bool startAndEndIngestionDatePresent,
@@ -1816,6 +1869,10 @@ class MMSEngineDBFacade
 	);
 
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster);
+	void encodingJobQuery(
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey,
+		int64_t ingestionJobKey, bool fromMaster
+	);
 
 	void checkWorkspaceStorageAndMaxIngestionNumber(int64_t workspaceKey);
 

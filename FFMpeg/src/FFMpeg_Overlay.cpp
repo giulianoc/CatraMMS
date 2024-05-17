@@ -11,12 +11,12 @@
  * Created on February 18, 2018, 1:27 AM
  */
 #include "FFMpeg.h"
-#include "JSONUtils.h"
-#include "FFMpegFilters.h"
 #include "FFMpegEncodingParameters.h"
+#include "FFMpegFilters.h"
+#include "JSONUtils.h"
 #include "catralibraries/ProcessUtility.h"
-#include <regex>
 #include <fstream>
+#include <regex>
 /*
 #include "MMSCURL.h"
 #include "catralibraries/StringUtils.h"
@@ -418,7 +418,6 @@ void FFMpeg::overlayTextOnVideo(
 
 	setStatus(ingestionJobKey, encodingJobKey, videoDurationInMilliSeconds, mmsSourceVideoAssetPathName, stagingEncodedAssetPathName);
 
-	string textTemporaryFileName;
 	try
 	{
 		if (!fs::exists(mmsSourceVideoAssetPathName))
@@ -569,9 +568,8 @@ void FFMpeg::overlayTextOnVideo(
 		{
 			string text = JSONUtils::asString(drawTextDetailsRoot, "text", "");
 
+			string textTemporaryFileName = getDrawTextTemporaryPathName(_currentIngestionJobKey, _currentEncodingJobKey);
 			{
-				textTemporaryFileName =
-					_ffmpegTempDir + "/" + to_string(_currentIngestionJobKey) + "_" + to_string(_currentEncodingJobKey) + ".overlayText";
 				ofstream of(textTemporaryFileName, ofstream::trunc);
 				of << text;
 				of.flush();
@@ -797,4 +795,3 @@ void FFMpeg::overlayTextOnVideo(
 		throw e;
 	}
 }
-

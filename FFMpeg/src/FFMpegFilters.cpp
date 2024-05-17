@@ -1,31 +1,19 @@
 
-#include "JSONUtils.h"
-#include <regex>
-#include <fstream>
 #include "FFMpegFilters.h"
+#include "JSONUtils.h"
+#include <fstream>
+#include <regex>
 
-FFMpegFilters::FFMpegFilters(string ffmpegTtfFontDir)
-{
-	_ffmpegTtfFontDir = ffmpegTtfFontDir;
-}
+FFMpegFilters::FFMpegFilters(string ffmpegTtfFontDir) { _ffmpegTtfFontDir = ffmpegTtfFontDir; }
 
-FFMpegFilters::~FFMpegFilters() 
-{
-    
-}
+FFMpegFilters::~FFMpegFilters() {}
 
-tuple<string, string, string> FFMpegFilters::addFilters(
-	json filtersRoot,
-	string ffmpegVideoResolutionParameter,
-	string ffmpegDrawTextFilter,
-	int64_t streamingDurationInSeconds
-)
+tuple<string, string, string>
+FFMpegFilters::addFilters(json filtersRoot, string ffmpegVideoResolutionParameter, string ffmpegDrawTextFilter, int64_t streamingDurationInSeconds)
 {
-	string videoFilters = addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter,
-		ffmpegDrawTextFilter, streamingDurationInSeconds);
+	string videoFilters = addVideoFilters(filtersRoot, ffmpegVideoResolutionParameter, ffmpegDrawTextFilter, streamingDurationInSeconds);
 	string audioFilters = addAudioFilters(filtersRoot, streamingDurationInSeconds);
 	string complexFilters;
-
 
 	if (filtersRoot != nullptr)
 	{
@@ -47,14 +35,10 @@ tuple<string, string, string> FFMpegFilters::addFilters(
 }
 
 string FFMpegFilters::addVideoFilters(
-	json filtersRoot,
-	string ffmpegVideoResolutionParameter,
-	string ffmpegDrawTextFilter,
-	int64_t streamingDurationInSeconds
+	json filtersRoot, string ffmpegVideoResolutionParameter, string ffmpegDrawTextFilter, int64_t streamingDurationInSeconds
 )
 {
 	string videoFilters;
-
 
 	if (ffmpegVideoResolutionParameter != "")
 	{
@@ -88,13 +72,9 @@ string FFMpegFilters::addVideoFilters(
 	return videoFilters;
 }
 
-string FFMpegFilters::addAudioFilters(
-	json filtersRoot,
-	int64_t streamingDurationInSeconds
-)
+string FFMpegFilters::addAudioFilters(json filtersRoot, int64_t streamingDurationInSeconds)
 {
 	string audioFilters;
-
 
 	if (filtersRoot != nullptr)
 	{
@@ -115,13 +95,9 @@ string FFMpegFilters::addAudioFilters(
 	return audioFilters;
 }
 
-string FFMpegFilters::getFilter(
-	json filterRoot,
-	int64_t streamingDurationInSeconds
-)
+string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeconds)
 {
 	string filter;
-
 
 	if (!JSONUtils::isMetadataPresent(filterRoot, "type"))
 	{
@@ -147,16 +123,14 @@ string FFMpegFilters::getFilter(
 		double black_min_duration = JSONUtils::asDouble(filterRoot, "black_min_duration", 2);
 		double pixel_black_th = JSONUtils::asDouble(filterRoot, "pixel_black_th", 0.0);
 
-		filter = ("blackdetect=d=" + to_string(black_min_duration)
-			+ ":pix_th=" + to_string(pixel_black_th));
+		filter = ("blackdetect=d=" + to_string(black_min_duration) + ":pix_th=" + to_string(pixel_black_th));
 	}
 	else if (type == "blackframe")
 	{
 		int amount = JSONUtils::asInt(filterRoot, "amount", 98);
 		int threshold = JSONUtils::asInt(filterRoot, "threshold", 32);
 
-		filter = ("blackframe=amount=" + to_string(amount)
-			+ ":threshold=" + to_string(threshold));
+		filter = ("blackframe=amount=" + to_string(amount) + ":threshold=" + to_string(threshold));
 	}
 	else if (type == "crop")
 	{
@@ -174,8 +148,7 @@ string FFMpegFilters::getFilter(
 		bool exact = JSONUtils::asBool(filterRoot, "exact", false);
 
 		// crop=w=100:h=100:x=12:y=34
-		filter = fmt::format("crop=out_w={}:out_h={}:x={}:y={}:keep_aspect={}:exact={}",
-			out_w, out_h, x, y, keep_aspect, exact);
+		filter = fmt::format("crop=out_w={}:out_h={}:x={}:y={}:keep_aspect={}:exact={}", out_w, out_h, x, y, keep_aspect, exact);
 	}
 	else if (type == "drawbox")
 	{
@@ -195,14 +168,13 @@ string FFMpegFilters::getFilter(
 		{
 			char cOpacity[64];
 
-			sprintf(cOpacity, "%.1f", ((float) percentageOpacity) / 100.0);
+			sprintf(cOpacity, "%.1f", ((float)percentageOpacity) / 100.0);
 
 			opacity = ("@" + string(cOpacity));
 		}
 
 		// drawbox=x=700:y=400:w=160:h=90:color=blue:t=5
-		filter = fmt::format("drawbox=x={}:y={}:w={}:h={}:color={}{}:t={}",
-			x, y, width, height, fontColor, opacity, thickness);
+		filter = fmt::format("drawbox=x={}:y={}:w={}:h={}:color={}{}:t={}", x, y, width, height, fontColor, opacity, thickness);
 	}
 	else if (type == "drawtext")
 	{
@@ -233,8 +205,9 @@ string FFMpegFilters::getFilter(
 				// expr_int_format, eif
 				//	Evaluate the expression’s value and output as formatted integer.
 				//	The first argument is the expression to be evaluated, just as for the expr function.
-				//	The second argument specifies the output format. Allowed values are ‘x’, ‘X’, ‘d’ and ‘u’. They are treated exactly as in the printf function.
-				//	The third parameter is optional and sets the number of positions taken by the output. It can be used to add padding with zeros from the left.
+				//	The second argument specifies the output format. Allowed values are ‘x’, ‘X’, ‘d’ and ‘u’. They are treated exactly as in the
+				// printf function. 	The third parameter is optional and sets the number of positions taken by the output. It can be used to add
+				// padding with zeros from the left.
 				//
 
 				if (textFilePathName != "")
@@ -243,16 +216,16 @@ string FFMpegFilters::getFilter(
 					if (ifPathFileName)
 					{
 						// get size/length of file:
-						ifPathFileName.seekg (0, ifPathFileName.end);
+						ifPathFileName.seekg(0, ifPathFileName.end);
 						int fileSize = ifPathFileName.tellg();
-						ifPathFileName.seekg (0, ifPathFileName.beg);
+						ifPathFileName.seekg(0, ifPathFileName.beg);
 
-						char* buffer = new char [fileSize];
-						ifPathFileName.read (buffer, fileSize);
+						char *buffer = new char[fileSize];
+						ifPathFileName.read(buffer, fileSize);
 						if (ifPathFileName)
 						{
 							// all characters read successfully
-							ffmpegText.assign(buffer, fileSize);                                                 
+							ffmpegText.assign(buffer, fileSize);
 						}
 						else
 						{
@@ -264,30 +237,41 @@ string FFMpegFilters::getFilter(
 					}
 					else
 					{
-						SPDLOG_ERROR("ffmpeg: drawtext file cannot be read"
-							", textFilePathName: {}", textFilePathName
+						SPDLOG_ERROR(
+							"ffmpeg: drawtext file cannot be read"
+							", textFilePathName: {}",
+							textFilePathName
 						);
 					}
 				}
 
 				string escape = "\\";
 				if (textFilePathName != "")
-					escape = "";	// in case of file, there is no need of escape
+					escape = ""; // in case of file, there is no need of escape
 
 				{
 					ffmpegText = regex_replace(ffmpegText, regex(":"), escape + ":");
-					ffmpegText = regex_replace(ffmpegText,
-						regex("days_counter"), "%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}");
-					ffmpegText = regex_replace(ffmpegText,
-						regex("hours_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/3600),24))" + escape + ":d" + escape + ":2}");
-					ffmpegText = regex_replace(ffmpegText,
-						regex("mins_counter"), "%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/60),60))" + escape + ":d" + escape + ":2}");
-					ffmpegText = regex_replace(ffmpegText,
-						regex("secs_counter"), "%{eif" + escape + ":trunc(mod(countDownDurationInSecs-t" + escape + ",60))" + escape + ":d" + escape + ":2}");
-					ffmpegText = regex_replace(ffmpegText,
-						regex("cents_counter"), "%{eif" + escape + ":(mod(countDownDurationInSecs-t" + escape + ",1)*pow(10,2))" + escape + ":d" + escape + ":2}");
-					ffmpegText = regex_replace(ffmpegText,
-						regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
+					ffmpegText = regex_replace(
+						ffmpegText, regex("days_counter"),
+						"%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}"
+					);
+					ffmpegText = regex_replace(
+						ffmpegText, regex("hours_counter"),
+						"%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/3600),24))" + escape + ":d" + escape + ":2}"
+					);
+					ffmpegText = regex_replace(
+						ffmpegText, regex("mins_counter"),
+						"%{eif" + escape + ":trunc(mod(((countDownDurationInSecs-t)/60),60))" + escape + ":d" + escape + ":2}"
+					);
+					ffmpegText = regex_replace(
+						ffmpegText, regex("secs_counter"),
+						"%{eif" + escape + ":trunc(mod(countDownDurationInSecs-t" + escape + ",60))" + escape + ":d" + escape + ":2}"
+					);
+					ffmpegText = regex_replace(
+						ffmpegText, regex("cents_counter"),
+						"%{eif" + escape + ":(mod(countDownDurationInSecs-t" + escape + ",1)*pow(10,2))" + escape + ":d" + escape + ":2}"
+					);
+					ffmpegText = regex_replace(ffmpegText, regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
 				}
 
 				if (textFilePathName != "")
@@ -301,7 +285,7 @@ string FFMpegFilters::getFilter(
 			/*
 			* -vf "drawtext=fontfile='C\:\\Windows\\fonts\\Arial.ttf':
 			fontcolor=yellow:fontsize=45:x=100:y=65:
-			text='%{eif\:trunc((5447324-t)/86400)\:d\:2} days 
+			text='%{eif\:trunc((5447324-t)/86400)\:d\:2} days
 			%{eif\:trunc(mod(((5447324-t)/3600),24))\:d\:2} hrs
 			%{eif\:trunc(mod(((5447324-t)/60),60))\:d\:2} m
 			%{eif\:trunc(mod(5447324-t\,60))\:d\:2} s'"
@@ -333,7 +317,7 @@ string FFMpegFilters::getFilter(
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * t)";
 			else if (textPosition_X_InPixel == "loopRightToLeft_15")
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 15) * mod(t\\, 15))";
-// loopRightToLeft_slow deve essere rimosso
+			// loopRightToLeft_slow deve essere rimosso
 			else if (textPosition_X_InPixel == "loopRightToLeft_slow" || textPosition_X_InPixel == "loopRightToLeft_30")
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 30) * mod(t\\, 30))";
 			else if (textPosition_X_InPixel == "loopRightToLeft_60")
@@ -350,14 +334,10 @@ string FFMpegFilters::getFilter(
 				ffmpegTextPosition_X_InPixel = "w - (((w + text_w) / 210) * mod(t\\, 210))";
 			else
 			{
-				ffmpegTextPosition_X_InPixel = 
-					regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
-				ffmpegTextPosition_X_InPixel = 
-					regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w"); // text_w or tw
-				ffmpegTextPosition_X_InPixel = 
-					regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
-				ffmpegTextPosition_X_InPixel = 
-					regex_replace(ffmpegTextPosition_X_InPixel, regex("timestampInSeconds"), "t");
+				ffmpegTextPosition_X_InPixel = regex_replace(textPosition_X_InPixel, regex("video_width"), "w");
+				ffmpegTextPosition_X_InPixel = regex_replace(ffmpegTextPosition_X_InPixel, regex("text_width"), "text_w"); // text_w or tw
+				ffmpegTextPosition_X_InPixel = regex_replace(ffmpegTextPosition_X_InPixel, regex("line_width"), "line_w");
+				ffmpegTextPosition_X_InPixel = regex_replace(ffmpegTextPosition_X_InPixel, regex("timestampInSeconds"), "t");
 			}
 
 			string ffmpegTextPosition_Y_InPixel;
@@ -388,14 +368,10 @@ string FFMpegFilters::getFilter(
 				ffmpegTextPosition_Y_InPixel = "mod(t * 100\\, h)";
 			else
 			{
-				ffmpegTextPosition_Y_InPixel = 
-					regex_replace(textPosition_Y_InPixel, regex("video_height"), "h");
-				ffmpegTextPosition_Y_InPixel = 
-					regex_replace(ffmpegTextPosition_Y_InPixel, regex("text_height"), "text_h");
-				ffmpegTextPosition_Y_InPixel = 
-					regex_replace(ffmpegTextPosition_Y_InPixel, regex("line_height"), "line_h");
-				ffmpegTextPosition_Y_InPixel = 
-					regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
+				ffmpegTextPosition_Y_InPixel = regex_replace(textPosition_Y_InPixel, regex("video_height"), "h");
+				ffmpegTextPosition_Y_InPixel = regex_replace(ffmpegTextPosition_Y_InPixel, regex("text_height"), "text_h");
+				ffmpegTextPosition_Y_InPixel = regex_replace(ffmpegTextPosition_Y_InPixel, regex("line_height"), "line_h");
+				ffmpegTextPosition_Y_InPixel = regex_replace(ffmpegTextPosition_Y_InPixel, regex("timestampInSeconds"), "t");
 			}
 
 			if (textFilePathName != "")
@@ -409,21 +385,21 @@ string FFMpegFilters::getFilter(
 			if (textPosition_X_InPixel != "")
 				filter += (":x=" + ffmpegTextPosition_X_InPixel);
 			if (textPosition_Y_InPixel != "")
-				filter += (":y=" + ffmpegTextPosition_Y_InPixel);               
+				filter += (":y=" + ffmpegTextPosition_Y_InPixel);
 			if (fontType != "")
 				filter += (":fontfile='" + _ffmpegTtfFontDir + "/" + fontType + "'");
 			if (fontSize != -1)
 				filter += (":fontsize=" + to_string(fontSize));
 			if (fontColor != "")
 			{
-				filter += (":fontcolor=" + fontColor);                
+				filter += (":fontcolor=" + fontColor);
 				if (textPercentageOpacity != -1)
 				{
 					char opacity[64];
 
-					sprintf(opacity, "%.1f", ((float) textPercentageOpacity) / 100.0);
+					sprintf(opacity, "%.1f", ((float)textPercentageOpacity) / 100.0);
 
-					filter += ("@" + string(opacity));                
+					filter += ("@" + string(opacity));
 				}
 			}
 			filter += (":shadowx=" + to_string(shadowX));
@@ -434,22 +410,23 @@ string FFMpegFilters::getFilter(
 
 				if (boxColor != "")
 				{
-					filter += (":boxcolor=" + boxColor);                
+					filter += (":boxcolor=" + boxColor);
 					if (boxPercentageOpacity != -1)
 					{
 						char opacity[64];
 
-						sprintf(opacity, "%.1f", ((float) boxPercentageOpacity) / 100.0);
+						sprintf(opacity, "%.1f", ((float)boxPercentageOpacity) / 100.0);
 
-						filter += ("@" + string(opacity));                
+						filter += ("@" + string(opacity));
 					}
 				}
 				if (boxBorderW != -1)
-					filter += (":boxborderw=" + to_string(boxBorderW));                
+					filter += (":boxborderw=" + to_string(boxBorderW));
 			}
 		}
 
-		SPDLOG_INFO("getDrawTextVideoFilterDescription"
+		SPDLOG_INFO(
+			"getDrawTextVideoFilterDescription"
 			", text: {}"
 			", textPosition_X_InPixel: {}"
 			", textPosition_Y_InPixel: {}"
@@ -462,9 +439,9 @@ string FFMpegFilters::getFilter(
 			", boxPercentageOpacity: {}"
 			", streamingDurationInSeconds: {}"
 			", filter: {}",
-			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize, fontColor,
-			textPercentageOpacity, boxEnable, boxColor, boxPercentageOpacity,
-			streamingDurationInSeconds, filter);
+			text, textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize, fontColor, textPercentageOpacity, boxEnable, boxColor,
+			boxPercentageOpacity, streamingDurationInSeconds, filter
+		);
 	}
 	else if (type == "fade")
 	{
@@ -473,21 +450,21 @@ string FFMpegFilters::getFilter(
 		if (streamingDurationInSeconds >= duration)
 		{
 			// fade=type=in:duration=3,fade=type=out:duration=3:start_time=27
-			filter = ("fade=type=in:duration=" + to_string(duration)
-				+ ",fade=type=out:duration=" + to_string(duration)
-				+ ":start_time=" + to_string(streamingDurationInSeconds - duration)
-			);
+			filter =
+				("fade=type=in:duration=" + to_string(duration) + ",fade=type=out:duration=" + to_string(duration) +
+				 ":start_time=" + to_string(streamingDurationInSeconds - duration));
 		}
 		else
 		{
-			SPDLOG_WARN("fade filter, streaming duration to small"
+			SPDLOG_WARN(
+				"fade filter, streaming duration to small"
 				", fadeDuration: {}"
 				", streamingDurationInSeconds: {}",
 				duration, streamingDurationInSeconds
 			);
 		}
 	}
-	else if (type == "fps")	// framerate
+	else if (type == "fps") // framerate
 	{
 		int framesNumber = JSONUtils::asInt(filterRoot, "framesNumber", 25);
 		int periodInSeconds = JSONUtils::asInt(filterRoot, "periodInSeconds", 1);
@@ -499,14 +476,13 @@ string FFMpegFilters::getFilter(
 		int noiseInDb = JSONUtils::asInt(filterRoot, "noiseInDb", -60);
 		int duration = JSONUtils::asInt(filterRoot, "duration", 2);
 
-		filter = ("freezedetect=noise=" + to_string(noiseInDb)
-			+ "dB:duration=" + to_string(duration));
+		filter = ("freezedetect=noise=" + to_string(noiseInDb) + "dB:duration=" + to_string(duration));
 	}
 	else if (type == "metadata")
 	{
 		filter = ("metadata=mode=print");
 	}
-	else if (type == "select")	// select frames to pass in output
+	else if (type == "select") // select frames to pass in output
 	{
 		string frameType = JSONUtils::asString(filterRoot, "frameType", "i-frame");
 
@@ -551,9 +527,7 @@ string FFMpegFilters::getFilter(
 	}
 	else
 	{
-		string errorMessage = string("filterRoot->type is unknown")
-			+ ", type: " + type
-		;
+		string errorMessage = string("filterRoot->type is unknown") + ", type: " + type;
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -561,4 +535,3 @@ string FFMpegFilters::getFilter(
 
 	return filter;
 }
-

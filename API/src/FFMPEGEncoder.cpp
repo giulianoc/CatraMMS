@@ -1020,8 +1020,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingCompleted)
 		{
-			// next \{ is to make the lock free as soon as the check
-			// is done
+			// next block is to make the lock free as soon as the check is done
 			{
 				for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding : *_encodingsCapability)
 				{
@@ -1037,7 +1036,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			if (!encodingFound)
 			{
-				// next \{ is to make the lock free as soon as
+				// next block is to make the lock free as soon as
 				// the check is done
 				{
 					/*
@@ -1959,6 +1958,82 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
 	}
+	else if (method == "changeLiveProxyOverlayText")
+	{
+		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+		if (encodingJobKeyIt == queryParameters.end())
+		{
+			string errorMessage = string("The 'encodingJobKey' parameter is not found");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+
+		string newOverlayText = requestBody;
+
+		bool encodingFound = false;
+
+		{
+			lock_guard<mutex> locker(*_liveProxyMutex);
+
+			shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> selectedLiveProxy;
+
+			for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy : *_liveProxiesCapability)
+			{
+				if (liveProxy->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					selectedLiveProxy = liveProxy;
+
+					break;
+				}
+			}
+
+			if (!encodingFound)
+			{
+				string errorMessage = fmt::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
+
+				_logger->error(__FILEREF__ + errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				// throw runtime_error(errorMessage);
+				return;
+			}
+
+			SPDLOG_INFO(
+				"Received changeLiveProxyOverlayText"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", requestBody: {}",
+				selectedLiveProxy->_ingestionJobKey, encodingJobKey, requestBody
+			);
+
+			string textTemporaryFileName =
+				selectedLiveProxy->_ffmpeg->getDrawTextTemporaryPathName(selectedLiveProxy->_ingestionJobKey, encodingJobKey, 0);
+			if (fs::exists(textTemporaryFileName))
+			{
+				ofstream of(textTemporaryFileName, ofstream::trunc);
+				of << newOverlayText;
+				of.flush();
+			}
+		}
+
+		string responseBody;
+		{
+			json responseBodyRoot;
+
+			string field = "encodingJobKey";
+			responseBodyRoot[field] = encodingJobKey;
+
+			responseBody = JSONUtils::toString(responseBodyRoot);
+		}
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+	}
 	else if (method == "encodingProgress")
 	{
 		// 2020-10-13: The encodingProgress API is not called anymore
@@ -2017,18 +2092,17 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		/*
 		if (!encodingCompleted)
 		{
-				// next \{ is to make the lock free as soon as
-the check is done
+				// next block is to make the lock free as soon as the check is done
 				{
 						lock_guard<mutex>
-locker(*_encodingMutex);
+	locker(*_encodingMutex);
 
 						for
-(shared_ptr<FFMPEGEncoderBase::Encoding> encoding:
-*_encodingsCapability)
+	(shared_ptr<FFMPEGEncoderBase::Encoding> encoding:
+	*_encodingsCapability)
 						{
 								if
-(encoding->_encodingJobKey == encodingJobKey)
+	(encoding->_encodingJobKey == encodingJobKey)
 								{
 										encodingFound = true;
 										selectedEncoding = encoding;
@@ -2041,14 +2115,14 @@ locker(*_encodingMutex);
 				if (!encodingFound)
 				{
 						lock_guard<mutex>
-locker(*_liveProxyMutex);
+	locker(*_liveProxyMutex);
 
 						for
-(shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy:
-*_liveProxiesCapability)
+	(shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy:
+	*_liveProxiesCapability)
 						{
 								if
-(liveProxy->_encodingJobKey == encodingJobKey)
+	(liveProxy->_encodingJobKey == encodingJobKey)
 								{
 										liveProxyFound = true;
 										selectedLiveProxy = liveProxy;
@@ -2059,12 +2133,12 @@ locker(*_liveProxyMutex);
 				}
 		}
 
-if (!encodingCompleted && !encodingFound && !liveProxyFound)
-{
+	if (!encodingCompleted && !encodingFound && !liveProxyFound)
+	{
 	string errorMessage = string("EncodingJobKey: ") +
-to_string(encodingJobKey)
+	to_string(encodingJobKey)
 						+ ", " +
-NoEncodingJobKeyFound().what();
+	NoEncodingJobKeyFound().what();
 
 	_logger->error(__FILEREF__ + errorMessage);
 
@@ -2072,30 +2146,30 @@ NoEncodingJobKeyFound().what();
 
 	// throw runtime_error(errorMessage);
 				return;
-}
+	}
 
-if (encodingFound)
+	if (encodingFound)
 		{
 				int encodingProgress;
 				try
 				{
 						encodingProgress =
-selectedEncoding->_ffmpeg->getEncodingProgress();
+	selectedEncoding->_ffmpeg->getEncodingProgress();
 				}
 				catch(FFMpegEncodingStatusNotAvailable& e)
 				{
 						string errorMessage =
-string("_ffmpeg->getEncodingProgress failed")
+	string("_ffmpeg->getEncodingProgress failed")
 										+ ", encodingJobKey: " +
-to_string(encodingJobKey)
+	to_string(encodingJobKey)
 								+ ", e.what(): "
-+ e.what()
+	+ e.what()
 										;
 						_logger->info(__FILEREF__ +
-errorMessage);
+	errorMessage);
 
 						sendError(request, 500,
-errorMessage);
+	errorMessage);
 
 						// throw e;
 						return;
@@ -2103,16 +2177,16 @@ errorMessage);
 				catch(exception& e)
 				{
 						string errorMessage =
-string("_ffmpeg->getEncodingProgress failed")
+	string("_ffmpeg->getEncodingProgress failed")
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", e.what(): "
-+ e.what()
+	+ e.what()
 			;
 						_logger->error(__FILEREF__ +
-errorMessage);
+	errorMessage);
 
 						sendError(request, 500,
-errorMessage);
+	errorMessage);
 
 						// throw e;
 						return;
@@ -2120,11 +2194,11 @@ errorMessage);
 
 				string responseBody = string("{ ")
 						+ "\"encodingJobKey\": " +
-to_string(encodingJobKey)
+	to_string(encodingJobKey)
 						+ ", \"pid\": " +
-to_string(selectedEncoding->_childPid)
+	to_string(selectedEncoding->_childPid)
 						+ ", \"encodingProgress\": " +
-to_string(encodingProgress) + " "
+	to_string(encodingProgress) + " "
 						+ "}";
 
 				sendSuccess(request, 200, responseBody);
@@ -2135,24 +2209,24 @@ to_string(encodingProgress) + " "
 				try
 				{
 						// 2020-06-11: it's a live, it
-does not have sense the encoding progress
+	does not have sense the encoding progress
 						// encodingProgress =
-selectedLiveProxy->_ffmpeg->getEncodingProgress(); encodingProgress = -1;
+	selectedLiveProxy->_ffmpeg->getEncodingProgress(); encodingProgress = -1;
 				}
 				catch(FFMpegEncodingStatusNotAvailable& e)
 				{
 						string errorMessage =
-string("_ffmpeg->getEncodingProgress failed")
+	string("_ffmpeg->getEncodingProgress failed")
 										+ ", encodingJobKey: " +
-to_string(encodingJobKey)
+	to_string(encodingJobKey)
 								+ ", e.what(): "
-+ e.what()
+	+ e.what()
 										;
 						_logger->info(__FILEREF__ +
-errorMessage);
+	errorMessage);
 
 						sendError(request, 500,
-errorMessage);
+	errorMessage);
 
 						// throw e;
 						return;
@@ -2160,16 +2234,16 @@ errorMessage);
 				catch(exception& e)
 				{
 						string errorMessage =
-string("_ffmpeg->getEncodingProgress failed")
+	string("_ffmpeg->getEncodingProgress failed")
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 								+ ", e.what(): "
-+ e.what()
+	+ e.what()
 			;
 						_logger->error(__FILEREF__ +
-errorMessage);
+	errorMessage);
 
 						sendError(request, 500,
-errorMessage);
+	errorMessage);
 
 						// throw e;
 						return;
@@ -2177,11 +2251,11 @@ errorMessage);
 
 				string responseBody = string("{ ")
 						+ "\"encodingJobKey\": " +
-to_string(encodingJobKey)
+	to_string(encodingJobKey)
 						+ ", \"pid\": " +
-to_string(selectedLiveProxy->_childPid)
+	to_string(selectedLiveProxy->_childPid)
 						+ ", \"encodingProgress\": " +
-to_string(encodingProgress) + " "
+	to_string(encodingProgress) + " "
 						+ "}";
 
 				sendSuccess(request, 200, responseBody);
@@ -2192,9 +2266,9 @@ to_string(encodingProgress) + " "
 
 				string responseBody = string("{ ")
 						+ "\"encodingJobKey\": " +
-to_string(encodingJobKey)
+	to_string(encodingJobKey)
 						+ ", \"encodingProgress\": " +
-to_string(encodingProgress) + " "
+	to_string(encodingProgress) + " "
 						+ "}";
 
 				sendSuccess(request, 200, responseBody);
@@ -2202,11 +2276,11 @@ to_string(encodingProgress) + " "
 		else // if (!encodingCompleted)
 		{
 				string errorMessage = method + ": " +
-FFMpegEncodingStatusNotAvailable().what()
+	FFMpegEncodingStatusNotAvailable().what()
 								+ ",
-encodingJobKey: " + to_string(encodingJobKey)
+	encodingJobKey: " + to_string(encodingJobKey)
 								+ ",
-encodingCompleted: " + to_string(encodingCompleted)
+	encodingCompleted: " + to_string(encodingCompleted)
 								;
 				_logger->info(__FILEREF__ + errorMessage);
 

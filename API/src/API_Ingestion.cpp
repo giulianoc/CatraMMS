@@ -20,6 +20,7 @@
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/StringUtils.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
@@ -5565,5 +5566,162 @@ void API::changeLiveProxyPlaylist(
 		sendError(request, 500, errorMessage);
 
 		throw runtime_error(errorMessage);
+	}
+}
+
+void API::changeLiveProxyOverlayText(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters, string requestBody
+)
+{
+	string api = "changeLiveProxyOverlayText";
+
+	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+
+	try
+	{
+		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
+		{
+			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		int64_t broadcasterIngestionJobKey = stoll(ingestionJobKeyIt->second);
+
+		SPDLOG_INFO("{}, broadcasterIngestionJobKey: {}", api, broadcasterIngestionJobKey);
+
+		try
+		{
+			{
+				SPDLOG_INFO(
+					"ingestionJobQuery"
+					", workspace->_workspaceKey: {}"
+					", broadcasterIngestionJobKey: {}",
+					workspace->_workspaceKey, broadcasterIngestionJobKey
+				);
+
+				vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}};
+				shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
+				_mmsEngineDBFacade->ingestionJobQuery(sqlResultSet, requestedColumns, workspace->_workspaceKey, broadcasterIngestionJobKey, false);
+
+				auto row = *(sqlResultSet->begin());
+				MMSEngineDBFacade::IngestionType ingestionType = MMSEngineDBFacade::toIngestionType(row[0].as<string>("null ingestion type!!!"));
+				MMSEngineDBFacade::IngestionStatus ingestionStatus =
+					MMSEngineDBFacade::toIngestionStatus(row[0].as<string>("null ingestion status!!!"));
+
+				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
+				{
+					string errorMessage = fmt::format(
+						"Ingestion type is not a Live/VODProxy"
+						", broadcasterIngestionJobKey: {}"
+						", ingestionType: {}",
+						broadcasterIngestionJobKey, MMSEngineDBFacade::toString(ingestionType)
+					);
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				string sIngestionStatus = MMSEngineDBFacade::toString(ingestionStatus);
+				string prefixIngestionStatus = "End_";
+				if (StringUtils::startWith(sIngestionStatus, "End_"))
+				{
+					string errorMessage = fmt::format(
+						"Ingestion job is already finished"
+						", broadcasterIngestionJobKey: {}"
+						", sIngestionStatus: {}"
+						", ingestionType: {}",
+						broadcasterIngestionJobKey, sIngestionStatus, MMSEngineDBFacade::toString(ingestionType)
+					);
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			int64_t broadcasterEncodingJobKey;
+			int64_t broadcasterEncoderKey;
+			{
+				SPDLOG_INFO(
+					"encodingJobQuery"
+					", broadcasterIngestionJobKey: {}",
+					broadcasterIngestionJobKey
+				);
+
+				vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.encodingJobKey"}, {false, "mms_encodingjob:.encoderKey"}};
+				shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
+				_mmsEngineDBFacade->encodingJobQuery(sqlResultSet, requestedColumns, -1, broadcasterIngestionJobKey, false);
+
+				auto row = *(sqlResultSet->begin());
+				broadcasterEncodingJobKey = row[0].as<int64_t>(-1);
+				broadcasterEncoderKey = row[1].as<int64_t>(-1);
+
+				if (broadcasterEncodingJobKey == -1 || broadcasterEncoderKey == -1)
+				{
+					string errorMessage = fmt::format(
+						"encodingJobKey and/or encoderKey not found"
+						", broadcasterEncodingJobKey: {}",
+						", broadcasterEncoderKey: {}", ", broadcasterIngestionJobKey: {}", broadcasterEncodingJobKey, broadcasterEncoderKey,
+						broadcasterIngestionJobKey
+					);
+					_logger->error(__FILEREF__ + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			{
+				string encoderURL;
+				tie(encoderURL, ignore) = _mmsEngineDBFacade->getEncoderURL(broadcasterEncoderKey);
+
+				string ffmpegEncoderURL = fmt::format("{}{}/{}", encoderURL, _ffmpegEncoderChangeLiveProxyOverlayTextURI, broadcasterEncodingJobKey);
+
+				vector<string> otherHeaders;
+				MMSCURL::httpPutStringAndGetJson(
+					_logger, broadcasterIngestionJobKey, ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword,
+					requestBody,
+					"text/plain", // contentType
+					otherHeaders
+				);
+			}
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+
+		throw e;
 	}
 }

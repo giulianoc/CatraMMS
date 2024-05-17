@@ -100,6 +100,7 @@ class API : public FastCGIAPI
 	int _ffmpegEncoderTimeoutInSeconds;
 	string _ffmpegEncoderKillEncodingURI;
 	string _ffmpegEncoderChangeLiveProxyPlaylistURI;
+	string _ffmpegEncoderChangeLiveProxyOverlayTextURI;
 
 	int _intervalInSecondsToCheckEncodingFinished;
 
@@ -255,6 +256,11 @@ class API : public FastCGIAPI
 	);
 
 	void changeLiveProxyPlaylist(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters, string requestBody
+	);
+
+	void changeLiveProxyOverlayText(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters, string requestBody
 	);

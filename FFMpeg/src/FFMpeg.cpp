@@ -392,3 +392,11 @@ string FFMpeg::centsOfSecondsToTime(int64_t ingestionJobKey, long centsOfSeconds
 		throw runtime_error(errorMessage);
 	}
 }
+
+string FFMpeg::getDrawTextTemporaryPathName(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex)
+{
+	if (outputIndex != -1)
+		return fmt::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
+	else
+		return fmt::format("{}/{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey);
+}
