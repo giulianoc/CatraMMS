@@ -175,6 +175,9 @@ MMSEngineDBFacade::MMSEngineDBFacade(json configuration, size_t masterDbPoolSize
 
 	_logger->info(__FILEREF__ + "createTablesIfNeeded...");
 	createTablesIfNeeded();
+
+	_logger->info(__FILEREF__ + "loadSqlColumnsSchema...");
+	loadSqlColumnsSchema();
 }
 
 MMSEngineDBFacade::~MMSEngineDBFacade() {}
