@@ -5607,15 +5607,11 @@ void API::changeLiveProxyOverlayText(
 				vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}};
 				shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
 				_mmsEngineDBFacade->ingestionJobQuery(sqlResultSet, requestedColumns, workspace->_workspaceKey, broadcasterIngestionJobKey, false);
-				SPDLOG_INFO("aaaaaaaaaaaa");
 
 				auto row = *(sqlResultSet->begin());
-				SPDLOG_INFO("aaaaaaaaaaaa");
 				MMSEngineDBFacade::IngestionType ingestionType = MMSEngineDBFacade::toIngestionType(row[0].as<string>("null ingestion type!!!"));
-				SPDLOG_INFO("aaaaaaaaaaaa");
 				MMSEngineDBFacade::IngestionStatus ingestionStatus =
-					MMSEngineDBFacade::toIngestionStatus(row[0].as<string>("null ingestion status!!!"));
-				SPDLOG_INFO("aaaaaaaaaaaa");
+					MMSEngineDBFacade::toIngestionStatus(row[1].as<string>("null ingestion status!!!"));
 
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 				{

@@ -139,7 +139,7 @@ class MMSEngineDBFacade
 		case CodeType::UserRegistrationComingFromShareWorkspace:
 			return "UserRegistrationComingFromShareWorkspace";
 		default:
-			throw runtime_error("toString with a wrong CodeType");
+			throw runtime_error(fmt::format("toString with a wrong CodeType: {}", static_cast<int>(codeType)));
 		}
 	}
 	static CodeType toCodeType(const string &codeType)
@@ -176,7 +176,7 @@ class MMSEngineDBFacade
 		case LockType::Encoding:
 			return "Encoding";
 		default:
-			throw runtime_error("toString with a wrong LockType");
+			throw runtime_error(fmt::format("toString with a wrong LockType: {}", static_cast<int>(lockType)));
 		}
 	}
 	static LockType toLockType(const string &lockType)
@@ -211,7 +211,7 @@ class MMSEngineDBFacade
 		case OncePerDayType::GEOInfo:
 			return "GEOInfo";
 		default:
-			throw runtime_error("toString with a wrong OncePerDayType");
+			throw runtime_error(fmt::format("toString with a wrong oncePerDayType: {}", static_cast<int>(oncePerDayType)));
 		}
 	}
 	static OncePerDayType toOncePerDayType(const string &oncePerDayType)
@@ -253,7 +253,7 @@ class MMSEngineDBFacade
 		case ContentType::Image:
 			return "Image";
 		default:
-			throw runtime_error("toString with a wrong ContentType");
+			throw runtime_error(fmt::format("toString with a wrong contentType: {}", static_cast<int>(contentType)));
 		}
 	}
 	static ContentType toContentType(const string &contentType)
@@ -293,7 +293,7 @@ class MMSEngineDBFacade
 		case EncodingPriority::High:
 			return "High";
 		default:
-			throw runtime_error("toString with a wrong EncodingPriority");
+			throw runtime_error(fmt::format("toString with a wrong encodingPriority: {}", static_cast<int>(priority)));
 		}
 	}
 	static EncodingPriority toEncodingPriority(const string &priority)
@@ -438,7 +438,7 @@ class MMSEngineDBFacade
 		case EncodingType::AddSilentAudio:
 			return "AddSilentAudio";
 		default:
-			throw runtime_error("toString with a wrong EncodingType");
+			throw runtime_error(fmt::format("toString with a wrong encodingType: {}", static_cast<int>(encodingType)));
 		}
 	}
 	static EncodingType toEncodingType(const string &encodingType)
@@ -520,7 +520,7 @@ class MMSEngineDBFacade
 		case EncodingError::CanceledByMMS:
 			return "CanceledByMMS";
 		default:
-			throw runtime_error("toString with a wrong EncodingError");
+			throw runtime_error(fmt::format("toString with a wrong encodingError: {}", static_cast<int>(encodingError)));
 		}
 	}
 	static EncodingError toEncodingError(const string &encodingError)
@@ -571,7 +571,7 @@ class MMSEngineDBFacade
 		case DeliveryTechnology::HTTPStreaming:
 			return "HTTPStreaming";
 		default:
-			throw runtime_error("toString with a wrong deliveryTechnology");
+			throw runtime_error(fmt::format("toString with a wrong deliveryTechnology: {}", static_cast<int>(deliveryTechnology)));
 		}
 	}
 	static DeliveryTechnology toDeliveryTechnology(const string &deliveryTechnology)
@@ -614,7 +614,7 @@ class MMSEngineDBFacade
 		case EncodingPeriod::Yearly:
 			return "Yearly";
 		default:
-			throw runtime_error("toString with a wrong EncodingPeriod");
+			throw runtime_error(fmt::format("toString with a wrong encodingPeriod: {}", static_cast<int>(encodingPeriod)));
 		}
 	}
 	static EncodingPeriod toEncodingPeriod(const string &encodingPeriod)
@@ -653,7 +653,7 @@ class MMSEngineDBFacade
 		case VideoSpeedType::SpeedUp:
 			return "SpeedUp";
 		default:
-			throw runtime_error("toString with a wrong VideoSpeedType");
+			throw runtime_error(fmt::format("toString with a wrong videoSpeedType: {}", static_cast<int>(videoSpeedType)));
 		}
 	}
 	static VideoSpeedType toVideoSpeedType(const string &videoSpeedType)
@@ -839,7 +839,7 @@ class MMSEngineDBFacade
 			return "GroupOfTasks";
 
 		default:
-			throw runtime_error(string("toString with a wrong IngestionType"));
+			throw runtime_error(fmt::format("toString with a wrong ingestionType: {}", static_cast<int>(ingestionType)));
 		}
 	}
 	static IngestionType toIngestionType(const string &ingestionType)
@@ -1004,7 +1004,7 @@ class MMSEngineDBFacade
 		case IngestionStatus::End_TaskSuccess:
 			return "End_TaskSuccess";
 		default:
-			throw runtime_error(string("Wrong IngestionStatus: ") + to_string(static_cast<int>(ingestionStatus)));
+			throw runtime_error(fmt::format("toString with a wrong IngestionStatus: {}", static_cast<int>(ingestionStatus)));
 		}
 	}
 	static IngestionStatus toIngestionStatus(const string &ingestionStatus)
