@@ -4741,28 +4741,30 @@ void API::changeLiveProxyPlaylist(
 				{
 					json newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[newReceivedPlaylistIndex];
 					{
-						string field = "vodInput";
-						string fieldCountdown = "countdownInput";
-						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, field))
+						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "streamInput"))
 						{
-							json vodInputRoot = newReceivedPlaylistItemRoot[field];
-							MMSEngineDBFacade::ContentType vodContentType;
+							json streamInputRoot = newReceivedPlaylistItemRoot["streamInput"];
 
-							field = "sources";
-							if (!JSONUtils::isMetadataPresent(vodInputRoot, field))
+							streamInputRoot["filters"] = getReviewedFiltersRoot(streamInputRoot["filters"], workspace, -1);
+
+							newReceivedPlaylistItemRoot["streamInput"] = streamInputRoot;
+						}
+						else if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "vodInput"))
+						{
+							json vodInputRoot = newReceivedPlaylistItemRoot["vodInput"];
+
+							vodInputRoot["filters"] = getReviewedFiltersRoot(vodInputRoot["filters"], workspace, -1);
+
+							// field = "sources";
+							if (!JSONUtils::isMetadataPresent(vodInputRoot, "sources"))
 							{
-								string errorMessage = string(
-									field +
-									" is missing"
-									", json data: " +
-									requestBody
-								);
+								string errorMessage = "sources is missing, json data: " + requestBody;
 								_logger->error(__FILEREF__ + errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
 
-							json sourcesRoot = vodInputRoot[field];
+							json sourcesRoot = vodInputRoot["sources"];
 
 							if (sourcesRoot.size() == 0)
 							{
@@ -4776,24 +4778,21 @@ void API::changeLiveProxyPlaylist(
 								throw runtime_error(errorMessage);
 							}
 
+							MMSEngineDBFacade::ContentType vodContentType;
+
 							for (int sourceIndex = 0; sourceIndex < sourcesRoot.size(); sourceIndex++)
 							{
 								json sourceRoot = sourcesRoot[sourceIndex];
 
-								field = "physicalPathKey";
-								if (!JSONUtils::isMetadataPresent(sourceRoot, field))
+								// field = "physicalPathKey";
+								if (!JSONUtils::isMetadataPresent(sourceRoot, "physicalPathKey"))
 								{
-									string errorMessage = string(
-										field +
-										" is missing"
-										", json data: " +
-										requestBody
-									);
+									string errorMessage = "physicalPathKey is missing, json data: " + requestBody;
 									_logger->error(__FILEREF__ + errorMessage);
 
 									throw runtime_error(errorMessage);
 								}
-								int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot, field, -1);
+								int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot, "physicalPathKey", -1);
 
 								string sourcePhysicalPathName;
 								{
@@ -4818,8 +4817,8 @@ void API::changeLiveProxyPlaylist(
 
 									tie(ignore, vodContentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore) = mediaItemKeyDetails;
 								}
-								field = "sourcePhysicalPathName";
-								sourceRoot[field] = sourcePhysicalPathName;
+								// field = "sourcePhysicalPathName";
+								sourceRoot["sourcePhysicalPathName"] = sourcePhysicalPathName;
 
 								// calculate delivery URL in case of an external
 								// encoder
@@ -4862,39 +4861,36 @@ void API::changeLiveProxyPlaylist(
 
 									tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
 								}
-								field = "sourcePhysicalDeliveryURL";
-								sourceRoot[field] = sourcePhysicalDeliveryURL;
+								// field = "sourcePhysicalDeliveryURL";
+								sourceRoot["sourcePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
 
 								sourcesRoot[sourceIndex] = sourceRoot;
 							}
 
-							field = "sources";
-							vodInputRoot[field] = sourcesRoot;
+							// field = "sources";
+							vodInputRoot["sources"] = sourcesRoot;
 
-							field = "vodContentType";
-							vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
+							// field = "vodContentType";
+							vodInputRoot["vodContentType"] = MMSEngineDBFacade::toString(vodContentType);
 
-							field = "vodInput";
-							newReceivedPlaylistItemRoot[field] = vodInputRoot;
+							// field = "vodInput";
+							newReceivedPlaylistItemRoot["vodInput"] = vodInputRoot;
 						}
-						else if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, fieldCountdown))
+						else if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "countdownInput"))
 						{
-							json countdownInputRoot = newReceivedPlaylistItemRoot[fieldCountdown];
+							json countdownInputRoot = newReceivedPlaylistItemRoot["countdownInput"];
 
-							field = "physicalPathKey";
-							if (!JSONUtils::isMetadataPresent(countdownInputRoot, field))
+							countdownInputRoot["filters"] = getReviewedFiltersRoot(countdownInputRoot["filters"], workspace, -1);
+
+							// field = "physicalPathKey";
+							if (!JSONUtils::isMetadataPresent(countdownInputRoot, "physicalPathKey"))
 							{
-								string errorMessage = string(
-									field +
-									" is missing"
-									", json data: " +
-									requestBody
-								);
+								string errorMessage = "physicalPathKey is missing, json data: " + requestBody;
 								_logger->error(__FILEREF__ + errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
-							int64_t physicalPathKey = JSONUtils::asInt64(countdownInputRoot, field, -1);
+							int64_t physicalPathKey = JSONUtils::asInt64(countdownInputRoot, "physicalPathKey", -1);
 
 							MMSEngineDBFacade::ContentType vodContentType;
 							string sourcePhysicalPathName;
@@ -4925,17 +4921,25 @@ void API::changeLiveProxyPlaylist(
 								// 	-1, physicalPathKey);
 							}
 
-							field = "mmsSourceVideoAssetPathName";
-							countdownInputRoot[field] = sourcePhysicalPathName;
+							// field = "mmsSourceVideoAssetPathName";
+							countdownInputRoot["mmsSourceVideoAssetPathName"] = sourcePhysicalPathName;
 
-							field = "videoDurationInMilliSeconds";
-							countdownInputRoot[field] = videoDurationInMilliSeconds;
+							// field = "videoDurationInMilliSeconds";
+							countdownInputRoot["videoDurationInMilliSeconds"] = videoDurationInMilliSeconds;
 
-							field = "vodContentType";
-							countdownInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
+							// field = "vodContentType";
+							countdownInputRoot["vodContentType"] = MMSEngineDBFacade::toString(vodContentType);
 
-							field = "countdownInput";
-							newReceivedPlaylistItemRoot[field] = countdownInputRoot;
+							// field = "countdownInput";
+							newReceivedPlaylistItemRoot["countdownInput"] = countdownInputRoot;
+						}
+						else if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "directURLInput"))
+						{
+							json directURLInputRoot = newReceivedPlaylistItemRoot["directURLInput"];
+
+							directURLInputRoot["filters"] = getReviewedFiltersRoot(directURLInputRoot["filters"], workspace, -1);
+
+							newReceivedPlaylistItemRoot["directURLInput"] = directURLInputRoot;
 						}
 
 						newReceivedPlaylistRoot[newReceivedPlaylistIndex] = newReceivedPlaylistItemRoot;
@@ -5742,4 +5746,88 @@ void API::changeLiveProxyOverlayText(
 
 		throw e;
 	}
+}
+
+// LO STESSO METODO E' IN MMSEngineProcessor.cpp
+json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey)
+{
+	if (filtersRoot == nullptr)
+		return filtersRoot;
+
+	// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
+	if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
+	{
+		json videoFiltersRoot = filtersRoot["video"];
+		for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+		{
+			json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
+			if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "imageoverlay")
+			{
+				if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalPathKey"))
+				{
+					string errorMessage = fmt::format(
+						"imageoverlay filter without imagePhysicalPathKey"
+						", ingestionJobKey: {}"
+						", imageoverlay filter: {}",
+						ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				string sourcePhysicalPathName;
+				{
+					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+						_mmsStorage->getPhysicalPathDetails(videoFilterRoot["imagePhysicalPathKey"], false);
+					tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
+				}
+
+				// calculate delivery URL in case of an external encoder
+				string sourcePhysicalDeliveryURL;
+				{
+					int64_t utcNow;
+					{
+						chrono::system_clock::time_point now = chrono::system_clock::now();
+						utcNow = chrono::system_clock::to_time_t(now);
+					}
+
+					pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
+						-1, // userKey,
+						workspace,
+						"", // clientIPAddress,
+
+						-1, // mediaItemKey,
+						"", // uniqueName,
+						-1, // encodingProfileKey,
+						"", // encodingProfileLabel,
+
+						videoFilterRoot["imagePhysicalPathKey"],
+
+						-1, // ingestionJobKey,	(in case of live)
+						-1, // deliveryCode,
+
+						365 * 24 * 60 * 60, // ttlInSeconds, 365 days!!!
+						999999,				// maxRetries,
+						false,				// save,
+						"MMS_SignedToken",	// deliveryType,
+
+						false, // warningIfMissingMediaItemKey,
+						true,  // filteredByStatistic
+						""	   // userId (it is not needed it
+							   // filteredByStatistic is true
+					);
+
+					tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+				}
+
+				videoFilterRoot["imagePhysicalPathName"] = sourcePhysicalPathName;
+				videoFilterRoot["imagePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
+				videoFiltersRoot[videoFilterIndex] = videoFilterRoot;
+			}
+		}
+		filtersRoot["video"] = videoFiltersRoot;
+	}
+
+	return filtersRoot;
 }

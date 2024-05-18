@@ -2294,7 +2294,7 @@ class MMSEngineDBFacade
 
 	bool oncePerDayExecution(OncePerDayType oncePerDayType);
 
-	static MMSEngineDBFacade::DeliveryTechnology fileFormatToDeliveryTechnology(string fileFormat);
+	static DeliveryTechnology fileFormatToDeliveryTechnology(string fileFormat);
 
   private:
 	shared_ptr<spdlog::logger> _logger;

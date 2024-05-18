@@ -171,6 +171,8 @@ class MMSEngineProcessor
 
 	json getReviewedOutputsRoot(json outputsRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey, bool encodingProfileMandatory);
 
+	json getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey);
+
 	int getMaxAdditionalProcessorThreads();
 
 	bool isMaintenanceMode();

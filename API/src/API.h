@@ -786,6 +786,8 @@ class API : public FastCGIAPI
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters
 	);
+
+	json getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey);
 };
 
 #endif /* POSTCUSTOMER_H */
