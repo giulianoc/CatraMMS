@@ -1328,7 +1328,7 @@ FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool ext
 
 			// se viene usato l'imageoverlay filter, bisogna aggiungere il riferimento alla image
 			{
-				if (!JSONUtils::isMetadataPresent(streamInputRoot, "filters"))
+				if (JSONUtils::isMetadataPresent(streamInputRoot, "filters"))
 				{
 					json filtersRoot = streamInputRoot["filters"];
 
@@ -1470,7 +1470,7 @@ FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool ext
 
 			// se viene usato l'imageoverlay filter, bisogna aggiungere il riferimento alla image
 			{
-				if (!JSONUtils::isMetadataPresent(directURLInputRoot, "filters"))
+				if (JSONUtils::isMetadataPresent(directURLInputRoot, "filters"))
 				{
 					json filtersRoot = directURLInputRoot["filters"];
 
@@ -1777,7 +1777,7 @@ FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool ext
 
 			// se viene usato l'imageoverlay filter, bisogna aggiungere il riferimento alla image
 			{
-				if (!JSONUtils::isMetadataPresent(vodInputRoot, "filters"))
+				if (JSONUtils::isMetadataPresent(vodInputRoot, "filters"))
 				{
 					json filtersRoot = vodInputRoot["filters"];
 
@@ -1932,7 +1932,7 @@ FFMpeg::liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool ext
 
 		// se viene usato l'imageoverlay filter, bisogna aggiungere il riferimento alla image
 		{
-			if (!JSONUtils::isMetadataPresent(countdownInputRoot, "filters"))
+			if (JSONUtils::isMetadataPresent(countdownInputRoot, "filters"))
 			{
 				json filtersRoot = countdownInputRoot["filters"];
 
