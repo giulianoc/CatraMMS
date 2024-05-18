@@ -59,7 +59,7 @@ fi
 removePreviousVersions
 
 mmsStopALL.sh
-sleep 2
+sleep 5
 
 echo "cd /opt/catramms"
 cd /opt/catramms

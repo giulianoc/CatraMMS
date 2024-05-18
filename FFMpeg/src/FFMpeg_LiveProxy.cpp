@@ -1474,6 +1474,66 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back(url);
 			}
 
+			// se negli outputsRoot viene usato l'imageoverlay filter, bisogna aggiungere il riferimento alla image
+			{
+				for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+				{
+					json outputRoot = outputsRoot[outputIndex];
+
+					if (!JSONUtils::isMetadataPresent(outputRoot, "filters"))
+						continue;
+
+					json filtersRoot = outputRoot["filters"];
+
+					// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
+					if (!JSONUtils::isMetadataPresent(filtersRoot, "video"))
+						continue;
+
+					json videoFiltersRoot = filtersRoot["video"];
+					for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+					{
+						json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
+						if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "imageoverlay")
+						{
+							if (externalEncoder)
+							{
+								if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalDeliveryURL"))
+								{
+									string errorMessage = fmt::format(
+										"imageoverlay filter without imagePhysicalDeliveryURL"
+										", ingestionJobKey: {}"
+										", imageoverlay filter: {}",
+										ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+									);
+									SPDLOG_ERROR(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								ffmpegInputArgumentList.push_back("-i");
+								ffmpegInputArgumentList.push_back(videoFilterRoot["imagePhysicalDeliveryURL"]);
+							}
+							else
+							{
+								if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalPathName"))
+								{
+									string errorMessage = fmt::format(
+										"imageoverlay filter without imagePhysicalDeliveryURL"
+										", ingestionJobKey: {}"
+										", imageoverlay filter: {}",
+										ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+									);
+									SPDLOG_ERROR(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								ffmpegInputArgumentList.push_back("-i");
+								ffmpegInputArgumentList.push_back(videoFilterRoot["imagePhysicalPathName"]);
+							}
+						}
+					}
+				}
+			}
+
 			if (timePeriod)
 			{
 				ffmpegInputArgumentList.push_back("-t");
@@ -1726,6 +1786,66 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				ffmpegInputArgumentList.push_back(endlessPlaylistListPathName);
 			}
 
+			// se negli outputsRoot viene usato l'imageoverlay filter, bisogna aggiungere il riferimento alla image
+			{
+				for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+				{
+					json outputRoot = outputsRoot[outputIndex];
+
+					if (!JSONUtils::isMetadataPresent(outputRoot, "filters"))
+						continue;
+
+					json filtersRoot = outputRoot["filters"];
+
+					// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
+					if (!JSONUtils::isMetadataPresent(filtersRoot, "video"))
+						continue;
+
+					json videoFiltersRoot = filtersRoot["video"];
+					for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+					{
+						json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
+						if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "imageoverlay")
+						{
+							if (externalEncoder)
+							{
+								if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalDeliveryURL"))
+								{
+									string errorMessage = fmt::format(
+										"imageoverlay filter without imagePhysicalDeliveryURL"
+										", ingestionJobKey: {}"
+										", imageoverlay filter: {}",
+										ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+									);
+									SPDLOG_ERROR(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								ffmpegInputArgumentList.push_back("-i");
+								ffmpegInputArgumentList.push_back(videoFilterRoot["imagePhysicalDeliveryURL"]);
+							}
+							else
+							{
+								if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalPathName"))
+								{
+									string errorMessage = fmt::format(
+										"imageoverlay filter without imagePhysicalDeliveryURL"
+										", ingestionJobKey: {}"
+										", imageoverlay filter: {}",
+										ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+									);
+									SPDLOG_ERROR(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								ffmpegInputArgumentList.push_back("-i");
+								ffmpegInputArgumentList.push_back(videoFilterRoot["imagePhysicalPathName"]);
+							}
+						}
+					}
+				}
+			}
+
 			if (timePeriod)
 			{
 				ffmpegInputArgumentList.push_back("-t");
@@ -1824,11 +1944,71 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 			ffmpegInputArgumentList.push_back(to_string(streamLoopNumber));
 			ffmpegInputArgumentList.push_back("-i");
 			ffmpegInputArgumentList.push_back(mmsSourceVideoAssetPathName);
+		}
+
+		// se negli outputsRoot viene usato l'imageoverlay filter, bisogna aggiungere il riferimento alla image
+		{
+			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			{
+				json outputRoot = outputsRoot[outputIndex];
+
+				if (!JSONUtils::isMetadataPresent(outputRoot, "filters"))
+					continue;
+
+				json filtersRoot = outputRoot["filters"];
+
+				// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
+				if (!JSONUtils::isMetadataPresent(filtersRoot, "video"))
+					continue;
+
+				json videoFiltersRoot = filtersRoot["video"];
+				for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+				{
+					json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
+					if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "imageoverlay")
+					{
+						if (externalEncoder)
+						{
+							if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalDeliveryURL"))
+							{
+								string errorMessage = fmt::format(
+									"imageoverlay filter without imagePhysicalDeliveryURL"
+									", ingestionJobKey: {}"
+									", imageoverlay filter: {}",
+									ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+								);
+								SPDLOG_ERROR(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+							ffmpegInputArgumentList.push_back("-i");
+							ffmpegInputArgumentList.push_back(videoFilterRoot["imagePhysicalDeliveryURL"]);
+						}
+						else
+						{
+							if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalPathName"))
+							{
+								string errorMessage = fmt::format(
+									"imageoverlay filter without imagePhysicalDeliveryURL"
+									", ingestionJobKey: {}"
+									", imageoverlay filter: {}",
+									ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+								);
+								SPDLOG_ERROR(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+							ffmpegInputArgumentList.push_back("-i");
+							ffmpegInputArgumentList.push_back(videoFilterRoot["imagePhysicalPathName"]);
+						}
+					}
+				}
+			}
+		}
+
+		{
 			ffmpegInputArgumentList.push_back("-t");
 			ffmpegInputArgumentList.push_back(to_string(streamingDurationInSeconds));
-
-			// ffmpegInputArgumentList.push_back("-vf");
-			// ffmpegInputArgumentList.push_back(ffmpegDrawTextFilter);
 		}
 
 		// inizializza filtersRoot e verifica se drawtext is present
