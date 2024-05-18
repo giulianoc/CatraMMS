@@ -1,6 +1,6 @@
 
-#include "MMSEngineProcessor.h"
 #include "JSONUtils.h"
+#include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
 /*
 #include <stdio.h>
@@ -17,8 +17,8 @@
 #include "ThreadsStatisticTimes.h"
 #include "catralibraries/Convert.h"
 #include "catralibraries/Encrypt.h"
-#include "catralibraries/StringUtils.h"
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/StringUtils.h"
 #include "catralibraries/System.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
@@ -37,7 +37,6 @@
 
 #define MD5BUFFERSIZE 16384
 */
-
 
 void MMSEngineProcessor::manageLiveProxy(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot
@@ -278,15 +277,15 @@ void MMSEngineProcessor::manageLiveProxy(
 			   campo broadcastDrawTextDetails, vedi il commento all'interno del
 			   metodo java CatraMMSBroadcaster::buildLiveProxyJsonForBroadcast
 			*/
-			json drawTextDetailsRoot = nullptr;
+			json filtersRoot = nullptr;
 
-			string field = "broadcastDrawTextDetails";
+			string field = "broadcastFilters";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				drawTextDetailsRoot = parametersRoot[field];
+				filtersRoot = parametersRoot[field];
 
 			json streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
 				workspace, ingestionJobKey, configurationLabel, useVideoTrackFromPhysicalPathName, useVideoTrackFromPhysicalDeliveryURL, maxWidth,
-				userAgent, otherInputOptions, taskEncodersPoolLabel, drawTextDetailsRoot
+				userAgent, otherInputOptions, taskEncodersPoolLabel, filtersRoot
 			);
 
 			json inputRoot;

@@ -2278,18 +2278,17 @@ class MMSEngineDBFacade
 	json getStreamInputRoot(
 		shared_ptr<Workspace> workspace, int64_t ingestionJobKey, string configurationLabel, string useVideoTrackFromPhysicalPathName,
 		string useVideoTrackFromPhysicalDeliveryURL, int maxWidth, string userAgent, string otherInputOptions, string taskEncodersPoolLabel,
-		json drawTextDetailsRoot
+		json filtersRoot
 	);
 
-	json
-	getVodInputRoot(MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json drawTextDetailsRoot);
+	json getVodInputRoot(MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot);
 
 	json getCountdownInputRoot(
 		string mmsSourceVideoAssetPathName, string mmsSourceVideoAssetDeliveryURL, int64_t physicalPathKey, int64_t videoDurationInMilliSeconds,
-		json drawTextDetailsRoot
+		json filtersRoot
 	);
 
-	json getDirectURLInputRoot(string url, json drawTextDetailsRoot);
+	json getDirectURLInputRoot(string url, json filtersRoot);
 
 	string getStreamingYouTubeLiveURL(shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t confKey, string liveURL);
 

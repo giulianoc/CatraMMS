@@ -237,7 +237,7 @@ void FFMpeg::liveProxy2(
 		string endlessPlaylistListPathName;
 		int pushListenTimeout;
 		int64_t utcProxyPeriodStart;
-		json inputDrawTextDetailsRoot;
+		json inputFiltersRoot;
 		// vector<tuple<int, int64_t, string, string, int, int, string, long>> inputVideoTracks;
 		// vector<tuple<int, int64_t, string, long, int, long, string>> inputAudioTracks;
 		try
@@ -247,14 +247,10 @@ void FFMpeg::liveProxy2(
 				", encodingJobKey: " + to_string(encodingJobKey) + ", inputsRoot->size: " + to_string(inputsRoot->size()) +
 				", timedInput: " + to_string(timedInput) + ", currentInputIndex: " + to_string(currentInputIndex)
 			);
-			tuple<
-				long, string, string, int, int64_t, json
-				// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
-				// vector<tuple<int, int64_t, string, long, int, long, string>>
-				>
-				inputDetails = liveProxyInput(ingestionJobKey, encodingJobKey, externalEncoder, currentInputRoot, ffmpegInputArgumentList);
+			tuple<long, string, string, int, int64_t, json> inputDetails =
+				liveProxyInput(ingestionJobKey, encodingJobKey, externalEncoder, currentInputRoot, outputsRoot, ffmpegInputArgumentList);
 			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth, endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
-				inputDrawTextDetailsRoot /*, inputVideoTracks, inputAudioTracks*/) = inputDetails;
+				inputFiltersRoot /*, inputVideoTracks, inputAudioTracks*/) = inputDetails;
 
 			{
 				ostringstream ffmpegInputArgumentListStream;
@@ -296,7 +292,7 @@ void FFMpeg::liveProxy2(
 				", encodingJobKey: " + to_string(encodingJobKey) + ", outputsRoot.size: " + to_string(outputsRoot.size())
 			);
 			outputsRootToFfmpeg(
-				ingestionJobKey, encodingJobKey, externalEncoder, otherOutputOptionsBecauseOfMaxWidth, inputDrawTextDetailsRoot,
+				ingestionJobKey, encodingJobKey, externalEncoder, otherOutputOptionsBecauseOfMaxWidth, inputFiltersRoot,
 				// inputVideoTracks, inputAudioTracks,
 				streamingDurationInSeconds, outputsRoot, ffmpegOutputArgumentList
 			);
@@ -832,20 +828,16 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
-tuple<long, string, string, int, int64_t, json
-	// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
-	// vector<tuple<int, int64_t, string, long, int, long, string>>
-	>
-	FFMpeg::liveProxyInput(
-		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder,
-		json inputRoot, vector<string>& ffmpegInputArgumentList)
+tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
+	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, json outputsRoot, vector<string> &ffmpegInputArgumentList
+)
 {
 	long streamingDurationInSeconds = -1;
 	string otherOutputOptionsBecauseOfMaxWidth;
 	string endlessPlaylistListPathName;
 	int pushListenTimeout = -1;
 	int64_t utcProxyPeriodStart = -1;
-	json inputDrawTextDetailsRoot = nullptr;
+	json inputFiltersRoot = nullptr;
 	// 2023-03-26: vengono per ora commentate perchè
 	// - sembra non siano utilizzate in questo momento
 	// - getMediaInfo impiega qualche secondo per calcolarle e, in caso di LiveChannel, serve
@@ -1335,6 +1327,66 @@ tuple<long, string, string, int, int64_t, json
 				}
 			}
 
+			// se negli outputsRoot viene usato l'imageoverlay filter, bisogna aggiungere il riferimento alla image
+			{
+				for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+				{
+					json outputRoot = outputsRoot[outputIndex];
+
+					if (!JSONUtils::isMetadataPresent(outputRoot, "filters"))
+						continue;
+
+					json filtersRoot = outputRoot["filters"];
+
+					// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
+					if (!JSONUtils::isMetadataPresent(filtersRoot, "video"))
+						continue;
+
+					json videoFiltersRoot = filtersRoot["video"];
+					for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+					{
+						json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
+						if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "imageoverlay")
+						{
+							if (externalEncoder)
+							{
+								if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalDeliveryURL"))
+								{
+									string errorMessage = fmt::format(
+										"imageoverlay filter without imagePhysicalDeliveryURL"
+										", ingestionJobKey: {}"
+										", imageoverlay filter: {}",
+										ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+									);
+									SPDLOG_ERROR(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								ffmpegInputArgumentList.push_back("-i");
+								ffmpegInputArgumentList.push_back(videoFilterRoot["imagePhysicalDeliveryURL"]);
+							}
+							else
+							{
+								if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalPathName"))
+								{
+									string errorMessage = fmt::format(
+										"imageoverlay filter without imagePhysicalDeliveryURL"
+										", ingestionJobKey: {}"
+										", imageoverlay filter: {}",
+										ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+									);
+									SPDLOG_ERROR(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								ffmpegInputArgumentList.push_back("-i");
+								ffmpegInputArgumentList.push_back(videoFilterRoot["imagePhysicalPathName"]);
+							}
+						}
+					}
+				}
+			}
+
 			if (timePeriod)
 			{
 				ffmpegInputArgumentList.push_back("-t");
@@ -1342,8 +1394,8 @@ tuple<long, string, string, int, int64_t, json
 			}
 		}
 
-		if (JSONUtils::isMetadataPresent(streamInputRoot, "drawTextDetails"))
-			inputDrawTextDetailsRoot = streamInputRoot["drawTextDetails"];
+		if (JSONUtils::isMetadataPresent(streamInputRoot, "filters"))
+			inputFiltersRoot = streamInputRoot["filters"];
 	}
 	//	"directURLInput": { "url": "" },
 	else if (JSONUtils::isMetadataPresent(inputRoot, "directURLInput"))
@@ -1429,8 +1481,8 @@ tuple<long, string, string, int, int64_t, json
 			}
 		}
 
-		if (JSONUtils::isMetadataPresent(streamInputRoot, "drawTextDetails"))
-			inputDrawTextDetailsRoot = streamInputRoot["drawTextDetails"];
+		if (JSONUtils::isMetadataPresent(streamInputRoot, "filters"))
+			inputFiltersRoot = streamInputRoot["filters"];
 	}
 	//	"vodInput": { "vodContentType": "", "sources": [{"sourcePhysicalPathName": "..."}],
 	//		"otherInputOptions": "" },
@@ -1681,12 +1733,12 @@ tuple<long, string, string, int, int64_t, json
 			}
 		}
 
-		if (JSONUtils::isMetadataPresent(vodInputRoot, "drawTextDetails"))
-			inputDrawTextDetailsRoot = vodInputRoot["drawTextDetails"];
+		if (JSONUtils::isMetadataPresent(vodInputRoot, "filters"))
+			inputFiltersRoot = vodInputRoot["filters"];
 	}
 	//	"countdownInput": { "mmsSourceVideoAssetPathName": "", "videoDurationInMilliSeconds": 123, "text": "", "textPosition_X_InPixel": "",
-	//"textPosition_Y_InPixel": "", "fontType": "", "fontSize": 22, "fontColor": "", "textPercentageOpacity": -1, "boxEnable": false, "boxColor": "",
-	//"boxPercentageOpacity": 20 },
+	//"textPosition_Y_InPixel": "", "fontType": "", "fontSize": 22, "fontColor": "", "textPercentageOpacity": -1, "boxEnable": false, "boxColor":
+	//"", "boxPercentageOpacity": 20 },
 	else if (JSONUtils::isMetadataPresent(inputRoot, "countdownInput"))
 	{
 		string field = "countdownInput";
@@ -1779,16 +1831,31 @@ tuple<long, string, string, int, int64_t, json
 			// ffmpegInputArgumentList.push_back(ffmpegDrawTextFilter);
 		}
 
-		if (!JSONUtils::isMetadataPresent(countdownInputRoot, "drawTextDetails"))
+		// inizializza filtersRoot e verifica se drawtext is present
+		bool isDrawTextFilterPresent = false;
+		if (JSONUtils::isMetadataPresent(countdownInputRoot, "filters"))
 		{
-			string errorMessage = __FILEREF__ + "Countdown. drawTextDetails has to be present" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+			inputFiltersRoot = countdownInputRoot["filters"];
+			if (JSONUtils::isMetadataPresent(inputFiltersRoot, "video"))
+			{
+				json videoFiltersRoot = inputFiltersRoot["video"];
+				for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+				{
+					json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
+					if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "drawtext")
+						isDrawTextFilterPresent = true;
+				}
+			}
+		}
+		if (!isDrawTextFilterPresent)
+		{
+			string errorMessage = __FILEREF__ + "Countdown has to have the drawText filter" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) +
 								  ", countdownInputRoot: " + JSONUtils::toString(countdownInputRoot);
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-		inputDrawTextDetailsRoot = countdownInputRoot["drawTextDetails"];
 	}
 	else
 	{
@@ -1801,15 +1868,13 @@ tuple<long, string, string, int, int64_t, json
 
 	return make_tuple(
 		streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth, endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
-		inputDrawTextDetailsRoot
+		inputFiltersRoot
 	); // , videoTracks, audioTracks);
 }
 
 // il metodo outputsRootToFfmpeg_clean pulisce eventuali directory/files creati da outputsRootToFfmpeg
 void FFMpeg::outputsRootToFfmpeg(
-	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string otherOutputOptionsBecauseOfMaxWidth, json inputDrawTextDetailsRoot,
-	// vector<tuple<int, int64_t, string, string, int, int, string, long>>& inputVideoTracks,
-	// vector<tuple<int, int64_t, string, long, int, long, string>>& inputAudioTracks,
+	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string otherOutputOptionsBecauseOfMaxWidth, json inputFiltersRoot,
 	long streamingDurationInSeconds, json outputsRoot,
 
 	/*
@@ -1850,11 +1915,13 @@ void FFMpeg::outputsRootToFfmpeg(
 	//		In particolare, il parametro inputDrawTextDetailsRoot arriva inizializzato solamente se
 	//		siamo nello scenario di un solo inputRoot che richiede il suo drawtext.
 	//		Per questo motivo, il prossimo if, gestisce il caso di drawTextDetails solo per un input root,
+	// 2024-05-17: non serve piu, la regola ora è che se abbiamo un inputFilters questo ha la precedenza sull'outputFilters
+	/*
 	string ffmpegDrawTextFilter;
-	if (inputDrawTextDetailsRoot != nullptr)
+	if (inputFiltersRoot != nullptr)
 	{
 		{
-			string text = JSONUtils::asString(inputDrawTextDetailsRoot, "text", "");
+			string text = JSONUtils::asString(inputFiltersRoot, "text", "");
 
 			string textTemporaryFileName = getDrawTextTemporaryPathName(ingestionJobKey, encodingJobKey);
 			{
@@ -1865,7 +1932,8 @@ void FFMpeg::outputsRootToFfmpeg(
 
 			_logger->info(
 				__FILEREF__ + "outputsRootToFfmpeg (inputRoot): added text into a temporary file" + ", ingestionJobKey: " +
-				to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) + ", textTemporaryFileName: " + textTemporaryFileName
+				to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) + ", textTemporaryFileName: " +
+	textTemporaryFileName
 			);
 
 			json filterRoot = inputDrawTextDetailsRoot;
@@ -1873,14 +1941,8 @@ void FFMpeg::outputsRootToFfmpeg(
 			filterRoot["textFilePathName"] = textTemporaryFileName;
 			ffmpegDrawTextFilter = ffmpegFilters.getFilter(filterRoot, streamingDurationInSeconds);
 		}
-		/*
-		ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
-			text, "", reloadAtFrameInterval, textPosition_X_InPixel, textPosition_Y_InPixel,
-			fontType, fontSize, fontColor, textPercentageOpacity, shadowx, shadowy,
-			boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
-			streamingDurationInSeconds);
-		*/
 	}
+	*/
 
 	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 	{
@@ -1891,34 +1953,45 @@ void FFMpeg::outputsRootToFfmpeg(
 		string inputVideoMap = JSONUtils::asString(outputRoot, "inputVideoMap", "");
 		string inputAudioMap = JSONUtils::asString(outputRoot, "inputAudioMap", "");
 
-		json filtersRoot = nullptr;
-		if (JSONUtils::isMetadataPresent(outputRoot, "filters"))
+		// 2024-05-17: inputFiltersRoot se presente si aggiunge al filtersRoot dell'output,
+		// 	Scenario di un Broadcast (Live Channel).
+		// 	All'interno del json dell'encodingJob, inputsRoot rappresenta l'intera playlist del live channel
+		//    (dalle ore A alle ora B contenuto 1, dalle ora C alle ore D contentuto 2, ...).
+		//    mentre  outputRoot è comune a tutta la playlist,
+		//    Nello scenario in cui serve un drawTextDetails solamente per un inputRoot, non è possibile
+		//    utilizzare outputRoot altrimenti avremmo il draw text anche per gli altri item della playlist.
+		//    In particolare, il parametro inputFiltersRoot arriva inizializzato solamente se
+		//    siamo nello scenario di un solo inputRoot che richiede il suo drawtext.
+		//    Per questo motivo, il prossimo if, gestisce il caso di drawTextDetails solo per un input root
+		json filtersRoot = ffmpegFilters.mergeFilters(outputRoot["filters"], inputFiltersRoot);
+
+		// in caso di drawtext filter, set textFilePathName sicuramente se è presente reloadAtFrameInterval
 		{
-			filtersRoot = outputRoot["filters"];
-
-			// in caso di drawtext filter, set textFilePathName sicuramente se è presente reloadAtFrameInterval
-			if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
+			if (filtersRoot != nullptr)
 			{
-				json videoFiltersRoot = filtersRoot["video"];
-				for (int filterIndex = 0; filterIndex < videoFiltersRoot.size(); filterIndex++)
+				if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
 				{
-					json videoFilterRoot = videoFiltersRoot[filterIndex];
-					if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "drawtext")
+					json videoFiltersRoot = filtersRoot["video"];
+					for (int filterIndex = 0; filterIndex < videoFiltersRoot.size(); filterIndex++)
 					{
-						int reloadAtFrameInterval = JSONUtils::asInt(videoFilterRoot, "reloadAtFrameInterval", -1);
-						if (reloadAtFrameInterval > 0)
+						json videoFilterRoot = videoFiltersRoot[filterIndex];
+						if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "drawtext")
 						{
-							string overlayText = JSONUtils::asString(videoFilterRoot, "text", "");
-							string textTemporaryFileName = getDrawTextTemporaryPathName(ingestionJobKey, encodingJobKey, outputIndex);
+							int reloadAtFrameInterval = JSONUtils::asInt(videoFilterRoot, "reloadAtFrameInterval", -1);
+							if (reloadAtFrameInterval > 0)
 							{
-								ofstream of(textTemporaryFileName, ofstream::trunc);
-								of << overlayText;
-								of.flush();
-							}
+								string overlayText = JSONUtils::asString(videoFilterRoot, "text", "");
+								string textTemporaryFileName = getDrawTextTemporaryPathName(ingestionJobKey, encodingJobKey, outputIndex);
+								{
+									ofstream of(textTemporaryFileName, ofstream::trunc);
+									of << overlayText;
+									of.flush();
+								}
 
-							videoFilterRoot["textFilePathName"] = textTemporaryFileName;
-							videoFiltersRoot[filterIndex] = videoFilterRoot;
-							filtersRoot["video"] = videoFiltersRoot;
+								videoFilterRoot["textFilePathName"] = textTemporaryFileName;
+								videoFiltersRoot[filterIndex] = videoFilterRoot;
+								filtersRoot["video"] = videoFiltersRoot;
+							}
 						}
 					}
 				}
@@ -1934,6 +2007,7 @@ void FFMpeg::outputsRootToFfmpeg(
 		string encodingProfileContentType = JSONUtils::asString(outputRoot, "encodingProfileContentType", "Video");
 		bool isVideo = encodingProfileContentType == "Video" ? true : false;
 
+		/*
 		if (ffmpegDrawTextFilter == "" && JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
 		{
 			string field = "drawTextDetails";
@@ -1955,15 +2029,8 @@ void FFMpeg::outputsRootToFfmpeg(
 				filterRoot["textFilePathName"] = textTemporaryFileName;
 				ffmpegDrawTextFilter = ffmpegFilters.getFilter(filterRoot, streamingDurationInSeconds);
 			}
-			/*
-			ffmpegDrawTextFilter = getDrawTextVideoFilterDescription(ingestionJobKey,
-				"", textTemporaryFileName, reloadAtFrameInterval,
-				textPosition_X_InPixel, textPosition_Y_InPixel, fontType, fontSize,
-				fontColor, textPercentageOpacity, shadowx, shadowy,
-				boxEnable, boxColor, boxPercentageOpacity, boxBorderW,
-				streamingDurationInSeconds);
-			*/
 		}
+		*/
 
 		string httpStreamingFileFormat;
 		string ffmpegHttpStreamingParameter = "";
@@ -2057,6 +2124,8 @@ void FFMpeg::outputsRootToFfmpeg(
 		}
 
 		// se abbiamo overlay, necessariamente serve un profilo di encoding
+		// questo controllo sarebbe in generale, cioé se abbiamo alcuni filtri in particolare dovremmo avere un profilo di encoding
+		/*
 		if (ffmpegDrawTextFilter != "" && encodingProfileDetailsRoot == nullptr)
 		{
 			string errorMessage = fmt::format(
@@ -2070,13 +2139,17 @@ void FFMpeg::outputsRootToFfmpeg(
 
 			throw runtime_error(errorMessage);
 		}
+		*/
 
-		tuple<string, string, string> allFilters =
-			ffmpegFilters.addFilters(filtersRoot, ffmpegVideoResolutionParameter, ffmpegDrawTextFilter, streamingDurationInSeconds);
 		string videoFilters;
 		string audioFilters;
 		string complexFilters;
-		tie(videoFilters, audioFilters, complexFilters) = allFilters;
+		if (filtersRoot != nullptr)
+		{
+			tuple<string, string, string> allFilters =
+				ffmpegFilters.addFilters(filtersRoot, ffmpegVideoResolutionParameter, "", streamingDurationInSeconds);
+			tie(videoFilters, audioFilters, complexFilters) = allFilters;
+		}
 
 		bool threadsParameterToBeAdded = false;
 

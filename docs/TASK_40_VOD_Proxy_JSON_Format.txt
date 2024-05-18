@@ -153,6 +153,19 @@
 							"type": "blend",
 							"mode": "difference",
 							"shortest": 1
+						},
+						{
+							// overlay image on video
+							"type": "overlay",
+							// the below parameters specify the X and Y in pixel where the image has to be overlayed on the video
+							// Default for both parameters is "0"
+							//    It is possible to specify also a formula using the following variables:
+							//        video_width: width in pixel of the video
+							//        video_height: height in pixel of the video
+							//        image_width: width in pixel of the image
+							//        image_height: height in pixel of the image
+							"imagePosition_X_InPixel": "video_width-image_width-10",
+							"imagePosition_Y_InPixel": "video_height-image_height-10"
 						}
 					]
 				}

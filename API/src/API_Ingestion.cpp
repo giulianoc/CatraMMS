@@ -4438,16 +4438,16 @@ void API::changeLiveProxyPlaylist(
 						string userAgent;
 						string otherInputOptions;
 
-						field = "drawTextDetails";
-						json drawTextDetailsRoot;
+						field = "filters";
+						json filtersRoot;
 						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
-							drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
+							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
 
 						broadcastDefaultStreamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
 							workspace, broadcasterIngestionJobKey, broadcastDefaultConfigurationLabel, "",
 							"", // useVideoTrackFromPhysicalPathName,
 								// useVideoTrackFromPhysicalDeliveryURL
-							maxWidth, userAgent, otherInputOptions, "", drawTextDetailsRoot
+							maxWidth, userAgent, otherInputOptions, "", filtersRoot
 						);
 					}
 					else if (broadcastDefaultMediaType == "Media")
@@ -4543,14 +4543,14 @@ void API::changeLiveProxyPlaylist(
 							}
 						}
 
-						field = "drawTextDetails";
-						json drawTextDetailsRoot;
+						field = "filters";
+						json filtersRoot;
 						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
-							drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
+							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
 
 						// the same json structure is used in
 						// MMSEngineProcessor::manageVODProxy
-						broadcastDefaultVodInputRoot = _mmsEngineDBFacade->getVodInputRoot(vodContentType, sources, drawTextDetailsRoot);
+						broadcastDefaultVodInputRoot = _mmsEngineDBFacade->getVodInputRoot(vodContentType, sources, filtersRoot);
 					}
 					else if (broadcastDefaultMediaType == "Countdown")
 					{
@@ -4624,24 +4624,41 @@ void API::changeLiveProxyPlaylist(
 							}
 						}
 
-						field = "drawTextDetails";
-						json drawTextDetailsRoot;
-						if (!JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+						// inizializza filtersRoot e verifica se drawtext is present
+						bool isDrawTextFilterPresent = false;
+						field = "filters";
+						json filtersRoot;
+						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
 						{
-							string errorMessage = __FILEREF__ + "Countdown has to have drawTextDetails" +
+							filtersRoot = broadcastDefaultPlaylistItemRoot["filters"];
+							field = "video";
+							if (JSONUtils::isMetadataPresent(filtersRoot, field))
+							{
+								json videoFiltersRoot = broadcastDefaultPlaylistItemRoot["video"];
+								for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+								{
+									json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
+									field = "type";
+									if (JSONUtils::isMetadataPresent(videoFilterRoot, field) && videoFilterRoot[field] == "drawtext")
+										isDrawTextFilterPresent = true;
+								}
+							}
+						}
+						if (!isDrawTextFilterPresent)
+						{
+							string errorMessage = __FILEREF__ + "Countdown has to have the drawText filter" +
 												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
 												  ", broadcastDefaultPlaylistItemRoot: " + JSONUtils::toString(broadcastDefaultPlaylistItemRoot);
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
-						drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
 
 						// the same json structure is used in
 						// MMSEngineProcessor::manageVODProxy
 						broadcastDefaultCountdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
 							sourcePhysicalPathName, sourcePhysicalDeliveryURL, broadcastDefaultPhysicalPathKey, videoDurationInMilliSeconds,
-							drawTextDetailsRoot
+							filtersRoot
 						);
 					}
 					else if (broadcastDefaultMediaType == "Direct URL")
@@ -4649,12 +4666,12 @@ void API::changeLiveProxyPlaylist(
 						field = "url";
 						string broadcastDefaultURL = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 
-						field = "drawTextDetails";
-						json drawTextDetailsRoot;
+						field = "filters";
+						json filtersRoot;
 						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
-							drawTextDetailsRoot = broadcastDefaultPlaylistItemRoot[field];
+							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
 
-						broadcastDefaultDirectURLInputRoot = _mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL, drawTextDetailsRoot);
+						broadcastDefaultDirectURLInputRoot = _mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL, filtersRoot);
 					}
 					else
 					{

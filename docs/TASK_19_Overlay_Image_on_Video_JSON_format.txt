@@ -43,8 +43,8 @@
 		//        video_height: height in pixel of the video
 		//        image_width: width in pixel of the image
 		//        image_height: height in pixel of the image
-		"ImagePosition_X_InPixel": "video_width-image_width-10",                                  
-		"ImagePosition_Y_InPixel": "video_height-image_height-10",                                
+		"imagePosition_X_InPixel": "video_width-image_width-10",                                  
+		"imagePosition_Y_InPixel": "video_height-image_height-10",                                
 
 		// optional. To be set with the EncodersPool label only in case 
 		// a specific encoders pool has to be used

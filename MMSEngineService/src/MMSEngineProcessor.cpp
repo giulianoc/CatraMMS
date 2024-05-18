@@ -957,6 +957,81 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		if (JSONUtils::isMetadataPresent(outputRoot, field))
 			filtersRoot = outputRoot[field];
 
+		// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
+		if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
+		{
+			json videoFiltersRoot = filtersRoot["video"];
+			for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+			{
+				json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
+				if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "imageoverlay")
+				{
+					if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalPathKey"))
+					{
+						string errorMessage = fmt::format(
+							"imageoverlay filter without imagePhysicalPathKey"
+							", ingestionJobKey: {}"
+							", imageoverlay filter: {}",
+							ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+						);
+						SPDLOG_ERROR(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					string sourcePhysicalPathName;
+					{
+						tuple<string, int, string, string, int64_t, string> physicalPathDetails =
+							_mmsStorage->getPhysicalPathDetails(videoFilterRoot["imagePhysicalPathKey"], false);
+						tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
+					}
+
+					// calculate delivery URL in case of an external encoder
+					string sourcePhysicalDeliveryURL;
+					{
+						int64_t utcNow;
+						{
+							chrono::system_clock::time_point now = chrono::system_clock::now();
+							utcNow = chrono::system_clock::to_time_t(now);
+						}
+
+						pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
+							-1, // userKey,
+							workspace,
+							"", // clientIPAddress,
+
+							-1, // mediaItemKey,
+							"", // uniqueName,
+							-1, // encodingProfileKey,
+							"", // encodingProfileLabel,
+
+							videoFilterRoot["imagePhysicalPathKey"],
+
+							-1, // ingestionJobKey,	(in case of live)
+							-1, // deliveryCode,
+
+							365 * 24 * 60 * 60, // ttlInSeconds, 365 days!!!
+							999999,				// maxRetries,
+							false,				// save,
+							"MMS_SignedToken",	// deliveryType,
+
+							false, // warningIfMissingMediaItemKey,
+							true,  // filteredByStatistic
+							""	   // userId (it is not needed it
+								   // filteredByStatistic is true
+						);
+
+						tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
+					}
+
+					videoFilterRoot["imagePhysicalPathName"] = sourcePhysicalPathName;
+					videoFilterRoot["imagePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
+					videoFiltersRoot[videoFilterIndex] = videoFilterRoot;
+					filtersRoot["video"] = videoFiltersRoot;
+				}
+			}
+		}
+
 		if (outputType == "CDN_AWS")
 		{
 			field = "awsChannelConfigurationLabel";

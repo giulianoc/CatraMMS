@@ -12740,7 +12740,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 json MMSEngineDBFacade::getStreamInputRoot(
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, string configurationLabel, string useVideoTrackFromPhysicalPathName,
 	string useVideoTrackFromPhysicalDeliveryURL, int maxWidth, string userAgent, string otherInputOptions, string taskEncodersPoolLabel,
-	json drawTextDetailsRoot
+	json filtersRoot
 )
 {
 	json streamInputRoot;
@@ -12858,8 +12858,8 @@ json MMSEngineDBFacade::getStreamInputRoot(
 		field = "url";
 		streamInputRoot[field] = liveURL;
 
-		field = "drawTextDetails";
-		streamInputRoot[field] = drawTextDetailsRoot;
+		field = "filters";
+		streamInputRoot[field] = filtersRoot;
 
 		if (maxWidth != -1)
 		{
@@ -12954,7 +12954,7 @@ json MMSEngineDBFacade::getStreamInputRoot(
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
 json MMSEngineDBFacade::getVodInputRoot(
-	MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json drawTextDetailsRoot
+	MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot
 )
 {
 	json vodInputRoot;
@@ -12995,8 +12995,8 @@ json MMSEngineDBFacade::getVodInputRoot(
 		field = "sources";
 		vodInputRoot[field] = sourcesRoot;
 
-		field = "drawTextDetails";
-		vodInputRoot[field] = drawTextDetailsRoot;
+		field = "filters";
+		vodInputRoot[field] = filtersRoot;
 	}
 	catch (runtime_error &e)
 	{
@@ -13017,7 +13017,7 @@ json MMSEngineDBFacade::getVodInputRoot(
 // this method is added here just because it is called by both API and MMSServiceProcessor
 json MMSEngineDBFacade::getCountdownInputRoot(
 	string mmsSourceVideoAssetPathName, string mmsSourceVideoAssetDeliveryURL, int64_t physicalPathKey, int64_t videoDurationInMilliSeconds,
-	json drawTextDetailsRoot
+	json filtersRoot
 )
 {
 	json countdownInputRoot;
@@ -13036,8 +13036,8 @@ json MMSEngineDBFacade::getCountdownInputRoot(
 		field = "videoDurationInMilliSeconds";
 		countdownInputRoot[field] = videoDurationInMilliSeconds;
 
-		field = "drawTextDetails";
-		countdownInputRoot[field] = drawTextDetailsRoot;
+		field = "filters";
+		countdownInputRoot[field] = filtersRoot;
 	}
 	catch (runtime_error &e)
 	{
@@ -13047,7 +13047,7 @@ json MMSEngineDBFacade::getCountdownInputRoot(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "getVodInputRoot failed");
+		_logger->error(__FILEREF__ + "getCountdownInputRoot failed");
 
 		throw e;
 	}
@@ -13056,7 +13056,7 @@ json MMSEngineDBFacade::getCountdownInputRoot(
 }
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
-json MMSEngineDBFacade::getDirectURLInputRoot(string url, json drawTextDetailsRoot)
+json MMSEngineDBFacade::getDirectURLInputRoot(string url, json filtersRoot)
 {
 	json directURLInputRoot;
 
@@ -13065,8 +13065,8 @@ json MMSEngineDBFacade::getDirectURLInputRoot(string url, json drawTextDetailsRo
 		string field = "url";
 		directURLInputRoot[field] = url;
 
-		field = "drawTextDetails";
-		directURLInputRoot[field] = drawTextDetailsRoot;
+		field = "filters";
+		directURLInputRoot[field] = filtersRoot;
 	}
 	catch (runtime_error &e)
 	{

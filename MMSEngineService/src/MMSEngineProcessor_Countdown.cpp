@@ -1,6 +1,6 @@
 
-#include "MMSEngineProcessor.h"
 #include "JSONUtils.h"
+#include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
 /*
 #include <stdio.h>
@@ -17,8 +17,8 @@
 #include "ThreadsStatisticTimes.h"
 #include "catralibraries/Convert.h"
 #include "catralibraries/Encrypt.h"
-#include "catralibraries/StringUtils.h"
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/StringUtils.h"
 #include "catralibraries/System.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
@@ -37,7 +37,6 @@
 
 #define MD5BUFFERSIZE 16384
 */
-
 
 void MMSEngineProcessor::manageCountdown(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, string ingestionDate, shared_ptr<Workspace> workspace,
@@ -244,16 +243,16 @@ void MMSEngineProcessor::manageCountdown(
 			   campo broadcastDrawTextDetails, vedi il commento all'interno del
 			   metodo java CatraMMSBroadcaster::buildCountdownJsonForBroadcast
 			*/
-			json drawTextDetailsRoot = nullptr;
+			json filtersRoot = nullptr;
 
-			string field = "broadcastDrawTextDetails";
+			string field = "broadcastFilters";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				drawTextDetailsRoot = parametersRoot[field];
+				filtersRoot = parametersRoot[field];
 
 			// same json structure is used in
 			// API_Ingestion::changeLiveProxyPlaylist
 			json countdownInputRoot = _mmsEngineDBFacade->getCountdownInputRoot(
-				mmsSourceVideoAssetPathName, mmsSourceVideoAssetDeliveryURL, sourcePhysicalPathKey, videoDurationInMilliSeconds, drawTextDetailsRoot
+				mmsSourceVideoAssetPathName, mmsSourceVideoAssetDeliveryURL, sourcePhysicalPathKey, videoDurationInMilliSeconds, filtersRoot
 			);
 
 			json inputRoot;
@@ -322,4 +321,3 @@ void MMSEngineProcessor::manageCountdown(
 		throw e;
 	}
 }
-

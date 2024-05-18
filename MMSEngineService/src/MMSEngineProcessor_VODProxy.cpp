@@ -1,6 +1,6 @@
 
-#include "MMSEngineProcessor.h"
 #include "JSONUtils.h"
+#include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
 /*
 #include <stdio.h>
@@ -17,8 +17,8 @@
 #include "ThreadsStatisticTimes.h"
 #include "catralibraries/Convert.h"
 #include "catralibraries/Encrypt.h"
-#include "catralibraries/StringUtils.h"
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/StringUtils.h"
 #include "catralibraries/System.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
@@ -268,15 +268,15 @@ void MMSEngineProcessor::manageVODProxy(
 			   campo broadcastDrawTextDetails, vedi il commento all'interno del
 			   metodo java CatraMMSBroadcaster::buildVODProxyJsonForBroadcast
 			*/
-			json drawTextDetailsRoot = nullptr;
+			json filtersRoot = nullptr;
 
-			string field = "broadcastDrawTextDetails";
+			string field = "broadcastfilters";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				drawTextDetailsRoot = parametersRoot[field];
+				filtersRoot = parametersRoot[field];
 
 			// same json structure is used in
 			// API_Ingestion::changeLiveProxyPlaylist
-			json vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(vodContentType, sources, drawTextDetailsRoot);
+			json vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(vodContentType, sources, filtersRoot);
 
 			json inputRoot;
 			{

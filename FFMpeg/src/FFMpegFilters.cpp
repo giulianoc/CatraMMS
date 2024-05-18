@@ -443,6 +443,40 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 			boxPercentageOpacity, streamingDurationInSeconds, filter
 		);
 	}
+	else if (type == "imageoverlay") // overlay image on video
+	{
+		string imagePosition_X_InPixel = JSONUtils::asString(filterRoot, "imagePosition_X_InPixel", "0");
+		string imagePosition_Y_InPixel = JSONUtils::asString(filterRoot, "imagePosition_Y_InPixel", "0");
+
+		string ffmpegImagePosition_X_InPixel;
+		if (imagePosition_X_InPixel == "left")
+			ffmpegImagePosition_X_InPixel = 20;
+		else if (imagePosition_X_InPixel == "center")
+			ffmpegImagePosition_X_InPixel = "(main_w - overlay_w)/2";
+		else if (imagePosition_X_InPixel == "right")
+			ffmpegImagePosition_X_InPixel = "main_w - (overlay_w + 20)";
+		else
+		{
+			ffmpegImagePosition_X_InPixel = regex_replace(imagePosition_X_InPixel, regex("video_width"), "main_w");
+			ffmpegImagePosition_X_InPixel = regex_replace(ffmpegImagePosition_X_InPixel, regex("image_width"), "overlay_w");
+		}
+
+		string ffmpegImagePosition_Y_InPixel;
+		if (imagePosition_Y_InPixel == "below")
+			ffmpegImagePosition_Y_InPixel = "main_h - (overlay_h + 20)";
+		else if (imagePosition_Y_InPixel == "center")
+			ffmpegImagePosition_Y_InPixel = "(main_h - overlay_h)/2";
+		else if (imagePosition_Y_InPixel == "high")
+			ffmpegImagePosition_Y_InPixel = "20";
+		else
+		{
+			ffmpegImagePosition_Y_InPixel = regex_replace(imagePosition_Y_InPixel, regex("video_height"), "main_h");
+			ffmpegImagePosition_Y_InPixel = regex_replace(ffmpegImagePosition_Y_InPixel, regex("image_height"), "overlay_h");
+		}
+
+		// overlay=x=main_w-overlay_w-10:y=main_h-overlay_h-10
+		filter = fmt::format("overlay=x={}:y={}", ffmpegImagePosition_X_InPixel, ffmpegImagePosition_Y_InPixel);
+	}
 	else if (type == "fade")
 	{
 		int duration = JSONUtils::asInt(filterRoot, "duration", 4);
@@ -534,4 +568,55 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 	}
 
 	return filter;
+}
+
+json FFMpegFilters::mergeFilters(json filters_1Root, json filters_2Root)
+{
+
+	json mergedFiltersRoot = nullptr;
+
+	if (filters_1Root == nullptr)
+		mergedFiltersRoot = filters_2Root;
+	else if (filters_2Root == nullptr)
+		mergedFiltersRoot = filters_1Root;
+	else
+	{
+		string field = "video";
+		{
+			if (JSONUtils::isMetadataPresent(filters_1Root, field))
+				mergedFiltersRoot[field] = filters_1Root[field];
+
+			if (JSONUtils::isMetadataPresent(filters_2Root, field))
+			{
+				for (int filterIndex = 0; filterIndex < filters_2Root[field].size(); filterIndex++)
+					mergedFiltersRoot[field].push_back(filters_2Root[field][filterIndex]);
+			}
+		}
+
+		field = "audio";
+		{
+			if (JSONUtils::isMetadataPresent(filters_1Root, field))
+				mergedFiltersRoot[field] = filters_1Root[field];
+
+			if (JSONUtils::isMetadataPresent(filters_2Root, field))
+			{
+				for (int filterIndex = 0; filterIndex < filters_2Root[field].size(); filterIndex++)
+					mergedFiltersRoot[field].push_back(filters_2Root[field][filterIndex]);
+			}
+		}
+
+		field = "complex";
+		{
+			if (JSONUtils::isMetadataPresent(filters_1Root, field))
+				mergedFiltersRoot[field] = filters_1Root[field];
+
+			if (JSONUtils::isMetadataPresent(filters_2Root, field))
+			{
+				for (int filterIndex = 0; filterIndex < filters_2Root[field].size(); filterIndex++)
+					mergedFiltersRoot[field].push_back(filters_2Root[field][filterIndex]);
+			}
+		}
+	}
+
+	return mergedFiltersRoot;
 }

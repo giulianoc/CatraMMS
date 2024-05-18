@@ -534,7 +534,10 @@ class FFMpeg
 		// vector<tuple<int, int64_t, string, string, int, int, string, long>>,
 		// vector<tuple<int, int64_t, string, long, int, long, string>>
 		>
-	liveProxyInput(int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, vector<string> &ffmpegInputArgumentList);
+	liveProxyInput(
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, json outputsRoot,
+		vector<string> &ffmpegInputArgumentList
+	);
 
 	void outputsRootToFfmpeg(
 		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string otherOutputOptionsBecauseOfMaxWidth,

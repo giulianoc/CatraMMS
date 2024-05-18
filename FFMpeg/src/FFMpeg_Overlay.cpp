@@ -17,13 +17,6 @@
 #include "catralibraries/ProcessUtility.h"
 #include <fstream>
 #include <regex>
-/*
-#include "MMSCURL.h"
-#include "catralibraries/StringUtils.h"
-#include <filesystem>
-#include <sstream>
-#include <string>
-*/
 
 void FFMpeg::overlayImageOnVideo(
 	bool externalEncoder, string mmsSourceVideoAssetPathName, int64_t videoDurationInMilliSeconds, string mmsSourceImageAssetPathName,
