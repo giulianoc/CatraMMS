@@ -4740,6 +4740,18 @@ void API::changeLiveProxyPlaylist(
 				for (int newReceivedPlaylistIndex = 0; newReceivedPlaylistIndex < newReceivedPlaylistRoot.size(); newReceivedPlaylistIndex++)
 				{
 					json newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[newReceivedPlaylistIndex];
+					// aggiungo sUtcScheduleStart/End in modo da capire le date per chi vede la playlist (info di debug)
+					{
+						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "timePeriod") && newReceivedPlaylistItemRoot["timePeriod"])
+						{
+							if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "utcScheduleStart"))
+								newReceivedPlaylistItemRoot["sUtcScheduleStart"] =
+									DateTime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleStart"]);
+							if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "utcScheduleEnd"))
+								newReceivedPlaylistItemRoot["sUtcScheduleEnd"] =
+									DateTime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleEnd"]);
+						}
+					}
 					{
 						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "streamInput"))
 						{
