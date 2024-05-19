@@ -1212,7 +1212,7 @@ json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Wor
 				complexFiltersRoot[complexFilterIndex] = complexFilterRoot;
 			}
 		}
-		filtersRoot["video"] = complexFiltersRoot;
+		filtersRoot["complex"] = complexFiltersRoot;
 	}
 
 	return filtersRoot;
