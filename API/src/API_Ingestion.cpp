@@ -5766,6 +5766,12 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 	if (filtersRoot == nullptr)
 		return filtersRoot;
 
+	SPDLOG_INFO(
+		"getReviewedFiltersRoot"
+		", filters: {}",
+		JSONUtils::toString(filtersRoot)
+	);
+
 	// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
 	if (JSONUtils::isMetadataPresent(filtersRoot, "complex"))
 	{
