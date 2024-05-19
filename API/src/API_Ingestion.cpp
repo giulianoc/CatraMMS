@@ -5767,7 +5767,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 		return filtersRoot;
 
 	SPDLOG_INFO(
-		"getReviewedFiltersRoot"
+		"getReviewedFiltersRoot in"
 		", filters: {}",
 		JSONUtils::toString(filtersRoot)
 	);
@@ -5851,9 +5851,19 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 				complexFilterRoot["imagePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
 				complexFiltersRoot[complexFilterIndex] = complexFilterRoot;
 			}
+			else
+				SPDLOG_INFO("getReviewedFiltersRoot");
 		}
 		filtersRoot["complex"] = complexFiltersRoot;
 	}
+	else
+		SPDLOG_INFO("getReviewedFiltersRoot");
+
+	SPDLOG_INFO(
+		"getReviewedFiltersRoot out"
+		", filters: {}",
+		JSONUtils::toString(filtersRoot)
+	);
 
 	return filtersRoot;
 }
