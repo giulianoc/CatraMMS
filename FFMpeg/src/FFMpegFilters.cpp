@@ -31,6 +31,17 @@ FFMpegFilters::addFilters(json filtersRoot, string ffmpegVideoResolutionParamete
 		}
 	}
 
+	// Simple and complex filtering cannot be used together for the same stream
+	if (complexFilters != "")
+	{
+		if (audioFilters != "")
+			complexFilters = audioFilters + "," + complexFilters;
+		if (videoFilters != "")
+			complexFilters = videoFilters + "," + complexFilters;
+		videoFilters = "";
+		audioFilters = "";
+	}
+
 	return make_tuple(videoFilters, audioFilters, complexFilters);
 }
 

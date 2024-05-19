@@ -5766,11 +5766,13 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 	if (filtersRoot == nullptr)
 		return filtersRoot;
 
+	/*
 	SPDLOG_INFO(
 		"getReviewedFiltersRoot in"
 		", filters: {}",
 		JSONUtils::toString(filtersRoot)
 	);
+	*/
 
 	// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
 	if (JSONUtils::isMetadataPresent(filtersRoot, "complex"))
@@ -5839,31 +5841,21 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 					tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
 				}
 
-				SPDLOG_INFO(
-					"getReviewedFiltersRoot"
-					", imagePhysicalPathKey: {}"
-					", sourcePhysicalPathName: {}"
-					", sourcePhysicalDeliveryURL: {}",
-					complexFilterRoot["imagePhysicalPathKey"], sourcePhysicalPathName, sourcePhysicalDeliveryURL
-				);
-
 				complexFilterRoot["imagePhysicalPathName"] = sourcePhysicalPathName;
 				complexFilterRoot["imagePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
 				complexFiltersRoot[complexFilterIndex] = complexFilterRoot;
 			}
-			else
-				SPDLOG_INFO("getReviewedFiltersRoot");
 		}
 		filtersRoot["complex"] = complexFiltersRoot;
 	}
-	else
-		SPDLOG_INFO("getReviewedFiltersRoot");
 
+	/*
 	SPDLOG_INFO(
 		"getReviewedFiltersRoot out"
 		", filters: {}",
 		JSONUtils::toString(filtersRoot)
 	);
+	*/
 
 	return filtersRoot;
 }
