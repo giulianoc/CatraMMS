@@ -638,6 +638,11 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("-filter:a");
 						ffmpegArgumentList.push_back(audioFilters);
 					}
+					if (complexFilters != "")
+					{
+						ffmpegArgumentList.push_back("-filter_complex");
+						ffmpegArgumentList.push_back(complexFilters);
+					}
 				}
 				else
 				{
@@ -663,6 +668,12 @@ void FFMpeg::liveRecorder(
 						// it is not possible to have -c:a copy and -filter:a toghether
 						ffmpegArgumentList.push_back("-c:a");
 						ffmpegArgumentList.push_back("copy");
+					}
+
+					if (complexFilters != "")
+					{
+						ffmpegArgumentList.push_back("-filter_complex");
+						ffmpegArgumentList.push_back(complexFilters);
 					}
 				}
 
@@ -919,6 +930,11 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("-filter:a");
 						ffmpegArgumentList.push_back(audioFilters);
 					}
+					if (complexFilters != "")
+					{
+						ffmpegArgumentList.push_back("-filter_complex");
+						ffmpegArgumentList.push_back(complexFilters);
+					}
 				}
 				else
 				{
@@ -944,6 +960,12 @@ void FFMpeg::liveRecorder(
 						// it is not possible to have -c:a copy and -filter:a toghether
 						ffmpegArgumentList.push_back("-c:a");
 						ffmpegArgumentList.push_back("copy");
+					}
+
+					if (complexFilters != "")
+					{
+						ffmpegArgumentList.push_back("-filter_complex");
+						ffmpegArgumentList.push_back(complexFilters);
 					}
 				}
 
@@ -1158,6 +1180,11 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("-filter:a");
 						ffmpegArgumentList.push_back(audioFilters);
 					}
+					if (complexFilters != "")
+					{
+						ffmpegArgumentList.push_back("-filter_complex");
+						ffmpegArgumentList.push_back(complexFilters);
+					}
 				}
 				else
 				{
@@ -1183,6 +1210,12 @@ void FFMpeg::liveRecorder(
 						// it is not possible to have -c:a copy and -filter:a toghether
 						ffmpegArgumentList.push_back("-c:a");
 						ffmpegArgumentList.push_back("copy");
+					}
+
+					if (complexFilters != "")
+					{
+						ffmpegArgumentList.push_back("-filter_complex");
+						ffmpegArgumentList.push_back(complexFilters);
 					}
 				}
 
@@ -1439,6 +1472,11 @@ void FFMpeg::liveRecorder(
 						ffmpegArgumentList.push_back("-filter:a");
 						ffmpegArgumentList.push_back(audioFilters);
 					}
+					if (complexFilters != "")
+					{
+						ffmpegArgumentList.push_back("-filter_complex");
+						ffmpegArgumentList.push_back(complexFilters);
+					}
 				}
 				else
 				{
@@ -1464,6 +1502,12 @@ void FFMpeg::liveRecorder(
 						// it is not possible to have -c:a copy and -filter:a toghether
 						ffmpegArgumentList.push_back("-c:a");
 						ffmpegArgumentList.push_back("copy");
+					}
+
+					if (complexFilters != "")
+					{
+						ffmpegArgumentList.push_back("-filter_complex");
+						ffmpegArgumentList.push_back(complexFilters);
 					}
 				}
 
@@ -1499,6 +1543,12 @@ void FFMpeg::liveRecorder(
 				{
 					ffmpegArgumentList.push_back("-filter:a");
 					ffmpegArgumentList.push_back(audioFilters);
+				}
+
+				if (complexFilters != "")
+				{
+					ffmpegArgumentList.push_back("-filter_complex");
+					ffmpegArgumentList.push_back(complexFilters);
 				}
 
 				ffmpegArgumentList.push_back("-f");

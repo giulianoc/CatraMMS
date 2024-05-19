@@ -5755,21 +5755,21 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 		return filtersRoot;
 
 	// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
-	if (JSONUtils::isMetadataPresent(filtersRoot, "video"))
+	if (JSONUtils::isMetadataPresent(filtersRoot, "complex"))
 	{
-		json videoFiltersRoot = filtersRoot["video"];
-		for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
+		json complexFiltersRoot = filtersRoot["complex"];
+		for (int complexFilterIndex = 0; complexFilterIndex < complexFiltersRoot.size(); complexFilterIndex++)
 		{
-			json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
-			if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "imageoverlay")
+			json complexFilterRoot = complexFiltersRoot[complexFilterIndex];
+			if (JSONUtils::isMetadataPresent(complexFilterRoot, "type") && complexFilterRoot["type"] == "imageoverlay")
 			{
-				if (!JSONUtils::isMetadataPresent(videoFilterRoot, "imagePhysicalPathKey"))
+				if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathKey"))
 				{
 					string errorMessage = fmt::format(
 						"imageoverlay filter without imagePhysicalPathKey"
 						", ingestionJobKey: {}"
 						", imageoverlay filter: {}",
-						ingestionJobKey, JSONUtils::toString(videoFilterRoot)
+						ingestionJobKey, JSONUtils::toString(complexFilterRoot)
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -5779,7 +5779,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 				string sourcePhysicalPathName;
 				{
 					tuple<string, int, string, string, int64_t, string> physicalPathDetails =
-						_mmsStorage->getPhysicalPathDetails(videoFilterRoot["imagePhysicalPathKey"], false);
+						_mmsStorage->getPhysicalPathDetails(complexFilterRoot["imagePhysicalPathKey"], false);
 					tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 				}
 
@@ -5802,7 +5802,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 						-1, // encodingProfileKey,
 						"", // encodingProfileLabel,
 
-						videoFilterRoot["imagePhysicalPathKey"],
+						complexFilterRoot["imagePhysicalPathKey"],
 
 						-1, // ingestionJobKey,	(in case of live)
 						-1, // deliveryCode,
@@ -5821,12 +5821,12 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 					tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
 				}
 
-				videoFilterRoot["imagePhysicalPathName"] = sourcePhysicalPathName;
-				videoFilterRoot["imagePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
-				videoFiltersRoot[videoFilterIndex] = videoFilterRoot;
+				complexFilterRoot["imagePhysicalPathName"] = sourcePhysicalPathName;
+				complexFilterRoot["imagePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
+				complexFiltersRoot[complexFilterIndex] = complexFilterRoot;
 			}
 		}
-		filtersRoot["video"] = videoFiltersRoot;
+		filtersRoot["video"] = complexFiltersRoot;
 	}
 
 	return filtersRoot;
