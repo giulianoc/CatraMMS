@@ -5833,12 +5833,20 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 					tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
 				}
 
+				SPDLOG_INFO(
+					"getReviewedFiltersRoot"
+					", imagePhysicalPathKey: {}"
+					", sourcePhysicalPathName: {}"
+					", sourcePhysicalDeliveryURL: {}",
+					complexFilterRoot["imagePhysicalPathKey"], sourcePhysicalPathName, sourcePhysicalDeliveryURL
+				);
+
 				complexFilterRoot["imagePhysicalPathName"] = sourcePhysicalPathName;
 				complexFilterRoot["imagePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
 				complexFiltersRoot[complexFilterIndex] = complexFilterRoot;
 			}
 		}
-		filtersRoot["video"] = complexFiltersRoot;
+		filtersRoot["complex"] = complexFiltersRoot;
 	}
 
 	return filtersRoot;
