@@ -708,8 +708,50 @@ void API::shareWorkspace_(
 		// email format check
 		{
 			// [[:w:]] ---> word character: digit, number or undescore
+			// l'espressione regolare sotto non accetta il punto nella parte sinistra della @
+			// 2024-05-20: https://stackoverflow.com/questions/48055431/can-it-cause-harm-to-validate-email-addresses-with-a-regex
+			// 	Visto il link sopra, non utilizzero l'espressione regolare per verificare un email address
+			/*
 			regex e("[[:w:]]+@[[:w:]]+\\.[[:w:]]+");
 			if (!regex_match(email, e))
+			{
+				string errorMessage = fmt::format(
+					"Wrong email format"
+					", email: {}",
+					email
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			*/
+
+			// controlli:
+			// L'indirizzo contiene almeno un @
+			// Il local-part(tutto a sinistra dell'estrema destra @) non è vuoto
+			// La parte domain (tutto a destra dell'estrema destra @) contiene almeno un punto (di nuovo, questo non è strettamente vero, ma
+			// pragmatico)
+
+			size_t endOfLocalPartIndex = email.find_last_of("@");
+			if (endOfLocalPartIndex == string::npos)
+			{
+				string errorMessage = fmt::format(
+					"Wrong email format"
+					", email: {}",
+					email
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			string localPart = email.substr(0, endOfLocalPartIndex);
+			string domainPart = email.substr(endOfLocalPartIndex + 1);
+			if (localPart == "" || domainPart.find(".") == string::npos)
 			{
 				string errorMessage = fmt::format(
 					"Wrong email format"
