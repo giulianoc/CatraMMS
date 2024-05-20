@@ -15,6 +15,7 @@
 #include "JSONUtils.h"
 #include "MMSCURL.h"
 #include "catralibraries/LdapWrapper.h"
+#include "spdlog/fmt/fmt.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
@@ -855,7 +856,7 @@ void API::shareWorkspace_(
 
 				vector<string> emailBody;
 				emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the workspace has been shared successfully</p>"));
+				emailBody.push_back(fmt::format("<p>&emsp;&emsp;&emsp;&emsp;the '{}' workspace has been shared successfully</p>", workspace->_name));
 				emailBody.push_back(
 					string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>") + to_string(userKey) + "</b> and the confirmation code <b>" +
 					shareWorkspaceCode + "</b> to be used to confirm the sharing of the Workspace</p>"
