@@ -4,43 +4,63 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   API.cpp
  * Author: giuliano
- * 
+ *
  * Created on February 18, 2018, 1:27 AM
  */
 
-#include "JSONUtils.h"
-#include "catralibraries/LdapWrapper.h"
 #include "API.h"
-#include <regex>
+#include "JSONUtils.h"
 #include "MMSCURL.h"
-#include <curlpp/cURLpp.hpp>
+#include "catralibraries/LdapWrapper.h"
 #include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/cURLpp.hpp>
 #include <iterator>
+#include <regex>
 #include <vector>
 
-
-void API::registerUser(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	string requestBody)
+void API::registerUser(string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestBody)
 {
-    string api = "registerUser";
+	string api = "registerUser";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
 
-    try
-    {
+	try
+	{
 		if (!_registerUserEnabled)
 		{
-			string errorMessage = string("registerUser is not enabled"
+			string errorMessage = string("registerUser is not enabled");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string email;
+		string password;
+		string shareWorkspaceCode;
+
+		int64_t workspaceKey;
+		int64_t userKey;
+		string confirmationCode;
+
+		json metadataRoot;
+		try
+		{
+			metadataRoot = JSONUtils::toJson(requestBody);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string(
+				"Json metadata failed during the parsing"
+				", json data: " +
+				requestBody
 			);
 			_logger->error(__FILEREF__ + errorMessage);
 
@@ -49,41 +69,12 @@ void API::registerUser(
 			throw runtime_error(errorMessage);
 		}
 
-        string email;
-        string password;
-        string shareWorkspaceCode;
-
-		int64_t workspaceKey;
-		int64_t userKey;
-		string confirmationCode;
-
-        json metadataRoot;
-        try
-        {
-			metadataRoot = JSONUtils::toJson(requestBody);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-		vector<string> mandatoryFields = {
-			"email",
-			"password"
-		};
-		for (string field: mandatoryFields)
+		vector<string> mandatoryFields = {"email", "password"};
+		for (string field : mandatoryFields)
 		{
 			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				string errorMessage = string("Json field is not present or it is null")
-					+ ", Json field: " + field;
+				string errorMessage = string("Json field is not present or it is null") + ", Json field: " + field;
 				_logger->error(__FILEREF__ + errorMessage);
 
 				sendError(request, 400, errorMessage);
@@ -107,7 +98,7 @@ void API::registerUser(
 			int maxIngestionsNumber;
 			int maxStorageInMB;
 
-            string workspaceName = JSONUtils::asString(metadataRoot, "workspaceName", "");
+			string workspaceName = JSONUtils::asString(metadataRoot, "workspaceName", "");
 			if (workspaceName == "")
 			{
 				if (name != "")
@@ -125,65 +116,49 @@ void API::registerUser(
 
 			try
 			{
-				_logger->info(__FILEREF__ + "Registering User because of Add Workspace"
-					+ ", workspaceName: " + workspaceName
-					+ ", shareWorkspaceCode: " + shareWorkspaceCode
-					+ ", email: " + email
+				_logger->info(
+					__FILEREF__ + "Registering User because of Add Workspace" + ", workspaceName: " + workspaceName +
+					", shareWorkspaceCode: " + shareWorkspaceCode + ", email: " + email
 				);
 
-				#ifdef __POSTGRES__
-				tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode
-					= _mmsEngineDBFacade->registerUserAndAddWorkspace(
-						name, 
-						email, 
-						password,
-						country, 
-						timezone, 
-						workspaceName,
-						MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
-						"",                             // string deliveryURL,
-						encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-						encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
-						maxIngestionsNumber,            // long maxIngestionsNumber,
-						maxStorageInMB,                 // long maxStorageInMB,
-						"",                             // string languageCode,
-						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
-					);
-				#else
-				tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode
-					= _mmsEngineDBFacade->registerUserAndAddWorkspace(
-						name, 
-						email, 
-						password,
-						country, 
-						workspaceName,
-						MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
-						"",                             // string deliveryURL,
-						encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-						encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
-						maxIngestionsNumber,            // long maxIngestionsNumber,
-						maxStorageInMB,                 // long maxStorageInMB,
-						"",                             // string languageCode,
-						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
-					);
-				#endif
+#ifdef __POSTGRES__
+				tuple<int64_t, int64_t, string> workspaceKeyUserKeyAndConfirmationCode = _mmsEngineDBFacade->registerUserAndAddWorkspace(
+					name, email, password, country, timezone, workspaceName,
+					MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,	   // MMSEngineDBFacade::WorkspaceType workspaceType
+					"",														   // string deliveryURL,
+					encodingPriority,										   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+					encodingPeriod,											   //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
+					maxIngestionsNumber,									   // long maxIngestionsNumber,
+					maxStorageInMB,											   // long maxStorageInMB,
+					"",														   // string languageCode,
+					chrono::system_clock::now() + chrono::hours(24 * 365 * 10) // chrono::system_clock::time_point userExpirationDate
+				);
+#else
+				tuple<int64_t, int64_t, string> workspaceKeyUserKeyAndConfirmationCode = _mmsEngineDBFacade->registerUserAndAddWorkspace(
+					name, email, password, country, workspaceName,
+					MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,	   // MMSEngineDBFacade::WorkspaceType workspaceType
+					"",														   // string deliveryURL,
+					encodingPriority,										   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+					encodingPeriod,											   //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
+					maxIngestionsNumber,									   // long maxIngestionsNumber,
+					maxStorageInMB,											   // long maxStorageInMB,
+					"",														   // string languageCode,
+					chrono::system_clock::now() + chrono::hours(24 * 365 * 10) // chrono::system_clock::time_point userExpirationDate
+				);
+#endif
 
 				workspaceKey = get<0>(workspaceKeyUserKeyAndConfirmationCode);
 				userKey = get<1>(workspaceKeyUserKeyAndConfirmationCode);
 				confirmationCode = get<2>(workspaceKeyUserKeyAndConfirmationCode);
 
-				_logger->info(__FILEREF__ + "Registered User and added Workspace"
-					+ ", workspaceName: " + workspaceName
-					+ ", email: " + email
-					+ ", userKey: " + to_string(userKey)
-					+ ", confirmationCode: " + confirmationCode
+				_logger->info(
+					__FILEREF__ + "Registered User and added Workspace" + ", workspaceName: " + workspaceName + ", email: " + email +
+					", userKey: " + to_string(userKey) + ", confirmationCode: " + confirmationCode
 				);
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				string errorMessage = string("Internal server error: ") + e.what();
 				_logger->error(__FILEREF__ + errorMessage);
@@ -192,11 +167,9 @@ void API::registerUser(
 
 				throw runtime_error(errorMessage);
 			}
-			catch(exception& e)
+			catch (exception &e)
 			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				string errorMessage = string("Internal server error");
 				_logger->error(__FILEREF__ + errorMessage);
@@ -210,19 +183,16 @@ void API::registerUser(
 			{
 				try
 				{
-					_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
-						+ ", workspaceKey: " + to_string(workspaceKey)
-						+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
+					_logger->info(
+						__FILEREF__ + "Associate defaults encoders to the Workspace" + ", workspaceKey: " + to_string(workspaceKey) +
+						", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
 					);
 
-					_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
-						_sharedEncodersPoolLabel, _sharedEncodersLabel);
+					_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey, _sharedEncodersPoolLabel, _sharedEncodersLabel);
 				}
-				catch(runtime_error& e)
+				catch (runtime_error &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					// string errorMessage = string("Internal server error: ") + e.what();
 					// _logger->error(__FILEREF__ + errorMessage);
@@ -233,11 +203,9 @@ void API::registerUser(
 
 					// throw runtime_error(errorMessage);
 				}
-				catch(exception& e)
+				catch (exception &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					// string errorMessage = string("Internal server error");
 					// _logger->error(__FILEREF__ + errorMessage);
@@ -251,20 +219,17 @@ void API::registerUser(
 
 				try
 				{
-					_logger->info(__FILEREF__ + "Add some HLS_Channels to the Workspace"
-						+ ", workspaceKey: " + to_string(workspaceKey)
-						+ ", _defaultSharedHLSChannelsNumber: " + to_string(_defaultSharedHLSChannelsNumber)
+					_logger->info(
+						__FILEREF__ + "Add some HLS_Channels to the Workspace" + ", workspaceKey: " + to_string(workspaceKey) +
+						", _defaultSharedHLSChannelsNumber: " + to_string(_defaultSharedHLSChannelsNumber)
 					);
 
-					for(int hlsChannelIndex = 0; hlsChannelIndex < _defaultSharedHLSChannelsNumber; hlsChannelIndex++)
-						_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1),
-							hlsChannelIndex + 1, -1, -1, "SHARED");
+					for (int hlsChannelIndex = 0; hlsChannelIndex < _defaultSharedHLSChannelsNumber; hlsChannelIndex++)
+						_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1), hlsChannelIndex + 1, -1, -1, "SHARED");
 				}
-				catch(runtime_error& e)
+				catch (runtime_error &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					// string errorMessage = string("Internal server error: ") + e.what();
 					// _logger->error(__FILEREF__ + errorMessage);
@@ -275,11 +240,9 @@ void API::registerUser(
 
 					// throw runtime_error(errorMessage);
 				}
-				catch(exception& e)
+				catch (exception &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					// string errorMessage = string("Internal server error");
 					// _logger->error(__FILEREF__ + errorMessage);
@@ -296,37 +259,27 @@ void API::registerUser(
 		{
 			try
 			{
-				_logger->info(__FILEREF__ + "Registering User because of Share Workspace"
-					+ ", shareWorkspaceCode: " + shareWorkspaceCode
-					+ ", email: " + email
+				_logger->info(
+					__FILEREF__ + "Registering User because of Share Workspace" + ", shareWorkspaceCode: " + shareWorkspaceCode + ", email: " + email
 				);
 
-				tuple<int64_t,int64_t,string> registerUserDetails
-					= _mmsEngineDBFacade->registerUserAndShareWorkspace(
-						name, 
-						email, 
-						password,
-						country, 
-						timezone, 
-						shareWorkspaceCode,
-						chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
-					);
+				tuple<int64_t, int64_t, string> registerUserDetails = _mmsEngineDBFacade->registerUserAndShareWorkspace(
+					name, email, password, country, timezone, shareWorkspaceCode,
+					chrono::system_clock::now() + chrono::hours(24 * 365 * 10) // chrono::system_clock::time_point userExpirationDate
+				);
 
 				workspaceKey = get<0>(registerUserDetails);
 				userKey = get<1>(registerUserDetails);
 				confirmationCode = get<2>(registerUserDetails);
 
-				_logger->info(__FILEREF__ + "Registered User and shared Workspace"
-					+ ", email: " + email
-					+ ", userKey: " + to_string(userKey)
-					+ ", confirmationCode: " + confirmationCode
+				_logger->info(
+					__FILEREF__ + "Registered User and shared Workspace" + ", email: " + email + ", userKey: " + to_string(userKey) +
+					", confirmationCode: " + confirmationCode
 				);
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				string errorMessage = string("Internal server error: ") + e.what();
 				_logger->error(__FILEREF__ + errorMessage);
@@ -335,11 +288,9 @@ void API::registerUser(
 
 				throw runtime_error(errorMessage);
 			}
-			catch(exception& e)
+			catch (exception &e)
 			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				string errorMessage = string("Internal server error");
 				_logger->error(__FILEREF__ + errorMessage);
@@ -350,144 +301,120 @@ void API::registerUser(
 			}
 		}
 
-        try
-        {
+		try
+		{
 			json registrationRoot;
 			// registrationRoot["workspaceKey"] = workspaceKey;
 			registrationRoot["userKey"] = userKey;
 			registrationRoot["confirmationCode"] = confirmationCode;
 
-            string responseBody = JSONUtils::toString(registrationRoot);
+			string responseBody = JSONUtils::toString(registrationRoot);
 
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
 				confirmationURL += (":" + to_string(_guiPort));
-			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
-				+ to_string(userKey)
-				+ "&confirmationCode=" + confirmationCode);
+			confirmationURL +=
+				("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey=" + to_string(userKey) +
+				 "&confirmationCode=" + confirmationCode);
 
-			_logger->info(__FILEREF__ + "Sending confirmation URL by email..."
-				+ ", confirmationURL: " + confirmationURL
+			_logger->info(__FILEREF__ + "Sending confirmation URL by email..." + ", confirmationURL: " + confirmationURL);
+
+			string tosCommaSeparated = email;
+			string subject = "Confirmation code";
+
+			vector<string> emailBody;
+			emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+			emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the registration has been done successfully</p>"));
+			emailBody.push_back(
+				string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>") + to_string(userKey) + "</b> and the confirmation code <b>" +
+				confirmationCode + "</b> to be used to confirm the registration</p>"
 			);
-
-            string tosCommaSeparated = email;
-            string subject = "Confirmation code";
-            
-            vector<string> emailBody;
-            emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-            emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the registration has been done successfully</p>"));
-            emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>") + to_string(userKey) 
-                + "</b> and the confirmation code <b>" + confirmationCode + "</b> to be used to confirm the registration</p>");
-            emailBody.push_back(
-					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")
-					+ confirmationURL
-					+ "\">here</a> to confirm the registration</b></p>");
-            emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
-            emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+			emailBody.push_back(
+				string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"") + confirmationURL + "\">here</a> to confirm the registration</b></p>"
+			);
+			emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+			emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-				_emailUserName,	// i.e.: info@catramms-cloud.com
-				tosCommaSeparated,
-				_emailCcsCommaSeparated,
-				subject,
-				emailBody,
-				_emailPassword
+				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	   // i.e.: info@catramms-cloud.com
+				tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 			);
-            // EMailSender emailSender(_logger, _configuration);
+			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
-            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::createWorkspace(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        int64_t userKey,
-        unordered_map<string, string> queryParameters,
-        string requestBody,
-		bool admin)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey,
+	unordered_map<string, string> queryParameters, string requestBody, bool admin
+)
 {
-    string api = "createWorkspace";
+	string api = "createWorkspace";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
 
-    try
-    {
-        string workspaceName;
-        MMSEngineDBFacade::EncodingPriority encodingPriority;
-        MMSEngineDBFacade::EncodingPeriod encodingPeriod;
-        int maxIngestionsNumber;
-        int maxStorageInMB;
+	try
+	{
+		string workspaceName;
+		MMSEngineDBFacade::EncodingPriority encodingPriority;
+		MMSEngineDBFacade::EncodingPeriod encodingPeriod;
+		int maxIngestionsNumber;
+		int maxStorageInMB;
 
-
-        auto workspaceNameIt = queryParameters.find("workspaceName");
-        if (workspaceNameIt == queryParameters.end())
-        {
+		auto workspaceNameIt = queryParameters.find("workspaceName");
+		if (workspaceNameIt == queryParameters.end())
+		{
 			string errorMessage = string("The 'workspaceName' parameter is not found");
 			_logger->error(__FILEREF__ + errorMessage);
 
 			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
-        }
+		}
 		{
 			workspaceName = workspaceNameIt->second;
 			string plus = "\\+";
@@ -497,106 +424,82 @@ void API::createWorkspace(
 			workspaceName = curlpp::unescape(firstDecoding);
 		}
 
-        encodingPriority = _encodingPriorityWorkspaceDefaultValue;
+		encodingPriority = _encodingPriorityWorkspaceDefaultValue;
 
-        encodingPeriod = _encodingPeriodWorkspaceDefaultValue;
-        maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
+		encodingPeriod = _encodingPeriodWorkspaceDefaultValue;
+		maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
 
-        maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
+		maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
 
 		int64_t workspaceKey;
 		string confirmationCode;
-        try
-        {
-            _logger->info(__FILEREF__ + "Creating Workspace"
-                + ", workspaceName: " + workspaceName
-            );
+		try
+		{
+			_logger->info(__FILEREF__ + "Creating Workspace" + ", workspaceName: " + workspaceName);
 
-			#ifdef __POSTGRES__
-			pair<int64_t,string> workspaceKeyAndConfirmationCode =
-				_mmsEngineDBFacade->createWorkspace(
-					userKey,
-					workspaceName,
-					MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
-					"",						// string deliveryURL,
-					encodingPriority,
-					encodingPeriod,
-					maxIngestionsNumber,
-					maxStorageInMB,
-					"",						// string languageCode,
-					admin,
-					chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
-				);
-			#else
-			pair<int64_t,string> workspaceKeyAndConfirmationCode =
-				_mmsEngineDBFacade->createWorkspace(
-					userKey,
-					workspaceName,
-					MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
-					"",						// string deliveryURL,
-					encodingPriority,
-					encodingPeriod,
-					maxIngestionsNumber,
-					maxStorageInMB,
-					"",						// string languageCode,
-					admin,
-					chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
-				);
-			#endif
+#ifdef __POSTGRES__
+			pair<int64_t, string> workspaceKeyAndConfirmationCode = _mmsEngineDBFacade->createWorkspace(
+				userKey, workspaceName, MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
+				"", // string deliveryURL,
+				encodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
+				"", // string languageCode,
+				admin, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+			);
+#else
+			pair<int64_t, string> workspaceKeyAndConfirmationCode = _mmsEngineDBFacade->createWorkspace(
+				userKey, workspaceName, MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
+				"", // string deliveryURL,
+				encodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
+				"", // string languageCode,
+				admin, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+			);
+#endif
 
-            _logger->info(__FILEREF__ + "Created a new Workspace for the User"
-                + ", workspaceName: " + workspaceName
-                + ", userKey: " + to_string(userKey)
-                + ", confirmationCode: " + get<1>(workspaceKeyAndConfirmationCode)
-            );
+			_logger->info(
+				__FILEREF__ + "Created a new Workspace for the User" + ", workspaceName: " + workspaceName + ", userKey: " + to_string(userKey) +
+				", confirmationCode: " + get<1>(workspaceKeyAndConfirmationCode)
+			);
 
 			workspaceKey = get<0>(workspaceKeyAndConfirmationCode);
 			confirmationCode = get<1>(workspaceKeyAndConfirmationCode);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
 
 		// workspace initialization
 		{
 			try
 			{
-				_logger->info(__FILEREF__ + "Associate defaults encoders to the Workspace"
-					+ ", workspaceKey: " + to_string(workspaceKey)
-					+ ", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
+				_logger->info(
+					__FILEREF__ + "Associate defaults encoders to the Workspace" + ", workspaceKey: " + to_string(workspaceKey) +
+					", _sharedEncodersPoolLabel: " + _sharedEncodersPoolLabel
 				);
 
-				_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey,
-					_sharedEncodersPoolLabel, _sharedEncodersLabel);
+				_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey, _sharedEncodersPoolLabel, _sharedEncodersLabel);
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				string errorMessage = string("Internal server error: ") + e.what();
 				_logger->error(__FILEREF__ + errorMessage);
@@ -607,11 +510,9 @@ void API::createWorkspace(
 
 				// throw runtime_error(errorMessage);
 			}
-			catch(exception& e)
+			catch (exception &e)
 			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				string errorMessage = string("Internal server error");
 				_logger->error(__FILEREF__ + errorMessage);
@@ -625,20 +526,17 @@ void API::createWorkspace(
 
 			try
 			{
-				_logger->info(__FILEREF__ + "Add some HLS_Channels to the Workspace"
-					+ ", workspaceKey: " + to_string(workspaceKey)
-					+ ", _defaultSharedHLSChannelsNumber: " + to_string(_defaultSharedHLSChannelsNumber)
+				_logger->info(
+					__FILEREF__ + "Add some HLS_Channels to the Workspace" + ", workspaceKey: " + to_string(workspaceKey) +
+					", _defaultSharedHLSChannelsNumber: " + to_string(_defaultSharedHLSChannelsNumber)
 				);
 
-				for(int hlsChannelIndex = 0; hlsChannelIndex < _defaultSharedHLSChannelsNumber; hlsChannelIndex++)
-					_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1),
-						hlsChannelIndex + 1, -1, -1, "SHARED");
+				for (int hlsChannelIndex = 0; hlsChannelIndex < _defaultSharedHLSChannelsNumber; hlsChannelIndex++)
+					_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1), hlsChannelIndex + 1, -1, -1, "SHARED");
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				string errorMessage = string("Internal server error: ") + e.what();
 				_logger->error(__FILEREF__ + errorMessage);
@@ -649,11 +547,9 @@ void API::createWorkspace(
 
 				// throw runtime_error(errorMessage);
 			}
-			catch(exception& e)
+			catch (exception &e)
 			{
-				_logger->error(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				string errorMessage = string("Internal server error");
 				_logger->error(__FILEREF__ + errorMessage);
@@ -666,168 +562,135 @@ void API::createWorkspace(
 			}
 		}
 
-        try
-        {
+		try
+		{
 			json registrationRoot;
 			// registrationRoot["workspaceKey"] = workspaceKey;
 			registrationRoot["userKey"] = userKey;
 			registrationRoot["workspaceKey"] = workspaceKey;
 			registrationRoot["confirmationCode"] = confirmationCode;
 
-            string responseBody = JSONUtils::toString(registrationRoot);
+			string responseBody = JSONUtils::toString(registrationRoot);
 
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 
-            pair<string, string> emailAddressAndName =
-				_mmsEngineDBFacade->getUserDetails (userKey);
+			pair<string, string> emailAddressAndName = _mmsEngineDBFacade->getUserDetails(userKey);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
 				confirmationURL += (":" + to_string(_guiPort));
-			confirmationURL += ("/catramms/conf/yourWorkspaces.xhtml?confirmationRequested=true&confirmationUserKey="
-				+ to_string(userKey)
-				+ "&confirmationCode=" + confirmationCode);
+			confirmationURL +=
+				("/catramms/conf/yourWorkspaces.xhtml?confirmationRequested=true&confirmationUserKey=" + to_string(userKey) +
+				 "&confirmationCode=" + confirmationCode);
 
-			_logger->info(__FILEREF__ + "Created Workspace code"
-				+ ", workspaceKey: " + to_string(workspaceKey)
-				+ ", userKey: " + to_string(userKey)
-				+ ", confirmationCode: " + confirmationCode
-				+ ", confirmationURL: " + confirmationURL
+			_logger->info(
+				__FILEREF__ + "Created Workspace code" + ", workspaceKey: " + to_string(workspaceKey) + ", userKey: " + to_string(userKey) +
+				", confirmationCode: " + confirmationCode + ", confirmationURL: " + confirmationURL
 			);
 
-            string tosCommaSeparated = emailAddressAndName.first;
-            string subject = "Confirmation code";
-            
-            vector<string> emailBody;
-            emailBody.push_back(string("<p>Dear ") + emailAddressAndName.second + ",</p>");
-            emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
-            emailBody.push_back(string("<p>here follows the confirmation code ") + confirmationCode + " to be used to confirm the registration</p>");
-			// string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/" + _apiVersion + "/user/" 
+			string tosCommaSeparated = emailAddressAndName.first;
+			string subject = "Confirmation code";
+
+			vector<string> emailBody;
+			emailBody.push_back(string("<p>Dear ") + emailAddressAndName.second + ",</p>");
+			emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
+			emailBody.push_back(string("<p>here follows the confirmation code ") + confirmationCode + " to be used to confirm the registration</p>");
+			// string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/" + _apiVersion + "/user/"
 			// 	+ to_string(userKey) + "/" + confirmationCode;
 			emailBody.push_back(string("<p>Click <a href=\"") + confirmationURL + "\">here</a> to confirm the registration</p>");
 			emailBody.push_back("<p>Have a nice day, best regards</p>");
-            emailBody.push_back("<p>MMS technical support</p>");
+			emailBody.push_back("<p>MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-				_emailUserName,	// i.e.: info@catramms-cloud.com
-				tosCommaSeparated,
-				_emailCcsCommaSeparated,
-				subject,
-				emailBody,
-				_emailPassword
+				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	   // i.e.: info@catramms-cloud.com
+				tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 			);
-            // EMailSender emailSender(_logger, _configuration);
+			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
-            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::shareWorkspace_(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters, string requestBody
+)
 {
-    string api = "shareWorkspace";
+	string api = "shareWorkspace";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
 
-    try
-    {
-        json metadataRoot;
-        try
-        {
+	try
+	{
+		json metadataRoot;
+		try
+		{
 			metadataRoot = JSONUtils::toJson(requestBody);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string(
+				"Json metadata failed during the parsing"
+				", json data: " +
+				requestBody
+			);
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
+			sendError(request, 400, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
 
 		vector<string> mandatoryFields = {
-			"email",
-			"createRemoveWorkspace",
-			"ingestWorkflow",
-			"createProfiles",
-			"deliveryAuthorization",
-			"shareWorkspace",
-			"editMedia",
-			"editConfiguration",
-			"killEncoding",
-			"cancelIngestionJob",
-			"editEncodersPool",
-			"applicationRecorder"
+			"email",	 "createRemoveWorkspace", "ingestWorkflow", "createProfiles",	  "deliveryAuthorization", "shareWorkspace",
+			"editMedia", "editConfiguration",	  "killEncoding",	"cancelIngestionJob", "editEncodersPool",	   "applicationRecorder"
 		};
-		for (string field: mandatoryFields)
+		for (string field : mandatoryFields)
 		{
 			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				string errorMessage = string("Json field is not present or it is null")
-				+ ", Json field: " + field;
+				string errorMessage = string("Json field is not present or it is null") + ", Json field: " + field;
 				_logger->error(__FILEREF__ + errorMessage);
 
 				sendError(request, 500, errorMessage);
@@ -838,7 +701,7 @@ void API::shareWorkspace_(
 
 		int64_t userKey;
 		string name;
-        bool userAlreadyPresent;
+		bool userAlreadyPresent;
 
 		string email = JSONUtils::asString(metadataRoot, "email", "");
 
@@ -848,8 +711,11 @@ void API::shareWorkspace_(
 			regex e("[[:w:]]+@[[:w:]]+\\.[[:w:]]+");
 			if (!regex_match(email, e))
 			{
-				string errorMessage = fmt::format("Wrong email format"
-					", email: {}", email);
+				string errorMessage = fmt::format(
+					"Wrong email format"
+					", email: {}",
+					email
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 500, errorMessage);
@@ -859,7 +725,7 @@ void API::shareWorkspace_(
 		}
 
 		// In case of ActiveDirectory, userAlreadyPresent is always true
-		if(_ldapEnabled)
+		if (_ldapEnabled)
 			userAlreadyPresent = true;
 		else
 		{
@@ -871,11 +737,9 @@ void API::shareWorkspace_(
 
 				userAlreadyPresent = true;
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				_logger->warn(__FILEREF__ + api + " failed"
-					+ ", e.what(): " + e.what()
-				);
+				_logger->warn(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 				userAlreadyPresent = false;
 			}
@@ -883,8 +747,7 @@ void API::shareWorkspace_(
 
 		if (!userAlreadyPresent && !_registerUserEnabled)
 		{
-			string errorMessage = string("registerUser is not enabled"
-			);
+			string errorMessage = string("registerUser is not enabled");
 			_logger->error(__FILEREF__ + errorMessage);
 
 			sendError(request, 400, errorMessage);
@@ -904,45 +767,37 @@ void API::shareWorkspace_(
 		bool editEncodersPool = JSONUtils::asBool(metadataRoot, "editEncodersPool", false);
 		bool applicationRecorder = JSONUtils::asBool(metadataRoot, "applicationRecorder", false);
 
-
-        try
-        {
-            _logger->info(__FILEREF__ + "Sharing workspace"
-                + ", userAlreadyPresent: " + to_string(userAlreadyPresent)
-                + ", email: " + email
-            );
+		try
+		{
+			_logger->info(__FILEREF__ + "Sharing workspace" + ", userAlreadyPresent: " + to_string(userAlreadyPresent) + ", email: " + email);
 
 			if (userAlreadyPresent)
 			{
 				bool admin = false;
 
-				_logger->info(__FILEREF__ + "createdCode"
-					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-					+ ", userKey: " + to_string(userKey)
-					+ ", email: " + email
-					+ ", codeType: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace)
+				_logger->info(
+					__FILEREF__ + "createdCode" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
+					", userKey: " + to_string(userKey) + ", email: " + email +
+					", codeType: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace)
 				);
 
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
-					workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace,
-					admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
-					editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
-					applicationRecorder
+					workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
+					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
+					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder
 				);
 
 				string confirmationURL = _guiProtocol + "://" + _guiHostname;
 				if (_guiProtocol == "https" && _guiPort != 443)
 					confirmationURL += (":" + to_string(_guiPort));
-				confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey="
-					+ to_string(userKey)
-					+ "&confirmationCode=" + shareWorkspaceCode);
+				confirmationURL +=
+					("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey=" + to_string(userKey) +
+					 "&confirmationCode=" + shareWorkspaceCode);
 
-				_logger->info(__FILEREF__ + "Created Shared Workspace code"
-					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-					+ ", email: " + email
-					+ ", userKey: " + to_string(userKey)
-					+ ", confirmationCode: " + shareWorkspaceCode
-					+ ", confirmationURL: " + confirmationURL
+				_logger->info(
+					__FILEREF__ + "Created Shared Workspace code" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
+					", email: " + email + ", userKey: " + to_string(userKey) + ", confirmationCode: " + shareWorkspaceCode +
+					", confirmationURL: " + confirmationURL
 				);
 
 				json registrationRoot;
@@ -951,33 +806,29 @@ void API::shareWorkspace_(
 
 				string responseBody = JSONUtils::toString(registrationRoot);
 
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-					request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 
 				string tosCommaSeparated = email;
 				string subject = "Share Workspace code";
-            
+
 				vector<string> emailBody;
 				emailBody.push_back(string("<p>Dear ") + name + ",</p>");
 				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the workspace has been shared successfully</p>"));
-				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>")
-					+ to_string(userKey) 
-					+ "</b> and the confirmation code <b>" + shareWorkspaceCode + "</b> to be used to confirm the sharing of the Workspace</p>");
 				emailBody.push_back(
-					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")
-					+ confirmationURL
-					+ "\">here</a> to confirm the registration</b></p>");
+					string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>") + to_string(userKey) + "</b> and the confirmation code <b>" +
+					shareWorkspaceCode + "</b> to be used to confirm the sharing of the Workspace</p>"
+				);
+				emailBody.push_back(
+					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"") + confirmationURL +
+					"\">here</a> to confirm the registration</b></p>"
+				);
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 				MMSCURL::sendEmail(
-					_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-					_emailUserName,	// i.e.: info@catramms-cloud.com
-					tosCommaSeparated,
-					_emailCcsCommaSeparated,
-					subject,
-					emailBody,
-					_emailPassword
+					_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+					_emailUserName,	   // i.e.: info@catramms-cloud.com
+					tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 				);
 				// EMailSender emailSender(_logger, _configuration);
 				// bool useMMSCCToo = true;
@@ -987,32 +838,26 @@ void API::shareWorkspace_(
 			{
 				bool admin = false;
 
-				_logger->info(__FILEREF__ + "createdCode"
-					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-					+ ", userKey: " + "-1"
-					+ ", email: " + email
-					+ ", codeType: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::ShareWorkspace)
+				_logger->info(
+					__FILEREF__ + "createdCode" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", userKey: " + "-1" +
+					", email: " + email + ", codeType: " + MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::ShareWorkspace)
 				);
 
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
-					workspace->_workspaceKey, -1, email, MMSEngineDBFacade::CodeType::ShareWorkspace,
-					admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
-					editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
-					applicationRecorder
+					workspace->_workspaceKey, -1, email, MMSEngineDBFacade::CodeType::ShareWorkspace, admin, createRemoveWorkspace, ingestWorkflow,
+					createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob,
+					editEncodersPool, applicationRecorder
 				);
 
 				string shareWorkspaceURL = _guiProtocol + "://" + _guiHostname;
 				if (_guiProtocol == "https" && _guiPort != 443)
 					shareWorkspaceURL += (":" + to_string(_guiPort));
-				shareWorkspaceURL += ("/catramms/login.xhtml?shareWorkspaceRequested=true&shareWorkspaceCode="
-					+ shareWorkspaceCode);
+				shareWorkspaceURL += ("/catramms/login.xhtml?shareWorkspaceRequested=true&shareWorkspaceCode=" + shareWorkspaceCode);
 				shareWorkspaceURL += ("&registrationEMail=" + email);
 
-				_logger->info(__FILEREF__ + "Created Shared Workspace code"
-					+ ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-					+ ", email: " + email
-					+ ", shareWorkspaceCode: " + shareWorkspaceCode
-					+ ", shareWorkspaceURL: " + shareWorkspaceURL
+				_logger->info(
+					__FILEREF__ + "Created Shared Workspace code" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
+					", email: " + email + ", shareWorkspaceCode: " + shareWorkspaceCode + ", shareWorkspaceURL: " + shareWorkspaceURL
 				);
 
 				json registrationRoot;
@@ -1020,322 +865,269 @@ void API::shareWorkspace_(
 
 				string responseBody = JSONUtils::toString(registrationRoot);
 
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-					request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 
 				string tosCommaSeparated = email;
 				string subject = "Share Workspace code";
 
 				vector<string> emailBody;
 				emailBody.push_back(string("<p>Dear ") + email + ",</p>");
-				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the <b>" + workspace->_name
-					+ "</b> workspace was shared with you</p>"));
-				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the share workspace code <b>")
-					+ shareWorkspaceCode + "</b></p>");
+				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the <b>" + workspace->_name + "</b> workspace was shared with you</p>"));
+				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the share workspace code <b>") + shareWorkspaceCode + "</b></p>");
 				emailBody.push_back(
-					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")
-					+ shareWorkspaceURL
-					+ "\">here</a> to continue with the registration</b></p>");
+					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"") + shareWorkspaceURL +
+					"\">here</a> to continue with the registration</b></p>"
+				);
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 				MMSCURL::sendEmail(
-					_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-					_emailUserName,	// i.e.: info@catramms-cloud.com
-					tosCommaSeparated,
-					_emailCcsCommaSeparated,
-					subject,
-					emailBody,
-					_emailPassword
+					_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+					_emailUserName,	   // i.e.: info@catramms-cloud.com
+					tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 				);
 				// EMailSender emailSender(_logger, _configuration);
 				// bool useMMSCCToo = true;
 				// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 			}
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::workspaceList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	int64_t userKey,
-	shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters,
-	bool admin)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters, bool admin
+)
 {
-    string api = "workspaceList";
+	string api = "workspaceList";
 
-    _logger->info(__FILEREF__ + "Received " + api
-    );
+	_logger->info(__FILEREF__ + "Received " + api);
 
-    try
-    {
-        bool costDetails = false;
-        auto costDetailsIt = queryParameters.find("costDetails");
-        if (costDetailsIt != queryParameters.end() && costDetailsIt->second == "true")
+	try
+	{
+		bool costDetails = false;
+		auto costDetailsIt = queryParameters.find("costDetails");
+		if (costDetailsIt != queryParameters.end() && costDetailsIt->second == "true")
 			costDetails = true;
 
-        {
+		{
 			json workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin, costDetails);
 
-            string responseBody = JSONUtils::toString(workspaceListRoot);
+			string responseBody = JSONUtils::toString(workspaceListRoot);
 
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::confirmRegistration(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, unordered_map<string, string> queryParameters
+)
 {
-    string api = "confirmRegistration";
+	string api = "confirmRegistration";
 
-    _logger->info(__FILEREF__ + "Received " + api
-    );
+	_logger->info(__FILEREF__ + "Received " + api);
 
-    try
-    {
-        auto confirmationCodeIt = queryParameters.find("confirmationeCode");
-        if (confirmationCodeIt == queryParameters.end())
-        {
-            string errorMessage = string("The 'confirmationeCode' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
+	try
+	{
+		auto confirmationCodeIt = queryParameters.find("confirmationeCode");
+		if (confirmationCodeIt == queryParameters.end())
+		{
+			string errorMessage = string("The 'confirmationeCode' parameter is not found");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
+			sendError(request, 400, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
 
-        try
-        {
-            tuple<string,string,string> apiKeyNameAndEmailAddress
-                = _mmsEngineDBFacade->confirmRegistration(confirmationCodeIt->second,
-					_expirationInDaysWorkspaceDefaultValue);
+		try
+		{
+			tuple<string, string, string> apiKeyNameAndEmailAddress =
+				_mmsEngineDBFacade->confirmRegistration(confirmationCodeIt->second, _expirationInDaysWorkspaceDefaultValue);
 
-            string apiKey;
-            string name;
-            string emailAddress;
-            
-            tie(apiKey, name, emailAddress) = apiKeyNameAndEmailAddress;
+			string apiKey;
+			string name;
+			string emailAddress;
+
+			tie(apiKey, name, emailAddress) = apiKeyNameAndEmailAddress;
 
 			json registrationRoot;
 			registrationRoot["apiKey"] = apiKey;
 
 			string responseBody = JSONUtils::toString(registrationRoot);
 
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 
-            string tosCommaSeparated = emailAddress;
-            string subject = "Welcome";
+			string tosCommaSeparated = emailAddress;
+			string subject = "Welcome";
 
 			string loginURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
 				loginURL += (":" + to_string(_guiPort));
 			loginURL += "/catramms/login.xhtml?confirmationRequested=false";
 
-            vector<string> emailBody;
-            emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-            emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Thank you for choosing the CatraMMS services</p>"));
-            emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Your registration is now completed and you can enjoy working with MMS</p>"));
-            emailBody.push_back(
-					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"")
-					+ loginURL
-					+ "\">here</a> to login into the MMS platform</b></p>");
-            emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Best regards</p>");
-            emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+			vector<string> emailBody;
+			emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+			emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Thank you for choosing the CatraMMS services</p>"));
+			emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Your registration is now completed and you can enjoy working with MMS</p>"));
+			emailBody.push_back(
+				string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"") + loginURL + "\">here</a> to login into the MMS platform</b></p>"
+			);
+			emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Best regards</p>");
+			emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-				_emailUserName,	// i.e.: info@catramms-cloud.com
-				tosCommaSeparated,
-				_emailCcsCommaSeparated,
-				subject,
-				emailBody,
-				_emailPassword
+				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	   // i.e.: info@catramms-cloud.com
+				tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 			);
-            // EMailSender emailSender(_logger, _configuration);
+			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
-            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
-void API::login(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        string requestBody)
+void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestBody)
 {
-    string api = "login";
+	string api = "login";
 
-    _logger->info(__FILEREF__ + "Received " + api
+	_logger->info(
+		__FILEREF__ + "Received " + api
 		// commented because of the password
-        // + ", requestBody: " + requestBody
-    );
+		// + ", requestBody: " + requestBody
+	);
 
-    try
-    {
-        json metadataRoot;
-        try
-        {
+	try
+	{
+		json metadataRoot;
+		try
+		{
 			metadataRoot = JSONUtils::toJson(requestBody);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string(
+				"Json metadata failed during the parsing"
+				", json data: " +
+				requestBody
+			);
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
+			sendError(request, 400, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
 
 		json loginDetailsRoot;
 		int64_t userKey;
 		string remoteClientIPAddress;
 
-        {
+		{
 			if (!_ldapEnabled)
 			{
-				vector<string> mandatoryFields = {
-					"email",
-					"password"
-				};
-				for (string field: mandatoryFields)
+				vector<string> mandatoryFields = {"email", "password"};
+				for (string field : mandatoryFields)
 				{
 					if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 					{
-						string errorMessage = string("Json field is not present or it is null")
-                            + ", Json field: " + field;
+						string errorMessage = string("Json field is not present or it is null") + ", Json field: " + field;
 						_logger->error(__FILEREF__ + errorMessage);
 
 						sendError(request, 400, errorMessage);
@@ -1355,14 +1147,9 @@ void API::login(
 
 				try
 				{
-					_logger->info(__FILEREF__ + "Login User"
-						+ ", email: " + email
-					);
-                        
-					loginDetailsRoot = _mmsEngineDBFacade->login(
-							email, 
-							password
-					);
+					_logger->info(__FILEREF__ + "Login User" + ", email: " + email);
+
+					loginDetailsRoot = _mmsEngineDBFacade->login(email, password);
 
 					field = "ldapEnabled";
 					loginDetailsRoot[field] = _ldapEnabled;
@@ -1372,30 +1159,23 @@ void API::login(
 
 					field = "userKey";
 					userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
-            
-					_logger->info(__FILEREF__ + "Login User"
-						+ ", userKey: " + to_string(userKey)
-						+ ", email: " + email
-					);
+
+					_logger->info(__FILEREF__ + "Login User" + ", userKey: " + to_string(userKey) + ", email: " + email);
 				}
-				catch(LoginFailed& e)
+				catch (LoginFailed &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					string errorMessage = e.what();
 					_logger->error(__FILEREF__ + errorMessage);
 
-					sendError(request, 401, errorMessage);   // unauthorized
+					sendError(request, 401, errorMessage); // unauthorized
 
 					throw runtime_error(errorMessage);
 				}
-				catch(runtime_error& e)
+				catch (runtime_error &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					string errorMessage = string("Internal server error: ") + e.what();
 					_logger->error(__FILEREF__ + errorMessage);
@@ -1404,11 +1184,9 @@ void API::login(
 
 					throw runtime_error(errorMessage);
 				}
-				catch(exception& e)
+				catch (exception &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					string errorMessage = string("Internal server error");
 					_logger->error(__FILEREF__ + errorMessage);
@@ -1420,16 +1198,12 @@ void API::login(
 			}
 			else // if (_ldapEnabled)
 			{
-				vector<string> mandatoryFields = {
-					"name",
-					"password"
-				};
-				for (string field: mandatoryFields)
+				vector<string> mandatoryFields = {"name", "password"};
+				for (string field : mandatoryFields)
 				{
 					if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 					{
-						string errorMessage = string("Json field is not present or it is null")
-                            + ", Json field: " + field;
+						string errorMessage = string("Json field is not present or it is null") + ", Json field: " + field;
 						_logger->error(__FILEREF__ + errorMessage);
 
 						sendError(request, 400, errorMessage);
@@ -1449,9 +1223,7 @@ void API::login(
 
 				try
 				{
-					_logger->info(__FILEREF__ + "Login User"
-						+ ", userName: " + userName
-					);
+					_logger->info(__FILEREF__ + "Login User" + ", userName: " + userName);
 
 					string email;
 					bool testCredentialsSuccessful = false;
@@ -1459,48 +1231,34 @@ void API::login(
 					{
 						istringstream iss(_ldapURL);
 						vector<string> ldapURLs;
-						copy(
-							istream_iterator<std::string>(iss),
-							istream_iterator<std::string>(),
-							back_inserter(ldapURLs)
-						);
+						copy(istream_iterator<std::string>(iss), istream_iterator<std::string>(), back_inserter(ldapURLs));
 
-						for(string ldapURL: ldapURLs)
+						for (string ldapURL : ldapURLs)
 						{
 							try
 							{
-								_logger->error(__FILEREF__ + "ldap URL"
-									+ ", ldapURL: " + ldapURL
-									+ ", userName: " + userName
-								);
+								_logger->error(__FILEREF__ + "ldap URL" + ", ldapURL: " + ldapURL + ", userName: " + userName);
 
 								LdapWrapper ldapWrapper;
 
-								ldapWrapper.init(ldapURL, _ldapCertificatePathName,
-									_ldapManagerUserName, _ldapManagerPassword);
+								ldapWrapper.init(ldapURL, _ldapCertificatePathName, _ldapManagerUserName, _ldapManagerPassword);
 
-								pair<bool, string> testCredentialsSuccessfulAndEmail =
-									ldapWrapper.testCredentials(userName, password, _ldapBaseDn);
+								pair<bool, string> testCredentialsSuccessfulAndEmail = ldapWrapper.testCredentials(userName, password, _ldapBaseDn);
 
 								tie(testCredentialsSuccessful, email) = testCredentialsSuccessfulAndEmail;
 
 								break;
 							}
-							catch(runtime_error& e)
+							catch (runtime_error &e)
 							{
-								_logger->error(__FILEREF__ + "ldap URL failed"
-									+ ", ldapURL: " + ldapURL
-									+ ", e.what(): " + e.what()
-								);
+								_logger->error(__FILEREF__ + "ldap URL failed" + ", ldapURL: " + ldapURL + ", e.what(): " + e.what());
 							}
 						}
 					}
 
 					if (!testCredentialsSuccessful)
 					{
-						_logger->error(__FILEREF__ + "Ldap Login failed"
-							+ ", userName: " + userName
-						);
+						_logger->error(__FILEREF__ + "Ldap Login failed" + ", userName: " + userName);
 
 						throw LoginFailed();
 					}
@@ -1508,13 +1266,11 @@ void API::login(
 					bool userAlreadyRegistered;
 					try
 					{
-						_logger->info(__FILEREF__ + "Login User"
-							+ ", email: " + email
-						);
+						_logger->info(__FILEREF__ + "Login User" + ", email: " + email);
 
 						loginDetailsRoot = _mmsEngineDBFacade->login(
 							email,
-							string("")		// password in case of ActiveDirectory is empty
+							string("") // password in case of ActiveDirectory is empty
 						);
 
 						field = "ldapEnabled";
@@ -1522,23 +1278,18 @@ void API::login(
 
 						field = "userKey";
 						userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
-            
-						_logger->info(__FILEREF__ + "Login User"
-							+ ", userKey: " + to_string(userKey)
-							+ ", email: " + email
-						);
+
+						_logger->info(__FILEREF__ + "Login User" + ", userKey: " + to_string(userKey) + ", email: " + email);
 
 						userAlreadyRegistered = true;
 					}
-					catch(LoginFailed& e)
+					catch (LoginFailed &e)
 					{
 						userAlreadyRegistered = false;
 					}
-					catch(runtime_error& e)
+					catch (runtime_error &e)
 					{
-						_logger->error(__FILEREF__ + api + " failed"
-							+ ", e.what(): " + e.what()
-						);
+						_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 						string errorMessage = string("Internal server error: ") + e.what();
 						_logger->error(__FILEREF__ + errorMessage);
@@ -1547,11 +1298,9 @@ void API::login(
 
 						throw runtime_error(errorMessage);
 					}
-					catch(exception& e)
+					catch (exception &e)
 					{
-						_logger->error(__FILEREF__ + api + " failed"
-							+ ", e.what(): " + e.what()
-						);
+						_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 						string errorMessage = string("Internal server error");
 						_logger->error(__FILEREF__ + errorMessage);
@@ -1563,9 +1312,7 @@ void API::login(
 
 					if (!userAlreadyRegistered)
 					{
-						_logger->info(__FILEREF__ + "Register ActiveDirectory User"
-							+ ", email: " + email
-						);
+						_logger->info(__FILEREF__ + "Register ActiveDirectory User" + ", email: " + email);
 
 						// flags set by default
 						bool createRemoveWorkspace = true;
@@ -1579,33 +1326,23 @@ void API::login(
 						bool cancelIngestionJob = true;
 						bool editEncodersPool = true;
 						bool applicationRecorder = true;
-						pair<int64_t,string> userKeyAndEmail =
-							_mmsEngineDBFacade->registerActiveDirectoryUser(
-							userName,
-							email,
-							string(""),	// userCountry,
-							string("CET"),
-							createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
-							editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
-							applicationRecorder,
-							_ldapDefaultWorkspaceKeys,
-							_expirationInDaysWorkspaceDefaultValue,
-							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
-								// chrono::system_clock::time_point userExpirationDate
+						pair<int64_t, string> userKeyAndEmail = _mmsEngineDBFacade->registerActiveDirectoryUser(
+							userName, email,
+							string(""), // userCountry,
+							string("CET"), createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
+							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, _ldapDefaultWorkspaceKeys,
+							_expirationInDaysWorkspaceDefaultValue, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+							// chrono::system_clock::time_point userExpirationDate
 						);
 
 						string apiKey;
 						tie(userKey, apiKey) = userKeyAndEmail;
 
-						_logger->info(__FILEREF__ + "Login User"
-							+ ", userKey: " + to_string(userKey)
-							+ ", apiKey: " + apiKey
-							+ ", email: " + email
-						);
+						_logger->info(__FILEREF__ + "Login User" + ", userKey: " + to_string(userKey) + ", apiKey: " + apiKey + ", email: " + email);
 
 						loginDetailsRoot = _mmsEngineDBFacade->login(
 							email,
-							string("")		// password in case of ActiveDirectory is empty
+							string("") // password in case of ActiveDirectory is empty
 						);
 
 						string field = "ldapEnabled";
@@ -1613,33 +1350,26 @@ void API::login(
 
 						field = "userKey";
 						userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
-            
-						_logger->info(__FILEREF__ + "Login User"
-							+ ", userKey: " + to_string(userKey)
-							+ ", email: " + email
-						);
+
+						_logger->info(__FILEREF__ + "Login User" + ", userKey: " + to_string(userKey) + ", email: " + email);
 					}
 				}
-				catch(LoginFailed& e)
+				catch (LoginFailed &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					string errorMessage = e.what();
 					_logger->error(__FILEREF__ + errorMessage);
 
-					sendError(request, 401, errorMessage);   // unauthorized
+					sendError(request, 401, errorMessage); // unauthorized
 
 					throw runtime_error(errorMessage);
 				}
-				catch(runtime_error& e)
+				catch (runtime_error &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", ldapURL: " + _ldapURL
-						+ ", ldapCertificatePathName: " + _ldapCertificatePathName
-						+ ", ldapManagerUserName: " + _ldapManagerUserName
-						+ ", e.what(): " + e.what()
+					_logger->error(
+						__FILEREF__ + api + " failed" + ", ldapURL: " + _ldapURL + ", ldapCertificatePathName: " + _ldapCertificatePathName +
+						", ldapManagerUserName: " + _ldapManagerUserName + ", e.what(): " + e.what()
 					);
 
 					string errorMessage = string("Internal server error: ") + e.what();
@@ -1649,11 +1379,9 @@ void API::login(
 
 					throw runtime_error(errorMessage);
 				}
-				catch(exception& e)
+				catch (exception &e)
 				{
-					_logger->error(__FILEREF__ + api + " failed"
-						+ ", e.what(): " + e.what()
-					);
+					_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
 					string errorMessage = string("Internal server error");
 					_logger->error(__FILEREF__ + errorMessage);
@@ -1663,24 +1391,23 @@ void API::login(
 					throw runtime_error(errorMessage);
 				}
 			}
-        }
+		}
 
 		if (remoteClientIPAddress != "")
 		{
 			try
 			{
-				_logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveLoginStatistics"
-					+ ", userKey: " + to_string(userKey)
-					+ ", remoteClientIPAddress: " + remoteClientIPAddress
+				_logger->info(
+					__FILEREF__ + "_mmsEngineDBFacade->saveLoginStatistics" + ", userKey: " + to_string(userKey) +
+					", remoteClientIPAddress: " + remoteClientIPAddress
 				);
 				_mmsEngineDBFacade->saveLoginStatistics(userKey, remoteClientIPAddress);
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
-					+ ", userKey: " + to_string(userKey)
-					+ ", remoteClientIPAddress: " + remoteClientIPAddress
-					+ ", e.what(): " + e.what()
+				_logger->error(
+					__FILEREF__ + "Saving Login Statistics failed" + ", userKey: " + to_string(userKey) +
+					", remoteClientIPAddress: " + remoteClientIPAddress + ", e.what(): " + e.what()
 				);
 
 				// string errorMessage = string("Internal server error: ") + e.what();
@@ -1690,12 +1417,11 @@ void API::login(
 
 				// throw runtime_error(errorMessage);
 			}
-			catch(exception& e)
+			catch (exception &e)
 			{
-				_logger->error(__FILEREF__ + "Saving Login Statistics failed"
-					+ ", userKey: " + to_string(userKey)
-					+ ", remoteClientIPAddress: " + remoteClientIPAddress
-					+ ", e.what(): " + e.what()
+				_logger->error(
+					__FILEREF__ + "Saving Login Statistics failed" + ", userKey: " + to_string(userKey) +
+					", remoteClientIPAddress: " + remoteClientIPAddress + ", e.what(): " + e.what()
 				);
 
 				// string errorMessage = string("Internal server error");
@@ -1707,125 +1433,108 @@ void API::login(
 			}
 		}
 
-        try
-        {
-            _logger->info(__FILEREF__ + "Login User"
-                + ", userKey: " + to_string(userKey)
-            );
+		try
+		{
+			_logger->info(__FILEREF__ + "Login User" + ", userKey: " + to_string(userKey));
 
-            json loginWorkspaceRoot =
-				_mmsEngineDBFacade->getLoginWorkspace(userKey,
+			json loginWorkspaceRoot = _mmsEngineDBFacade->getLoginWorkspace(
+				userKey,
 				// 2022-12-18: viene chiamato quando l'utente fa la login
-				false);
+				false
+			);
 
-            string field = "workspace";
-            loginDetailsRoot[field] = loginWorkspaceRoot;
+			string field = "workspace";
+			loginDetailsRoot[field] = loginWorkspaceRoot;
 
-            string responseBody = JSONUtils::toString(loginDetailsRoot);
+			string responseBody = JSONUtils::toString(loginDetailsRoot);
 
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::updateUser(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        int64_t userKey,
-        string requestBody,
-		bool admin)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, string requestBody, bool admin
+)
 {
-    string api = "updateUser";
+	string api = "updateUser";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
 
-    try
-    {
-        string name;
+	try
+	{
+		string name;
 		bool nameChanged;
-        string email;
+		string email;
 		bool emailChanged;
-        string country;
+		string country;
 		bool countryChanged;
-        string timezone;
+		string timezone;
 		bool timezoneChanged;
-        bool insolvent;
+		bool insolvent;
 		bool insolventChanged;
-        string expirationUtcDate;
+		string expirationUtcDate;
 		bool expirationDateChanged;
 		bool passwordChanged;
-        string newPassword;
-        string oldPassword;
+		string newPassword;
+		string oldPassword;
 
-        json metadataRoot;
-        try
-        {
+		json metadataRoot;
+		try
+		{
 			metadataRoot = JSONUtils::toJson(requestBody);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string(
+				"Json metadata failed during the parsing"
+				", json data: " +
+				requestBody
+			);
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
+			sendError(request, 400, errorMessage);
 
-            throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
 		}
 
 		nameChanged = false;
@@ -1835,8 +1544,8 @@ void API::updateUser(
 		insolventChanged = false;
 		expirationDateChanged = false;
 		passwordChanged = false;
-		if(!_ldapEnabled)
-        {
+		if (!_ldapEnabled)
+		{
 			string field = "name";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
@@ -1885,16 +1594,15 @@ void API::updateUser(
 				}
 			}
 
-			if (JSONUtils::isMetadataPresent(metadataRoot, "newPassword")
-				&& JSONUtils::isMetadataPresent(metadataRoot, "oldPassword"))
+			if (JSONUtils::isMetadataPresent(metadataRoot, "newPassword") && JSONUtils::isMetadataPresent(metadataRoot, "oldPassword"))
 			{
 				passwordChanged = true;
 				newPassword = JSONUtils::asString(metadataRoot, "newPassword", "");
 				oldPassword = JSONUtils::asString(metadataRoot, "oldPassword", "");
 			}
-        }
+		}
 		else
-        {
+		{
 			string field = "country";
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
@@ -1908,108 +1616,76 @@ void API::updateUser(
 				timezone = JSONUtils::asString(metadataRoot, field, "CET");
 				timezoneChanged = true;
 			}
+		}
 
-        }
+		try
+		{
+			_logger->info(__FILEREF__ + "Updating User" + ", userKey: " + to_string(userKey) + ", name: " + name + ", email: " + email);
 
-        try
-        {
-            _logger->info(__FILEREF__ + "Updating User"
-                + ", userKey: " + to_string(userKey)
-                + ", name: " + name
-                + ", email: " + email
-            );
+			json loginDetailsRoot = _mmsEngineDBFacade->updateUser(
+				admin, _ldapEnabled, userKey, nameChanged, name, emailChanged, email, countryChanged, country, timezoneChanged, timezone,
+				insolventChanged, insolvent, expirationDateChanged, expirationUtcDate, passwordChanged, newPassword, oldPassword
+			);
 
-            json loginDetailsRoot = _mmsEngineDBFacade->updateUser(
-				admin,
-				_ldapEnabled,
-				userKey,
-				nameChanged, name,
-				emailChanged, email,
-				countryChanged, country,
-				timezoneChanged, timezone,
-				insolventChanged, insolvent,
-				expirationDateChanged, expirationUtcDate,
-				passwordChanged, newPassword, oldPassword);
+			_logger->info(__FILEREF__ + "User updated" + ", userKey: " + to_string(userKey) + ", name: " + name + ", email: " + email);
 
-            _logger->info(__FILEREF__ + "User updated"
-                + ", userKey: " + to_string(userKey)
-                + ", name: " + name
-                + ", email: " + email
-            );
-            
-            string responseBody = JSONUtils::toString(loginDetailsRoot);
+			string responseBody = JSONUtils::toString(loginDetailsRoot);
 
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::createTokenToResetPassword(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, unordered_map<string, string> queryParameters
+)
 {
-    string api = "createTokenToResetPassword";
+	string api = "createTokenToResetPassword";
 
-    _logger->info(__FILEREF__ + "Received " + api
-    );
+	_logger->info(__FILEREF__ + "Received " + api);
 
-    try
-    {
-        string email;
-
+	try
+	{
+		string email;
 
 		auto emailIt = queryParameters.find("email");
 		if (emailIt == queryParameters.end())
@@ -2032,11 +1708,9 @@ void API::createTokenToResetPassword(
 
 		string resetPasswordToken;
 		string name;
-        try
-        {
-            _logger->info(__FILEREF__ + "getUserDetailsByEmail"
-                + ", email: " + email
-            );
+		try
+		{
+			_logger->info(__FILEREF__ + "getUserDetailsByEmail" + ", email: " + email);
 
 			bool warningIfError = false;
 			pair<int64_t, string> userDetails = _mmsEngineDBFacade->getUserDetailsByEmail(email, warningIfError);
@@ -2044,154 +1718,132 @@ void API::createTokenToResetPassword(
 			name = userDetails.second;
 
 			resetPasswordToken = _mmsEngineDBFacade->createResetPasswordToken(userKey);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
 
-        try
-        {
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 201, "");
+		try
+		{
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, "");
 
 			string resetPasswordURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
 				resetPasswordURL += (":" + to_string(_guiPort));
-			resetPasswordURL += (string("/catramms/login.xhtml?resetPasswordRequested=true")
-				+ "&resetPasswordToken=" + resetPasswordToken);
+			resetPasswordURL += (string("/catramms/login.xhtml?resetPasswordRequested=true") + "&resetPasswordToken=" + resetPasswordToken);
 
-            string tosCommaSeparated = email;
-            string subject = "Reset password";
+			string tosCommaSeparated = email;
+			string subject = "Reset password";
 
 			vector<string> emailBody;
 			emailBody.push_back(string("<p>Dear ") + name + ",</p>");
 			emailBody.push_back(
-				string("<p><b>Please click <a href=\"") + resetPasswordURL
-				+ "\">here</a> to reset your password. This link is valid for a limited time.</b></p>");
-            emailBody.push_back(string("In case you did not request any reset of your password, just ignore this email</p>"));
+				string("<p><b>Please click <a href=\"") + resetPasswordURL +
+				"\">here</a> to reset your password. This link is valid for a limited time.</b></p>"
+			);
+			emailBody.push_back(string("In case you did not request any reset of your password, just ignore this email</p>"));
 
-            emailBody.push_back("<p>Have a nice day, best regards</p>");
-            emailBody.push_back("<p>MMS technical support</p>");
+			emailBody.push_back("<p>Have a nice day, best regards</p>");
+			emailBody.push_back("<p>MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-				_emailUserName,	// i.e.: info@catramms-cloud.com
-				tosCommaSeparated,
-				_emailCcsCommaSeparated,
-				subject,
-				emailBody,
-				_emailPassword
+				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	   // i.e.: info@catramms-cloud.com
+				tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 			);
-            // EMailSender emailSender(_logger, _configuration);
+			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
-            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
-void API::resetPassword(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	string requestBody)
+void API::resetPassword(string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestBody)
 {
 	string api = "resetPassword";
 
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", requestBody: " + requestBody
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
 
-    try
-    {
+	try
+	{
 		string newPassword;
 		string resetPasswordToken;
 
-        json metadataRoot;
-        try
-        {
+		json metadataRoot;
+		try
+		{
 			metadataRoot = JSONUtils::toJson(requestBody);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string(
+				"Json metadata failed during the parsing"
+				", json data: " +
+				requestBody
+			);
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
 		}
 
 		resetPasswordToken = JSONUtils::asString(metadataRoot, "resetPasswordToken", "");
@@ -2218,190 +1870,183 @@ void API::resetPassword(
 
 		string name;
 		string email;
-        try
-        {
-            _logger->info(__FILEREF__ + "Reset Password"
-                + ", resetPasswordToken: " + resetPasswordToken
-            );
+		try
+		{
+			_logger->info(__FILEREF__ + "Reset Password" + ", resetPasswordToken: " + resetPasswordToken);
 
-            pair<string, string> details = _mmsEngineDBFacade->resetPassword(
-				resetPasswordToken, newPassword);
+			pair<string, string> details = _mmsEngineDBFacade->resetPassword(resetPasswordToken, newPassword);
 			name = details.first;
 			email = details.second;
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
 
-        try
-        {
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, "");
+		try
+		{
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, "");
 
-            string tosCommaSeparated = email;
-            string subject = "Reset password";
+			string tosCommaSeparated = email;
+			string subject = "Reset password";
 
-            vector<string> emailBody;
-            emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-            emailBody.push_back(string("your password has been changed.</p>"));
+			vector<string> emailBody;
+			emailBody.push_back(string("<p>Dear ") + name + ",</p>");
+			emailBody.push_back(string("your password has been changed.</p>"));
 
-            emailBody.push_back("<p>Have a nice day, best regards</p>");
-            emailBody.push_back("<p>MMS technical support</p>");
+			emailBody.push_back("<p>Have a nice day, best regards</p>");
+			emailBody.push_back("<p>MMS technical support</p>");
 
 			MMSCURL::sendEmail(
-				_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-				_emailUserName,	// i.e.: info@catramms-cloud.com
-				tosCommaSeparated,
-				_emailCcsCommaSeparated,
-				subject,
-				emailBody,
-				_emailPassword
+				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	   // i.e.: info@catramms-cloud.com
+				tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 			);
-            // EMailSender emailSender(_logger, _configuration);
+			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
-            // emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::updateWorkspace(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        int64_t userKey,
-        string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
+	string requestBody
+)
 {
-    string api = "updateWorkspace";
+	string api = "updateWorkspace";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
 
-    try
-    {
-        bool newEnabled; bool enabledChanged = false;
-        string newName; bool nameChanged = false;
-        string newMaxEncodingPriority; bool maxEncodingPriorityChanged = false;
-        string newEncodingPeriod; bool encodingPeriodChanged = false;
-        int64_t newMaxIngestionsNumber; bool maxIngestionsNumberChanged = false;
-        string newLanguageCode; bool languageCodeChanged = false;
-        string newExpirationUtcDate; bool expirationDateChanged = false;
+	try
+	{
+		bool newEnabled;
+		bool enabledChanged = false;
+		string newName;
+		bool nameChanged = false;
+		string newMaxEncodingPriority;
+		bool maxEncodingPriorityChanged = false;
+		string newEncodingPeriod;
+		bool encodingPeriodChanged = false;
+		int64_t newMaxIngestionsNumber;
+		bool maxIngestionsNumberChanged = false;
+		string newLanguageCode;
+		bool languageCodeChanged = false;
+		string newExpirationUtcDate;
+		bool expirationDateChanged = false;
 
-		bool maxStorageInGBChanged = false; int64_t maxStorageInGB;
-		bool currentCostForStorageChanged = false; int64_t currentCostForStorage;
-		bool dedicatedEncoder_power_1Changed = false; int64_t dedicatedEncoder_power_1;
-		bool currentCostForDedicatedEncoder_power_1Changed = false; int64_t currentCostForDedicatedEncoder_power_1;
-		bool dedicatedEncoder_power_2Changed = false; int64_t dedicatedEncoder_power_2;
-		bool currentCostForDedicatedEncoder_power_2Changed = false; int64_t currentCostForDedicatedEncoder_power_2;
-		bool dedicatedEncoder_power_3Changed = false; int64_t dedicatedEncoder_power_3;
-		bool currentCostForDedicatedEncoder_power_3Changed = false; int64_t currentCostForDedicatedEncoder_power_3;
-		bool CDN_type_1Changed = false; int64_t CDN_type_1;
-		bool currentCostForCDN_type_1Changed = false; int64_t currentCostForCDN_type_1;
-		bool support_type_1Changed = false; bool support_type_1;
-		bool currentCostForSupport_type_1Changed = false; int64_t currentCostForSupport_type_1;
+		bool maxStorageInGBChanged = false;
+		int64_t maxStorageInGB;
+		bool currentCostForStorageChanged = false;
+		int64_t currentCostForStorage;
+		bool dedicatedEncoder_power_1Changed = false;
+		int64_t dedicatedEncoder_power_1;
+		bool currentCostForDedicatedEncoder_power_1Changed = false;
+		int64_t currentCostForDedicatedEncoder_power_1;
+		bool dedicatedEncoder_power_2Changed = false;
+		int64_t dedicatedEncoder_power_2;
+		bool currentCostForDedicatedEncoder_power_2Changed = false;
+		int64_t currentCostForDedicatedEncoder_power_2;
+		bool dedicatedEncoder_power_3Changed = false;
+		int64_t dedicatedEncoder_power_3;
+		bool currentCostForDedicatedEncoder_power_3Changed = false;
+		int64_t currentCostForDedicatedEncoder_power_3;
+		bool CDN_type_1Changed = false;
+		int64_t CDN_type_1;
+		bool currentCostForCDN_type_1Changed = false;
+		int64_t currentCostForCDN_type_1;
+		bool support_type_1Changed = false;
+		bool support_type_1;
+		bool currentCostForSupport_type_1Changed = false;
+		int64_t currentCostForSupport_type_1;
 
-        bool newCreateRemoveWorkspace;
-        bool newIngestWorkflow;
-        bool newCreateProfiles;
-        bool newDeliveryAuthorization;
-        bool newShareWorkspace;
-        bool newEditMedia;
-        bool newEditConfiguration;
-        bool newKillEncoding;
-        bool newCancelIngestionJob;
-        bool newEditEncodersPool;
-        bool newApplicationRecorder;
+		bool newCreateRemoveWorkspace;
+		bool newIngestWorkflow;
+		bool newCreateProfiles;
+		bool newDeliveryAuthorization;
+		bool newShareWorkspace;
+		bool newEditMedia;
+		bool newEditConfiguration;
+		bool newKillEncoding;
+		bool newCancelIngestionJob;
+		bool newEditEncodersPool;
+		bool newApplicationRecorder;
 
-        json metadataRoot;
-        try
-        {
+		json metadataRoot;
+		try
+		{
 			metadataRoot = JSONUtils::toJson(requestBody);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string(
+				"Json metadata failed during the parsing"
+				", json data: " +
+				requestBody
+			);
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
+			sendError(request, 400, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
 
 		string field = "enabled";
 		if (JSONUtils::isMetadataPresent(metadataRoot, field))
@@ -2535,26 +2180,14 @@ void API::updateWorkspace(
 			json userAPIKeyRoot = metadataRoot[field];
 
 			{
-				vector<string> mandatoryFields = {
-					"createRemoveWorkspace",
-					"ingestWorkflow",
-					"createProfiles",
-					"deliveryAuthorization",
-					"shareWorkspace",
-					"editMedia",
-					"editConfiguration",
-					"killEncoding",
-					"cancelIngestionJob",
-					"editEncodersPool",
-					"applicationRecorder"
-				};
-				for (string field: mandatoryFields)
+				vector<string> mandatoryFields = {"createRemoveWorkspace", "ingestWorkflow",   "createProfiles",	 "deliveryAuthorization",
+												  "shareWorkspace",		   "editMedia",		   "editConfiguration",	 "killEncoding",
+												  "cancelIngestionJob",	   "editEncodersPool", "applicationRecorder"};
+				for (string field : mandatoryFields)
 				{
 					if (!JSONUtils::isMetadataPresent(userAPIKeyRoot, field))
 					{
-						string errorMessage =
-							string("Json field is not present or it is null")
-							+ ", Json field: " + field;
+						string errorMessage = string("Json field is not present or it is null") + ", Json field: " + field;
 						_logger->error(__FILEREF__ + errorMessage);
 
 						sendError(request, 400, errorMessage);
@@ -2605,159 +2238,107 @@ void API::updateWorkspace(
 			newApplicationRecorder = JSONUtils::asBool(userAPIKeyRoot, field, false);
 		}
 
-        try
-        {
-            _logger->info(__FILEREF__ + "Updating WorkspaceDetails"
-                + ", userKey: " + to_string(userKey)
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
+		try
+		{
+			_logger->info(
+				__FILEREF__ + "Updating WorkspaceDetails" + ", userKey: " + to_string(userKey) +
+				", workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
 
-			#ifdef __POSTGRES__
-			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
-				userKey,
-				workspace->_workspaceKey,
-				enabledChanged, newEnabled,
-				nameChanged, newName,
-				maxEncodingPriorityChanged, newMaxEncodingPriority,
-				encodingPeriodChanged, newEncodingPeriod,
-				maxIngestionsNumberChanged, newMaxIngestionsNumber,
-				languageCodeChanged, newLanguageCode,
-				expirationDateChanged, newExpirationUtcDate,
+#ifdef __POSTGRES__
+			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails(
+				userKey, workspace->_workspaceKey, enabledChanged, newEnabled, nameChanged, newName, maxEncodingPriorityChanged,
+				newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged, newMaxIngestionsNumber,
+				languageCodeChanged, newLanguageCode, expirationDateChanged, newExpirationUtcDate,
 
-				maxStorageInGBChanged, maxStorageInGB,
-				currentCostForStorageChanged, currentCostForStorage,
-				dedicatedEncoder_power_1Changed, dedicatedEncoder_power_1,
-				currentCostForDedicatedEncoder_power_1Changed, currentCostForDedicatedEncoder_power_1,
-				dedicatedEncoder_power_2Changed, dedicatedEncoder_power_2,
-				currentCostForDedicatedEncoder_power_2Changed, currentCostForDedicatedEncoder_power_2,
-				dedicatedEncoder_power_3Changed, dedicatedEncoder_power_3,
-				currentCostForDedicatedEncoder_power_3Changed, currentCostForDedicatedEncoder_power_3,
-				CDN_type_1Changed, CDN_type_1,
-				currentCostForCDN_type_1Changed, currentCostForCDN_type_1,
-				support_type_1Changed, support_type_1,
-				currentCostForSupport_type_1Changed, currentCostForSupport_type_1,
+				maxStorageInGBChanged, maxStorageInGB, currentCostForStorageChanged, currentCostForStorage, dedicatedEncoder_power_1Changed,
+				dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1Changed, currentCostForDedicatedEncoder_power_1,
+				dedicatedEncoder_power_2Changed, dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2Changed,
+				currentCostForDedicatedEncoder_power_2, dedicatedEncoder_power_3Changed, dedicatedEncoder_power_3,
+				currentCostForDedicatedEncoder_power_3Changed, currentCostForDedicatedEncoder_power_3, CDN_type_1Changed, CDN_type_1,
+				currentCostForCDN_type_1Changed, currentCostForCDN_type_1, support_type_1Changed, support_type_1, currentCostForSupport_type_1Changed,
+				currentCostForSupport_type_1,
 
-				newCreateRemoveWorkspace,
-				newIngestWorkflow,
-				newCreateProfiles,
-				newDeliveryAuthorization,
-				newShareWorkspace,
-				newEditMedia,
-				newEditConfiguration,
-				newKillEncoding,
-				newCancelIngestionJob,
-				newEditEncodersPool,
-				newApplicationRecorder);
-			#else
+				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
+				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newApplicationRecorder
+			);
+#else
 			bool maxStorageInMBChanged = false;
 			int64_t newMaxStorageInMB = 0;
-			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
-				userKey,
-				workspace->_workspaceKey,
-				enabledChanged, newEnabled,
-				nameChanged, newName,
-				maxEncodingPriorityChanged, newMaxEncodingPriority,
-				encodingPeriodChanged, newEncodingPeriod,
-				maxIngestionsNumberChanged, newMaxIngestionsNumber,
-				maxStorageInMBChanged, newMaxStorageInMB,
-				languageCodeChanged, newLanguageCode,
-				expirationDateChanged, newExpirationUtcDate,
-				newCreateRemoveWorkspace,
-				newIngestWorkflow,
-				newCreateProfiles,
-				newDeliveryAuthorization,
-				newShareWorkspace,
-				newEditMedia,
-				newEditConfiguration,
-				newKillEncoding,
-				newCancelIngestionJob,
-				newEditEncodersPool,
-				newApplicationRecorder);
-			#endif
+			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails(
+				userKey, workspace->_workspaceKey, enabledChanged, newEnabled, nameChanged, newName, maxEncodingPriorityChanged,
+				newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged, newMaxIngestionsNumber,
+				maxStorageInMBChanged, newMaxStorageInMB, languageCodeChanged, newLanguageCode, expirationDateChanged, newExpirationUtcDate,
+				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
+				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newApplicationRecorder
+			);
+#endif
 
-            _logger->info(__FILEREF__ + "WorkspaceDetails updated"
-                + ", userKey: " + to_string(userKey)
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
-            
-            string responseBody = JSONUtils::toString(workspaceDetailRoot);
-            
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			_logger->info(
+				__FILEREF__ + "WorkspaceDetails updated" + ", userKey: " + to_string(userKey) +
+				", workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string responseBody = JSONUtils::toString(workspaceDetailRoot);
 
-            sendError(request, 500, errorMessage);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			sendError(request, 500, errorMessage);
 
-            sendError(request, 500, errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        throw runtime_error(errorMessage);
-    }
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::setWorkspaceAsDefault(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        int64_t userKey,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
+	unordered_map<string, string> queryParameters, string requestBody
+)
 {
-    string api = "setWorkspaceAsDefault";
+	string api = "setWorkspaceAsDefault";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
 
-    try
-    {
-        int64_t workspaceKeyToBeSetAsDefault = -1;
-        auto workspaceKeyToBeSetAsDefaultIt = queryParameters.find("workspaceKeyToBeSetAsDefault");
-        if (workspaceKeyToBeSetAsDefaultIt == queryParameters.end() || workspaceKeyToBeSetAsDefaultIt->second == "")
+	try
+	{
+		int64_t workspaceKeyToBeSetAsDefault = -1;
+		auto workspaceKeyToBeSetAsDefaultIt = queryParameters.find("workspaceKeyToBeSetAsDefault");
+		if (workspaceKeyToBeSetAsDefaultIt == queryParameters.end() || workspaceKeyToBeSetAsDefaultIt->second == "")
 		{
 			string errorMessage = string("The 'workspaceKeyToBeSetAsDefault' parameter is not found");
 			_logger->error(__FILEREF__ + errorMessage);
@@ -2768,123 +2349,102 @@ void API::setWorkspaceAsDefault(
 		}
 		workspaceKeyToBeSetAsDefault = stoll(workspaceKeyToBeSetAsDefaultIt->second);
 
-        try
-        {
-            _logger->info(__FILEREF__ + "setWorkspaceAsDefault"
-                + ", userKey: " + to_string(userKey)
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
-            
-            _mmsEngineDBFacade->setWorkspaceAsDefault (userKey, workspace->_workspaceKey,
-					workspaceKeyToBeSetAsDefault);
-
-            string responseBody;
-
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-}
-
-void API::deleteWorkspace(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-		int64_t userKey,
-        shared_ptr<Workspace> workspace)
-{
-    string api = "deleteWorkspace";
-
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", userKey: " + to_string(userKey)
-		+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-    );
-
-    try
-    {
-		if (_noFileSystemAccess)
+		try
 		{
-            _logger->error(__FILEREF__ + api + " failed, no rights to execute this method"
-				+ ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
-            );
+			_logger->info(
+				__FILEREF__ + "setWorkspaceAsDefault" + ", userKey: " + to_string(userKey) + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
 
-            string errorMessage = string("Internal server error: ") + "no rights to execute this method";
-            _logger->error(__FILEREF__ + errorMessage);
+			_mmsEngineDBFacade->setWorkspaceAsDefault(userKey, workspace->_workspaceKey, workspaceKeyToBeSetAsDefault);
+
+			string responseBody;
+
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
 			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+void API::deleteWorkspace(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, shared_ptr<Workspace> workspace
+)
+{
+	string api = "deleteWorkspace";
+
+	_logger->info(__FILEREF__ + "Received " + api + ", userKey: " + to_string(userKey) + ", workspaceKey: " + to_string(workspace->_workspaceKey));
+
+	try
+	{
+		if (_noFileSystemAccess)
+		{
+			_logger->error(
+				__FILEREF__ + api + " failed, no rights to execute this method" + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess)
+			);
+
+			string errorMessage = string("Internal server error: ") + "no rights to execute this method";
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-        try
-        {
-            _logger->info(__FILEREF__ + "Delete Workspace from DB"
-                + ", userKey: " + to_string(userKey)
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
+		try
+		{
+			_logger->info(
+				__FILEREF__ + "Delete Workspace from DB" + ", userKey: " + to_string(userKey) +
+				", workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
 
 			// ritorna gli utenti eliminati perchè avevano solamente il workspace che è stato rimosso
-			vector<tuple<int64_t, string, string>> usersRemoved = _mmsEngineDBFacade->deleteWorkspace(
-				userKey, workspace->_workspaceKey);
+			vector<tuple<int64_t, string, string>> usersRemoved = _mmsEngineDBFacade->deleteWorkspace(userKey, workspace->_workspaceKey);
 
-            _logger->info(__FILEREF__ + "Workspace from DB deleted"
-                + ", userKey: " + to_string(userKey)
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
-            
+			_logger->info(
+				__FILEREF__ + "Workspace from DB deleted" + ", userKey: " + to_string(userKey) +
+				", workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
+
 			if (usersRemoved.size() > 0)
 			{
-				for(tuple<int64_t, string, string> userDetails: usersRemoved)
+				for (tuple<int64_t, string, string> userDetails : usersRemoved)
 				{
 					string name;
 					string eMailAddress;
@@ -2896,155 +2456,133 @@ void API::deleteWorkspace(
 
 					vector<string> emailBody;
 					emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + workspace->_name + ") was removed and</p>"));
+					emailBody.push_back(string(
+						"<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + workspace->_name +
+						") was removed and</p>"
+					));
 					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>"));
-					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>"));
+					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>"
+					));
 					emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
 					emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 					MMSCURL::sendEmail(
-						_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-						_emailUserName,	// i.e.: info@catramms-cloud.com
-						tosCommaSeparated,
-						_emailCcsCommaSeparated,
-						subject,
-						emailBody,
-						_emailPassword
+						_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+						_emailUserName,	   // i.e.: info@catramms-cloud.com
+						tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 					);
 				}
 			}
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
 			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+			throw runtime_error(errorMessage);
+		}
 
-        try
-        {
-            _logger->info(__FILEREF__ + "Delete Workspace from Storage"
-                + ", userKey: " + to_string(userKey)
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
-            
-            _mmsStorage->deleteWorkspace(workspace);
+		try
+		{
+			_logger->info(
+				__FILEREF__ + "Delete Workspace from Storage" + ", userKey: " + to_string(userKey) +
+				", workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
 
-            _logger->info(__FILEREF__ + "Workspace from Storage deleted"
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
-            
-            string responseBody;
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			_mmsStorage->deleteWorkspace(workspace);
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			_logger->info(__FILEREF__ + "Workspace from Storage deleted" + ", workspaceKey: " + to_string(workspace->_workspaceKey));
 
-            sendError(request, 500, errorMessage);
+			string responseBody;
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			sendError(request, 500, errorMessage);
 
-            sendError(request, 500, errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-			+ ", userKey: " + to_string(userKey)
-			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            + ", e.what(): " + e.what()
-        );
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-			+ ", userKey: " + to_string(userKey)
-			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            + ", e.what(): " + e.what()
-        );
+			sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(
+			__FILEREF__ + "API failed" + ", API: " + api + ", userKey: " + to_string(userKey) +
+			", workspaceKey: " + to_string(workspace->_workspaceKey) + ", e.what(): " + e.what()
+		);
 
-        sendError(request, 500, errorMessage);
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(
+			__FILEREF__ + "API failed" + ", API: " + api + ", userKey: " + to_string(userKey) +
+			", workspaceKey: " + to_string(workspace->_workspaceKey) + ", e.what(): " + e.what()
+		);
 
-        throw runtime_error(errorMessage);
-    }
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::unshareWorkspace(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	int64_t userKey,
-	shared_ptr<Workspace> workspace)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, shared_ptr<Workspace> workspace
+)
 {
-    string api = "unshareWorkspace";
+	string api = "unshareWorkspace";
 
-    _logger->info(__FILEREF__ + "Received " + api
-		+ ", userKey: " + to_string(userKey)
-		+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", userKey: " + to_string(userKey) + ", workspaceKey: " + to_string(workspace->_workspaceKey));
 
-    try
-    {
-        try
-        {
-            _logger->info(__FILEREF__ + "Unshare Workspace"
-                + ", userKey: " + to_string(userKey)
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
+	try
+	{
+		try
+		{
+			_logger->info(
+				__FILEREF__ + "Unshare Workspace" + ", userKey: " + to_string(userKey) + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
 
 			// ritorna gli utenti eliminati perchè avevano solamente il workspace che è stato unshared
-			auto [userToBeRemoved, name, eMailAddress] = _mmsEngineDBFacade->unshareWorkspace(
-				userKey, workspace->_workspaceKey);
+			auto [userToBeRemoved, name, eMailAddress] = _mmsEngineDBFacade->unshareWorkspace(userKey, workspace->_workspaceKey);
 
-            _logger->info(__FILEREF__ + "Workspace from DB unshared"
-                + ", userKey: " + to_string(userKey)
-                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            );
-            
+			_logger->info(
+				__FILEREF__ + "Workspace from DB unshared" + ", userKey: " + to_string(userKey) +
+				", workspaceKey: " + to_string(workspace->_workspaceKey)
+			);
+
 			if (userToBeRemoved)
 			{
 				string tosCommaSeparated = eMailAddress;
@@ -3052,142 +2590,126 @@ void API::unshareWorkspace(
 
 				vector<string> emailBody;
 				emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + workspace->_name + ") was unshared and</p>"));
+				emailBody.push_back(string(
+					"<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + workspace->_name +
+					") was unshared and</p>"
+				));
 				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>"));
 				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>"));
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
 				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 				MMSCURL::sendEmail(
-					_emailProviderURL,	// i.e.: smtps://smtppro.zoho.eu:465
-					_emailUserName,	// i.e.: info@catramms-cloud.com
-					tosCommaSeparated,
-					_emailCcsCommaSeparated,
-					subject,
-					emailBody,
-					_emailPassword
+					_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+					_emailUserName,	   // i.e.: info@catramms-cloud.com
+					tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
 				);
 			}
 
-            string responseBody;
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			string responseBody;
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error: ") + e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
 			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + api + " failed"
-                + ", e.what(): " + e.what()
-            );
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = string("Internal server error");
+			_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-			+ ", userKey: " + to_string(userKey)
-			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            + ", e.what(): " + e.what()
-        );
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(
+			__FILEREF__ + "API failed" + ", API: " + api + ", userKey: " + to_string(userKey) +
+			", workspaceKey: " + to_string(workspace->_workspaceKey) + ", e.what(): " + e.what()
+		);
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-			+ ", userKey: " + to_string(userKey)
-			+ ", workspaceKey: " + to_string(workspace->_workspaceKey)
-            + ", e.what(): " + e.what()
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(
+			__FILEREF__ + "API failed" + ", API: " + api + ", userKey: " + to_string(userKey) +
+			", workspaceKey: " + to_string(workspace->_workspaceKey) + ", e.what(): " + e.what()
+		);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
-void API::workspaceUsage (
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace)
+void API::workspaceUsage(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace
+)
 {
-    json workspaceUsageRoot;
-    
-    string api = "workspaceUsage";
+	json workspaceUsageRoot;
 
-    try
-    {
-        string field;
-        
-        {
-            json requestParametersRoot;
-            
-            field = "requestParameters";
-            workspaceUsageRoot[field] = requestParametersRoot;
-        }
-        
-        json responseRoot;
+	string api = "workspaceUsage";
+
+	try
+	{
+		string field;
+
+		{
+			json requestParametersRoot;
+
+			field = "requestParameters";
+			workspaceUsageRoot[field] = requestParametersRoot;
+		}
+
+		json responseRoot;
 		{
 			int64_t workSpaceUsageInBytes;
 
-			pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB =
-				_mmsEngineDBFacade->getWorkspaceUsage(workspace->_workspaceKey);
-			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;              
-                                                                                                            
+			pair<int64_t, int64_t> workSpaceUsageInBytesAndMaxStorageInMB = _mmsEngineDBFacade->getWorkspaceUsage(workspace->_workspaceKey);
+			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;
+
 			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
 
 			field = "usageInMB";
 			responseRoot[field] = workSpaceUsageInMB;
 		}
-        
-        field = "response";
-        workspaceUsageRoot[field] = responseRoot;
+
+		field = "response";
+		workspaceUsageRoot[field] = responseRoot;
 
 		string responseBody = JSONUtils::toString(workspaceUsageRoot);
-            
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 200, responseBody);            
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "getWorkspaceUsage exception"
-            + ", e.what(): " + e.what()
-        );
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "getWorkspaceUsage exception" + ", e.what(): " + e.what());
 
 		sendError(request, 500, e.what());
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "getWorkspaceUsage exception"
-        );
+		throw e;
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "getWorkspaceUsage exception");
 
 		sendError(request, 500, e.what());
 
-        throw e;
-    }
+		throw e;
+	}
 }
