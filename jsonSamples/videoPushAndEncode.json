@@ -19,7 +19,7 @@
                 "type": "Encode",
                 "parameters": {
                     "encodingPriority": "Low",
-                    "EncodingProfilesSetLabel": "Sport"
+                    "encodingProfilesSetLabel": "Sport"
                 }
             }
         }

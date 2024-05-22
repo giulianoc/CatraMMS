@@ -982,8 +982,8 @@ vector<int64_t> API::ingestionSingleTask(
 		// scenarios: case 1. in case of EncodingProfilesSet case 2. in case we
 		// will have more than one References
 
-		string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
-		string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
+		string encodingProfilesSetKeyField = "encodingProfilesSetKey";
+		string encodingProfilesSetLabelField = "encodingProfilesSetLabel";
 		string referencesField = "references";
 
 		if (parametersSectionPresent &&
@@ -1048,8 +1048,8 @@ vector<int64_t> API::ingestionSingleTask(
 				{
 					string errorMessage = __FILEREF__ +
 										  "No EncodingProfileKey into the "
-										  "EncodingProfilesSetKey" +
-										  ", EncodingProfilesSetKey/EncodingProfilesSetLabel: " + encodingProfilesSetReference +
+										  "encodingProfilesSetKey" +
+										  ", encodingProfilesSetKey/encodingProfilesSetLabel: " + encodingProfilesSetReference +
 										  ", ingestionRootKey: " + to_string(ingestionRootKey) + ", type: " + type + ", taskLabel: " + taskLabel;
 					_logger->error(errorMessage);
 

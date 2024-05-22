@@ -23,3 +23,10 @@ Examples:
 nohup ./ingestionThroughChunk.sh 10 HNVOoVhHx0yoWNIxFu-ThBA1vAPEKWSxneGgze6eAodfCj8pNouN2apCURJyaGdNz VTS_01_4_4k pippo 10y ../VTS_01_4_4k.mkv &
 tail -f nohup.out 
 
+Options:
+1. in case you want to use a specific "encoding profiles set"
+	edit the helper/ingestionWorkflow.json file and replace the "encodingProfileLabel" field with the "encodingProfilesSetLabel" field and set his value
+2. in case you want to use a specific "encoders pool"
+	edit the helper/ingestionWorkflow.json file and add the "encodersPool" field to the "task->onSuccess->task->parameters->tasks[@type=Encode]->parameters" json object
+
+

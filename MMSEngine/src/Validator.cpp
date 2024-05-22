@@ -1443,8 +1443,8 @@ void Validator::validateEncodeMetadata(
 		}
 	}
 
-	string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
-	string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
+	string encodingProfilesSetKeyField = "encodingProfilesSetKey";
+	string encodingProfilesSetLabelField = "encodingProfilesSetLabel";
 	string encodingProfileKeyField = "encodingProfileKey";
 	string encodingProfileLabelField = "encodingProfileLabel";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField) &&

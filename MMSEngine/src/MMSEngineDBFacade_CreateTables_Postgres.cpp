@@ -1523,8 +1523,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			// viene usato dalla select di getIngestionsToBeManaged
-			string sqlStatement = "create index if not exists MMS_IngestionJob_idx15 on MMS_IngestionJob(priority, "
-								  "processingstartingfrom, toBeManaged_virtual, processorMMS) NULLS NOT DISTINCT";
+			string sqlStatement = "create index if not exists MMS_IngestionJob_idx15 on MMS_IngestionJob(priority, processingstartingfrom, "
+								  "toBeManaged_virtual, processorMMS, scheduleStart_virtual) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
@@ -1731,6 +1731,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
 				"constraint MMS_MediaItem_FK foreign key (workspaceKey) "
 				"references MMS_Workspace (workspaceKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			// usato da getMediaItemKeyDetails
+			string sqlStatement = "create index if not exists MMS_MediaItem_idx1 on MMS_MediaItem (workspaceKey, mediaItemKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(

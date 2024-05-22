@@ -9,7 +9,7 @@
 				{ "mediaItemKey": 11 }
 			],
 			"encodingPriority": "Low",
-			"EncodingProfilesSetLabel": "Sport"
+			"encodingProfilesSetLabel": "Sport"
 		}
 	}
 }

@@ -23,7 +23,7 @@
 				"type": "Encode",
 				"parameters":
 				{
-					"EncodingProfilesSetLabel": "${profileSet}",
+					"encodingProfilesSetLabel": "${profileSet}",
 					"contentType": "image",
 					"encodingPriority": "Low"
 				}

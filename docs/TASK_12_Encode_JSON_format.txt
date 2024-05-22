@@ -34,13 +34,13 @@
 		// encoders pool has to be used
 		"encodersPool": "",
 
-		// mandatory: just one, EncodingProfilesSetKey, EncodingProfilesSetLabel,
-		//    EncodingProfileKey or EncodingProfileLabel has to be present.
-		//      EncodingProfilesSetLabel or EncodingProfilesSetKey will refer a set of profiles, 
+		// mandatory: just one, encodingProfilesSetKey, encodingProfilesSetLabel,
+		//    encodingProfileKey or encodingProfileLabel has to be present.
+		//      encodingProfilesSetLabel or encodingProfilesSetKey will refer a set of profiles, 
 		//            so several encodings will be generated.
-		//      EncodingProfileLabel or EncodingProfileKey will represent just one profile
-		"EncodingProfilesSetLabel": "Sport",
-		"EncodingProfilesSetKey": 1,
+		//      encodingProfileLabel or encodingProfileKey will represent just one profile
+		"encodingProfilesSetLabel": "Sport",
+		"encodingProfilesSetKey": 1,
 		"encodingProfileKey": 1,
 		"encodingProfileLabel": "Profile Logo",
 

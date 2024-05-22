@@ -19,7 +19,7 @@
 				"type": "Encode",
 				"parameters": {
 					"encodingPriority": "Low",
-					"EncodingProfilesSetKey": 1
+					"encodingProfilesSetKey": 1
 				}
 			}
 		},

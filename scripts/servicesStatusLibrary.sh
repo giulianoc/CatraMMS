@@ -615,21 +615,24 @@ mms_api_timing_check_service()
           datetime=substr($0, 2, 23); \
           method=$4;  \
           duration=$8;  \
-			maxDuration = maxAPIDuration;	\
-			// custom max duration
-			if (method == "killOrCancelEncodingJob"	\
-			)	\
-				maxDuration = 6000;	\
+			    maxDuration = maxAPIDuration;	\
+			    // custom max duration
+			    if (method == "killOrCancelEncodingJob"	\
+			    )	\
+				    maxDuration = 6000;	\
+			    else if (method == "uploadedBinary"	\
+			    )	\
+				    maxDuration = 3000;	\
           if (duration > maxDuration)  \
             warningMessage=warningMessage""datetime" - "method" - "duration"/"maxAPIDuration"\n";  \
         } \
-      } \
-      END \
-      { \
-        printf("%s", warningMessage); \
-        printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile;  \
-      }  \
-      ')
+    } \
+    END \
+    { \
+      printf("%s", warningMessage); \
+      printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile;  \
+    }  \
+  ')
 
 	if [ "$warningMessage" = "" ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_timing_check_service, mms api timing is fine" >> $debugFilename
@@ -681,6 +684,9 @@ mms_webservices_timing_check_service()
 			else if (method == "epgUpdate"	\
 			)	\
 				maxDuration = 150000;	\
+			else if (method == "promoList"	\
+			)	\
+				maxDuration = 1500;	\
 			if (duration > maxDuration)	\
 				warningMessage=warningMessage""datetime" - "method" - "duration"/"maxDuration" - "otherInfo"\n";	\
 		}	\
@@ -737,7 +743,7 @@ mms_sql_timing_check_service()
 			duration=$6;	\
 			label=$7;	\
 			if (label == "getIngestionsToBeManaged")	\
-				maxSQLDuration = 500;	\
+				maxSQLDuration = 700;	\
 			else if (label == "getIngestionRootsStatus")	\
 				maxSQLDuration = 300;	\
 			if (duration > maxSQLDuration)	\

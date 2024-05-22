@@ -29,8 +29,8 @@ do
 	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem $sourceFilePathName mms@$server:$destDirectoryPathName
 done
 
-#hetzner-test-api-1 hetzner-test-engine-2 hetzner-test-engine-3 hetzner-test-transcoder-2 hetzner-api-1 hetzner-api-2 hetzner-delivery-binary-gui-3 hetzner-delivery-binary-gui-4 hetzner-engine-1 hetzner-engine-3 hetzner-transcoder-5
-for server in 138.201.245.228 49.12.74.56 142.132.232.196 88.198.47.118 159.69.251.50 168.119.250.162 142.132.238.211 49.13.18.245 167.235.14.44 167.235.14.105 46.4.98.135 
+#hetzner-test-api-1 hetzner-test-engine-2 hetzner-test-engine-3 hetzner-test-transcoder-2 hetzner-api-1 hetzner-api-2 hetzner-delivery-binary-gui-5 hetzner-delivery-binary-gui-6 hetzner-engine-1 hetzner-engine-3 hetzner-transcoder-5
+for server in 138.201.245.228 49.12.74.56 142.132.232.196 88.198.47.118 159.69.251.50 168.119.250.162 136.243.35.105 136.243.34.218 167.235.14.44 167.235.14.105 46.4.98.135 
 do
 	echo "scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem $sourceFilePathName mms@$server:$destDirectoryPathName"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem $sourceFilePathName mms@$server:$destDirectoryPathName

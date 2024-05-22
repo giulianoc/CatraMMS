@@ -64,10 +64,10 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 		int64_t encodingProfileKey = -1;
 		json encodingProfileDetailsRoot = nullptr;
 		{
-			// This task shall contain EncodingProfileKey or
-			// EncodingProfileLabel. We cannot have EncodingProfilesSetKey
+			// This task shall contain encodingProfileKey or
+			// encodingProfileLabel. We cannot have encodingProfilesSetKey
 			// because we replaced it with a GroupOfTasks
-			//  having just EncodingProfileKey
+			//  having just encodingProfileKey
 
 			string keyField = "encodingProfileKey";
 			string labelField = "encodingProfileLabel";
