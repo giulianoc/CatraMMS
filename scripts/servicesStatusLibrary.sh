@@ -732,7 +732,9 @@ mms_sql_timing_check_service()
 		return 1
 	fi
 
-	maxSQLDuration=200
+	#incrementato a 300 perchè capita di avere poco piu di 200 anche per query perfettamente indicizzate che impiegano al 99.9% 1 millisecs
+	# e poco piu di 200 nello 0.1%
+	maxSQLDuration=300
 	warningMessage=$(grep "statement, sqlStatement" $logFilePathName | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxSQLDuration=$maxSQLDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
 	{	\
 		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
@@ -745,7 +747,7 @@ mms_sql_timing_check_service()
 			if (label == "getIngestionsToBeManaged")	\
 				maxSQLDuration = 700;	\
 			else if (label == "getIngestionRootsStatus")	\
-				maxSQLDuration = 300;	\
+				maxSQLDuration = 400;	\
 			if (duration > maxSQLDuration)	\
 				warningMessage=warningMessage""datetime" - "label" - "sqlStatement" - "duration"/"maxSQLDuration"\n";	\
 		}	\

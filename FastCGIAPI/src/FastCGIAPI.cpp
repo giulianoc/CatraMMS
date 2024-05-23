@@ -881,6 +881,201 @@ string FastCGIAPI::getHtmlStandardMessage(int htmlResponseCode)
 	}
 }
 
+int32_t FastCGIAPI::getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, int32_t defaultParameter, bool mandatory)
+{
+
+	int32_t parameterValue;
+
+	auto it = queryParameters.find(parameterName);
+	if (it != queryParameters.end() && it->second != "")
+		parameterValue = stol(it->second);
+	else
+	{
+		if (mandatory)
+		{
+			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		parameterValue = defaultParameter;
+	}
+
+	return parameterValue;
+}
+
+int64_t FastCGIAPI::getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, int64_t defaultParameter, bool mandatory)
+{
+
+	int64_t parameterValue;
+
+	auto it = queryParameters.find(parameterName);
+	if (it != queryParameters.end() && it->second != "")
+		parameterValue = stoll(it->second);
+	else
+	{
+		if (mandatory)
+		{
+			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		parameterValue = defaultParameter;
+	}
+
+	return parameterValue;
+}
+
+bool FastCGIAPI::getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, bool defaultParameter, bool mandatory)
+{
+
+	bool parameterValue;
+
+	auto it = queryParameters.find(parameterName);
+	if (it != queryParameters.end() && it->second != "")
+		parameterValue = it->second == "true";
+	else
+	{
+		if (mandatory)
+		{
+			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		parameterValue = defaultParameter;
+	}
+
+	return parameterValue;
+}
+
+string FastCGIAPI::getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, string defaultParameter, bool mandatory)
+{
+
+	string parameterValue;
+
+	auto it = queryParameters.find(parameterName);
+	if (it != queryParameters.end() && it->second != "")
+		parameterValue = it->second;
+	else
+	{
+		if (mandatory)
+		{
+			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		parameterValue = defaultParameter;
+	}
+
+	return parameterValue;
+}
+
+vector<int32_t> FastCGIAPI::getQueryParameter(
+	unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<int32_t> defaultParameter, bool mandatory
+)
+{
+	vector<int32_t> parameterValue;
+
+	auto it = queryParameters.find(parameterName);
+	if (it != queryParameters.end() && it->second != "")
+	{
+		stringstream ss(it->second);
+		string token;
+		while (getline(ss, token, delim))
+		{
+			if (!token.empty())
+				parameterValue.push_back(stol(token));
+		}
+	}
+	else
+	{
+		if (mandatory)
+		{
+			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		parameterValue = defaultParameter;
+	}
+
+	return parameterValue;
+}
+
+vector<int64_t> FastCGIAPI::getQueryParameter(
+	unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<int64_t> defaultParameter, bool mandatory
+)
+{
+	vector<int64_t> parameterValue;
+
+	auto it = queryParameters.find(parameterName);
+	if (it != queryParameters.end() && it->second != "")
+	{
+		stringstream ss(it->second);
+		string token;
+		while (getline(ss, token, delim))
+		{
+			if (!token.empty())
+				parameterValue.push_back(stoll(token));
+		}
+	}
+	else
+	{
+		if (mandatory)
+		{
+			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		parameterValue = defaultParameter;
+	}
+
+	return parameterValue;
+}
+
+vector<string> FastCGIAPI::getQueryParameter(
+	unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<string> defaultParameter, bool mandatory
+)
+{
+	vector<string> parameterValue;
+
+	auto it = queryParameters.find(parameterName);
+	if (it != queryParameters.end() && it->second != "")
+	{
+		stringstream ss(it->second);
+		string token;
+		while (getline(ss, token, delim))
+		{
+			if (!token.empty())
+				parameterValue.push_back(token);
+		}
+	}
+	else
+	{
+		if (mandatory)
+		{
+			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		parameterValue = defaultParameter;
+	}
+
+	return parameterValue;
+}
+
 void FastCGIAPI::fillEnvironmentDetails(const char *const *envp, unordered_map<string, string> &requestDetails)
 {
 

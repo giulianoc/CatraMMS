@@ -3213,7 +3213,7 @@ MMSEngineDBFacade::getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster
 
 void MMSEngineDBFacade::encodingJobQuery(
 	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey,
-	int64_t ingestionJobKey, bool fromMaster
+	int64_t ingestionJobKey, bool fromMaster, int startIndex, int rows
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -3227,31 +3227,33 @@ void MMSEngineDBFacade::encodingJobQuery(
 	nontransaction trans{*(conn->_sqlConnection)};
 	try
 	{
+		if (rows > _maxRows)
 		{
-			bool whereIsPresent = false;
-			bool firstParameterDone = false;
-			string encodingJobKeyQuery;
+			string errorMessage = fmt::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		{
+			string where;
 			if (encodingJobKey != -1)
-			{
-				encodingJobKeyQuery += fmt::format("{} encodingJobKey = {} ", firstParameterDone ? "and" : "", encodingJobKey);
-				whereIsPresent = true;
-				firstParameterDone = true;
-			}
-			string ingestionJobKeyQuery;
+				where += fmt::format("{} encodingJobKey = {} ", where.size() > 0 ? "and" : "", encodingJobKey);
 			if (ingestionJobKey != -1)
-			{
-				ingestionJobKeyQuery += fmt::format("{} ingestionJobKey = {} ", firstParameterDone ? "and" : "", ingestionJobKey);
-				whereIsPresent = true;
-				firstParameterDone = true;
-			}
+				where += fmt::format("{} ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
 
 			string sqlStatement = fmt::format(
 				"select {} "
 				"from MMS_EncodingJob "
 				"{} "
-				"{} "
-				"{} ",
-				_postgresHelper.buildQueryColumns(requestedColumns), whereIsPresent ? "where " : "", encodingJobKeyQuery, ingestionJobKeyQuery
+				"{} limit {} offset {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, rows == -1 ? _maxRows : rows,
+				startIndex == -1 ? 0 : startIndex
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);

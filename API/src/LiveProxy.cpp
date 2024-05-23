@@ -57,6 +57,8 @@ void LiveProxy::encodeContent(string requestBody)
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
+		long maxStreamingDurationInSeconds = JSONUtils::asInt64(_liveProxyData->_ingestedParametersRoot, "maxStreamingDurationInSeconds", -1);
+
 		_liveProxyData->_monitoringRealTimeInfoEnabled =
 			JSONUtils::asBool(_liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
 		_liveProxyData->_realTimeFrame = -1;
@@ -258,8 +260,9 @@ void LiveProxy::encodeContent(string requestBody)
 			}
 
 			_liveProxyData->_ffmpeg->liveProxy2(
-				_liveProxyData->_ingestionJobKey, _encodingJobKey, externalEncoder, &(_liveProxyData->_inputsRootMutex),
-				&(_liveProxyData->_inputsRoot), _liveProxyData->_outputsRoot, &(_liveProxyData->_childPid), &(_liveProxyData->_proxyStart)
+				_liveProxyData->_ingestionJobKey, _encodingJobKey, externalEncoder, maxStreamingDurationInSeconds,
+				&(_liveProxyData->_inputsRootMutex), &(_liveProxyData->_inputsRoot), _liveProxyData->_outputsRoot, &(_liveProxyData->_childPid),
+				&(_liveProxyData->_proxyStart)
 			);
 		}
 

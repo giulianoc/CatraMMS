@@ -264,13 +264,12 @@ string PostgresHelper::getQueryColumn(
 		if (requestedTableNameAlias.empty())
 			queryColumn = fmt::format(
 				"EXTRACT(EPOCH FROM {0} AT TIME ZONE 'UTC') * 1000 as {1}, "
-				"to_char({0}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as {1}_",
+				"to_char({0}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as \"{1}:iso\"",
 				sqlColumnSchema->columnName, columnName
 			);
 		else
 			queryColumn = fmt::format(
-				"EXTRACT(EPOCH FROM {0}.{1} AT TIME ZONE 'UTC') * 1000 as {2}, to_char({0}.{1}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as "
-				"{2}_",
+				"EXTRACT(EPOCH FROM {0}.{1} AT TIME ZONE 'UTC') * 1000 as {2}, to_char({0}.{1}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as \"{2}:iso\"",
 				requestedTableNameAlias, sqlColumnSchema->columnName, columnName
 			);
 	}

@@ -413,7 +413,10 @@ create-directory()
 		fi
 	fi
 
-	mkdir /mnt/local-data/logs
+	if [ ! -d "/mnt/local-data/logs" ];
+	then
+		mkdir /mnt/local-data/logs
+	fi
 	ln -s /mnt/local-data/logs /var/catramms/logs
 
 	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
@@ -442,7 +445,9 @@ create-directory()
 		#	mkdir /mnt/mmsRepository0000
 		#	chown mms:mms /mnt/mmsRepository0000
 		#fi
-		sudo ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000
+		if [ ! -e /mnt/mmsRepository0000 ]; then
+			sudo ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000
+		fi
 
 		if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]
 		then
@@ -463,13 +468,17 @@ create-directory()
 		#	mkdir /mnt/mmsStorage
 		#	chown mms:mms /mnt/mmsStorage
 		#fi
-		sudo ln -s /mnt/mmsStorage-1 /mnt/mmsStorage
+		if [ ! -e /mnt/mmsStorage ]; then
+			sudo ln -s /mnt/mmsStorage-1 /mnt/mmsStorage
+		fi
 		#if [ ! -d "/mnt/mmsIngestionRepository" ];
 		#then
 		#	mkdir /mnt/mmsIngestionRepository
 		#	chown mms:mms /mnt/mmsIngestionRepository
 		#fi
-		sudo ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
+		if [ ! -e /mnt/mmsIngestionRepository ]; then
+			sudo ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
+		fi
 		if [ ! -d "/mnt/mmsStorage/MMSGUI" ];
 		then
 			mkdir /mnt/mmsStorage/MMSGUI

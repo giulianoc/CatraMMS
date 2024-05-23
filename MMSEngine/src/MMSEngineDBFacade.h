@@ -1871,7 +1871,7 @@ class MMSEngineDBFacade
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster);
 	void encodingJobQuery(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey,
-		int64_t ingestionJobKey, bool fromMaster
+		int64_t ingestionJobKey, bool fromMaster, int startIndex = -1, int rows = -1
 	);
 
 	void checkWorkspaceStorageAndMaxIngestionNumber(int64_t workspaceKey);
@@ -2300,6 +2300,7 @@ class MMSEngineDBFacade
 	shared_ptr<spdlog::logger> _logger;
 	json _configuration;
 	PostgresHelper _postgresHelper;
+	int _maxRows;
 
 #ifdef __POSTGRES__
 #else

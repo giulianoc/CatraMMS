@@ -25,6 +25,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(json configuration, size_t masterDbPoolSize
 {
 	_logger = logger;
 	_configuration = configuration;
+	_maxRows = 1000;
 
 	_doNotManageIngestionsOlderThanDays = JSONUtils::asInt(configuration["mms"], "doNotManageIngestionsOlderThanDays", 7);
 	_logger->info(
