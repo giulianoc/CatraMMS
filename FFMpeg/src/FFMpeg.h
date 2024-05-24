@@ -285,7 +285,7 @@ class FFMpeg
 	);
 
 	void liveProxy2(
-		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, long maxStreamingDurationInSeconds, mutex *inputsRootMutex,
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, long maxStreamingDurationInMinutes, mutex *inputsRootMutex,
 		json *inputsRoot, json outputsRoot, pid_t *pChildPid, chrono::system_clock::time_point *pProxyStart
 	);
 
@@ -530,7 +530,7 @@ class FFMpeg
 		// vector<tuple<int, int64_t, string, long, int, long, string>>
 		>
 	liveProxyInput(
-		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, long maxStreamingDurationInSeconds,
+		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, long maxStreamingDurationInMinutes,
 		vector<string> &ffmpegInputArgumentList
 	);
 

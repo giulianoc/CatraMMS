@@ -27,9 +27,9 @@
 		"timePeriod": false,
 
 		// optional, some proxy will not work well after a long period of streaming.
-		// 	This parameter will force a restart of the proxy after the time specified by this parameter.
-		// 	The proxy will start instantly respecting the schedule
-		"maxStreamingDurationInSeconds": 12000,
+		// 	This parameter will force a restart instantly of the proxy after the time specified by this parameter.
+		// 	In any case the proxy will stop definitely based on the schedule
+		"maxStreamingDurationInMinutes": 600,
 
 		// mandatory in case the 'timePeriod' field is true: It specifies the proxy period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ

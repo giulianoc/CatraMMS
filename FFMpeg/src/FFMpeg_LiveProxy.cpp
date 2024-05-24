@@ -20,7 +20,7 @@
 #include <regex>
 
 void FFMpeg::liveProxy2(
-	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, long maxStreamingDurationInSeconds, mutex *inputsRootMutex,
+	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, long maxStreamingDurationInMinutes, mutex *inputsRootMutex,
 	json *inputsRoot, json outputsRoot, pid_t *pChildPid, chrono::system_clock::time_point *pProxyStart
 )
 {
@@ -237,7 +237,7 @@ void FFMpeg::liveProxy2(
 				", timedInput: " + to_string(timedInput) + ", currentInputIndex: " + to_string(currentInputIndex)
 			);
 			tuple<long, string, string, int, int64_t, json> inputDetails = liveProxyInput(
-				ingestionJobKey, encodingJobKey, externalEncoder, currentInputRoot, maxStreamingDurationInSeconds, ffmpegInputArgumentList
+				ingestionJobKey, encodingJobKey, externalEncoder, currentInputRoot, maxStreamingDurationInMinutes, ffmpegInputArgumentList
 			);
 			tie(streamingDurationInSeconds, otherOutputOptionsBecauseOfMaxWidth, endlessPlaylistListPathName, pushListenTimeout, utcProxyPeriodStart,
 				inputFiltersRoot /*, inputVideoTracks, inputAudioTracks*/) = inputDetails;
@@ -819,7 +819,7 @@ int FFMpeg::getNextLiveProxyInput(
 }
 
 tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
-	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, long maxStreamingDurationInSeconds,
+	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, long maxStreamingDurationInMinutes,
 	vector<string> &ffmpegInputArgumentList
 )
 {
@@ -1068,13 +1068,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 			if (timePeriod)
 			{
 				// 2024-05-23: abbiamo visto che, per alcuni canali, il processo ffmpeg dopo tanto tempo che è running, non prox-a piu tanto bene.
-				// 	Per questo motivo abbiamo introdotto maxStreamingDurationInSeconds che rappresenta il max che il processo ffmpeg posso essere
+				// 	Per questo motivo abbiamo introdotto maxStreamingDurationInMinutes che rappresenta il max che il processo ffmpeg posso essere
 				// running. 	Il processo ffmpeg ripartirà l'istante dopo in base a utcProxyPeriodEnd
-				if (maxStreamingDurationInSeconds == -1)
+				if (maxStreamingDurationInMinutes == -1)
 					streamingDurationInSeconds = utcProxyPeriodEnd - utcNow;
 				else
-					streamingDurationInSeconds =
-						utcProxyPeriodEnd - utcNow > maxStreamingDurationInSeconds ? maxStreamingDurationInSeconds : utcProxyPeriodEnd - utcNow;
+					streamingDurationInSeconds = utcProxyPeriodEnd - utcNow > maxStreamingDurationInMinutes * 60 ? maxStreamingDurationInMinutes * 60
+																												 : utcProxyPeriodEnd - utcNow;
 
 				_logger->info(
 					__FILEREF__ + "LiveProxy timing. " + "Streaming duration" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
