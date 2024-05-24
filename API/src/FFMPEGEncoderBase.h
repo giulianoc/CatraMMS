@@ -48,6 +48,8 @@ class FFMPEGEncoderBase
 		double _realTimeTimeInMilliSeconds;
 		chrono::system_clock::time_point _realTimeLastChange;
 
+		long _numberOfRestartBecauseOfFailure;
+
 		int64_t _ingestionJobKey;
 		json _encodingParametersRoot;
 		json _ingestedParametersRoot;
@@ -70,6 +72,7 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_realTimeBitRate = _realTimeBitRate;
 			liveProxyAndGrid->_realTimeTimeInMilliSeconds = _realTimeTimeInMilliSeconds;
 			liveProxyAndGrid->_realTimeLastChange = _realTimeLastChange;
+			liveProxyAndGrid->_numberOfRestartBecauseOfFailure = _numberOfRestartBecauseOfFailure;
 			liveProxyAndGrid->_encodingJobKey = _encodingJobKey;
 			liveProxyAndGrid->_method = _method;
 			liveProxyAndGrid->_ffmpeg = _ffmpeg;
@@ -103,6 +106,8 @@ class FFMPEGEncoderBase
 		double _realTimeBitRate;
 		double _realTimeTimeInMilliSeconds;
 		chrono::system_clock::time_point _realTimeLastChange;
+
+		long _numberOfRestartBecauseOfFailure;
 
 		int64_t _ingestionJobKey;
 		bool _externalEncoder;
@@ -140,6 +145,7 @@ class FFMPEGEncoderBase
 			liveRecording->_realTimeBitRate = _realTimeBitRate;
 			liveRecording->_realTimeTimeInMilliSeconds = _realTimeTimeInMilliSeconds;
 			liveRecording->_realTimeLastChange = _realTimeLastChange;
+			liveRecording->_numberOfRestartBecauseOfFailure = _numberOfRestartBecauseOfFailure;
 			liveRecording->_encodingJobKey = _encodingJobKey;
 			liveRecording->_externalEncoder = _externalEncoder;
 			liveRecording->_ffmpeg = _ffmpeg;

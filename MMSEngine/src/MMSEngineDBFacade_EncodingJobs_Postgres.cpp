@@ -1929,7 +1929,9 @@ void MMSEngineDBFacade::updateEncodingJobProgress(int64_t encodingJobKey, double
 	}
 }
 
-void MMSEngineDBFacade::updateEncodingRealTimeInfo(int64_t encodingJobKey, int encodingPid, long realTimeFrameRate, double realTimeBitRate)
+void MMSEngineDBFacade::updateEncodingRealTimeInfo(
+	int64_t encodingJobKey, int encodingPid, long realTimeFrameRate, double realTimeBitRate, long numberOfRestartBecauseOfFailure
+)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -1951,10 +1953,11 @@ void MMSEngineDBFacade::updateEncodingRealTimeInfo(int64_t encodingJobKey, int e
 				);
 			*/
 			string sqlStatement = fmt::format(
-				"WITH rows AS (update MMS_EncodingJob set encodingPid = {}, realTimeFrameRate = {}, realTimeBitRate = {} "
+				"WITH rows AS (update MMS_EncodingJob set encodingPid = {}, realTimeFrameRate = {}, realTimeBitRate = {}, "
+				"numberOfRestartBecauseOfFailure = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				encodingPid == -1 ? "null" : to_string(encodingPid), realTimeFrameRate == -1 ? "null" : to_string(realTimeFrameRate),
-				realTimeBitRate == -1 ? "null" : to_string(realTimeBitRate), encodingJobKey
+				realTimeBitRate == -1 ? "null" : to_string(realTimeBitRate), numberOfRestartBecauseOfFailure, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
@@ -3717,7 +3720,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 			string sqlStatement = fmt::format(
 				"select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.status, ej.encodingProgress, ej.processorMMS, ej.encoderKey, ej.encodingPid, "
-				"ej.realTimeFrameRate, ej.realTimeBitRate, ej.failuresNumber, ej.encodingPriority, "
+				"ej.realTimeFrameRate, ej.realTimeBitRate, ej.numberOfRestartBecauseOfFailure, ej.failuresNumber, ej.encodingPriority, "
 				"to_char(ej.encodingJobStart, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobStart, "
 				"to_char(ej.encodingJobEnd, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobEnd, "
 				"case when ij.startProcessing IS NULL then NOW() at time zone 'utc' else ij.startProcessing end as newStartProcessing, "
@@ -3847,6 +3850,12 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 					encodingJobRoot[field] = -1.0;
 				else
 					encodingJobRoot[field] = row["realTimeBitRate"].as<float>();
+
+				field = "numberOfRestartBecauseOfFailure";
+				if (row["numberOfRestartBecauseOfFailure"].is_null())
+					encodingJobRoot[field] = -1;
+				else
+					encodingJobRoot[field] = row["numberOfRestartBecauseOfFailure"].as<int64_t>();
 
 				field = "failuresNumber";
 				encodingJobRoot[field] = row["failuresNumber"].as<int>();
@@ -4230,10 +4239,12 @@ void MMSEngineDBFacade::addEncodingJob(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, "
-				"processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "
+				"creationDate) values ("
 				"DEFAULT,         {},              {},   {},           {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL,             {}, "
-				"NULL,         NULL,       NULL,        NULL,              NULL,            0,				NOW() at time zone 'utc')",
+				"NULL,         NULL,       NULL,        NULL,              NULL,            NULL,                            0,				NOW() at "
+				"time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -4454,10 +4465,11 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},  {},		   {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -4660,10 +4672,11 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -4889,10 +4902,11 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -5090,11 +5104,11 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, "
 				"parameters, encodingPriority, encodingJobStart, encodingJobEnd, "
 				"encodingProgress, status, processorMMS, encoderKey, "
-				"encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {}, "
 				"{},          {},              NOW() at time zone 'utc', NULL, "
 				"NULL,             {},      NULL,         NULL, "
-				"NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,        NULL,              NULL,            NULL,                             0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -5257,10 +5271,11 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,       NULL,        NULL,              NULL,            NULL,                             0,			  NOW() at time zone "
+				"'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -5419,10 +5434,11 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -5688,10 +5704,12 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 				string sqlStatement = fmt::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 					savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 				);
@@ -5879,10 +5897,12 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 				string sqlStatement = fmt::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 					savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 				);
@@ -6065,10 +6085,12 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 				string sqlStatement = fmt::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 					savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 				);
@@ -6246,10 +6268,12 @@ void MMSEngineDBFacade::addEncoding_CountdownJob(
 				string sqlStatement = fmt::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 					savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 				);
@@ -6414,10 +6438,12 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob(shared_ptr<Workspace> workspace,
 				string sqlStatement = fmt::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"'utc')",
 					ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 					savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 				);
@@ -6628,10 +6654,11 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -6813,10 +6840,11 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -7051,10 +7079,11 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            0,			  NOW() at time zone 'utc')",
+				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -7305,10 +7334,12 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, "
-				"status, processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"status, processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "
+				"creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL, "
-				"{},      NULL,         NULL,       NULL,        NULL,              NULL,            0,			    NOW() at time zone 'utc')",
+				"{},      NULL,         NULL,       NULL,        NULL,              NULL,           NULL,                            0,			    "
+				"NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -7529,10 +7560,12 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 			string sqlStatement = fmt::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, "
-				"status, processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, failuresNumber, creationDate) values ("
+				"status, processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "
+				"creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL, "
-				"{},      NULL,         NULL,       NULL,        NULL,              NULL,            0,				NOW() at time zone 'utc')",
+				"{},      NULL,         NULL,       NULL,        NULL,              NULL,           NULL,                            0,				"
+				"NOW() at time zone 'utc')",
 				ingestionJobKey, trans.quote(toString(encodingType)), getEncodingTypePriority(encodingType), trans.quote(parameters),
 				savedEncodingPriority, trans.quote(toString(EncodingStatus::ToBeProcessed))
 			);

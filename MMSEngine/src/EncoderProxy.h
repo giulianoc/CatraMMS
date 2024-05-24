@@ -224,7 +224,7 @@ class EncoderProxy
 
 	void processCutFrameAccurate();
 
-	tuple<bool, bool, bool, string, bool, bool, double, int, long, double> getEncodingStatus();
+	tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> getEncodingStatus();
 
 	string generateMediaMetadataToIngest(
 		int64_t ingestionJobKey, string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,

@@ -1275,7 +1275,7 @@ void EncoderProxy::operator()()
 	);
 }
 
-tuple<bool, bool, bool, string, bool, bool, double, int, long, double> EncoderProxy::getEncodingStatus()
+tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> EncoderProxy::getEncodingStatus()
 {
 	bool encodingFinished;
 	bool killedByUser;
@@ -1287,6 +1287,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double> EncoderPr
 	int pid;
 	long realTimeFrameRate;
 	double realTimeBitRate;
+	long numberOfRestartBecauseOfFailure;
 
 	string ffmpegEncoderURL;
 	// ostringstream response;
@@ -1345,6 +1346,9 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double> EncoderPr
 
 			field = "realTimeBitRate";
 			realTimeBitRate = JSONUtils::asDouble(encodeStatusResponse, field, -1.0);
+
+			field = "numberOfRestartBecauseOfFailure";
+			numberOfRestartBecauseOfFailure = JSONUtils::asInt(encodeStatusResponse, field, -1);
 		}
 		catch (...)
 		{
@@ -1396,7 +1400,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double> EncoderPr
 
 	return make_tuple(
 		encodingFinished, killedByUser, completedWithError, encoderErrorMessage, urlForbidden, urlNotFound, encodingProgress, pid, realTimeFrameRate,
-		realTimeBitRate
+		realTimeBitRate, numberOfRestartBecauseOfFailure
 	);
 }
 
@@ -1536,6 +1540,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 	int lastEncodingPid = 0;
 	long lastRealTimeFrameRate = 0;
 	long lastRealTimeBitRate = 0;
+	long lastNumberOfRestartBecauseOfFailure = 0;
 	while (!(encodingFinished || encodingStatusFailures >= maxConsecutiveEncodingStatusFailures))
 	{
 		this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -1550,12 +1555,13 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 			int encodingPid;
 			long realTimeFrameRate;
 			long realTimeBitRate;
+			long numberOfRestartBecauseOfFailure;
 
 			// tuple<bool, bool, bool, string, bool, bool, double, int>
 			// encodingStatus =
 			// getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 			tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage, urlForbidden, urlNotFound, encodingProgress, encodingPid,
-				realTimeFrameRate, realTimeBitRate) = getEncodingStatus();
+				realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 
 			if (encodingErrorMessage != "")
 			{
@@ -1626,7 +1632,8 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 					);
 				}
 
-				if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate)
+				if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate ||
+					lastNumberOfRestartBecauseOfFailure != numberOfRestartBecauseOfFailure)
 				{
 					try
 					{
@@ -1636,16 +1643,19 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 							", encodingJobKey: {}"
 							", encodingPid: {}"
 							", realTimeFrameRate: {}"
-							", realTimeBitRate: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+							", realTimeBitRate: {}"
+							", numberOfRestartBecauseOfFailure: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+							numberOfRestartBecauseOfFailure
 						);
 						_mmsEngineDBFacade->updateEncodingRealTimeInfo(
-							_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+							_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure
 						);
 
 						lastEncodingPid = encodingPid;
 						lastRealTimeFrameRate = realTimeFrameRate;
 						lastRealTimeBitRate = realTimeBitRate;
+						lastNumberOfRestartBecauseOfFailure = numberOfRestartBecauseOfFailure;
 					}
 					catch (runtime_error &e)
 					{
@@ -1656,8 +1666,10 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 							", encodingPid: {}"
 							", realTimeFrameRate: {}"
 							", realTimeBitRate: {}"
+							", numberOfRestartBecauseOfFailure: {}"
 							", e.what: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate, e.what()
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+							numberOfRestartBecauseOfFailure, e.what()
 						);
 					}
 					catch (exception &e)
@@ -1668,8 +1680,10 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 							", encodingJobKey: {}"
 							", encodingPid: {}"
 							", realTimeFrameRate: {}"
-							", realTimeBitRate: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+							", realTimeBitRate: {}"
+							", numberOfRestartBecauseOfFailure: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+							numberOfRestartBecauseOfFailure
 						);
 					}
 				}

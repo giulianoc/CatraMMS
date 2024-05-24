@@ -1101,6 +1101,8 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 			int encodingPid;
 			long realTimeFrameRate;
 			double realTimeBitRate;
+			long lastNumberOfRestartBecauseOfFailure = 0;
+			long numberOfRestartBecauseOfFailure;
 			// string lastRecordedAssetFileName;
 
 			// see the comment few lines below (2019-05-03)
@@ -1117,7 +1119,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 					/* _encodingItem->_encodingJobKey */
 					// );
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage, urlForbidden, urlNotFound, ignore, encodingPid,
-						realTimeFrameRate, realTimeBitRate) = getEncodingStatus();
+						realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 
 					if (encodingErrorMessage != "")
 					{
@@ -1267,7 +1269,8 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 							);
 						}
 
-						if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate)
+						if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate ||
+							lastNumberOfRestartBecauseOfFailure != numberOfRestartBecauseOfFailure)
 						{
 							try
 							{
@@ -1277,16 +1280,19 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 									", encodingJobKey: {}"
 									", encodingPid: {}"
 									", realTimeFrameRate: {}"
-									", realTimeBitRate: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+									", realTimeBitRate: {}"
+									", numberOfRestartBecauseOfFailure: {}",
+									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+									numberOfRestartBecauseOfFailure
 								);
 								_mmsEngineDBFacade->updateEncodingRealTimeInfo(
-									_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+									_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure
 								);
 
 								lastEncodingPid = encodingPid;
 								lastRealTimeFrameRate = realTimeFrameRate;
 								lastRealTimeBitRate = realTimeBitRate;
+								lastNumberOfRestartBecauseOfFailure = numberOfRestartBecauseOfFailure;
 							}
 							catch (runtime_error &e)
 							{
@@ -1297,9 +1303,10 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 									", encodingPid: {}"
 									", realTimeFrameRate: {}"
 									", realTimeBitRate: {}"
+									", numberOfRestartBecauseOfFailure: {}"
 									", e.what: {}",
 									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
-									e.what()
+									numberOfRestartBecauseOfFailure, e.what()
 								);
 							}
 							catch (exception &e)
@@ -1310,8 +1317,10 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 									", encodingJobKey: {}"
 									", encodingPid: {}"
 									", realTimeFrameRate: {}"
-									", realTimeBitRate: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+									", realTimeBitRate: {}"
+									", numberOfRestartBecauseOfFailure: {}",
+									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+									numberOfRestartBecauseOfFailure
 								);
 							}
 						}

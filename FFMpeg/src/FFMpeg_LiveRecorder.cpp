@@ -53,7 +53,7 @@ void FFMpeg::liveRecorder(
 
 	json framesToBeDetectedRoot,
 
-	pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart
+	pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart, long *numberOfRestartBecauseOfFailure
 )
 {
 	_currentApiName = APIName::LiveRecorder;
@@ -1617,6 +1617,9 @@ void FFMpeg::liveRecorder(
 		bool sigQuitOrTermReceived = true;
 		while (sigQuitOrTermReceived)
 		{
+			// inizialmente la variabile è -1, per cui il primo incremento la inizializza a 0
+			(*numberOfRestartBecauseOfFailure)++;
+
 			sigQuitOrTermReceived = false;
 
 			if (!ffmpegArgumentList.empty())
@@ -2044,7 +2047,7 @@ void FFMpeg::liveRecorder2(
 
 	json framesToBeDetectedRoot,
 
-	pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart
+	pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart, long *numberOfRestartBecauseOfFailure
 )
 {
 	_currentApiName = APIName::LiveRecorder;
@@ -2536,6 +2539,9 @@ void FFMpeg::liveRecorder2(
 		bool sigQuitOrTermReceived = true;
 		while (sigQuitOrTermReceived)
 		{
+			// inizialmente la variabile è -1, per cui il primo incremento la inizializza a 0
+			(*numberOfRestartBecauseOfFailure)++;
+
 			sigQuitOrTermReceived = false;
 
 			if (!ffmpegArgumentList.empty())

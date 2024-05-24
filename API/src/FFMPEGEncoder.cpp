@@ -1322,6 +1322,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				field = "realTimeBitRate";
 				responseBodyRoot[field] = selectedLiveProxy->_realTimeBitRate;
 
+				field = "numberOfRestartBecauseOfFailure";
+				responseBodyRoot[field] = selectedLiveProxy->_numberOfRestartBecauseOfFailure;
+
 				field = "killedByUser";
 				responseBodyRoot[field] = false;
 
@@ -1362,6 +1365,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				field = "realTimeBitRate";
 				responseBodyRoot[field] = selectedLiveRecording->_realTimeBitRate;
+
+				field = "numberOfRestartBecauseOfFailure";
+				responseBodyRoot[field] = selectedLiveRecording->_numberOfRestartBecauseOfFailure;
 
 				field = "killedByUser";
 				responseBodyRoot[field] = false;

@@ -21,7 +21,7 @@
 
 void FFMpeg::liveProxy2(
 	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, long maxStreamingDurationInMinutes, mutex *inputsRootMutex,
-	json *inputsRoot, json outputsRoot, pid_t *pChildPid, chrono::system_clock::time_point *pProxyStart
+	json *inputsRoot, json outputsRoot, pid_t *pChildPid, chrono::system_clock::time_point *pProxyStart, long *numberOfRestartBecauseOfFailure
 )
 {
 	_currentApiName = APIName::LiveProxy;
@@ -215,6 +215,7 @@ void FFMpeg::liveProxy2(
 	int currentNumberOfRepeatingSameInput = 0;
 	int sleepInSecondsInCaseOfRepeating = 5;
 	int currentInputIndex = -1;
+	int previousInputIndex = -1;
 	json currentInputRoot;
 	while ((currentInputIndex =
 				getNextLiveProxyInput(ingestionJobKey, encodingJobKey, inputsRoot, inputsRootMutex, currentInputIndex, timedInput, &currentInputRoot)
@@ -227,8 +228,17 @@ void FFMpeg::liveProxy2(
 		int pushListenTimeout;
 		int64_t utcProxyPeriodStart;
 		json inputFiltersRoot;
-		// vector<tuple<int, int64_t, string, string, int, int, string, long>> inputVideoTracks;
-		// vector<tuple<int, int64_t, string, long, int, long, string>> inputAudioTracks;
+
+		if (previousInputIndex == -1)
+			previousInputIndex = currentInputIndex;
+		else
+		{
+			if (previousInputIndex == currentInputIndex)
+				(*numberOfRestartBecauseOfFailure)++;
+			else
+				previousInputIndex = currentInputIndex;
+		}
+
 		try
 		{
 			_logger->info(

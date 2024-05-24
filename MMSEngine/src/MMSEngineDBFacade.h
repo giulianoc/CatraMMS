@@ -1851,7 +1851,9 @@ class MMSEngineDBFacade
 
 	void updateEncodingJobProgress(int64_t encodingJobKey, double encodingPercentage);
 
-	void updateEncodingRealTimeInfo(int64_t encodingJobKey, int encodingPid, long realTimeFrameRate, double realTimeBitRate);
+	void updateEncodingRealTimeInfo(
+		int64_t encodingJobKey, int encodingPid, long realTimeFrameRate, double realTimeBitRate, long numberOfRestartBecauseOfFailure
+	);
 
 	bool updateEncodingJobFailuresNumber(int64_t encodingJobKey, long failuresNumber);
 

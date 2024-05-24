@@ -2105,6 +2105,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "encodingPid				integer NULL,"
 								  "realTimeFrameRate				integer NULL,"
 								  "realTimeBitRate				numeric(5,1) NULL,"
+								  "numberOfRestartBecauseOfFailure				integer NULL,"
 								  "stagingEncodedAssetPathName text NULL,"
 								  "failuresNumber           	smallint NOT NULL,"
 								  "isKilled					boolean NULL,"

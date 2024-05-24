@@ -68,6 +68,9 @@ void LiveProxy::encodeContent(string requestBody)
 		_liveProxyData->_realTimeTimeInMilliSeconds = -1.0;
 		_liveProxyData->_realTimeLastChange = chrono::system_clock::now();
 
+		// 0 perchè liveProxy2 incrementa su un restart
+		_liveProxyData->_numberOfRestartBecauseOfFailure = 0;
+
 		_liveProxyData->_outputsRoot = encodingParametersRoot["outputsRoot"];
 		{
 			for (int outputIndex = 0; outputIndex < _liveProxyData->_outputsRoot.size(); outputIndex++)
@@ -262,7 +265,7 @@ void LiveProxy::encodeContent(string requestBody)
 			_liveProxyData->_ffmpeg->liveProxy2(
 				_liveProxyData->_ingestionJobKey, _encodingJobKey, externalEncoder, maxStreamingDurationInMinutes,
 				&(_liveProxyData->_inputsRootMutex), &(_liveProxyData->_inputsRoot), _liveProxyData->_outputsRoot, &(_liveProxyData->_childPid),
-				&(_liveProxyData->_proxyStart)
+				&(_liveProxyData->_proxyStart), &(_liveProxyData->_numberOfRestartBecauseOfFailure)
 			);
 		}
 

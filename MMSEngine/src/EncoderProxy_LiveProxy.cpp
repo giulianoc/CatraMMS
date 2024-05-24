@@ -1188,6 +1188,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			int encodingPid;
 			long realTimeFrameRate;
 			double realTimeBitRate;
+			long lastNumberOfRestartBecauseOfFailure = 0;
+			long numberOfRestartBecauseOfFailure;
 
 			_logger->info(
 				__FILEREF__ + "starting loop" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
@@ -1224,7 +1226,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					/* _encodingItem->_encodingJobKey */
 					// );
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage, urlForbidden, urlNotFound, ignore, encodingPid,
-						realTimeFrameRate, realTimeBitRate) = getEncodingStatus();
+						realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 					_logger->info(
 						__FILEREF__ + "getEncodingStatus" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
 						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
@@ -1497,7 +1499,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 							}
 						}
 
-						if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate)
+						if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate ||
+							lastNumberOfRestartBecauseOfFailure != numberOfRestartBecauseOfFailure)
 						{
 							try
 							{
@@ -1507,16 +1510,19 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 									", encodingJobKey: {}"
 									", encodingPid: {}"
 									", realTimeFrameRate: {}"
-									", realTimeBitRate: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+									", realTimeBitRate: {}"
+									", numberOfRestartBecauseOfFailure: {}",
+									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+									numberOfRestartBecauseOfFailure
 								);
 								_mmsEngineDBFacade->updateEncodingRealTimeInfo(
-									_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+									_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure
 								);
 
 								lastEncodingPid = encodingPid;
 								lastRealTimeFrameRate = realTimeFrameRate;
 								lastRealTimeBitRate = realTimeBitRate;
+								lastNumberOfRestartBecauseOfFailure = numberOfRestartBecauseOfFailure;
 							}
 							catch (runtime_error &e)
 							{
@@ -1527,9 +1533,10 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 									", encodingPid: {}"
 									", realTimeFrameRate: {}"
 									", realTimeBitRate: {}"
+									", numberOfRestartBecauseOfFailure: {}"
 									", e.what: {}",
 									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
-									e.what()
+									numberOfRestartBecauseOfFailure, e.what()
 								);
 							}
 							catch (exception &e)
@@ -1540,8 +1547,10 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 									", encodingJobKey: {}"
 									", encodingPid: {}"
 									", realTimeFrameRate: {}"
-									", realTimeBitRate: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+									", realTimeBitRate: {}"
+									", numberOfRestartBecauseOfFailure: {}",
+									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+									numberOfRestartBecauseOfFailure
 								);
 							}
 						}
@@ -1553,8 +1562,10 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 								", encodingJobKey: {}"
 								", encodingPid: {}"
 								", realTimeFrameRate: {}"
-								", realTimeBitRate: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate
+								", realTimeBitRate: {}"
+								", numberOfRestartBecauseOfFailure: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+								numberOfRestartBecauseOfFailure
 							);
 						}
 					}

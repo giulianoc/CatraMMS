@@ -262,7 +262,7 @@ class FFMpeg
 
 		json picturePathNamesToBeDetectedRoot,
 
-		pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart
+		pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart, long *numberOfRestartBecauseOfFailure
 	);
 
 	void liveRecorder2(
@@ -281,12 +281,12 @@ class FFMpeg
 
 		json picturePathNamesToBeDetectedRoot,
 
-		pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart
+		pid_t *pChildPid, chrono::system_clock::time_point *pRecordingStart, long *numberOfRestartBecauseOfFailure
 	);
 
 	void liveProxy2(
 		int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, long maxStreamingDurationInMinutes, mutex *inputsRootMutex,
-		json *inputsRoot, json outputsRoot, pid_t *pChildPid, chrono::system_clock::time_point *pProxyStart
+		json *inputsRoot, json outputsRoot, pid_t *pChildPid, chrono::system_clock::time_point *pProxyStart, long *numberOfRestartBecauseOfFailure
 	);
 
 	void liveGrid(

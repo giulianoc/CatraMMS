@@ -171,6 +171,9 @@ void LiveRecorder::encodeContent(string requestBody)
 		_liveRecording->_realTimeTimeInMilliSeconds = -1.0;
 		_liveRecording->_realTimeLastChange = chrono::system_clock::now();
 
+		// -1 perchè liveRecording fa un incremento quando il live recording parte che quindi setta a 0 correttamente la variabile
+		_liveRecording->_numberOfRestartBecauseOfFailure = -1;
+
 		_liveRecording->_channelLabel = JSONUtils::asString(_liveRecording->_ingestedParametersRoot, "configurationLabel", "");
 
 		_liveRecording->_lastRecordedAssetFileName = "";
@@ -396,7 +399,7 @@ void LiveRecorder::encodeContent(string requestBody)
 
 			framesToBeDetectedRoot,
 
-			&(_liveRecording->_childPid), &(_liveRecording->_recordingStart)
+			&(_liveRecording->_childPid), &(_liveRecording->_recordingStart), &(_liveRecording->_numberOfRestartBecauseOfFailure)
 		);
 
 		if (_liveRecording->_streamSourceType == "TV" && tvServiceId != -1 // this is just to be sure variables are initialized
