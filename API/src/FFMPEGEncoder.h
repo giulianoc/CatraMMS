@@ -41,20 +41,13 @@ class FFMPEGEncoder : public FastCGIAPI
 		// mutex* lastEncodingAcceptedTimeMutex,
 		chrono::system_clock::time_point *lastEncodingAcceptedTime,
 
-		mutex *encodingMutex,
-		vector<shared_ptr<FFMPEGEncoderBase::Encoding>> *encodingsCapability,
+		mutex *encodingMutex, vector<shared_ptr<FFMPEGEncoderBase::Encoding>> *encodingsCapability,
 
-		mutex *liveProxyMutex,
-		vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>>
-			*liveProxiesCapability,
+		mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability,
 
-		mutex *liveRecordingMutex,
-		vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>
-			*liveRecordingsCapability,
+		mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
 
-		mutex *encodingCompletedMutex,
-		map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>
-			*encodingCompletedMap,
+		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap,
 		chrono::system_clock::time_point *lastEncodingCompletedCheck,
 
 		mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset,
@@ -65,20 +58,14 @@ class FFMPEGEncoder : public FastCGIAPI
 	~FFMPEGEncoder();
 
 	virtual void manageRequestAndResponse(
-		string sThreadId, int64_t requestIdentifier,
-		bool responseBodyCompressed, FCGX_Request &request, string requestURI,
-		string requestMethod, unordered_map<string, string> queryParameters,
-		bool authorizationPresent, string userName, string password,
-		unsigned long contentLength, string requestBody,
-		unordered_map<string, string> &requestDetails
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestURI, string requestMethod,
+		unordered_map<string, string> queryParameters, bool authorizationPresent, string userName, string password, unsigned long contentLength,
+		string requestBody, unordered_map<string, string> &requestDetails
 	);
 
-	virtual void
-	checkAuthorization(string sThreadId, string userName, string password);
+	virtual void checkAuthorization(string sThreadId, string userName, string password);
 
-	virtual bool basicAuthenticationRequired(
-		string requestURI, unordered_map<string, string> queryParameters
-	);
+	virtual bool basicAuthenticationRequired(string requestURI, unordered_map<string, string> queryParameters);
 
   private:
 	shared_ptr<spdlog::logger> _logger;
@@ -113,15 +100,13 @@ class FFMPEGEncoder : public FastCGIAPI
 	int getMaxEncodingsCapability(void);
 
 	mutex *_liveProxyMutex;
-	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>>
-		*_liveProxiesCapability;
+	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
 	// commented because retrieved dinamically
 	// int							_maxLiveProxiesCapability;
 	int getMaxLiveProxiesCapability(void);
 
 	mutex *_liveRecordingMutex;
-	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>>
-		*_liveRecordingsCapability;
+	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
 	// commented because retrieved dinamically
 	// int							_maxLiveRecordingsCapability;
 	int getMaxLiveRecordingsCapability(void);
@@ -134,8 +119,7 @@ class FFMPEGEncoder : public FastCGIAPI
 
 	mutex *_encodingCompletedMutex;
 	int _encodingCompletedRetentionInSeconds;
-	map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>
-		*_encodingCompletedMap;
+	map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *_encodingCompletedMap;
 	chrono::system_clock::time_point *_lastEncodingCompletedCheck;
 
 	mutex *_tvChannelsPortsMutex;
@@ -145,98 +129,74 @@ class FFMPEGEncoder : public FastCGIAPI
 
 	void encodeContentThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void overlayImageOnVideoThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void overlayTextOnVideoThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void generateFramesThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void slideShowThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void liveRecorderThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording,
-		int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+		shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
 	);
 
 	void liveProxyThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy,
-		int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
 	);
 
 	void liveGridThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy,
-		int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
 	);
 
 	void videoSpeedThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void addSilentAudioThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void pictureInPictureThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void introOutroOverlayThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
 	void cutFrameAccurateThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding,
-		int64_t ingestionJobKey, int64_t encodingJobKey,
-		json metadataRoot
+		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
 	);
 
-	string buildFilterNotificationIngestionWorkflow(
-		int64_t ingestionJobKey, string filterName,
-		json ingestedParametersRoot
-	);
+	string buildFilterNotificationIngestionWorkflow(int64_t ingestionJobKey, string filterName, json ingestedParametersRoot);
 
 	void encodingCompletedRetention();
+
+	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t encodingJobKey, bool kill);
 };
 
 #endif

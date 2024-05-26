@@ -252,16 +252,7 @@ void API::modifyYouTubeConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
+			int64_t confKey = getQueryParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
 			if (tokenTypeModified)
 			{
@@ -3978,21 +3969,7 @@ void API::cdn77ChannelConfList(
 
 	try
 	{
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = curlpp::unescape(firstDecoding);
-		}
+		string label = getQueryParameter(queryParameters, "label", string(), false);
 
 		int type = 0; // ALL
 		string sType;

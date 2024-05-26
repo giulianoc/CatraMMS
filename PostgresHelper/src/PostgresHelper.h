@@ -4,6 +4,7 @@
 
 #include "spdlog/spdlog.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #define DBCONNECTIONPOOL_LOG
@@ -61,7 +62,7 @@ class PostgresHelper
 		shared_ptr<Base> value;
 
 	  public:
-		SqlValue() {};
+		SqlValue(){};
 
 		void setValue(shared_ptr<Base> value) { this->value = value; };
 
@@ -76,6 +77,7 @@ class PostgresHelper
 		enum SqlValueType
 		{
 			unknown,
+			int16,
 			int32,
 			int64,
 			double_,
@@ -102,6 +104,7 @@ class PostgresHelper
 		};
 		virtual void addColumnValueToCurrentRow(string fieldName, SqlValue sqlValue) = 0;
 		virtual void addCurrentRow() = 0;
+		virtual size_t size() = 0;
 		virtual json asJson() = 0;
 		void addColumnType(string fieldName, SqlValueType sqlValueType)
 		{
@@ -146,6 +149,7 @@ class PostgresHelper
 			_sqlValuesByName.push_back(_sqlCurrentRowValuesByName);
 			_sqlCurrentRowValuesByName.clear();
 		};
+		virtual size_t size() { return _sqlValuesByName.size(); };
 		virtual json asJson();
 		vector<map<string, SqlValue>>::iterator begin() { return _sqlValuesByName.begin(); };
 		vector<map<string, SqlValue>>::iterator end() { return _sqlValuesByName.end(); };
@@ -173,6 +177,7 @@ class PostgresHelper
 			_sqlValuesByIndex.push_back(_sqlCurrentRowValuesByIndex);
 			_sqlCurrentRowValuesByIndex.clear();
 		};
+		virtual size_t size() { return _sqlValuesByIndex.size(); };
 		virtual json asJson();
 		vector<vector<SqlValue>>::iterator begin() { return _sqlValuesByIndex.begin(); };
 		vector<vector<SqlValue>>::iterator end() { return _sqlValuesByIndex.end(); };

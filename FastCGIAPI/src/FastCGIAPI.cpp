@@ -1,12 +1,16 @@
 
 #include "Compressor.h"
+#include <curlpp/Easy.hpp>
+#include <curlpp/Exception.hpp>
+#include <curlpp/Infos.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/cURLpp.hpp>
 #include <deque>
 #include <fstream>
 #include <iostream>
 #include <regex>
 #include <sstream>
 #include <sys/utsname.h>
-#include <vector>
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
@@ -960,7 +964,18 @@ string FastCGIAPI::getQueryParameter(unordered_map<string, string> &queryParamet
 
 	auto it = queryParameters.find(parameterName);
 	if (it != queryParameters.end() && it->second != "")
+	{
 		parameterValue = it->second;
+
+		// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+		//	That  because if we have really a + char (%2B into the string), and we do the replace
+		//	after curlpp::unescape, this char will be changed to space and we do not want it
+		string plus = "\\+";
+		string plusDecoded = " ";
+		string firstDecoding = regex_replace(parameterValue, regex(plus), plusDecoded);
+
+		parameterValue = curlpp::unescape(firstDecoding);
+	}
 	else
 	{
 		if (mandatory)
@@ -1058,6 +1073,39 @@ vector<string> FastCGIAPI::getQueryParameter(
 		{
 			if (!token.empty())
 				parameterValue.push_back(token);
+		}
+	}
+	else
+	{
+		if (mandatory)
+		{
+			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		parameterValue = defaultParameter;
+	}
+
+	return parameterValue;
+}
+
+set<string> FastCGIAPI::getQueryParameter(
+	unordered_map<string, string> &queryParameters, string parameterName, char delim, set<string> defaultParameter, bool mandatory
+)
+{
+	set<string> parameterValue;
+
+	auto it = queryParameters.find(parameterName);
+	if (it != queryParameters.end() && it->second != "")
+	{
+		stringstream ss(it->second);
+		string token;
+		while (getline(ss, token, delim))
+		{
+			if (!token.empty())
+				parameterValue.insert(token);
 		}
 	}
 	else

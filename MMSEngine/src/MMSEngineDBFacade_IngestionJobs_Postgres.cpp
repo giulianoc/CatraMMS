@@ -3549,6 +3549,48 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 	return make_tuple(label, ingestionType, ingestionStatus, metaDataContent, errorMessage);
 }
 
+pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
+MMSEngineDBFacade::getIngestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}};
+		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
+		ingestionJobQuery(sqlResultSet, requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+		MMSEngineDBFacade::IngestionType ingestionType =
+			MMSEngineDBFacade::toIngestionType((*sqlResultSet)[0][0].as<string>("null ingestion type!!!"));
+		MMSEngineDBFacade::IngestionStatus ingestionStatus =
+			MMSEngineDBFacade::toIngestionStatus((*sqlResultSet)[0][1].as<string>("null ingestion status!!!"));
+
+		return make_pair(ingestionType, ingestionStatus);
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
 void MMSEngineDBFacade::ingestionJobQuery(
 	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns,
 	// 2021-02-20: workspaceKey is used just to be sure the ingestionJobKey
@@ -3570,9 +3612,9 @@ void MMSEngineDBFacade::ingestionJobQuery(
 	try
 	{
 		{
-			string ingestionJobKeyQuery;
+			string where;
 			if (ingestionJobKey != -1)
-				ingestionJobKeyQuery += fmt::format("and ij.ingestionJobKey = {} ", ingestionJobKey);
+				where += fmt::format("{} ij.ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
 
 			string sqlStatement = fmt::format(
 				"select {} "
@@ -3580,7 +3622,7 @@ void MMSEngineDBFacade::ingestionJobQuery(
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ir.workspaceKey = {} "
 				"{} ",
-				_postgresHelper.buildQueryColumns(requestedColumns), workspaceKey, ingestionJobKeyQuery
+				_postgresHelper.buildQueryColumns(requestedColumns), workspaceKey, where
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);

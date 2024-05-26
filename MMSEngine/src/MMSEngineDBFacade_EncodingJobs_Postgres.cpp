@@ -3214,6 +3214,44 @@ MMSEngineDBFacade::getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster
 	}
 }
 
+pair<int64_t, int64_t> MMSEngineDBFacade::getEncodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.encodingJobKey"}, {false, "mms_encodingjob:.encoderKey"}};
+		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
+		encodingJobQuery(sqlResultSet, requestedColumns, -1, ingestionJobKey, fromMaster, 0, 1);
+
+		int64_t encodingJobKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<int64_t>(-1) : -1;
+		int64_t encoderKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][1].as<int64_t>(-1) : -1;
+
+		return make_pair(encodingJobKey, encoderKey);
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
 void MMSEngineDBFacade::encodingJobQuery(
 	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey,
 	int64_t ingestionJobKey, bool fromMaster, int startIndex, int rows

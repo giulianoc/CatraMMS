@@ -5635,14 +5635,8 @@ void API::changeLiveProxyOverlayText(
 					workspace->_workspaceKey, broadcasterIngestionJobKey
 				);
 
-				vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}};
-				shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
-				_mmsEngineDBFacade->ingestionJobQuery(sqlResultSet, requestedColumns, workspace->_workspaceKey, broadcasterIngestionJobKey, false);
-
-				auto row = *(sqlResultSet->begin());
-				MMSEngineDBFacade::IngestionType ingestionType = MMSEngineDBFacade::toIngestionType(row[0].as<string>("null ingestion type!!!"));
-				MMSEngineDBFacade::IngestionStatus ingestionStatus =
-					MMSEngineDBFacade::toIngestionStatus(row[1].as<string>("null ingestion status!!!"));
+				auto [ingestionType, ingestionStatus] =
+					_mmsEngineDBFacade->getIngestionJob_IngestionTypeStatus(workspace->_workspaceKey, broadcasterIngestionJobKey, false);
 
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 				{
@@ -5683,13 +5677,8 @@ void API::changeLiveProxyOverlayText(
 					broadcasterIngestionJobKey
 				);
 
-				vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.encodingJobKey"}, {false, "mms_encodingjob:.encoderKey"}};
-				shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
-				_mmsEngineDBFacade->encodingJobQuery(sqlResultSet, requestedColumns, -1, broadcasterIngestionJobKey, false);
-
-				auto row = *(sqlResultSet->begin());
-				broadcasterEncodingJobKey = row[0].as<int64_t>(-1);
-				broadcasterEncoderKey = row[1].as<int64_t>(-1);
+				tie(broadcasterEncodingJobKey, broadcasterEncoderKey) =
+					_mmsEngineDBFacade->getEncodingJob_EncodingJobKeyEncoderKey(broadcasterIngestionJobKey, false);
 
 				if (broadcasterEncodingJobKey == -1 || broadcasterEncoderKey == -1)
 				{

@@ -52,15 +52,15 @@ string PostgresHelper::buildQueryColumns(vector<pair<bool, string>> &requestedCo
 				requestedTableName = StringUtils::lowerCase(requestedTableName);
 				requestedColumnName = StringUtils::lowerCase(requestedColumnName);
 
-				SPDLOG_INFO(
-					"ColumnInfo"
-					", column: {}"
-					", requestedTableNameAndAlias: {}"
-					", requestedTableName: {}"
-					", requestedTableNameAlias: {}"
-					", requestedColumnName: {}",
-					column, requestedTableNameAndAlias, requestedTableName, requestedTableNameAlias, requestedColumnName
-				);
+				// SPDLOG_INFO(
+				// 	"ColumnInfo"
+				// 	", column: {}"
+				// 	", requestedTableNameAndAlias: {}"
+				// 	", requestedTableName: {}"
+				// 	", requestedTableNameAlias: {}"
+				// 	", requestedColumnName: {}",
+				// 	column, requestedTableNameAndAlias, requestedTableName, requestedTableNameAlias, requestedColumnName
+				// );
 			}
 
 			auto itTable = _sqlTablesColumnsSchema.find(requestedTableName);
@@ -151,6 +151,10 @@ void PostgresHelper::buildResult(result result, shared_ptr<PostgresHelper::SqlRe
 					case 20: // int8
 						sqlValue.setValue(make_shared<SqlType<int64_t>>(field.as<int64_t>()));
 						sqlValueType = PostgresHelper::SqlResultSet::int64;
+						break;
+					case 21: // int2
+						sqlValue.setValue(make_shared<SqlType<int16_t>>(field.as<int16_t>()));
+						sqlValueType = PostgresHelper::SqlResultSet::int16;
 						break;
 					case 23: // int4
 						sqlValue.setValue(make_shared<SqlType<int32_t>>(field.as<int32_t>()));
@@ -362,6 +366,9 @@ json PostgresHelper::SqlResultSet::asJson(string fieldName, SqlValue sqlValue)
 	{
 		switch (type(fieldName))
 		{
+		case PostgresHelper::SqlResultSet::int16:
+			root = sqlValue.as<int16_t>(-1);
+			break;
 		case PostgresHelper::SqlResultSet::int32:
 			root = sqlValue.as<int32_t>(-1);
 			break;

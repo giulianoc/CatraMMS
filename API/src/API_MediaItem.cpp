@@ -318,76 +318,41 @@ void API::mediaItemsList(
 	{
 		chrono::system_clock::time_point startAPI = chrono::system_clock::now();
 
-		int64_t mediaItemKey = -1;
-		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt != queryParameters.end() && mediaItemKeyIt->second != "")
+		int64_t mediaItemKey = getQueryParameter(queryParameters, "mediaItemKey", static_cast<int64_t>(-1), false);
+		// client could send 0 (see CatraMMSAPI::getMEdiaItem) in case it does not have mediaItemKey
+		// but other parameters
+		if (mediaItemKey == 0)
+			mediaItemKey = -1;
+
+		string uniqueName = getQueryParameter(queryParameters, "uniqueName", string(), false);
+
+		int64_t physicalPathKey = getQueryParameter(queryParameters, "physicalPathKey", static_cast<int64_t>(-1), false);
+		if (physicalPathKey == 0)
+			physicalPathKey = -1;
+
+		int32_t start = getQueryParameter(queryParameters, "start", static_cast<int32_t>(0), false);
+
+		int32_t rows = getQueryParameter(queryParameters, "rows", static_cast<int32_t>(10), false);
+		if (rows > _maxPageSize)
 		{
-			mediaItemKey = stoll(mediaItemKeyIt->second);
-			// client could send 0 (see CatraMMSAPI::getMEdiaItem) in case it does not have mediaItemKey
-			// but other parameters
-			if (mediaItemKey == 0)
-				mediaItemKey = -1;
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage =
+				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-		string uniqueName;
-		auto uniqueNameIt = queryParameters.find("uniqueName");
-		if (uniqueNameIt != queryParameters.end() && uniqueNameIt->second != "")
-		{
-			uniqueName = uniqueNameIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(uniqueName, regex(plus), plusDecoded);
-
-			uniqueName = curlpp::unescape(firstDecoding);
-		}
-
-		int64_t physicalPathKey = -1;
-		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
-		if (physicalPathKeyIt != queryParameters.end() && physicalPathKeyIt->second != "")
-		{
-			physicalPathKey = stoll(physicalPathKeyIt->second);
-			if (physicalPathKey == 0)
-				physicalPathKey = -1;
-		}
-
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
-		{
-			start = stoll(startIt->second);
-		}
-
-		int rows = 10;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
-
-				// rows = _maxPageSize;
-
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
+		string sContentType = getQueryParameter(queryParameters, "contentType", string(), false);
 		bool contentTypePresent = false;
 		MMSEngineDBFacade::ContentType contentType;
-		auto contentTypeIt = queryParameters.find("contentType");
-		if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
+		if (sContentType != "")
 		{
-			contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
-
+			contentType = MMSEngineDBFacade::toContentType(sContentType);
 			contentTypePresent = true;
 		}
 
@@ -407,204 +372,24 @@ void API::mediaItemsList(
 				liveRecordingChunk = 0;
 		}
 
-		string startIngestionDate;
-		auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-		if (startIngestionDateIt != queryParameters.end())
-			startIngestionDate = startIngestionDateIt->second;
+		string startIngestionDate = getQueryParameter(queryParameters, "startIngestionDate", string(), false);
 
-		string endIngestionDate;
-		auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-		if (endIngestionDateIt != queryParameters.end())
-			endIngestionDate = endIngestionDateIt->second;
+		string endIngestionDate = getQueryParameter(queryParameters, "endIngestionDate", string(), false);
 
-		string title;
-		auto titleIt = queryParameters.find("title");
-		if (titleIt != queryParameters.end() && titleIt->second != "")
-		{
-			title = titleIt->second;
+		string title = getQueryParameter(queryParameters, "title", string(), false);
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+		vector<string> tagsIn = getQueryParameter(queryParameters, "tagsIn", ',', vector<string>(), false);
+		vector<string> tagsNotIn = getQueryParameter(queryParameters, "tagsNotIn", ',', vector<string>(), false);
+		vector<int64_t> otherMediaItemsKey = getQueryParameter(queryParameters, "otherMIKs", ',', vector<int64_t>(), false);
+		set<string> responseFields = getQueryParameter(queryParameters, "responseFields", ',', set<string>(), false);
 
-			title = curlpp::unescape(firstDecoding);
-		}
+		int64_t recordingCode = getQueryParameter(queryParameters, "recordingCode", static_cast<int64_t>(-1), false);
 
-		vector<string> tagsIn;
-		vector<string> tagsNotIn;
-		vector<int64_t> otherMediaItemsKey;
-		set<string> responseFields;
-		/*
-		if (requestBody != "")
-		{
-			json otherInputsRoot = JSONUtils::toJson(requestBody);
+		string jsonCondition = getQueryParameter(queryParameters, "jsonCondition", string(), false);
 
-			string field = "tagsIn";
-			if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
-			{
-				json tagsInRoot = otherInputsRoot[field];
+		string orderBy = getQueryParameter(queryParameters, "orderBy", string(), false);
 
-				for (int tagIndex = 0; tagIndex < tagsInRoot.size(); ++tagIndex)
-				{
-					tagsIn.push_back (JSONUtils::asString(tagsInRoot[tagIndex]));
-				}
-			}
-
-			field = "tagsNotIn";
-			if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
-			{
-				json tagsNotInRoot = otherInputsRoot[field];
-
-				for (int tagIndex = 0; tagIndex < tagsNotInRoot.size(); ++tagIndex)
-				{
-					tagsNotIn.push_back (JSONUtils::asString(tagsNotInRoot[tagIndex]));
-				}
-			}
-
-			field = "otherMediaItemsKey";
-			if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
-			{
-				json otherMediaItemsKeyRoot = otherInputsRoot[field];
-
-				for (int mediaItemsIndex = 0; mediaItemsIndex < otherMediaItemsKeyRoot.size(); ++mediaItemsIndex)
-				{
-					otherMediaItemsKey.push_back (JSONUtils::asInt64(otherMediaItemsKeyRoot[mediaItemsIndex]));
-				}
-			}
-
-			field = "responseFields";
-			if (JSONUtils::isMetadataPresent(otherInputsRoot, field))
-				responseFields = otherInputsRoot[field];
-		}
-		else
-		*/
-		{
-			{
-				auto tagsInIt = queryParameters.find("tagsIn");
-				if (tagsInIt != queryParameters.end() && tagsInIt->second != "")
-				{
-					string sTagsIn = tagsInIt->second;
-
-					stringstream ss(sTagsIn);
-					string token;
-					char delim = ',';
-					while (getline(ss, token, delim))
-					{
-						if (!token.empty())
-							tagsIn.push_back(token);
-					}
-				}
-			}
-
-			{
-				auto tagsNotInIt = queryParameters.find("tagsNotIn");
-				if (tagsNotInIt != queryParameters.end() && tagsNotInIt->second != "")
-				{
-					string sTagsNotIn = tagsNotInIt->second;
-
-					stringstream ss(sTagsNotIn);
-					string token;
-					char delim = ',';
-					while (getline(ss, token, delim))
-					{
-						if (!token.empty())
-							tagsNotIn.push_back(token);
-					}
-				}
-			}
-
-			{
-				auto otherMIKsIt = queryParameters.find("otherMIKs");
-				if (otherMIKsIt != queryParameters.end() && otherMIKsIt->second != "")
-				{
-					string sOtherMIKs = otherMIKsIt->second;
-
-					stringstream ss(sOtherMIKs);
-					string token;
-					char delim = ',';
-					while (getline(ss, token, delim))
-					{
-						if (!token.empty())
-							otherMediaItemsKey.push_back(stoll(token));
-					}
-				}
-			}
-
-			{
-				auto responseFieldsIt = queryParameters.find("responseFields");
-				if (responseFieldsIt != queryParameters.end() && responseFieldsIt->second != "")
-				{
-					string sResponseFields = responseFieldsIt->second;
-
-					stringstream ss(sResponseFields);
-					string token;
-					char delim = ',';
-					while (getline(ss, token, delim))
-					{
-						if (!token.empty())
-							responseFields.insert(token);
-					}
-				}
-			}
-		}
-
-		int64_t recordingCode = -1;
-		auto recordingCodeIt = queryParameters.find("recordingCode");
-		if (recordingCodeIt != queryParameters.end() && recordingCodeIt->second != "")
-		{
-			recordingCode = stoll(recordingCodeIt->second);
-		}
-
-		string jsonCondition;
-		auto jsonConditionIt = queryParameters.find("jsonCondition");
-		if (jsonConditionIt != queryParameters.end() && jsonConditionIt->second != "")
-		{
-			jsonCondition = jsonConditionIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(jsonCondition, regex(plus), plusDecoded);
-
-			jsonCondition = curlpp::unescape(firstDecoding);
-		}
-
-		string orderBy;
-		auto orderByIt = queryParameters.find("orderBy");
-		if (orderByIt != queryParameters.end() && orderByIt->second != "")
-		{
-			orderBy = orderByIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(orderBy, regex(plus), plusDecoded);
-
-			orderBy = curlpp::unescape(firstDecoding);
-		}
-
-		string jsonOrderBy;
-		auto jsonOrderByIt = queryParameters.find("jsonOrderBy");
-		if (jsonOrderByIt != queryParameters.end() && jsonOrderByIt->second != "")
-		{
-			jsonOrderBy = jsonOrderByIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(jsonOrderBy, regex(plus), plusDecoded);
-
-			jsonOrderBy = curlpp::unescape(firstDecoding);
-		}
+		string jsonOrderBy = getQueryParameter(queryParameters, "jsonOrderBy", string(), false);
 
 		{
 			int64_t utcCutPeriodStartTimeInMilliSeconds = -1;

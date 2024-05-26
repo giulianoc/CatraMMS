@@ -909,7 +909,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// ProcessUtility::killProcess(sourceLiveProxy->_childPid);
 						// sourceLiveProxy->_killedBecauseOfNotWorking = true;
 						// ProcessUtility::quitProcess(sourceLiveProxy->_childPid);
-						ProcessUtility::termProcess(sourceLiveProxy->_childPid);
+						termProcess(sourceLiveProxy, copiedLiveProxy->_ingestionJobKey, false);
+						// ProcessUtility::termProcess(sourceLiveProxy->_childPid);
 						{
 							char strDateTime[64];
 							{
@@ -1829,7 +1830,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// ProcessUtility::killProcess(sourceLiveRecording->_childPid);
 						// sourceLiveRecording->_killedBecauseOfNotWorking = true;
 						// ProcessUtility::quitProcess(sourceLiveRecording->_childPid);
-						ProcessUtility::termProcess(sourceLiveRecording->_childPid);
+						termProcess(sourceLiveRecording, copiedLiveRecording->_ingestionJobKey, false);
+						// ProcessUtility::termProcess(sourceLiveRecording->_childPid);
 						{
 							char strDateTime[64];
 							{
@@ -1942,4 +1944,62 @@ void FFMPEGEncoderDaemons::stopCPUUsageThread()
 	_cpuUsageThreadShutdown = true;
 
 	this_thread::sleep_for(chrono::seconds(1));
+}
+
+// questo metodo è duplicato anche in FFMPEGEncoder
+void FFMPEGEncoderDaemons::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, bool kill)
+{
+	try
+	{
+		// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liveProxy
+		// 2023-02-18: using SIGQUIT, the process was not stopped, it worked with SIGTERM SIGTERM now is managed by FFMpeg.cpp too
+		chrono::system_clock::time_point start = chrono::system_clock::now();
+		pid_t previousChildPid = selectedEncoding->_childPid;
+		long secondsToWait = 10;
+		int counter = 0;
+		do
+		{
+			SPDLOG_INFO(
+				"ProcessUtility::termProcess"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", selectedEncoding->_childPid: {}"
+				", kill: {}"
+				", counter: {}",
+				ingestionJobKey, selectedEncoding->_encodingJobKey, selectedEncoding->_childPid, kill, counter++
+			);
+			if (kill)
+				ProcessUtility::killProcess(selectedEncoding->_childPid);
+			else
+				ProcessUtility::termProcess(selectedEncoding->_childPid);
+			this_thread::sleep_for(chrono::seconds(1));
+			// ripete il loop se la condizione è true
+		} while (selectedEncoding->_childPid == previousChildPid && chrono::system_clock::now() - start <= chrono::seconds(secondsToWait));
+	}
+	catch (runtime_error e)
+	{
+		SPDLOG_ERROR(
+			"termProcess failed"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", kill: {}"
+			", exception: {}",
+			ingestionJobKey, selectedEncoding->_encodingJobKey, kill, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		SPDLOG_ERROR(
+			"termProcess failed"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", kill: {}"
+			", exception: {}",
+			ingestionJobKey, selectedEncoding->_encodingJobKey, kill, e.what()
+		);
+
+		throw e;
+	}
 }

@@ -55,6 +55,8 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
 	mutex *_cpuUsageMutex;
 	deque<int> *_cpuUsage;
+
+	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, bool kill);
 };
 
 #endif

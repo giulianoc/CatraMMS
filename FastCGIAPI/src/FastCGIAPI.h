@@ -5,8 +5,10 @@
 #include "fcgi_config.h"
 #include "fcgi_stdio.h"
 #include "nlohmann/json.hpp"
+#include <set>
 #include <stdlib.h>
 #include <unordered_map>
+#include <vector>
 
 using namespace std;
 
@@ -83,6 +85,8 @@ class FastCGIAPI
 	vector<string> getQueryParameter(
 		unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<string> defaultParameter, bool mandatory
 	);
+	set<string>
+	getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, char delim, set<string> defaultParameter, bool mandatory);
 
   private:
 	void fillEnvironmentDetails(const char *const *envp, unordered_map<string, string> &requestDetails);

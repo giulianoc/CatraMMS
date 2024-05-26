@@ -1520,6 +1520,8 @@ class MMSEngineDBFacade
 	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
 	getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 
+	pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
+	getIngestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	void ingestionJobQuery(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey,
 		int64_t ingestionJobKey, bool fromMaster
@@ -1871,6 +1873,7 @@ class MMSEngineDBFacade
 	);
 
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster);
+	pair<int64_t, int64_t> getEncodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, bool fromMaster);
 	void encodingJobQuery(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey,
 		int64_t ingestionJobKey, bool fromMaster, int startIndex = -1, int rows = -1
