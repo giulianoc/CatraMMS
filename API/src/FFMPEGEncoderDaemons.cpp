@@ -1955,23 +1955,29 @@ void FFMPEGEncoderDaemons::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> s
 		// 2023-02-18: using SIGQUIT, the process was not stopped, it worked with SIGTERM SIGTERM now is managed by FFMpeg.cpp too
 		chrono::system_clock::time_point start = chrono::system_clock::now();
 		pid_t previousChildPid = selectedEncoding->_childPid;
+		if (previousChildPid == 0)
+			return;
 		long secondsToWait = 10;
 		int counter = 0;
 		do
 		{
+			if (selectedEncoding->_childPid == 0 || selectedEncoding->_childPid != previousChildPid)
+				break;
+
+			if (kill)
+				ProcessUtility::killProcess(previousChildPid);
+			else
+				ProcessUtility::termProcess(previousChildPid);
 			SPDLOG_INFO(
 				"ProcessUtility::termProcess"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
+				", previousChildPid: {}"
 				", selectedEncoding->_childPid: {}"
 				", kill: {}"
 				", counter: {}",
-				ingestionJobKey, selectedEncoding->_encodingJobKey, selectedEncoding->_childPid, kill, counter++
+				ingestionJobKey, selectedEncoding->_encodingJobKey, previousChildPid, selectedEncoding->_childPid, kill, counter++
 			);
-			if (kill)
-				ProcessUtility::killProcess(selectedEncoding->_childPid);
-			else
-				ProcessUtility::termProcess(selectedEncoding->_childPid);
 			this_thread::sleep_for(chrono::seconds(1));
 			// ripete il loop se la condizione è true
 		} while (selectedEncoding->_childPid == previousChildPid && chrono::system_clock::now() - start <= chrono::seconds(secondsToWait));
