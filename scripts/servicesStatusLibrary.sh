@@ -619,7 +619,7 @@ mms_api_timing_check_service()
 			    // custom max duration
 			    if (method == "killOrCancelEncodingJob"	\
 			    )	\
-				    maxDuration = 6000;	\
+				    maxDuration = 10000;	\
 			    else if (method == "uploadedBinary"	\
 			    )	\
 				    maxDuration = 3000;	\
@@ -680,7 +680,7 @@ mms_webservices_timing_check_service()
 			if (method == "startChannels"	\
 				|| method == "checkChannels"	\
 			)	\
-				maxDuration = 10000;	\
+				maxDuration = 15000;	\
 			else if (method == "epgUpdate"	\
 			)	\
 				maxDuration = 150000;	\

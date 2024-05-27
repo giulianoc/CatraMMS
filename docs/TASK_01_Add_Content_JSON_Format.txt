@@ -25,12 +25,12 @@
 		//					the directory inside the tar.gz downloaded content will be
 		//					fixed to "content"
 		//			2. the segmented content is downloaded by the streaming referred by a URL
-		//				in this case the file format has to be "m3u8-streaming" and the sourceURL will refer
+		//				in this case the file format has to be "streaming-to-mp4" and the sourceURL will refer
 		//				the streamingURL
 		"fileFormat": "mp4",
 
 		// Optional, default is false. Used only in case of streaming, today we have only
-		//	the m3u8-streaming file format using it. This is in case the source streaming input
+		//	the streaming-to-mp4 file format using it. This is in case the source streaming input
 		//	does not have "consistent timestamps", i.e. it is a HLS streaming where the segments
 		//	are taken randomily from a full HLS, in particular it was the HLS streaming
 		//	of the highlights of a football match. The highlights was just built using the segments

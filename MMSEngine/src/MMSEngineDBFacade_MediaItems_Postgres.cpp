@@ -951,11 +951,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch

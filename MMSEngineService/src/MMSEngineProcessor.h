@@ -399,15 +399,15 @@ class MMSEngineProcessor
 	validateMediaSourceFile(int64_t ingestionJobKey, string mediaSourcePathName, string mediaFileFormat, string md5FileCheckSum, int fileSizeInBytes);
 
 	void downloadMediaSourceFileThread(
-		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrM3u8Streaming,
+		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrStreaming,
 		int64_t ingestionJobKey, shared_ptr<Workspace> workspace
 	);
 	void moveMediaSourceFileThread(
-		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming, int64_t ingestionJobKey,
+		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
 		shared_ptr<Workspace> workspace
 	);
 	void copyMediaSourceFileThread(
-		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming, int64_t ingestionJobKey,
+		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
 		shared_ptr<Workspace> workspace
 	);
 

@@ -73,6 +73,8 @@ then
 	kill -9 `cat $PIDFILE`
 	pkill ffmpeg
 	sleep 2
+	pkill ffmpeg
+	sleep 2
 	ps -ef | grep ffmpeg | grep -v grep
 fi
 

@@ -627,13 +627,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								{
 									// 0: no m3u8
 									// 1: m3u8 by .tar.gz
-									// 2: m3u8 by streaming (it will be saved as
-									// .mp4)
-									int m3u8TarGzOrM3u8Streaming = 0;
+									// 2: streaming (it will be saved as .mp4)
+									int m3u8TarGzOrStreaming = 0;
 									if (mediaFileFormat == "m3u8-tar.gz")
-										m3u8TarGzOrM3u8Streaming = 1;
-									else if (mediaFileFormat == "m3u8-streaming")
-										m3u8TarGzOrM3u8Streaming = 2;
+										m3u8TarGzOrStreaming = 1;
+									else if (mediaFileFormat == "streaming-to-mp4")
+										m3u8TarGzOrStreaming = 2;
 
 									if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
 									{
@@ -693,16 +692,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 											// 2021-09-02: regenerateTimestamps
 											// is used only
-											//	in case of m3u8-streaming
+											//	in case of streaming-to-mp4
 											//	(see
 											// docs/TASK_01_Add_Content_JSON_Format.txt)
 											bool regenerateTimestamps = false;
-											if (mediaFileFormat == "m3u8-streaming")
+											if (mediaFileFormat == "streaming-to-mp4")
 												regenerateTimestamps = JSONUtils::asBool(parametersRoot, "regenerateTimestamps", false);
 
 											thread downloadMediaSource(
 												&MMSEngineProcessor::downloadMediaSourceFileThread, this, _processorsThreadsNumber, mediaSourceURL,
-												regenerateTimestamps, m3u8TarGzOrM3u8Streaming, ingestionJobKey, workspace
+												regenerateTimestamps, m3u8TarGzOrStreaming, ingestionJobKey, workspace
 											);
 											downloadMediaSource.detach();
 										}
@@ -765,7 +764,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 											thread moveMediaSource(
 												&MMSEngineProcessor::moveMediaSourceFileThread, this, _processorsThreadsNumber, mediaSourceURL,
-												m3u8TarGzOrM3u8Streaming, ingestionJobKey, workspace
+												m3u8TarGzOrStreaming, ingestionJobKey, workspace
 											);
 											moveMediaSource.detach();
 										}
@@ -828,7 +827,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 											thread copyMediaSource(
 												&MMSEngineProcessor::copyMediaSourceFileThread, this, _processorsThreadsNumber, mediaSourceURL,
-												m3u8TarGzOrM3u8Streaming, ingestionJobKey, workspace
+												m3u8TarGzOrStreaming, ingestionJobKey, workspace
 											);
 											copyMediaSource.detach();
 										}
@@ -4843,10 +4842,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 
 			string field = "fileFormat";
 			string fileFormat = JSONUtils::asString(parametersRoot, field, "");
-			if (fileFormat == "m3u8-streaming")
+			if (fileFormat == "streaming-to-mp4")
 			{
 				// .mp4 is used in
-				// 1. downloadMediaSourceFileThread (when the m3u8-streaming is
+				// 1. downloadMediaSourceFileThread (when the streaming-to-mp4 is
 				// downloaded in a .mp4 file
 				// 2. here, handleLocalAssetIngestionEvent (when the
 				// IngestionRepository file name
@@ -5506,14 +5505,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				mediaSourceFileName = localAssetIngestionEvent.getIngestionSourceFileName();
 				// .mp4 is used in
-				// 1. downloadMediaSourceFileThread (when the m3u8-streaming is
+				// 1. downloadMediaSourceFileThread (when the streaming-to-mp4 is
 				// downloaded in a .mp4 file
 				// 2. handleLocalAssetIngestionEvent (when the
 				// IngestionRepository file name
 				//		is built "consistent" with the above step no. 1)
 				// 3. here, handleLocalAssetIngestionEvent (when the MMS file
 				// name is generated)
-				if (mediaFileFormat == "m3u8-streaming")
+				if (mediaFileFormat == "streaming-to-mp4")
 					mediaSourceFileName += ".mp4";
 				else if (mediaFileFormat == "m3u8-tar.gz")
 					; // mediaSourceFileName is like "2131450_source"
@@ -7680,8 +7679,8 @@ size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 };
 
 void MMSEngineProcessor::downloadMediaSourceFileThread(
-	shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrM3u8Streaming,
-	int64_t ingestionJobKey, shared_ptr<Workspace> workspace
+	shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
+	shared_ptr<Workspace> workspace
 )
 {
 	ThreadsStatistic::ThreadStatistic threadStatistic(
@@ -7691,9 +7690,12 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	bool downloadingCompleted = false;
 
 	SPDLOG_INFO(
-		string() + "downloadMediaSourceFileThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-		", ingestionJobKey: " + to_string(ingestionJobKey) + ", m3u8TarGzOrM3u8Streaming: " + to_string(m3u8TarGzOrM3u8Streaming) +
-		", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		"downloadMediaSourceFileThread"
+		", _processorIdentifier: {}"
+		", ingestionJobKey: {}"
+		", m3u8TarGzOrStreaming: {}"
+		", _processorsThreadsNumber.use_count(): {}",
+		_processorIdentifier, ingestionJobKey, m3u8TarGzOrStreaming, _processorsThreadsNumber.use_count()
 	);
 	/*
 		- aggiungere un timeout nel caso nessun pacchetto è ricevuto entro XXXX
@@ -7729,7 +7731,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	 */
 
 	string localSourceReferenceURL = sourceReferenceURL;
-	int localM3u8TarGzOrM3u8Streaming = m3u8TarGzOrM3u8Streaming;
+	int localM3u8TarGzOrStreaming = m3u8TarGzOrStreaming;
 	// in case of youtube url, the real URL to be used has to be calcolated
 	{
 		if (StringUtils::startWith(sourceReferenceURL, "https://www.youtube.com/") || StringUtils::startWith(sourceReferenceURL, "https://youtu.be/"))
@@ -7754,8 +7756,8 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 				localSourceReferenceURL = streamingYouTubeURL;
 
-				// for sure localM3u8TarGzOrM3u8Streaming has to be false
-				localM3u8TarGzOrM3u8Streaming = 0;
+				// for sure localM3u8TarGzOrStreaming has to be false
+				localM3u8TarGzOrStreaming = 0;
 			}
 			catch (runtime_error &e)
 			{
@@ -7803,18 +7805,18 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	// 1: m3u8 by .tar.gz
 	// 2: m3u8 by streaming (it will be saved as .mp4)
 	// .mp4 is used in
-	// 1. downloadMediaSourceFileThread (when the m3u8-streaming is downloaded
+	// 1. downloadMediaSourceFileThread (when the streaming-to-mp4 is downloaded
 	// in a .mp4 file
 	// 2. handleLocalAssetIngestionEvent (when the IngestionRepository file name
 	//		is built "consistent" with the above step no. 1)
 	// 3. here, handleLocalAssetIngestionEvent (when the MMS file name is
 	// generated)
-	if (localM3u8TarGzOrM3u8Streaming == 1)
+	if (localM3u8TarGzOrStreaming == 1)
 		destBinaryPathName = destBinaryPathName + ".tar.gz";
-	else if (localM3u8TarGzOrM3u8Streaming == 2)
+	else if (localM3u8TarGzOrStreaming == 2)
 		destBinaryPathName = destBinaryPathName + ".mp4";
 
-	if (localM3u8TarGzOrM3u8Streaming == 2)
+	if (localM3u8TarGzOrStreaming == 2)
 	{
 		try
 		{
@@ -7893,10 +7895,14 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			try
 			{
 				SPDLOG_INFO(
-					string() + "Downloading" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", localSourceReferenceURL: " + localSourceReferenceURL +
-					", destBinaryPathName: " + destBinaryPathName + ", attempt: " + to_string(attemptIndex + 1) +
-					", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+					"Downloading"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", localSourceReferenceURL: {}"
+					", destBinaryPathName: {}"
+					", attempt: {}"
+					", _maxDownloadAttemptNumber: {}",
+					_processorIdentifier, ingestionJobKey, localSourceReferenceURL, destBinaryPathName, attemptIndex + 1, _maxDownloadAttemptNumber
 				);
 
 				if (attemptIndex == 0)
@@ -8056,7 +8062,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					(curlDownloadData.mediaSourceFileStream).close();
 				}
 
-				if (localM3u8TarGzOrM3u8Streaming == 1)
+				if (localM3u8TarGzOrStreaming == 1)
 				{
 					try
 					{

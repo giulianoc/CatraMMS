@@ -2,41 +2,6 @@
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
 #include "catralibraries/StringUtils.h"
-/*
-#include <stdio.h>
-
-#include "CheckEncodingTimes.h"
-#include "CheckIngestionTimes.h"
-#include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "ContentRetentionTimes.h"
-#include "DBDataRetentionTimes.h"
-#include "FFMpeg.h"
-#include "GEOInfoTimes.h"
-#include "MMSCURL.h"
-#include "PersistenceLock.h"
-#include "ThreadsStatisticTimes.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/System.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-#include <fstream>
-#include <iomanip>
-#include <regex>
-#include <sstream>
-// #include "EMailSender.h"
-#include "Magick++.h"
-// #include <openssl/md5.h>
-#include "spdlog/spdlog.h"
-#include <openssl/evp.h>
-
-#define MD5BUFFERSIZE 16384
-*/
 
 void MMSEngineProcessor::localCopyContentThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -326,7 +291,7 @@ void MMSEngineProcessor::copyContent(int64_t ingestionJobKey, string mmsAssetPat
 }
 
 void MMSEngineProcessor::moveMediaSourceFileThread(
-	shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming, int64_t ingestionJobKey,
+	shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
 	shared_ptr<Workspace> workspace
 )
 {
@@ -347,7 +312,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		// 0: no m3u8
 		// 1: m3u8 by .tar.gz
 		// 2: m3u8 by streaming (it will be saved as .mp4)
-		if (m3u8TarGzOrM3u8Streaming == 1)
+		if (m3u8TarGzOrStreaming == 1)
 			destBinaryPathName = destBinaryPathName + ".tar.gz";
 
 		string movePrefix("move://");
@@ -378,7 +343,10 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 
 		int64_t elapsedInSeconds = MMSStorage::move(ingestionJobKey, sourcePathName, destBinaryPathName, _logger);
 
-		if (m3u8TarGzOrM3u8Streaming)
+		// 0: no m3u8
+		// 1: m3u8 by .tar.gz
+		// 2: m3u8 by streaming (it will be saved as .mp4)
+		if (m3u8TarGzOrStreaming)
 		{
 			try
 			{
@@ -474,7 +442,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 }
 
 void MMSEngineProcessor::copyMediaSourceFileThread(
-	shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrM3u8Streaming, int64_t ingestionJobKey,
+	shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
 	shared_ptr<Workspace> workspace
 )
 {
@@ -494,7 +462,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		// 0: no m3u8
 		// 1: m3u8 by .tar.gz
 		// 2: m3u8 by streaming (it will be saved as .mp4)
-		if (m3u8TarGzOrM3u8Streaming == 1)
+		if (m3u8TarGzOrStreaming == 1)
 			destBinaryPathName = destBinaryPathName + ".tar.gz";
 
 		string copyPrefix("copy://");
@@ -525,7 +493,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		fs::copy(sourcePathName, destBinaryPathName, fs::copy_options::recursive);
 		chrono::system_clock::time_point endCoping = chrono::system_clock::now();
 
-		if (m3u8TarGzOrM3u8Streaming == 1)
+		if (m3u8TarGzOrStreaming == 1)
 		{
 			try
 			{

@@ -5929,7 +5929,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 bool Validator::isVideoAudioFileFormat(string fileFormat)
 {
 	// see https://en.wikipedia.org/wiki/Video_file_format
-	vector<string> suffixes = {"webm", "mkv", "flv", "vob", "ogv", "ogg", "avi", "mov",	 "wmv",	  "m3u8-tar.gz", "m3u8-streaming",
+	vector<string> suffixes = {"webm", "mkv", "flv", "vob", "ogv", "ogg", "avi", "mov",	 "wmv",	  "m3u8-tar.gz", "streaming-to-mp4",
 							   "yuv",  "mp4", "m4a", "m4p", "mpg", "mp2", "mp3", "mpeg", "mjpeg", "m4v",		 "3gp",
 							   "3g2",  "mxf", "ts",	 "mts", "wav"};
 

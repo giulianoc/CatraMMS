@@ -1,7 +1,7 @@
 
-#include "MMSEngineProcessor.h"
-#include "JSONUtils.h"
 #include "FFMpeg.h"
+#include "JSONUtils.h"
+#include "MMSEngineProcessor.h"
 /*
 #include <stdio.h>
 
@@ -17,8 +17,8 @@
 #include "catralibraries/Convert.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
-#include "catralibraries/StringUtils.h"
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/StringUtils.h"
 #include "catralibraries/System.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
@@ -37,7 +37,6 @@
 
 #define MD5BUFFERSIZE 16384
 */
-
 
 void MMSEngineProcessor::changeFileFormatThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -146,8 +145,10 @@ void MMSEngineProcessor::changeFileFormatThread(
 				// add the new file as a new variant of the MIK
 				{
 					string changeFormatFileName = to_string(ingestionJobKey) + "_" + to_string(mediaItemKey) + "_changeFileFormat";
-					if (outputFileFormat == "m3u8-tar.gz" || outputFileFormat == "m3u8-streaming")
+					if (outputFileFormat == "m3u8-tar.gz") // || outputFileFormat == "m3u8-streaming")
 						changeFormatFileName += ".m3u8";
+					else if (outputFileFormat == "streaming-to-mp4")
+						changeFormatFileName += ".mp4";
 					else
 						changeFormatFileName += (string(".") + outputFileFormat);
 
