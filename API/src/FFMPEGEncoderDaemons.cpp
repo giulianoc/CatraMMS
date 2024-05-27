@@ -909,7 +909,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// ProcessUtility::killProcess(sourceLiveProxy->_childPid);
 						// sourceLiveProxy->_killedBecauseOfNotWorking = true;
 						// ProcessUtility::quitProcess(sourceLiveProxy->_childPid);
-						termProcess(sourceLiveProxy, copiedLiveProxy->_ingestionJobKey, false);
+						termProcess(sourceLiveProxy, copiedLiveProxy->_ingestionJobKey, configurationLabel, localErrorMessage, false);
 						// ProcessUtility::termProcess(sourceLiveProxy->_childPid);
 						{
 							char strDateTime[64];
@@ -1830,7 +1830,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// ProcessUtility::killProcess(sourceLiveRecording->_childPid);
 						// sourceLiveRecording->_killedBecauseOfNotWorking = true;
 						// ProcessUtility::quitProcess(sourceLiveRecording->_childPid);
-						termProcess(sourceLiveRecording, copiedLiveRecording->_ingestionJobKey, false);
+						termProcess(
+							sourceLiveRecording, copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_channelLabel, localErrorMessage, false
+						);
 						// ProcessUtility::termProcess(sourceLiveRecording->_childPid);
 						{
 							char strDateTime[64];
@@ -1947,7 +1949,9 @@ void FFMPEGEncoderDaemons::stopCPUUsageThread()
 }
 
 // questo metodo è duplicato anche in FFMPEGEncoder
-void FFMPEGEncoderDaemons::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, bool kill)
+void FFMPEGEncoderDaemons::termProcess(
+	shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill
+)
 {
 	try
 	{
@@ -1972,11 +1976,13 @@ void FFMPEGEncoderDaemons::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> s
 				"ProcessUtility::termProcess"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
+				", label: {}"
+				", message: {}"
 				", previousChildPid: {}"
 				", selectedEncoding->_childPid: {}"
 				", kill: {}"
 				", counter: {}",
-				ingestionJobKey, selectedEncoding->_encodingJobKey, previousChildPid, selectedEncoding->_childPid, kill, counter++
+				ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, previousChildPid, selectedEncoding->_childPid, kill, counter++
 			);
 			this_thread::sleep_for(chrono::seconds(1));
 			// ripete il loop se la condizione è true
@@ -1988,9 +1994,11 @@ void FFMPEGEncoderDaemons::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> s
 			"termProcess failed"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
+			", label: {}"
+			", message: {}"
 			", kill: {}"
 			", exception: {}",
-			ingestionJobKey, selectedEncoding->_encodingJobKey, kill, e.what()
+			ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, kill, e.what()
 		);
 
 		throw e;
@@ -2001,9 +2009,11 @@ void FFMPEGEncoderDaemons::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> s
 			"termProcess failed"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
+			", label: {}"
+			", message: {}"
 			", kill: {}"
 			", exception: {}",
-			ingestionJobKey, selectedEncoding->_encodingJobKey, kill, e.what()
+			ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, kill, e.what()
 		);
 
 		throw e;

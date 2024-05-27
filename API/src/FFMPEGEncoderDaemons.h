@@ -56,7 +56,7 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 	mutex *_cpuUsageMutex;
 	deque<int> *_cpuUsage;
 
-	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, bool kill);
+	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill);
 };
 
 #endif

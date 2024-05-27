@@ -196,7 +196,7 @@ class FFMPEGEncoder : public FastCGIAPI
 
 	void encodingCompletedRetention();
 
-	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t encodingJobKey, bool kill);
+	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t encodingJobKey, string label, string message, bool kill);
 };
 
 #endif

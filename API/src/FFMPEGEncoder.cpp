@@ -1620,22 +1620,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	}
 	else if (method == "killEncodingJob")
 	{
-		/*
-		bool isAdminAPI = get<1>(workspaceAndFlags);
-		if (!isAdminAPI)
-		{
-			string errorMessage = string("APIKey flags does not have
-		the ADMIN permission"
-					", isAdminAPI: " + to_string(isAdminAPI)
-					);
-			_logger->error(__FILEREF__ + errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		*/
-
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
@@ -1772,11 +1756,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// 2023-02-18: using SIGQUIT, the process was
 				// not stopped, it worked with SIGTERM
 				//	SIGTERM now is managed by FFMpeg.cpp too
-				termProcess(selectedEncoding, encodingJobKey, false);
+				termProcess(selectedEncoding, encodingJobKey, "unknown", "received killEncodingJob", false);
 			}
 			else
 			{
-				termProcess(selectedEncoding, encodingJobKey, true);
+				termProcess(selectedEncoding, encodingJobKey, "unknown", "received killEncodingJob", true);
 			}
 
 			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
@@ -1799,17 +1783,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		string responseBody;
 		{
-			/*
-			string responseBody = string("{ ")
-					+ "\"ingestionJobKey\": " +
-			to_string(ingestionJobKey)
-					+ "\"encodingJobKey\": " +
-			to_string(encodingJobKey)
-					+ ", \"pid\": " +
-			to_string(pidToBeKilled)
-					+ "}";
-			*/
-
 			json responseBodyRoot;
 
 			string field = "ingestionJobKey";
@@ -1926,7 +1899,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				try
 				{
-					termProcess(selectedLiveProxy, selectedLiveProxy->_ingestionJobKey, false);
+					termProcess(selectedLiveProxy, selectedLiveProxy->_ingestionJobKey, "unknown", "received changeLiveProxyPlaylist", false);
 				}
 				catch (runtime_error &e)
 				{
@@ -3232,7 +3205,9 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestion
 }
 
 // questo metodo è duplicato anche in FFMPEGEncoderDaemons
-void FFMPEGEncoder::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, bool kill)
+void FFMPEGEncoder::termProcess(
+	shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill
+)
 {
 	try
 	{
@@ -3257,11 +3232,13 @@ void FFMPEGEncoder::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selected
 				"ProcessUtility::termProcess"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
+				", label: {}"
+				", message: {}"
 				", previousChildPid: {}"
 				", selectedEncoding->_childPid: {}"
 				", kill: {}"
 				", counter: {}",
-				ingestionJobKey, selectedEncoding->_encodingJobKey, previousChildPid, selectedEncoding->_childPid, kill, counter++
+				ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, previousChildPid, selectedEncoding->_childPid, kill, counter++
 			);
 			this_thread::sleep_for(chrono::seconds(1));
 			// ripete il loop se la condizione è true
@@ -3273,9 +3250,11 @@ void FFMPEGEncoder::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selected
 			"termProcess failed"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
+			", label: {}"
+			", message: {}"
 			", kill: {}"
 			", exception: {}",
-			ingestionJobKey, selectedEncoding->_encodingJobKey, kill, e.what()
+			ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, kill, e.what()
 		);
 
 		throw e;
@@ -3286,9 +3265,11 @@ void FFMPEGEncoder::termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selected
 			"termProcess failed"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
+			", label: {}"
+			", message: {}"
 			", kill: {}"
 			", exception: {}",
-			ingestionJobKey, selectedEncoding->_encodingJobKey, kill, e.what()
+			ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, kill, e.what()
 		);
 
 		throw e;
