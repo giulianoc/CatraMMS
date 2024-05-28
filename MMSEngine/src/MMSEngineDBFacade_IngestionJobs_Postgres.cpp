@@ -3550,17 +3550,20 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 }
 
 pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
-MMSEngineDBFacade::getIngestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, chrono::milliseconds *sqlDuration, bool fromMaster)
 {
 	try
 	{
 		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}};
-		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
-		ingestionJobQuery(sqlResultSet, requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet =
+			ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, sqlDuration, fromMaster);
 		MMSEngineDBFacade::IngestionType ingestionType =
 			MMSEngineDBFacade::toIngestionType((*sqlResultSet)[0][0].as<string>("null ingestion type!!!"));
 		MMSEngineDBFacade::IngestionStatus ingestionStatus =
 			MMSEngineDBFacade::toIngestionStatus((*sqlResultSet)[0][1].as<string>("null ingestion status!!!"));
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
 
 		return make_pair(ingestionType, ingestionStatus);
 	}
@@ -3591,13 +3594,13 @@ MMSEngineDBFacade::getIngestionJob_IngestionTypeStatus(int64_t workspaceKey, int
 	}
 }
 
-void MMSEngineDBFacade::ingestionJobQuery(
-	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns,
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
+	vector<pair<bool, string>> &requestedColumns,
 	// 2021-02-20: workspaceKey is used just to be sure the ingestionJobKey
 	//	will belong to the specified workspaceKey. We do that because the updateIngestionJob API
 	//	calls this method, to be sure an end user can do an update of any IngestionJob (also
 	//	belonging to another workspace)
-	int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster
+	int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -3611,45 +3614,127 @@ void MMSEngineDBFacade::ingestionJobQuery(
 	nontransaction trans{*(conn->_sqlConnection)};
 	try
 	{
+		if (rows > _maxRows)
+		{
+			string errorMessage = fmt::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = fmt::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
 			if (ingestionJobKey != -1)
 				where += fmt::format("{} ij.ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
+
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = fmt::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = fmt::format("offset {} ", startIndex);
+			if (orderBy != "")
+				orderByCondition = fmt::format("order by {} ", orderBy);
 
 			string sqlStatement = fmt::format(
 				"select {} "
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 				"where ir.ingestionRootKey = ij.ingestionRootKey "
 				"and ir.workspaceKey = {} "
-				"{} ",
-				_postgresHelper.buildQueryColumns(requestedColumns), workspaceKey, where
+				"{} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), workspaceKey, where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
+
+			sqlResultSet = _postgresHelper.buildResult(res);
+
+			chrono::system_clock::time_point endSql = chrono::system_clock::now();
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
 			);
-			if (empty(res) && ingestionJobKey != -1)
+
+			if (empty(res) && ingestionJobKey != -1 && notFoundAsException)
 			{
 				string errorMessage = fmt::format(
 					"ingestionJob not found"
 					", workspaceKey: {}",
 					", ingestionJobKey: {}", workspaceKey, ingestionJobKey
 				);
-				_logger->error(errorMessage);
+				// abbiamo il log nel catch
+				// SPDLOG_WARN(errorMessage);
 
-				throw runtime_error(errorMessage);
+				throw NotFound(errorMessage);
 			}
-			_postgresHelper.buildResult(res, sqlResultSet);
 		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return sqlResultSet;
+	}
+	catch (NotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
 	}
 	catch (sql_error const &e)
 	{

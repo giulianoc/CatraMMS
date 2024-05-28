@@ -3214,16 +3214,19 @@ MMSEngineDBFacade::getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster
 	}
 }
 
-pair<int64_t, int64_t> MMSEngineDBFacade::getEncodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, bool fromMaster)
+pair<int64_t, int64_t>
+MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, chrono::milliseconds *sqlDuration, bool fromMaster)
 {
 	try
 	{
 		vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.encodingJobKey"}, {false, "mms_encodingjob:.encoderKey"}};
-		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
-		encodingJobQuery(sqlResultSet, requestedColumns, -1, ingestionJobKey, fromMaster, 0, 1);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, -1, ingestionJobKey, sqlDuration, fromMaster);
 
 		int64_t encodingJobKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<int64_t>(-1) : -1;
 		int64_t encoderKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][1].as<int64_t>(-1) : -1;
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
 
 		return make_pair(encodingJobKey, encoderKey);
 	}
@@ -3252,9 +3255,9 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getEncodingJob_EncodingJobKeyEncoderKe
 	}
 }
 
-void MMSEngineDBFacade::encodingJobQuery(
-	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey,
-	int64_t ingestionJobKey, bool fromMaster, int startIndex, int rows
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
+	vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey, int64_t ingestionJobKey, bool fromMaster, int startIndex, int rows,
+	string orderBy, bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -3276,11 +3279,31 @@ void MMSEngineDBFacade::encodingJobQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = fmt::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
 			if (encodingJobKey != -1)
@@ -3288,40 +3311,87 @@ void MMSEngineDBFacade::encodingJobQuery(
 			if (ingestionJobKey != -1)
 				where += fmt::format("{} ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
 
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = fmt::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = fmt::format("offset {} ", startIndex);
+			if (orderBy != "")
+				orderByCondition = fmt::format("order by {} ", orderBy);
+
 			string sqlStatement = fmt::format(
 				"select {} "
 				"from MMS_EncodingJob "
-				"{} "
-				"{} limit {} offset {}",
-				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, rows == -1 ? _maxRows : rows,
-				startIndex == -1 ? 0 : startIndex
+				"{} {} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
+
+			sqlResultSet = _postgresHelper.buildResult(res);
+
+			chrono::system_clock::time_point endSql = chrono::system_clock::now();
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
 			);
-			if (empty(res) && encodingJobKey != -1)
+
+			if (empty(res) && encodingJobKey != -1 && notFoundAsException)
 			{
 				string errorMessage = fmt::format(
 					"encodingJob not found"
 					", encodingJobKey: {}",
 					encodingJobKey
 				);
-				_logger->error(errorMessage);
+				// abbiamo il log nel catch
+				// SPDLOG_WARN(errorMessage);
 
-				throw runtime_error(errorMessage);
+				throw NotFound(errorMessage);
 			}
-			_postgresHelper.buildResult(res, sqlResultSet);
 		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return sqlResultSet;
+	}
+	catch (NotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
 	}
 	catch (sql_error const &e)
 	{

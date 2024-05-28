@@ -118,8 +118,10 @@ string PostgresHelper::buildQueryColumns(vector<pair<bool, string>> &requestedCo
 	return queryColumns;
 }
 
-void PostgresHelper::buildResult(result result, shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet)
+shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result result)
 {
+	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = make_shared<PostgresHelper::SqlResultSet>();
+
 	sqlResultSet->clearData();
 	int rowIndex = 0;
 	for (auto row : result)
@@ -233,6 +235,8 @@ void PostgresHelper::buildResult(result result, shared_ptr<PostgresHelper::SqlRe
 		sqlResultSet->addCurrentRow();
 		rowIndex++;
 	}
+
+	return sqlResultSet;
 }
 
 string PostgresHelper::getQueryColumn(
@@ -416,30 +420,7 @@ json PostgresHelper::SqlResultSet::asJson(string fieldName, SqlValue sqlValue)
 	return root;
 }
 
-json PostgresHelper::SqlResultSetByName::asJson()
-{
-	json jsonRoot = json::array();
-
-	for (auto row : _sqlValuesByName)
-	{
-		json rowRoot;
-
-		for (pair<string, PostgresHelper::SqlValue> sqlValuePair : row)
-		{
-			auto [fieldName, sqlValue] = sqlValuePair;
-
-			string jsonKey = fieldName; // fmt::format("{} ({})", fieldName, (int)type(fieldName));
-			if (sqlValue.isNull())
-				rowRoot[jsonKey] = nullptr;
-			else
-				rowRoot[jsonKey] = SqlResultSet::asJson(fieldName, sqlValue);
-		}
-		jsonRoot.push_back(rowRoot);
-	}
-	return jsonRoot;
-}
-
-json PostgresHelper::SqlResultSetByIndex::asJson()
+json PostgresHelper::SqlResultSet::asJson()
 {
 	json jsonRoot = json::array();
 
@@ -447,10 +428,11 @@ json PostgresHelper::SqlResultSetByIndex::asJson()
 	{
 		json rowRoot;
 
-		int columnIndex = 0;
-		for (PostgresHelper::SqlValue sqlValue : row)
+		// for (auto sqlValue : row)
+		for (int columnIndex = 0, columnNumber = row.size(); columnIndex < columnNumber; columnIndex++)
 		{
 			string fieldName = _sqlColumnTypeByIndex[columnIndex].first;
+			SqlValue sqlValue = row[columnIndex];
 
 			string jsonKey = fieldName; // fmt::format("{} ({})", fieldName, (int)type(fieldName));
 			if (sqlValue.isNull())

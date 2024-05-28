@@ -91,21 +91,34 @@ class PostgresHelper
 			vectorBoolean
 		};
 
-	  protected:
+	  private:
 		// column Name / type
 		vector<pair<string, SqlValueType>> _sqlColumnTypeByIndex;
 		map<string, SqlValueType> _sqlColumnTypeByName;
+
+		// per ogni riga (vector) abbiamo un vettore che contiene i valori delle colonne by Index
+		vector<vector<SqlValue>> _sqlValuesByIndex;
+
+		chrono::milliseconds _sqlDuration;
+
+		// temporary vector to fill _sqlValuesByIndex
+		vector<SqlValue> _sqlCurrentRowValuesByIndex;
 
 	  public:
 		virtual void clearData()
 		{
 			_sqlColumnTypeByIndex.clear();
 			_sqlColumnTypeByName.clear();
+			_sqlValuesByIndex.clear();
 		};
-		virtual void addColumnValueToCurrentRow(string fieldName, SqlValue sqlValue) = 0;
-		virtual void addCurrentRow() = 0;
-		virtual size_t size() = 0;
-		virtual json asJson() = 0;
+		virtual void addColumnValueToCurrentRow(string fieldName, SqlValue sqlValue) { _sqlCurrentRowValuesByIndex.push_back(sqlValue); };
+		virtual void addCurrentRow()
+		{
+			_sqlValuesByIndex.push_back(_sqlCurrentRowValuesByIndex);
+			_sqlCurrentRowValuesByIndex.clear();
+		};
+		virtual size_t size() { return _sqlValuesByIndex.size(); };
+		virtual json asJson();
 		void addColumnType(string fieldName, SqlValueType sqlValueType)
 		{
 			auto it = _sqlColumnTypeByName.find(fieldName);
@@ -120,6 +133,44 @@ class PostgresHelper
 		};
 		SqlValueType type(string fieldName);
 		json asJson(string fieldName, SqlValue sqlValue);
+		string getColumnNameByIndex(int columnIndex) { return _sqlColumnTypeByIndex[columnIndex].first; };
+		vector<vector<SqlValue>>::iterator begin() { return _sqlValuesByIndex.begin(); };
+		vector<vector<SqlValue>>::iterator end() { return _sqlValuesByIndex.end(); };
+		vector<vector<SqlValue>>::const_iterator begin() const { return _sqlValuesByIndex.begin(); };
+		vector<vector<SqlValue>>::const_iterator end() const { return _sqlValuesByIndex.end(); };
+		vector<SqlValue> &operator[](int index) { return _sqlValuesByIndex[index]; }
+
+		void setSqlDuration(chrono::milliseconds sqlDuration) { _sqlDuration = sqlDuration; }
+		chrono::milliseconds getSqlDuration() { return _sqlDuration; }
+	};
+
+	/*
+	class SqlResultSetByIndex : public SqlResultSet
+	{
+	  private:
+		vector<SqlValue> _sqlCurrentRowValuesByIndex;
+		// per ogni riga (vector) abbiamo un vettore che contiene i valori delle colonne by Index
+		vector<vector<SqlValue>> _sqlValuesByIndex;
+
+	  public:
+		virtual void clearData()
+		{
+			_sqlValuesByIndex.clear();
+			SqlResultSet::clearData();
+		};
+		virtual void addColumnValueToCurrentRow(string fieldName, SqlValue sqlValue) { _sqlCurrentRowValuesByIndex.push_back(sqlValue); };
+		virtual void addCurrentRow()
+		{
+			_sqlValuesByIndex.push_back(_sqlCurrentRowValuesByIndex);
+			_sqlCurrentRowValuesByIndex.clear();
+		};
+		virtual size_t size() { return _sqlValuesByIndex.size(); };
+		virtual json asJson();
+		vector<vector<SqlValue>>::iterator begin() { return _sqlValuesByIndex.begin(); };
+		vector<vector<SqlValue>>::iterator end() { return _sqlValuesByIndex.end(); };
+		vector<vector<SqlValue>>::const_iterator begin() const { return _sqlValuesByIndex.begin(); };
+		vector<vector<SqlValue>>::const_iterator end() const { return _sqlValuesByIndex.end(); };
+		vector<SqlValue> &operator[](int index) { return _sqlValuesByIndex[index]; }
 	};
 
 	class SqlResultSetByName : public SqlResultSet
@@ -157,34 +208,7 @@ class PostgresHelper
 		vector<map<string, SqlValue>>::const_iterator end() const { return _sqlValuesByName.end(); };
 		map<string, SqlValue> &operator[](int index) { return _sqlValuesByName[index]; }
 	};
-
-	class SqlResultSetByIndex : public SqlResultSet
-	{
-	  private:
-		vector<SqlValue> _sqlCurrentRowValuesByIndex;
-		// per ogni riga (vector) abbiamo un vettore che contiene i valori delle colonne by Index
-		vector<vector<SqlValue>> _sqlValuesByIndex;
-
-	  public:
-		virtual void clearData()
-		{
-			_sqlValuesByIndex.clear();
-			SqlResultSet::clearData();
-		};
-		virtual void addColumnValueToCurrentRow(string fieldName, SqlValue sqlValue) { _sqlCurrentRowValuesByIndex.push_back(sqlValue); };
-		virtual void addCurrentRow()
-		{
-			_sqlValuesByIndex.push_back(_sqlCurrentRowValuesByIndex);
-			_sqlCurrentRowValuesByIndex.clear();
-		};
-		virtual size_t size() { return _sqlValuesByIndex.size(); };
-		virtual json asJson();
-		vector<vector<SqlValue>>::iterator begin() { return _sqlValuesByIndex.begin(); };
-		vector<vector<SqlValue>>::iterator end() { return _sqlValuesByIndex.end(); };
-		vector<vector<SqlValue>>::const_iterator begin() const { return _sqlValuesByIndex.begin(); };
-		vector<vector<SqlValue>>::const_iterator end() const { return _sqlValuesByIndex.end(); };
-		vector<SqlValue> &operator[](int index) { return _sqlValuesByIndex[index]; }
-	};
+*/
 
   public:
 	PostgresHelper();
@@ -199,7 +223,7 @@ class PostgresHelper
 	}
 
 	string buildQueryColumns(vector<pair<bool, string>> &requestedColumns);
-	void buildResult(result result, shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet);
+	shared_ptr<PostgresHelper::SqlResultSet> buildResult(result result);
 
   private:
 	map<string, map<string, shared_ptr<SqlColumnSchema>>> _sqlTablesColumnsSchema;

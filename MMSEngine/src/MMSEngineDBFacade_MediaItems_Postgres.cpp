@@ -1106,6 +1106,8 @@ json MMSEngineDBFacade::getMediaItemsList(
 			mediaItemsListRoot[field] = requestParametersRoot;
 		}
 
+		chrono::milliseconds internalSqlDuration(0);
+
 		int64_t newMediaItemKey = mediaItemKey;
 		if (mediaItemKey == -1)
 		{
@@ -1113,7 +1115,9 @@ json MMSEngineDBFacade::getMediaItemsList(
 			{
 				try
 				{
-					newMediaItemKey = getPhysicalPath_MediaItemKey(physicalPathKey, fromMaster);
+					chrono::milliseconds localSqlDuration(0);
+					newMediaItemKey = physicalPath_MediaItemKey(physicalPathKey, &localSqlDuration, fromMaster);
+					internalSqlDuration += localSqlDuration;
 				}
 				catch (NotFound &e)
 				{
@@ -1126,37 +1130,14 @@ json MMSEngineDBFacade::getMediaItemsList(
 					// throw runtime_error(errorMessage);
 					newMediaItemKey = 0; // let's force a MIK that does not exist
 				}
-				/*
-				string sqlStatement = fmt::format("select mediaItemKey from MMS_PhysicalPath where physicalPathKey = {}", physicalPathKey);
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				result res = trans.exec(sqlStatement);
-				SPDLOG_INFO(
-					"SQL statement"
-					", sqlStatement: @{}@"
-					", getConnectionId: @{}@"
-					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-				);
-				if (!empty(res))
-					newMediaItemKey = res[0]["mediaItemKey"].as<int64_t>();
-				else
-				{
-					SPDLOG_ERROR(
-						"getMediaItemsList: requested physicalPathKey does not exist"
-						", physicalPathKey: {}",
-						physicalPathKey
-					);
-
-					// throw runtime_error(errorMessage);
-					newMediaItemKey = 0; // let's force a MIK that does not exist
-				}
-				*/
 			}
 			else if (uniqueName != "")
 			{
 				try
 				{
-					newMediaItemKey = getExternalUniqueName_MediaItemKey(workspaceKey, uniqueName, fromMaster);
+					chrono::milliseconds localSqlDuration(0);
+					newMediaItemKey = externalUniqueName_MediaItemKey(workspaceKey, uniqueName, &localSqlDuration, fromMaster);
+					internalSqlDuration += localSqlDuration;
 				}
 				catch (NotFound &e)
 				{
@@ -1170,36 +1151,6 @@ json MMSEngineDBFacade::getMediaItemsList(
 					// throw runtime_error(errorMessage);
 					newMediaItemKey = 0; // let's force a MIK that does not exist
 				}
-				/*
-				string sqlStatement = fmt::format(
-					"select mediaItemKey from MMS_ExternalUniqueName "
-					"where workspaceKey = {} and uniqueName = {}",
-					workspaceKey, trans.quote(uniqueName)
-				);
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				result res = trans.exec(sqlStatement);
-				SPDLOG_INFO(
-					"SQL statement"
-					", sqlStatement: @{}@"
-					", getConnectionId: @{}@"
-					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-				);
-				if (!empty(res))
-					newMediaItemKey = res[0]["mediaItemKey"].as<int64_t>();
-				else
-				{
-					SPDLOG_ERROR(
-						"getMediaItemsList: requested uniqueName does not exist"
-						", workspaceKey: {}"
-						", uniqueName: {}",
-						workspaceKey, uniqueName
-					);
-
-					// throw runtime_error(errorMessage);
-					newMediaItemKey = 0; // let's force a MIK that does not exist
-				}
-				*/
 			}
 		}
 
@@ -1342,7 +1293,6 @@ json MMSEngineDBFacade::getMediaItemsList(
 		json mediaItemsRoot = json::array();
 		{
 			chrono::system_clock::time_point startSqlResultSet = chrono::system_clock::now();
-			chrono::milliseconds internalSqlDuration(0);
 			for (auto row : res)
 			{
 				json mediaItemRoot;
@@ -1452,34 +1402,10 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 				if (responseFields.empty() || responseFields.find("uniqueName") != responseFields.end())
 				{
-					{
-						string sqlStatement = fmt::format(
-							"select uniqueName from MMS_ExternalUniqueName "
-							"where workspaceKey = {} and mediaItemKey = {}",
-							workspaceKey, localMediaItemKey
-						);
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						result res = trans.exec(sqlStatement);
-						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
-						internalSqlDuration += sqlDuration;
-						SPDLOG_INFO(
-							"SQL statement"
-							", sqlStatement: @{}@"
-							", getConnectionId: @{}@"
-							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(), sqlDuration.count()
-						);
-						if (!empty(res))
-						{
-							field = "uniqueName";
-							mediaItemRoot[field] = res[0]["uniqueName"].as<string>();
-						}
-						else
-						{
-							field = "uniqueName";
-							mediaItemRoot[field] = string("");
-						}
-					}
+					chrono::milliseconds localSqlDuration(0);
+					field = "uniqueName";
+					mediaItemRoot[field] = externalUniqueName_UniqueName(workspaceKey, localMediaItemKey, &localSqlDuration, fromMaster);
+					internalSqlDuration += localSqlDuration;
 				}
 
 				// CrossReferences
@@ -2077,13 +2003,15 @@ json MMSEngineDBFacade::getMediaItemsList(
 	return mediaItemsListRoot;
 }
 
-int64_t MMSEngineDBFacade::getPhysicalPath_MediaItemKey(int64_t physicalPathKey, bool fromMaster)
+int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster)
 {
 	try
 	{
 		vector<pair<bool, string>> requestedColumns = {{false, "mms_physicalpath:.mediaitemkey"}};
-		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
-		physicalPathQuery(sqlResultSet, requestedColumns, physicalPathKey, fromMaster, 0, 1);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = physicalPathQuery(requestedColumns, physicalPathKey, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
 
 		return (*sqlResultSet)[0][0].as<int64_t>(-1);
 	}
@@ -2124,9 +2052,9 @@ int64_t MMSEngineDBFacade::getPhysicalPath_MediaItemKey(int64_t physicalPathKey,
 	}
 }
 
-void MMSEngineDBFacade::physicalPathQuery(
-	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster,
-	int startIndex, int rows
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
+	vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex, int rows, string orderBy,
+	bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -2148,54 +2076,92 @@ void MMSEngineDBFacade::physicalPathQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = fmt::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
 			if (physicalPathKey != -1)
 				where += fmt::format("{} physicalPathKey = {} ", where.size() > 0 ? "and" : "", physicalPathKey);
 
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = fmt::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = fmt::format("offset {} ", startIndex);
+			if (orderBy != "")
+				orderByCondition = fmt::format("order by {} ", orderBy);
+
 			string sqlStatement = fmt::format(
 				"select {} "
 				"from MMS_PhysicalPath "
-				"{} "
-				"{} limit {} offset {}",
-				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, rows == -1 ? _maxRows : rows,
-				startIndex == -1 ? 0 : startIndex
+				"{} {} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
+
+			sqlResultSet = _postgresHelper.buildResult(res);
+
+			chrono::system_clock::time_point endSql = chrono::system_clock::now();
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
 			);
-			if (empty(res) && physicalPathKey != -1)
+
+			if (empty(res) && physicalPathKey != -1 && notFoundAsException)
 			{
 				string errorMessage = fmt::format(
 					"physicalPath not found"
 					", physicalPathKey: {}",
 					physicalPathKey
 				);
-				_logger->error(errorMessage);
+				// abbiamo il log nel catch
+				// SPDLOG_WARN(errorMessage);
 
 				throw NotFound(errorMessage);
 			}
-			_postgresHelper.buildResult(res, sqlResultSet);
 		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return sqlResultSet;
 	}
 	catch (NotFound &e)
 	{
-		SPDLOG_ERROR(
+		// il chaimante decidera se loggarlo come error
+		SPDLOG_WARN(
 			"NotFound exception"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2311,13 +2277,71 @@ void MMSEngineDBFacade::physicalPathQuery(
 	}
 }
 
-int64_t MMSEngineDBFacade::getExternalUniqueName_MediaItemKey(int64_t workspaceKey, string uniqueName, bool fromMaster)
+string
+MMSEngineDBFacade::externalUniqueName_UniqueName(int64_t workspaceKey, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_externaluniquename:.uniquename"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = externalUniqueNameQuery(requestedColumns, workspaceKey, "", mediaItemKey, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
+
+		return (*sqlResultSet).size() == 0 ? "" : (*sqlResultSet)[0][0].as<string>("");
+	}
+	/*
+	catch (NotFound &e)
+	{
+		SPDLOG_ERROR(
+			"NotFound"
+			", workspaceKey: {}"
+			", uniqueName: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, uniqueName, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	*/
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", mediaItemKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, mediaItemKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", mediaItemKey: {}"
+			", fromMaster: {}",
+			workspaceKey, mediaItemKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+int64_t
+MMSEngineDBFacade::externalUniqueName_MediaItemKey(int64_t workspaceKey, string uniqueName, chrono::milliseconds *sqlDuration, bool fromMaster)
 {
 	try
 	{
 		vector<pair<bool, string>> requestedColumns = {{false, "mms_externaluniquename:.mediaitemkey"}};
-		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
-		externalUniqueNameQuery(sqlResultSet, requestedColumns, workspaceKey, uniqueName, fromMaster, 0, 1);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = externalUniqueNameQuery(requestedColumns, workspaceKey, uniqueName, -1, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
 
 		return (*sqlResultSet)[0][0].as<int64_t>(-1);
 	}
@@ -2361,9 +2385,9 @@ int64_t MMSEngineDBFacade::getExternalUniqueName_MediaItemKey(int64_t workspaceK
 	}
 }
 
-void MMSEngineDBFacade::externalUniqueNameQuery(
-	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, string uniqueName,
-	bool fromMaster, int startIndex, int rows
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQuery(
+	vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, string uniqueName, int64_t mediaItemKey, bool fromMaster, int startIndex,
+	int rows, string orderBy, bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -2385,36 +2409,73 @@ void MMSEngineDBFacade::externalUniqueNameQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = fmt::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
 			if (workspaceKey != -1)
 				where += fmt::format("{} workspaceKey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
 			if (uniqueName != "")
 				where += fmt::format("{} uniqueName = {} ", where.size() > 0 ? "and" : "", trans.quote(uniqueName));
+			if (mediaItemKey != -1)
+				where += fmt::format("{} mediaItemKey = {} ", where.size() > 0 ? "and" : "", mediaItemKey);
+
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = fmt::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = fmt::format("offset {} ", startIndex);
+			if (orderBy != "")
+				orderByCondition = fmt::format("order by {} ", orderBy);
 
 			string sqlStatement = fmt::format(
 				"select {} "
 				"from MMS_ExternalUniqueName "
-				"{} "
-				"{} limit {} offset {}",
-				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, rows == -1 ? _maxRows : rows,
-				startIndex == -1 ? 0 : startIndex
+				"{} {} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
+
+			sqlResultSet = _postgresHelper.buildResult(res);
+
+			chrono::system_clock::time_point endSql = chrono::system_clock::now();
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
 			);
-			if (empty(res) && workspaceKey != -1 && uniqueName != "")
+
+			if (empty(res) && workspaceKey != -1 && uniqueName != "" && notFoundAsException)
 			{
 				string errorMessage = fmt::format(
 					"workspaceKey/uniqueName not found"
@@ -2422,20 +2483,23 @@ void MMSEngineDBFacade::externalUniqueNameQuery(
 					", uniqueName: {}",
 					workspaceKey, uniqueName
 				);
-				_logger->error(errorMessage);
+				// abbiamo il log nel catch
+				// SPDLOG_WARN(errorMessage);
 
 				throw NotFound(errorMessage);
 			}
-			_postgresHelper.buildResult(res, sqlResultSet);
 		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return sqlResultSet;
 	}
 	catch (NotFound &e)
 	{
-		SPDLOG_ERROR(
+		// il chaimante decidera se loggarlo come error
+		SPDLOG_WARN(
 			"NotFound exception"
 			", exceptionMessage: {}"
 			", conn: {}",

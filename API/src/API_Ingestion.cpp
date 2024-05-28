@@ -5636,7 +5636,7 @@ void API::changeLiveProxyOverlayText(
 				);
 
 				auto [ingestionType, ingestionStatus] =
-					_mmsEngineDBFacade->getIngestionJob_IngestionTypeStatus(workspace->_workspaceKey, broadcasterIngestionJobKey, false);
+					_mmsEngineDBFacade->ingestionJob_IngestionTypeStatus(workspace->_workspaceKey, broadcasterIngestionJobKey, nullptr, false);
 
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 				{
@@ -5678,7 +5678,7 @@ void API::changeLiveProxyOverlayText(
 				);
 
 				tie(broadcasterEncodingJobKey, broadcasterEncoderKey) =
-					_mmsEngineDBFacade->getEncodingJob_EncodingJobKeyEncoderKey(broadcasterIngestionJobKey, false);
+					_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(broadcasterIngestionJobKey, nullptr, false);
 
 				if (broadcasterEncodingJobKey == -1 || broadcasterEncoderKey == -1)
 				{

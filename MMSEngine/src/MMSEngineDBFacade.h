@@ -1531,10 +1531,10 @@ class MMSEngineDBFacade
 	getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 
 	pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
-	getIngestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
-	void ingestionJobQuery(
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey,
-		int64_t ingestionJobKey, bool fromMaster
+	ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, chrono::milliseconds *sqlDuration, bool fromMaster);
+	shared_ptr<PostgresHelper::SqlResultSet> ingestionJobQuery(
+		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster, int startIndex = -1,
+		int rows = -1, string orderBy = "", bool notFoundAsException = true
 	);
 
 	json getIngestionRootsStatus(
@@ -1609,16 +1609,17 @@ class MMSEngineDBFacade
 	json getEncodingProfileList(int64_t workspaceKey, int64_t encodingProfileKey, bool contentTypePresent, ContentType contentType, string label);
 
 	int64_t getPhysicalPathDetails(int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
-	int64_t getPhysicalPath_MediaItemKey(int64_t physicalPathKey, bool fromMaster);
-	void physicalPathQuery(
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster,
-		int startIndex, int rows
+	int64_t physicalPath_MediaItemKey(int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster);
+	shared_ptr<PostgresHelper::SqlResultSet> physicalPathQuery(
+		vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex = -1, int rows = -1,
+		string orderBy = "", bool notFoundAsException = true
 	);
 
-	int64_t getExternalUniqueName_MediaItemKey(int64_t workspaceKey, string uniqueName, bool fromMaster);
-	void externalUniqueNameQuery(
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, string uniqueName,
-		bool fromMaster, int startIndex, int rows
+	string externalUniqueName_UniqueName(int64_t workspaceKey, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster);
+	int64_t externalUniqueName_MediaItemKey(int64_t workspaceKey, string uniqueName, chrono::milliseconds *sqlDuration, bool fromMaster);
+	shared_ptr<PostgresHelper::SqlResultSet> externalUniqueNameQuery(
+		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, string uniqueName, int64_t mediaItemKey, bool fromMaster,
+		int startIndex = -1, int rows = -1, string orderBy = "", bool notFoundAsException = true
 	);
 
 	int64_t getPhysicalPathDetails(
@@ -1894,10 +1895,10 @@ class MMSEngineDBFacade
 	);
 
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster);
-	pair<int64_t, int64_t> getEncodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, bool fromMaster);
-	void encodingJobQuery(
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey,
-		int64_t ingestionJobKey, bool fromMaster, int startIndex = -1, int rows = -1
+	pair<int64_t, int64_t> encodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, chrono::milliseconds *sqlDuration, bool fromMaster);
+	shared_ptr<PostgresHelper::SqlResultSet> encodingJobQuery(
+		vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey, int64_t ingestionJobKey, bool fromMaster, int startIndex = -1,
+		int rows = -1, string orderBy = "", bool notFoundAsException = true
 	);
 
 	void checkWorkspaceStorageAndMaxIngestionNumber(int64_t workspaceKey);
