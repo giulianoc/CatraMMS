@@ -963,17 +963,30 @@ json MMSEngineDBFacade::getMediaItemsList(
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getMediaItemsList" + ", workspaceKey: " + to_string(workspaceKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
-			", uniqueName: " + uniqueName + ", physicalPathKey: " + to_string(physicalPathKey) + ", start: " + to_string(start) +
-			", rows: " + to_string(rows) + ", contentTypePresent: " + to_string(contentTypePresent) + ", contentType: " +
-			(contentTypePresent ? toString(contentType) : "")
-			// + ", startAndEndIngestionDatePresent: " + to_string(startAndEndIngestionDatePresent)
-			+ ", startIngestionDate: " + startIngestionDate + ", endIngestionDate: " + endIngestionDate + ", title: " + title +
-			", tagsIn.size(): " + to_string(tagsIn.size()) + ", tagsNotIn.size(): " + to_string(tagsNotIn.size()) +
-			", otherMediaItemsKey.size(): " + to_string(otherMediaItemsKey.size()) + ", liveRecordingChunk: " + to_string(liveRecordingChunk) +
-			", recordingCode: " + to_string(recordingCode) + ", jsonCondition: " + jsonCondition + ", orderBy: " + orderBy +
-			", jsonOrderBy: " + jsonOrderBy
+		SPDLOG_INFO(
+			"getMediaItemsList"
+			", workspaceKey: {}"
+			", mediaItemKey: {}"
+			", uniqueName: {}"
+			", physicalPathKey: {}"
+			", start: {}"
+			", rows: {}"
+			", contentTypePresent: {}"
+			", contentType: {}"
+			", startIngestionDate: {}"
+			", endIngestionDate: {}"
+			", title: {}"
+			", tagsIn.size(): {}"
+			", tagsNotIn.size(): {}"
+			", otherMediaItemsKey.size(): {}"
+			", liveRecordingChunk: {}"
+			", recordingCode: {}"
+			", jsonCondition: {}"
+			", orderBy: {}"
+			", jsonOrderBy: {}",
+			workspaceKey, mediaItemKey, uniqueName, physicalPathKey, start, rows, contentTypePresent,
+			(contentTypePresent ? toString(contentType) : ""), startIngestionDate, endIngestionDate, title, tagsIn.size(), tagsNotIn.size(),
+			otherMediaItemsKey.size(), liveRecordingChunk, recordingCode, jsonCondition, orderBy, jsonOrderBy
 		);
 
 		{
@@ -1098,6 +1111,22 @@ json MMSEngineDBFacade::getMediaItemsList(
 		{
 			if (physicalPathKey != -1)
 			{
+				try
+				{
+					newMediaItemKey = getPhysicalPath_MediaItemKey(physicalPathKey, fromMaster);
+				}
+				catch (NotFound &e)
+				{
+					SPDLOG_ERROR(
+						"getPhysicalPath_MediaItemKey: requested physicalPathKey does not exist"
+						", physicalPathKey: {}",
+						physicalPathKey
+					);
+
+					// throw runtime_error(errorMessage);
+					newMediaItemKey = 0; // let's force a MIK that does not exist
+				}
+				/*
 				string sqlStatement = fmt::format("select mediaItemKey from MMS_PhysicalPath where physicalPathKey = {}", physicalPathKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.exec(sqlStatement);
@@ -1112,18 +1141,36 @@ json MMSEngineDBFacade::getMediaItemsList(
 					newMediaItemKey = res[0]["mediaItemKey"].as<int64_t>();
 				else
 				{
-					string errorMessage(
-						__FILEREF__ + "getMediaItemsList: requested physicalPathKey does not exist" +
-						", physicalPathKey: " + to_string(physicalPathKey)
+					SPDLOG_ERROR(
+						"getMediaItemsList: requested physicalPathKey does not exist"
+						", physicalPathKey: {}",
+						physicalPathKey
 					);
-					_logger->error(errorMessage);
 
 					// throw runtime_error(errorMessage);
 					newMediaItemKey = 0; // let's force a MIK that does not exist
 				}
+				*/
 			}
 			else if (uniqueName != "")
 			{
+				try
+				{
+					newMediaItemKey = getExternalUniqueName_MediaItemKey(workspaceKey, uniqueName, fromMaster);
+				}
+				catch (NotFound &e)
+				{
+					SPDLOG_ERROR(
+						"getExternalUniqueName_MediaItemKey: requested workspaceKey/uniqueName does not exist"
+						", workspaceKey: {}"
+						", uniqueName: {}",
+						workspaceKey, uniqueName
+					);
+
+					// throw runtime_error(errorMessage);
+					newMediaItemKey = 0; // let's force a MIK that does not exist
+				}
+				/*
 				string sqlStatement = fmt::format(
 					"select mediaItemKey from MMS_ExternalUniqueName "
 					"where workspaceKey = {} and uniqueName = {}",
@@ -1142,15 +1189,17 @@ json MMSEngineDBFacade::getMediaItemsList(
 					newMediaItemKey = res[0]["mediaItemKey"].as<int64_t>();
 				else
 				{
-					string errorMessage(
-						__FILEREF__ + "getMediaItemsList: requested uniqueName does not exist" + ", workspaceKey: " + to_string(workspaceKey) +
-						", uniqueName: " + uniqueName
+					SPDLOG_ERROR(
+						"getMediaItemsList: requested uniqueName does not exist"
+						", workspaceKey: {}"
+						", uniqueName: {}",
+						workspaceKey, uniqueName
 					);
-					_logger->error(errorMessage);
 
 					// throw runtime_error(errorMessage);
 					newMediaItemKey = 0; // let's force a MIK that does not exist
 				}
+				*/
 			}
 		}
 
@@ -2026,6 +2075,480 @@ json MMSEngineDBFacade::getMediaItemsList(
 	}
 
 	return mediaItemsListRoot;
+}
+
+int64_t MMSEngineDBFacade::getPhysicalPath_MediaItemKey(int64_t physicalPathKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_physicalpath:mediaitemkey"}};
+		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
+		physicalPathQuery(sqlResultSet, requestedColumns, physicalPathKey, fromMaster, 0, 1);
+
+		return (*sqlResultSet)[0][0].as<int64_t>(-1);
+	}
+	catch (NotFound &e)
+	{
+		SPDLOG_ERROR(
+			"NotFound"
+			", physicalPathKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			physicalPathKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", physicalPathKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			physicalPathKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", physicalPathKey: {}"
+			", fromMaster: {}",
+			physicalPathKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+void MMSEngineDBFacade::physicalPathQuery(
+	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster,
+	int startIndex, int rows
+)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	nontransaction trans{*(conn->_sqlConnection)};
+	try
+	{
+		if (rows > _maxRows)
+		{
+			string errorMessage = fmt::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		{
+			string where;
+			if (physicalPathKey != -1)
+				where += fmt::format("{} physicalPathKey = {} ", where.size() > 0 ? "and" : "", physicalPathKey);
+
+			string sqlStatement = fmt::format(
+				"select {} "
+				"from MMS_PhysicalPath "
+				"{} "
+				"{} limit {} offset {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, rows == -1 ? _maxRows : rows,
+				startIndex == -1 ? 0 : startIndex
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (empty(res) && physicalPathKey != -1)
+			{
+				string errorMessage = fmt::format(
+					"physicalPath not found"
+					", physicalPathKey: {}",
+					physicalPathKey
+				);
+				_logger->error(errorMessage);
+
+				throw NotFound(errorMessage);
+			}
+			_postgresHelper.buildResult(res, sqlResultSet);
+		}
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+	}
+	catch (NotFound &e)
+	{
+		SPDLOG_ERROR(
+			"NotFound exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+}
+
+int64_t MMSEngineDBFacade::getExternalUniqueName_MediaItemKey(int64_t workspaceKey, string uniqueName, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_externaluniquename:mediaitemkey"}};
+		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
+		externalUniqueNameQuery(sqlResultSet, requestedColumns, workspaceKey, uniqueName, fromMaster, 0, 1);
+
+		return (*sqlResultSet)[0][0].as<int64_t>(-1);
+	}
+	catch (NotFound &e)
+	{
+		SPDLOG_ERROR(
+			"NotFound"
+			", workspaceKey: {}"
+			", uniqueName: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, uniqueName, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", uniqueName: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, uniqueName, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", uniqueName: {}"
+			", fromMaster: {}",
+			workspaceKey, uniqueName, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+void MMSEngineDBFacade::externalUniqueNameQuery(
+	shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, string uniqueName,
+	bool fromMaster, int startIndex, int rows
+)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	nontransaction trans{*(conn->_sqlConnection)};
+	try
+	{
+		if (rows > _maxRows)
+		{
+			string errorMessage = fmt::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		{
+			string where;
+			if (workspaceKey != -1)
+				where += fmt::format("{} workspaceKey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
+			if (uniqueName != "")
+				where += fmt::format("{} uniqueName = {} ", where.size() > 0 ? "and" : "", trans.quote(uniqueName));
+
+			string sqlStatement = fmt::format(
+				"select {} "
+				"from MMS_ExternalUniqueName "
+				"{} "
+				"{} limit {} offset {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, rows == -1 ? _maxRows : rows,
+				startIndex == -1 ? 0 : startIndex
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+			if (empty(res) && workspaceKey != -1 && uniqueName != "")
+			{
+				string errorMessage = fmt::format(
+					"workspaceKey/uniqueName not found"
+					", physicalPathKey: {}"
+					", uniqueName: {}",
+					workspaceKey, uniqueName
+				);
+				_logger->error(errorMessage);
+
+				throw NotFound(errorMessage);
+			}
+			_postgresHelper.buildResult(res, sqlResultSet);
+		}
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+	}
+	catch (NotFound &e)
+	{
+		SPDLOG_ERROR(
+			"NotFound exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
 }
 
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(

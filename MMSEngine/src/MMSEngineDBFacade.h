@@ -55,6 +55,16 @@ struct APIKeyNotFoundOrExpired : public exception
 	char const *what() const throw() { return "APIKey was not found or it is expired"; };
 };
 
+struct NotFound : public exception
+{
+
+	string _errorMessage;
+
+	NotFound(string errorMessage) { _errorMessage = errorMessage; }
+
+	char const *what() const throw() { return _errorMessage.c_str(); };
+};
+
 struct MediaItemKeyNotFound : public exception
 {
 
@@ -1599,6 +1609,17 @@ class MMSEngineDBFacade
 	json getEncodingProfileList(int64_t workspaceKey, int64_t encodingProfileKey, bool contentTypePresent, ContentType contentType, string label);
 
 	int64_t getPhysicalPathDetails(int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
+	int64_t getPhysicalPath_MediaItemKey(int64_t physicalPathKey, bool fromMaster);
+	void physicalPathQuery(
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster,
+		int startIndex, int rows
+	);
+
+	int64_t getExternalUniqueName_MediaItemKey(int64_t workspaceKey, string uniqueName, bool fromMaster);
+	void externalUniqueNameQuery(
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet, vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, string uniqueName,
+		bool fromMaster, int startIndex, int rows
+	);
 
 	int64_t getPhysicalPathDetails(
 		int64_t workspaceKey, int64_t mediaItemKey, ContentType contentType, string encodingProfileLabel, bool warningIfMissing, bool fromMaster
