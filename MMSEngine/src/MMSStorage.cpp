@@ -1423,6 +1423,39 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 	chrono::system_clock::time_point endPoint;
 	try
 	{
+		if (fs::exists(dest))
+		{
+			SPDLOG_WARN(
+				"move. Dest already exists!!! Let's remove it"
+				", dest: {}",
+				dest.string()
+			);
+			try
+			{
+				fs::remove_all(dest);
+			}
+			catch (runtime_error &e)
+			{
+				SPDLOG_ERROR(
+					"remove failed"
+					", ingestionJobKey: {}"
+					", dest: {}"
+					", e.what(): {}",
+					ingestionJobKey, dest.string(), e.what()
+				);
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"remove failed"
+					", ingestionJobKey: {}"
+					", dest: {}"
+					", e.what(): {}",
+					ingestionJobKey, dest.string(), e.what()
+				);
+			}
+		}
+
 		startPoint = chrono::system_clock::now();
 		// fs::rename works only if source and destination are on the same file systems
 		fs::rename(source, dest);
