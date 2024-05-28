@@ -1423,6 +1423,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 	chrono::system_clock::time_point endPoint;
 	try
 	{
+		/*
 		if (fs::exists(dest))
 		{
 			SPDLOG_WARN(
@@ -1455,6 +1456,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 				);
 			}
 		}
+		*/
 
 		startPoint = chrono::system_clock::now();
 		// fs::rename works only if source and destination are on the same file systems
