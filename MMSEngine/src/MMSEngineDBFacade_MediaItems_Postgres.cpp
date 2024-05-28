@@ -2081,7 +2081,7 @@ int64_t MMSEngineDBFacade::getPhysicalPath_MediaItemKey(int64_t physicalPathKey,
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_physicalpath:mediaitemkey"}};
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_physicalpath:.mediaitemkey"}};
 		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
 		physicalPathQuery(sqlResultSet, requestedColumns, physicalPathKey, fromMaster, 0, 1);
 
@@ -2315,7 +2315,7 @@ int64_t MMSEngineDBFacade::getExternalUniqueName_MediaItemKey(int64_t workspaceK
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_externaluniquename:mediaitemkey"}};
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_externaluniquename:.mediaitemkey"}};
 		shared_ptr<PostgresHelper::SqlResultSetByIndex> sqlResultSet = make_shared<PostgresHelper::SqlResultSetByIndex>();
 		externalUniqueNameQuery(sqlResultSet, requestedColumns, workspaceKey, uniqueName, fromMaster, 0, 1);
 
