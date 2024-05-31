@@ -120,7 +120,7 @@ startOfProcess()
 	if [ $isProcessRunning -eq 1 ]
 	then
 		if [ $debug -eq 1 ]; then
-			echo "$(date): dvblast is already running ($frequency)"
+			echo "$(date): dvblast is already running ($frequency)" >> $debugFilename
 		fi
 
 		return 1
@@ -131,7 +131,7 @@ startOfProcess()
 	if [ $deviceNumber -eq 255 ]
 	then
 		if [ $debug -eq 1 ]; then
-			echo "$(date): No deviceNumber available"
+			echo "$(date): No deviceNumber available" >> $debugFilename
 		fi
 
 		return 1
@@ -312,6 +312,7 @@ do
 done
 
 if [ $debug -eq 1 ]; then
+	echo "" >> $debugFilename
 	echo "$(date): script finished" >> $debugFilename
 fi
 

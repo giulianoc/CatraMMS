@@ -14,16 +14,8 @@
 #include "FFMpegEncodingParameters.h"
 #include "JSONUtils.h"
 #include "catralibraries/ProcessUtility.h"
+#include "spdlog/fmt/fmt.h"
 #include <fstream>
-/*
-#include "FFMpegFilters.h"
-#include "MMSCURL.h"
-#include "catralibraries/StringUtils.h"
-#include <filesystem>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
 
 void FFMpeg::slideShow(
 	int64_t ingestionJobKey, int64_t encodingJobKey, float durationOfEachSlideInSeconds, string frameRateMode, json encodingProfileDetailsRoot,
@@ -64,16 +56,22 @@ void FFMpeg::slideShow(
 		*/
 	);
 
-	_logger->info(
-		__FILEREF__ + "Received " + toString(_currentApiName) + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-		to_string(encodingJobKey) + ", frameRateMode: " + frameRateMode + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName +
-		", durationOfEachSlideInSeconds: " + to_string(durationOfEachSlideInSeconds) + ", shortestAudioDurationInSeconds: " +
-		to_string(shortestAudioDurationInSeconds) + ", videoDurationInSeconds: " + to_string(videoDurationInSeconds)
+	SPDLOG_INFO(
+		"Received {}"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", frameRateMode: {}"
+		", encodedStagingAssetPathName: {}"
+		", durationOfEachSlideInSeconds: {}"
+		", shortestAudioDurationInSeconds: {}"
+		", videoDurationInSeconds: {}",
+		toString(_currentApiName), ingestionJobKey, encodingJobKey, frameRateMode, encodedStagingAssetPathName, durationOfEachSlideInSeconds,
+		shortestAudioDurationInSeconds, videoDurationInSeconds
 	);
 
 	int iReturnedStatus = 0;
 
-	string slideshowListImagesPathName = _ffmpegTempDir + "/" + to_string(ingestionJobKey) + ".slideshowListImages.txt";
+	string slideshowListImagesPathName = fmt::format("{}/{}.slideshowListImages.txt", _ffmpegTempDir, ingestionJobKey);
 
 	{
 		ofstream slideshowListFile(slideshowListImagesPathName.c_str(), ofstream::trunc);
@@ -85,11 +83,14 @@ void FFMpeg::slideShow(
 
 			if (!fs::exists(sourcePhysicalPath))
 			{
-				string errorMessage = string("Source asset path name not existing") + ", ingestionJobKey: " +
-									  to_string(ingestionJobKey)
-									  // + ", encodingJobKey: " + to_string(encodingJobKey)
-									  + ", sourcePhysicalPath: " + sourcePhysicalPath;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format(
+					"Source asset path name not existing"
+					", ingestionJobKey: {}"
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					", sourcePhysicalPath: {}",
+					ingestionJobKey, sourcePhysicalPath
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -125,27 +126,36 @@ void FFMpeg::slideShow(
 				slideDurationInSeconds = durationOfEachSlideInSeconds;
 
 			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
-			_logger->info(
-				__FILEREF__ + "slideShow" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-				", line: " + ("file '" + sourcePhysicalPath + "'")
+			SPDLOG_INFO(
+				"slideShow"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", line: file '{}'",
+				ingestionJobKey, encodingJobKey, sourcePhysicalPath
 			);
 			slideshowListFile << "duration " << slideDurationInSeconds << endl;
-			_logger->info(
-				__FILEREF__ + "slideShow" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-				", line: " + ("duration " + to_string(slideDurationInSeconds))
+			SPDLOG_INFO(
+				"slideShow"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", line: duration {}",
+				ingestionJobKey, encodingJobKey, slideDurationInSeconds
 			);
 
 			lastSourcePhysicalPath = sourcePhysicalPath;
 		}
 		slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
-		_logger->info(
-			__FILEREF__ + "slideShow" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", line: " + ("file '" + lastSourcePhysicalPath + "'")
+		SPDLOG_INFO(
+			"slideShow"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", line: file '{}'",
+			ingestionJobKey, encodingJobKey, lastSourcePhysicalPath
 		);
 		slideshowListFile.close();
 	}
 
-	string slideshowListAudiosPathName = _ffmpegTempDir + "/" + to_string(ingestionJobKey) + ".slideshowListAudios.txt";
+	string slideshowListAudiosPathName = fmt::format("{}/{}.slideshowListAudios.txt", _ffmpegTempDir, ingestionJobKey);
 
 	if (audiosSourcePhysicalPaths.size() > 1)
 	{
@@ -155,11 +165,14 @@ void FFMpeg::slideShow(
 		{
 			if (!fs::exists(sourcePhysicalPath))
 			{
-				string errorMessage = string("Source asset path name not existing") + ", ingestionJobKey: " +
-									  to_string(ingestionJobKey)
-									  // + ", encodingJobKey: " + to_string(encodingJobKey)
-									  + ", sourcePhysicalPath: " + sourcePhysicalPath;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format(
+					"Source asset path name not existing"
+					", ingestionJobKey: {}"
+					// + ", encodingJobKey: " + to_string(encodingJobKey)
+					", sourcePhysicalPath: {}",
+					ingestionJobKey, sourcePhysicalPath
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -249,11 +262,13 @@ void FFMpeg::slideShow(
 				*/
 				twoPasses = false;
 
-				string errorMessage = __FILEREF__ +
-									  "in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-									  ", twoPasses: " + to_string(twoPasses);
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(
+					"in case of introOutroOverlay it is not possible to have a two passes encoding. Change it to false"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", twoPasses: {}",
+					ingestionJobKey, encodingJobKey, twoPasses
+				);
 			}
 
 			FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -279,14 +294,23 @@ void FFMpeg::slideShow(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-								  ", e.what(): " + e.what() + ", encodingProfileDetailsRoot: " + JSONUtils::toString(encodingProfileDetailsRoot);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(
+				"ffmpeg: encodingProfileParameter retrieving failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", e.what(): {}"
+				", encodingProfileDetailsRoot: {}",
+				ingestionJobKey, encodingJobKey, e.what(), JSONUtils::toString(encodingProfileDetailsRoot)
+			);
 
 			// to hide the ffmpeg staff
-			errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+			string errorMessage = fmt::format(
+				"encodingProfileParameter retrieving failed"
+				" ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, e.what()
+			);
 			throw e;
 		}
 	}
@@ -367,9 +391,11 @@ void FFMpeg::slideShow(
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-		_logger->info(
-			__FILEREF__ + "slideShow: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+		SPDLOG_INFO(
+			"slideShow: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegArgumentList: {}",
+			ingestionJobKey, ffmpegArgumentListStream.str()
 		);
 
 		bool redirectionStdOutput = true;
@@ -382,21 +408,27 @@ void FFMpeg::slideShow(
 		*pChildPid = 0;
 		if (iReturnedStatus != 0)
 		{
-			string errorMessage = __FILEREF__ + "slideShow: ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", iReturnedStatus: " + to_string(iReturnedStatus) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(
+				"slideShow: ffmpeg command failed"
+				", ingestionJobKey: "
+				", iReturnedStatus: " +
+					", ffmpegArgumentList: ",
+				ingestionJobKey, iReturnedStatus, ffmpegArgumentListStream.str()
+			);
 
 			// to hide the ffmpeg staff
-			errorMessage = __FILEREF__ + "slideShow: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey);
+			string errorMessage = __FILEREF__ + "slideShow: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey);
 			throw runtime_error(errorMessage);
 		}
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "slideShow: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"slideShow: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegArgumentList: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			ingestionJobKey, ffmpegArgumentListStream.str(), chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
@@ -406,28 +438,52 @@ void FFMpeg::slideShow(
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
 		if (iReturnedStatus == 9) // 9 means: SIGKILL
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user" +
-						   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", encodingJobKey: " + to_string(encodingJobKey) +
-						   ", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+			errorMessage = fmt::format(
+				"ffmpeg: ffmpeg command failed because killed by the user"
+				", _outputFfmpegPathFileName: {}"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				_outputFfmpegPathFileName, ingestionJobKey, encodingJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
 		else
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
-						   ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+			errorMessage = fmt::format(
+				"ffmpeg: ffmpeg command failed"
+				", _outputFfmpegPathFileName: {}"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				_outputFfmpegPathFileName, ingestionJobKey, encodingJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
+		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"Remove"
+			", _outputFfmpegPathFileName: {}",
+			_outputFfmpegPathFileName
+		);
 		fs::remove_all(_outputFfmpegPathFileName);
 
 		if (fs::exists(slideshowListImagesPathName.c_str()))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", slideshowListImagesPathName: " + slideshowListImagesPathName);
+			SPDLOG_INFO(
+				"Remove"
+				", slideshowListImagesPathName: {}",
+				slideshowListImagesPathName
+			);
 			fs::remove_all(slideshowListImagesPathName);
 		}
 		if (fs::exists(slideshowListAudiosPathName.c_str()))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", slideshowListAudiosPathName: " + slideshowListAudiosPathName);
+			SPDLOG_INFO(
+				"Remove"
+				", slideshowListAudiosPathName: {}",
+				slideshowListAudiosPathName
+			);
 			fs::remove_all(slideshowListAudiosPathName);
 		}
 
@@ -437,17 +493,29 @@ void FFMpeg::slideShow(
 			throw e;
 	}
 
-	_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	SPDLOG_INFO(
+		"Remove"
+		", _outputFfmpegPathFileName: {}",
+		_outputFfmpegPathFileName
+	);
 	fs::remove_all(_outputFfmpegPathFileName);
 
 	if (fs::exists(slideshowListImagesPathName.c_str()))
 	{
-		_logger->info(__FILEREF__ + "Remove" + ", slideshowListImagesPathName: " + slideshowListImagesPathName);
+		SPDLOG_INFO(
+			"Remove"
+			", slideshowListImagesPathName: {}",
+			slideshowListImagesPathName
+		);
 		fs::remove_all(slideshowListImagesPathName);
 	}
 	if (fs::exists(slideshowListAudiosPathName.c_str()))
 	{
-		_logger->info(__FILEREF__ + "Remove" + ", slideshowListAudiosPathName: " + slideshowListAudiosPathName);
+		SPDLOG_INFO(
+			"Remove"
+			", slideshowListAudiosPathName: {}",
+			slideshowListAudiosPathName
+		);
 		fs::remove_all(slideshowListAudiosPathName);
 	}
 }

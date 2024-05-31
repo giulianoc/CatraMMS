@@ -1,0 +1,58 @@
+{
+  "label": "${title}",
+  "type": "Workflow",
+  "task":
+  {
+    "label": "Add Content ${title}",
+    "type": "Add-Content",
+    "parameters": {
+      "title": "${title}",
+      "sourceURL": "${streamingURL}",
+	    "tags": ["${tag}"],
+      "allowUniqueNameOverride": false,
+      "fileFormat": "streaming-to-mp4",
+      "ingester": "${ingester}",
+      "retention": "${retention}"
+    },
+    "onSuccess": {
+      "task":
+      {
+        "label": "${title}",
+        "type": "GroupOfTasks",
+        "parameters": {
+          "executionType": "parallel",
+          "tasks": [
+            {
+              "label": "Generate Picture ${title}",
+              "type": "Workflow-As-Library",
+              "parameters": {
+                "title": "${title}",
+                "workflowAsLibraryType": "MMS",
+                "workflowAsLibraryLabel": "Best Picture of the Video",
+                "allowUniqueNameOverride": false,
+                "imageRetention": "${retention}",
+                "imageTags": ["FACE"],
+                "imageUserData": {},
+                "ingester": "${ingester}",
+                "initialFramesNumberToBeSkipped": 1500,
+                "instantInSeconds": 60,
+                "uniqueName": ""
+              }
+            },
+            {
+              "label": "Encode ${title}",
+              "type": "Encode",
+              "parameters": {
+                "contentType": "video",
+                "encodingPriority": "Low",
+                "encodersPool": "${encodersPool}",
+					      "encodingProfilesSetLabel": "${encodingProfilesSet}"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+

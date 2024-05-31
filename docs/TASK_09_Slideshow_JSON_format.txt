@@ -9,7 +9,7 @@
 		// mandatory. It references images and audios (audios are optional)
 		//	The width/height of the Images has to be divisible by 2 (required by h.264 codec)
 		"references": [
-			// mandatory. As many References as the number of images and number of audio.
+			// mandatory. At least one Picture (width/height even) and optionally one or more Audio.
 			// As reference can be used "mediaItemKey" or "uniqueName"
 
 			// The below object could contain optionally:

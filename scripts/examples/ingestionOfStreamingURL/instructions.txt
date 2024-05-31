@@ -1,0 +1,20 @@
+
+The ingestionOfStreamingURL.sh script help you to ingest the streaming of a URL into the MMS.
+
+Usage: ./ingestionOfStreamingURL.sh <mmsUserKey> <mmsAPIKey> <tag> <ingester> <retention> <encodersPool> <encodingProfilesSet> <streamingURLFile>
+
+<mmsUserKey>: the mms key identifying the user
+<mmsAPIKey>: the mms key identifying the user and the workspace
+<ingester>: the ingester of the content
+<retention>: the retention of the content (i.e.: 10d means 10 days, 3M means 3 months, 1y means 1 year)
+<encodersPool>: the encoders pool to be used
+<encodingProfilesSet>: the set of the encoding profiles to be used
+<streamingURLFile>: the text file containing the title and the relative streaming URLs separated by ';'
+
+Examples:
+./ingestionOfStreamingURL.sh 1 HNVOoVhHx0yoWNIxFu-ThBA1vAPEKWsxneGgze6eoddaSmofyO1KA3qX0hafz6Zy "test tag" giu 1h ToEncode ZWAN_VOD ./streamingurls.txt
+where ./streamingurls.txt is like
+primo title;https://player.vimeo.com/progressive_redirect/download/834785907/container/cefc0596-702a-45e1-a2fc-f5491c3db2af/cb43494a-eb8709ce/non_e%CC%80_l
+secondo title;https://player.vimeo.com/progressive_redirect/download/859087354/container/9a66e9d2-034d-4571-8b9e-a481628b2c62/7a93606d-14ed5505/nelr_ep2_de
+
+
