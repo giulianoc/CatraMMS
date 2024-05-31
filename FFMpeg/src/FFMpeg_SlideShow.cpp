@@ -410,9 +410,9 @@ void FFMpeg::slideShow(
 		{
 			SPDLOG_ERROR(
 				"slideShow: ffmpeg command failed"
-				", ingestionJobKey: "
-				", iReturnedStatus: " +
-					", ffmpegArgumentList: ",
+				", ingestionJobKey: {}"
+				", iReturnedStatus: {}"
+				", ffmpegArgumentList: {}",
 				ingestionJobKey, iReturnedStatus, ffmpegArgumentListStream.str()
 			);
 
