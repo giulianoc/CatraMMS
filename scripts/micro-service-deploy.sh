@@ -26,6 +26,11 @@ fi
 echo "write the bitbucket pwd"
 git clone https://giuliano_catrambone@bitbucket.org/giuliano_catrambone/$serviceFileName.git
 
+if [ ! -d "$serviceFileName" ]; then
+	echo "no service directory found: $serviceFileName"
+	exit 1
+fi
+
 cd $serviceFileName
 
 #next if is for the catrammswebservices microservice
