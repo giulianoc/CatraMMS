@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   JSONUtils.h
  * Author: giuliano
  *
@@ -22,11 +22,10 @@ using json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
 
+class JSONUtils
+{
 
-class JSONUtils {
-    
-public:
-
+  public:
 	static bool isMetadataPresent(json root, string field);
 
 	static bool isNull(json root, string field);
@@ -44,7 +43,8 @@ public:
 	static json toJson(string json, bool warningIfError = false);
 
 	static string toString(json joValueRoot);
+
+	static json toJson(vector<int32_t> v);
 };
 
 #endif
-

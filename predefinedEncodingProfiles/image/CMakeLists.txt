@@ -30,6 +30,7 @@ set(PROFILEs
     MMS_PNG_W120.json
     MMS_PNG_W1280.json
     MMS_JPG_W1280.json
+    MMS_JPG_W1920.json
     MMS_PNG_W240.json
     MMS_PNG_W40.json
     MMS_PNG_W60.json)

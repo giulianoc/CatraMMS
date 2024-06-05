@@ -62,7 +62,7 @@ class PostgresHelper
 		shared_ptr<Base> value;
 
 	  public:
-		SqlValue(){};
+		SqlValue() {};
 
 		void setValue(shared_ptr<Base> value) { this->value = value; };
 
@@ -99,6 +99,8 @@ class PostgresHelper
 		// per ogni riga (vector) abbiamo un vettore che contiene i valori delle colonne by Index
 		vector<vector<SqlValue>> _sqlValuesByIndex;
 
+		int32_t _count;
+		chrono::milliseconds _countSqlDuration;
 		chrono::milliseconds _sqlDuration;
 
 		// temporary vector to fill _sqlValuesByIndex
@@ -140,6 +142,10 @@ class PostgresHelper
 		vector<vector<SqlValue>>::const_iterator end() const { return _sqlValuesByIndex.end(); };
 		vector<SqlValue> &operator[](int index) { return _sqlValuesByIndex[index]; }
 
+		void setCount(int32_t count) { _count = count; }
+		int32_t getCount() { return _count; }
+		void setCountSqlDuration(chrono::milliseconds countSqlDuration) { _countSqlDuration = countSqlDuration; }
+		chrono::milliseconds getCountSqlDuration() { return _countSqlDuration; }
 		void setSqlDuration(chrono::milliseconds sqlDuration) { _sqlDuration = sqlDuration; }
 		chrono::milliseconds getSqlDuration() { return _sqlDuration; }
 	};

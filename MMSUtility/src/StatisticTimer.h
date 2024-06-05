@@ -2,22 +2,30 @@
 #ifndef StatisticTimer_h
 #define StatisticTimer_h
 
-#include <string>
 #include <chrono>
-#include <vector>
 #include <map>
+#include <string>
+#include <vector>
 
-using namespace std;                                                                                          
+#include "nlohmann/json.hpp"
 
-class StatisticTimer {
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
 
-public:
+using namespace std;
+
+class StatisticTimer
+{
+
+  public:
 	StatisticTimer(string name);
 	void start(string label);
-	void stop(string label);
+	chrono::system_clock::duration stop(string label);
 	string toString();
+	json toJson();
 
-private:
+  private:
 	string _name;
 
 	map<string, chrono::system_clock::time_point> _uncompletedTimers;
@@ -26,4 +34,3 @@ private:
 };
 
 #endif
-

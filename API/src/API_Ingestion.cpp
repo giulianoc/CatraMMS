@@ -5030,6 +5030,7 @@ void API::changeLiveProxyPlaylist(
 
 			// build the new playlist
 			// add the default media in case of hole filling newPlaylistRoot
+			// genero un errore in caso di sovrapposizioni tra gli items della playlist
 			{
 				int64_t utcCurrentBroadcasterStart = utcBroadcasterStart;
 
@@ -5038,21 +5039,22 @@ void API::changeLiveProxyPlaylist(
 					json newReceivedPlaylistItemRoot = vNewReceivedPlaylist[newReceivedPlaylistIndex];
 
 					// correct values have to be:
-					//	utcCurrentBroadcasterStart <= utcProxyPeriodStart <
-					// utcProxyPeriodEnd
-					// the last utcProxyPeriodEnd has to be equal to
-					// utcBroadcasterEnd
+					//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd
+					// the last utcProxyPeriodEnd has to be equal to utcBroadcasterEnd
 					string field = "utcScheduleStart";
 					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot, field, -1);
 					field = "utcScheduleEnd";
 					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, field, -1);
 
-					_logger->info(
-						__FILEREF__ + "Processing newReceivedPlaylistRoot" + ", newReceivedPlaylistRoot: " + to_string(newReceivedPlaylistIndex) +
-						"/" + to_string(newReceivedPlaylistRoot.size()) + ", utcCurrentBroadcasterStart: " + to_string(utcCurrentBroadcasterStart) +
-						" (" + DateTime::utcToUtcString(utcCurrentBroadcasterStart) + ")" +
-						", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) + " (" + DateTime::utcToUtcString(utcProxyPeriodStart) + ")" +
-						", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + " (" + DateTime::utcToUtcString(utcProxyPeriodEnd) + ")"
+					SPDLOG_INFO(
+						"Processing newReceivedPlaylistRoot"
+						", newReceivedPlaylistRoot: {}/{}"
+						", utcCurrentBroadcasterStart: {} ({})"
+						", utcProxyPeriodStart: {} ({})"
+						", utcProxyPeriodEnd: {} ({})",
+						newReceivedPlaylistIndex, newReceivedPlaylistRoot.size(), utcCurrentBroadcasterStart,
+						DateTime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart, DateTime::utcToUtcString(utcProxyPeriodStart),
+						utcProxyPeriodEnd, DateTime::utcToUtcString(utcProxyPeriodEnd)
 					);
 
 					if (utcCurrentBroadcasterStart > utcProxyPeriodStart || utcProxyPeriodStart >= utcProxyPeriodEnd ||
@@ -5061,21 +5063,24 @@ void API::changeLiveProxyPlaylist(
 						string partialMessage;
 
 						if (utcCurrentBroadcasterStart > utcProxyPeriodStart)
-							partialMessage = "utcCurrentBroadcasterStart > "
-											 "utcProxyPeriodStart";
+							partialMessage = "utcCurrentBroadcasterStart > utcProxyPeriodStart";
 						else if (utcProxyPeriodEnd >= utcProxyPeriodStart)
 							partialMessage = "utcProxyPeriodEnd >= utcProxyPeriodStart";
 						else if (utcProxyPeriodEnd > utcBroadcasterEnd)
 							partialMessage = "utcProxyPeriodEnd > utcBroadcasterEnd";
 
-						string errorMessage =
-							__FILEREF__ + "Wrong dates (" + partialMessage + ")" +
-							", newReceivedPlaylistIndex: " + to_string(newReceivedPlaylistIndex) +
-							", utcCurrentBroadcasterStart: " + to_string(utcCurrentBroadcasterStart) + " (" +
-							DateTime::utcToUtcString(utcCurrentBroadcasterStart) + ")" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
-							" (" + DateTime::utcToUtcString(utcProxyPeriodStart) + ")" + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) +
-							" (" + DateTime::utcToUtcString(utcProxyPeriodEnd) + ")" + ", utcBroadcasterEnd: " + to_string(utcBroadcasterEnd) + " (" +
-							DateTime::utcToUtcString(utcBroadcasterEnd) + ")";
+						string errorMessage = fmt::format(
+							"Wrong dates ({})"
+							", newReceivedPlaylistIndex: {}"
+							", utcCurrentBroadcasterStart: {} ({})"
+							", utcProxyPeriodStart: {} ()"
+							", utcProxyPeriodEnd: {} ({})"
+							", utcBroadcasterEnd: {} ({})",
+							partialMessage, newReceivedPlaylistIndex, utcCurrentBroadcasterStart,
+							DateTime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart, DateTime::utcToUtcString(utcProxyPeriodStart),
+							utcProxyPeriodEnd, DateTime::utcToUtcString(utcProxyPeriodEnd), utcBroadcasterEnd,
+							DateTime::utcToUtcString(utcBroadcasterEnd)
+						);
 						_logger->error(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -5169,24 +5174,6 @@ void API::changeLiveProxyPlaylist(
 
 							throw runtime_error(errorMessage);
 						}
-
-						// update the end time of the last entry with the start
-						// time of the entry we are adding
-						/* 2021-12-19: non ho capito il controllo sotto!!!
-								Tra l'altro newReceivedPlaylistRoot è ora in un
-						vector if (newPlaylistRoot.size() > 0)
-						{
-								json newLastPlaylistRoot =
-						newReceivedPlaylistRoot[ newPlaylistRoot.size() - 1];
-
-								field = "utcProxyPeriodEnd";
-								newLastPlaylistRoot[field] =
-						utcCurrentBroadcasterStart;
-
-								newReceivedPlaylistRoot[newPlaylistRoot.size() -
-						1] = newLastPlaylistRoot;
-						}
-						*/
 
 						newPlaylistRoot.push_back(newdPlaylistItemToBeAddedRoot);
 
@@ -5365,24 +5352,6 @@ void API::changeLiveProxyPlaylist(
 						throw runtime_error(errorMessage);
 					}
 
-					// update the end time of the last entry with the start time
-					// of the entry we are adding
-					/* 2021-12-19: non ho capito il controllo sotto
-									Tra l'altro newReceivedPlaylistRoot è ora in
-					un vector if (newPlaylistRoot.size() > 0)
-					{
-							json newLastPlaylistRoot =
-					newReceivedPlaylistRoot[ newPlaylistRoot.size() - 1];
-
-							field = "utcProxyPeriodEnd";
-							newLastPlaylistRoot[field] =
-					utcCurrentBroadcasterStart;
-
-							newReceivedPlaylistRoot[newPlaylistRoot.size() - 1]
-									= newLastPlaylistRoot;
-					}
-					*/
-
 					newPlaylistRoot.push_back(newdPlaylistItemToBeAddedRoot);
 				}
 			}
@@ -5418,9 +5387,11 @@ void API::changeLiveProxyPlaylist(
 		ostringstream response;
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "getIngestionJobDetails" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
-				", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey)
+			SPDLOG_INFO(
+				"getIngestionJobDetails"
+				", workspace->_workspaceKey: {}"
+				", broadcastIngestionJobKey: {}",
+				workspace->_workspaceKey, broadcastIngestionJobKey
 			);
 
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
@@ -5507,12 +5478,11 @@ void API::changeLiveProxyPlaylist(
 			}
 			else
 			{
-				_logger->info(
-					__FILEREF__ +
-					"The Broadcast EncodingJob was not found, the IngestionJob "
-					"is updated" +
-					", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey) +
-					", broadcastEncodingJobKey: " + to_string(broadcastEncodingJobKey)
+				SPDLOG_INFO(
+					"The Broadcast EncodingJob was not found, the IngestionJob is updated"
+					", broadcastIngestionJobKey: {}"
+					", broadcastEncodingJobKey: {}",
+					broadcastIngestionJobKey, broadcastEncodingJobKey
 				);
 
 				json metadataContentRoot = JSONUtils::toJson(metaDataContent);

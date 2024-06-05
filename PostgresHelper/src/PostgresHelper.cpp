@@ -200,6 +200,23 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 						sqlValueType = PostgresHelper::SqlResultSet::vectorInt32;
 					}
 					break;
+					case 1009: // _text
+					{
+						vector<string> v;
+
+						auto array = field.as_array();
+						pair<array_parser::juncture, string> elem;
+						do
+						{
+							elem = array.get_next();
+							if (elem.first == array_parser::juncture::string_value)
+								v.push_back(elem.second);
+						} while (elem.first != array_parser::juncture::done);
+
+						sqlValue.setValue(make_shared<SqlType<vector<string>>>(v));
+						sqlValueType = PostgresHelper::SqlResultSet::vectorText;
+					}
+					break;
 					case 1700: // numeric
 						sqlValue.setValue(make_shared<SqlType<double>>(field.as<double>()));
 						sqlValueType = PostgresHelper::SqlResultSet::double_;

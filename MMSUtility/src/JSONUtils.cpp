@@ -244,3 +244,11 @@ string JSONUtils::toString(json root)
 		return Json::writeString(wbuilder, joValueRoot);
 	*/
 }
+
+json JSONUtils::toJson(vector<int32_t> v)
+{
+	json root = json::array();
+	for (int32_t i : v)
+		root.push_back(i);
+	return root;
+}

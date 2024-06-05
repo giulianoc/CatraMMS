@@ -72,21 +72,34 @@ class FastCGIAPI
 
 	string getClientIPAddress(unordered_map<string, string> &requestDetails);
 
-	int32_t getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, int32_t defaultParameter, bool mandatory);
-	int64_t getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, int64_t defaultParameter, bool mandatory);
-	bool getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, bool defaultParameter, bool mandatory);
-	string getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, string defaultParameter, bool mandatory);
+	int32_t getQueryParameter(
+		unordered_map<string, string> &queryParameters, string parameterName, int32_t defaultParameter, bool mandatory, bool *isParamPresent = nullptr
+	);
+	int64_t getQueryParameter(
+		unordered_map<string, string> &queryParameters, string parameterName, int64_t defaultParameter, bool mandatory, bool *isParamPresent = nullptr
+	);
+	bool getQueryParameter(
+		unordered_map<string, string> &queryParameters, string parameterName, bool defaultParameter, bool mandatory, bool *isParamPresent = nullptr
+	);
+	string getQueryParameter(
+		unordered_map<string, string> &queryParameters, string parameterName, string defaultParameter, bool mandatory, bool *isParamPresent = nullptr
+	);
 	vector<int32_t> getQueryParameter(
-		unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<int32_t> defaultParameter, bool mandatory
+		unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<int32_t> defaultParameter, bool mandatory,
+		bool *isParamPresent = nullptr
 	);
 	vector<int64_t> getQueryParameter(
-		unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<int64_t> defaultParameter, bool mandatory
+		unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<int64_t> defaultParameter, bool mandatory,
+		bool *isParamPresent = nullptr
 	);
 	vector<string> getQueryParameter(
-		unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<string> defaultParameter, bool mandatory
+		unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<string> defaultParameter, bool mandatory,
+		bool *isParamPresent = nullptr
 	);
-	set<string>
-	getQueryParameter(unordered_map<string, string> &queryParameters, string parameterName, char delim, set<string> defaultParameter, bool mandatory);
+	set<string> getQueryParameter(
+		unordered_map<string, string> &queryParameters, string parameterName, char delim, set<string> defaultParameter, bool mandatory,
+		bool *isParamPresent = nullptr
+	);
 
   private:
 	void fillEnvironmentDetails(const char *const *envp, unordered_map<string, string> &requestDetails);
