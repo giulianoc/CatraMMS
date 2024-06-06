@@ -5064,8 +5064,8 @@ void API::changeLiveProxyPlaylist(
 
 						if (utcCurrentBroadcasterStart > utcProxyPeriodStart)
 							partialMessage = "utcCurrentBroadcasterStart > utcProxyPeriodStart";
-						else if (utcProxyPeriodEnd >= utcProxyPeriodStart)
-							partialMessage = "utcProxyPeriodEnd >= utcProxyPeriodStart";
+						else if (utcProxyPeriodStart >= utcProxyPeriodEnd)
+							partialMessage = "utcProxyPeriodStart >= utcProxyPeriodEnd";
 						else if (utcProxyPeriodEnd > utcBroadcasterEnd)
 							partialMessage = "utcProxyPeriodEnd > utcBroadcasterEnd";
 
