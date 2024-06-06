@@ -5073,7 +5073,7 @@ void API::changeLiveProxyPlaylist(
 							"Wrong dates ({})"
 							", newReceivedPlaylistIndex: {}"
 							", utcCurrentBroadcasterStart: {} ({})"
-							", utcProxyPeriodStart: {} ()"
+							", utcProxyPeriodStart: {} ({})"
 							", utcProxyPeriodEnd: {} ({})"
 							", utcBroadcasterEnd: {} ({})",
 							partialMessage, newReceivedPlaylistIndex, utcCurrentBroadcasterStart,
