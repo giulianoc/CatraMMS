@@ -342,7 +342,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 	string userName, string userEmailAddress, string userPassword, string userCountry, string userTimezone, string workspaceName,
 	WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber,
-	long maxStorageInMB, string languageCode, chrono::system_clock::time_point userExpirationLocalDate
+	long maxStorageInMB, string languageCode, string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
 )
 {
 	int64_t workspaceKey;
@@ -433,7 +433,8 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = addWorkspace(
 				conn, trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, trimWorkspaceName, workspaceType,
-				deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode, userExpirationLocalDate
+				deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode, workspaceTimezone,
+				userExpirationLocalDate
 			);
 
 			workspaceKey = workspaceKeyAndConfirmationCode.first;
@@ -759,7 +760,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 
 pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 	int64_t userKey, string workspaceName, WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority,
-	EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode, bool admin,
+	EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode, string workspaceTimezone, bool admin,
 	chrono::system_clock::time_point userExpirationLocalDate
 )
 {
@@ -803,7 +804,8 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = addWorkspace(
 				conn, trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, trimWorkspaceName, workspaceType,
-				deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode, userExpirationLocalDate
+				deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode, workspaceTimezone,
+				userExpirationLocalDate
 			);
 
 			workspaceKey = workspaceKeyAndConfirmationCode.first;
@@ -1573,7 +1575,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 	bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
 	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, string workspaceName, WorkspaceType workspaceType, string deliveryURL,
 	EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode,
-	chrono::system_clock::time_point userExpirationLocalDate
+	string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
 )
 {
 	int64_t workspaceKey;
@@ -1582,6 +1584,9 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 
 	try
 	{
+		if (!isTimezoneValid(workspaceTimezone))
+			workspaceTimezone = "CET";
+
 		{
 			bool enabled = false;
 			string workspaceDirectoryName = "tempName";
@@ -1590,13 +1595,13 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 				"insert into MMS_Workspace ("
 				"creationDate,              name, directoryName, workspaceType, "
 				"deliveryURL, enabled, maxEncodingPriority, encodingPeriod, "
-				"maxIngestionsNumber, languageCode) values ("
+				"maxIngestionsNumber, languageCode, timezone) values ("
 				"NOW() at time zone 'utc',  {},   {},            {}, "
 				"{},          {},     {},                   {}, "
-				"{},                  {}) returning workspaceKey",
+				"{},                  {},           {}) returning workspaceKey",
 				trans.quote(workspaceName), trans.quote(workspaceDirectoryName), static_cast<int>(workspaceType),
 				deliveryURL == "" ? "null" : trans.quote(deliveryURL), enabled, trans.quote(toString(maxEncodingPriority)),
-				trans.quote(toString(encodingPeriod)), maxIngestionsNumber, trans.quote(languageCode)
+				trans.quote(toString(encodingPeriod)), maxIngestionsNumber, trans.quote(languageCode), trans.quote(workspaceTimezone)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			workspaceKey = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -3317,7 +3322,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				sqlStatement = fmt::format(
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
-					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
+					"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
 					"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
@@ -3331,7 +3336,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				sqlStatement = fmt::format(
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
-					"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
+					"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
 					"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
@@ -3483,7 +3488,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			string sqlStatement = fmt::format(
 				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
-				"w.languageCode, "
+				"w.languageCode, w.timezone, "
 				"a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
@@ -3518,7 +3523,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			{
 				string sqlStatement = fmt::format(
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -3702,6 +3707,9 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(
 		field = "languageCode";
 		workspaceDetailRoot[field] = row["languageCode"].as<string>();
 
+		field = "timezone";
+		workspaceDetailRoot[field] = row["timezone"].as<string>();
+
 		field = "creationDate";
 		workspaceDetailRoot[field] = row["creationDate"].as<string>();
 
@@ -3869,7 +3877,8 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(
 json MMSEngineDBFacade::updateWorkspaceDetails(
 	int64_t userKey, int64_t workspaceKey, bool enabledChanged, bool newEnabled, bool nameChanged, string newName, bool maxEncodingPriorityChanged,
 	string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod, bool maxIngestionsNumberChanged,
-	int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool expirationDateChanged, string newExpirationUtcDate,
+	int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged, string newTimezone,
+	bool expirationDateChanged, string newExpirationUtcDate,
 
 	bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
 	bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1, bool currentCostForDedicatedEncoder_power_1Changed,
@@ -4058,6 +4067,14 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += fmt::format("languageCode = {}", trans.quote(newLanguageCode));
+				oneParameterPresent = true;
+			}
+
+			if (timezoneChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += fmt::format("timezone = {}", trans.quote(newTimezone));
 				oneParameterPresent = true;
 			}
 
@@ -4266,7 +4283,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			string sqlStatement = fmt::format(
 				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
-				"w.languageCode, a.apiKey, a.isOwner, a.isDefault, "
+				"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
 				"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "

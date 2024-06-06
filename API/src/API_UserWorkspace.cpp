@@ -132,6 +132,7 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 					maxIngestionsNumber,									   // long maxIngestionsNumber,
 					maxStorageInMB,											   // long maxStorageInMB,
 					"",														   // string languageCode,
+					timezone,												   // by default, timezone del workspace coincide con quello dell'utente
 					chrono::system_clock::now() + chrono::hours(24 * 365 * 10) // chrono::system_clock::time_point userExpirationDate
 				);
 #else
@@ -443,7 +444,8 @@ void API::createWorkspace(
 				userKey, workspaceName, MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
 				"", // string deliveryURL,
 				encodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
-				"", // string languageCode,
+				"",	   // string languageCode,
+				"CET", // default timezone
 				admin, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 			);
 #else
@@ -2032,6 +2034,8 @@ void API::updateWorkspace(
 		bool maxIngestionsNumberChanged = false;
 		string newLanguageCode;
 		bool languageCodeChanged = false;
+		string newTimezone;
+		bool timezoneChanged = false;
 		string newExpirationUtcDate;
 		bool expirationDateChanged = false;
 
@@ -2131,6 +2135,13 @@ void API::updateWorkspace(
 		{
 			languageCodeChanged = true;
 			newLanguageCode = JSONUtils::asString(metadataRoot, field, "");
+		}
+
+		field = "timezone";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			timezoneChanged = true;
+			newTimezone = JSONUtils::asString(metadataRoot, field, "CET");
 		}
 
 		field = "maxStorageInGB";
@@ -2292,7 +2303,7 @@ void API::updateWorkspace(
 			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails(
 				userKey, workspace->_workspaceKey, enabledChanged, newEnabled, nameChanged, newName, maxEncodingPriorityChanged,
 				newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged, newMaxIngestionsNumber,
-				languageCodeChanged, newLanguageCode, expirationDateChanged, newExpirationUtcDate,
+				languageCodeChanged, newLanguageCode, timezoneChanged, newTimezone, expirationDateChanged, newExpirationUtcDate,
 
 				maxStorageInGBChanged, maxStorageInGB, currentCostForStorageChanged, currentCostForStorage, dedicatedEncoder_power_1Changed,
 				dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1Changed, currentCostForDedicatedEncoder_power_1,

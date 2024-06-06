@@ -1211,7 +1211,8 @@ class MMSEngineDBFacade
 	tuple<int64_t, int64_t, string> registerUserAndAddWorkspace(
 		string userName, string userEmailAddress, string userPassword, string userCountry, string userTimezone, string workspaceName,
 		WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
-		long maxIngestionsNumber, long maxStorageInMB, string languageCode, chrono::system_clock::time_point userExpirationDate
+		long maxIngestionsNumber, long maxStorageInMB, string languageCode, string workspaceTimezone,
+		chrono::system_clock::time_point userExpirationDate
 	);
 #else
 	tuple<int64_t, int64_t, string> registerUserAndAddWorkspace(
@@ -1235,7 +1236,7 @@ class MMSEngineDBFacade
 
 	pair<int64_t, string> createWorkspace(
 		int64_t userKey, string workspaceName, WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority,
-		EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode, bool admin,
+		EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode, string workspaceTimezone, bool admin,
 		chrono::system_clock::time_point userExpirationDate
 	);
 
@@ -1302,8 +1303,8 @@ class MMSEngineDBFacade
 	json updateWorkspaceDetails(
 		int64_t userKey, int64_t workspaceKey, bool enabledChanged, bool newEnabled, bool nameChanged, string newName,
 		bool maxEncodingPriorityChanged, string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod,
-		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool expirationDateChanged,
-		string newExpirationDate,
+		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged,
+		string newTimezone, bool expirationDateChanged, string newExpirationDate,
 
 		bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
 		bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1, bool currentCostForDedicatedEncoder_power_1Changed,
@@ -2513,7 +2514,7 @@ class MMSEngineDBFacade
 		bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
 		bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, string workspaceName, WorkspaceType workspaceType,
 		string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB,
-		string languageCode, chrono::system_clock::time_point userExpirationDate
+		string languageCode, string workspaceTimezone, chrono::system_clock::time_point userExpirationDate
 	);
 #else
 	pair<int64_t, string> addWorkspace(

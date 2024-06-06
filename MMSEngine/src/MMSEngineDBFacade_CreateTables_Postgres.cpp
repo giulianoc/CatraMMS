@@ -143,6 +143,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "encodingPeriod			text NOT NULL,"
 								  "maxIngestionsNumber	integer NOT NULL,"
 								  "languageCode			text NOT NULL,"
+								  "timezone				text NOT NULL default 'CET',"
 								  "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
@@ -709,7 +710,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "eMailAddress			text NULL,"
 								  "password				text NOT NULL,"
 								  "country				text NULL,"
-								  "timezone				text NOT NULL,"
+								  "timezone				text NOT NULL default 'CET',"
 								  "creationDate			timestamp without time zone default (now() at time zone 'utc'),"
 								  "insolvent				boolean NOT NULL default false,"
 								  "expirationDate			timestamp without time zone NOT NULL,"
