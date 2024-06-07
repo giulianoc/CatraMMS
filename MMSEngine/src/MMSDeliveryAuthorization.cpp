@@ -4,10 +4,10 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   CURL.cpp
  * Author: giuliano
- * 
+ *
  * Created on March 29, 2018, 6:27 AM
  */
 
@@ -16,17 +16,14 @@
 #include "AWSSigner.h"
 #include "JSONUtils.h"
 #include "catralibraries/Convert.h"
+#include "spdlog/fmt/fmt.h"
 // #include <openssl/md5.h>
+#include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include <openssl/bio.h>
-
 
 MMSDeliveryAuthorization::MMSDeliveryAuthorization(
-	json configuration,
-	shared_ptr<MMSStorage> mmsStorage,
-	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-	shared_ptr<spdlog::logger> logger
+	json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<spdlog::logger> logger
 )
 {
 	_configuration = configuration;
@@ -34,53 +31,38 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 	_logger = logger;
 
-	_keyPairId =  JSONUtils::asString(_configuration["aws"], "keyPairId", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", aws->keyPairId: " + _keyPairId
-	);
-	_privateKeyPEMPathName =  JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName
-	);
+	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
+	_logger->info(__FILEREF__ + "Configuration item" + ", aws->keyPairId: " + _keyPairId);
+	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
+	_logger->info(__FILEREF__ + "Configuration item" + ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName);
 	_vodCloudFrontHostNamesRoot = _configuration["aws"]["vodCloudFrontHostNames"];
-	_logger->info(__FILEREF__ + "Configuration item"
-		+ ", aws->vodCloudFrontHostNames: " + "..."
+	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodCloudFrontHostNames: " + "...");
+
+	json api = _configuration["api"];
+
+	_deliveryProtocol = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
+	_logger->info(__FILEREF__ + "Configuration item" + ", api->delivery->deliveryProtocol: " + _deliveryProtocol);
+	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
+	_logger->info(
+		__FILEREF__ + "Configuration item" +
+		", api->delivery->deliveryHost_authorizationThroughParameter: " + _deliveryHost_authorizationThroughParameter
 	);
-
-    json api = _configuration["api"];
-
-    _deliveryProtocol  = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->deliveryProtocol: " + _deliveryProtocol
-    );
-    _deliveryHost_authorizationThroughParameter  = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->deliveryHost_authorizationThroughParameter: " + _deliveryHost_authorizationThroughParameter
-    );
-    _deliveryHost_authorizationThroughPath  = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->delivery->deliveryHost_authorizationThroughPath: " + _deliveryHost_authorizationThroughPath 
-    );
-
+	_deliveryHost_authorizationThroughPath = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
+	_logger->info(
+		__FILEREF__ + "Configuration item" + ", api->delivery->deliveryHost_authorizationThroughPath: " + _deliveryHost_authorizationThroughPath
+	);
 }
-	
-pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
-	int64_t userKey,
-	shared_ptr<Workspace> requestWorkspace,
-	string clientIPAddress,
 
-	int64_t mediaItemKey,
-	string uniqueName,
-	int64_t encodingProfileKey,
-	string encodingProfileLabel,
+pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
+	int64_t userKey, shared_ptr<Workspace> requestWorkspace, string clientIPAddress,
+
+	int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey, string encodingProfileLabel,
 
 	int64_t physicalPathKey,
 
-	int64_t ingestionJobKey,
-	int64_t deliveryCode,
+	int64_t ingestionJobKey, int64_t deliveryCode,
 
-	int ttlInSeconds,
-	int maxRetries,
+	int ttlInSeconds, int maxRetries,
 
 	bool save,
 	// deliveryType:
@@ -90,10 +72,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	// AWSCloudFront_Signed: delivery by AWS CloudFront with a signed URL
 	string deliveryType,
 
-	bool warningIfMissingMediaItemKey,
-	bool filteredByStatistic,
-	string userId
-	)
+	bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
+)
 {
 	string deliveryURL;
 	string deliveryFileName;
@@ -110,8 +90,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			tuple<string, int, string, string> deliveryFileNameAndDeliveryURI =
 				_mmsStorage->getVODDeliveryURI(localPhysicalPathKey, save, requestWorkspace);
 
-			tie(title, mmsPartitionNumber, deliveryFileName, deliveryURI)
-				= deliveryFileNameAndDeliveryURI;
+			tie(title, mmsPartitionNumber, deliveryFileName, deliveryURI) = deliveryFileNameAndDeliveryURI;
 		}
 		else
 		{
@@ -119,12 +98,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				// initialize mediaItemKey
 
-				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails =
-					_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-						requestWorkspace->_workspaceKey,
-						uniqueName, warningIfMissingMediaItemKey,
-						// 2022-12-18: assumo il MIK sia nel DB da un po di tempo
-						false);
+				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+					requestWorkspace->_workspaceKey, uniqueName, warningIfMissingMediaItemKey,
+					// 2022-12-18: assumo il MIK sia nel DB da un po di tempo
+					false
+				);
 				tie(mediaItemKey, ignore) = mediaItemKeyDetails;
 			}
 
@@ -134,44 +112,36 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				MMSEngineDBFacade::ContentType contentType;
 
-				tuple<MMSEngineDBFacade::ContentType, string, string, string,
-					int64_t, int64_t> mediaItemDetails;
+				tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t> mediaItemDetails;
 				mediaItemDetails = _mmsEngineDBFacade->getMediaItemKeyDetails(
 					requestWorkspace->_workspaceKey, mediaItemKey,
-					false,	// warningIfMissing
+					false, // warningIfMissing
 					// 2022-12-18: assumo il MIK sia nel DB da un po di tempo
-					false);
-				tie(contentType, ignore, ignore, ignore, ignore, ignore) =
-					mediaItemDetails;
+					false
+				);
+				tie(contentType, ignore, ignore, ignore, ignore, ignore) = mediaItemDetails;
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
-					requestWorkspace->_workspaceKey,
-					contentType,
-					encodingProfileLabel,
-					true	// contentTypeToBeUsed
+					requestWorkspace->_workspaceKey, contentType, encodingProfileLabel,
+					true // contentTypeToBeUsed
 				);
 			}
 
 			tuple<string, int, int64_t, string, string> vodDeliveryURIDetails =
-				_mmsStorage->getVODDeliveryURI(mediaItemKey,
-					encodingProfileKey, save, requestWorkspace);
-			tie(title, mmsPartitionNumber, localPhysicalPathKey, deliveryFileName, deliveryURI) =
-				vodDeliveryURIDetails;
+				_mmsStorage->getVODDeliveryURI(mediaItemKey, encodingProfileKey, save, requestWorkspace);
+			tie(title, mmsPartitionNumber, localPhysicalPathKey, deliveryFileName, deliveryURI) = vodDeliveryURIDetails;
 		}
 
 		if (deliveryType == "AWSCloudFront_Signed")
 		{
-			time_t expirationTime = chrono::system_clock::to_time_t(
-				chrono::system_clock::now());
+			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 			expirationTime += ttlInSeconds;
 
 			// deliverURI: /MMS_0000/2/.....
 			size_t beginURIIndex = deliveryURI.find("/", 1);
 			if (beginURIIndex == string::npos)
 			{
-				string errorMessage = string("wrong deliveryURI")
-					+ ", deliveryURI: " + deliveryURI
-				;
+				string errorMessage = string("wrong deliveryURI") + ", deliveryURI: " + deliveryURI;
 				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -180,26 +150,16 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			if (mmsPartitionNumber >= _vodCloudFrontHostNamesRoot.size())
 			{
-				string errorMessage = string("no CloudFrontHostName available")
-					+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-					+ ", _vodCloudFrontHostNamesRoot.size: "
-						+ to_string(_vodCloudFrontHostNamesRoot.size())
-				;
+				string errorMessage = string("no CloudFrontHostName available") + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber) +
+									  ", _vodCloudFrontHostNamesRoot.size: " + to_string(_vodCloudFrontHostNamesRoot.size());
 				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string cloudFrontHostName
-				= JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
+			string cloudFrontHostName = JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
 
 			AWSSigner awsSigner(_logger);
-			string signedPlayURL = awsSigner.calculateSignedURL(
-				cloudFrontHostName,
-				uriPath,
-				_keyPairId,
-				_privateKeyPEMPathName,
-				expirationTime
-			);
+			string signedPlayURL = awsSigner.calculateSignedURL(cloudFrontHostName, uriPath, _keyPairId, _privateKeyPEMPathName, expirationTime);
 
 			deliveryURL = signedPlayURL;
 		}
@@ -209,9 +169,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			size_t beginURIIndex = deliveryURI.find("/", 1);
 			if (beginURIIndex == string::npos)
 			{
-				string errorMessage = string("wrong deliveryURI")
-					+ ", deliveryURI: " + deliveryURI
-				;
+				string errorMessage = string("wrong deliveryURI") + ", deliveryURI: " + deliveryURI;
 				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -220,53 +178,38 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			if (mmsPartitionNumber >= _vodCloudFrontHostNamesRoot.size())
 			{
-				string errorMessage = string("no CloudFrontHostName available")
-					+ ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
-					+ ", _vodCloudFrontHostNamesRoot.size: "
-						+ to_string(_vodCloudFrontHostNamesRoot.size())
-				;
+				string errorMessage = string("no CloudFrontHostName available") + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber) +
+									  ", _vodCloudFrontHostNamesRoot.size: " + to_string(_vodCloudFrontHostNamesRoot.size());
 				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string cloudFrontHostName
-				= JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
+			string cloudFrontHostName = JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
 
 			deliveryURL = "https://" + cloudFrontHostName + uriPath;
 		}
 		else if (deliveryType == "MMS_Token")
 		{
 			int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-				userKey,
-				clientIPAddress,
-				localPhysicalPathKey,
-				-1,
-				deliveryURI,
-				ttlInSeconds,
-				maxRetries);
+				userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries
+			);
 
-			deliveryURL = 
-				_deliveryProtocol
-				+ "://" 
-				+ _deliveryHost_authorizationThroughParameter
-				+ deliveryURI
-				+ "?token=" + to_string(authorizationKey)
-			;
+			deliveryURL =
+				_deliveryProtocol + "://" + _deliveryHost_authorizationThroughParameter + deliveryURI + "?token=" + to_string(authorizationKey);
 
 			if (save && deliveryFileName != "")
 				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
 		}
 		else // if (deliveryType == "MMS_SignedToken")
 		{
-			time_t expirationTime = chrono::system_clock::to_time_t(
-				chrono::system_clock::now());
+			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 			expirationTime += ttlInSeconds;
 
 			string uriToBeSigned;
 			{
 				string m3u8Suffix(".m3u8");
-				if (deliveryURI.size() >= m3u8Suffix.size()
-					&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+				if (deliveryURI.size() >= m3u8Suffix.size() &&
+					0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 				{
 					size_t endPathIndex = deliveryURI.find_last_of("/");
 					if (endPathIndex == string::npos)
@@ -279,13 +222,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-			deliveryURL = 
-				_deliveryProtocol
-				+ "://" 
-				+ _deliveryHost_authorizationThroughPath
-				+ "/token_" + md5Base64 + "," + to_string(expirationTime)
-				+ deliveryURI
-			;
+			deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughPath + "/token_" + md5Base64 + "," +
+						  to_string(expirationTime) + deliveryURI;
 		}
 		/*
 		else
@@ -304,54 +242,42 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			try
 			{
 				_mmsEngineDBFacade->addRequestStatistic(
-					requestWorkspace->_workspaceKey,
-					clientIPAddress,
-					userId,
-					localPhysicalPathKey,
-					-1,	// confStreamKey
+					requestWorkspace->_workspaceKey, clientIPAddress, userId, localPhysicalPathKey,
+					-1, // confStreamKey
 					title
 				);
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed")
-					+ ", e.what: " + e.what()
-				;
+				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed") + ", e.what: " + e.what();
 				_logger->error(__FILEREF__ + errorMessage);
 			}
 		}
 
-		_logger->info(__FILEREF__ + "createDeliveryAuthorization info"
-			+ ", title: " + title
-			+ ", deliveryURI: " + deliveryURI
-			+ ", deliveryType: " + deliveryType
-			+ ", deliveryURL (authorized): " + deliveryURL
+		_logger->info(
+			__FILEREF__ + "createDeliveryAuthorization info" + ", title: " + title + ", deliveryURI: " + deliveryURI +
+			", deliveryType: " + deliveryType + ", deliveryURL (authorized): " + deliveryURL
 		);
 	}
 	else
 	{
 		// create authorization for a live request
 
-		tuple<string, MMSEngineDBFacade::IngestionType,
-			MMSEngineDBFacade::IngestionStatus, string, string>
-			ingestionJobDetails = _mmsEngineDBFacade->getIngestionJobDetails(
+		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
+			_mmsEngineDBFacade->getIngestionJobDetails(
 				requestWorkspace->_workspaceKey, ingestionJobKey,
 				// 2022-12-18: it is a live request, it has time to be present into the slave
-				false);
+				false
+			);
 		MMSEngineDBFacade::IngestionType ingestionType;
 		string metaDataContent;
 		tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;
 
-		if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy
-			&& ingestionType != MMSEngineDBFacade::IngestionType::VODProxy
-			&& ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid
-			&& ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder
-			&& ingestionType != MMSEngineDBFacade::IngestionType::Countdown
-		)
+		if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy && ingestionType != MMSEngineDBFacade::IngestionType::VODProxy &&
+			ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid && ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder &&
+			ingestionType != MMSEngineDBFacade::IngestionType::Countdown)
 		{
-			string errorMessage = string("ingestionJob is not a LiveProxy")
-				+ ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
-			;
+			string errorMessage = string("ingestionJob is not a LiveProxy") + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
 			_logger->error(__FILEREF__ + errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -359,19 +285,14 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 		json ingestionJobRoot = JSONUtils::toJson(metaDataContent, false);
 
-		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy
-			|| ingestionType == MMSEngineDBFacade::IngestionType::VODProxy
-			|| ingestionType == MMSEngineDBFacade::IngestionType::Countdown
-			|| ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder
-		)
+		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy || ingestionType == MMSEngineDBFacade::IngestionType::VODProxy ||
+			ingestionType == MMSEngineDBFacade::IngestionType::Countdown || ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
 		{
 			string field = "outputs";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
 				string errorMessage =
-					string("A Proxy/Countdown/Recorder without outputs cannot be delivered")
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				;
+					string("A Proxy/Countdown/Recorder without outputs cannot be delivered") + ", ingestionJobKey: " + to_string(ingestionJobKey);
 				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -403,10 +324,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					field = "DeliveryCode";
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 				}
-				else */ if (outputType == "RTMP_Channel"
-					|| outputType == "CDN_AWS"
-					|| outputType == "CDN_CDN77"
-				)
+				else */
+				if (outputType == "RTMP_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
 				{
 					field = "playUrl";
 					playURL = JSONUtils::asString(outputRoot, field, "");
@@ -419,20 +338,18 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 				}
 
-				outputDeliveryOptions.push_back(
-					make_tuple(outputType, localDeliveryCode, playURL));
+				outputDeliveryOptions.push_back(make_tuple(outputType, localDeliveryCode, playURL));
 			}
 
 			string outputType;
 			string playURL;
 
-			if (deliveryCode == -1)	// requested delivery code (it is an input)
+			if (deliveryCode == -1) // requested delivery code (it is an input)
 			{
 				if (outputDeliveryOptions.size() == 0)
 				{
-					string errorMessage = string("No outputDeliveryOptions, it cannot be delivered")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
+					string errorMessage =
+						string("No outputDeliveryOptions, it cannot be delivered") + ", ingestionJobKey: " + to_string(ingestionJobKey);
 					_logger->error(__FILEREF__ + errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -440,9 +357,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				else if (outputDeliveryOptions.size() > 1)
 				{
 					string errorMessage =
-						string("Live authorization with several option. Just get the first")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
+						string("Live authorization with several option. Just get the first") + ", ingestionJobKey: " + to_string(ingestionJobKey);
 					_logger->warn(__FILEREF__ + errorMessage);
 
 					tie(outputType, deliveryCode, playURL) = outputDeliveryOptions[0];
@@ -457,8 +372,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				bool deliveryCodeFound = false;
 
-				for (tuple<string, int64_t, string> outputDeliveryOption:
-					outputDeliveryOptions)
+				for (tuple<string, int64_t, string> outputDeliveryOption : outputDeliveryOptions)
 				{
 					int64_t localDeliveryCode;
 					tie(outputType, localDeliveryCode, playURL) = outputDeliveryOption;
@@ -473,18 +387,15 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				if (!deliveryCodeFound)
 				{
-					string errorMessage = string("DeliveryCode received does not exist for the ingestionJob")
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
+					string errorMessage =
+						string("DeliveryCode received does not exist for the ingestionJob") + ", ingestionJobKey: " + to_string(ingestionJobKey);
 					_logger->error(__FILEREF__ + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 
-			if (outputType == "RTMP_Channel"
-				|| outputType == "CDN_AWS"
-				|| outputType == "CDN_CDN77")
+			if (outputType == "RTMP_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
 			{
 				deliveryURL = playURL;
 			}
@@ -493,49 +404,36 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string deliveryURI;
 				string liveFileExtension;
 				// if (outputType == "HLS")
-					liveFileExtension = "m3u8";
+				liveFileExtension = "m3u8";
 				// else
 				// 	liveFileExtension = "mpd";
 
-				tuple<string, string, string> liveDeliveryDetails
-					= _mmsStorage->getLiveDeliveryDetails(
-					to_string(deliveryCode),
-					liveFileExtension, requestWorkspace);
-				tie(deliveryURI, ignore, deliveryFileName) =
-					liveDeliveryDetails;
+				tuple<string, string, string> liveDeliveryDetails =
+					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
+				tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
 				if (deliveryType == "MMS_Token")
 				{
-					int64_t authorizationKey =
-						_mmsEngineDBFacade->createDeliveryAuthorization(
-						userKey,
-						clientIPAddress,
-						-1,	// physicalPathKey,	vod key
-						deliveryCode,		// live key
-						deliveryURI,
-						ttlInSeconds,
-						maxRetries);
+					int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey, clientIPAddress,
+						-1,			  // physicalPathKey,	vod key
+						deliveryCode, // live key
+						deliveryURI, ttlInSeconds, maxRetries
+					);
 
-					deliveryURL = 
-						_deliveryProtocol
-						+ "://" 
-						+ _deliveryHost_authorizationThroughParameter
-						+ deliveryURI
-						+ "?token=" + to_string(authorizationKey)
-					;
+					deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughParameter + deliveryURI +
+								  "?token=" + to_string(authorizationKey);
 				}
 				else // if (deliveryType == "MMS_SignedToken")
 				{
-					time_t expirationTime = chrono::system_clock::to_time_t(
-						chrono::system_clock::now());
+					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 					expirationTime += ttlInSeconds;
 
 					string uriToBeSigned;
 					{
 						string m3u8Suffix(".m3u8");
-						if (deliveryURI.size() >= m3u8Suffix.size()
-							&& 0 == deliveryURI.compare(deliveryURI.size()
-								- m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+						if (deliveryURI.size() >= m3u8Suffix.size() &&
+							0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 						{
 							size_t endPathIndex = deliveryURI.find_last_of("/");
 							if (endPathIndex == string::npos)
@@ -548,13 +446,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-					deliveryURL = 
-						_deliveryProtocol
-						+ "://" 
-						+ _deliveryHost_authorizationThroughPath
-						+ "/token_" + md5Base64 + "," + to_string(expirationTime)
-						+ deliveryURI
-					;
+					deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughPath + "/token_" + md5Base64 + "," +
+								  to_string(expirationTime) + deliveryURI;
 				}
 				/*
 				else
@@ -577,45 +470,32 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				else
 					liveFileExtension = "mpd";
 
-				tuple<string, string, string> liveDeliveryDetails
-					= _mmsStorage->getLiveDeliveryDetails(
-					to_string(deliveryCode),
-					liveFileExtension, requestWorkspace);
-				tie(deliveryURI, ignore, deliveryFileName) =
-					liveDeliveryDetails;
+				tuple<string, string, string> liveDeliveryDetails =
+					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
+				tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
 				if (deliveryType == "MMS_Token")
 				{
-					int64_t authorizationKey =
-						_mmsEngineDBFacade->createDeliveryAuthorization(
-						userKey,
-						clientIPAddress,
-						-1,	// physicalPathKey,	vod key
-						deliveryCode,		// live key
-						deliveryURI,
-						ttlInSeconds,
-						maxRetries);
+					int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+						userKey, clientIPAddress,
+						-1,			  // physicalPathKey,	vod key
+						deliveryCode, // live key
+						deliveryURI, ttlInSeconds, maxRetries
+					);
 
-					deliveryURL = 
-						_deliveryProtocol
-						+ "://" 
-						+ _deliveryHost_authorizationThroughParameter
-						+ deliveryURI
-						+ "?token=" + to_string(authorizationKey)
-					;
+					deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughParameter + deliveryURI +
+								  "?token=" + to_string(authorizationKey);
 				}
 				else // if (deliveryType == "MMS_SignedToken")
 				{
-					time_t expirationTime = chrono::system_clock::to_time_t(
-						chrono::system_clock::now());
+					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 					expirationTime += ttlInSeconds;
 
 					string uriToBeSigned;
 					{
 						string m3u8Suffix(".m3u8");
-						if (deliveryURI.size() >= m3u8Suffix.size()
-							&& 0 == deliveryURI.compare(deliveryURI.size()
-								- m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+						if (deliveryURI.size() >= m3u8Suffix.size() &&
+							0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 						{
 							size_t endPathIndex = deliveryURI.find_last_of("/");
 							if (endPathIndex == string::npos)
@@ -628,13 +508,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-					deliveryURL = 
-						_deliveryProtocol
-						+ "://" 
-						+ _deliveryHost_authorizationThroughPath
-						+ "/token_" + md5Base64 + "," + to_string(expirationTime)
-						+ deliveryURI
-					;
+					deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughPath + "/token_" + md5Base64 + "," +
+								  to_string(expirationTime) + deliveryURI;
 				}
 				/*
 				else
@@ -654,10 +529,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				{
-					string errorMessage =
-						field + " field missing"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					;
+					string errorMessage = field + " field missing" + ", ingestionJobKey: " + to_string(ingestionJobKey);
 					_logger->error(__FILEREF__ + errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -665,32 +537,22 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string configurationLabel = JSONUtils::asString(ingestionJobRoot, field, "");
 
 				bool warningIfMissing = false;
-				tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int,
-					int, string, int, int, int, int, int, int64_t> streamDetails
-					= _mmsEngineDBFacade->getStreamDetails(
-					requestWorkspace->_workspaceKey,
-					configurationLabel, warningIfMissing
-				);
+				tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
+					streamDetails = _mmsEngineDBFacade->getStreamDetails(requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
 
 				int64_t streamConfKey;
-				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
-					ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
-					ignore, ignore) = streamDetails;
+				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+					ignore, ignore, ignore) = streamDetails;
 
 				_mmsEngineDBFacade->addRequestStatistic(
-					requestWorkspace->_workspaceKey,
-					clientIPAddress,
-					userId,
-					-1,	// localPhysicalPathKey,
-					streamConfKey,
-					configurationLabel
+					requestWorkspace->_workspaceKey, clientIPAddress, userId,
+					-1, // localPhysicalPathKey,
+					streamConfKey, configurationLabel
 				);
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed")
-					+ ", e.what: " + e.what()
-				;
+				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed") + ", e.what: " + e.what();
 				_logger->error(__FILEREF__ + errorMessage);
 			}
 		}
@@ -743,7 +605,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			bool monitorHLS = false;
 			bool liveRecorderVirtualVOD = false;
-			
+
 			field = "monitorHLS";
 			if (JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				monitorHLS = true;
@@ -876,9 +738,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						ttlInSeconds,
 						maxRetries);
 
-					deliveryURL = 
+					deliveryURL =
 						_deliveryProtocol
-						+ "://" 
+						+ "://"
 						+ _deliveryHost_authorizationThroughParameter
 						+ deliveryURI
 						+ "?token=" + to_string(authorizationKey)
@@ -906,9 +768,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-					deliveryURL = 
+					deliveryURL =
 						_deliveryProtocol
-						+ "://" 
+						+ "://"
 						+ _deliveryHost_authorizationThroughPath
 						+ "/token_" + md5Base64 + "," + to_string(expirationTime)
 						+ deliveryURI
@@ -937,9 +799,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						ttlInSeconds,
 						maxRetries);
 
-					deliveryURL = 
+					deliveryURL =
 						_deliveryProtocol
-						+ "://" 
+						+ "://"
 						+ _deliveryHost_authorizationThroughParameter
 						+ deliveryURI
 						+ "?token=" + to_string(authorizationKey)
@@ -967,9 +829,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-					deliveryURL = 
+					deliveryURL =
 						_deliveryProtocol
-						+ "://" 
+						+ "://"
 						+ _deliveryHost_authorizationThroughPath
 						+ "/token_" + md5Base64 + "," + to_string(expirationTime)
 						+ deliveryURI
@@ -1033,9 +895,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string field = "DeliveryCode";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
-				string errorMessage = string("A LiveGrid without DeliveryCode cannot be delivered")
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				;
+				string errorMessage =
+					string("A LiveGrid without DeliveryCode cannot be delivered") + ", ingestionJobKey: " + to_string(ingestionJobKey);
 				_logger->error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -1044,32 +905,20 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			string deliveryURI;
 			string liveFileExtension = "m3u8";
-			tuple<string, string, string> liveDeliveryDetails
-				= _mmsStorage->getLiveDeliveryDetails(
-				to_string(deliveryCode),
-				liveFileExtension, requestWorkspace);
-			tie(deliveryURI, ignore, deliveryFileName) =
-				liveDeliveryDetails;
+			tuple<string, string, string> liveDeliveryDetails =
+				_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
+			tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
 			if (deliveryType == "MMS_Token")
 			{
-				int64_t authorizationKey
-					= _mmsEngineDBFacade->createDeliveryAuthorization(
-					userKey,
-					clientIPAddress,
-					-1,	// physicalPathKey,
-					deliveryCode,
-					deliveryURI,
-					ttlInSeconds,
-					maxRetries);
+				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+					userKey, clientIPAddress,
+					-1, // physicalPathKey,
+					deliveryCode, deliveryURI, ttlInSeconds, maxRetries
+				);
 
-				deliveryURL = 
-					_deliveryProtocol
-					+ "://" 
-					+ _deliveryHost_authorizationThroughParameter
-					+ deliveryURI
-					+ "?token=" + to_string(authorizationKey)
-				;
+				deliveryURL =
+					_deliveryProtocol + "://" + _deliveryHost_authorizationThroughParameter + deliveryURI + "?token=" + to_string(authorizationKey);
 			}
 			else // if (deliveryType == "MMS_SignedToken")
 			{
@@ -1079,8 +928,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string uriToBeSigned;
 				{
 					string m3u8Suffix(".m3u8");
-					if (deliveryURI.size() >= m3u8Suffix.size()
-						&& 0 == deliveryURI.compare(deliveryURI.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+					if (deliveryURI.size() >= m3u8Suffix.size() &&
+						0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 					{
 						size_t endPathIndex = deliveryURI.find_last_of("/");
 						if (endPathIndex == string::npos)
@@ -1093,13 +942,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-				deliveryURL = 
-					_deliveryProtocol
-					+ "://" 
-					+ _deliveryHost_authorizationThroughPath
-					+ "/token_" + md5Base64 + "," + to_string(expirationTime)
-					+ deliveryURI
-				;
+				deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughPath + "/token_" + md5Base64 + "," +
+							  to_string(expirationTime) + deliveryURI;
 			}
 			/*
 			else
@@ -1113,10 +957,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			*/
 
-			_logger->info(__FILEREF__ + "createDeliveryAuthorization for LiveGrid"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", deliveryCode: " + to_string(deliveryCode)
-				+ ", deliveryURL: " + deliveryURL
+			_logger->info(
+				__FILEREF__ + "createDeliveryAuthorization for LiveGrid" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+				", deliveryCode: " + to_string(deliveryCode) + ", deliveryURL: " + deliveryURL
 			);
 		}
 	}
@@ -1126,7 +969,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expirationTime)
 {
-	string token = to_string(expirationTime) + contentURI;
+	string token = fmt::format("{}{}", expirationTime, contentURI);
 	string md5Base64;
 	{
 		// unsigned char digest[MD5_DIGEST_LENGTH];
@@ -1143,7 +986,7 @@ string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expi
 			EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
 
 			// MD5_Update
-			EVP_DigestUpdate(mdctx, (unsigned char*) token.c_str(), token.size());
+			EVP_DigestUpdate(mdctx, (unsigned char *)token.c_str(), token.size());
 
 			// MD5_Final
 			md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
@@ -1156,51 +999,45 @@ string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expi
 			EVP_MD_CTX_free(mdctx);
 		}
 
-		transform(md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
-			[](unsigned char c){
+		transform(
+			md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
+			[](unsigned char c)
+			{
 				if (c == '+')
 					return '-';
 				else if (c == '/')
 					return '_';
 				else
-					return (char) c;
+					return (char)c;
 			}
 		);
 	}
 
-	_logger->info(__FILEREF__ + "Authorization through path"
-		+ ", contentURI: " + contentURI
-		+ ", expirationTime: " + to_string(expirationTime)
-		+ ", token: " + token
-		+ ", md5Base64: " + md5Base64
+	_logger->info(
+		__FILEREF__ + "Authorization through path" + ", contentURI: " + contentURI + ", expirationTime: " + to_string(expirationTime) +
+		", token: " + token + ", md5Base64: " + md5Base64
 	);
-
 
 	return md5Base64;
 }
 
 string MMSDeliveryAuthorization::getSignedCDN77URL(
-	string resourceURL,	// i.e.: 1234456789.rsc.cdn77.org
+	string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
 	string filePath,	// /file/playlist/d.m3u8
-	string secureToken,
-	long expirationInMinutes,
-	shared_ptr<spdlog::logger> logger
+	string secureToken, long expirationInMinutes, shared_ptr<spdlog::logger> logger
 )
 {
-	logger->info(__FILEREF__ + "getSignedCDN77URL"
-		+ ", resourceURL: " + resourceURL
-		+ ", filePath: " + filePath
-		+ ", secureToken: " + secureToken
-		+ ", expirationInMinutes: " + to_string(expirationInMinutes)
+	logger->info(
+		__FILEREF__ + "getSignedCDN77URL" + ", resourceURL: " + resourceURL + ", filePath: " + filePath + ", secureToken: " + secureToken +
+		", expirationInMinutes: " + to_string(expirationInMinutes)
 	);
 
-    try
-    {
+	try
+	{
 		//  It's smart to set the expiration time as current time plus 5 minutes { time() + 300}.
 		//  This way the link will be available only for the time needed to start the download.
 
-		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now())
-			+ (expirationInMinutes * 60);
+		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now()) + (expirationInMinutes * 60);
 
 		string signedURL;
 		{
@@ -1212,9 +1049,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 				size_t fileNameStart = filePath.find_last_of("/");
 				if (fileNameStart == string::npos)
 				{
-					string errorMessage = string("filePath format is wrong")
-						+ ", filePath: " + filePath
-					;
+					string errorMessage = string("filePath format is wrong") + ", filePath: " + filePath;
 					logger->error(__FILEREF__ + errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -1247,10 +1082,9 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			hashStr = to_string(expiryTimestamp) + hashStr;
 			string sExpiryTimestamp = string(",") + to_string(expiryTimestamp);
 
-			logger->info(__FILEREF__ + "getSignedCDN77URL"
-				+ ", strippedPath: " + strippedPath
-				+ ", hashStr: " + hashStr
-				+ ", sExpiryTimestamp: " + sExpiryTimestamp
+			logger->info(
+				__FILEREF__ + "getSignedCDN77URL" + ", strippedPath: " + strippedPath + ", hashStr: " + hashStr +
+				", sExpiryTimestamp: " + sExpiryTimestamp
 			);
 
 			// the URL is however, intensionaly returned with the previously stripped parts (eg. playlist/{chunk}..)
@@ -1274,7 +1108,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 					EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
 
 					// MD5_Update
-					EVP_DigestUpdate(mdctx, (unsigned char*) hashStr.c_str(), hashStr.size());
+					EVP_DigestUpdate(mdctx, (unsigned char *)hashStr.c_str(), hashStr.size());
 
 					// MD5_Final
 					md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
@@ -1307,7 +1141,6 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 						logger->debug(__FILEREF__ + "BIO_push...");
 						bio = BIO_push(b64, bio);
 
-
 						logger->debug(__FILEREF__ + "BIO_write...");
 						BIO_write(bio, md5_digest, md5_digest_len);
 						BIO_flush(bio);
@@ -1323,9 +1156,9 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 						logger->debug(__FILEREF__ + "base64Text set...");
 						// char* base64Text=(*bufferPtr).data;
 
-						logger->info(__FILEREF__ + "getSignedCDN77URL"
-							+ ", (*bufferPtr).length: " + to_string((*bufferPtr).length)
-							+ ", (*bufferPtr).data: " + (*bufferPtr).data
+						logger->info(
+							__FILEREF__ + "getSignedCDN77URL" + ", (*bufferPtr).length: " + to_string((*bufferPtr).length) +
+							", (*bufferPtr).data: " + (*bufferPtr).data
 						);
 
 						md5Base64 = string((*bufferPtr).data, (*bufferPtr).length);
@@ -1338,56 +1171,46 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 					EVP_MD_CTX_free(mdctx);
 				}
 
-				logger->info(__FILEREF__ + "getSignedCDN77URL"
-					+ ", md5Base64: " + md5Base64
-				);
-
+				logger->info(__FILEREF__ + "getSignedCDN77URL" + ", md5Base64: " + md5Base64);
 
 				// $invalidChars = ['+','/'];
 				// $validChars = ['-','_'];
-				transform(md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
-					[](unsigned char c){
+				transform(
+					md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
+					[](unsigned char c)
+					{
 						if (c == '+')
 							return '-';
 						else if (c == '/')
 							return '_';
 						else
-							return (char) c;
+							return (char)c;
 					}
 				);
 			}
 
-			signedURL = "https://" + resourceURL + "/" + md5Base64
-				+ sExpiryTimestamp + filePath;
+			signedURL = "https://" + resourceURL + "/" + md5Base64 + sExpiryTimestamp + filePath;
 		}
 
-		logger->info(__FILEREF__ + "end getSignedCDN77URL"
-			+ ", resourceURL: " + resourceURL
-			+ ", filePath: " + filePath
-			+ ", secureToken: " + secureToken
-			+ ", expirationInMinutes: " + to_string(expirationInMinutes)
-			+ ", signedURL: " + signedURL
+		logger->info(
+			__FILEREF__ + "end getSignedCDN77URL" + ", resourceURL: " + resourceURL + ", filePath: " + filePath + ", secureToken: " + secureToken +
+			", expirationInMinutes: " + to_string(expirationInMinutes) + ", signedURL: " + signedURL
 		);
 
 		return signedURL;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		string errorMessage = string("getSignedCDN77URL failed")
-			+ ", e.what(): " + e.what()
-		;
+		string errorMessage = string("getSignedCDN77URL failed") + ", e.what(): " + e.what();
 		logger->error(__FILEREF__ + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		string errorMessage = string("getSignedCDN77URL failed")
-			+ ", e.what(): " + e.what()
-		;
+		string errorMessage = string("getSignedCDN77URL failed") + ", e.what(): " + e.what();
 		logger->error(__FILEREF__ + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 }
-

@@ -1,44 +1,42 @@
 
 #include "API.h"
 #include "JSONUtils.h"
+#include "catralibraries/Encrypt.h"
+#include "catralibraries/StringUtils.h"
 #include <curlpp/cURLpp.hpp>
 #include <regex>
-#include "catralibraries/Encrypt.h"
 
 void API::createDeliveryAuthorization(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	int64_t userKey,
-	shared_ptr<Workspace> requestWorkspace,
-	string clientIPAddress,
-	unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey,
+	shared_ptr<Workspace> requestWorkspace, string clientIPAddress, unordered_map<string, string> queryParameters
+)
 {
-    string api = "createDeliveryAuthorization";
+	string api = "createDeliveryAuthorization";
 
-    SPDLOG_INFO("Received {}", api);
+	SPDLOG_INFO("Received {}", api);
 
-    try
-    {
-        int64_t physicalPathKey = -1;
-        auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
-        if (physicalPathKeyIt != queryParameters.end())
-        {
+	try
+	{
+		int64_t physicalPathKey = -1;
+		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
+		if (physicalPathKeyIt != queryParameters.end())
+		{
 			physicalPathKey = stoll(physicalPathKeyIt->second);
-        }
+		}
 
-        int64_t mediaItemKey = -1;
-        auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-        if (mediaItemKeyIt != queryParameters.end())
-        {
+		int64_t mediaItemKey = -1;
+		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
+		if (mediaItemKeyIt != queryParameters.end())
+		{
 			mediaItemKey = stoll(mediaItemKeyIt->second);
 			if (mediaItemKey == 0)
 				mediaItemKey = -1;
-        }
+		}
 
-        string uniqueName;
-        auto uniqueNameIt = queryParameters.find("uniqueName");
-        if (uniqueNameIt != queryParameters.end())
-        {
+		string uniqueName;
+		auto uniqueNameIt = queryParameters.find("uniqueName");
+		if (uniqueNameIt != queryParameters.end())
+		{
 			uniqueName = uniqueNameIt->second;
 
 			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
@@ -49,21 +47,21 @@ void API::createDeliveryAuthorization(
 			string firstDecoding = regex_replace(uniqueName, regex(plus), plusDecoded);
 
 			uniqueName = curlpp::unescape(firstDecoding);
-        }
+		}
 
-        int64_t encodingProfileKey = -1;
-        auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
-        if (encodingProfileKeyIt != queryParameters.end())
+		int64_t encodingProfileKey = -1;
+		auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
+		if (encodingProfileKeyIt != queryParameters.end())
 		{
 			encodingProfileKey = stoll(encodingProfileKeyIt->second);
 			if (encodingProfileKey == 0)
 				encodingProfileKey = -1;
 		}
 
-        string encodingProfileLabel;
-        auto encodingProfileLabelIt = queryParameters.find("encodingProfileLabel");
-        if (encodingProfileLabelIt != queryParameters.end())
-        {
+		string encodingProfileLabel;
+		auto encodingProfileLabelIt = queryParameters.find("encodingProfileLabel");
+		if (encodingProfileLabelIt != queryParameters.end())
+		{
 			encodingProfileLabel = encodingProfileLabelIt->second;
 
 			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
@@ -74,84 +72,86 @@ void API::createDeliveryAuthorization(
 			string firstDecoding = regex_replace(encodingProfileLabel, regex(plus), plusDecoded);
 
 			encodingProfileLabel = curlpp::unescape(firstDecoding);
-        }
-
-		// this is for live authorization
-        int64_t ingestionJobKey = -1;
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        if (ingestionJobKeyIt != queryParameters.end())
-        {
-			ingestionJobKey = stoll(ingestionJobKeyIt->second);
-        }
-
-		// this is for live authorization
-        int64_t deliveryCode = -1;
-        auto deliveryCodeIt = queryParameters.find("deliveryCode");
-        if (deliveryCodeIt != queryParameters.end())
-        {
-			deliveryCode = stoll(deliveryCodeIt->second);
-        }
-
-		if (physicalPathKey == -1
-			&& ((mediaItemKey == -1 && uniqueName == "")) // || (encodingProfileKey == -1 && encodingProfileLabel == "")) commentato perchè profile -1 indica 'source profile'
-			&& ingestionJobKey == -1)
-		{
-            string errorMessage = string("The 'physicalPathKey' or the (mediaItemKey-uniqueName)/(encodingProfileKey-encodingProfileLabel) or ingestionJobKey parameters have to be present");
-            SPDLOG_ERROR(errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
 		}
 
-        int ttlInSeconds = _defaultTTLInSeconds;
-        auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
-        if (ttlInSecondsIt != queryParameters.end() && ttlInSecondsIt->second != "")
-        {
-            ttlInSeconds = stol(ttlInSecondsIt->second);
-        }
+		// this is for live authorization
+		int64_t ingestionJobKey = -1;
+		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+		if (ingestionJobKeyIt != queryParameters.end())
+		{
+			ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		}
 
-        int maxRetries = _defaultMaxRetries;
-        auto maxRetriesIt = queryParameters.find("maxRetries");
-        if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
-        {
-            maxRetries = stol(maxRetriesIt->second);
-        }
-        
-        bool redirect = _defaultRedirect;
-        auto redirectIt = queryParameters.find("redirect");
-        if (redirectIt != queryParameters.end())
-        {
-            if (redirectIt->second == "true")
-                redirect = true;
-            else
-                redirect = false;
-        }
-        
-        bool save = false;
-        auto saveIt = queryParameters.find("save");
-        if (saveIt != queryParameters.end())
-        {
-            if (saveIt->second == "true")
-                save = true;
-            else
-                save = false;
-        }
+		// this is for live authorization
+		int64_t deliveryCode = -1;
+		auto deliveryCodeIt = queryParameters.find("deliveryCode");
+		if (deliveryCodeIt != queryParameters.end())
+		{
+			deliveryCode = stoll(deliveryCodeIt->second);
+		}
 
-        string deliveryType;
-        auto deliveryTypeIt = queryParameters.find("deliveryType");
-        if (deliveryTypeIt != queryParameters.end())
+		if (physicalPathKey == -1 &&
+			((mediaItemKey == -1 && uniqueName == "")
+			) // || (encodingProfileKey == -1 && encodingProfileLabel == "")) commentato perchè profile -1 indica 'source profile'
+			&& ingestionJobKey == -1)
+		{
+			string errorMessage = string("The 'physicalPathKey' or the (mediaItemKey-uniqueName)/(encodingProfileKey-encodingProfileLabel) or "
+										 "ingestionJobKey parameters have to be present");
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		int ttlInSeconds = _defaultTTLInSeconds;
+		auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
+		if (ttlInSecondsIt != queryParameters.end() && ttlInSecondsIt->second != "")
+		{
+			ttlInSeconds = stol(ttlInSecondsIt->second);
+		}
+
+		int maxRetries = _defaultMaxRetries;
+		auto maxRetriesIt = queryParameters.find("maxRetries");
+		if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
+		{
+			maxRetries = stol(maxRetriesIt->second);
+		}
+
+		bool redirect = _defaultRedirect;
+		auto redirectIt = queryParameters.find("redirect");
+		if (redirectIt != queryParameters.end())
+		{
+			if (redirectIt->second == "true")
+				redirect = true;
+			else
+				redirect = false;
+		}
+
+		bool save = false;
+		auto saveIt = queryParameters.find("save");
+		if (saveIt != queryParameters.end())
+		{
+			if (saveIt->second == "true")
+				save = true;
+			else
+				save = false;
+		}
+
+		string deliveryType;
+		auto deliveryTypeIt = queryParameters.find("deliveryType");
+		if (deliveryTypeIt != queryParameters.end())
 			deliveryType = deliveryTypeIt->second;
 
-        bool filteredByStatistic = false;
-        auto filteredByStatisticIt = queryParameters.find("filteredByStatistic");
-        if (filteredByStatisticIt != queryParameters.end())
-        {
-            if (filteredByStatisticIt->second == "true")
-                filteredByStatistic = true;
-            else
-                filteredByStatistic = false;
-        }
+		bool filteredByStatistic = false;
+		auto filteredByStatisticIt = queryParameters.find("filteredByStatistic");
+		if (filteredByStatisticIt != queryParameters.end())
+		{
+			if (filteredByStatisticIt->second == "true")
+				filteredByStatistic = true;
+			else
+				filteredByStatistic = false;
+		}
 
 		string userId;
 		auto userIdIt = queryParameters.find("userId");
@@ -169,34 +169,21 @@ void API::createDeliveryAuthorization(
 			userId = curlpp::unescape(firstDecoding);
 		}
 
-
 		try
 		{
 			bool warningIfMissingMediaItemKey = false;
-			pair<string, string> deliveryAuthorizationDetails =
-				_mmsDeliveryAuthorization->createDeliveryAuthorization(
-				userKey,
-				requestWorkspace,
-				clientIPAddress,
+			pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
+				userKey, requestWorkspace, clientIPAddress,
 
-				mediaItemKey,
-				uniqueName,
-				encodingProfileKey,
-				encodingProfileLabel,
+				mediaItemKey, uniqueName, encodingProfileKey, encodingProfileLabel,
 
 				physicalPathKey,
 
-				ingestionJobKey,
-				deliveryCode,
+				ingestionJobKey, deliveryCode,
 
-				ttlInSeconds,
-				maxRetries,
-				save,
-				deliveryType,
+				ttlInSeconds, maxRetries, save, deliveryType,
 
-				warningIfMissingMediaItemKey,
-				filteredByStatistic,
-				userId
+				warningIfMissingMediaItemKey, filteredByStatistic, userId
 			);
 
 			string deliveryURL;
@@ -234,127 +221,127 @@ void API::createDeliveryAuthorization(
 					+ ", \"maxRetries\": " + to_string(maxRetries)
 					+ " }";
 				*/
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-					request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 			}
-        }
-        catch(MediaItemKeyNotFound& e)
-        {
-            SPDLOG_ERROR("{} failed"
-                ", e.what(): {}",
+		}
+		catch (MediaItemKeyNotFound &e)
+		{
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
 				api, e.what()
-            );
+			);
 
-            string errorMessage = fmt::format("Internal server error: {}", e.what());
-            SPDLOG_ERROR(errorMessage);
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(runtime_error& e)
-        {
-            SPDLOG_ERROR("{} failed"
-                ", e.what(): {}",
+			throw runtime_error(errorMessage);
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
 				api, e.what()
-            );
+			);
 
-            string errorMessage = fmt::format("Internal server error: {}", e.what());
-            SPDLOG_ERROR(errorMessage);
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            SPDLOG_ERROR("{} failed"
-                ", e.what(): {}",
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
 				api, e.what()
-            );
+			);
 
-            string errorMessage = string("Internal server error");
-            SPDLOG_ERROR(errorMessage);
+			string errorMessage = string("Internal server error");
+			SPDLOG_ERROR(errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        SPDLOG_ERROR("API failed"
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
-        );
+		);
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        SPDLOG_ERROR("API failed"
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
-        );
+		);
 
-        string errorMessage = string("Internal server error");
-        SPDLOG_ERROR(errorMessage);
+		string errorMessage = string("Internal server error");
+		SPDLOG_ERROR(errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::createBulkOfDeliveryAuthorization(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	int64_t userKey,
-	shared_ptr<Workspace> requestWorkspace,
-	string clientIPAddress,
-	unordered_map<string, string> queryParameters,
-	string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey,
+	shared_ptr<Workspace> requestWorkspace, string clientIPAddress, unordered_map<string, string> queryParameters, string requestBody
+)
 {
-    string api = "createBulkOfDeliveryAuthorization";
+	string api = "createBulkOfDeliveryAuthorization";
 
-    SPDLOG_INFO("Received {}", api);
+	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
 		/*
 		 * input:
-            {
-                "uniqueNameList" : [
-                    {
-                        "uniqueName": "...",
+			{
+				"uniqueNameList" : [
+					{
+						"uniqueName": "...",
 						"encodingProfileKey": 123
-                    },
-                    ...
-                ],
-                "liveIngestionJobKeyList" : [
-                    {
-                        "ingestionJobKey": 1234
-                    },
-                    ...
-                ]
-             }
+					},
+					...
+				],
+				"liveIngestionJobKeyList" : [
+					{
+						"ingestionJobKey": 1234
+					},
+					...
+				]
+			 }
 			output is like the input with the addition of the deliveryURL field
 		*/
 		json deliveryAutorizationDetailsRoot;
-        try
-        {
+		try
+		{
 			deliveryAutorizationDetailsRoot = JSONUtils::toJson(requestBody);
-        }
-        catch(exception& e)
-        {
-            SPDLOG_ERROR(e.what());
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(e.what());
 
-            sendError(request, 400, e.what());
+			sendError(request, 400, e.what());
 
-            throw runtime_error(e.what());
-        }
+			throw runtime_error(e.what());
+		}
 
 		try
 		{
@@ -380,7 +367,7 @@ void API::createBulkOfDeliveryAuthorization(
 				// sono tutte le stesse). Per questo motivo usiamo una mappa che conserva le deliveryURL
 				// ed evita di farle ricalcolare se il lavoro è stato già fatto
 				map<string, string> deliveryURLAlreadyCreated;
-                for (auto& [keyRoot, valRoot] : mediaItemKeyListRoot.items())
+				for (auto &[keyRoot, valRoot] : mediaItemKeyListRoot.items())
 				{
 					field = "mediaItemKey";
 					int64_t mediaItemKey = JSONUtils::asInt64(valRoot, field, -1);
@@ -393,14 +380,14 @@ void API::createBulkOfDeliveryAuthorization(
 					string deliveryType = JSONUtils::asString(valRoot, field, "");
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic  = JSONUtils::asBool(valRoot, field, false);
+					bool filteredByStatistic = JSONUtils::asBool(valRoot, field, false);
 
 					field = "userId";
 					string userId = JSONUtils::asString(valRoot, field, "");
 
-					string requestKey = fmt::format("{}_{}_{}_{}_{}_{}",
-						mediaItemKey, encodingProfileKey, encodingProfileLabel,
-						deliveryType, filteredByStatistic, userId);
+					string requestKey = fmt::format(
+						"{}_{}_{}_{}_{}_{}", mediaItemKey, encodingProfileKey, encodingProfileLabel, deliveryType, filteredByStatistic, userId
+					);
 					map<string, string>::const_iterator searchIt = deliveryURLAlreadyCreated.find(requestKey);
 					if (searchIt == deliveryURLAlreadyCreated.end())
 					{
@@ -408,34 +395,25 @@ void API::createBulkOfDeliveryAuthorization(
 						try
 						{
 							bool warningIfMissingMediaItemKey = true;
-							deliveryAuthorizationDetails =
-								_mmsDeliveryAuthorization->createDeliveryAuthorization(
-								userKey,
-								requestWorkspace,
-								clientIPAddress,
+							deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
+								userKey, requestWorkspace, clientIPAddress,
 
 								mediaItemKey,
-								"",	// uniqueName,
-								encodingProfileKey,
-								encodingProfileLabel,
+								"", // uniqueName,
+								encodingProfileKey, encodingProfileLabel,
 
-								-1,	// physicalPathKey,
+								-1, // physicalPathKey,
 
-								-1,	// ingestionJobKey,
-								-1,	// deliveryCode,
+								-1, // ingestionJobKey,
+								-1, // deliveryCode,
 
-								ttlInSeconds,
-								maxRetries,
-								save,
-								deliveryType,
-								warningIfMissingMediaItemKey,
-								filteredByStatistic,
-								userId
+								ttlInSeconds, maxRetries, save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
 						}
-						catch (MediaItemKeyNotFound& e)
+						catch (MediaItemKeyNotFound &e)
 						{
-							SPDLOG_WARN("createDeliveryAuthorization failed"
+							SPDLOG_WARN(
+								"createDeliveryAuthorization failed"
 								", mediaItemKey: {}"
 								", encodingProfileKey: {}"
 								", e.what(): {}",
@@ -444,9 +422,10 @@ void API::createBulkOfDeliveryAuthorization(
 
 							continue;
 						}
-						catch (runtime_error& e)
+						catch (runtime_error &e)
 						{
-							SPDLOG_ERROR("createDeliveryAuthorization failed"
+							SPDLOG_ERROR(
+								"createDeliveryAuthorization failed"
 								", mediaItemKey: {}"
 								", encodingProfileKey: {}"
 								", e.what(): {}",
@@ -455,9 +434,10 @@ void API::createBulkOfDeliveryAuthorization(
 
 							continue;
 						}
-						catch (exception& e)
+						catch (exception &e)
 						{
-							SPDLOG_ERROR("createDeliveryAuthorization failed"
+							SPDLOG_ERROR(
+								"createDeliveryAuthorization failed"
 								", mediaItemKey: {}"
 								", encodingProfileKey: {}"
 								", e.what(): {}",
@@ -497,8 +477,7 @@ void API::createBulkOfDeliveryAuthorization(
 				// sono tutte le stesse). Per questo motivo usiamo una mappa che conserva le deliveryURL
 				// ed evita di farle ricalcolare se il lavoro è stato già fatto
 				map<string, string> deliveryURLAlreadyCreated;
-				for (int uniqueNameIndex = 0; uniqueNameIndex < uniqueNameListRoot.size();
-					uniqueNameIndex++)
+				for (int uniqueNameIndex = 0; uniqueNameIndex < uniqueNameListRoot.size(); uniqueNameIndex++)
 				{
 					json uniqueNameRoot = uniqueNameListRoot[uniqueNameIndex];
 
@@ -513,14 +492,14 @@ void API::createBulkOfDeliveryAuthorization(
 					string deliveryType = JSONUtils::asString(uniqueNameRoot, field, "");
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic  = JSONUtils::asBool(uniqueNameRoot, field, false);
+					bool filteredByStatistic = JSONUtils::asBool(uniqueNameRoot, field, false);
 
 					field = "userId";
 					string userId = JSONUtils::asString(uniqueNameRoot, field, "");
 
-					string requestKey = fmt::format("{}_{}_{}_{}_{}_{}",
-						uniqueName, encodingProfileKey, encodingProfileLabel,
-						deliveryType, filteredByStatistic, userId);
+					string requestKey = fmt::format(
+						"{}_{}_{}_{}_{}_{}", uniqueName, encodingProfileKey, encodingProfileLabel, deliveryType, filteredByStatistic, userId
+					);
 					map<string, string>::const_iterator searchIt = deliveryURLAlreadyCreated.find(requestKey);
 					if (searchIt == deliveryURLAlreadyCreated.end())
 					{
@@ -528,34 +507,24 @@ void API::createBulkOfDeliveryAuthorization(
 						try
 						{
 							bool warningIfMissingMediaItemKey = true;
-							deliveryAuthorizationDetails =
-								_mmsDeliveryAuthorization->createDeliveryAuthorization(
-								userKey,
-								requestWorkspace,
-								clientIPAddress,
+							deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
+								userKey, requestWorkspace, clientIPAddress,
 
-								-1,	// mediaItemKey,
-								uniqueName,
-								encodingProfileKey,
-								encodingProfileLabel,
+								-1, // mediaItemKey,
+								uniqueName, encodingProfileKey, encodingProfileLabel,
 
-								-1,	// physicalPathKey,
+								-1, // physicalPathKey,
 
-								-1,	// ingestionJobKey,
-								-1,	// deliveryCode,
+								-1, // ingestionJobKey,
+								-1, // deliveryCode,
 
-								ttlInSeconds,
-								maxRetries,
-								save,
-								deliveryType,
-								warningIfMissingMediaItemKey,
-								filteredByStatistic,
-								userId
+								ttlInSeconds, maxRetries, save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
 						}
-						catch (MediaItemKeyNotFound& e)
+						catch (MediaItemKeyNotFound &e)
 						{
-							SPDLOG_ERROR("createDeliveryAuthorization failed"
+							SPDLOG_ERROR(
+								"createDeliveryAuthorization failed"
 								", uniqueName: {}"
 								", encodingProfileKey: {}"
 								", e.what(): {}",
@@ -564,9 +533,10 @@ void API::createBulkOfDeliveryAuthorization(
 
 							continue;
 						}
-						catch (runtime_error& e)
+						catch (runtime_error &e)
 						{
-							SPDLOG_ERROR("createDeliveryAuthorization failed"
+							SPDLOG_ERROR(
+								"createDeliveryAuthorization failed"
 								", uniqueName: {}"
 								", encodingProfileKey: {}"
 								", e.what(): {}",
@@ -575,9 +545,10 @@ void API::createBulkOfDeliveryAuthorization(
 
 							continue;
 						}
-						catch (exception& e)
+						catch (exception &e)
 						{
-							SPDLOG_ERROR("createDeliveryAuthorization failed"
+							SPDLOG_ERROR(
+								"createDeliveryAuthorization failed"
 								", uniqueName: {}"
 								", encodingProfileKey: {}"
 								", e.what(): {}",
@@ -614,9 +585,7 @@ void API::createBulkOfDeliveryAuthorization(
 			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
 			{
 				json liveIngestionJobKeyListRoot = deliveryAutorizationDetailsRoot[field];
-				for (int liveIngestionJobKeyIndex = 0;
-					liveIngestionJobKeyIndex < liveIngestionJobKeyListRoot.size();
-					liveIngestionJobKeyIndex++)
+				for (int liveIngestionJobKeyIndex = 0; liveIngestionJobKeyIndex < liveIngestionJobKeyListRoot.size(); liveIngestionJobKeyIndex++)
 				{
 					json liveIngestionJobKeyRoot = liveIngestionJobKeyListRoot[liveIngestionJobKeyIndex];
 
@@ -629,7 +598,7 @@ void API::createBulkOfDeliveryAuthorization(
 					string deliveryType = JSONUtils::asString(liveIngestionJobKeyRoot, field, "");
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic  = JSONUtils::asBool(liveIngestionJobKeyRoot, field, false);
+					bool filteredByStatistic = JSONUtils::asBool(liveIngestionJobKeyRoot, field, false);
 
 					field = "userId";
 					string userId = JSONUtils::asString(liveIngestionJobKeyRoot, field, "");
@@ -638,34 +607,25 @@ void API::createBulkOfDeliveryAuthorization(
 					try
 					{
 						bool warningIfMissingMediaItemKey = false;
-						deliveryAuthorizationDetails =
-							_mmsDeliveryAuthorization->createDeliveryAuthorization(
-							userKey,
-							requestWorkspace,
-							clientIPAddress,
+						deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
+							userKey, requestWorkspace, clientIPAddress,
 
-							-1,	// mediaItemKey,
-							"",	// uniqueName,
-							-1,	// encodingProfileKey,
-							"",	// encodingProfileLabel,
+							-1, // mediaItemKey,
+							"", // uniqueName,
+							-1, // encodingProfileKey,
+							"", // encodingProfileLabel,
 
-							-1,	// physicalPathKey,
+							-1, // physicalPathKey,
 
-							ingestionJobKey,
-							deliveryCode,
+							ingestionJobKey, deliveryCode,
 
-							ttlInSeconds,
-							maxRetries,
-							save,
-							deliveryType,
-							warningIfMissingMediaItemKey,
-							filteredByStatistic,
-							userId
+							ttlInSeconds, maxRetries, save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 						);
 					}
-					catch (MediaItemKeyNotFound& e)
+					catch (MediaItemKeyNotFound &e)
 					{
-						SPDLOG_ERROR("createDeliveryAuthorization failed"
+						SPDLOG_ERROR(
+							"createDeliveryAuthorization failed"
 							", ingestionJobKey: {}"
 							", deliveryCode: {}"
 							", e.what(): {}",
@@ -674,9 +634,10 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
-					catch (runtime_error& e)
+					catch (runtime_error &e)
 					{
-						SPDLOG_ERROR("createDeliveryAuthorization failed"
+						SPDLOG_ERROR(
+							"createDeliveryAuthorization failed"
 							", ingestionJobKey: {}"
 							", deliveryCode: {}"
 							", e.what(): {}",
@@ -685,9 +646,10 @@ void API::createBulkOfDeliveryAuthorization(
 
 						continue;
 					}
-					catch (exception& e)
+					catch (exception &e)
 					{
-						SPDLOG_ERROR("createDeliveryAuthorization failed"
+						SPDLOG_ERROR(
+							"createDeliveryAuthorization failed"
 							", ingestionJobKey: {}"
 							", deliveryCode: {}"
 							", e.what(): {}",
@@ -720,75 +682,78 @@ void API::createBulkOfDeliveryAuthorization(
 				// 	responseBody
 				// );
 
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-					request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 			}
 		}
-        catch(runtime_error& e)
-        {
-			SPDLOG_ERROR("API failed"
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
 
-            string errorMessage = fmt::format("Internal server error: {}", e.what());
-            SPDLOG_ERROR(errorMessage);
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-			SPDLOG_ERROR("API failed"
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
 
-            string errorMessage = string("Internal server error");
-            SPDLOG_ERROR(errorMessage);
+			string errorMessage = string("Internal server error");
+			SPDLOG_ERROR(errorMessage);
 
-            sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        SPDLOG_ERROR("API failed"
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
-        );
+		);
 
-        throw e;
-    }
-    catch(exception& e)
-    {
-        SPDLOG_ERROR("API failed"
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
-        );
+		);
 
-        string errorMessage = string("Internal server error");
-        SPDLOG_ERROR(errorMessage);
+		string errorMessage = string("Internal server error");
+		SPDLOG_ERROR(errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
-int64_t API::checkDeliveryAuthorizationThroughParameter(
-		string contentURI, string tokenParameter)
+int64_t API::checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter)
 {
 	int64_t tokenComingFromURL;
 	try
 	{
-		SPDLOG_INFO("checkDeliveryAuthorizationThroughParameter, received"
+		SPDLOG_INFO(
+			"checkDeliveryAuthorizationThroughParameter, received"
 			", contentURI: {}"
 			", tokenParameter: {}",
 			contentURI, tokenParameter
@@ -812,7 +777,8 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			size_t endOfTokenIndex = tokenParameter.rfind(separator);
 			if (endOfTokenIndex == string::npos)
 			{
-				string errorMessage = fmt::format("Wrong token format, no --- is present"
+				string errorMessage = fmt::format(
+					"Wrong token format, no --- is present"
 					", contentURI: {}"
 					", tokenParameter: {}",
 					contentURI, tokenParameter
@@ -826,24 +792,16 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 		}
 
 		// end with
-		string tsExtension(".ts");		// hls
-		string m4sExtension(".m4s");	// dash
-		string m3u8Extension(".m3u8");	// m3u8
-		if (
-			(secondPartOfToken != "")	// secondPartOfToken is the cookie
-			&&
-			(
-			(contentURI.size() >= tsExtension.size() && 0 == contentURI.compare(
-			contentURI.size()-tsExtension.size(), tsExtension.size(), tsExtension))
-			||
-			(contentURI.size() >= m4sExtension.size() && 0 == contentURI.compare(
-			contentURI.size()-m4sExtension.size(), m4sExtension.size(), m4sExtension))
-			||
-			(contentURI.size() >= m3u8Extension.size() && 0 == contentURI.compare(
-			contentURI.size()-m3u8Extension.size(), m3u8Extension.size(), m3u8Extension)
-			&& secondPartOfToken != "")
-			)
-		)
+		string tsExtension(".ts");	   // hls
+		string m4sExtension(".m4s");   // dash
+		string m3u8Extension(".m3u8"); // m3u8
+		if ((secondPartOfToken != "")  // secondPartOfToken is the cookie
+			&& ((contentURI.size() >= tsExtension.size() &&
+				 0 == contentURI.compare(contentURI.size() - tsExtension.size(), tsExtension.size(), tsExtension)) ||
+				(contentURI.size() >= m4sExtension.size() &&
+				 0 == contentURI.compare(contentURI.size() - m4sExtension.size(), m4sExtension.size(), m4sExtension)) ||
+				(contentURI.size() >= m3u8Extension.size() &&
+				 0 == contentURI.compare(contentURI.size() - m3u8Extension.size(), m3u8Extension.size(), m3u8Extension) && secondPartOfToken != "")))
 		{
 			// .ts/m4s content to be authorized
 
@@ -852,7 +810,8 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 
 			if (cookie == "")
 			{
-				string errorMessage = fmt::format("cookie is wrong"
+				string errorMessage = fmt::format(
+					"cookie is wrong"
 					", contentURI: {}"
 					", cookie: {}"
 					", firstPartOfToken: {}"
@@ -872,7 +831,8 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 				size_t beginOfTokenIndex = manifestLineAndToken.rfind(separator);
 				if (beginOfTokenIndex == string::npos)
 				{
-					string errorMessage = fmt::format("Wrong parameter format"
+					string errorMessage = fmt::format(
+						"Wrong parameter format"
 						", contentURI: {}"
 						", manifestLineAndToken: {}",
 						contentURI, manifestLineAndToken
@@ -889,7 +849,8 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			string sTokenComingFromCookie = Encrypt::opensslDecrypt(cookie);
 			int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
-			SPDLOG_INFO("check token info"
+			SPDLOG_INFO(
+				"check token info"
 				", encryptedToken: {}"
 				", manifestLineAndToken: {}"
 				", manifestLine: {}"
@@ -898,20 +859,21 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 				", sTokenComingFromCookie: {}"
 				", tokenComingFromCookie: {}"
 				", contentURI: {}",
-				encryptedToken, manifestLineAndToken, manifestLine, tokenComingFromURL, cookie,
-				sTokenComingFromCookie, tokenComingFromCookie, contentURI
+				encryptedToken, manifestLineAndToken, manifestLine, tokenComingFromURL, cookie, sTokenComingFromCookie, tokenComingFromCookie,
+				contentURI
 			);
 
 			if (tokenComingFromCookie != tokenComingFromURL
 
-					// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
-					// 2020-02-04: commented because it does not work in case of dash
-					// contentURI: /MMSLive/1/109/init-stream0.m4s
-					// manifestLine: chunk-stream$RepresentationID$-$Number%05d$.m4s
-					// || contentURI.find(manifestLine) == string::npos
+				// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
+				// 2020-02-04: commented because it does not work in case of dash
+				// contentURI: /MMSLive/1/109/init-stream0.m4s
+				// manifestLine: chunk-stream$RepresentationID$-$Number%05d$.m4s
+				// || contentURI.find(manifestLine) == string::npos
 			)
 			{
-				string errorMessage = fmt::format("Wrong parameter format"
+				string errorMessage = fmt::format(
+					"Wrong parameter format"
 					", contentURI: {}"
 					", manifestLine: {}"
 					", tokenComingFromCookie: {}"
@@ -923,7 +885,8 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 				throw runtime_error(errorMessage);
 			}
 
-			SPDLOG_INFO("token authorized"
+			SPDLOG_INFO(
+				"token authorized"
 				", contentURI: {}"
 				", manifestLine: {}"
 				", tokenComingFromURL: {}"
@@ -940,8 +903,10 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			tokenComingFromURL = stoll(firstPartOfToken);
 			if (_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
 			{
-				SPDLOG_INFO("token authorized"
-					", tokenComingFromURL: {}", tokenComingFromURL
+				SPDLOG_INFO(
+					"token authorized"
+					", tokenComingFromURL: {}",
+					tokenComingFromURL
 				);
 
 				// authorized
@@ -951,8 +916,10 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			}
 			else
 			{
-				string errorMessage = fmt::format("Not authorized: token invalid"
-					", tokenComingFromURL: {}", tokenComingFromURL
+				string errorMessage = fmt::format(
+					"Not authorized: token invalid"
+					", tokenComingFromURL: {}",
+					tokenComingFromURL
 				);
 				SPDLOG_WARN(errorMessage);
 
@@ -960,14 +927,14 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 			}
 		}
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
 		string errorMessage = string("Not authorized");
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
 		string errorMessage = string("Not authorized: exception managing token");
 		SPDLOG_WARN(errorMessage);
@@ -978,14 +945,15 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(
 	return tokenComingFromURL;
 }
 
-int64_t API::checkDeliveryAuthorizationThroughPath(
-	string contentURI)
+int64_t API::checkDeliveryAuthorizationThroughPath(string contentURI)
 {
 	int64_t tokenComingFromURL = -1;
 	try
 	{
-		SPDLOG_INFO("checkDeliveryAuthorizationThroughPath, received"
-			", contentURI: {}", contentURI
+		SPDLOG_INFO(
+			"checkDeliveryAuthorizationThroughPath, received"
+			", contentURI: {}",
+			contentURI
 		);
 
 		string tokenLabel = "/token_";
@@ -993,8 +961,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		size_t startTokenIndex = contentURI.find("/token_");
 		if (startTokenIndex == string::npos)
 		{
-			string errorMessage = fmt::format("Wrong token format"
-				", contentURI: {}", contentURI
+			string errorMessage = fmt::format(
+				"Wrong token format"
+				", contentURI: {}",
+				contentURI
 			);
 			SPDLOG_WARN(errorMessage);
 
@@ -1006,8 +976,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		size_t endTokenIndex = contentURI.find(",", startTokenIndex);
 		if (endTokenIndex == string::npos)
 		{
-			string errorMessage = fmt::format("Wrong token format"
-				", contentURI: {}", contentURI
+			string errorMessage = fmt::format(
+				"Wrong token format"
+				", contentURI: {}",
+				contentURI
 			);
 			SPDLOG_WARN(errorMessage);
 
@@ -1017,8 +989,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		size_t endExpirationIndex = contentURI.find("/", endTokenIndex);
 		if (endExpirationIndex == string::npos)
 		{
-			string errorMessage = fmt::format("Wrong token format"
-				", contentURI: {}", contentURI
+			string errorMessage = fmt::format(
+				"Wrong token format"
+				", contentURI: {}",
+				contentURI
 			);
 			SPDLOG_WARN(errorMessage);
 
@@ -1028,8 +1002,6 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		string tokenSigned = contentURI.substr(startTokenIndex, endTokenIndex - startTokenIndex);
 		string sExpirationTime = contentURI.substr(endTokenIndex + 1, endExpirationIndex - (endTokenIndex + 1));
 		time_t expirationTime = stoll(sExpirationTime);
-
-
 
 		string contentURIToBeVerified;
 
@@ -1041,8 +1013,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 		string m3u8Suffix(".m3u8");
 		string tsSuffix(".ts");
-		if (contentURIToBeVerified.size() >= m3u8Suffix.size()
-			&& 0 == contentURIToBeVerified.compare(contentURIToBeVerified.size()-m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+		if (StringUtils::endWith(contentURIToBeVerified, m3u8Suffix))
 		{
 			{
 				size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
@@ -1052,7 +1023,8 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 			string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-			SPDLOG_INFO("Authorization through path (m3u8)"
+			SPDLOG_INFO(
+				"Authorization through path (m3u8)"
 				", contentURI: {}"
 				", contentURIToBeVerified: {}"
 				", expirationTime: {}"
@@ -1073,7 +1045,8 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 				string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-				SPDLOG_INFO("Authorization through path (m3u8 2)"
+				SPDLOG_INFO(
+					"Authorization through path (m3u8 2)"
 					", contentURI: {}"
 					", contentURIToBeVerified: {}"
 					", expirationTime: {}"
@@ -1084,7 +1057,8 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 				if (md5Base64 != tokenSigned)
 				{
-					string errorMessage = fmt::format("Wrong token (m3u8)"
+					string errorMessage = fmt::format(
+						"Wrong token (m3u8)"
 						", md5Base64: {}"
 						", tokenSigned: {}",
 						md5Base64, tokenSigned
@@ -1095,9 +1069,7 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 				}
 			}
 		}
-		else if (contentURIToBeVerified.size() >= tsSuffix.size()
-			&& 0 == contentURIToBeVerified.compare(contentURIToBeVerified.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix)
-		)
+		else if (StringUtils::endWith(contentURIToBeVerified, tsSuffix))
 		{
 			// 2022-11-29: ci sono 3 casi per il download di un .ts:
 			//	1. download NON dall'interno di un m3u8
@@ -1106,10 +1078,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 			{
 				// check caso 1.
-				string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
-					expirationTime);
+				string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-				SPDLOG_INFO("Authorization through path"
+				SPDLOG_INFO(
+					"Authorization through path"
 					", contentURI: {}"
 					", contentURIToBeVerified: {}"
 					", expirationTime: {}"
@@ -1129,10 +1101,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 					}
 
 					// check caso 2.
-					md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
-						expirationTime);
+					md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-					SPDLOG_INFO("Authorization through path (ts 1)"
+					SPDLOG_INFO(
+						"Authorization through path (ts 1)"
 						", contentURI: {}"
 						", contentURIToBeVerified: {}"
 						", expirationTime: {}"
@@ -1154,10 +1126,10 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 						}
 
 						// check caso 3.
-						string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified,
-							expirationTime);
+						string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-						SPDLOG_INFO("Authorization through path (ts 2)"
+						SPDLOG_INFO(
+							"Authorization through path (ts 2)"
 							", contentURI: {}"
 							", contentURIToBeVerified: {}"
 							", expirationTime: {}"
@@ -1170,7 +1142,8 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 						{
 							// non siamo in nessuno dei 3 casi
 
-							string errorMessage = fmt::format("Wrong token (ts)"
+							string errorMessage = fmt::format(
+								"Wrong token (ts)"
 								", md5Base64: {}"
 								", tokenSigned: {}",
 								md5Base64, tokenSigned
@@ -1187,7 +1160,8 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 		{
 			string md5Base64 = _mmsDeliveryAuthorization->getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-			SPDLOG_INFO("Authorization through path"
+			SPDLOG_INFO(
+				"Authorization through path"
 				", contentURI: {}"
 				", contentURIToBeVerified: {}"
 				", expirationTime: {}"
@@ -1198,7 +1172,8 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 			if (md5Base64 != tokenSigned)
 			{
-				string errorMessage = fmt::format("Wrong token"
+				string errorMessage = fmt::format(
+					"Wrong token"
 					", md5Base64: {}"
 					", tokenSigned: {}",
 					md5Base64, tokenSigned
@@ -1209,11 +1184,11 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 			}
 		}
 
-
 		time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 		if (expirationTime < utcNow)
 		{
-			string errorMessage = fmt::format("Token expired"
+			string errorMessage = fmt::format(
+				"Token expired"
 				", expirationTime: {}"
 				", utcNow: {}",
 				expirationTime, utcNow
@@ -1223,14 +1198,14 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 			throw runtime_error(errorMessage);
 		}
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
 		string errorMessage = string("Not authorized");
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
 		string errorMessage = string("Not authorized: exception managing token");
 		SPDLOG_WARN(errorMessage);
@@ -1240,4 +1215,3 @@ int64_t API::checkDeliveryAuthorizationThroughPath(
 
 	return tokenComingFromURL;
 }
-
