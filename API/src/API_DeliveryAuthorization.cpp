@@ -1,7 +1,7 @@
 
 #include "API.h"
 #include "JSONUtils.h"
-#include "catralibraries/Encrypt.h"
+// #include "catralibraries/Encrypt.h"
 #include "catralibraries/StringUtils.h"
 #include <curlpp/cURLpp.hpp>
 #include <regex>
@@ -747,6 +747,7 @@ void API::createBulkOfDeliveryAuthorization(
 	}
 }
 
+/*
 int64_t API::checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter)
 {
 	int64_t tokenComingFromURL;
@@ -900,6 +901,7 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(string contentURI, strin
 		}
 		else
 		{
+#ifdef TOKEN_THROGH_DB
 			tokenComingFromURL = stoll(firstPartOfToken);
 			if (_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
 			{
@@ -925,6 +927,8 @@ int64_t API::checkDeliveryAuthorizationThroughParameter(string contentURI, strin
 
 				throw runtime_error(errorMessage);
 			}
+#else
+#endif
 		}
 	}
 	catch (runtime_error &e)
@@ -1215,3 +1219,4 @@ int64_t API::checkDeliveryAuthorizationThroughPath(string contentURI)
 
 	return tokenComingFromURL;
 }
+*/

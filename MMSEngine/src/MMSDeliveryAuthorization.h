@@ -53,6 +53,12 @@ class MMSDeliveryAuthorization
 		bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
 	);
 
+	string checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter);
+
+	int64_t checkDeliveryAuthorizationThroughPath(string contentURI);
+
+	int64_t checkSignedMMSPath(string tokenSigned, string contentURIToBeVerified);
+
 	string getSignedMMSPath(string contentURI, time_t expirationTime);
 
 	static string getSignedCDN77URL(

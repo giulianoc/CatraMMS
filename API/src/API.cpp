@@ -680,7 +680,7 @@ void API::manageRequestAndResponse(
 				contentURI, tokenParameter
 			);
 
-			checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+			_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 
 			string responseBody;
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
@@ -726,7 +726,7 @@ void API::manageRequestAndResponse(
 				contentURI
 			);
 
-			checkDeliveryAuthorizationThroughPath(contentURI);
+			_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughPath(contentURI);
 
 			string responseBody;
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
@@ -777,7 +777,7 @@ void API::manageRequestAndResponse(
 			//		- secondary manifest (that has to be treated as a .ts delivery), token parameter:
 			//			<encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
 			bool secondaryManifest;
-			int64_t tokenComingFromURL;
+			string tokenComingFromURL;
 
 			bool isNumber = !(tokenIt->second).empty() &&
 							ranges::find_if((tokenIt->second).begin(), (tokenIt->second).end(), [](unsigned char c) { return !isdigit(c); }) ==
@@ -785,7 +785,8 @@ void API::manageRequestAndResponse(
 			if (isNumber)
 			{
 				secondaryManifest = false;
-				tokenComingFromURL = stoll(tokenIt->second);
+				// tokenComingFromURL = stoll(tokenIt->second);
+				tokenComingFromURL = tokenIt->second;
 			}
 			else
 			{
@@ -836,7 +837,7 @@ void API::manageRequestAndResponse(
 					", tokenParameter: {}",
 					contentURI, tokenParameter
 				);
-				tokenComingFromURL = checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+				tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 			}
 			else
 			{
@@ -855,7 +856,8 @@ void API::manageRequestAndResponse(
 
 				if (mmsInfoCookie == "")
 				{
-					if (!_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
+#ifdef TOKEN_THROGH_DB
+					if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
 					{
 						string errorMessage = fmt::format(
 							"Not authorized: token invalid"
@@ -867,6 +869,9 @@ void API::manageRequestAndResponse(
 
 						throw runtime_error(errorMessage);
 					}
+#else
+					_mmsDeliveryAuthorization->checkSignedMMSPath(tokenComingFromURL, contentURI);
+#endif
 
 					SPDLOG_INFO(
 						"token authorized"
@@ -877,19 +882,20 @@ void API::manageRequestAndResponse(
 				else
 				{
 					string sTokenComingFromCookie = Encrypt::opensslDecrypt(mmsInfoCookie);
-					int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
+					// int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
-					if (tokenComingFromCookie != tokenComingFromURL)
+					if (sTokenComingFromCookie != tokenComingFromURL)
 					{
 						string errorMessage = fmt::format(
 							"cookie invalid, let's check the token"
-							", tokenComingFromCookie: {}"
+							", sTokenComingFromCookie: {}"
 							", tokenComingFromURL: {}",
-							tokenComingFromCookie, tokenComingFromURL
+							sTokenComingFromCookie, tokenComingFromURL
 						);
 						SPDLOG_INFO(errorMessage);
 
-						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(tokenComingFromURL, contentURI))
+#ifdef TOKEN_THROGH_DB
+						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
 						{
 							string errorMessage = fmt::format(
 								"Not authorized: token invalid"
@@ -901,6 +907,9 @@ void API::manageRequestAndResponse(
 
 							throw runtime_error(errorMessage);
 						}
+#else
+						_mmsDeliveryAuthorization->checkSignedMMSPath(tokenComingFromURL, contentURI);
+#endif
 
 						SPDLOG_INFO(
 							"token authorized"
@@ -991,7 +1000,7 @@ void API::manageRequestAndResponse(
 									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 								);
 								*/
-								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
+								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
 								responseBody += (manifestLine + "?token=" + auth + endLine);
 							}
 							else if (manifestLine[0] != '#' &&
@@ -1007,7 +1016,7 @@ void API::manageRequestAndResponse(
 									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 								);
 								*/
-								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + to_string(tokenComingFromURL));
+								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
 								responseBody += (manifestLine + "?token=" + auth + endLine);
 							}
 							// start with
@@ -1032,7 +1041,7 @@ void API::manageRequestAndResponse(
 											+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 										);
 										*/
-										string auth = Encrypt::opensslEncrypt(uri + "+++" + to_string(tokenComingFromURL));
+										string auth = Encrypt::opensslEncrypt(uri + "+++" + tokenComingFromURL);
 										string tokenParameter = string("?token=") + auth;
 
 										manifestLine.insert(uriEndIndex, tokenParameter);
@@ -1237,7 +1246,7 @@ void API::manageRequestAndResponse(
 								throw runtime_error(errorMessage);
 							}
 
-							string auth = Encrypt::opensslEncrypt(string((char *)mediaValue) + "+++" + to_string(tokenComingFromURL));
+							string auth = Encrypt::opensslEncrypt(string((char *)mediaValue) + "+++" + tokenComingFromURL);
 							string newMediaAttributeValue = string((char *)mediaValue) + "?token=" + auth;
 							// xmlAttrPtr
 							xmlSetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName, BAD_CAST newMediaAttributeValue.c_str());
@@ -1307,7 +1316,7 @@ void API::manageRequestAndResponse(
 					}
 				}
 
-				string cookieValue = Encrypt::opensslEncrypt(to_string(tokenComingFromURL));
+				string cookieValue = Encrypt::opensslEncrypt(tokenComingFromURL);
 				string cookiePath;
 				{
 					size_t cookiePathIndex = contentURI.find_last_of("/");

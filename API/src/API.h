@@ -448,9 +448,9 @@ class API : public FastCGIAPI
 		shared_ptr<Workspace> requestWorkspace, string clientIPAddress, unordered_map<string, string> queryParameters, string requestBody
 	);
 
-	int64_t checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter);
+	// int64_t checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter);
 
-	int64_t checkDeliveryAuthorizationThroughPath(string contentURI);
+	// int64_t checkDeliveryAuthorizationThroughPath(string contentURI);
 
 	// string getSignedPath(string contentURI, time_t expirationTime);
 

@@ -16,6 +16,7 @@
 #include "AWSSigner.h"
 #include "JSONUtils.h"
 #include "catralibraries/Convert.h"
+#include "catralibraries/Encrypt.h"
 #include "catralibraries/StringUtils.h"
 #include "spdlog/fmt/fmt.h"
 // #include <openssl/md5.h>
@@ -198,12 +199,41 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 		*/
 		else if (deliveryType == "MMS_Token")
 		{
+#ifdef TOKEN_THROGH_DB
 			int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 				userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries
 			);
 
 			deliveryURL =
 				fmt::format("{}://{}{}?token={}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI, authorizationKey);
+#else
+			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+			expirationTime += ttlInSeconds;
+
+			string uriToBeSigned;
+			{
+				string m3u8Suffix(".m3u8");
+				// if (deliveryURI.size() >= m3u8Suffix.size() &&
+				// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+				if (StringUtils::endWith(deliveryURI, m3u8Suffix))
+				{
+					size_t endPathIndex = deliveryURI.find_last_of("/");
+					if (endPathIndex == string::npos)
+						uriToBeSigned = deliveryURI;
+					else
+						uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+				}
+				else
+					uriToBeSigned = deliveryURI;
+			}
+			string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+
+			deliveryURL = fmt::format(
+				"{}://{}/{}?token={},{}", _deliveryProtocol,
+				deliveryType == "MMS_SignedToken" ? _deliveryHost_authorizationThroughPath : _vodCloudFrontHostName, deliveryURI, md5Base64,
+				expirationTime
+			);
+#endif
 
 			if (save && deliveryFileName != "")
 				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
@@ -977,6 +1007,521 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	}
 
 	return make_pair(deliveryURL, deliveryFileName);
+}
+
+string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter)
+{
+	string tokenComingFromURL;
+	try
+	{
+		SPDLOG_INFO(
+			"checkDeliveryAuthorizationThroughParameter, received"
+			", contentURI: {}"
+			", tokenParameter: {}",
+			contentURI, tokenParameter
+		);
+
+		string firstPartOfToken;
+		string secondPartOfToken;
+		{
+			// token formats:
+			// scenario in case of .ts (hls) delivery: <encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+			// scenario in case of .m4s (dash) delivery: ---<cookie: encription of 'token'>
+			//		both encryption were built in 'manageHTTPStreamingManifest'
+			// scenario in case of .m3u8 delivery:
+			//		case 1. master .m3u8: <token>---
+			//		case 2. secondary .m3u8: <encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+			// scenario in case of any other delivery: <token>---
+			//		Any other delivery includes for example also the delivery/download of a .ts file, not part
+			//		of an hls delivery. In this case we will have just a token as any normal download
+
+			string separator = "---";
+			size_t endOfTokenIndex = tokenParameter.rfind(separator);
+			if (endOfTokenIndex == string::npos)
+			{
+				string errorMessage = fmt::format(
+					"Wrong token format, no --- is present"
+					", contentURI: {}"
+					", tokenParameter: {}",
+					contentURI, tokenParameter
+				);
+				SPDLOG_WARN(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			firstPartOfToken = tokenParameter.substr(0, endOfTokenIndex);
+			secondPartOfToken = tokenParameter.substr(endOfTokenIndex + separator.length());
+		}
+
+		// end with
+		string tsExtension(".ts");	   // hls
+		string m4sExtension(".m4s");   // dash
+		string m3u8Extension(".m3u8"); // m3u8
+		if ((secondPartOfToken != "")  // secondPartOfToken is the cookie
+			&& ((contentURI.size() >= tsExtension.size() &&
+				 0 == contentURI.compare(contentURI.size() - tsExtension.size(), tsExtension.size(), tsExtension)) ||
+				(contentURI.size() >= m4sExtension.size() &&
+				 0 == contentURI.compare(contentURI.size() - m4sExtension.size(), m4sExtension.size(), m4sExtension)) ||
+				(contentURI.size() >= m3u8Extension.size() &&
+				 0 == contentURI.compare(contentURI.size() - m3u8Extension.size(), m3u8Extension.size(), m3u8Extension) && secondPartOfToken != "")))
+		{
+			// .ts/m4s content to be authorized
+
+			string encryptedToken = firstPartOfToken;
+			string cookie = secondPartOfToken;
+
+			if (cookie == "")
+			{
+				string errorMessage = fmt::format(
+					"cookie is wrong"
+					", contentURI: {}"
+					", cookie: {}"
+					", firstPartOfToken: {}"
+					", secondPartOfToken: {}",
+					contentURI, cookie, firstPartOfToken, secondPartOfToken
+				);
+				SPDLOG_INFO(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			// manifestLineAndToken comes from ts URL
+			string manifestLineAndToken = Encrypt::opensslDecrypt(encryptedToken);
+			string manifestLine;
+			// int64_t tokenComingFromURL;
+			{
+				string separator = "+++";
+				size_t beginOfTokenIndex = manifestLineAndToken.rfind(separator);
+				if (beginOfTokenIndex == string::npos)
+				{
+					string errorMessage = fmt::format(
+						"Wrong parameter format"
+						", contentURI: {}"
+						", manifestLineAndToken: {}",
+						contentURI, manifestLineAndToken
+					);
+					SPDLOG_INFO(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				manifestLine = manifestLineAndToken.substr(0, beginOfTokenIndex);
+				tokenComingFromURL = manifestLineAndToken.substr(beginOfTokenIndex + separator.length());
+				// string sTokenComingFromURL = manifestLineAndToken.substr(beginOfTokenIndex + separator.length());
+				// tokenComingFromURL = stoll(sTokenComingFromURL);
+			}
+
+			string tokenComingFromCookie = Encrypt::opensslDecrypt(cookie);
+			// string sTokenComingFromCookie = Encrypt::opensslDecrypt(cookie);
+			// int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
+
+			SPDLOG_INFO(
+				"check token info"
+				", encryptedToken: {}"
+				", manifestLineAndToken: {}"
+				", manifestLine: {}"
+				", tokenComingFromURL: {}"
+				", cookie: {}"
+				", tokenComingFromCookie: {}"
+				", contentURI: {}",
+				encryptedToken, manifestLineAndToken, manifestLine, tokenComingFromURL, cookie, tokenComingFromCookie, contentURI
+			);
+
+			if (tokenComingFromCookie != tokenComingFromURL
+
+				// i.e., contentURI: /MMSLive/1/94/94446.ts, manifestLine: 94446.ts
+				// 2020-02-04: commented because it does not work in case of dash
+				// contentURI: /MMSLive/1/109/init-stream0.m4s
+				// manifestLine: chunk-stream$RepresentationID$-$Number%05d$.m4s
+				// || contentURI.find(manifestLine) == string::npos
+			)
+			{
+				string errorMessage = fmt::format(
+					"Wrong parameter format"
+					", contentURI: {}"
+					", manifestLine: {}"
+					", tokenComingFromCookie: {}"
+					", tokenComingFromURL: {}",
+					contentURI, manifestLine, tokenComingFromCookie, tokenComingFromURL
+				);
+				SPDLOG_INFO(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			SPDLOG_INFO(
+				"token authorized"
+				", contentURI: {}"
+				", manifestLine: {}"
+				", tokenComingFromURL: {}"
+				", tokenComingFromCookie: {}",
+				contentURI, manifestLine, tokenComingFromURL, tokenComingFromCookie
+			);
+
+			// authorized
+			// string responseBody;
+			// sendSuccess(request, 200, responseBody);
+		}
+		else
+		{
+#ifdef TOKEN_THROGH_DB
+			// tokenComingFromURL = stoll(firstPartOfToken);
+			tokenComingFromURL = firstPartOfToken;
+			if (_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
+			{
+				SPDLOG_INFO(
+					"token authorized"
+					", tokenComingFromURL: {}",
+					tokenComingFromURL
+				);
+
+				// authorized
+
+				// string responseBody;
+				// sendSuccess(request, 200, responseBody);
+			}
+			else
+			{
+				string errorMessage = fmt::format(
+					"Not authorized: token invalid"
+					", tokenComingFromURL: {}",
+					tokenComingFromURL
+				);
+				SPDLOG_WARN(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+#else
+			string tokenSigned = firstPartOfToken;
+			checkSignedMMSPath(tokenSigned, contentURI);
+#endif
+		}
+	}
+	catch (runtime_error &e)
+	{
+		string errorMessage = string("Not authorized");
+		SPDLOG_WARN(errorMessage);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = string("Not authorized: exception managing token");
+		SPDLOG_WARN(errorMessage);
+
+		throw e;
+	}
+
+	return tokenComingFromURL;
+}
+
+int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string contentURI)
+{
+	int64_t tokenComingFromURL = -1;
+	try
+	{
+		SPDLOG_INFO(
+			"checkDeliveryAuthorizationThroughPath, received"
+			", contentURI: {}",
+			contentURI
+		);
+
+		string tokenLabel = "/token_";
+
+		size_t startTokenIndex = contentURI.find("/token_");
+		if (startTokenIndex == string::npos)
+		{
+			string errorMessage = fmt::format(
+				"Wrong token format"
+				", contentURI: {}",
+				contentURI
+			);
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		startTokenIndex += tokenLabel.size();
+
+		size_t endTokenIndex = contentURI.find(",", startTokenIndex);
+		if (endTokenIndex == string::npos)
+		{
+			string errorMessage = fmt::format(
+				"Wrong token format"
+				", contentURI: {}",
+				contentURI
+			);
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		size_t endExpirationIndex = contentURI.find("/", endTokenIndex);
+		if (endExpirationIndex == string::npos)
+		{
+			string errorMessage = fmt::format(
+				"Wrong token format"
+				", contentURI: {}",
+				contentURI
+			);
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string tokenSigned = contentURI.substr(startTokenIndex, endTokenIndex - startTokenIndex);
+
+		string contentURIToBeVerified;
+
+		size_t endContentURIIndex = contentURI.find("?", endExpirationIndex);
+		if (endContentURIIndex == string::npos)
+			contentURIToBeVerified = contentURI.substr(endExpirationIndex);
+		else
+			contentURIToBeVerified = contentURI.substr(endExpirationIndex, endContentURIIndex - endExpirationIndex);
+
+		return checkSignedMMSPath(tokenSigned, contentURIToBeVerified);
+	}
+	catch (runtime_error &e)
+	{
+		string errorMessage = string("Not authorized");
+		SPDLOG_WARN(errorMessage);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = string("Not authorized: exception managing token");
+		SPDLOG_WARN(errorMessage);
+
+		throw e;
+	}
+
+	return tokenComingFromURL;
+}
+
+int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string contentURIToBeVerified)
+{
+	int64_t tokenComingFromURL = -1;
+	try
+	{
+		SPDLOG_INFO(
+			"checkSignedMMSPath, received"
+			", tokenSigned: {}"
+			", contentURIToBeVerified: {}",
+			tokenSigned, contentURIToBeVerified
+		);
+
+		size_t endTokenIndex = tokenSigned.find(",");
+		if (endTokenIndex == string::npos)
+		{
+			string errorMessage = fmt::format(
+				"Wrong token format"
+				", tokenSigned: {}",
+				tokenSigned
+			);
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string sExpirationTime = tokenSigned.substr(endTokenIndex + 1);
+		time_t expirationTime = stoll(sExpirationTime);
+
+		string m3u8Suffix(".m3u8");
+		string tsSuffix(".ts");
+		if (StringUtils::endWith(contentURIToBeVerified, m3u8Suffix))
+		{
+			{
+				size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+				if (endPathIndex != string::npos)
+					contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+			}
+
+			string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
+
+			SPDLOG_INFO(
+				"Authorization through path (m3u8)"
+				", contentURIToBeVerified: {}"
+				", expirationTime: {}"
+				", tokenSigned: {}"
+				", md5Base64: {}",
+				contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
+			);
+
+			if (md5Base64 != tokenSigned)
+			{
+				// we still try removing again the last directory to manage the scenario
+				// of multi bitrate encoding or multi audio tracks (one director for each audio)
+				{
+					size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+					if (endPathIndex != string::npos)
+						contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+				}
+
+				string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
+
+				SPDLOG_INFO(
+					"Authorization through path (m3u8 2)"
+					", contentURIToBeVerified: {}"
+					", expirationTime: {}"
+					", tokenSigned: {}"
+					", md5Base64: {}",
+					contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
+				);
+
+				if (md5Base64 != tokenSigned)
+				{
+					string errorMessage = fmt::format(
+						"Wrong token (m3u8)"
+						", md5Base64: {}"
+						", tokenSigned: {}",
+						md5Base64, tokenSigned
+					);
+					SPDLOG_WARN(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+		else if (StringUtils::endWith(contentURIToBeVerified, tsSuffix))
+		{
+			// 2022-11-29: ci sono 3 casi per il download di un .ts:
+			//	1. download NON dall'interno di un m3u8
+			//	2. download dall'interno di un m3u8 single bitrate
+			//	3. download dall'interno di un m3u8 multi bitrate
+
+			{
+				// check caso 1.
+				string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
+
+				SPDLOG_INFO(
+					"Authorization through path"
+					", contentURIToBeVerified: {}"
+					", expirationTime: {}"
+					", tokenSigned: {}"
+					", md5Base64: {}",
+					contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
+				);
+
+				if (md5Base64 != tokenSigned)
+				{
+					// potremmo essere nel caso 2 o caso 3
+
+					{
+						size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+						if (endPathIndex != string::npos)
+							contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+					}
+
+					// check caso 2.
+					md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
+
+					SPDLOG_INFO(
+						"Authorization through path (ts 1)"
+						", contentURIToBeVerified: {}"
+						", expirationTime: {}"
+						", tokenSigned: {}"
+						", md5Base64: {}",
+						contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
+					);
+
+					if (md5Base64 != tokenSigned)
+					{
+						// dovremmo essere nel caso 3
+
+						// we still try removing again the last directory to manage
+						// the scenario of multi bitrate encoding
+						{
+							size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+							if (endPathIndex != string::npos)
+								contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
+						}
+
+						// check caso 3.
+						string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
+
+						SPDLOG_INFO(
+							"Authorization through path (ts 2)"
+							", contentURIToBeVerified: {}"
+							", expirationTime: {}"
+							", tokenSigned: {}"
+							", md5Base64: {}",
+							contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
+						);
+
+						if (md5Base64 != tokenSigned)
+						{
+							// non siamo in nessuno dei 3 casi
+
+							string errorMessage = fmt::format(
+								"Wrong token (ts)"
+								", md5Base64: {}"
+								", tokenSigned: {}",
+								md5Base64, tokenSigned
+							);
+							SPDLOG_WARN(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
+
+			SPDLOG_INFO(
+				"Authorization through path"
+				", contentURIToBeVerified: {}"
+				", expirationTime: {}"
+				", tokenSigned: {}"
+				", md5Base64: {}",
+				contentURIToBeVerified, expirationTime, tokenSigned, md5Base64
+			);
+
+			if (md5Base64 != tokenSigned)
+			{
+				string errorMessage = fmt::format(
+					"Wrong token"
+					", md5Base64: {}"
+					", tokenSigned: {}",
+					md5Base64, tokenSigned
+				);
+				SPDLOG_WARN(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+		if (expirationTime < utcNow)
+		{
+			string errorMessage = fmt::format(
+				"Token expired"
+				", expirationTime: {}"
+				", utcNow: {}",
+				expirationTime, utcNow
+			);
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		string errorMessage = string("Not authorized");
+		SPDLOG_WARN(errorMessage);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = string("Not authorized: exception managing token");
+		SPDLOG_WARN(errorMessage);
+
+		throw e;
+	}
+
+	return tokenComingFromURL;
 }
 
 string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expirationTime)
