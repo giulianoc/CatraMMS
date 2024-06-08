@@ -196,19 +196,21 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			deliveryURL = "https://" + cloudFrontHostName + uriPath;
 		}
 		*/
-		else if (deliveryType == "MMS_Token")
+		else if (deliveryType == "MMS_Token" || deliveryType == "AWSCloudFront")
 		{
 			int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 				userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries
 			);
 
-			deliveryURL =
-				_deliveryProtocol + "://" + _deliveryHost_authorizationThroughParameter + deliveryURI + "?token=" + to_string(authorizationKey);
+			deliveryURL = fmt::format(
+				"{}://{}{}?token={}", _deliveryProtocol,
+				deliveryType == "MMS_Token" ? _deliveryHost_authorizationThroughParameter : _vodCloudFrontHostName, deliveryURI, authorizationKey
+			);
 
 			if (save && deliveryFileName != "")
 				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
 		}
-		else // if (deliveryType == "MMS_SignedToken" || deliveryType == "AWSCloudFront")
+		else // if (deliveryType == "MMS_SignedToken")
 		{
 			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 			expirationTime += ttlInSeconds;
@@ -232,9 +234,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 			deliveryURL = fmt::format(
-				"{}://{}/token_{},{}{}", _deliveryProtocol,
-				deliveryType == "MMS_SignedToken" ? _deliveryHost_authorizationThroughPath : _vodCloudFrontHostName, md5Base64, expirationTime,
-				deliveryURI
+				"{}://{}/token_{},{}{}", _deliveryProtocol, _deliveryHost_authorizationThroughPath, md5Base64, expirationTime, deliveryURI
 			);
 		}
 		/*
