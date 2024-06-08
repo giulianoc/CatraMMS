@@ -16,6 +16,7 @@
 #include "AWSSigner.h"
 #include "JSONUtils.h"
 #include "catralibraries/Convert.h"
+#include "catralibraries/StringUtils.h"
 #include "spdlog/fmt/fmt.h"
 // #include <openssl/md5.h>
 #include <openssl/bio.h>
@@ -168,9 +169,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			deliveryURL = signedPlayURL;
 		}
+		/*
 		else if (deliveryType == "AWSCloudFront")
 		{
-			/*
 			// deliverURI: /MMS_0000/2/.....
 			size_t beginURIIndex = deliveryURI.find("/", 1);
 			if (beginURIIndex == string::npos)
@@ -193,9 +194,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string cloudFrontHostName = JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
 
 			deliveryURL = "https://" + cloudFrontHostName + uriPath;
-			*/
-			deliveryURL = fmt::format("https://{}{}", _vodCloudFrontHostName, deliveryURI);
 		}
+		*/
 		else if (deliveryType == "MMS_Token")
 		{
 			int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
@@ -208,7 +208,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (save && deliveryFileName != "")
 				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
 		}
-		else // if (deliveryType == "MMS_SignedToken")
+		else // if (deliveryType == "MMS_SignedToken" || deliveryType == "AWSCloudFront")
 		{
 			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 			expirationTime += ttlInSeconds;
@@ -216,8 +216,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string uriToBeSigned;
 			{
 				string m3u8Suffix(".m3u8");
-				if (deliveryURI.size() >= m3u8Suffix.size() &&
-					0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+				// if (deliveryURI.size() >= m3u8Suffix.size() &&
+				// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+				if (StringUtils::endWith(deliveryURI, m3u8Suffix))
 				{
 					size_t endPathIndex = deliveryURI.find_last_of("/");
 					if (endPathIndex == string::npos)
@@ -230,8 +231,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-			deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughPath + "/token_" + md5Base64 + "," +
-						  to_string(expirationTime) + deliveryURI;
+			deliveryURL = fmt::format(
+				"{}://{}/token_{},{}{}", _deliveryProtocol,
+				deliveryType == "MMS_SignedToken" ? _deliveryHost_authorizationThroughPath : _vodCloudFrontHostName, md5Base64, expirationTime,
+				deliveryURI
+			);
 		}
 		/*
 		else
