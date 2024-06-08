@@ -125,7 +125,7 @@ class API : public FastCGIAPI
 
 	string _keyPairId;
 	string _privateKeyPEMPathName;
-	json _vodCloudFrontHostNamesRoot;
+	// json _vodCloudFrontHostNamesRoot;
 
 	string _emailProviderURL;
 	string _emailUserName;

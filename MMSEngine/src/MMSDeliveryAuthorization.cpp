@@ -35,8 +35,8 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	_logger->info(__FILEREF__ + "Configuration item" + ", aws->keyPairId: " + _keyPairId);
 	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
 	_logger->info(__FILEREF__ + "Configuration item" + ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName);
-	_vodCloudFrontHostNamesRoot = _configuration["aws"]["vodCloudFrontHostNames"];
-	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodCloudFrontHostNames: " + "...");
+	_vodCloudFrontHostName = _configuration["aws"]["vodCloudFrontHostName"];
+	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodCloudFrontHostName: " + _vodCloudFrontHostName);
 
 	json api = _configuration["api"];
 
@@ -137,6 +137,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 			expirationTime += ttlInSeconds;
 
+			/*
 			// deliverURI: /MMS_0000/2/.....
 			size_t beginURIIndex = deliveryURI.find("/", 1);
 			if (beginURIIndex == string::npos)
@@ -160,11 +161,16 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			AWSSigner awsSigner(_logger);
 			string signedPlayURL = awsSigner.calculateSignedURL(cloudFrontHostName, uriPath, _keyPairId, _privateKeyPEMPathName, expirationTime);
+			*/
+			AWSSigner awsSigner(_logger);
+			string signedPlayURL =
+				awsSigner.calculateSignedURL(_vodCloudFrontHostName, deliveryURI, _keyPairId, _privateKeyPEMPathName, expirationTime);
 
 			deliveryURL = signedPlayURL;
 		}
 		else if (deliveryType == "AWSCloudFront")
 		{
+			/*
 			// deliverURI: /MMS_0000/2/.....
 			size_t beginURIIndex = deliveryURI.find("/", 1);
 			if (beginURIIndex == string::npos)
@@ -187,6 +193,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string cloudFrontHostName = JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
 
 			deliveryURL = "https://" + cloudFrontHostName + uriPath;
+			*/
+			deliveryURL = fmt::format("https://{}{}", _vodCloudFrontHostName, deliveryURI);
 		}
 		else if (deliveryType == "MMS_Token")
 		{

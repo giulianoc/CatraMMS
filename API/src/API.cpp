@@ -350,12 +350,14 @@ API::API(
 		", aws->privateKeyPEMPathName: {}",
 		_privateKeyPEMPathName
 	);
+	/*
 	_vodCloudFrontHostNamesRoot = _configurationRoot["aws"]["vodCloudFrontHostNames"];
 	SPDLOG_INFO(
 		"Configuration item"
 		", aws->vodCloudFrontHostNames: {}",
 		"..."
 	);
+	*/
 
 	_emailProviderURL = JSONUtils::asString(_configurationRoot["EmailNotification"], "providerURL", "");
 	SPDLOG_INFO(
