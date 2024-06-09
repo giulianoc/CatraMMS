@@ -1196,7 +1196,7 @@ json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Wor
 						365 * 24 * 60 * 60, // ttlInSeconds, 365 days!!!
 						999999,				// maxRetries,
 						false,				// save,
-						"MMS_SignedToken",	// deliveryType,
+						"MMS_SignedURL",	// deliveryType,
 
 						false, // warningIfMissingMediaItemKey,
 						true,  // filteredByStatistic
@@ -1646,7 +1646,7 @@ MMSEngineProcessor::processDependencyInfo(
 			365 * 24 * 60 * 60, // ttlInSeconds, 365 days!!!
 			999999,				// maxRetries,
 			false,				// save,
-			"MMS_SignedToken",	// deliveryType,
+			"MMS_SignedURL",	// deliveryType,
 
 			false, // warningIfMissingMediaItemKey,
 			true,  // filteredByStatistic

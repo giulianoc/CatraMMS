@@ -42,13 +42,7 @@ class MMSDeliveryAuthorization
 
 		int ttlInSeconds, int maxRetries,
 
-		bool save,
-		// deliveryType:
-		// MMS_Token: delivery by MMS with a Token
-		// MMS_SignedToken: delivery by MMS with a signed URL
-		// AWSCloudFront: delivery by AWS CloudFront without a signed URL
-		// AWSCloudFront_Signed: delivery by AWS CloudFront with a signed URL
-		string deliveryType,
+		bool save, string deliveryType,
 
 		bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
 	);

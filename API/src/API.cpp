@@ -773,16 +773,20 @@ void API::manageRequestAndResponse(
 			}
 
 			// we could have:
-			//		- master manifest, token parameter: <token>---
+			//		- master manifest, token parameter: <token>--- (es: token=9163 oppure ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161)
+			//			es: /MMS_0000/1/001/472/152/8063642_2/8063642_1653439.m3u8?token=9163
+			//			es: /MMS_0000/1/001/470/566/8055007_2/8055007_1652158.m3u8?token=ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161
 			//		- secondary manifest (that has to be treated as a .ts delivery), token parameter:
 			//			<encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+			//			es:
+			/// MMS_0000/1/001/472/152/8063642_2/360p/8063642_1653439.m3u8?token=Nw2npoRhfMLZC-GiRuZHpI~jGKBRA-NE-OARj~o68En4XFUriOSuXqexke21OTVd
 			bool secondaryManifest;
 			string tokenComingFromURL;
 
 			bool isNumber = !(tokenIt->second).empty() &&
 							ranges::find_if((tokenIt->second).begin(), (tokenIt->second).end(), [](unsigned char c) { return !isdigit(c); }) ==
 								(tokenIt->second).end();
-			if (isNumber)
+			if (isNumber || tokenIt->second.find(",") != string::npos)
 			{
 				secondaryManifest = false;
 				// tokenComingFromURL = stoll(tokenIt->second);
@@ -797,8 +801,9 @@ void API::manageRequestAndResponse(
 				"manageHTTPStreamingManifest"
 				", analizing the token {}"
 				", isNumber: {}"
+				", tokenIt->second: {}"
 				", secondaryManifest: {}",
-				tokenIt->second, isNumber, secondaryManifest
+				tokenIt->second, isNumber, tokenIt->second, secondaryManifest
 			);
 
 			string contentURI;
@@ -830,7 +835,21 @@ void API::manageRequestAndResponse(
 				}
 				string cookie = cookieIt->second;
 
-				string tokenParameter = tokenIt->second + "---" + cookie;
+				/* unescape è gia in checkDeliveryAuthorizationThroughParameter
+				string tokenParameter;
+				{
+					// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+					//	That  because if we have really a + char (%2B into the string), and we do the replace
+					//	after curlpp::unescape, this char will be changed to space and we do not want it
+					string plus = "\\+";
+					string plusDecoded = " ";
+					string firstDecoding = regex_replace(tokenIt->second, regex(plus), plusDecoded);
+
+					tokenParameter = curlpp::unescape(firstDecoding);
+				}
+				tokenParameter = fmt::format("{}---{}", tokenParameter, cookie);
+				*/
+				string tokenParameter = fmt::format("{}---{}", tokenIt->second, cookie);
 				SPDLOG_INFO(
 					"Calling checkDeliveryAuthorizationThroughParameter"
 					", contentURI: {}"
@@ -870,6 +889,16 @@ void API::manageRequestAndResponse(
 						throw runtime_error(errorMessage);
 					}
 #else
+					{
+						// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+						//	That  because if we have really a + char (%2B into the string), and we do the replace
+						//	after curlpp::unescape, this char will be changed to space and we do not want it
+						string plus = "\\+";
+						string plusDecoded = " ";
+						string firstDecoding = regex_replace(tokenComingFromURL, regex(plus), plusDecoded);
+
+						tokenComingFromURL = curlpp::unescape(firstDecoding);
+					}
 					_mmsDeliveryAuthorization->checkSignedMMSPath(tokenComingFromURL, contentURI);
 #endif
 

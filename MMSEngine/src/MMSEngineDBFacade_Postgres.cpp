@@ -1662,7 +1662,8 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 		{
 			string sqlStatement = fmt::format(
 				"select deliveryURI, currentRetriesNumber, maxRetries, "
-				"((authorizationTimestamp + INTERVAL '1 second' * ttlInSeconds) - NOW() at time zone 'utc') as timeToLiveAvailable "
+				"extract(epoch from (((authorizationTimestamp + INTERVAL '1 second' * ttlInSeconds) - NOW() at time zone 'utc'))) as "
+				"timeToLiveAvailable "
 				"from MMS_DeliveryAuthorization "
 				"where deliveryAuthorizationKey = {}",
 				deliveryAuthorizationKey
@@ -1681,7 +1682,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 				string deliveryURI = res[0]["deliveryURI"].as<string>();
 				int currentRetriesNumber = res[0]["currentRetriesNumber"].as<int>();
 				int maxRetries = res[0]["maxRetries"].as<int>();
-				int timeToLiveAvailable = res[0]["timeToLiveAvailable"].as<int>();
+				int timeToLiveAvailable = res[0]["timeToLiveAvailable"].as<float>();
 
 				if (contentURI != deliveryURI)
 				{

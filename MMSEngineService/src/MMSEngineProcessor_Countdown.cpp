@@ -186,7 +186,7 @@ void MMSEngineProcessor::manageCountdown(
 					abs(utcNow - utcProxyPeriodEnd), // ttlInSeconds,
 					999999,							 // maxRetries,
 					false,							 // save,
-					"MMS_SignedToken",				 // deliveryType,
+					"MMS_SignedURL",				 // deliveryType,
 
 					false, // warningIfMissingMediaItemKey,
 					true,  // filteredByStatistic
