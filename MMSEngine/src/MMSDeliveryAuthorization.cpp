@@ -47,6 +47,10 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	_logger->info(__FILEREF__ + "Configuration item" + ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName);
 	_vodCloudFrontHostName = _configuration["aws"]["vodCloudFrontHostName"];
 	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodCloudFrontHostName: " + _vodCloudFrontHostName);
+	_vodDeliveryCloudFrontHostName = _configuration["aws"]["vodDeliveryCloudFrontHostName"];
+	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodDeliveryCloudFrontHostName: " + _vodDeliveryCloudFrontHostName);
+	_vodDeliveryPathCloudFrontHostName = _configuration["aws"]["vodDeliveryPathCloudFrontHostName"];
+	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodDeliveryPathCloudFrontHostName: " + _vodDeliveryPathCloudFrontHostName);
 
 	json api = _configuration["api"];
 
@@ -209,7 +213,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 		{
 			string deliveryHost;
 #ifdef AWSCLOUDFRONT
-			deliveryHost = _vodCloudFrontHostName;
+			deliveryHost = _vodDeliveryCloudFrontHostName;
 #else
 			deliveryHost = _deliveryHost_authorizationThroughParameter;
 #endif
@@ -273,7 +277,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			string deliveryHost;
 #ifdef AWSCLOUDFRONT
-			deliveryHost = _vodCloudFrontHostName;
+			deliveryHost = _vodDeliveryPathCloudFrontHostName;
 #else
 			deliveryHost = _deliveryHost_authorizationThroughPath;
 #endif

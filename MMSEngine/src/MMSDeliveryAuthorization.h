@@ -69,7 +69,9 @@ class MMSDeliveryAuthorization
 
 	string _keyPairId;
 	string _privateKeyPEMPathName;
-	string _vodCloudFrontHostName;
+	string _vodCloudFrontHostName;			   // token as parameter
+	string _vodDeliveryCloudFrontHostName;	   // token as parameter
+	string _vodDeliveryPathCloudFrontHostName; // url signed
 
 	string _deliveryProtocol;
 	string _deliveryHost_authorizationThroughParameter;
