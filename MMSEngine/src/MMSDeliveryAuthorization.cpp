@@ -80,7 +80,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 	bool save,
 	// deliveryType:
-	// MMS_URLWithTokenAsParam (ex MMS_Token): delivery by MMS with a Token
+	// MMS_URLWithTokenAsParam_DB (ex MMS_Token): delivery by MMS with a Token retrieved by DB
+	// MMS_URLWithTokenAsParam_Signed (ex MMS_Token): delivery by MMS with a Token signed
 	// MMS_SignedURL: delivery by MMS with a signed URL
 	// AWSCloudFront: delivery by AWS CloudFront without a signed URL
 	// AWSCloudFront_Signed: delivery by AWS CloudFront with a signed URL
@@ -209,7 +210,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			deliveryURL = "https://" + cloudFrontHostName + uriPath;
 		}
 		*/
-		else if (deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token")
+		else if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
+				 deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
 		{
 			string deliveryHost;
 #ifdef AWSCLOUDFRONT
@@ -217,37 +219,40 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 #else
 			deliveryHost = _deliveryHost_authorizationThroughParameter;
 #endif
-#ifdef TOKEN_THROGH_DB
-			int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-				userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries
-			);
-
-			deliveryURL = fmt::format("{}://{}{}?token={}", _deliveryProtocol, deliveryHost, deliveryURI, authorizationKey);
-#else
-			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			expirationTime += ttlInSeconds;
-
-			string uriToBeSigned;
+			if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 			{
-				string m3u8Suffix(".m3u8");
-				// if (deliveryURI.size() >= m3u8Suffix.size() &&
-				// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
-				if (StringUtils::endWith(deliveryURI, m3u8Suffix))
-				{
-					size_t endPathIndex = deliveryURI.find_last_of("/");
-					if (endPathIndex == string::npos)
-						uriToBeSigned = deliveryURI;
-					else
-						uriToBeSigned = deliveryURI.substr(0, endPathIndex);
-				}
-				else
-					uriToBeSigned = deliveryURI;
-			}
-			string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+					userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries
+				);
 
-			deliveryURL =
-				fmt::format("{}://{}{}?token={},{}", _deliveryProtocol, deliveryHost, deliveryURI, curlpp::escape(md5Base64), expirationTime);
-#endif
+				deliveryURL = fmt::format("{}://{}{}?token={}", _deliveryProtocol, deliveryHost, deliveryURI, authorizationKey);
+			}
+			else
+			{
+				time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+				expirationTime += ttlInSeconds;
+
+				string uriToBeSigned;
+				{
+					string m3u8Suffix(".m3u8");
+					// if (deliveryURI.size() >= m3u8Suffix.size() &&
+					// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+					if (StringUtils::endWith(deliveryURI, m3u8Suffix))
+					{
+						size_t endPathIndex = deliveryURI.find_last_of("/");
+						if (endPathIndex == string::npos)
+							uriToBeSigned = deliveryURI;
+						else
+							uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+					}
+					else
+						uriToBeSigned = deliveryURI;
+				}
+				string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+
+				deliveryURL =
+					fmt::format("{}://{}{}?token={},{}", _deliveryProtocol, deliveryHost, deliveryURI, curlpp::escape(md5Base64), expirationTime);
+			}
 
 			if (save && deliveryFileName != "")
 				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
@@ -470,46 +475,50 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 				tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-				if (deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token")
+				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
+					deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
 				{
-#ifdef TOKEN_THROGH_DB
-					int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-						userKey, clientIPAddress,
-						-1,			  // physicalPathKey,	vod key
-						deliveryCode, // live key
-						deliveryURI, ttlInSeconds, maxRetries
-					);
-
-					deliveryURL = fmt::format(
-						"{}://{}{}?token={}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI, authorizationKey
-					);
-#else
-					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-					expirationTime += ttlInSeconds;
-
-					string uriToBeSigned;
+					if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 					{
-						string m3u8Suffix(".m3u8");
-						// if (deliveryURI.size() >= m3u8Suffix.size() &&
-						// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
-						if (StringUtils::endWith(deliveryURI, m3u8Suffix))
-						{
-							size_t endPathIndex = deliveryURI.find_last_of("/");
-							if (endPathIndex == string::npos)
-								uriToBeSigned = deliveryURI;
-							else
-								uriToBeSigned = deliveryURI.substr(0, endPathIndex);
-						}
-						else
-							uriToBeSigned = deliveryURI;
-					}
-					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+							userKey, clientIPAddress,
+							-1,			  // physicalPathKey,	vod key
+							deliveryCode, // live key
+							deliveryURI, ttlInSeconds, maxRetries
+						);
 
-					deliveryURL = fmt::format(
-						"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
-						curlpp::escape(md5Base64), expirationTime
-					);
-#endif
+						deliveryURL = fmt::format(
+							"{}://{}{}?token={}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI, authorizationKey
+						);
+					}
+					else
+					{
+						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+						expirationTime += ttlInSeconds;
+
+						string uriToBeSigned;
+						{
+							string m3u8Suffix(".m3u8");
+							// if (deliveryURI.size() >= m3u8Suffix.size() &&
+							// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+							if (StringUtils::endWith(deliveryURI, m3u8Suffix))
+							{
+								size_t endPathIndex = deliveryURI.find_last_of("/");
+								if (endPathIndex == string::npos)
+									uriToBeSigned = deliveryURI;
+								else
+									uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+							}
+							else
+								uriToBeSigned = deliveryURI;
+						}
+						string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+
+						deliveryURL = fmt::format(
+							"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
+							curlpp::escape(md5Base64), expirationTime
+						);
+					}
 				}
 				else // if (deliveryType == "MMS_SignedURL")
 				{
@@ -561,46 +570,50 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 				tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-				if (deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token")
+				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
+					deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
 				{
-#ifdef TOKEN_THROGH_DB
-					int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-						userKey, clientIPAddress,
-						-1,			  // physicalPathKey,	vod key
-						deliveryCode, // live key
-						deliveryURI, ttlInSeconds, maxRetries
-					);
-
-					deliveryURL = fmt::format(
-						"{}://{}{}?token={}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI, authorizationKey
-					);
-#else
-					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-					expirationTime += ttlInSeconds;
-
-					string uriToBeSigned;
+					if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 					{
-						string m3u8Suffix(".m3u8");
-						// if (deliveryURI.size() >= m3u8Suffix.size() &&
-						// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
-						if (StringUtils::endWith(deliveryURI, m3u8Suffix))
-						{
-							size_t endPathIndex = deliveryURI.find_last_of("/");
-							if (endPathIndex == string::npos)
-								uriToBeSigned = deliveryURI;
-							else
-								uriToBeSigned = deliveryURI.substr(0, endPathIndex);
-						}
-						else
-							uriToBeSigned = deliveryURI;
-					}
-					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+							userKey, clientIPAddress,
+							-1,			  // physicalPathKey,	vod key
+							deliveryCode, // live key
+							deliveryURI, ttlInSeconds, maxRetries
+						);
 
-					deliveryURL = fmt::format(
-						"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
-						curlpp::escape(md5Base64), expirationTime
-					);
-#endif
+						deliveryURL = fmt::format(
+							"{}://{}{}?token={}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI, authorizationKey
+						);
+					}
+					else
+					{
+						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+						expirationTime += ttlInSeconds;
+
+						string uriToBeSigned;
+						{
+							string m3u8Suffix(".m3u8");
+							// if (deliveryURI.size() >= m3u8Suffix.size() &&
+							// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+							if (StringUtils::endWith(deliveryURI, m3u8Suffix))
+							{
+								size_t endPathIndex = deliveryURI.find_last_of("/");
+								if (endPathIndex == string::npos)
+									uriToBeSigned = deliveryURI;
+								else
+									uriToBeSigned = deliveryURI.substr(0, endPathIndex);
+							}
+							else
+								uriToBeSigned = deliveryURI;
+						}
+						string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
+
+						deliveryURL = fmt::format(
+							"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
+							curlpp::escape(md5Base64), expirationTime
+						);
+					}
 				}
 				else // if (deliveryType == "MMS_SignedURL")
 				{
@@ -691,7 +704,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 			tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-			if (deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token")
+			if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
+				deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
 			{
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey, clientIPAddress,
