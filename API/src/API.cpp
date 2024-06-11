@@ -18,6 +18,7 @@
 #include "catralibraries/Convert.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/LdapWrapper.h"
+#include "catralibraries/StringUtils.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -783,9 +784,7 @@ void API::manageRequestAndResponse(
 			bool secondaryManifest;
 			string tokenComingFromURL;
 
-			bool isNumber = !(tokenIt->second).empty() &&
-							ranges::find_if((tokenIt->second).begin(), (tokenIt->second).end(), [](unsigned char c) { return !isdigit(c); }) ==
-								(tokenIt->second).end();
+			bool isNumber = StringUtils::isNumber(tokenIt->second);
 			if (isNumber || tokenIt->second.find(",") != string::npos)
 			{
 				secondaryManifest = false;
@@ -875,32 +874,35 @@ void API::manageRequestAndResponse(
 
 				if (mmsInfoCookie == "")
 				{
-#ifdef TOKEN_THROGH_DB
-					if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
+					if (StringUtils::isNumber(tokenComingFromURL)) // MMS_URLWithTokenAsParam_DB
 					{
-						string errorMessage = fmt::format(
-							"Not authorized: token invalid"
-							", contentURI: {}"
-							", tokenComingFromURL: {}",
-							contentURI, tokenComingFromURL
-						);
-						SPDLOG_INFO(errorMessage);
+						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
+						{
+							string errorMessage = fmt::format(
+								"Not authorized: token invalid"
+								", contentURI: {}"
+								", tokenComingFromURL: {}",
+								contentURI, tokenComingFromURL
+							);
+							SPDLOG_INFO(errorMessage);
 
-						throw runtime_error(errorMessage);
+							throw runtime_error(errorMessage);
+						}
 					}
-#else
+					else
 					{
-						// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-						//	That  because if we have really a + char (%2B into the string), and we do the replace
-						//	after curlpp::unescape, this char will be changed to space and we do not want it
-						string plus = "\\+";
-						string plusDecoded = " ";
-						string firstDecoding = regex_replace(tokenComingFromURL, regex(plus), plusDecoded);
+						{
+							// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+							//	That  because if we have really a + char (%2B into the string), and we do the replace
+							//	after curlpp::unescape, this char will be changed to space and we do not want it
+							string plus = "\\+";
+							string plusDecoded = " ";
+							string firstDecoding = regex_replace(tokenComingFromURL, regex(plus), plusDecoded);
 
-						tokenComingFromURL = curlpp::unescape(firstDecoding);
+							tokenComingFromURL = curlpp::unescape(firstDecoding);
+						}
+						_mmsDeliveryAuthorization->checkSignedMMSPath(tokenComingFromURL, contentURI);
 					}
-					_mmsDeliveryAuthorization->checkSignedMMSPath(tokenComingFromURL, contentURI);
-#endif
 
 					SPDLOG_INFO(
 						"token authorized"
@@ -923,22 +925,25 @@ void API::manageRequestAndResponse(
 						);
 						SPDLOG_INFO(errorMessage);
 
-#ifdef TOKEN_THROGH_DB
-						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
+						if (StringUtils::isNumber(tokenComingFromURL)) // MMS_URLWithTokenAsParam_DB
 						{
-							string errorMessage = fmt::format(
-								"Not authorized: token invalid"
-								", contentURI: {}"
-								", tokenComingFromURL: {}",
-								contentURI, tokenComingFromURL
-							);
-							SPDLOG_INFO(errorMessage);
+							if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
+							{
+								string errorMessage = fmt::format(
+									"Not authorized: token invalid"
+									", contentURI: {}"
+									", tokenComingFromURL: {}",
+									contentURI, tokenComingFromURL
+								);
+								SPDLOG_INFO(errorMessage);
 
-							throw runtime_error(errorMessage);
+								throw runtime_error(errorMessage);
+							}
 						}
-#else
-						_mmsDeliveryAuthorization->checkSignedMMSPath(tokenComingFromURL, contentURI);
-#endif
+						else
+						{
+							_mmsDeliveryAuthorization->checkSignedMMSPath(tokenComingFromURL, contentURI);
+						}
 
 						SPDLOG_INFO(
 							"token authorized"

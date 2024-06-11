@@ -949,37 +949,40 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 				tokenParameter, firstPartOfToken, secondPartOfToken, contentURI
 			);
 
-#ifdef TOKEN_THROGH_DB
-			// tokenComingFromURL = stoll(firstPartOfToken);
-			tokenComingFromURL = firstPartOfToken;
-			if (_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
+			if (StringUtils::isNumber(firstPartOfToken)) // MMS_URLWithTokenAsParam_DB
 			{
-				SPDLOG_INFO(
-					"token authorized"
-					", tokenComingFromURL: {}",
-					tokenComingFromURL
-				);
+				// tokenComingFromURL = stoll(firstPartOfToken);
+				tokenComingFromURL = firstPartOfToken;
+				if (_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
+				{
+					SPDLOG_INFO(
+						"token authorized"
+						", tokenComingFromURL: {}",
+						tokenComingFromURL
+					);
 
-				// authorized
+					// authorized
 
-				// string responseBody;
-				// sendSuccess(request, 200, responseBody);
+					// string responseBody;
+					// sendSuccess(request, 200, responseBody);
+				}
+				else
+				{
+					string errorMessage = fmt::format(
+						"Not authorized: token invalid"
+						", tokenComingFromURL: {}",
+						tokenComingFromURL
+					);
+					SPDLOG_WARN(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
 			}
-			else
+			else // MMS_URLWithTokenAsParam_Signed
 			{
-				string errorMessage = fmt::format(
-					"Not authorized: token invalid"
-					", tokenComingFromURL: {}",
-					tokenComingFromURL
-				);
-				SPDLOG_WARN(errorMessage);
-
-				throw runtime_error(errorMessage);
+				string tokenSigned = firstPartOfToken;
+				checkSignedMMSPath(tokenSigned, contentURI);
 			}
-#else
-			string tokenSigned = firstPartOfToken;
-			checkSignedMMSPath(tokenSigned, contentURI);
-#endif
 		}
 	}
 	catch (runtime_error &e)
