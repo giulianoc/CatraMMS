@@ -1942,6 +1942,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 
 					throw runtime_error(errorMessage);
 				}
+				/* 2024-06-12: dopo aver inserito il token reusable (per usare la cache della CDN), ho preferito non verificare currentRetriesNumber
 				else if (currentRetriesNumber >= maxRetries)
 				{
 					string errorMessage = __FILEREF__ + "maxRetries is already reached" +
@@ -1951,6 +1952,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 
 					throw runtime_error(errorMessage);
 				}
+				*/
 				else if (timeToLiveAvailable < 0)
 				{
 					string errorMessage =
