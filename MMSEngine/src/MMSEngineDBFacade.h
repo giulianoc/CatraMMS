@@ -1685,7 +1685,12 @@ class MMSEngineDBFacade
 
 	int64_t createDeliveryAuthorization(
 		int64_t userKey, string clientIPAddress, int64_t physicalPathKey, int64_t liveDeliveryKey, string deliveryURI, int ttlInSeconds,
-		int maxRetries
+		int maxRetries, bool reuseAuthIfPresent
+	);
+
+	shared_ptr<PostgresHelper::SqlResultSet> deliveryAuthorizationQuery(
+		vector<pair<bool, string>> &requestedColumns, int64_t deliveryAuthorizationKey, string contentType, int64_t contentKey, string deliveryURI,
+		bool notExpiredCheck, bool fromMaster, int startIndex = -1, int rows = -1, string orderBy = "", bool notFoundAsException = true
 	);
 
 	bool checkDeliveryAuthorization(int64_t deliveryAuthorizationKey, string contentURI);

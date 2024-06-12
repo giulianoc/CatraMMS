@@ -3690,8 +3690,9 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 			{
 				string errorMessage = fmt::format(
 					"ingestionJob not found"
-					", workspaceKey: {}",
-					", ingestionJobKey: {}", workspaceKey, ingestionJobKey
+					", workspaceKey: {}"
+					", ingestionJobKey: {}",
+					workspaceKey, ingestionJobKey
 				);
 				// abbiamo il log nel catch
 				// SPDLOG_WARN(errorMessage);

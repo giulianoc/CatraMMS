@@ -834,20 +834,11 @@ void API::manageRequestAndResponse(
 				}
 				string cookie = cookieIt->second;
 
-				/* unescape è gia in checkDeliveryAuthorizationThroughParameter
-				string tokenParameter;
-				{
-					// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
-					//	That  because if we have really a + char (%2B into the string), and we do the replace
-					//	after curlpp::unescape, this char will be changed to space and we do not want it
-					string plus = "\\+";
-					string plusDecoded = " ";
-					string firstDecoding = regex_replace(tokenIt->second, regex(plus), plusDecoded);
+				string token = tokenIt->second;
 
-					tokenParameter = curlpp::unescape(firstDecoding);
-				}
-				tokenParameter = fmt::format("{}---{}", tokenParameter, cookie);
-				*/
+				tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(secondaryManifest, token, cookie, contentURI);
+
+				/*
 				string tokenParameter = fmt::format("{}---{}", tokenIt->second, cookie);
 				SPDLOG_INFO(
 					"Calling checkDeliveryAuthorizationThroughParameter"
@@ -856,6 +847,7 @@ void API::manageRequestAndResponse(
 					contentURI, tokenParameter
 				);
 				tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+				*/
 			}
 			else
 			{
@@ -865,6 +857,11 @@ void API::manageRequestAndResponse(
 				if (cookieIt != queryParameters.end())
 					mmsInfoCookie = cookieIt->second;
 
+				tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(
+					secondaryManifest, tokenComingFromURL, mmsInfoCookie, contentURI
+				);
+
+				/*
 				SPDLOG_INFO(
 					"manageHTTPStreamingManifest"
 					", tokenComingFromURL: {}"
@@ -960,6 +957,7 @@ void API::manageRequestAndResponse(
 						);
 					}
 				}
+				*/
 			}
 
 			// manifest authorized
@@ -968,8 +966,7 @@ void API::manageRequestAndResponse(
 				string contentType;
 
 				string m3u8Extension(".m3u8");
-				if (contentURI.size() >= m3u8Extension.size() &&
-					0 == contentURI.compare(contentURI.size() - m3u8Extension.size(), m3u8Extension.size(), m3u8Extension))
+				if (StringUtils::endWith(contentURI, m3u8Extension))
 					contentType = "Content-type: application/x-mpegURL";
 				else // dash
 					contentType = "Content-type: application/dash+xml";
@@ -997,8 +994,7 @@ void API::manageRequestAndResponse(
 						throw runtime_error(errorMessage);
 					}
 
-					if (contentURI.size() >= m3u8Extension.size() &&
-						0 == contentURI.compare(contentURI.size() - m3u8Extension.size(), m3u8Extension.size(), m3u8Extension))
+					if (StringUtils::endWith(contentURI, m3u8Extension))
 					{
 						std::ifstream manifestFile;
 
@@ -1022,11 +1018,7 @@ void API::manageRequestAndResponse(
 						string endLine = "\n";
 						while (getline(manifestFile, manifestLine))
 						{
-							if (manifestLine[0] != '#' &&
-
-								// end with
-								manifestLine.size() >= tsExtension.size() &&
-								0 == manifestLine.compare(manifestLine.size() - tsExtension.size(), tsExtension.size(), tsExtension))
+							if (manifestLine[0] != '#' && StringUtils::endWith(manifestLine, tsExtension))
 							{
 								/*
 								SPDLOG_INFO(__FILEREF__ + "Creation token parameter for ts"
@@ -1037,11 +1029,7 @@ void API::manageRequestAndResponse(
 								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
 								responseBody += (manifestLine + "?token=" + auth + endLine);
 							}
-							else if (manifestLine[0] != '#' &&
-
-									 // end with
-									 manifestLine.size() >= m3u8Extension.size() &&
-									 0 == manifestLine.compare(manifestLine.size() - m3u8Extension.size(), m3u8Extension.size(), m3u8Extension))
+							else if (manifestLine[0] != '#' && StringUtils::endWith(manifestLine, m3u8Extension))
 							{
 								// scenario where we have several .m3u8 manifest files
 								/*
@@ -1053,8 +1041,7 @@ void API::manageRequestAndResponse(
 								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
 								responseBody += (manifestLine + "?token=" + auth + endLine);
 							}
-							// start with
-							else if (manifestLine.size() >= m3u8ExtXMedia.size() && 0 == manifestLine.compare(0, m3u8ExtXMedia.size(), m3u8ExtXMedia))
+							else if (StringUtils::startWith(manifestLine, m3u8ExtXMedia))
 							{
 								// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES,
 								// DEFAULT=YES,URI="eng/1247999_384641.m3u8"

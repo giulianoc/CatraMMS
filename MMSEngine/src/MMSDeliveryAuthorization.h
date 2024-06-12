@@ -32,24 +32,16 @@ class MMSDeliveryAuthorization
 	);
 
 	pair<string, string> createDeliveryAuthorization(
-		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string clientIPAddress,
-
-		int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey, string encodingProfileLabel,
-
-		int64_t physicalPathKey,
-
-		int64_t ingestionJobKey, int64_t deliveryCode,
-
-		int ttlInSeconds, int maxRetries,
-
-		bool save, string deliveryType,
-
-		bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
+		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string clientIPAddress, int64_t mediaItemKey, string uniqueName,
+		int64_t encodingProfileKey, string encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode,
+		int ttlInSeconds, int maxRetries, bool save, string deliveryType, bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
 	);
 
 	string checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter);
 
 	int64_t checkDeliveryAuthorizationThroughPath(string contentURI);
+
+	string checkDeliveryAuthorizationOfAManifest(bool secondaryManifest, string token, string cookie, string contentURI);
 
 	int64_t checkSignedMMSPath(string tokenSigned, string contentURIToBeVerified);
 

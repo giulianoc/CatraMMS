@@ -222,7 +222,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 			{
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-					userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries
+					userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries, true
 				);
 
 				deliveryURL = fmt::format("{}://{}{}?token={}", _deliveryProtocol, deliveryHost, deliveryURI, authorizationKey);
@@ -484,7 +484,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							userKey, clientIPAddress,
 							-1,			  // physicalPathKey,	vod key
 							deliveryCode, // live key
-							deliveryURI, ttlInSeconds, maxRetries
+							deliveryURI, ttlInSeconds, maxRetries, true
 						);
 
 						deliveryURL = fmt::format(
@@ -579,7 +579,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							userKey, clientIPAddress,
 							-1,			  // physicalPathKey,	vod key
 							deliveryCode, // live key
-							deliveryURI, ttlInSeconds, maxRetries
+							deliveryURI, ttlInSeconds, maxRetries, true
 						);
 
 						deliveryURL = fmt::format(
@@ -710,7 +710,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey, clientIPAddress,
 					-1, // physicalPathKey,
-					deliveryCode, deliveryURI, ttlInSeconds, maxRetries
+					deliveryCode, deliveryURI, ttlInSeconds, maxRetries, true
 				);
 
 				deliveryURL =
@@ -1085,6 +1085,170 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 	}
 
 	return tokenComingFromURL;
+}
+
+string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool secondaryManifest, string token, string cookie, string contentURI)
+{
+	try
+	{
+		SPDLOG_INFO(
+			"checkDeliveryAuthorizationOfAManifest, received"
+			", contentURI: {}",
+			contentURI
+		);
+
+		string tokenComingFromURL;
+
+		// we could have:
+		//		- master manifest, token parameter: <token>--- (es: token=9163 oppure ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161)
+		//			es: /MMS_0000/1/001/472/152/8063642_2/8063642_1653439.m3u8?token=9163
+		//			es: /MMS_0000/1/001/470/566/8055007_2/8055007_1652158.m3u8?token=ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161
+		//		- secondary manifest (that has to be treated as a .ts delivery), token parameter:
+		//			<encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+		//			es:
+		/// MMS_0000/1/001/472/152/8063642_2/360p/8063642_1653439.m3u8?token=Nw2npoRhfMLZC-GiRuZHpI~jGKBRA-NE-OARj~o68En4XFUriOSuXqexke21OTVd
+		if (secondaryManifest)
+		{
+			/* unescape è gia in checkDeliveryAuthorizationThroughParameter
+			string tokenParameter;
+			{
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				//	That  because if we have really a + char (%2B into the string), and we do the replace
+				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				string plus = "\\+";
+				string plusDecoded = " ";
+				string firstDecoding = regex_replace(tokenIt->second, regex(plus), plusDecoded);
+
+				tokenParameter = curlpp::unescape(firstDecoding);
+			}
+			tokenParameter = fmt::format("{}---{}", tokenParameter, cookie);
+			*/
+			string tokenParameter = fmt::format("{}---{}", token, cookie);
+			SPDLOG_INFO(
+				"Calling checkDeliveryAuthorizationThroughParameter"
+				", contentURI: {}"
+				", tokenParameter: {}",
+				contentURI, tokenParameter
+			);
+			tokenComingFromURL = checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+		}
+		else
+		{
+			SPDLOG_INFO(
+				"manageHTTPStreamingManifest"
+				", token: {}"
+				", mmsInfoCookie: {}",
+				token, cookie
+			);
+
+			tokenComingFromURL = token;
+
+			if (cookie == "")
+			{
+				if (StringUtils::isNumber(token)) // MMS_URLWithTokenAsParam_DB
+				{
+					if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(token), contentURI))
+					{
+						string errorMessage = fmt::format(
+							"Not authorized: token invalid"
+							", contentURI: {}"
+							", token: {}",
+							contentURI, token
+						);
+						SPDLOG_INFO(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+				}
+				else
+				{
+					{
+						// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+						//	That  because if we have really a + char (%2B into the string), and we do the replace
+						//	after curlpp::unescape, this char will be changed to space and we do not want it
+						string plus = "\\+";
+						string plusDecoded = " ";
+						string firstDecoding = regex_replace(token, regex(plus), plusDecoded);
+
+						tokenComingFromURL = curlpp::unescape(firstDecoding);
+					}
+					checkSignedMMSPath(tokenComingFromURL, contentURI);
+				}
+
+				SPDLOG_INFO(
+					"token authorized"
+					", tokenComingFromURL: {}",
+					tokenComingFromURL
+				);
+			}
+			else
+			{
+				string sTokenComingFromCookie = Encrypt::opensslDecrypt(cookie);
+				// int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
+
+				if (sTokenComingFromCookie != tokenComingFromURL)
+				{
+					string errorMessage = fmt::format(
+						"cookie invalid, let's check the token"
+						", sTokenComingFromCookie: {}"
+						", tokenComingFromURL: {}",
+						sTokenComingFromCookie, tokenComingFromURL
+					);
+					SPDLOG_INFO(errorMessage);
+
+					if (StringUtils::isNumber(tokenComingFromURL)) // MMS_URLWithTokenAsParam_DB
+					{
+						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
+						{
+							string errorMessage = fmt::format(
+								"Not authorized: token invalid"
+								", contentURI: {}"
+								", tokenComingFromURL: {}",
+								contentURI, tokenComingFromURL
+							);
+							SPDLOG_INFO(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else
+					{
+						checkSignedMMSPath(tokenComingFromURL, contentURI);
+					}
+
+					SPDLOG_INFO(
+						"token authorized"
+						", tokenComingFromURL: {}",
+						tokenComingFromURL
+					);
+				}
+				else
+				{
+					SPDLOG_INFO(
+						"cookie authorized"
+						", cookie: {}",
+						cookie
+					);
+				}
+			}
+		}
+
+		return tokenComingFromURL;
+	}
+	catch (runtime_error &e)
+	{
+		string errorMessage = string("Not authorized");
+		SPDLOG_WARN(errorMessage);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = string("Not authorized: exception managing token");
+		SPDLOG_WARN(errorMessage);
+
+		throw e;
+	}
 }
 
 int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string contentURIToBeVerified)

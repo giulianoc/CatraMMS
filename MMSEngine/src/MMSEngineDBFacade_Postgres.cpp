@@ -1500,10 +1500,9 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 	int64_t userKey, string clientIPAddress,
 	int64_t physicalPathKey, // vod key
 	int64_t liveDeliveryKey, // live key
-	string deliveryURI, int ttlInSeconds, int maxRetries
+	string deliveryURI, int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent
 )
 {
-	int64_t deliveryAuthorizationKey;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -1516,19 +1515,31 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 
 	try
 	{
+		string contentType;
+		int64_t contentKey;
+		if (physicalPathKey == -1)
 		{
-			string contentType;
-			int64_t contentKey;
-			if (physicalPathKey == -1)
-			{
-				contentType = "live";
-				contentKey = liveDeliveryKey;
-			}
-			else
-			{
-				contentType = "vod";
-				contentKey = physicalPathKey;
-			}
+			contentType = "live";
+			contentKey = liveDeliveryKey;
+		}
+		else
+		{
+			contentType = "vod";
+			contentKey = physicalPathKey;
+		}
+
+		int64_t deliveryAuthorizationKey = -1;
+		if (reuseAuthIfPresent)
+		{
+			vector<pair<bool, string>> requestedColumns = {{false, "mms_deliveryauthorization:.deliveryauthorizationkey"}};
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet =
+				deliveryAuthorizationQuery(requestedColumns, -1, contentType, contentKey, deliveryURI, true, false, -1, -1, "", false);
+
+			if (!(*sqlResultSet).empty())
+				deliveryAuthorizationKey = (*sqlResultSet)[0][0].as<int64_t>(-1);
+		}
+		if (deliveryAuthorizationKey == -1)
+		{
 			string sqlStatement = fmt::format(
 				"insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, "
 				"contentType, contentKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
@@ -1552,6 +1563,8 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return deliveryAuthorizationKey;
 	}
 	catch (sql_error const &e)
 	{
@@ -1640,8 +1653,242 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 
 		throw e;
 	}
+}
 
-	return deliveryAuthorizationKey;
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizationQuery(
+	vector<pair<bool, string>> &requestedColumns, int64_t deliveryAuthorizationKey, string contentType, int64_t contentKey, string deliveryURI,
+	bool notExpiredCheck, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
+)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	nontransaction trans{*(conn->_sqlConnection)};
+	try
+	{
+		if (rows > _maxRows)
+		{
+			string errorMessage = fmt::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = fmt::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
+		{
+			string where;
+			if (deliveryAuthorizationKey != -1)
+				where += fmt::format("{} deliveryAuthorizationKey = {} ", where.size() > 0 ? "and" : "", deliveryAuthorizationKey);
+			if (contentType != "")
+				where += fmt::format("{} contentType = {} ", where.size() > 0 ? "and" : "", trans.quote(contentType));
+			if (contentKey != -1)
+				where += fmt::format("{} contentKey = {} ", where.size() > 0 ? "and" : "", contentKey);
+			if (deliveryURI != "")
+				where += fmt::format("{} deliveryURI = {} ", where.size() > 0 ? "and" : "", trans.quote(deliveryURI));
+			if (notExpiredCheck)
+				where += fmt::format(
+					"{} extract(epoch from (((authorizationTimestamp + INTERVAL '1 second' * ttlInSeconds) - NOW() at time zone 'utc'))) > 60 ",
+					where.size() > 0 ? "and" : ""
+				);
+
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = fmt::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = fmt::format("offset {} ", startIndex);
+			if (orderBy != "")
+				orderByCondition = fmt::format("order by {} ", orderBy);
+
+			string sqlStatement = fmt::format(
+				"select {} "
+				"from MMS_DeliveryAuthorization "
+				"{} {} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+
+			sqlResultSet = _postgresHelper.buildResult(res);
+
+			chrono::system_clock::time_point endSql = chrono::system_clock::now();
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
+			);
+
+			if (empty(res) && deliveryAuthorizationKey != -1 && notFoundAsException)
+			{
+				string errorMessage = fmt::format(
+					"deliveryAuthorization not found"
+					", deliveryAuthorizationKey: {}",
+					deliveryAuthorizationKey
+				);
+				// abbiamo il log nel catch
+				// SPDLOG_WARN(errorMessage);
+
+				throw NotFound(errorMessage);
+			}
+		}
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return sqlResultSet;
+	}
+	catch (NotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
 }
 
 bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorizationKey, string contentURI)

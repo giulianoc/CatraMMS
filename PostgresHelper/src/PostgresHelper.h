@@ -62,7 +62,7 @@ class PostgresHelper
 		shared_ptr<Base> value;
 
 	  public:
-		SqlValue() {};
+		SqlValue(){};
 
 		void setValue(shared_ptr<Base> value) { this->value = value; };
 
@@ -120,6 +120,7 @@ class PostgresHelper
 			_sqlCurrentRowValuesByIndex.clear();
 		};
 		virtual size_t size() { return _sqlValuesByIndex.size(); };
+		virtual size_t empty() { return _sqlValuesByIndex.size() == 0; };
 		virtual json asJson();
 		void addColumnType(string fieldName, SqlValueType sqlValueType)
 		{
