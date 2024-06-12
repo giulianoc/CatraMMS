@@ -45,8 +45,6 @@ class MMSDeliveryAuthorization
 
 	int64_t checkSignedMMSPath(string tokenSigned, string contentURIToBeVerified);
 
-	string getSignedMMSPath(string contentURI, time_t expirationTime);
-
 	static string getSignedCDN77URL(
 		string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
 		string filePath,	// /file/playlist/d.m3u8
@@ -68,5 +66,8 @@ class MMSDeliveryAuthorization
 	string _deliveryProtocol;
 	string _deliveryHost_authorizationThroughParameter;
 	string _deliveryHost_authorizationThroughPath;
+
+	string getSignedMMSPath(string contentURI, time_t expirationTime);
+	time_t getReusableExpirationTime(int ttlInSeconds);
 };
 #endif

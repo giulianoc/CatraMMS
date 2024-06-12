@@ -2191,12 +2191,26 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "contentKey					bigint NOT NULL,"
 								  "deliveryURI    			text NOT NULL,"
 								  "ttlInSeconds               integer NOT NULL,"
-								  "currentRetriesNumber       smallint NOT NULL,"
-								  "maxRetries                 smallint NOT NULL,"
+								  "currentRetriesNumber       integer NOT NULL,"
+								  "maxRetries                 integer NOT NULL,"
 								  "authorizationTimestamp		timestamp without time zone default (now() at time zone 'utc'),"
 								  "constraint MMS_DeliveryAuthorization_PK PRIMARY KEY (deliveryAuthorizationKey), "
 								  "constraint MMS_DeliveryAuthorization_FK foreign key (userKey) "
 								  "references MMS_User (userKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement =
+				"create index if not exists MMS_DeliveryAuthorization_idx1 on MMS_DeliveryAuthorization (contentType, contentKey, deliveryURI)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(

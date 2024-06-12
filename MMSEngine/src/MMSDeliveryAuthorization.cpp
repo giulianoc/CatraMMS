@@ -229,8 +229,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			else
 			{
-				time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-				expirationTime += ttlInSeconds;
+				time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
 				string uriToBeSigned;
 				{
@@ -259,8 +258,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 		}
 		else // if (deliveryType == "MMS_SignedURL")
 		{
-			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			expirationTime += ttlInSeconds;
+			time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
 			string uriToBeSigned;
 			{
@@ -493,8 +491,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					else
 					{
-						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-						expirationTime += ttlInSeconds;
+						time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
 						string uriToBeSigned;
 						{
@@ -522,8 +519,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				else // if (deliveryType == "MMS_SignedURL")
 				{
-					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-					expirationTime += ttlInSeconds;
+					time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
 					string uriToBeSigned;
 					{
@@ -588,8 +584,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					else
 					{
-						time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-						expirationTime += ttlInSeconds;
+						time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
 						string uriToBeSigned;
 						{
@@ -617,8 +612,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				else // if (deliveryType == "MMS_SignedURL")
 				{
-					time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-					expirationTime += ttlInSeconds;
+					time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
 					string uriToBeSigned;
 					{
@@ -718,8 +712,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			else // if (deliveryType == "MMS_SignedURL")
 			{
-				time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-				expirationTime += ttlInSeconds;
+				time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
 				string uriToBeSigned;
 				{
@@ -1730,4 +1723,33 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 
 		throw runtime_error(errorMessage);
 	}
+}
+
+time_t MMSDeliveryAuthorization::getReusableExpirationTime(int ttlInSeconds)
+{
+	time_t utcExpirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
+	utcExpirationTime += ttlInSeconds;
+
+	// arrotondiamo in eccesso al primo secondo del mese successivo
+	// Viene usato questo arrotondamento in modo da avere la stessa url signed per far usare la cache alla CDN
+	tm tmDateTime;
+	localtime_r(&utcExpirationTime, &tmDateTime);
+
+	tmDateTime.tm_mday = 1;
+	// Next month 0=Jan
+	if (tmDateTime.tm_mon == 11) // Dec
+	{
+		tmDateTime.tm_mon = 0;
+		tmDateTime.tm_year++;
+	}
+	else
+		tmDateTime.tm_mon++;
+	tmDateTime.tm_hour = 0;
+	tmDateTime.tm_min = 0;
+	tmDateTime.tm_sec = 0;
+
+	// Get the first day/hour/second of the next month
+	utcExpirationTime = mktime(&tmDateTime);
+
+	return utcExpirationTime;
 }
