@@ -1715,10 +1715,13 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 			if (deliveryURI != "")
 				where += fmt::format("{} deliveryURI = {} ", where.size() > 0 ? "and" : "", trans.quote(deliveryURI));
 			if (notExpiredCheck)
+			{
+				long minTimeToLeaveInSeconds = 3 * 3600; // 3h (non servono 3h in caso di un film?)
 				where += fmt::format(
-					"{} extract(epoch from (((authorizationTimestamp + INTERVAL '1 second' * ttlInSeconds) - NOW() at time zone 'utc'))) > 60 ",
-					where.size() > 0 ? "and" : ""
+					"{} extract(epoch from (((authorizationTimestamp + INTERVAL '1 second' * ttlInSeconds) - NOW() at time zone 'utc'))) > {} ",
+					where.size() > 0 ? "and" : "", minTimeToLeaveInSeconds
 				);
+			}
 
 			string limit;
 			string offset;
