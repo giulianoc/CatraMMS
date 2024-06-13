@@ -21,6 +21,8 @@
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/bundled/format.h"
+#include "spdlog/fmt/fmt.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
@@ -4740,17 +4742,31 @@ void API::changeLiveProxyPlaylist(
 				for (int newReceivedPlaylistIndex = 0; newReceivedPlaylistIndex < newReceivedPlaylistRoot.size(); newReceivedPlaylistIndex++)
 				{
 					json newReceivedPlaylistItemRoot = newReceivedPlaylistRoot[newReceivedPlaylistIndex];
+
 					// aggiungo sUtcScheduleStart/End in modo da capire le date per chi vede la playlist (info di debug)
 					{
+						string sUtcScheduleStart;
+						string sUtcScheduleEnd;
 						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "timePeriod") && newReceivedPlaylistItemRoot["timePeriod"])
 						{
 							if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "utcScheduleStart"))
-								newReceivedPlaylistItemRoot["sUtcScheduleStart"] =
-									DateTime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleStart"]);
+							{
+								sUtcScheduleStart = DateTime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleStart"]);
+								newReceivedPlaylistItemRoot["sUtcScheduleStart"] = sUtcScheduleStart;
+							}
 							if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "utcScheduleEnd"))
-								newReceivedPlaylistItemRoot["sUtcScheduleEnd"] =
-									DateTime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleEnd"]);
+							{
+								sUtcScheduleEnd = DateTime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleEnd"]);
+								newReceivedPlaylistItemRoot["sUtcScheduleEnd"] = sUtcScheduleEnd;
+							}
 						}
+						SPDLOG_INFO(
+							"Processing newReceivedPlaylistRoot (the received one)"
+							", newReceivedPlaylistRoot: {}/{}"
+							", sUtcScheduleStart: {}"
+							", sUtcScheduleEnd: {}",
+							newReceivedPlaylistIndex, newReceivedPlaylistRoot.size(), sUtcScheduleStart, sUtcScheduleEnd
+						);
 					}
 					{
 						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "streamInput"))
@@ -5008,10 +5024,12 @@ void API::changeLiveProxyPlaylist(
 				int leavePastEntriesNumber = 3;
 				if (currentPlaylistIndex - leavePastEntriesNumber > 0)
 				{
-					_logger->info(
-						__FILEREF__ + "Erase playlist items in the past: " + to_string(currentPlaylistIndex - leavePastEntriesNumber) + " items" +
-						", currentPlaylistIndex: " + to_string(currentPlaylistIndex) + ", leavePastEntriesNumber: " +
-						to_string(leavePastEntriesNumber) + ", vNewReceivedPlaylist.size: " + to_string(vNewReceivedPlaylist.size())
+					SPDLOG_INFO(
+						"Erase playlist items in the past: {} items"
+						", currentPlaylistIndex: {}"
+						", leavePastEntriesNumber: {}"
+						", vNewReceivedPlaylist.size: {}",
+						currentPlaylistIndex - leavePastEntriesNumber, currentPlaylistIndex, leavePastEntriesNumber, vNewReceivedPlaylist.size()
 					);
 
 					vNewReceivedPlaylist.erase(
@@ -5020,10 +5038,12 @@ void API::changeLiveProxyPlaylist(
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "Erase playlist items in the past: nothing" + ", currentPlaylistIndex: " + to_string(currentPlaylistIndex) +
-						", leavePastEntriesNumber: " + to_string(leavePastEntriesNumber) +
-						", vNewReceivedPlaylist.size: " + to_string(vNewReceivedPlaylist.size())
+					SPDLOG_INFO(
+						"Erase playlist items in the past: nothing"
+						", currentPlaylistIndex: {}"
+						", leavePastEntriesNumber: {}"
+						", vNewReceivedPlaylist.size: {}",
+						currentPlaylistIndex, leavePastEntriesNumber, vNewReceivedPlaylist.size()
 					);
 				}
 			}
@@ -5063,23 +5083,26 @@ void API::changeLiveProxyPlaylist(
 						string partialMessage;
 
 						if (utcCurrentBroadcasterStart > utcProxyPeriodStart)
-							partialMessage = "utcCurrentBroadcasterStart > utcProxyPeriodStart";
+							partialMessage = fmt::format(
+								"utcCurrentBroadcasterStart {} ({}) > utcProxyPeriodStart {} ({})", utcCurrentBroadcasterStart,
+								DateTime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart,
+								DateTime::utcToUtcString(utcProxyPeriodStart)
+							);
 						else if (utcProxyPeriodStart >= utcProxyPeriodEnd)
-							partialMessage = "utcProxyPeriodStart >= utcProxyPeriodEnd";
+							partialMessage = fmt::format(
+								"utcProxyPeriodStart {} ({}) >= utcProxyPeriodEnd {} ({})", utcProxyPeriodStart,
+								DateTime::utcToUtcString(utcProxyPeriodStart), utcProxyPeriodEnd, DateTime::utcToUtcString(utcProxyPeriodEnd)
+							);
 						else if (utcProxyPeriodEnd > utcBroadcasterEnd)
-							partialMessage = "utcProxyPeriodEnd > utcBroadcasterEnd";
+							partialMessage = fmt::format(
+								"utcProxyPeriodEnd {} ({}) > utcBroadcasterEnd {} ({})", utcProxyPeriodEnd,
+								DateTime::utcToUtcString(utcProxyPeriodEnd), utcBroadcasterEnd, DateTime::utcToUtcString(utcBroadcasterEnd)
+							);
 
 						string errorMessage = fmt::format(
 							"Wrong dates ({})"
-							", newReceivedPlaylistIndex: {}"
-							", utcCurrentBroadcasterStart: {} ({})"
-							", utcProxyPeriodStart: {} ({})"
-							", utcProxyPeriodEnd: {} ({})"
-							", utcBroadcasterEnd: {} ({})",
-							partialMessage, newReceivedPlaylistIndex, utcCurrentBroadcasterStart,
-							DateTime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart, DateTime::utcToUtcString(utcProxyPeriodStart),
-							utcProxyPeriodEnd, DateTime::utcToUtcString(utcProxyPeriodEnd), utcBroadcasterEnd,
-							DateTime::utcToUtcString(utcBroadcasterEnd)
+							", newReceivedPlaylistIndex: {}",
+							partialMessage, newReceivedPlaylistIndex
 						);
 						_logger->error(errorMessage);
 

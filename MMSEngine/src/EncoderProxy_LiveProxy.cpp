@@ -17,30 +17,6 @@
 #include "MMSCURL.h"
 #include "MMSDeliveryAuthorization.h"
 #include <regex>
-/*
-#include "AWSSigner.h"
-#include "LocalAssetIngestionEvent.h"
-#include "MultiLocalAssetIngestionEvent.h"
-#include "Validator.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include "opencv2/face.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/imgproc.hpp"
-#include "opencv2/objdetect.hpp"
-#include <fstream>
-
-#include <aws/core/Aws.h>
-#include <aws/medialive/MediaLiveClient.h>
-#include <aws/medialive/model/DescribeChannelRequest.h>
-#include <aws/medialive/model/DescribeChannelResult.h>
-#include <aws/medialive/model/StartChannelRequest.h>
-#include <aws/medialive/model/StopChannelRequest.h>
-*/
 
 bool EncoderProxy::liveProxy(string proxyType)
 {
@@ -1104,13 +1080,13 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			}
 			else
 			{
-				_logger->info(
-					__FILEREF__ +
-					"LiveProxy. Selection of the transcoder. The transcoder is "
-					"already saved (DB), the encoding should be already "
-					"running" +
-					", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", encoderKey: " + to_string(_encodingItem->_encoderKey)
+				SPDLOG_INFO(
+					"LiveProxy. Selection of the transcoder. The transcoder is already saved (DB), the encoding should be already running"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", encoderKey: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _encodingItem->_encoderKey
 				);
 
 				pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
