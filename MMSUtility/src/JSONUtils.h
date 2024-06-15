@@ -22,6 +22,15 @@ using json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
 
+struct JsonFieldNotFound : public exception
+{
+	string _errorMessage;
+
+	JsonFieldNotFound(string errorMessage) { _errorMessage = errorMessage; }
+
+	char const *what() const throw() { return _errorMessage.c_str(); };
+};
+
 class JSONUtils
 {
 
@@ -30,15 +39,15 @@ class JSONUtils
 
 	static bool isNull(json root, string field);
 
-	static string asString(json root, string field = "", string defaultValue = "");
+	static string asString(json root, string field = "", string defaultValue = "", bool notFoundAsException = false);
 
-	static int asInt(json root, string field = "", int defaultValue = 0);
+	static int asInt(json root, string field = "", int defaultValue = 0, bool notFoundAsException = false);
 
-	static int64_t asInt64(json root, string field = "", int64_t defaultValue = 0);
+	static int64_t asInt64(json root, string field = "", int64_t defaultValue = 0, bool notFoundAsException = false);
 
-	static double asDouble(json root, string field = "", double defaultValue = 0.0);
+	static double asDouble(json root, string field = "", double defaultValue = 0.0, bool notFoundAsException = false);
 
-	static bool asBool(json root, string field, bool defaultValue);
+	static bool asBool(json root, string field, bool defaultValue, bool notFoundAsException = false);
 
 	static json toJson(string json, bool warningIfError = false);
 

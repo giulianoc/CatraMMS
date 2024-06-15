@@ -1765,7 +1765,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 				// abbiamo il log nel catch
 				// SPDLOG_WARN(errorMessage);
 
-				throw NotFound(errorMessage);
+				throw DBRecordNotFound(errorMessage);
 			}
 		}
 
@@ -1775,7 +1775,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 
 		return sqlResultSet;
 	}
-	catch (NotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		// il chiamante decidera se loggarlo come error
 		SPDLOG_WARN(

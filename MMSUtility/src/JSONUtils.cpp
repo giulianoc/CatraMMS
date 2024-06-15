@@ -26,8 +26,19 @@ bool JSONUtils::isNull(json root, string field)
 	return root[field].is_null();
 }
 
-string JSONUtils::asString(json root, string field, string defaultValue)
+string JSONUtils::asString(json root, string field, string defaultValue, bool notFoundAsException)
 {
+	if (notFoundAsException && !isMetadataPresent(root, field))
+	{
+		string errorMessage = fmt::format(
+			"Field not found"
+			", field: {}",
+			field
+		);
+
+		throw JsonFieldNotFound(errorMessage);
+	}
+
 	if (root == nullptr)
 		return defaultValue;
 
@@ -62,8 +73,19 @@ string JSONUtils::asString(json root, string field, string defaultValue)
 	}
 }
 
-int JSONUtils::asInt(json root, string field, int defaultValue)
+int JSONUtils::asInt(json root, string field, int defaultValue, bool notFoundAsException)
 {
+	if (notFoundAsException && !isMetadataPresent(root, field))
+	{
+		string errorMessage = fmt::format(
+			"Field not found"
+			", field: {}",
+			field
+		);
+
+		throw JsonFieldNotFound(errorMessage);
+	}
+
 	if (root == nullptr)
 		return defaultValue;
 
@@ -92,8 +114,19 @@ int JSONUtils::asInt(json root, string field, int defaultValue)
 	}
 }
 
-int64_t JSONUtils::asInt64(json root, string field, int64_t defaultValue)
+int64_t JSONUtils::asInt64(json root, string field, int64_t defaultValue, bool notFoundAsException)
 {
+	if (notFoundAsException && !isMetadataPresent(root, field))
+	{
+		string errorMessage = fmt::format(
+			"Field not found"
+			", field: {}",
+			field
+		);
+
+		throw JsonFieldNotFound(errorMessage);
+	}
+
 	if (root == nullptr)
 		return defaultValue;
 
@@ -122,8 +155,19 @@ int64_t JSONUtils::asInt64(json root, string field, int64_t defaultValue)
 	}
 }
 
-double JSONUtils::asDouble(json root, string field, double defaultValue)
+double JSONUtils::asDouble(json root, string field, double defaultValue, bool notFoundAsException)
 {
+	if (notFoundAsException && !isMetadataPresent(root, field))
+	{
+		string errorMessage = fmt::format(
+			"Field not found"
+			", field: {}",
+			field
+		);
+
+		throw JsonFieldNotFound(errorMessage);
+	}
+
 	if (root == nullptr)
 		return defaultValue;
 
@@ -152,8 +196,19 @@ double JSONUtils::asDouble(json root, string field, double defaultValue)
 	}
 }
 
-bool JSONUtils::asBool(json root, string field, bool defaultValue)
+bool JSONUtils::asBool(json root, string field, bool defaultValue, bool notFoundAsException)
 {
+	if (notFoundAsException && !isMetadataPresent(root, field))
+	{
+		string errorMessage = fmt::format(
+			"Field not found"
+			", field: {}",
+			field
+		);
+
+		throw JsonFieldNotFound(errorMessage);
+	}
+
 	if (root == nullptr)
 		return defaultValue;
 

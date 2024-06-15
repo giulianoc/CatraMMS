@@ -1,42 +1,9 @@
 
 #include "JSONUtils.h"
 #include "MMSCURL.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
-/*
-#include <stdio.h>
-
-#include "CheckEncodingTimes.h"
-#include "CheckIngestionTimes.h"
-#include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "ContentRetentionTimes.h"
-#include "DBDataRetentionTimes.h"
-#include "FFMpeg.h"
-#include "GEOInfoTimes.h"
-#include "PersistenceLock.h"
-#include "ThreadsStatisticTimes.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-#include <fstream>
-#include <iomanip>
-#include <regex>
-#include <sstream>
-// #include "EMailSender.h"
-#include "Magick++.h"
-// #include <openssl/md5.h>
-#include "spdlog/spdlog.h"
-#include <openssl/evp.h>
-
-#define MD5BUFFERSIZE 16384
-*/
+#include "spdlog/fmt/fmt.h"
 
 void MMSEngineProcessor::emailNotificationThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -199,6 +166,7 @@ void MMSEngineProcessor::emailNotificationThread(
 									{
 										checkStreaming_streamingName = JSONUtils::asString(parametersRoot, field, "");
 
+										/*
 										bool warningIfMissing = false;
 										tuple<
 											int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int,
@@ -207,9 +175,12 @@ void MMSEngineProcessor::emailNotificationThread(
 												workspace->_workspaceKey, checkStreaming_streamingName, warningIfMissing
 											);
 
-										string streamSourceType;
 										tie(ignore, streamSourceType, ignore, checkStreaming_streamingUrl, ignore, ignore, ignore, ignore, ignore,
 											ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore) = channelDetails;
+										*/
+										string streamSourceType;
+										tie(streamSourceType, checkStreaming_streamingUrl) =
+											_mmsEngineDBFacade->stream_sourceTypeUrl(workspace->_workspaceKey, checkStreaming_streamingName);
 									}
 								}
 								else
@@ -224,12 +195,28 @@ void MMSEngineProcessor::emailNotificationThread(
 							}
 						}
 					}
+					catch (DBRecordNotFound &e)
+					{
+						string errorMessage = fmt::format(
+							"Exception processing referencies"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}"
+							", e.what: ",
+							_processorIdentifier, ingestionJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
 					catch (...)
 					{
-						string errorMessage = string("Exception processing referencies") +
-											  ", _processorIdentifier: " + to_string(_processorIdentifier) +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey);
-						SPDLOG_ERROR(string() + errorMessage);
+						string errorMessage = fmt::format(
+							"Exception processing referencies"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}",
+							_processorIdentifier, ingestionJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}

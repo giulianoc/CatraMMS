@@ -186,12 +186,19 @@ bool EncoderProxy::liveProxy(string proxyType)
 							// string encodingParameters = JSONUtils::toString(
 							// 	_encodingItem->_encodingParametersRoot);
 
-							_logger->info(
-								__FILEREF__ + "updateOutputRtmpAndPlaURL" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) + ", ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								", awsChannelConfigurationLabel: " + awsChannelConfigurationLabel + ", awsChannelId: " + awsChannelId +
-								", rtmpURL: " + rtmpURL + ", playURL: " + playURL + ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+							SPDLOG_INFO(
+								"updateOutputRtmpAndPlaURL"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", awsChannelConfigurationLabel: {}"
+								", awsChannelId: {}"
+								", rtmpURL: {}"
+								", playURL: {}"
+								", channelAlreadyReserved: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, awsChannelConfigurationLabel, awsChannelId, rtmpURL, playURL, channelAlreadyReserved
 								// + ", encodingParameters: " +
 								// encodingParameters
 							);
@@ -537,6 +544,7 @@ bool EncoderProxy::liveProxy(string proxyType)
 			}
 
 			killedByUser = liveProxy_through_ffmpeg(proxyType);
+
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				json outputRoot = outputsRoot[outputIndex];
@@ -713,30 +721,28 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 {
 
 	string encodersPool;
-	int64_t liveURLConfKey = -1;
-	string liveURL;
+	string url;
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
 	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
 	string streamSourceType;
-	int64_t pushEncoderKey;
-	// string pushEncoderName;
+
+	string field = "inputsRoot";
+	json inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+
+	json firstInputRoot = inputsRoot[0];
+
+	if (proxyType == "vodProxy")
+		field = "vodInput";
+	else if (proxyType == "liveProxy")
+		field = "streamInput";
+	else if (proxyType == "countdownProxy")
+		field = "countdownInput";
+	json streamInputRoot = firstInputRoot[field];
+
 	{
-		string field = "inputsRoot";
-		json inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
-
-		json firstInputRoot = inputsRoot[0];
-
-		if (proxyType == "vodProxy")
-			field = "vodInput";
-		else if (proxyType == "liveProxy")
-			field = "streamInput";
-		else if (proxyType == "countdownProxy")
-			field = "countdownInput";
-		json streamInputRoot = firstInputRoot[field];
-
 		if (proxyType == "vodProxy" || proxyType == "countdownProxy")
 		{
 			// both vodProxy and countdownProxy work with VOD
@@ -748,17 +754,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			field = "encodersPoolLabel";
 			encodersPool = JSONUtils::asString(streamInputRoot, field, "");
 
-			field = "confKey";
-			liveURLConfKey = JSONUtils::asInt64(streamInputRoot, field, 0);
-
 			field = "url";
-			liveURL = JSONUtils::asString(streamInputRoot, field, "");
-
-			field = "pushEncoderKey";
-			pushEncoderKey = JSONUtils::asInt64(streamInputRoot, field, -1);
-
-			// field = "pushEncoderName";
-			// pushEncoderName = JSONUtils::asString(streamInputRoot, field, "");
+			url = JSONUtils::asString(streamInputRoot, field, "");
 
 			field = "streamSourceType";
 			streamSourceType = JSONUtils::asString(streamInputRoot, field, "");
@@ -771,8 +768,6 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 		maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_ingestedParametersRoot, field, -1);
 
 		{
-			// json firstInputRoot = inputsRoot[0];
-
 			field = "timePeriod";
 			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
 
@@ -911,9 +906,73 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 			if (_encodingItem->_encoderKey == -1)
 			{
-				if (streamSourceType == "IP_PUSH" && pushEncoderKey != -1)
+				// 2021-12-14: we have to read again encodingParametersRoot
+				// because,
+				//	in case the playlist (inputsRoot) is changed, the
+				// updated inputsRoot 	is into DB
 				{
-					_currentUsedFFMpegEncoderKey = pushEncoderKey;
+					try
+					{
+						tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> encodingJobDetails =
+							_mmsEngineDBFacade->getEncodingJobDetails(
+								_encodingItem->_encodingJobKey,
+								// 2022-12-18: true because the
+								// inputsRoot maybe was just updated
+								true
+							);
+
+						string encodingParameters;
+
+						tie(ignore, ignore, ignore, ignore, encodingParameters) = encodingJobDetails;
+
+						_encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
+					}
+					catch (runtime_error &e)
+					{
+						_logger->error(
+							__FILEREF__ + "getEncodingJobDetails failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
+							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+						);
+
+						throw e;
+					}
+					catch (exception &e)
+					{
+						_logger->error(
+							__FILEREF__ + "getEncodingJobDetails failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
+							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						);
+
+						throw e;
+					}
+				}
+
+				if (streamSourceType == "IP_PUSH")
+				{
+					// scenario:
+					// 	- viene configurato uno Stream per un IP_PUSH su un encoder specifico
+					// 	- questo encoder ha un fault e va giu
+					// 	- finche questo encode non viene ripristinato (dipende da Hetzner) abbiamo un outage
+					// 	- Per evitare l'outage, posso io cambiare encoder nella configurazione dello Stream
+					// 	- La getStreamInputPushDetails sotto mi serve in questo loop per recuperare avere l'encoder aggiornato configurato nello
+					// Stream 		altrimenti rimarremmo con l'encoder e l'url calcolata all'inizio e non potremmo evitare l'outage
+
+					json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
+
+					// se è IP_PUSH vuol dire anche che siamo nel caso di proxyType == "liveProxy"
+					json streamInputRoot = inputsRoot[0]["streamInput"];
+
+					string streamConfigurationLabel = JSONUtils::asString(streamInputRoot, "configurationLabel", "");
+
+					auto [updatedPushEncoderKey, updatedURL] = _mmsEngineDBFacade->getStreamInputPushDetails(
+						_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel
+					);
+					streamInputRoot["pushEncoderKey"] = updatedPushEncoderKey;
+					streamInputRoot["url"] = updatedURL;
+					inputsRoot[0] = streamInputRoot;
+					(_encodingItem->_encodingParametersRoot)["inputsRoot"] = inputsRoot;
+
+					_currentUsedFFMpegEncoderKey = updatedPushEncoderKey;
 					// 2023-12-18: pushEncoderName è importante che sia usato
 					// nella url rtmp
 					//	dove il transcoder ascolta per il flusso di streaming
@@ -921,7 +980,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					// l'engine deve comunicare 	con il transcoder. Questa url
 					// dipende solamente dal fatto che il transcoder 	sia interno
 					// o esterno
-					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(pushEncoderKey); // , pushEncoderName);
+					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // , pushEncoderName);
 					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
 				}
 				else
@@ -952,54 +1011,13 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 				string body;
 				{
-					// 2021-12-14: we have to read again encodingParametersRoot
-					// because,
-					//	in case the playlist (inputsRoot) is changed, the
-					// updated inputsRoot 	is into DB
-					{
-						try
-						{
-							tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> encodingJobDetails =
-								_mmsEngineDBFacade->getEncodingJobDetails(
-									_encodingItem->_encodingJobKey,
-									// 2022-12-18: true because the
-									// inputsRoot maybe was just updated
-									true
-								);
-
-							string encodingParameters;
-
-							tie(ignore, ignore, ignore, ignore, encodingParameters) = encodingJobDetails;
-
-							_encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
-						}
-						catch (runtime_error &e)
-						{
-							_logger->error(
-								__FILEREF__ + "getEncodingJobDetails failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-							);
-
-							throw e;
-						}
-						catch (exception &e)
-						{
-							_logger->error(
-								__FILEREF__ + "getEncodingJobDetails failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							);
-
-							throw e;
-						}
-					}
-
 					json liveProxyMetadata;
 
 					// 2023-03-21: rimuovere il parametro ingestionJobKey se il
 					// trascoder deployed è > 1.0.5315
 					liveProxyMetadata["ingestionJobKey"] = _encodingItem->_ingestionJobKey;
 					liveProxyMetadata["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
-					liveProxyMetadata["liveURL"] = liveURL;
+					liveProxyMetadata["liveURL"] = url;
 					liveProxyMetadata["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 					liveProxyMetadata["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
 

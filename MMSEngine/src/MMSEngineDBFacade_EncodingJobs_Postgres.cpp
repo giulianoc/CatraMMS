@@ -3353,7 +3353,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
 				// abbiamo il log nel catch
 				// SPDLOG_WARN(errorMessage);
 
-				throw NotFound(errorMessage);
+				throw DBRecordNotFound(errorMessage);
 			}
 		}
 
@@ -3363,7 +3363,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
 
 		return sqlResultSet;
 	}
-	catch (NotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		// il chiamante decidera se loggarlo come error
 		SPDLOG_WARN(
@@ -5671,7 +5671,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 
 	string configurationLabel, int64_t confKey, string liveURL, string encodersPoolLabel, EncodingPriority encodingPriority,
 
-	int pushListenTimeout, int64_t pushEncoderKey, string pushEncoderName, json captureRoot, json tvRoot,
+	int pushListenTimeout, int64_t pushEncoderKey, json captureRoot, json tvRoot,
 
 	bool monitorHLS, bool liveRecorderVirtualVOD, int monitorVirtualVODOutputRootIndex,
 
@@ -5733,9 +5733,6 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 
 				field = "pushEncoderKey";
 				parametersRoot[field] = pushEncoderKey;
-
-				field = "pushEncoderName";
-				parametersRoot[field] = pushEncoderName;
 
 				field = "capture";
 				parametersRoot[field] = captureRoot;

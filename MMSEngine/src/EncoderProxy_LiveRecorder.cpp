@@ -814,20 +814,10 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 {
 	bool exitInCaseOfUrlNotFoundOrForbidden;
 	string streamSourceType;
-	int64_t pushEncoderKey;
-	// string pushEncoderName;
 	string encodersPool;
 	{
 		string field = "exitInCaseOfUrlNotFoundOrForbidden";
 		exitInCaseOfUrlNotFoundOrForbidden = JSONUtils::asBool(_encodingItem->_ingestedParametersRoot, field, false);
-
-		field = "pushEncoderKey";
-		pushEncoderKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
-
-		// field = "pushEncoderName";
-		// pushEncoderName = JSONUtils::asString(
-		// 	_encodingItem->_encodingParametersRoot, field, ""
-		// );
 
 		field = "streamSourceType";
 		streamSourceType = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
@@ -923,9 +913,25 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 
 			if (_encodingItem->_encoderKey == -1)
 			{
-				if (streamSourceType == "IP_PUSH" && pushEncoderKey != -1)
+				if (streamSourceType == "IP_PUSH")
 				{
-					_currentUsedFFMpegEncoderKey = pushEncoderKey;
+					// scenario:
+					// 	- viene configurato uno Stream per un IP_PUSH su un encoder specifico
+					// 	- questo encoder ha un fault e va giu
+					// 	- finche questo encode non viene ripristinato (dipende da Hetzner) abbiamo un outage
+					// 	- Per evitare l'outage, posso io cambiare encoder nella configurazione dello Stream
+					// 	- La getStreamInputPushDetails sotto mi serve in questo loop per recuperare avere l'encoder aggiornato configurato nello
+					// Stream 		altrimenti rimarremmo con l'encoder e l'url calcolata all'inizio e non potremmo evitare l'outage
+
+					string streamConfigurationLabel = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "configurationLabel", "");
+
+					auto [updatedPushEncoderKey, updatedURL] = _mmsEngineDBFacade->getStreamInputPushDetails(
+						_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel
+					);
+					_encodingItem->_encodingParametersRoot["pushEncoderKey"] = updatedPushEncoderKey;
+					_encodingItem->_encodingParametersRoot["liveURL"] = updatedURL;
+
+					_currentUsedFFMpegEncoderKey = updatedPushEncoderKey;
 					// 2023-05-14: pushEncoderName è importante che sia usato
 					// nella url rtmp
 					//	dove il transcoder ascolta per il flusso di streaming
@@ -933,7 +939,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 					// l'engine deve comunicare 	con il transcoder. Questa url
 					// dipende solamente dal fatto che il transcoder 	sia interno
 					// o esterno
-					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(pushEncoderKey); // pushEncoderName);
+					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // pushEncoderName);
 					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
 				}
 				else
@@ -952,14 +958,16 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
 				}
 
-				_logger->info(
-					__FILEREF__ + "LiveRecorder. Selection of the transcoder" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-					", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", streamSourceType: " + streamSourceType +
-					", pushEncoderKey: " + to_string(pushEncoderKey) +
-					// ", pushEncoderName: " + pushEncoderName +
-					", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost +
-					", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+				SPDLOG_INFO(
+					"LiveRecorder. Selection of the transcoder"
+					", _proxyIdentifier: {}"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", streamSourceType: {}"
+					", _currentUsedFFMpegEncoderHost: {}"
+					", _currentUsedFFMpegEncoderKey: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, streamSourceType,
+					_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey
 				);
 
 				ffmpegEncoderURL = _currentUsedFFMpegEncoderHost + ffmpegURI + "/" + to_string(_encodingItem->_ingestionJobKey) + "/" +

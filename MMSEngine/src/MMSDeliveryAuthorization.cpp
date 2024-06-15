@@ -15,9 +15,11 @@
 
 #include "AWSSigner.h"
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "catralibraries/Convert.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
 // #include <openssl/md5.h>
 #include <curlpp/Easy.hpp>
@@ -659,6 +661,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				string configurationLabel = JSONUtils::asString(ingestionJobRoot, field, "");
 
+				int64_t streamConfKey = _mmsEngineDBFacade->stream_confKey(requestWorkspace->_workspaceKey, configurationLabel);
+				/*
 				bool warningIfMissing = false;
 				tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 					streamDetails = _mmsEngineDBFacade->getStreamDetails(requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
@@ -666,6 +670,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				int64_t streamConfKey;
 				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
 					ignore, ignore, ignore) = streamDetails;
+				*/
 
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey, clientIPAddress, userId,
@@ -673,10 +678,21 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					streamConfKey, configurationLabel
 				);
 			}
+			catch (DBRecordNotFound &e)
+			{
+				SPDLOG_ERROR(
+					"mmsEngineDBFacade->addRequestStatistic failed"
+					", e.what: {}",
+					e.what()
+				);
+			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed") + ", e.what: " + e.what();
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(
+					"mmsEngineDBFacade->addRequestStatistic failed"
+					", e.what: {}",
+					e.what()
+				);
 			}
 		}
 		else // if (ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid)

@@ -1,5 +1,6 @@
 
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/StringUtils.h"
@@ -24,11 +25,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string streamSourceType;
 		string encodersPoolLabel;
 		string pullUrl;
+		/*
 		string pushProtocol;
 		int64_t pushEncoderKey = -1;
 		string pushEncoderName;
 		int pushServerPort = -1;
 		string pushUri;
+		*/
 		int pushListenTimeout = -1;
 		int captureVideoDeviceNumber = -1;
 		string captureVideoInputFormat;
@@ -74,14 +77,21 @@ void MMSEngineProcessor::manageLiveRecorder(
 				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 				{
-					bool pushPublicEncoderName = false;
+					/*
 					bool warningIfMissing = false;
 					tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort,
 						pushUri, pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight,
 						captureAudioDeviceNumber, captureChannelsNumber, tvSourceTVConfKey) = channelConfDetails;
+						*/
 
+					// bool pushPublicEncoderName = false;
+					tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat,
+						captureFrameRate, captureWidth, captureHeight, captureAudioDeviceNumber, captureChannelsNumber, tvSourceTVConfKey) =
+						_mmsEngineDBFacade->stream_aLot(workspace->_workspaceKey, configurationLabel);
+
+					/*
 					if (pushEncoderKey >= 0)
 					{
 						auto [pushEncoderLabel, publicServerName, internalServerName] = _mmsEngineDBFacade->getEncoderDetails(pushEncoderKey);
@@ -91,6 +101,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 						else
 							pushEncoderName = internalServerName;
 					}
+					*/
 					// default is IP_PULL
 					if (streamSourceType == "")
 						streamSourceType = "IP_PULL";
@@ -311,6 +322,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int tvVideoPid = -1;
 		int tvAudioItalianPid = -1;
 		string liveURL;
+		int64_t pushEncoderKey = -1;
 
 		if (streamSourceType == "IP_PULL")
 		{
@@ -327,7 +339,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 		else if (streamSourceType == "IP_PUSH")
 		{
-			liveURL = pushProtocol + "://" + pushEncoderName + ":" + to_string(pushServerPort) + pushUri;
+			tie(pushEncoderKey, liveURL) =
+				_mmsEngineDBFacade->getStreamInputPushDetails(workspace->_workspaceKey, ingestionJobKey, configurationLabel);
+			// liveURL = pushProtocol + "://" + pushEncoderName + ":" + to_string(pushServerPort) + pushUri;
 		}
 		else if (streamSourceType == "TV")
 		{
@@ -384,30 +398,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
 			}
-
-			/*
-			int monitorVirtualVODSegmentDurationInSeconds;
-			{
-				if (liveRecorderVirtualVOD)
-					monitorVirtualVODSegmentDurationInSeconds =
-			virtualVODSegmentDurationInSeconds; else
-					monitorVirtualVODSegmentDurationInSeconds =
-			monitorSegmentDurationInSeconds;
-			}
-
-			int monitorVirtualVODPlaylistEntriesNumber;
-			{
-				if (liveRecorderVirtualVOD)
-				{
-					monitorVirtualVODPlaylistEntriesNumber =
-			(liveRecorderVirtualVODMaxDurationInMinutes * 60) /
-						monitorVirtualVODSegmentDurationInSeconds;
-				}
-				else
-					monitorVirtualVODPlaylistEntriesNumber =
-			monitorPlaylistEntriesNumber;
-			}
-			*/
 
 			json localOutputRoot;
 
@@ -649,7 +639,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			encodingPriority,
 
-			pushListenTimeout, pushEncoderKey, pushEncoderName, captureRoot,
+			pushListenTimeout, pushEncoderKey, captureRoot,
 
 			tvRoot,
 
@@ -663,11 +653,28 @@ void MMSEngineProcessor::manageLiveRecorder(
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL
 		);
 	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"manageLiveRecorder failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			_processorIdentifier, ingestionJobKey, e.what()
+		);
+
+		// Update IngestionJob done in the calling method
+
+		throw e;
+	}
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
-			string() + "manageLiveRecorder failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
+			"manageLiveRecorder failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			_processorIdentifier, ingestionJobKey, e.what()
 		);
 
 		// Update IngestionJob done in the calling method
@@ -677,8 +684,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() + "manageLiveRecorder failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+			"manageLiveRecorder failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}",
+			_processorIdentifier, ingestionJobKey
 		);
 
 		// Update IngestionJob done in the calling method

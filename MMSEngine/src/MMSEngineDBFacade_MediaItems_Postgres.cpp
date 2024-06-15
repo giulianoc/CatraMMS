@@ -1119,7 +1119,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					newMediaItemKey = physicalPath_MediaItemKey(physicalPathKey, &localSqlDuration, fromMaster);
 					internalSqlDuration += localSqlDuration;
 				}
-				catch (NotFound &e)
+				catch (DBRecordNotFound &e)
 				{
 					SPDLOG_ERROR(
 						"getPhysicalPath_MediaItemKey: requested physicalPathKey does not exist"
@@ -1139,7 +1139,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					newMediaItemKey = externalUniqueName_MediaItemKey(workspaceKey, uniqueName, &localSqlDuration, fromMaster);
 					internalSqlDuration += localSqlDuration;
 				}
-				catch (NotFound &e)
+				catch (DBRecordNotFound &e)
 				{
 					SPDLOG_ERROR(
 						"getExternalUniqueName_MediaItemKey: requested workspaceKey/uniqueName does not exist"
@@ -2015,7 +2015,7 @@ int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, ch
 
 		return (*sqlResultSet)[0][0].as<int64_t>(-1);
 	}
-	catch (NotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		SPDLOG_ERROR(
 			"NotFound"
@@ -2148,7 +2148,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 				// abbiamo il log nel catch
 				// SPDLOG_WARN(errorMessage);
 
-				throw NotFound(errorMessage);
+				throw DBRecordNotFound(errorMessage);
 			}
 		}
 
@@ -2158,7 +2158,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 
 		return sqlResultSet;
 	}
-	catch (NotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		// il chaimante decidera se loggarlo come error
 		SPDLOG_WARN(
@@ -2291,7 +2291,7 @@ MMSEngineDBFacade::externalUniqueName_UniqueName(int64_t workspaceKey, int64_t m
 		return (*sqlResultSet).size() == 0 ? "" : (*sqlResultSet)[0][0].as<string>("");
 	}
 	/*
-	catch (NotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		SPDLOG_ERROR(
 			"NotFound"
@@ -2345,7 +2345,7 @@ MMSEngineDBFacade::externalUniqueName_MediaItemKey(int64_t workspaceKey, string 
 
 		return (*sqlResultSet)[0][0].as<int64_t>(-1);
 	}
-	catch (NotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		SPDLOG_ERROR(
 			"NotFound"
@@ -2486,7 +2486,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 				// abbiamo il log nel catch
 				// SPDLOG_WARN(errorMessage);
 
-				throw NotFound(errorMessage);
+				throw DBRecordNotFound(errorMessage);
 			}
 		}
 
@@ -2496,7 +2496,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 
 		return sqlResultSet;
 	}
-	catch (NotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		// il chaimante decidera se loggarlo come error
 		SPDLOG_WARN(

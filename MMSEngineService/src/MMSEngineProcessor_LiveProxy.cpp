@@ -1,7 +1,9 @@
 
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
+#include "spdlog/fmt/fmt.h"
 
 void MMSEngineProcessor::manageLiveProxy(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot
@@ -45,25 +47,21 @@ void MMSEngineProcessor::manageLiveProxy(
 		{
 			{
 				string field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-				{
-					string errorMessage = string() + "Field is not present or it is null" +
-										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-					SPDLOG_ERROR(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
+				configurationLabel = JSONUtils::asString(parametersRoot, field, "", true);
 
 				field = "useVideoTrackFromMediaItemKey";
 				useVideoTrackFromMediaItemKey = JSONUtils::asInt64(parametersRoot, field, -1);
 
 				{
+					/*
 					bool warningIfMissing = false;
 					tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
 						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
 					tie(ignore, streamSourceType, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
 						ignore, ignore, ignore, ignore) = channelConfDetails;
+					*/
+
+					streamSourceType = _mmsEngineDBFacade->stream_sourceType(workspace->_workspaceKey, configurationLabel);
 
 					// default is IP_PULL
 					if (streamSourceType == "")
@@ -88,8 +86,12 @@ void MMSEngineProcessor::manageLiveProxy(
 					field = "schedule";
 					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 					{
-						string errorMessage = string() + "Field is not present or it is null" +
-											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
+						string errorMessage = fmt::format(
+							"Field is not present or it is null"
+							", _processorIdentifier: {}"
+							", field: {}",
+							_processorIdentifier, field
+						);
 						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -101,29 +103,11 @@ void MMSEngineProcessor::manageLiveProxy(
 					json proxyPeriodRoot = parametersRoot[field];
 
 					field = "start";
-					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
-					{
-						string errorMessage = string() + "Field is not present or it is null" +
-											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-						SPDLOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
+					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "", true);
 					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
 					field = "end";
-					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
-					{
-						string errorMessage = string() + "Field is not present or it is null" +
-											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-						SPDLOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
+					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "", true);
 					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
@@ -150,8 +134,12 @@ void MMSEngineProcessor::manageLiveProxy(
 			field = "outputs";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", Field: " + field;
+				string errorMessage = fmt::format(
+					"Field is not present or it is null"
+					", _processorIdentifier: {}"
+					", field: {}",
+					_processorIdentifier, field
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -170,8 +158,11 @@ void MMSEngineProcessor::manageLiveProxy(
 			int64_t sourcePhysicalPathKey;
 
 			SPDLOG_INFO(
-				string() + "useVideoTrackFromMediaItemKey" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", useVideoTrackFromMediaItemKey: " + to_string(useVideoTrackFromMediaItemKey)
+				"useVideoTrackFromMediaItemKey"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", useVideoTrackFromMediaItemKey: {}",
+				_processorIdentifier, ingestionJobKey, useVideoTrackFromMediaItemKey
 			);
 
 			{
@@ -193,7 +184,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					utcNow = chrono::system_clock::to_time_t(now);
 				}
 
-				pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
+				tie(useVideoTrackFromPhysicalDeliveryURL, ignore) = _mmsDeliveryAuthorization->createDeliveryAuthorization(
 					-1, // userKey,
 					workspace,
 					"", // clientIPAddress,
@@ -218,8 +209,6 @@ void MMSEngineProcessor::manageLiveProxy(
 					""	   // userId (it is not needed it filteredByStatistic is
 					   // true
 				);
-
-				tie(useVideoTrackFromPhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
 			}
 		}
 
@@ -299,11 +288,28 @@ void MMSEngineProcessor::manageLiveProxy(
 			_mmsWorkflowIngestionURL
 		);
 	}
-	catch (ConfKeyNotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		SPDLOG_ERROR(
-			string() + "manageLiveProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
+			"manageLiveProxy failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what: {}",
+			_processorIdentifier, ingestionJobKey, e.what()
+		);
+
+		// Update IngestionJob done in the calling method
+
+		throw runtime_error(e.what());
+	}
+	catch (JsonFieldNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"manageLiveProxy failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what: {}",
+			_processorIdentifier, ingestionJobKey, e.what()
 		);
 
 		// Update IngestionJob done in the calling method
@@ -313,8 +319,11 @@ void MMSEngineProcessor::manageLiveProxy(
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
-			string() + "manageLiveProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
+			"manageLiveProxy failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what: {}",
+			_processorIdentifier, ingestionJobKey, e.what()
 		);
 
 		// Update IngestionJob done in the calling method
@@ -324,8 +333,10 @@ void MMSEngineProcessor::manageLiveProxy(
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() + "manageLiveProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+			"manageLiveProxy failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}",
+			_processorIdentifier, ingestionJobKey
 		);
 
 		// Update IngestionJob done in the calling method

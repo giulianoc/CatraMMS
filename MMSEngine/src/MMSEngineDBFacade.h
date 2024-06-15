@@ -55,12 +55,12 @@ struct APIKeyNotFoundOrExpired : public exception
 	char const *what() const throw() { return "APIKey was not found or it is expired"; };
 };
 
-struct NotFound : public exception
+struct DBRecordNotFound : public exception
 {
 
 	string _errorMessage;
 
-	NotFound(string errorMessage) { _errorMessage = errorMessage; }
+	DBRecordNotFound(string errorMessage) { _errorMessage = errorMessage; }
 
 	char const *what() const throw() { return _errorMessage.c_str(); };
 };
@@ -1775,7 +1775,7 @@ class MMSEngineDBFacade
 		// bool highAvailability,
 		string configurationLabel, int64_t confKey, string url, string encodersPoolLabel, EncodingPriority encodingPriority,
 
-		int pushListenTimeout, int64_t pushEncoderKey, string pushEncoderName, json captureRoot, json tvRoot,
+		int pushListenTimeout, int64_t pushEncoderKey, json captureRoot, json tvRoot,
 
 		bool monitorHLS, bool liveRecorderVirtualVOD, int monitorVirtualVODOutputRootIndex,
 
@@ -2067,10 +2067,20 @@ class MMSEngineDBFacade
 	json getStreamFreePushEncoderPort(int64_t encoderKey, bool fromMaster = false);
 #endif
 
-	tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
-	getStreamDetails(int64_t workspaceKey, string label, bool warningIfMissing);
-
-	tuple<string, string, string> getStreamDetails(int64_t workspaceKey, int64_t confKey);
+	tuple<int64_t, string, string, string, int, int, string, int, int, int, int, int, int64_t> stream_aLot(int64_t workspaceKey, string label);
+	tuple<string, string, int64_t, bool, int, string> stream_pushInfo(int64_t workspaceKey, string label);
+	int64_t stream_confKey(int64_t workspaceKey, string label);
+	string stream_sourceType(int64_t workspaceKey, string label);
+	pair<string, string> stream_sourceTypeUrl(int64_t workspaceKey, string label);
+	tuple<int64_t, string, string> stream_confKeySourceTypeUrl(int64_t workspaceKey, string label);
+	json stream_userData(int64_t workspaceKey, int64_t confKey);
+	shared_ptr<PostgresHelper::SqlResultSet> streamQuery(
+		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t confKey = -1, string label = "", bool fromMaster = false,
+		int startIndex = -1, int rows = -1, string orderBy = "", bool notFoundAsException = true
+	);
+	// tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
+	// getStreamDetails(int64_t workspaceKey, string label, bool warningIfMissing);
+	// tuple<string, string, string> getStreamDetails(int64_t workspaceKey, int64_t confKey);
 
 	json addSourceTVStream(
 		string type, int64_t serviceId, int64_t networkId, int64_t transportStreamId, string name, string satellite, int64_t frequency, string lnb,
@@ -2313,6 +2323,7 @@ class MMSEngineDBFacade
 		string useVideoTrackFromPhysicalDeliveryURL, int maxWidth, string userAgent, string otherInputOptions, string taskEncodersPoolLabel,
 		json filtersRoot
 	);
+	pair<int64_t, string> getStreamInputPushDetails(int64_t workspaceKey, int64_t ingestionJobKey, string configurationLabel);
 
 	json getVodInputRoot(MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot);
 

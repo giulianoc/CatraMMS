@@ -24,6 +24,9 @@ if(DEFINED __POSTGRES__)
       MMSStorage.cpp
       MMSEngineDBFacade_Postgres.cpp
       MMSEngineDBFacade_Configuration_Postgres.cpp
+      MMSEngineDBFacade_ConfigurationOutputType_Postgres.cpp
+      MMSEngineDBFacade_ConfigurationSocial_Postgres.cpp
+      MMSEngineDBFacade_ConfigurationStream_Postgres.cpp
       MMSEngineDBFacade_CreateTables_Postgres.cpp
       MMSEngineDBFacade_EncodersPool_Postgres.cpp
       MMSEngineDBFacade_EncodingJobs_Postgres.cpp
