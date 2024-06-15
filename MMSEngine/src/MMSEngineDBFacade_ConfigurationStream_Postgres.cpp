@@ -1916,9 +1916,9 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
-			where += fmt::format("{} workspaceKey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
+			where += fmt::format("{} workspacekey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
 			if (confKey != -1)
-				where += fmt::format("{} confKey = {} ", where.size() > 0 ? "and" : "", confKey);
+				where += fmt::format("{} confkey = {} ", where.size() > 0 ? "and" : "", confKey);
 			if (label != "")
 				where += fmt::format("{} label = {} ", where.size() > 0 ? "and" : "", trans.quote(label));
 
@@ -1938,7 +1938,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 				"where "
 				"{} "
 				"{} {} {}",
-				_postgresHelper.buildQueryColumns(requestedColumns), workspaceKey, where, limit, offset, orderByCondition
+				_postgresHelper.buildQueryColumns(requestedColumns), where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
