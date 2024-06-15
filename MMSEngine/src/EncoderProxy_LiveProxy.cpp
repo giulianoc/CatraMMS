@@ -969,7 +969,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					);
 					streamInputRoot["pushEncoderKey"] = updatedPushEncoderKey;
 					streamInputRoot["url"] = updatedURL;
-					inputsRoot[0] = streamInputRoot;
+					inputsRoot[0]["streamInput"] = streamInputRoot;
 					(_encodingItem->_encodingParametersRoot)["inputsRoot"] = inputsRoot;
 
 					_currentUsedFFMpegEncoderKey = updatedPushEncoderKey;
