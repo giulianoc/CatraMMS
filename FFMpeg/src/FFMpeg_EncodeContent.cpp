@@ -11,13 +11,14 @@
  * Created on February 18, 2018, 1:27 AM
  */
 #include "FFMpeg.h"
+#include "FFMpegEncodingParameters.h"
+#include "JSONUtils.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
-#include "JSONUtils.h"
-#include "FFMpegEncodingParameters.h"
 /*
 #include "FFMpegFilters.h"
 #include "MMSCURL.h"
+#include "spdlog/fmt/fmt.h"
 #include <filesystem>
 #include <fstream>
 #include <regex>
@@ -1143,10 +1144,13 @@ void FFMpeg::encodeContent(
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-					_logger->info(
-						__FILEREF__ + "encodeContent: Executing ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					SPDLOG_INFO(
+						"encodeContent: Executing ffmpeg command"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _outputFfmpegPathFileName: {}"
+						", ffmpegArgumentList: {}",
+						ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName, ffmpegArgumentListStream.str()
 					);
 
 					bool redirectionStdOutput = true;
@@ -1159,24 +1163,36 @@ void FFMpeg::encodeContent(
 					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
-						string errorMessage =
-							__FILEREF__ + "encodeContent: ffmpeg command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", iReturnedStatus: " + to_string(iReturnedStatus) +
-							", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"encodeContent: executed ffmpeg command failed"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", iReturnedStatus: {}"
+							", _outputFfmpegPathFileName: {}"
+							", ffmpegArgumentList: {}",
+							ingestionJobKey, encodingJobKey, iReturnedStatus, _outputFfmpegPathFileName, ffmpegArgumentListStream.str()
+						);
 
 						// to hide the ffmpeg staff
-						errorMessage = __FILEREF__ + "encodeContent command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-									   ", ingestionJobKey: " + to_string(ingestionJobKey);
+						string errorMessage = fmt::format(
+							"encodeContent command failed"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}",
+							ingestionJobKey, encodingJobKey
+						);
 						throw runtime_error(errorMessage);
 					}
 
 					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
-					_logger->info(
-						__FILEREF__ + "encodeContent: Executed ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					SPDLOG_INFO(
+						"encodeContent: Executed ffmpeg command"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _outputFfmpegPathFileName: {}"
+						", ffmpegArgumentList: {}"
+						", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+						ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName, ffmpegArgumentListStream.str(),
+						chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 					);
 				}
 				catch (runtime_error &e)
@@ -1327,4 +1343,3 @@ void FFMpeg::encodeContent(
 		throw e;
 	}
 }
-

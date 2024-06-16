@@ -7,7 +7,7 @@
 		"profile" : "high422",
 		"frameRate": 25,
 		"twoPasses" : false,
-		"otherOutputParameters": "-preset medium -level 4.0 -crf 22",
+		"otherOutputParameters": "-pix_fmt yuv420p -preset medium -level 4.0 -crf 22",
 		"bitRates": [
 			{
 				"width" : 1920,
