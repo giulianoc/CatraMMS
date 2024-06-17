@@ -1448,7 +1448,7 @@ string EncoderProxy::generateMediaMetadataToIngest(
 		field = "crossReferences";
 		parametersRoot[field] = crossReferencesRoot;
 	}
-	else if (slideShowOfImageMediaItemKeys.size() > 0)
+	else if (slideShowOfImageMediaItemKeys.size() > 0 || slideShowOfAudioMediaItemKeys.size() > 0)
 	{
 		json crossReferencesRoot = json::array();
 		for (int64_t slideShowOfImageMediaItemKey : slideShowOfImageMediaItemKeys)
@@ -1466,12 +1466,6 @@ string EncoderProxy::generateMediaMetadataToIngest(
 			crossReferencesRoot.push_back(crossReferenceRoot);
 		}
 
-		field = "crossReferences";
-		parametersRoot[field] = crossReferencesRoot;
-	}
-	else if (slideShowOfAudioMediaItemKeys.size() > 0)
-	{
-		json crossReferencesRoot = json::array();
 		for (int64_t slideShowOfAudioMediaItemKey : slideShowOfAudioMediaItemKeys)
 		{
 			json crossReferenceRoot;
