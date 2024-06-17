@@ -1406,7 +1406,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 
 string EncoderProxy::generateMediaMetadataToIngest(
 	int64_t ingestionJobKey, string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,
-	double endTimeInSeconds, json parametersRoot
+	double endTimeInSeconds, vector<int64_t> slideShowOfImageMediaItemKeys, vector<int64_t> slideShowOfAudioMediaItemKeys, json parametersRoot
 )
 {
 	string field = "fileFormat";
@@ -1441,6 +1441,48 @@ string EncoderProxy::generateMediaMetadataToIngest(
 
 			field = "mediaItemKey";
 			crossReferenceRoot[field] = faceOfVideoMediaItemKey;
+
+			crossReferencesRoot.push_back(crossReferenceRoot);
+		}
+
+		field = "crossReferences";
+		parametersRoot[field] = crossReferencesRoot;
+	}
+	else if (slideShowOfImageMediaItemKeys.size() > 0)
+	{
+		json crossReferencesRoot = json::array();
+		for (int64_t slideShowOfImageMediaItemKey : slideShowOfImageMediaItemKeys)
+		{
+			json crossReferenceRoot;
+
+			MMSEngineDBFacade::CrossReferenceType crossReferenceType = MMSEngineDBFacade::CrossReferenceType::SlideShowOfImage;
+
+			field = "type";
+			crossReferenceRoot[field] = MMSEngineDBFacade::toString(crossReferenceType);
+
+			field = "mediaItemKey";
+			crossReferenceRoot[field] = slideShowOfImageMediaItemKey;
+
+			crossReferencesRoot.push_back(crossReferenceRoot);
+		}
+
+		field = "crossReferences";
+		parametersRoot[field] = crossReferencesRoot;
+	}
+	else if (slideShowOfAudioMediaItemKeys.size() > 0)
+	{
+		json crossReferencesRoot = json::array();
+		for (int64_t slideShowOfAudioMediaItemKey : slideShowOfAudioMediaItemKeys)
+		{
+			json crossReferenceRoot;
+
+			MMSEngineDBFacade::CrossReferenceType crossReferenceType = MMSEngineDBFacade::CrossReferenceType::SlideShowOfAudio;
+
+			field = "type";
+			crossReferenceRoot[field] = MMSEngineDBFacade::toString(crossReferenceType);
+
+			field = "mediaItemKey";
+			crossReferenceRoot[field] = slideShowOfAudioMediaItemKey;
 
 			crossReferencesRoot.push_back(crossReferenceRoot);
 		}

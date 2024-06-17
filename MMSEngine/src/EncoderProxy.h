@@ -228,7 +228,7 @@ class EncoderProxy
 
 	string generateMediaMetadataToIngest(
 		int64_t ingestionJobKey, string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,
-		double endTimeInSeconds, json parametersRoot
+		double endTimeInSeconds, vector<int64_t> slideShowOfImageMediaItemKeys, vector<int64_t> slideShowOfAudioMediaItemKeys, json parametersRoot
 	);
 
 	// void killEncodingJob(string transcoderHost, int64_t encodingJobKey);

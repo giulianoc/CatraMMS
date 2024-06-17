@@ -64,7 +64,8 @@
 		//	it is possible to specify this image is for a specific Video
 		"crossReferences": [
 			{
-				// mandatory. Possible values: ImageOfVideo (or VideoOfImage), ImageOfAudio (or AudioOfImage), FaceOfVideo, CutOfVideo, CutOfAudio
+				// mandatory. Possible values: ImageOfVideo (or VideoOfImage), ImageOfAudio (or AudioOfImage), FaceOfVideo,
+				// SlideShowOfImage (or ImageForSlideShow), SlideShowOfAudio (or AudioForSlideShow), CutOfVideo, CutOfAudio
 				"type": "ImageOfVideo",
 
 				// mandatory

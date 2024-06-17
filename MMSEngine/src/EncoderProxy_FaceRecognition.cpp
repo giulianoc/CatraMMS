@@ -446,7 +446,7 @@ string EncoderProxy::faceRecognition()
 						string mediaMetaDataContent = generateMediaMetadataToIngest(
 							_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1,
 							-1, // cutOfVideoMediaItemKey
-							_encodingItem->_ingestedParametersRoot
+							vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 						);
 
 						shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -508,7 +508,7 @@ string EncoderProxy::faceRecognition()
 				string mediaMetaDataContent = generateMediaMetadataToIngest(
 					_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1,
 					-1, // cutOfVideoMediaItemKey
-					_encodingItem->_ingestedParametersRoot
+					vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 				);
 
 				shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -558,7 +558,7 @@ string EncoderProxy::faceRecognition()
 			int64_t faceOfVideoMediaItemKey = sourceMediaItemKey;
 			string mediaMetaDataContent = generateMediaMetadataToIngest(
 				_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-				_encodingItem->_ingestedParametersRoot
+				vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 			);
 
 			shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -693,7 +693,7 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 		int64_t faceOfVideoMediaItemKey = -1;
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
 			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-			_encodingItem->_ingestedParametersRoot
+			vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 		);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =

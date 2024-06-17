@@ -16,31 +16,6 @@
 #include "JSONUtils.h"
 #include "LocalAssetIngestionEvent.h"
 #include "MultiLocalAssetIngestionEvent.h"
-/*
-#include "AWSSigner.h"
-#include "MMSCURL.h"
-#include "MMSDeliveryAuthorization.h"
-#include "Validator.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include "opencv2/face.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/imgproc.hpp"
-#include "opencv2/objdetect.hpp"
-#include <fstream>
-#include <regex>
-
-#include <aws/core/Aws.h>
-#include <aws/medialive/MediaLiveClient.h>
-#include <aws/medialive/model/DescribeChannelRequest.h>
-#include <aws/medialive/model/DescribeChannelResult.h>
-#include <aws/medialive/model/StartChannelRequest.h>
-#include <aws/medialive/model/StopChannelRequest.h>
-*/
 
 void EncoderProxy::processLiveGrid(bool killedByUser)
 {
@@ -130,10 +105,18 @@ void EncoderProxy::processSlideShow()
 		}
 		string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-		int64_t faceOfVideoMediaItemKey = -1;
+		vector<int64_t> slideShowOfImageMediaItemKeys;
+		vector<int64_t> slideShowOfAudioMediaItemKeys;
+		{
+			for (const auto &imageRoot : _encodingItem->_encodingParametersRoot["imagesRoot"])
+				slideShowOfImageMediaItemKeys.push_back(imageRoot["sourceMediaItemKey"]);
+			for (const auto &audioRoot : _encodingItem->_encodingParametersRoot["audiosRoot"])
+				slideShowOfAudioMediaItemKeys.push_back(audioRoot["sourceMediaItemKey"]);
+		}
+
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
-			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-			_encodingItem->_ingestedParametersRoot
+			_encodingItem->_ingestionJobKey, fileFormat, -1, -1, -1, -1, // cutOfVideoMediaItemKey
+			slideShowOfImageMediaItemKeys, slideShowOfAudioMediaItemKeys, _encodingItem->_ingestedParametersRoot
 		);
 
 		int outputFrameRate;
@@ -251,7 +234,7 @@ void EncoderProxy::processIntroOutroOverlay()
 		int64_t faceOfVideoMediaItemKey = -1;
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
 			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-			_encodingItem->_ingestedParametersRoot
+			vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 		);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -401,10 +384,9 @@ void EncoderProxy::processCutFrameAccurate()
 			_encodingItem->_ingestedParametersRoot[field] = destUserDataRoot;
 		}
 
-		int64_t faceOfVideoMediaItemKey = -1;
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
-			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, sourceVideoMediaItemKey, newUtcStartTimeInMilliSecs / 1000,
-			newUtcEndTimeInMilliSecs / 1000, _encodingItem->_ingestedParametersRoot
+			_encodingItem->_ingestionJobKey, fileFormat, -1, sourceVideoMediaItemKey, newUtcStartTimeInMilliSecs / 1000,
+			newUtcEndTimeInMilliSecs / 1000, vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 		);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -586,7 +568,7 @@ void EncoderProxy::processAddSilentAudio(bool killedByUser)
 			int64_t faceOfVideoMediaItemKey = -1;
 			string mediaMetaDataContent = generateMediaMetadataToIngest(
 				_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-				_encodingItem->_ingestedParametersRoot
+				vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 			);
 
 			shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -701,7 +683,7 @@ void EncoderProxy::processPictureInPicture(bool killedByUser)
 		int64_t faceOfVideoMediaItemKey = -1;
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
 			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-			_encodingItem->_ingestedParametersRoot
+			vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 		);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -814,7 +796,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
 		int64_t faceOfVideoMediaItemKey = -1;
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
 			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-			_encodingItem->_ingestedParametersRoot
+			vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 		);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -927,7 +909,7 @@ void EncoderProxy::processVideoSpeed(bool killedByUser)
 		int64_t faceOfVideoMediaItemKey = -1;
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
 			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-			_encodingItem->_ingestedParametersRoot
+			vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 		);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
@@ -1040,7 +1022,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killedByUser)
 		int64_t faceOfVideoMediaItemKey = -1;
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
 			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-			_encodingItem->_ingestedParametersRoot
+			vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 		);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =

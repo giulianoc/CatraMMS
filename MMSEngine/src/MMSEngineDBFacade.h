@@ -1119,6 +1119,10 @@ class MMSEngineDBFacade
 		AudioOfImage, // will be converted to ImageOfAudio
 		FaceOfVideo,
 		VideoOfFace, // will be converted to FaceOfVideo
+		SlideShowOfImage,
+		ImageForSlideShow, // will be converted to SlideShowOfImage
+		SlideShowOfAudio,
+		AudioForSlideShow, // will be converted to SlideShowOfAudio
 		CutOfVideo,
 		CutOfAudio,
 		PosterOfVideo,
@@ -1140,6 +1144,14 @@ class MMSEngineDBFacade
 			return "FaceOfVideo";
 		case CrossReferenceType::VideoOfFace:
 			return "VideoOfFace";
+		case CrossReferenceType::SlideShowOfImage:
+			return "SlideShowOfImage";
+		case CrossReferenceType::ImageForSlideShow:
+			return "ImageForSlideShow";
+		case CrossReferenceType::SlideShowOfAudio:
+			return "SlideShowOfAudio";
+		case CrossReferenceType::AudioForSlideShow:
+			return "AudioForSlideShow";
 		case CrossReferenceType::CutOfVideo:
 			return "CutOfVideo";
 		case CrossReferenceType::CutOfAudio:
@@ -1170,6 +1182,14 @@ class MMSEngineDBFacade
 			return CrossReferenceType::FaceOfVideo;
 		else if (lowerCase == "videoofface")
 			return CrossReferenceType::VideoOfFace;
+		else if (lowerCase == "slideshowofimage")
+			return CrossReferenceType::SlideShowOfImage;
+		else if (lowerCase == "imageforslideshow")
+			return CrossReferenceType::ImageForSlideShow;
+		else if (lowerCase == "slideshowofaudio")
+			return CrossReferenceType::SlideShowOfAudio;
+		else if (lowerCase == "audioforslideshow")
+			return CrossReferenceType::AudioForSlideShow;
 		else if (lowerCase == "cutofvideo")
 			return CrossReferenceType::CutOfVideo;
 		else if (lowerCase == "cutofaudio")

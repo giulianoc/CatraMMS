@@ -6627,6 +6627,24 @@ void MMSEngineDBFacade::manageCrossReferences(
 				field = "mediaItemKey";
 				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
 			}
+			else if (crossReferenceType == CrossReferenceType::ImageForSlideShow)
+			{
+				crossReferenceType = CrossReferenceType::SlideShowOfImage;
+
+				targetMediaItemKey = mediaItemKey;
+
+				field = "mediaItemKey";
+				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+			}
+			else if (crossReferenceType == CrossReferenceType::AudioForSlideShow)
+			{
+				crossReferenceType = CrossReferenceType::SlideShowOfAudio;
+
+				targetMediaItemKey = mediaItemKey;
+
+				field = "mediaItemKey";
+				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+			}
 			else if (crossReferenceType == CrossReferenceType::AudioOfImage)
 			{
 				crossReferenceType = CrossReferenceType::ImageOfAudio;

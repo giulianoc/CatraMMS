@@ -20,28 +20,6 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/objdetect.hpp"
-/*
-#include "AWSSigner.h"
-#include "FFMpeg.h"
-#include "MMSCURL.h"
-#include "MMSDeliveryAuthorization.h"
-#include "MultiLocalAssetIngestionEvent.h"
-#include "Validator.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include <fstream>
-#include <regex>
-
-#include <aws/core/Aws.h>
-#include <aws/medialive/MediaLiveClient.h>
-#include <aws/medialive/model/DescribeChannelRequest.h>
-#include <aws/medialive/model/DescribeChannelResult.h>
-#include <aws/medialive/model/StartChannelRequest.h>
-#include <aws/medialive/model/StopChannelRequest.h>
-*/
 
 string EncoderProxy::faceIdentification()
 {
@@ -541,7 +519,7 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 		int64_t faceOfVideoMediaItemKey = -1;
 		string mediaMetaDataContent = generateMediaMetadataToIngest(
 			_encodingItem->_ingestionJobKey, fileFormat, faceOfVideoMediaItemKey, -1, -1, -1, // cutOfVideoMediaItemKey
-			_encodingItem->_ingestedParametersRoot
+			vector<int64_t>(), vector<int64_t>(), _encodingItem->_ingestedParametersRoot
 		);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =

@@ -7,7 +7,7 @@ if [ ! -f "$debugFilename" ]; then
   echo "" > $debugFilename
 else 
   filesize=$(stat -c %s $debugFilename) 
-  if [ $filesize -gt 50000000]; then 
+  if [ $filesize -gt 50000000 ]; then 
     echo "" > $debugFilename 
   fi 
 fi
@@ -58,6 +58,9 @@ getAlarmDescription()
 			;;
 		"alarm_mms_sql_timing_check_service")
 			echo "mms sql too slow"
+			;;
+		"alarm_mms_server_reachable")
+			echo "mms server is not reachable"
 			;;
 		*)
 			echo "Unknown alarmType: $alarmType"
@@ -768,6 +771,31 @@ mms_sql_timing_check_service()
 
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
 		notify "$(hostname)" "alarm_mms_sql_timing_check_service" "alarm_mms_sql_timing_check_service" $alarmNotificationPeriod "$warningMessage"
+		return 1
+	fi
+}
+
+server_reachable()
+{
+	ip_address=$1
+	port=$2
+	host_name=$3
+
+	if nc -w 15 -z $ip_address $port 2>/dev/null; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_server_reachable, mms server is reachable: ip_address $ip_address, host_name: $host_name" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_server_reachable"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_server_reachable, mms server IS NOT reachable: ip_address $ip_address, host_name: $host_name" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 5))		#5 minuti
+		alarmDetails="mms server IS NOT reachable"
+		notify "$(hostname)" "alarm_mms_server_reachable" "alarm_mms_server_reachable_$host_name" $alarmNotificationPeriod "$alarmDetails"
 		return 1
 	fi
 }
