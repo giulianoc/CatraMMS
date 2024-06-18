@@ -259,6 +259,29 @@ bool JSONUtils::asBool(json root, string field, bool defaultValue, bool notFound
 	}
 }
 
+json JSONUtils::asJson(json root, string field, json defaultValue, bool notFoundAsException)
+{
+	bool isPresent = isMetadataPresent(root, field);
+
+	if (notFoundAsException && !isPresent)
+	{
+		string errorMessage = fmt::format(
+			"Field not found"
+			", field: {}",
+			field
+		);
+
+		throw JsonFieldNotFound(errorMessage);
+	}
+
+	// è presente oppure non è presente ma non deve dare eccezione
+
+	if (!isPresent)
+		return defaultValue;
+	else
+		return root[field];
+}
+
 json JSONUtils::toJson(string j, bool warningIfError)
 {
 	try
@@ -285,6 +308,14 @@ json JSONUtils::toJson(string j, bool warningIfError)
 	}
 }
 
+json JSONUtils::toJson(vector<int32_t> v)
+{
+	json root = json::array();
+	for (int32_t i : v)
+		root.push_back(i);
+	return root;
+}
+
 string JSONUtils::toString(json root)
 {
 	if (root == nullptr)
@@ -298,12 +329,4 @@ string JSONUtils::toString(json root)
 
 		return Json::writeString(wbuilder, joValueRoot);
 	*/
-}
-
-json JSONUtils::toJson(vector<int32_t> v)
-{
-	json root = json::array();
-	for (int32_t i : v)
-		root.push_back(i);
-	return root;
 }

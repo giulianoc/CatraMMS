@@ -51,10 +51,6 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@5.9.57.85:/opt/catramms
 	date
 
-	echo "hetzner-delivery-binary-gui-1"
-	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@5.9.57.85:/opt/catramms
-	date
-
 	echo "hetzner-delivery-binary-gui-5"
 	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@136.243.35.105:/opt/catramms
 	date

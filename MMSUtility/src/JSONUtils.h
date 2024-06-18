@@ -49,6 +49,8 @@ class JSONUtils
 
 	static bool asBool(json root, string field, bool defaultValue, bool notFoundAsException = false);
 
+	static json asJson(json root, string field, json defaultValue = json(), bool notFoundAsException = false);
+
 	static json toJson(string json, bool warningIfError = false);
 
 	static string toString(json joValueRoot);

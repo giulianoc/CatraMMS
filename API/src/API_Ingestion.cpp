@@ -4267,31 +4267,36 @@ void API::changeLiveProxyPlaylist(
 {
 	string api = "changeLiveProxyPlaylist";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
+		int64_t broadcasterIngestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", -1, true, nullptr);
+		/*
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
 		{
-			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'ingestionJobKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		int64_t broadcasterIngestionJobKey = stoll(ingestionJobKeyIt->second);
-
+		*/
+		bool interruptPlaylist = getQueryParameter(queryParameters, "interruptPlaylist", false, false, nullptr);
+		/*
 		bool interruptPlaylist = false;
 		auto interruptPlaylistIt = queryParameters.find("interruptPlaylist");
 		if (interruptPlaylistIt != queryParameters.end())
 			interruptPlaylist = interruptPlaylistIt->second == "true";
+		*/
 
 		SPDLOG_INFO(
-			"{}, broadcasterIngestionJobKey: {}"
-			", interruptPlaylist: {}",
-			api, broadcasterIngestionJobKey, interruptPlaylist
+			"Received {}"
+			", broadcasterIngestionJobKey: {}",
+			", interruptPlaylist: {}", ", requestBody: {}", api, broadcasterIngestionJobKey, interruptPlaylist, requestBody
 		);
 
 		// next try/catch initialize the belows parameters using the broadcaster
@@ -4314,9 +4319,11 @@ void API::changeLiveProxyPlaylist(
 		json broadcastDefaultDirectURLInputRoot = nullptr;
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "getIngestionJobDetails" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
-				", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey)
+			SPDLOG_INFO(
+				"getIngestionJobDetails"
+				", workspace->_workspaceKey: {}"
+				", broadcasterIngestionJobKey: {}",
+				workspace->_workspaceKey, broadcasterIngestionJobKey
 			);
 
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
@@ -4334,23 +4341,29 @@ void API::changeLiveProxyPlaylist(
 
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 			{
-				string errorMessage = string("Ingestion type is not a Live/VODProxy") +
-									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-									  ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format(
+					"Ingestion type is not a Live/VODProxy"
+					", broadcasterIngestionJobKey: {}"
+					", ingestionType: {}",
+					broadcasterIngestionJobKey, MMSEngineDBFacade::toString(ingestionType)
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
 			string sIngestionStatus = MMSEngineDBFacade::toString(ingestionStatus);
 			string prefixIngestionStatus = "End_";
-			if (sIngestionStatus.size() >= prefixIngestionStatus.size() &&
-				0 == sIngestionStatus.compare(0, prefixIngestionStatus.size(), prefixIngestionStatus))
+			if (StringUtils::startWith(sIngestionStatus, prefixIngestionStatus))
 			{
-				string errorMessage = string("Ingestion job is already finished") +
-									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-									  ", sIngestionStatus: " + sIngestionStatus + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format(
+					"Ingestion job is already finished"
+					", broadcasterIngestionJobKey: {}"
+					", sIngestionStatus: {}"
+					", ingestionType: {}",
+					broadcasterIngestionJobKey, sIngestionStatus, MMSEngineDBFacade::toString(ingestionType)
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4358,40 +4371,47 @@ void API::changeLiveProxyPlaylist(
 			json metadataContentRoot = JSONUtils::toJson(metaDataContent);
 
 			string field = "internalMMS";
+			json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, field, json(), true);
+			/*
 			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"Field is not present or it is null"
+					", broadcasterIngestionJobKey: {}"
+					", Field: {}",
+					broadcasterIngestionJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			json internalMMSRoot = metadataContentRoot[field];
+			*/
 
 			field = "broadcaster";
+			json broadcasterRoot = JSONUtils::asJson(internalMMSRoot, field, json(), true);
+			/*
 			if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"Field is not present or it is null"
+					", broadcasterIngestionJobKey: {}"
+					", Field: {}",
+					broadcasterIngestionJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			json broadcasterRoot = internalMMSRoot[field];
+			*/
 
 			field = "broadcastIngestionJobKey";
-			broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, field, 0);
-			if (broadcastIngestionJobKey == 0)
-			{
-				string errorMessage = __FILEREF__ + "No broadcastIngestionJobKey found" +
-									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-									  ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey);
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, field, 0, true);
 
 			field = "schedule";
+			json proxyPeriodRoot = JSONUtils::asJson(metadataContentRoot, field, json(), true);
+			/*
 			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null" +
@@ -4401,8 +4421,11 @@ void API::changeLiveProxyPlaylist(
 				throw runtime_error(errorMessage);
 			}
 			json proxyPeriodRoot = metadataContentRoot[field];
+			*/
 
 			field = "timePeriod";
+			bool timePeriod = JSONUtils::asBool(metadataContentRoot, field, false, true);
+			/*
 			bool timePeriod = JSONUtils::asBool(metadataContentRoot, field, false);
 			if (!timePeriod)
 			{
@@ -4413,6 +4436,7 @@ void API::changeLiveProxyPlaylist(
 
 				throw runtime_error(errorMessage);
 			}
+			*/
 
 			field = "start";
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
@@ -4546,9 +4570,11 @@ void API::changeLiveProxyPlaylist(
 						}
 
 						field = "filters";
-						json filtersRoot;
+						json filtersRoot = JSONUtils::asJson(broadcastDefaultPlaylistItemRoot, field, json());
+						/*
 						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
 							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
+						*/
 
 						// the same json structure is used in
 						// MMSEngineProcessor::manageVODProxy
@@ -4648,10 +4674,13 @@ void API::changeLiveProxyPlaylist(
 						}
 						if (!isDrawTextFilterPresent)
 						{
-							string errorMessage = __FILEREF__ + "Countdown has to have the drawText filter" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-												  ", broadcastDefaultPlaylistItemRoot: " + JSONUtils::toString(broadcastDefaultPlaylistItemRoot);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Countdown has to have the drawText filter"
+								", broadcasterIngestionJobKey: {}"
+								", broadcastDefaultPlaylistItemRoot: {}",
+								broadcasterIngestionJobKey, JSONUtils::toString(broadcastDefaultPlaylistItemRoot)
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -4669,48 +4698,76 @@ void API::changeLiveProxyPlaylist(
 						string broadcastDefaultURL = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 
 						field = "filters";
-						json filtersRoot;
+						json filtersRoot = JSONUtils::asJson(broadcastDefaultPlaylistItemRoot, field, json());
+						/*
 						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
 							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
+						*/
 
 						broadcastDefaultDirectURLInputRoot = _mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL, filtersRoot);
 					}
 					else
 					{
-						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType" +
-											  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-											  ", broadcastDefaultMediaType: " + broadcastDefaultMediaType;
-						_logger->error(errorMessage);
+						string errorMessage = fmt::format(
+							"Broadcaster data: unknown MediaType"
+							", broadcasterIngestionJobKey: {}"
+							", broadcastDefaultMediaType: {}",
+							broadcasterIngestionJobKey, broadcastDefaultMediaType
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
 				else
 				{
-					string errorMessage = __FILEREF__ + "Broadcaster data: no mediaType is present" +
-										  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-					_logger->error(errorMessage);
+					string errorMessage = fmt::format(
+						"Broadcaster data: no mediaType is present"
+						", broadcasterIngestionJobKey: {}",
+						broadcasterIngestionJobKey
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ +
-									  "Broadcaster data: no broadcastDefaultPlaylistItem is "
-									  "present" +
-									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"Broadcaster data: no broadcastDefaultPlaylistItem is present"
+					", broadcasterIngestionJobKey: {}",
+					broadcasterIngestionJobKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
+		catch (JsonFieldNotFound &e)
+		{
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
+
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error: ") + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -4718,10 +4775,14 @@ void API::changeLiveProxyPlaylist(
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -4784,24 +4845,26 @@ void API::changeLiveProxyPlaylist(
 							vodInputRoot["filters"] = getReviewedFiltersRoot(vodInputRoot["filters"], workspace, -1);
 
 							// field = "sources";
+							json sourcesRoot = JSONUtils::asJson(vodInputRoot, "sources", json(), true);
+							/*
 							if (!JSONUtils::isMetadataPresent(vodInputRoot, "sources"))
 							{
-								string errorMessage = "sources is missing, json data: " + requestBody;
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = fmt::format("sources is missing, json data: {}", requestBody);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
-
 							json sourcesRoot = vodInputRoot["sources"];
+							*/
 
 							if (sourcesRoot.size() == 0)
 							{
-								string errorMessage = string(
+								string errorMessage = fmt::format(
 									"No source is present"
-									", json data: " +
+									", json data: {}",
 									requestBody
 								);
-								_logger->error(__FILEREF__ + errorMessage);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -4815,8 +4878,8 @@ void API::changeLiveProxyPlaylist(
 								// field = "physicalPathKey";
 								if (!JSONUtils::isMetadataPresent(sourceRoot, "physicalPathKey"))
 								{
-									string errorMessage = "physicalPathKey is missing, json data: " + requestBody;
-									_logger->error(__FILEREF__ + errorMessage);
+									string errorMessage = fmt::format("physicalPathKey is missing, json data: {}", requestBody);
+									SPDLOG_ERROR(errorMessage);
 
 									throw runtime_error(errorMessage);
 								}
@@ -4913,8 +4976,8 @@ void API::changeLiveProxyPlaylist(
 							// field = "physicalPathKey";
 							if (!JSONUtils::isMetadataPresent(countdownInputRoot, "physicalPathKey"))
 							{
-								string errorMessage = "physicalPathKey is missing, json data: " + requestBody;
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = fmt::format("physicalPathKey is missing, json data: {}", requestBody);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -4998,7 +5061,11 @@ void API::changeLiveProxyPlaylist(
 					}
 				);
 
-				_logger->info(__FILEREF__ + "Sort playlist items" + ", vNewReceivedPlaylist.size: " + to_string(vNewReceivedPlaylist.size()));
+				SPDLOG_INFO(
+					"Sort playlist items"
+					", vNewReceivedPlaylist.size: {}",
+					vNewReceivedPlaylist.size()
+				);
 			}
 			// 2023-02-26: ora che il vettore è ordinato, elimino gli elementi
 			// precedenti a 'now'
@@ -5104,7 +5171,7 @@ void API::changeLiveProxyPlaylist(
 							", newReceivedPlaylistIndex: {}",
 							partialMessage, newReceivedPlaylistIndex
 						);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -5134,11 +5201,12 @@ void API::changeLiveProxyPlaylist(
 								newdPlaylistItemToBeAddedRoot["streamInput"] = broadcastDefaultStreamInputRoot;
 							else
 							{
-								string errorMessage = __FILEREF__ +
-													  "Broadcaster data: no default Stream "
-													  "present" +
-													  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-								_logger->error(errorMessage);
+								string errorMessage = fmt::format(
+									"Broadcaster data: no default Stream present"
+									", broadcasterIngestionJobKey: {}",
+									broadcasterIngestionJobKey
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -5149,11 +5217,12 @@ void API::changeLiveProxyPlaylist(
 								newdPlaylistItemToBeAddedRoot["vodInput"] = broadcastDefaultVodInputRoot;
 							else
 							{
-								string errorMessage = __FILEREF__ +
-													  "Broadcaster data: no default Media "
-													  "present" +
-													  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-								_logger->error(errorMessage);
+								string errorMessage = fmt::format(
+									"Broadcaster data: no default Media present"
+									", broadcasterIngestionJobKey: {}",
+									broadcasterIngestionJobKey
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -5164,11 +5233,12 @@ void API::changeLiveProxyPlaylist(
 								newdPlaylistItemToBeAddedRoot["countdownInput"] = broadcastDefaultCountdownInputRoot;
 							else
 							{
-								string errorMessage = __FILEREF__ +
-													  "Broadcaster data: no default Countdown "
-													  "present" +
-													  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-								_logger->error(errorMessage);
+								string errorMessage = fmt::format(
+									"Broadcaster data: no default Countdown present"
+									", broadcasterIngestionJobKey: {}",
+									broadcasterIngestionJobKey
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -5179,21 +5249,25 @@ void API::changeLiveProxyPlaylist(
 								newdPlaylistItemToBeAddedRoot["directURLInput"] = broadcastDefaultDirectURLInputRoot;
 							else
 							{
-								string errorMessage = __FILEREF__ +
-													  "Broadcaster data: no default DirectURL "
-													  "present" +
-													  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-								_logger->error(errorMessage);
+								string errorMessage = fmt::format(
+									"Broadcaster data: no default DirectURL present"
+									", broadcasterIngestionJobKey: {}",
+									broadcasterIngestionJobKey
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
 						}
 						else
 						{
-							string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-												  ", broadcastDefaultMediaType: " + broadcastDefaultMediaType;
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: unknown MediaType"
+								", broadcasterIngestionJobKey: {}"
+								", broadcastDefaultMediaType: {}",
+								broadcasterIngestionJobKey, broadcastDefaultMediaType
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -5229,9 +5303,12 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["streamInput"] = broadcastDefaultStreamInputRoot;
 						else
 						{
-							string errorMessage = __FILEREF__ + "Broadcaster data: no default Stream present" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: no default Stream present"
+								", broadcasterIngestionJobKey: {}",
+								broadcasterIngestionJobKey
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -5242,9 +5319,12 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["vodInput"] = broadcastDefaultVodInputRoot;
 						else
 						{
-							string errorMessage = __FILEREF__ + "Broadcaster data: no default Media present" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: no default Media present"
+								", broadcasterIngestionJobKey: {}",
+								broadcasterIngestionJobKey
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -5255,11 +5335,12 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["countdownInput"] = broadcastDefaultCountdownInputRoot;
 						else
 						{
-							string errorMessage = __FILEREF__ +
-												  "Broadcaster data: no default Countdown "
-												  "present" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: no default Countdown present"
+								", broadcasterIngestionJobKey: {}",
+								broadcasterIngestionJobKey
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -5270,21 +5351,25 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["directURLInput"] = broadcastDefaultDirectURLInputRoot;
 						else
 						{
-							string errorMessage = __FILEREF__ +
-												  "Broadcaster data: no default Direct URL "
-												  "present" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: no default Direct URL present"
+								", broadcasterIngestionJobKey: {}",
+								broadcasterIngestionJobKey
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 					}
 					else
 					{
-						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType" +
-											  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-											  ", broadcastDefaultMediaType: " + broadcastDefaultMediaType;
-						_logger->error(errorMessage);
+						string errorMessage = fmt::format(
+							"Broadcaster data: unknown MediaType"
+							", broadcasterIngestionJobKey: {}"
+							", broadcastDefaultMediaType: {}",
+							broadcasterIngestionJobKey, broadcastDefaultMediaType
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -5315,9 +5400,12 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["streamInput"] = broadcastDefaultStreamInputRoot;
 						else
 						{
-							string errorMessage = __FILEREF__ + "Broadcaster data: no default Stream present" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: no default Stream present"
+								", broadcasterIngestionJobKey: {}",
+								broadcasterIngestionJobKey
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -5328,9 +5416,12 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["vodInput"] = broadcastDefaultVodInputRoot;
 						else
 						{
-							string errorMessage = __FILEREF__ + "Broadcaster data: no default Media present" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: no default Media present"
+								", broadcasterIngestionJobKey: {}",
+								broadcasterIngestionJobKey
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -5341,11 +5432,12 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["countdownInput"] = broadcastDefaultCountdownInputRoot;
 						else
 						{
-							string errorMessage = __FILEREF__ +
-												  "Broadcaster data: no default Countdown "
-												  "present" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: no default Countdown present"
+								", broadcasterIngestionJobKey: {}",
+								broadcasterIngestionJobKey
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -5356,21 +5448,25 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["directURLInput"] = broadcastDefaultDirectURLInputRoot;
 						else
 						{
-							string errorMessage = __FILEREF__ +
-												  "Broadcaster data: no default Direct URL "
-												  "present" +
-												  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey);
-							_logger->error(errorMessage);
+							string errorMessage = fmt::format(
+								"Broadcaster data: no default Direct URL present"
+								", broadcasterIngestionJobKey: {}",
+								broadcasterIngestionJobKey
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 					}
 					else
 					{
-						string errorMessage = __FILEREF__ + "Broadcaster data: unknown MediaType" +
-											  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-											  ", broadcastDefaultMediaType: " + broadcastDefaultMediaType;
-						_logger->error(errorMessage);
+						string errorMessage = fmt::format(
+							"Broadcaster data: unknown MediaType"
+							", broadcasterIngestionJobKey: {}"
+							", broadcastDefaultMediaType: {}",
+							broadcasterIngestionJobKey, broadcastDefaultMediaType
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -5381,10 +5477,14 @@ void API::changeLiveProxyPlaylist(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error: ") + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -5392,10 +5492,14 @@ void API::changeLiveProxyPlaylist(
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -5433,10 +5537,13 @@ void API::changeLiveProxyPlaylist(
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy && ingestionType != MMSEngineDBFacade::IngestionType::VODProxy &&
 				ingestionType != MMSEngineDBFacade::IngestionType::Countdown)
 			{
-				string errorMessage = string("Ingestion type is not a LiveProxy-VODProxy-Countdown") +
-									  ", broadcastIngestionJobKey: " + to_string(broadcastIngestionJobKey) +
-									  ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = fmt::format(
+					"Ingestion type is not a LiveProxy-VODProxy-Countdown"
+					", broadcastIngestionJobKey: {}"
+					", ingestionType: {}",
+					broadcastIngestionJobKey, MMSEngineDBFacade::toString(ingestionType)
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5459,7 +5566,7 @@ void API::changeLiveProxyPlaylist(
 			}
 			catch (runtime_error &e)
 			{
-				_logger->warn(__FILEREF__ + e.what());
+				SPDLOG_WARN(e.what());
 
 				// throw runtime_error(errorMessage);
 			}
@@ -5549,8 +5656,8 @@ void API::changeLiveProxyPlaylist(
 				api, ffmpegEncoderURL, response.str(), e.what()
 			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "Internal server error";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -5566,8 +5673,8 @@ void API::changeLiveProxyPlaylist(
 				api, ffmpegEncoderURL, response.str(), e.what()
 			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "Internal server error";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -5576,16 +5683,28 @@ void API::changeLiveProxyPlaylist(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		// sendError(request, 500, errorMessage);
 
