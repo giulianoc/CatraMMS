@@ -4296,7 +4296,9 @@ void API::changeLiveProxyPlaylist(
 		SPDLOG_INFO(
 			"Received {}"
 			", broadcasterIngestionJobKey: {}",
-			", interruptPlaylist: {}", ", requestBody: {}", api, broadcasterIngestionJobKey, interruptPlaylist, requestBody
+			", interruptPlaylist: {}"
+			", requestBody: {}",
+			api, broadcasterIngestionJobKey, interruptPlaylist, requestBody
 		);
 
 		// next try/catch initialize the belows parameters using the broadcaster
