@@ -5750,7 +5750,7 @@ void API::changeLiveProxyOverlayText(
 				);
 
 				auto [ingestionType, ingestionStatus] =
-					_mmsEngineDBFacade->ingestionJob_IngestionTypeStatus(workspace->_workspaceKey, broadcasterIngestionJobKey, nullptr, false);
+					_mmsEngineDBFacade->ingestionJob_IngestionTypeStatus(workspace->_workspaceKey, broadcasterIngestionJobKey, false);
 
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 				{

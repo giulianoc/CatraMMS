@@ -1552,7 +1552,7 @@ class MMSEngineDBFacade
 	getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 
 	pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
-	ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, chrono::milliseconds *sqlDuration, bool fromMaster);
+	ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	shared_ptr<PostgresHelper::SqlResultSet> ingestionJobQuery(
 		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster, int startIndex = -1,
 		int rows = -1, string orderBy = "", bool notFoundAsException = true

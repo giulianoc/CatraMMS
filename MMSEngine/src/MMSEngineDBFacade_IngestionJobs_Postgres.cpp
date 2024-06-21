@@ -3550,20 +3550,16 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 }
 
 pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
-MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
 {
 	try
 	{
 		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}};
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet =
-			ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, sqlDuration, fromMaster);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
 		MMSEngineDBFacade::IngestionType ingestionType =
 			MMSEngineDBFacade::toIngestionType((*sqlResultSet)[0][0].as<string>("null ingestion type!!!"));
 		MMSEngineDBFacade::IngestionStatus ingestionStatus =
 			MMSEngineDBFacade::toIngestionStatus((*sqlResultSet)[0][1].as<string>("null ingestion status!!!"));
-
-		if (sqlDuration != nullptr)
-			*sqlDuration = sqlResultSet->getSqlDuration();
 
 		return make_pair(ingestionType, ingestionStatus);
 	}
