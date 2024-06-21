@@ -3645,6 +3645,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
+			where += fmt::format("ir.ingestionRootKey = ij.ingestionRootKey and ir.workspaceKey = {} ", workspaceKey);
 			if (ingestionJobKey != -1)
 				where += fmt::format("{} ij.ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
 
@@ -3661,11 +3662,9 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 			string sqlStatement = fmt::format(
 				"select {} "
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
-				"where ir.ingestionRootKey = ij.ingestionRootKey "
-				"and ir.workspaceKey = {} "
-				"{} "
+				"{} {} "
 				"{} {} {}",
-				_postgresHelper.buildQueryColumns(requestedColumns), workspaceKey, where, limit, offset, orderByCondition
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
