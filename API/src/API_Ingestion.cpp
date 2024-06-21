@@ -5792,7 +5792,7 @@ void API::changeLiveProxyOverlayText(
 				);
 
 				tie(broadcasterEncodingJobKey, broadcasterEncoderKey) =
-					_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(broadcasterIngestionJobKey, nullptr, false);
+					_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(broadcasterIngestionJobKey, false);
 
 				if (broadcasterEncodingJobKey == -1 || broadcasterEncoderKey == -1)
 				{

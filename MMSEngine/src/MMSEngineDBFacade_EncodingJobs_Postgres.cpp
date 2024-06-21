@@ -3214,19 +3214,15 @@ MMSEngineDBFacade::getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster
 	}
 }
 
-pair<int64_t, int64_t>
-MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+pair<int64_t, int64_t> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, bool fromMaster)
 {
 	try
 	{
 		vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.encodingJobKey"}, {false, "mms_encodingjob:.encoderKey"}};
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, -1, ingestionJobKey, sqlDuration, fromMaster);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, -1, ingestionJobKey, fromMaster);
 
 		int64_t encodingJobKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<int64_t>(-1) : -1;
 		int64_t encoderKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][1].as<int64_t>(-1) : -1;
-
-		if (sqlDuration != nullptr)
-			*sqlDuration = sqlResultSet->getSqlDuration();
 
 		return make_pair(encodingJobKey, encoderKey);
 	}

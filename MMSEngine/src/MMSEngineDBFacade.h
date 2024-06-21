@@ -1921,7 +1921,7 @@ class MMSEngineDBFacade
 	);
 
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster);
-	pair<int64_t, int64_t> encodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, chrono::milliseconds *sqlDuration, bool fromMaster);
+	pair<int64_t, int64_t> encodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, bool fromMaster);
 	shared_ptr<PostgresHelper::SqlResultSet> encodingJobQuery(
 		vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey, int64_t ingestionJobKey, bool fromMaster, int startIndex = -1,
 		int rows = -1, string orderBy = "", bool notFoundAsException = true
