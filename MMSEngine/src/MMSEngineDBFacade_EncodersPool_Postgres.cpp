@@ -226,7 +226,7 @@ void MMSEngineDBFacade::modifyEncoder(
 
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_Encoder {} "
-				"where encoderKey = ? returning 1) select count(*) from rows",
+				"where encoderKey = {} returning 1) select count(*) from rows",
 				setSQL, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

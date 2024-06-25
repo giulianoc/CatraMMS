@@ -34,16 +34,6 @@ void LiveProxy::encodeContent(string requestBody)
 
 	_logger->info(__FILEREF__ + "Received " + api + ", _encodingJobKey: " + to_string(_encodingJobKey) + ", requestBody: " + requestBody);
 
-	// string tvMulticastIP;
-	// string tvMulticastPort;
-	// string tvType;
-	// int64_t tvServiceId = -1;
-	// int64_t tvFrequency = -1;
-	// int64_t tvSymbolRate = -1;
-	// int64_t tvBandwidthInMhz = -1;
-	// string tvModulation;
-	// int tvVideoPid = -1;
-	// int tvAudioItalianPid = -1;
 	try
 	{
 		_liveProxyData->_killedBecauseOfNotWorking = false;
@@ -115,12 +105,6 @@ void LiveProxy::encodeContent(string requestBody)
 				}
 			}
 		}
-
-		// non serve
-		// _liveProxyData->_channelLabel = "";
-
-		// _liveProxyData->_streamSourceType = metadataRoot["encodingParametersRoot"].
-		// 	get("streamSourceType", "IP_PULL").asString();
 
 		_liveProxyData->_inputsRoot = encodingParametersRoot["inputsRoot"];
 

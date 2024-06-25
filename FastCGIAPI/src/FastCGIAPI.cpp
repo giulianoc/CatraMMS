@@ -366,6 +366,16 @@ int FastCGIAPI::operator()()
 				userName, password, contentLength, requestBody, requestDetails
 			);
 		}
+		catch (JsonFieldNotFound &e)
+		{
+			SPDLOG_ERROR(
+				"manageRequestAndResponse failed"
+				", _requestIdentifier: {}"
+				", threadId: {}"
+				", e: {}",
+				_requestIdentifier, sThreadId, e.what()
+			);
+		}
 		catch (runtime_error &e)
 		{
 			SPDLOG_ERROR(
