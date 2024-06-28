@@ -2132,6 +2132,16 @@ void FFMpeg::outputsRootToFfmpeg(
 		//    siamo nello scenario di un solo inputRoot che richiede il suo drawtext.
 		//    Per questo motivo, il prossimo if, gestisce il caso di drawTextDetails solo per un input root
 		json filtersRoot = ffmpegFilters.mergeFilters(outputRoot["filters"], inputFiltersRoot);
+		SPDLOG_INFO(
+			"mergeFilters"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", outputRoot[filters]: {}"
+			", inputFiltersRoot: {}"
+			", filtersRoot: {}",
+			ingestionJobKey, encodingJobKey, JSONUtils::toString(outputRoot["filters"]), JSONUtils::toString(inputFiltersRoot),
+			JSONUtils::toString(filtersRoot)
+		);
 
 		// in caso di drawtext filter, set textFilePathName sicuramente se è presente reloadAtFrameInterval
 		{
