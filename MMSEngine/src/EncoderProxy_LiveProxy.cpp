@@ -956,6 +956,10 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					// 	- Per evitare l'outage, posso io cambiare encoder nella configurazione dello Stream
 					// 	- La getStreamInputPushDetails sotto mi serve in questo loop per recuperare avere l'encoder aggiornato configurato nello
 					// Stream 		altrimenti rimarremmo con l'encoder e l'url calcolata all'inizio e non potremmo evitare l'outage
+					// 2024-06-25: In uno scenario di Broadcaster e Broadcast, il cambiamento descritto sopra
+					// 		risolve il problema del broadcaster ma non quello del broadcast. Infatti il broadcast ha il campo udpUrl
+					// 		nell'outputRoot che punta al transcoder iniziale. Questo campo udpUrl è stato inizializzato
+					// 		in CatraMMSBroadcaster.java (method: addBroadcaster).
 
 					json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
 

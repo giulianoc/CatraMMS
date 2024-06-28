@@ -5070,10 +5070,13 @@ void API::changeLiveProxyPlaylist(
 				);
 			}
 			// 2023-02-26: ora che il vettore è ordinato, elimino gli elementi
-			// precedenti a 'now'
+			// precedenti a 'now - 2 days' (just a retention)
 			{
 				chrono::system_clock::time_point now = chrono::system_clock::now();
-				time_t utcNow = chrono::system_clock::to_time_t(now);
+				chrono::duration<int, ratio<60 * 60 * 24>> two_day(2);
+				chrono::system_clock::time_point retention = now - two_day;
+
+				time_t utcRetention = chrono::system_clock::to_time_t(retention);
 
 				int currentPlaylistIndex = -1;
 				for (int newReceivedPlaylistIndex = 0; newReceivedPlaylistIndex < vNewReceivedPlaylist.size(); newReceivedPlaylistIndex++)
@@ -5083,14 +5086,14 @@ void API::changeLiveProxyPlaylist(
 					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleStart", -1);
 					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleEnd", -1);
 
-					if (utcProxyPeriodStart <= utcNow && utcNow < utcProxyPeriodEnd)
+					if (utcProxyPeriodStart <= utcRetention && utcRetention < utcProxyPeriodEnd)
 					{
 						currentPlaylistIndex = newReceivedPlaylistIndex;
 
 						break;
 					}
 				}
-				int leavePastEntriesNumber = 3;
+				int leavePastEntriesNumber = 1;
 				if (currentPlaylistIndex - leavePastEntriesNumber > 0)
 				{
 					SPDLOG_INFO(
