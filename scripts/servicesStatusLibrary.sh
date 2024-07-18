@@ -794,7 +794,7 @@ server_reachable()
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_server_reachable, mms server IS NOT reachable: ip_address $ip_address, host_name: $host_name" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
-		alarmDetails="mms server IS NOT reachable"
+		alarmDetails="The $ip_address mms server IS NOT reachable"
 		notify "$(hostname)" "alarm_mms_server_reachable" "alarm_mms_server_reachable_$host_name" $alarmNotificationPeriod "$alarmDetails"
 		return 1
 	fi

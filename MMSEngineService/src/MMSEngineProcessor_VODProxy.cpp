@@ -270,7 +270,7 @@ void MMSEngineProcessor::manageVODProxy(
 			*/
 			json filtersRoot = nullptr;
 
-			string field = "broadcastfilters";
+			string field = "broadcastFilters";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				filtersRoot = parametersRoot[field];
 
