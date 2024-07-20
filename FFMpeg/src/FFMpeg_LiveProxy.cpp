@@ -1704,8 +1704,9 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 						"Error creating ffmpegEndlessRecursivePlaylist file"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
-						", _ffmpegEndlessRecursivePlaylist: {}",
-						ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
+						", _ffmpegEndlessRecursivePlaylist: {}"
+						", errno: {} ({})",
+						ingestionJobKey, encodingJobKey, endlessPlaylistListPathName, errno, strerror(errno)
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -1823,19 +1824,6 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				}
 				playlistListFile << "file '" << endlessPlaylistListFileName << "'" << endl;
 				playlistListFile.close();
-				if (!playlistListFile)
-				{
-					string errorMessage = fmt::format(
-						"Error saving ffmpegEndlessRecursivePlaylist file"
-						", ingestionJobKey: {}"
-						", encodingJobKey: {}"
-						", _ffmpegEndlessRecursivePlaylist: {}",
-						ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
-					);
-					SPDLOG_ERROR(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
 
 				ffmpegInputArgumentList.push_back("-f");
 				ffmpegInputArgumentList.push_back("concat");
