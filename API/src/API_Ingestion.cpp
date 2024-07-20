@@ -4489,7 +4489,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							json referencePhysicalPathKeysRoot = broadcastDefaultPlaylistItemRoot[field];
 
-							// 						int64_t encodingProfileKey = -1;
+							int64_t firstMediaEncodingProfileKey = -2;
 							for (int referencePhysicalPathKeyIndex = 0; referencePhysicalPathKeyIndex < referencePhysicalPathKeysRoot.size();
 								 referencePhysicalPathKeyIndex++)
 							{
@@ -4498,9 +4498,27 @@ void API::changeLiveProxyPlaylist(
 								int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(referencePhysicalPathKeyRoot, "physicalPathKey", -1);
 								string broadcastDefaultTitle = JSONUtils::asString(referencePhysicalPathKeyRoot, "mediaItemTitle", "");
 
-								// 								int64_t currentEncodingProfileKey =
-								// _mmsEngineDBFacade->physicalPath_EncodingProfileKey(physicalPathKey, chrono::milliseconds *sqlDuration, bool
-								// fromMaster)
+								// controllo che tutti i media usano lo stesso encoding profile
+								{
+									int64_t currentEncodingProfileKey =
+										_mmsEngineDBFacade->physicalPath_EncodingProfileKey(broadcastDefaultPhysicalPathKey, nullptr, false);
+									if (firstMediaEncodingProfileKey == -2) // primo media
+										firstMediaEncodingProfileKey = currentEncodingProfileKey;
+									else if (firstMediaEncodingProfileKey != currentEncodingProfileKey)
+									{
+										string errorMessage = fmt::format(
+											"Media are not using the same encoding profile"
+											", broadcasterIngestionJobKey: {}"
+											", firstMediaEncodingProfileKey: {}"
+											", currentEncodingProfileKey: {}",
+											broadcasterIngestionJobKey, firstMediaEncodingProfileKey, currentEncodingProfileKey
+										);
+										SPDLOG_ERROR(errorMessage);
+
+										throw runtime_error(errorMessage);
+									}
+								}
+
 								string sourcePhysicalPathName;
 								{
 									tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore) = _mmsStorage->getPhysicalPathDetails(
@@ -4749,8 +4767,9 @@ void API::changeLiveProxyPlaylist(
 		{
 			SPDLOG_ERROR(
 				"{} failed"
+				", broadcasterIngestionJobKey: {}"
 				", e.what(): {}",
-				api, e.what()
+				api, broadcasterIngestionJobKey, e.what()
 			);
 
 			string errorMessage = fmt::format("Internal server error: {}", e.what());
@@ -4764,8 +4783,9 @@ void API::changeLiveProxyPlaylist(
 		{
 			SPDLOG_ERROR(
 				"{} failed"
+				", broadcasterIngestionJobKey: {}"
 				", e.what(): {}",
-				api, e.what()
+				api, broadcasterIngestionJobKey, e.what()
 			);
 
 			string errorMessage = fmt::format("Internal server error: {}", e.what());
@@ -4779,8 +4799,9 @@ void API::changeLiveProxyPlaylist(
 		{
 			SPDLOG_ERROR(
 				"{} failed"
+				", broadcasterIngestionJobKey: {}"
 				", e.what(): {}",
-				api, e.what()
+				api, broadcasterIngestionJobKey, e.what()
 			);
 
 			string errorMessage = fmt::format("Internal server error: {}", e.what());
@@ -4825,10 +4846,11 @@ void API::changeLiveProxyPlaylist(
 						}
 						SPDLOG_INFO(
 							"Processing newReceivedPlaylistRoot (the received one)"
+							", broadcasterIngestionJobKey: {}"
 							", newReceivedPlaylistRoot: {}/{}"
 							", sUtcScheduleStart: {}"
 							", sUtcScheduleEnd: {}",
-							newReceivedPlaylistIndex, newReceivedPlaylistRoot.size(), sUtcScheduleStart, sUtcScheduleEnd
+							broadcasterIngestionJobKey, newReceivedPlaylistIndex, newReceivedPlaylistRoot.size(), sUtcScheduleStart, sUtcScheduleEnd
 						);
 					}
 					{
@@ -4863,8 +4885,9 @@ void API::changeLiveProxyPlaylist(
 							{
 								string errorMessage = fmt::format(
 									"No source is present"
+									", broadcasterIngestionJobKey: {}"
 									", json data: {}",
-									requestBody
+									broadcasterIngestionJobKey, requestBody
 								);
 								SPDLOG_ERROR(errorMessage);
 
@@ -5065,8 +5088,9 @@ void API::changeLiveProxyPlaylist(
 
 				SPDLOG_INFO(
 					"Sort playlist items"
+					", broadcasterIngestionJobKey: {}"
 					", vNewReceivedPlaylist.size: {}",
-					vNewReceivedPlaylist.size()
+					broadcasterIngestionJobKey, vNewReceivedPlaylist.size()
 				);
 			}
 			// 2023-02-26: ora che il vettore è ordinato, elimino gli elementi
@@ -5098,10 +5122,12 @@ void API::changeLiveProxyPlaylist(
 				{
 					SPDLOG_INFO(
 						"Erase playlist items in the past: {} items"
+						", broadcasterIngestionJobKey: {}"
 						", currentPlaylistIndex: {}"
 						", leavePastEntriesNumber: {}"
 						", vNewReceivedPlaylist.size: {}",
-						currentPlaylistIndex - leavePastEntriesNumber, currentPlaylistIndex, leavePastEntriesNumber, vNewReceivedPlaylist.size()
+						currentPlaylistIndex - leavePastEntriesNumber, broadcasterIngestionJobKey, currentPlaylistIndex, leavePastEntriesNumber,
+						vNewReceivedPlaylist.size()
 					);
 
 					vNewReceivedPlaylist.erase(
@@ -5112,10 +5138,11 @@ void API::changeLiveProxyPlaylist(
 				{
 					SPDLOG_INFO(
 						"Erase playlist items in the past: nothing"
+						", broadcasterIngestionJobKey: {}"
 						", currentPlaylistIndex: {}"
 						", leavePastEntriesNumber: {}"
 						", vNewReceivedPlaylist.size: {}",
-						currentPlaylistIndex, leavePastEntriesNumber, vNewReceivedPlaylist.size()
+						broadcasterIngestionJobKey, currentPlaylistIndex, leavePastEntriesNumber, vNewReceivedPlaylist.size()
 					);
 				}
 			}
@@ -5140,11 +5167,12 @@ void API::changeLiveProxyPlaylist(
 
 					SPDLOG_INFO(
 						"Processing newReceivedPlaylistRoot"
+						", broadcasterIngestionJobKey: {}"
 						", newReceivedPlaylistRoot: {}/{}"
 						", utcCurrentBroadcasterStart: {} ({})"
 						", utcProxyPeriodStart: {} ({})"
 						", utcProxyPeriodEnd: {} ({})",
-						newReceivedPlaylistIndex, newReceivedPlaylistRoot.size(), utcCurrentBroadcasterStart,
+						broadcasterIngestionJobKey, newReceivedPlaylistIndex, newReceivedPlaylistRoot.size(), utcCurrentBroadcasterStart,
 						DateTime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart, DateTime::utcToUtcString(utcProxyPeriodStart),
 						utcProxyPeriodEnd, DateTime::utcToUtcString(utcProxyPeriodEnd)
 					);
@@ -5484,8 +5512,9 @@ void API::changeLiveProxyPlaylist(
 		{
 			SPDLOG_ERROR(
 				"{} failed"
+				", broadcasterIngestionJobKey: {}"
 				", e.what(): {}",
-				api, e.what()
+				api, broadcasterIngestionJobKey, e.what()
 			);
 
 			string errorMessage = fmt::format("Internal server error: {}", e.what());
@@ -5499,8 +5528,9 @@ void API::changeLiveProxyPlaylist(
 		{
 			SPDLOG_ERROR(
 				"{} failed"
+				", broadcasterIngestionJobKey: {}"
 				", e.what(): {}",
-				api, e.what()
+				api, broadcasterIngestionJobKey, e.what()
 			);
 
 			string errorMessage = fmt::format("Internal server error: {}", e.what());
@@ -5522,8 +5552,9 @@ void API::changeLiveProxyPlaylist(
 			SPDLOG_INFO(
 				"getIngestionJobDetails"
 				", workspace->_workspaceKey: {}"
+				", broadcasterIngestionJobKey: {}"
 				", broadcastIngestionJobKey: {}",
-				workspace->_workspaceKey, broadcastIngestionJobKey
+				workspace->_workspaceKey, broadcasterIngestionJobKey, broadcastIngestionJobKey
 			);
 
 			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
@@ -5544,9 +5575,10 @@ void API::changeLiveProxyPlaylist(
 			{
 				string errorMessage = fmt::format(
 					"Ingestion type is not a LiveProxy-VODProxy-Countdown"
+					", broadcasterIngestionJobKey: {}"
 					", broadcastIngestionJobKey: {}"
 					", ingestionType: {}",
-					broadcastIngestionJobKey, MMSEngineDBFacade::toString(ingestionType)
+					broadcasterIngestionJobKey, broadcastIngestionJobKey, MMSEngineDBFacade::toString(ingestionType)
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -5615,9 +5647,10 @@ void API::changeLiveProxyPlaylist(
 			{
 				SPDLOG_INFO(
 					"The Broadcast EncodingJob was not found, the IngestionJob is updated"
+					", broadcasterIngestionJobKey: {}"
 					", broadcastIngestionJobKey: {}"
 					", broadcastEncodingJobKey: {}",
-					broadcastIngestionJobKey, broadcastEncodingJobKey
+					broadcasterIngestionJobKey, broadcastIngestionJobKey, broadcastEncodingJobKey
 				);
 
 				json metadataContentRoot = JSONUtils::toJson(metaDataContent);
@@ -5655,10 +5688,11 @@ void API::changeLiveProxyPlaylist(
 		{
 			SPDLOG_ERROR(
 				"{} failed"
+				", broadcasterIngestionJobKey: {}"
 				", ffmpegEncoderURL: {}"
 				", response.str: {}"
 				", e.what(): {}",
-				api, ffmpegEncoderURL, response.str(), e.what()
+				api, broadcasterIngestionJobKey, ffmpegEncoderURL, response.str(), e.what()
 			);
 
 			string errorMessage = "Internal server error";
@@ -5672,10 +5706,11 @@ void API::changeLiveProxyPlaylist(
 		{
 			SPDLOG_ERROR(
 				"{} failed"
+				", broadcasterIngestionJobKey: {}"
 				", ffmpegEncoderURL: {}"
 				", response.str: {}"
 				", e.what(): {}",
-				api, ffmpegEncoderURL, response.str(), e.what()
+				api, broadcasterIngestionJobKey, ffmpegEncoderURL, response.str(), e.what()
 			);
 
 			string errorMessage = "Internal server error";
@@ -5689,8 +5724,7 @@ void API::changeLiveProxyPlaylist(
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
+			"{} failed"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
@@ -5701,8 +5735,7 @@ void API::changeLiveProxyPlaylist(
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
+			"{} failed"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
