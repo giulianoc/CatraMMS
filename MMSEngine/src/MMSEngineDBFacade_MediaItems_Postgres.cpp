@@ -2052,6 +2052,55 @@ int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, ch
 	}
 }
 
+int64_t MMSEngineDBFacade::physicalPath_EncodingProfileKey(int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_physicalpath:.encodingprofilekey"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = physicalPathQuery(requestedColumns, physicalPathKey, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
+
+		return (*sqlResultSet)[0][0].as<int64_t>(-1);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"NotFound"
+			", physicalPathKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			physicalPathKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", physicalPathKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			physicalPathKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", physicalPathKey: {}"
+			", fromMaster: {}",
+			physicalPathKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 	vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex, int rows, string orderBy,
 	bool notFoundAsException

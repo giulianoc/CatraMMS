@@ -430,9 +430,12 @@ void FFMpeg::liveProxy2(
 							{
 								string mediaFileName = configuration.substr(prefixFile.size(), configuration.size() - prefixFile.size() - 1);
 
-								_logger->info(
-									__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-									to_string(encodingJobKey) + ", mediaPathName: " + _ffmpegEndlessRecursivePlaylistDir + "/" + mediaFileName
+								SPDLOG_INFO(
+									"Remove"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", _ffmpegEndlessRecursivePlaylist: {}",
+									ingestionJobKey, encodingJobKey, _ffmpegEndlessRecursivePlaylistDir + "/" + mediaFileName
 								);
 								fs::remove_all(_ffmpegEndlessRecursivePlaylistDir + "/" + mediaFileName);
 							}
@@ -564,9 +567,12 @@ void FFMpeg::liveProxy2(
 							{
 								string mediaFileName = configuration.substr(prefixFile.size(), configuration.size() - prefixFile.size() - 1);
 
-								_logger->info(
-									__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-									to_string(encodingJobKey) + ", mediaPathName: " + _ffmpegEndlessRecursivePlaylistDir + "/" + mediaFileName
+								SPDLOG_INFO(
+									"Remove"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", _ffmpegEndlessRecursivePlaylist: {}",
+									ingestionJobKey, encodingJobKey, _ffmpegEndlessRecursivePlaylistDir + "/" + mediaFileName
 								);
 								fs::remove_all(_ffmpegEndlessRecursivePlaylistDir + "/" + mediaFileName);
 							}
@@ -1680,10 +1686,17 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				//	...
 				//	file 'XXX_YYY_endlessPlaylist.txt'
 
-				string endlessPlaylistListFileName = to_string(ingestionJobKey) + "_" + to_string(encodingJobKey) + "_endlessPlaylist.txt";
+				string endlessPlaylistListFileName = fmt::format("{}_{}_endlessPlaylist.txt", ingestionJobKey, encodingJobKey);
 				endlessPlaylistListPathName = _ffmpegEndlessRecursivePlaylistDir + "/" + endlessPlaylistListFileName;
 				;
 
+				SPDLOG_INFO(
+					"Creating ffmpegEndlessRecursivePlaylist file"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", _ffmpegEndlessRecursivePlaylist: {}",
+					ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
+				);
 				ofstream playlistListFile(endlessPlaylistListPathName.c_str(), ofstream::trunc);
 				playlistListFile << "ffconcat version 1.0" << endl;
 				for (string sourcePhysicalReference : sources)
@@ -1692,9 +1705,11 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 					//	a URL in case of externalEncoder
 					//	a storage path name in case of a local encoder
 
-					_logger->info(
-						__FILEREF__ + "ffmpeg: adding physical path" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", sourcePhysicalReference: " + sourcePhysicalReference
+					SPDLOG_INFO(
+						"ffmpeg: adding physical path"
+						", ingestionJobKey: {}"
+						", sourcePhysicalReference: {}",
+						ingestionJobKey, sourcePhysicalReference
 					);
 
 					if (externalEncoder)
@@ -1707,9 +1722,11 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 							size_t fileNameIndex = sourcePhysicalReference.find_last_of("/");
 							if (fileNameIndex == string::npos)
 							{
-								_logger->error(
-									__FILEREF__ + "physical path has a wrong path" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", sourcePhysicalReference: " + sourcePhysicalReference
+								SPDLOG_ERROR(
+									"physical path has a wrong path"
+									", ingestionJobKey: {}"
+									", sourcePhysicalReference: {}",
+									ingestionJobKey, sourcePhysicalReference
 								);
 
 								continue;
@@ -1721,8 +1738,8 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 							//	con lo stesso nome, nella stessa directory (_ffmpegEndlessRecursivePlaylistDir).
 							//	Per questo motivo aggiungiamo, come prefisso al source file name,
 							//	ingestionJobKey and encodingJobKey
-							destBinaryFileName = to_string(ingestionJobKey) + "_" + to_string(encodingJobKey) + "_" +
-												 sourcePhysicalReference.substr(fileNameIndex + 1);
+							destBinaryFileName =
+								fmt::format("{}_{}_{}", ingestionJobKey, encodingJobKey, sourcePhysicalReference.substr(fileNameIndex + 1));
 
 							size_t extensionIndex = destBinaryFileName.find_last_of(".");
 							if (extensionIndex != string::npos)
@@ -1764,9 +1781,11 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 						size_t storageIndex = sourcePhysicalReference.find("/storage/");
 						if (storageIndex == string::npos)
 						{
-							_logger->error(
-								__FILEREF__ + "physical path has a wrong path" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								", sourcePhysicalReference: " + sourcePhysicalReference
+							SPDLOG_ERROR(
+								"physical path has a wrong path"
+								", ingestionJobKey: {}"
+								", sourcePhysicalReference: {}",
+								ingestionJobKey, sourcePhysicalReference
 							);
 
 							continue;

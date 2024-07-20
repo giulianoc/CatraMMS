@@ -4489,6 +4489,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							json referencePhysicalPathKeysRoot = broadcastDefaultPlaylistItemRoot[field];
 
+							// 						int64_t encodingProfileKey = -1;
 							for (int referencePhysicalPathKeyIndex = 0; referencePhysicalPathKeyIndex < referencePhysicalPathKeysRoot.size();
 								 referencePhysicalPathKeyIndex++)
 							{
@@ -4497,27 +4498,28 @@ void API::changeLiveProxyPlaylist(
 								int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(referencePhysicalPathKeyRoot, "physicalPathKey", -1);
 								string broadcastDefaultTitle = JSONUtils::asString(referencePhysicalPathKeyRoot, "mediaItemTitle", "");
 
+								// 								int64_t currentEncodingProfileKey =
+								// _mmsEngineDBFacade->physicalPath_EncodingProfileKey(physicalPathKey, chrono::milliseconds *sqlDuration, bool
+								// fromMaster)
 								string sourcePhysicalPathName;
 								{
-									tuple<string, int, string, string, int64_t, string> physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+									tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore) = _mmsStorage->getPhysicalPathDetails(
 										broadcastDefaultPhysicalPathKey,
 										// 2022-12-18: MIK dovrebbe
 										// essere stato aggiunto da
 										// tempo
 										false
 									);
-									tie(sourcePhysicalPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 
 									bool warningIfMissing = false;
-									tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string, int64_t>
-										mediaItemKeyDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+									tie(ignore, vodContentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
+										_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 											workspace->_workspaceKey, broadcastDefaultPhysicalPathKey, warningIfMissing,
 											// 2022-12-18: MIK dovrebbe
 											// essere stato aggiunto da
 											// tempo
 											false
 										);
-									tie(ignore, vodContentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore) = mediaItemKeyDetails;
 								}
 
 								// int64_t durationInMilliSeconds =
@@ -4534,7 +4536,7 @@ void API::changeLiveProxyPlaylist(
 										utcNow = chrono::system_clock::to_time_t(now);
 									}
 
-									pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
+									tie(sourcePhysicalDeliveryURL, ignore) = _mmsDeliveryAuthorization->createDeliveryAuthorization(
 										-1, // userKey,
 										workspace,
 										"", // clientIPAddress,
@@ -4561,8 +4563,6 @@ void API::changeLiveProxyPlaylist(
 											   // it filteredByStatistic is
 											   // true
 									);
-
-									tie(sourcePhysicalDeliveryURL, ignore) = deliveryAuthorizationDetails;
 								}
 
 								sources.push_back(make_tuple(

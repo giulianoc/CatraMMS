@@ -1631,6 +1631,7 @@ class MMSEngineDBFacade
 
 	int64_t getPhysicalPathDetails(int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
 	int64_t physicalPath_MediaItemKey(int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster);
+	int64_t physicalPath_EncodingProfileKey(int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster);
 	shared_ptr<PostgresHelper::SqlResultSet> physicalPathQuery(
 		vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex = -1, int rows = -1,
 		string orderBy = "", bool notFoundAsException = true
