@@ -4896,6 +4896,7 @@ void API::changeLiveProxyPlaylist(
 
 							MMSEngineDBFacade::ContentType vodContentType;
 
+							int64_t firstMediaEncodingProfileKey = -2;
 							for (int sourceIndex = 0; sourceIndex < sourcesRoot.size(); sourceIndex++)
 							{
 								json sourceRoot = sourcesRoot[sourceIndex];
@@ -4909,6 +4910,27 @@ void API::changeLiveProxyPlaylist(
 									throw runtime_error(errorMessage);
 								}
 								int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot, "physicalPathKey", -1);
+
+								// controllo che tutti i media usano lo stesso encoding profile
+								{
+									int64_t currentEncodingProfileKey =
+										_mmsEngineDBFacade->physicalPath_EncodingProfileKey(physicalPathKey, nullptr, false);
+									if (firstMediaEncodingProfileKey == -2) // primo media
+										firstMediaEncodingProfileKey = currentEncodingProfileKey;
+									else if (firstMediaEncodingProfileKey != currentEncodingProfileKey)
+									{
+										string errorMessage = fmt::format(
+											"Media are not using the same encoding profile"
+											", broadcasterIngestionJobKey: {}"
+											", firstMediaEncodingProfileKey: {}"
+											", currentEncodingProfileKey: {}",
+											broadcasterIngestionJobKey, firstMediaEncodingProfileKey, currentEncodingProfileKey
+										);
+										SPDLOG_ERROR(errorMessage);
+
+										throw runtime_error(errorMessage);
+									}
+								}
 
 								string sourcePhysicalPathName;
 								{
