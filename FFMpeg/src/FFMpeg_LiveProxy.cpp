@@ -1698,6 +1698,19 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 					ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
 				);
 				ofstream playlistListFile(endlessPlaylistListPathName.c_str(), ofstream::trunc);
+				if (!playlistListFile)
+				{
+					string errorMessage = fmt::format(
+						"Error creating ffmpegEndlessRecursivePlaylist file"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _ffmpegEndlessRecursivePlaylist: {}",
+						ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
 				playlistListFile << "ffconcat version 1.0" << endl;
 				for (string sourcePhysicalReference : sources)
 				{
@@ -1810,6 +1823,19 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				}
 				playlistListFile << "file '" << endlessPlaylistListFileName << "'" << endl;
 				playlistListFile.close();
+				if (!playlistListFile)
+				{
+					string errorMessage = fmt::format(
+						"Error saving ffmpegEndlessRecursivePlaylist file"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _ffmpegEndlessRecursivePlaylist: {}",
+						ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
 
 				ffmpegInputArgumentList.push_back("-f");
 				ffmpegInputArgumentList.push_back("concat");
