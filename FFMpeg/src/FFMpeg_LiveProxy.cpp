@@ -1705,13 +1705,6 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 					//	a URL in case of externalEncoder
 					//	a storage path name in case of a local encoder
 
-					SPDLOG_INFO(
-						"ffmpeg: adding physical path"
-						", ingestionJobKey: {}"
-						", sourcePhysicalReference: {}",
-						ingestionJobKey, sourcePhysicalReference
-					);
-
 					if (externalEncoder)
 					{
 						bool isStreaming = false;
@@ -1775,6 +1768,16 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 						}
 						// playlist and dowloaded files will be removed by the calling FFMpeg::liveProxy2 method
 						playlistListFile << "file '" << destBinaryFileName << "'" << endl;
+
+						SPDLOG_INFO(
+							"ffmpeg: adding physical path"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", _ffmpegEndlessRecursivePlaylist: {}"
+							", sourcePhysicalReference: {}"
+							", content: file '{}'",
+							ingestionJobKey, encodingJobKey, endlessPlaylistListPathName, sourcePhysicalReference, destBinaryFileName
+						);
 					}
 					else
 					{
@@ -1792,6 +1795,17 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 						}
 
 						playlistListFile << "file '" << sourcePhysicalReference.substr(storageIndex + 1) << "'" << endl;
+
+						SPDLOG_INFO(
+							"ffmpeg: adding physical path"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", _ffmpegEndlessRecursivePlaylist: {}"
+							", sourcePhysicalReference: {}"
+							", content: file '{}'",
+							ingestionJobKey, encodingJobKey, endlessPlaylistListPathName, sourcePhysicalReference,
+							sourcePhysicalReference.substr(storageIndex + 1)
+						);
 					}
 				}
 				playlistListFile << "file '" << endlessPlaylistListFileName << "'" << endl;
