@@ -478,6 +478,7 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 	}
 }
 
+/*
 tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails(int64_t encoderKey)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -575,6 +576,272 @@ tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails(int64_t encod
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+}
+*/
+
+tuple<string, string, string> MMSEngineDBFacade::encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {
+			{false, "mms_encoder:.label"}, {false, "mms_encoder:.publicServerName"}, {false, "mms_encoder:.internalServerName"}
+		};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
+
+		string label = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<string>("") : "";
+		string publicServerName = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][1].as<string>("") : "";
+		string internalServerName = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][2].as<string>("") : "";
+
+		return make_tuple(label, publicServerName, internalServerName);
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", encoderKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encoderKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", encoderKey: {}"
+			", fromMaster: {}",
+			encoderKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
+	vector<pair<bool, string>> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex, int rows, string orderBy,
+	bool notFoundAsException
+)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	nontransaction trans{*(conn->_sqlConnection)};
+	try
+	{
+		if (rows > _maxRows)
+		{
+			string errorMessage = fmt::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = fmt::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
+		{
+			string where;
+			if (encoderKey != -1)
+				where += fmt::format("{} encoderKey = {} ", where.size() > 0 ? "and" : "", encoderKey);
+
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = fmt::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = fmt::format("offset {} ", startIndex);
+			if (orderBy != "")
+				orderByCondition = fmt::format("order by {} ", orderBy);
+
+			string sqlStatement = fmt::format(
+				"select {} "
+				"from MMS_Encoder "
+				"{} {} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+
+			sqlResultSet = _postgresHelper.buildResult(res);
+
+			chrono::system_clock::time_point endSql = chrono::system_clock::now();
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
+			);
+
+			if (empty(res) && encoderKey != -1 && notFoundAsException)
+			{
+				string errorMessage = fmt::format(
+					"encoder not found"
+					", encoderKey: {}",
+					encoderKey
+				);
+				// abbiamo il log nel catch
+				// SPDLOG_WARN(errorMessage);
+
+				throw DBRecordNotFound(errorMessage);
+			}
+		}
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		return sqlResultSet;
+	}
+	catch (DBRecordNotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		try

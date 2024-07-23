@@ -2283,7 +2283,12 @@ class MMSEngineDBFacade
 
 	void removeEncoder(int64_t encoderKey);
 
-	tuple<string, string, string> getEncoderDetails(int64_t encoderKey);
+	// tuple<string, string, string> getEncoderDetails(int64_t encoderKey);
+	tuple<string, string, string> encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster = false);
+	shared_ptr<PostgresHelper::SqlResultSet> encoderQuery(
+		vector<pair<bool, string>> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex = -1, int rows = -1, string orderBy = "",
+		bool notFoundAsException = true
+	);
 
 	bool isEncoderRunning(bool external, string protocol, string publicServerName, string internalServerName, int port);
 

@@ -1729,7 +1729,8 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 				throw runtime_error(errorMessage);
 			}
 
-			auto [pushEncoderLabel, publicServerName, internalServerName] = getEncoderDetails(pushEncoderKey);
+			auto [pushEncoderLabel, publicServerName, internalServerName] = // getEncoderDetails(pushEncoderKey);
+				encoder_LabelPublicServerNameInternalServerName(pushEncoderKey);
 
 			if (pushProtocol == "srt")
 				url = pushProtocol + "://" + (pushPublicEncoderName ? publicServerName : internalServerName) + ":" + to_string(pushServerPort) +

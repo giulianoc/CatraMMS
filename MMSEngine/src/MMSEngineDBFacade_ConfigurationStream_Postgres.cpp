@@ -1155,7 +1155,8 @@ json MMSEngineDBFacade::getStreamList(
 								field = "pushPublicEncoderName";
 								streamRoot[field] = pushPublicEncoderName;
 
-								auto [pushEncoderLabel, publicServerName, internalServerName] = getEncoderDetails(pushEncoderKey);
+								auto [pushEncoderLabel, publicServerName, internalServerName] = // getEncoderDetails(pushEncoderKey);
+									encoder_LabelPublicServerNameInternalServerName(pushEncoderKey);
 
 								field = "pushEncoderLabel";
 								streamRoot[field] = pushEncoderLabel;
@@ -1165,6 +1166,10 @@ json MMSEngineDBFacade::getStreamList(
 									streamRoot[field] = publicServerName;
 								else
 									streamRoot[field] = internalServerName;
+							}
+							catch (DBRecordNotFound &e)
+							{
+								_logger->error(__FILEREF__ + "getEncoderDetails failed" + ", pushEncoderKey: " + to_string(pushEncoderKey));
 							}
 							catch (exception &e)
 							{
