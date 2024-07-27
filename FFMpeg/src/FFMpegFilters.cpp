@@ -262,6 +262,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 
 				{
 					ffmpegText = regex_replace(ffmpegText, regex(":"), escape + ":");
+					ffmpegText = regex_replace(ffmpegText, regex("'"), escape + "'");
 					ffmpegText = regex_replace(
 						ffmpegText, regex("days_counter"),
 						"%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}"
