@@ -119,6 +119,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 	}
 	string type = JSONUtils::asString(filterRoot, "type", "");
 
+	SPDLOG_INFO("TYPEEEEEE: {}", type);
 	if (type == "ametadata")
 	{
 		filter = ("ametadata=mode=print");
@@ -261,11 +262,8 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 					escape = ""; // in case of file, there is no need of escape
 
 				{
-					SPDLOG_INFO("getDrawTextVideoFilterDescription, prima di : {}", ffmpegText);
 					ffmpegText = regex_replace(ffmpegText, regex(":"), escape + ":");
-					SPDLOG_INFO("getDrawTextVideoFilterDescription, dopo : {}", ffmpegText);
 					ffmpegText = regex_replace(ffmpegText, regex("'"), escape + "'");
-					SPDLOG_INFO("getDrawTextVideoFilterDescription, dopo ' {}", ffmpegText);
 					ffmpegText = regex_replace(
 						ffmpegText, regex("days_counter"),
 						"%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}"
