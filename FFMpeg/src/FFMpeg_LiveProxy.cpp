@@ -2191,6 +2191,7 @@ void FFMpeg::outputsRootToFfmpeg(
 		);
 
 		// in caso di drawtext filter, set textFilePathName sicuramente se è presente reloadAtFrameInterval
+		// Inoltre in caso di caratteri speciali come ', bisogna usare il file
 		{
 			if (filtersRoot != nullptr)
 			{
@@ -2203,9 +2204,11 @@ void FFMpeg::outputsRootToFfmpeg(
 						if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "drawtext")
 						{
 							int reloadAtFrameInterval = JSONUtils::asInt(videoFilterRoot, "reloadAtFrameInterval", -1);
-							if (reloadAtFrameInterval > 0)
+							string overlayText = JSONUtils::asString(videoFilterRoot, "text", "");
+							if (reloadAtFrameInterval > 0 ||
+								// caratteri dove non si puo usare escape
+								overlayText.find("'") != string::npos)
 							{
-								string overlayText = JSONUtils::asString(videoFilterRoot, "text", "");
 								string textTemporaryFileName = getDrawTextTemporaryPathName(ingestionJobKey, encodingJobKey, outputIndex);
 								{
 									ofstream of(textTemporaryFileName, ofstream::trunc);
