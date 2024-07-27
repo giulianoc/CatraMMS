@@ -119,7 +119,6 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 	}
 	string type = JSONUtils::asString(filterRoot, "type", "");
 
-	SPDLOG_INFO("TYPEEEEEE: {}", type);
 	if (type == "ametadata")
 	{
 		filter = ("ametadata=mode=print");
@@ -209,6 +208,49 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 		{
 			// management of the text, many processing is in case of a countdown
 			string ffmpegText = text;
+
+			if (textFilePathName != "")
+			{
+				ifstream ifPathFileName(textFilePathName);
+				if (ifPathFileName)
+				{
+					// get size/length of file:
+					ifPathFileName.seekg(0, ifPathFileName.end);
+					int fileSize = ifPathFileName.tellg();
+					ifPathFileName.seekg(0, ifPathFileName.beg);
+
+					char *buffer = new char[fileSize];
+					ifPathFileName.read(buffer, fileSize);
+					if (ifPathFileName)
+					{
+						// all characters read successfully
+						ffmpegText.assign(buffer, fileSize);
+					}
+					else
+					{
+						// error: only is.gcount() could be read";
+						ffmpegText.assign(buffer, ifPathFileName.gcount());
+					}
+					ifPathFileName.close();
+					delete[] buffer;
+				}
+				else
+				{
+					SPDLOG_ERROR(
+						"ffmpeg: drawtext file cannot be read"
+						", textFilePathName: {}",
+						textFilePathName
+					);
+				}
+			}
+
+			string escape = "\\";
+			if (textFilePathName != "")
+				escape = ""; // in case of file, there is no need of escape
+
+			ffmpegText = regex_replace(ffmpegText, regex(":"), escape + ":");
+			ffmpegText = regex_replace(ffmpegText, regex("'"), escape + "'");
+
 			if (streamingDurationInSeconds != -1)
 			{
 				// see https://ffmpeg.org/ffmpeg-filters.html
@@ -222,48 +264,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 				// padding with zeros from the left.
 				//
 
-				if (textFilePathName != "")
 				{
-					ifstream ifPathFileName(textFilePathName);
-					if (ifPathFileName)
-					{
-						// get size/length of file:
-						ifPathFileName.seekg(0, ifPathFileName.end);
-						int fileSize = ifPathFileName.tellg();
-						ifPathFileName.seekg(0, ifPathFileName.beg);
-
-						char *buffer = new char[fileSize];
-						ifPathFileName.read(buffer, fileSize);
-						if (ifPathFileName)
-						{
-							// all characters read successfully
-							ffmpegText.assign(buffer, fileSize);
-						}
-						else
-						{
-							// error: only is.gcount() could be read";
-							ffmpegText.assign(buffer, ifPathFileName.gcount());
-						}
-						ifPathFileName.close();
-						delete[] buffer;
-					}
-					else
-					{
-						SPDLOG_ERROR(
-							"ffmpeg: drawtext file cannot be read"
-							", textFilePathName: {}",
-							textFilePathName
-						);
-					}
-				}
-
-				string escape = "\\";
-				if (textFilePathName != "")
-					escape = ""; // in case of file, there is no need of escape
-
-				{
-					ffmpegText = regex_replace(ffmpegText, regex(":"), escape + ":");
-					ffmpegText = regex_replace(ffmpegText, regex("'"), escape + "'");
 					ffmpegText = regex_replace(
 						ffmpegText, regex("days_counter"),
 						"%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}"
@@ -286,13 +287,13 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 					);
 					ffmpegText = regex_replace(ffmpegText, regex("countDownDurationInSecs"), to_string(streamingDurationInSeconds));
 				}
+			}
 
-				if (textFilePathName != "")
-				{
-					ofstream of(textFilePathName, ofstream::trunc);
-					of << ffmpegText;
-					of.flush();
-				}
+			if (textFilePathName != "")
+			{
+				ofstream of(textFilePathName, ofstream::trunc);
+				of << ffmpegText;
+				of.flush();
 			}
 
 			/*
