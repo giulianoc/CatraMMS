@@ -261,8 +261,11 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 					escape = ""; // in case of file, there is no need of escape
 
 				{
+					SPDLOG_INFO("getDrawTextVideoFilterDescription, prima di : {}", ffmpegText);
 					ffmpegText = regex_replace(ffmpegText, regex(":"), escape + ":");
+					SPDLOG_INFO("getDrawTextVideoFilterDescription, dopo : {}", ffmpegText);
 					ffmpegText = regex_replace(ffmpegText, regex("'"), escape + "'");
+					SPDLOG_INFO("getDrawTextVideoFilterDescription, dopo ' {}", ffmpegText);
 					ffmpegText = regex_replace(
 						ffmpegText, regex("days_counter"),
 						"%{eif" + escape + ":trunc((countDownDurationInSecs-t)/86400)" + escape + ":d" + escape + ":2}"
@@ -393,7 +396,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 					filter += (":reload=" + to_string(reloadAtFrameInterval));
 			}
 			else
-				filter = string("drawtext=text='") + ffmpegText + "'";
+				filter = fmt::format("drawtext=text='{}'", ffmpegText);
 			if (textPosition_X_InPixel != "")
 				filter += (":x=" + ffmpegTextPosition_X_InPixel);
 			if (textPosition_Y_InPixel != "")
