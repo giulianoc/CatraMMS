@@ -20,6 +20,11 @@
 		// mandatory if InputType is StreamingUrl
 		"streamingUrl": "https://.....",
 
+		// optional: 
+		// if true, it makes sure it has at least one video track and one audio track
+		// default: true
+		"isVideo": true,
+
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:

@@ -3,6 +3,8 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
+#include "spdlog/fmt/fmt.h"
+#include "spdlog/spdlog.h"
 
 void MMSEngineProcessor::checkStreamingThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot
@@ -79,6 +81,8 @@ void MMSEngineProcessor::checkStreamingThread(
 			streamingUrl = JSONUtils::asString(parametersRoot, field, "");
 		}
 
+		bool isVideo = JSONUtils::asBool(parametersRoot, "isVideo", true);
+
 		SPDLOG_INFO(
 			string() + "checkStreamingThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", _ingestionJobKey: " + to_string(ingestionJobKey) + ", inputType: " + inputType + ", streamingUrl: " + streamingUrl
@@ -94,8 +98,11 @@ void MMSEngineProcessor::checkStreamingThread(
 
 		{
 			SPDLOG_INFO(
-				string() + "Calling ffmpeg.getMediaInfo" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", _ingestionJobKey: " + to_string(ingestionJobKey) + ", streamingUrl: " + streamingUrl
+				"Calling ffmpeg.getMediaInfo"
+				", processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", streamingUrl: {}",
+				_processorIdentifier, ingestionJobKey, streamingUrl
 			);
 			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = false;
@@ -113,11 +120,42 @@ void MMSEngineProcessor::checkStreamingThread(
 				", audioTracks.size: {}",
 				_processorIdentifier, ingestionJobKey, streamingUrl, videoTracks.size(), audioTracks.size()
 			);
+
+			if (isVideo && (videoTracks.size() == 0 || audioTracks.size() == 0))
+			{
+				string errorMessage = fmt::format(
+					"Video with wrong video or audio tracks"
+					", processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", videoTracks.size: {}"
+					", audioTracks.size: {}",
+					_processorIdentifier, ingestionJobKey, videoTracks.size(), audioTracks.size()
+				);
+				SPDLOG_ERROR(errorMessage);
+				throw runtime_error(errorMessage);
+			}
+			else if (!isVideo && (videoTracks.size() > 0 || audioTracks.size() == 0))
+			{
+				string errorMessage = fmt::format(
+					"Audio with wrong video or audio tracks"
+					", processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", videoTracks.size: {}"
+					", audioTracks.size: {}",
+					_processorIdentifier, ingestionJobKey, videoTracks.size(), audioTracks.size()
+				);
+				SPDLOG_ERROR(errorMessage);
+				throw runtime_error(errorMessage);
+			}
 		}
 
 		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
+			"Update IngestionJob"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", IngestionStatus: End_TaskSuccess"
+			", errorMessage: ",
+			_processorIdentifier, ingestionJobKey
 		);
 		_mmsEngineDBFacade->updateIngestionJob(
 			ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
