@@ -103,7 +103,7 @@ class FFMPEGEncoder : public FastCGIAPI
 	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
 	// commented because retrieved dinamically
 	// int							_maxLiveProxiesCapability;
-	int getMaxLiveProxiesCapability(void);
+	int getMaxLiveProxiesCapability(int64_t ingestionJobKey);
 
 	mutex *_liveRecordingMutex;
 	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;

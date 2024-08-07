@@ -749,7 +749,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			// for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>
 			// liveProxy:
 			// *_liveProxiesCapability)
-			int maxLiveProxiesCapability = getMaxLiveProxiesCapability();
+			int maxLiveProxiesCapability = getMaxLiveProxiesCapability(ingestionJobKey);
 			for (int liveProxyIndex = 0; liveProxyIndex < maxLiveProxiesCapability; liveProxyIndex++)
 			{
 				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy = (*_liveProxiesCapability)[liveProxyIndex];
@@ -2897,7 +2897,7 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 	}
 }
 
-int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
+int FFMPEGEncoder::getMaxLiveProxiesCapability(int64_t ingestionJobKey)
 {
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to
 	// be done
@@ -2919,7 +2919,13 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(void)
 		string lastCPUUsage;
 		for (int cpuUsage : *_cpuUsage)
 			lastCPUUsage += (to_string(cpuUsage) + " ");
-		_logger->info(__FILEREF__ + "getMaxXXXXCapability" + ", lastCPUUsage: " + lastCPUUsage + ", maxCapability: " + to_string(maxCapability));
+		SPDLOG_INFO(
+			"getMaxXXXXCapability"
+			", ingestionJobKey: {}"
+			", lastCPUUsage: {}"
+			", maxCapability: {}",
+			ingestionJobKey, lastCPUUsage, maxCapability
+		);
 
 		return maxCapability;
 	}
