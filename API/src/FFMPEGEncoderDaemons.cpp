@@ -32,7 +32,8 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_monitorCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds));
 
-		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
+		// 2024-08-08: era prima inizializzato a 60, poi ho visto un canale le cui info cambiavano ogni 75 secs, per cui ho cambiato a 120
+		_maxRealTimeInfoNotChangedToleranceInSeconds = 120;
 	}
 	catch (runtime_error &e)
 	{
@@ -106,17 +107,21 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						liveProxyAndGridNotRunningCounter++;
 					}
 				}
-				_logger->info(
-					__FILEREF__ + "liveProxyMonitor, numbers" +
-					", total LiveProxyAndGrid: " + to_string(liveProxyAndGridRunningCounter + liveProxyAndGridNotRunningCounter) +
-					", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter) +
-					", liveProxyAndGridNotRunningCounter: " + to_string(liveProxyAndGridNotRunningCounter)
+				SPDLOG_INFO(
+					"liveProxyMonitor, numbers"
+					", total LiveProxyAndGrid: {}"
+					", liveProxyAndGridRunningCounter: {}"
+					", liveProxyAndGridNotRunningCounter: {}",
+					liveProxyAndGridRunningCounter + liveProxyAndGridNotRunningCounter, liveProxyAndGridRunningCounter,
+					liveProxyAndGridNotRunningCounter
 				);
 			}
-			_logger->info(
-				__FILEREF__ + "liveProxyMonitor clone" + ", copiedRunningLiveProxiesCapability.size: " +
-				to_string(copiedRunningLiveProxiesCapability.size()) + ", @MMS statistics@ - elapsed (millisecs): " +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
+			SPDLOG_INFO(
+				"liveProxyMonitor clone"
+				", copiedRunningLiveProxiesCapability.size: {}"
+				", @MMS statistics@ - elapsed (millisecs): {}",
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startClone).count(),
+				copiedRunningLiveProxiesCapability.size()
 			);
 
 			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
@@ -140,13 +145,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				_logger->info(
-					__FILEREF__ + "liveProxyMonitor start" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-					", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-					", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid) +
-					", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " +
-					to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count()) +
-					", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " + to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+				SPDLOG_INFO(
+					"liveProxyMonitor start"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", configurationLabel: {}"
+					", sourceLiveProxy->_childPid: {}"
+					", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+					", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+					copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, sourceLiveProxy->_childPid,
+					copiedLiveProxy->_proxyStart.time_since_epoch().count(), sourceLiveProxy->_proxyStart.time_since_epoch().count()
 				);
 
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -870,14 +878,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveProxy->_childPid == 0 || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor. LiveProxy changed" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-						", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid) +
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count()) +
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childPid: {}"
+						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, sourceLiveProxy->_childPid,
+						copiedLiveProxy->_proxyStart.time_since_epoch().count(), sourceLiveProxy->_proxyStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -885,15 +895,17 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!liveProxyWorking)
 				{
-					_logger->error(
-						__FILEREF__ +
+					SPDLOG_ERROR(
 						"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to "
-						"be started again" +
-						", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-						to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel + ", localErrorMessage: " +
-						localErrorMessage
+						"be started again"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", localErrorMessage: {}"
 						// + ", channelLabel: " + copiedLiveProxy->_channelLabel
-						+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+						", copiedLiveProxy->_childPid: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, localErrorMessage,
+						copiedLiveProxy->_childPid
 					);
 
 					try
