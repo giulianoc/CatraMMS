@@ -32,8 +32,8 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_monitorCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds));
 
-		// 2024-08-08: era prima inizializzato a 60, poi ho visto un canale le cui info cambiavano ogni 75 secs, per cui ho cambiato a 120
-		_maxRealTimeInfoNotChangedToleranceInSeconds = 120;
+		// 2024-08-08: era prima inizializzato a 60, poi ho visto un canale le cui info cambiavano ogni 135 secs, per cui ho cambiato a 120
+		_maxRealTimeInfoNotChangedToleranceInSeconds = 180;
 	}
 	catch (runtime_error &e)
 	{
