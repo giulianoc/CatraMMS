@@ -16,6 +16,8 @@
 #include "JSONUtils.h"
 #include "MMSCURL.h"
 #include "catralibraries/ProcessUtility.h"
+#include "spdlog/fmt/bundled/format.h"
+#include "spdlog/fmt/fmt.h"
 #include <fstream>
 #include <regex>
 
@@ -495,13 +497,19 @@ void FFMpeg::liveProxy2(
 			string errorMessage;
 			if (iReturnedStatus == 9) // 9 means: SIGKILL
 			{
-				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg execution command failed because killed by the user" +
-							   ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-							   ", currentInputIndex: " + to_string(currentInputIndex) +
-							   ", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) +
-							   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-							   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-							   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+				errorMessage = fmt::format(
+					"ffmpeg: ffmpeg execution command failed because killed by the user"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", currentInputIndex: {}"
+					", currentNumberOfRepeatingSameInput: {}"
+					", _outputFfmpegPathFileName: {}"
+					", ffmpegArgumentList: {}"
+					", lastPartOfFfmpegOutputFile: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, _outputFfmpegPathFileName,
+					ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+				);
 			}
 			else
 			{
@@ -518,26 +526,40 @@ void FFMpeg::liveProxy2(
 				{
 					stoppedBySigQuitOrTerm = true;
 
-					errorMessage =
-						__FILEREF__ + "ffmpeg execution stopped by SIGQUIT/SIGTERM (3/15): ffmpeg command failed" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", currentInputIndex: " + to_string(currentInputIndex) +
-						", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) +
-						", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						", lastPartOfFfmpegOutputFile: " + regex_replace(lastPartOfFfmpegOutputFile, regex("\n"), " ") + ", e.what(): " + e.what();
+					errorMessage = fmt::format(
+						"ffmpeg execution stopped by SIGQUIT/SIGTERM (3/15): ffmpeg command failed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", currentInputIndex: {}"
+						", currentNumberOfRepeatingSameInput: {}"
+						", _outputFfmpegPathFileName: {}"
+						", ffmpegArgumentList: {}"
+						", lastPartOfFfmpegOutputFile: {}"
+						", e.what(): {}",
+						ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, _outputFfmpegPathFileName,
+						ffmpegArgumentListStream.str(), regex_replace(lastPartOfFfmpegOutputFile, regex("\n"), " "), e.what()
+					);
 				}
 				else
 				{
-					errorMessage =
-						__FILEREF__ + "ffmpeg: ffmpeg execution command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-						", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) + ", ffmpegCommandDuration (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startFfmpegCommand).count()) + "@" +
-						", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						", lastPartOfFfmpegOutputFile: " + regex_replace(lastPartOfFfmpegOutputFile, regex("\n"), " ") + ", e.what(): " + e.what();
+					errorMessage = fmt::format(
+						"ffmpeg: ffmpeg execution command failed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", currentInputIndex: {}"
+						", currentNumberOfRepeatingSameInput: {}"
+						", ffmpegCommandDuration (secs): @{}@"
+						", _outputFfmpegPathFileName: {}"
+						", ffmpegArgumentList: {}"
+						", lastPartOfFfmpegOutputFile: {}"
+						", e.what(): {}",
+						ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput,
+						chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startFfmpegCommand).count(), _outputFfmpegPathFileName,
+						ffmpegArgumentListStream.str(), regex_replace(lastPartOfFfmpegOutputFile, regex("\n"), " "), e.what()
+					);
 				}
 			}
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			/*
 			_logger->info(__FILEREF__ + "Remove"

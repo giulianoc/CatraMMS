@@ -682,12 +682,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveProxyWorking && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
+				// 2024-08-10: sposto il controllo _monitoringRealTimeInfoEnabled prima del check sotto
+				// perchè voglio cmq avere i dati real time
+				if (liveProxyWorking) // && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor getRealTimeInfoByOutputLog check" +
-						", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel
+					SPDLOG_INFO(
+						"liveProxyMonitor getRealTimeInfoByOutputLog check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
 					);
 
 					try
@@ -742,40 +746,46 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							if (copiedLiveProxy->_realTimeFrame == realTimeFrame && copiedLiveProxy->_realTimeSize == realTimeSize &&
 								copiedLiveProxy->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
-								// real time info not changed
-								if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+								if (copiedLiveProxy->_monitoringRealTimeInfoEnabled)
 								{
-									_logger->error(
-										__FILEREF__ +
-										"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
-										"info "
-										"are not changing. "
-										"LiveProxy (ffmpeg) is killed in order to be started again" +
-										", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-										to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-										", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
-										", realTimeFrame: " + to_string(realTimeFrame) + ", realTimeSize: " + to_string(realTimeSize) +
-										", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds) +
-										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
-										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
-									);
+									// real time info not changed
+									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+									{
+										SPDLOG_ERROR(
+											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
+											"info are not changing. LiveProxy (ffmpeg) is killed in order to be started again"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}"
+											", configurationLabel: {}"
+											", copiedLiveProxy->_childPid: {}"
+											", realTimeFrame: {}"
+											", realTimeSize: {}"
+											", realTimeTimeInMilliSeconds: {}"
+											", elapsedInSecondsSinceLastChange: {}"
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
+											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+											copiedLiveProxy->_childPid, realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds,
+											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds
+										);
 
-									liveProxyWorking = false;
+										liveProxyWorking = false;
 
-									localErrorMessage = " restarted because of 'real time info not changing'";
-								}
-								else
-								{
-									_logger->info(
-										__FILEREF__ +
-										"liveProxyMonitor. Live Proxy real time info is not changed within the tolerance"
-										", ingestionJobKey: " +
-										to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-										to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-										", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) +
-										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
-										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
-									);
+										localErrorMessage = " restarted because of 'real time info not changing'";
+									}
+									else
+									{
+										SPDLOG_INFO(
+											"liveProxyMonitor. Live Proxy real time info is not changed within the tolerance"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}"
+											", configurationLabel: {}"
+											", copiedLiveProxy->_childPid: {}"
+											", elapsedInSecondsSinceLastChange: {}"
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
+											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+											copiedLiveProxy->_childPid, elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds
+										);
+									}
 								}
 							}
 							else

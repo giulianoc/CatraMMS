@@ -99,6 +99,14 @@ if [ "$deploy" == "y" ]; then
 	scp -P 9255 -i ~/ssh-keys/cibortv-aruba.pem /opt/catrasoftware/deploy/$tarFileName mms@ru002148.arubabiz.net:/opt/catramms
 	date
 
+	echo "serverplan-mms-transcoder-1"
+	scp -P 9255 -i ~/ssh-keys/cibortv-serverplan.pem /opt/catrasoftware/deploy/$tarFileName mms@d02c0q-hdea.sphostserver.com:/opt/catramms
+	date
+
+	echo "serverplan-mms-transcoder-2"
+	scp -P 9255 -i ~/ssh-keys/cibortv-serverplan.pem /opt/catrasoftware/deploy/$tarFileName mms@d02c0q-hdea2.sphostserver.com:/opt/catramms
+	date
+
 	echo "aws-mms-api-gui-1"
 	scp -i ~/ssh-keys/aws-mms-key-ireland.pem /opt/catrasoftware/deploy/$tarFileName mms@ec2-63-35-35-24.eu-west-1.compute.amazonaws.com:/opt/catramms
 	date
