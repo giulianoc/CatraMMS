@@ -33,7 +33,7 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds));
 
 		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
-		_maxRealTimeInfoTimestampDiscontinuity = 10;
+		_maxRealTimeInfoTimestampDiscontinuity = 100;
 	}
 	catch (runtime_error &e)
 	{
@@ -806,6 +806,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						else
 							sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 
+						/*
 						if (timestampDiscontinuityCount > _maxRealTimeInfoTimestampDiscontinuity)
 						{
 							SPDLOG_ERROR(
@@ -830,6 +831,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							localErrorMessage = " restarted because of 'real time info timestampDiscontinuity is too much'";
 						}
+						*/
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
@@ -1856,6 +1858,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						else
 							sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 
+						/*
 						if (timestampDiscontinuityCount > _maxRealTimeInfoTimestampDiscontinuity)
 						{
 							SPDLOG_ERROR(
@@ -1881,6 +1884,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							localErrorMessage = " restarted because of 'real time info timestampDiscontinuity is too much'";
 						}
+					*/
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
