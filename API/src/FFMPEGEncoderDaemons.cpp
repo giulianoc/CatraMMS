@@ -32,8 +32,8 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_monitorCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds));
 
-		// 2024-08-08: era prima inizializzato a 60, poi ho visto un canale le cui info cambiavano ogni 135 secs, per cui ho cambiato a 120
-		_maxRealTimeInfoNotChangedToleranceInSeconds = 180;
+		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
+		_maxRealTimeInfoTimestampDiscontinuity = 10;
 	}
 	catch (runtime_error &e)
 	{
@@ -697,7 +697,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds, bitRate] =
+						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds, bitRate, timestampDiscontinuityCount] =
 							copiedLiveProxy->_ffmpeg->getRealTimeInfoByOutputLog();
 						sourceLiveProxy->_realTimeFrame = realTimeFrame;
 						sourceLiveProxy->_realTimeSize = realTimeSize;
@@ -737,18 +737,22 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								", diff real time frame: {}"
 								", diff real time size: {}"
 								", diff real time time in millisecs: {}"
-								", realTimeBitRate: {}",
+								", realTimeBitRate: {}"
+								", timestampDiscontinuityCount: {}"
+								", _maxRealTimeInfoTimestampDiscontinuity: {}",
 								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, copiedLiveProxy->_childPid,
 								elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds, diffRealTimeFrame, diffRealTimeSize,
-								diffRealTimeTimeInMilliSeconds, sourceLiveProxy->_realTimeBitRate
+								diffRealTimeTimeInMilliSeconds, sourceLiveProxy->_realTimeBitRate, timestampDiscontinuityCount,
+								_maxRealTimeInfoTimestampDiscontinuity
 							);
 
 							if (copiedLiveProxy->_realTimeFrame == realTimeFrame && copiedLiveProxy->_realTimeSize == realTimeSize &&
 								copiedLiveProxy->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
+								// real time info non sono cambiate
+
 								if (copiedLiveProxy->_monitoringRealTimeInfoEnabled)
 								{
-									// real time info not changed
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 									{
 										SPDLOG_ERROR(
@@ -762,10 +766,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", realTimeSize: {}"
 											", realTimeTimeInMilliSeconds: {}"
 											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+											", timestampDiscontinuityCount: {}"
+											", _maxRealTimeInfoTimestampDiscontinuity: {}",
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
 											copiedLiveProxy->_childPid, realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds,
-											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds
+											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
+											timestampDiscontinuityCount, _maxRealTimeInfoTimestampDiscontinuity
 										);
 
 										liveProxyWorking = false;
@@ -781,9 +788,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", configurationLabel: {}"
 											", copiedLiveProxy->_childPid: {}"
 											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+											", timestampDiscontinuityCount: {}"
+											", _maxRealTimeInfoTimestampDiscontinuity: {}",
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-											copiedLiveProxy->_childPid, elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds
+											copiedLiveProxy->_childPid, elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
+											timestampDiscontinuityCount, _maxRealTimeInfoTimestampDiscontinuity
 										);
 									}
 								}
@@ -795,6 +805,31 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						}
 						else
 							sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
+
+						if (timestampDiscontinuityCount > _maxRealTimeInfoTimestampDiscontinuity)
+						{
+							SPDLOG_ERROR(
+								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
+								"info timestampDiscontinuity is too much. LiveProxy (ffmpeg) is killed in order to be started again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", configurationLabel: {}"
+								", copiedLiveProxy->_childPid: {}"
+								", realTimeFrame: {}"
+								", realTimeSize: {}"
+								", realTimeTimeInMilliSeconds: {}"
+								", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+								", timestampDiscontinuityCount: {}"
+								", _maxRealTimeInfoTimestampDiscontinuity: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, copiedLiveProxy->_childPid,
+								realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds, _maxRealTimeInfoNotChangedToleranceInSeconds,
+								timestampDiscontinuityCount, _maxRealTimeInfoTimestampDiscontinuity
+							);
+
+							liveProxyWorking = false;
+
+							localErrorMessage = " restarted because of 'real time info timestampDiscontinuity is too much'";
+						}
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
@@ -1699,7 +1734,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveRecorderWorking && copiedLiveRecording->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
+				// 2024-08-10: sposto il controllo _monitoringRealTimeInfoEnabled prima del check sotto
+				// perchè voglio cmq avere i dati real time
+				if (liveRecorderWorking) // && copiedLiveRecording->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
 					_logger->info(
 						__FILEREF__ + "liveRecordingMonitor. areRealTimeInfoChanged check" + ", ingestionJobKey: " +
@@ -1710,7 +1747,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds, bitRate] =
+						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds, bitRate, timestampDiscontinuityCount] =
 							copiedLiveRecording->_ffmpeg->getRealTimeInfoByOutputLog();
 						sourceLiveRecording->_realTimeFrame = realTimeFrame;
 						sourceLiveRecording->_realTimeSize = realTimeSize;
@@ -1743,41 +1780,53 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							if (copiedLiveRecording->_realTimeFrame == realTimeFrame && copiedLiveRecording->_realTimeSize == realTimeSize &&
 								copiedLiveRecording->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds)
 							{
-								// real time info not changed
-								if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+								if (copiedLiveRecording->_monitoringRealTimeInfoEnabled)
 								{
-									_logger->error(
-										__FILEREF__ +
-										"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live Recorder "
-										"real time "
-										"info "
-										"are not changing. "
-										"LiveRecorder (ffmpeg) is killed in order to be started again" +
-										", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-										to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-										", _childPid: " + to_string(copiedLiveRecording->_childPid) + ", realTimeFrame: " + to_string(realTimeFrame) +
-										", realTimeSize: " + to_string(realTimeSize) +
-										", realTimeTimeInMilliSeconds: " + to_string(realTimeTimeInMilliSeconds) +
-										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
-										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
-									);
+									// real time info not changed
+									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+									{
+										SPDLOG_ERROR(
+											"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live "
+											"Recorder real time info are not changing. LiveRecorder (ffmpeg) is killed in order to be started again"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}"
+											", channelLabel: {}"
+											", _childPid: {}"
+											", realTimeFrame: {}"
+											", realTimeSize: {}"
+											", realTimeTimeInMilliSeconds: {}"
+											", elapsedInSecondsSinceLastChange: {}"
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+											", timestampDiscontinuityCount: {}"
+											", _maxRealTimeInfoTimestampDiscontinuity: {}",
+											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childPid, realTimeFrame, realTimeSize,
+											realTimeTimeInMilliSeconds, elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
+											timestampDiscontinuityCount, _maxRealTimeInfoTimestampDiscontinuity
+										);
 
-									liveRecorderWorking = false;
+										liveRecorderWorking = false;
 
-									localErrorMessage = " restarted because of 'real time info not changing'";
-								}
-								else
-								{
-									_logger->info(
-										__FILEREF__ +
-										"liveRecordingMonitor. Live Recorder real time info is not changed but within the tolerance"
-										", ingestionJobKey: " +
-										to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-										to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-										", _childPid: " + to_string(copiedLiveRecording->_childPid) +
-										", elapsedInSecondsSinceLastChange: " + to_string(elapsedInSecondsSinceLastChange) +
-										", _maxRealTimeInfoNotChangedToleranceInSeconds: " + to_string(_maxRealTimeInfoNotChangedToleranceInSeconds)
-									);
+										localErrorMessage = " restarted because of 'real time info not changing'";
+									}
+									else
+									{
+										SPDLOG_INFO(
+											"liveRecordingMonitor. Live Recorder real time info is not changed but within the tolerance"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}"
+											", channelLabel: {}"
+											", _childPid: {}"
+											", elapsedInSecondsSinceLastChange: {}"
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+											", timestampDiscontinuityCount: {}"
+											", _maxRealTimeInfoTimestampDiscontinuity: {}",
+											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childPid, elapsedInSecondsSinceLastChange,
+											_maxRealTimeInfoNotChangedToleranceInSeconds, timestampDiscontinuityCount,
+											_maxRealTimeInfoTimestampDiscontinuity
+										);
+									}
 								}
 							}
 							else
@@ -1794,15 +1843,44 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
 									", diff real time frame: {}"
 									", diff real time size: {}"
-									", diff real time time in millisecs: {}",
+									", diff real time time in millisecs: {}"
+									", timestampDiscontinuityCount: {}"
+									", _maxRealTimeInfoTimestampDiscontinuity: {}",
 									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
 									copiedLiveRecording->_childPid, elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
-									diffRealTimeFrame, diffRealTimeSize, diffRealTimeTimeInMilliSeconds
+									diffRealTimeFrame, diffRealTimeSize, diffRealTimeTimeInMilliSeconds, timestampDiscontinuityCount,
+									_maxRealTimeInfoTimestampDiscontinuity
 								);
 							}
 						}
 						else
 							sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
+
+						if (timestampDiscontinuityCount > _maxRealTimeInfoTimestampDiscontinuity)
+						{
+							SPDLOG_ERROR(
+								"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live "
+								"Recorder real time info timestampDiscontinuity is too much. LiveRecorder (ffmpeg) is killed in order to be started "
+								"again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", channelLabel: {}"
+								", _childPid: {}"
+								", realTimeFrame: {}"
+								", realTimeSize: {}"
+								", realTimeTimeInMilliSeconds: {}"
+								", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+								", timestampDiscontinuityCount: {}"
+								", _maxRealTimeInfoTimestampDiscontinuity: {}",
+								copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+								copiedLiveRecording->_childPid, realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds,
+								_maxRealTimeInfoNotChangedToleranceInSeconds, timestampDiscontinuityCount, _maxRealTimeInfoTimestampDiscontinuity
+							);
+
+							liveRecorderWorking = false;
+
+							localErrorMessage = " restarted because of 'real time info timestampDiscontinuity is too much'";
+						}
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{

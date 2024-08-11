@@ -179,7 +179,7 @@ class FFMpeg
 	bool nonMonotonousDTSInOutputLog();
 	bool forbiddenErrorInOutputLog();
 	// bool areRealTimeInfoChanged(int maxMilliSecondsToWait);
-	tuple<long, long, double, double> getRealTimeInfoByOutputLog();
+	tuple<long, long, double, double, int> getRealTimeInfoByOutputLog();
 
 	tuple<int64_t, long, json> getMediaInfo(
 		int64_t ingestionJobKey, bool isMMSAssetPathName, int timeoutInSeconds, string mediaSource,

@@ -655,7 +655,7 @@ install-mms-packages()
 
 	packageName=ffmpeg
 	echo ""
-	ffmpegVersion=7.0
+	ffmpegVersion=7.0.2
 	echo -n "$packageName version (i.e.: $ffmpegVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -823,7 +823,7 @@ install-mms-packages()
 	if [ "$moduleType" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		catraLibrariesVersion=1.0.1870
+		catraLibrariesVersion=1.0.1890
 		echo -n "$packageName version (i.e.: $catraLibrariesVersion)? "
 		read version
 		if [ "$version" == "" ]; then

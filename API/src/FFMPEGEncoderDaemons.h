@@ -47,6 +47,7 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 	int _monitorCheckInSeconds;
 
 	int _maxRealTimeInfoNotChangedToleranceInSeconds;
+	int _maxRealTimeInfoTimestampDiscontinuity;
 	GetCpuUsage_t _getCpuUsage;
 
 	mutex *_liveRecordingMutex;

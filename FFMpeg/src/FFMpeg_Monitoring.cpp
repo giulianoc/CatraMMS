@@ -12,8 +12,8 @@
  */
 #include "FFMpeg.h"
 #include "catralibraries/StringUtils.h"
-#include <regex>
 #include <fstream>
+#include <regex>
 /*
 #include "FFMpegEncodingParameters.h"
 #include "FFMpegFilters.h"
@@ -346,7 +346,7 @@ bool FFMpeg::forbiddenErrorInOutputLog()
 	}
 }
 
-tuple<long, long, double, double> FFMpeg::getRealTimeInfoByOutputLog()
+tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 {
 	// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x
 
@@ -354,6 +354,7 @@ tuple<long, long, double, double> FFMpeg::getRealTimeInfoByOutputLog()
 	long size = -1;
 	double timeInMilliSeconds = -1.0;
 	double bitRate = -1.0;
+	int timestampDiscontinuityCount = -1;
 
 	try
 	{
@@ -525,23 +526,41 @@ tuple<long, long, double, double> FFMpeg::getRealTimeInfoByOutputLog()
 				value = StringUtils::ltrim(value);
 				if (!StringUtils::startWith(value, "N/A"))
 				{
-				size_t endIndex = value.find("kbits/s");
-				if (endIndex == string::npos)
-				{
-					_logger->error(
-						__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-						", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-						_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
-					);
-				}
-				else
-				{
-					value = value.substr(0, endIndex);
-					bitRate = stof(value);
-				}
+					size_t endIndex = value.find("kbits/s");
+					if (endIndex == string::npos)
+					{
+						_logger->error(
+							__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
+							", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
+							", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
+							_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+						);
+					}
+					else
+					{
+						value = value.substr(0, endIndex);
+						bitRate = stof(value);
+					}
 				}
 			}
+		}
+
+		// [vist#0:4/h264 @ 0x55562ce99140] timestamp discontinuity (stream id=3): -20048800, new offset= 82
+		// [aist#0:0/aac @ 0x55562ced7800] timestamp discontinuity (stream id=0): 20048803, new offset= -20048721
+		// [vist#0:4/h264 @ 0x55562ce99140] timestamp discontinuity (stream id=3): -20048800, new offset= 79
+		// [aist#0:0/aac @ 0x55562ced7800] timestamp discontinuity (stream id=0): 20048804, new offset= -20048725
+		// [vist#0:4/h264 @ 0x55562ce99140] timestamp discontinuity (stream id=3): -20048800, new offset= 75
+		// [aist#0:0/aac @ 0x55562ced7800] timestamp discontinuity (stream id=0): 20048803, new offset= -20048728
+		// [vist#0:4/h264 @ 0x55562ce99140] timestamp discontinuity (stream id=3): -20048811, new offset= 83
+		// [aist#0:0/aac @ 0x55562ced7800] timestamp discontinuity (stream id=0): 20048803, new offset= -20048720
+		// ...
+		// Scenario:
+		// Abbiamo tanti messaggi "timestamp discontinuity" (vedi sopra)
+		// con i valori frame=, size=, time= corretti.
+		// Indica che lo streaming sta andando avanti ma mancano tanti timestamp.
+		// Il risultato è che il play non funziona per cui bisogna fare un restart.
+		{
+			timestampDiscontinuityCount = StringUtils::kmpSearch("timestamp discontinuity", ffmpegEncodingStatus);
 		}
 	}
 	catch (FFMpegEncodingStatusNotAvailable &e)
@@ -567,7 +586,7 @@ tuple<long, long, double, double> FFMpeg::getRealTimeInfoByOutputLog()
 		throw e;
 	}
 
-	return make_tuple(frame, size, timeInMilliSeconds, bitRate);
+	return make_tuple(frame, size, timeInMilliSeconds, bitRate, timestampDiscontinuityCount);
 }
 
 string FFMpeg::getLastPartOfFile(string pathFileName, int lastCharsToBeRead)
@@ -625,4 +644,3 @@ string FFMpeg::getLastPartOfFile(string pathFileName, int lastCharsToBeRead)
 
 	return lastPartOfFile;
 }
-
