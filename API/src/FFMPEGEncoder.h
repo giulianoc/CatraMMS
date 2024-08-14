@@ -67,6 +67,8 @@ class FFMPEGEncoder : public FastCGIAPI
 
 	virtual bool basicAuthenticationRequired(string requestURI, unordered_map<string, string> queryParameters);
 
+	virtual void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage);
+
   private:
 	shared_ptr<spdlog::logger> _logger;
 

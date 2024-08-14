@@ -57,6 +57,8 @@ class API : public FastCGIAPI
 
 	virtual bool basicAuthenticationRequired(string requestURI, unordered_map<string, string> queryParameters);
 
+	virtual void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage);
+
 	void fileUploadProgressCheck();
 	void stopUploadFileProgressThread();
 

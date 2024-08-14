@@ -67,8 +67,8 @@ class FastCGIAPI
 	void sendRedirect(FCGX_Request &request, string locationURL);
 	void sendHeadSuccess(FCGX_Request &request, int htmlResponseCode, unsigned long fileSize);
 	void sendHeadSuccess(int htmlResponseCode, unsigned long fileSize);
-	void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage);
-	void sendError(int htmlResponseCode, string errorMessage);
+	virtual void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage);
+	// void sendError(int htmlResponseCode, string errorMessage);
 
 	string getClientIPAddress(unordered_map<string, string> &requestDetails);
 
@@ -101,12 +101,12 @@ class FastCGIAPI
 		bool *isParamPresent = nullptr
 	);
 
+	string getHtmlStandardMessage(int htmlResponseCode);
+
   private:
 	void fillEnvironmentDetails(const char *const *envp, unordered_map<string, string> &requestDetails);
 
 	void fillQueryString(string queryString, unordered_map<string, string> &queryParameters);
-
-	string getHtmlStandardMessage(int htmlResponseCode);
 
 	string base64_encode(const string &in);
 

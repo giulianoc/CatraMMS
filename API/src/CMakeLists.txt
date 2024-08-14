@@ -19,7 +19,7 @@
 
 add_definitions(-DNO_FCGI_DEFINES)
 
-set(COMMON_SOURCES APICommon.cpp)
+# set(COMMON_SOURCES APICommon.cpp)
 
 set(SOURCES_API
     api.cpp
@@ -58,7 +58,28 @@ set(SOURCES_FFMPEGENCODER
     LiveProxy.cpp
     LiveGrid.cpp)
 
-set(HEADERS APICommon.h)
+set(HEADERS
+    AddSilentAudio.h
+    FFMPEGEncoderBase.h
+    IntroOutroOverlay.h
+    OverlayImageOnVideo.h
+    VideoSpeed.h
+    # APICommon.h
+    FFMPEGEncoderDaemons.h
+    LiveGrid.h
+    OverlayTextOnVideo.h
+    API.h
+    FFMPEGEncoder.h
+    LiveProxy.h
+    PictureInPicture.h
+    CutFrameAccurate.h
+    FFMPEGEncoderTask.h
+    LiveRecorderDaemons.h
+    SlideShow.h
+    EncodeContent.h
+    GenerateFrames.h
+    LiveRecorder.h
+    UploadBinaryNotUsed.h)
 
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(
@@ -108,8 +129,8 @@ link_directories("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib64")
 # link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
-# API
-add_executable(api.fcgi ${SOURCES_API} ${COMMON_SOURCES} ${HEADERS})
+# API add_executable(api.fcgi ${SOURCES_API} ${COMMON_SOURCES} ${HEADERS})
+add_executable(api.fcgi ${SOURCES_API} ${HEADERS})
 target_link_libraries(api.fcgi fastCGIAPI)
 target_link_libraries(api.fcgi MMSUtility)
 target_link_libraries(api.fcgi MMSEngine)
@@ -190,9 +211,9 @@ list(APPEND TARGETS api.fcgi)
 # ${ZLIB_LIBRARIES}) endif() target_link_libraries (uploadBinary.cgi pthread)
 # list(APPEND TARGETS uploadBinary.cgi)
 
-# FFMPEGEncoder
-add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER} ${COMMON_SOURCES}
-                                  ${HEADERS})
+# FFMPEGEncoder add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER}
+# ${COMMON_SOURCES} ${HEADERS})
+add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER} ${HEADERS})
 target_link_libraries(ffmpegEncoder.fcgi fastCGIAPI)
 target_link_libraries(ffmpegEncoder.fcgi MMSUtility)
 target_link_libraries(ffmpegEncoder.fcgi MMSEngine)

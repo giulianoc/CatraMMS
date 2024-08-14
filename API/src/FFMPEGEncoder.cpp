@@ -3281,3 +3281,12 @@ void FFMPEGEncoder::termProcess(
 		throw e;
 	}
 }
+
+void FFMPEGEncoder::sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage)
+{
+	json responseBodyRoot;
+	responseBodyRoot["status"] = to_string(htmlResponseCode);
+	responseBodyRoot["error"] = errorMessage;
+
+	FastCGIAPI::sendError(request, htmlResponseCode, JSONUtils::toString(responseBodyRoot));
+}

@@ -721,7 +721,7 @@ void FastCGIAPI::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
 	);
 }
 
-void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage)
+void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string responseBody)
 {
 	if (_fcgxFinishDone)
 	{
@@ -738,31 +738,31 @@ void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string e
 
 	long contentLength;
 
-	string responseBody;
+	// string responseBody;
 	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
-	if (errorMessage.find("%") != string::npos)
+	if (responseBody.find("%") != string::npos)
 	{
-		json temporaryResponseBodyRoot;
-		temporaryResponseBodyRoot["status"] = to_string(htmlResponseCode);
-		temporaryResponseBodyRoot["error"] = errorMessage;
+		// json temporaryResponseBodyRoot;
+		// temporaryResponseBodyRoot["status"] = to_string(htmlResponseCode);
+		// temporaryResponseBodyRoot["error"] = errorMessage;
 
-		string temporaryResponseBody = JSONUtils::toString(temporaryResponseBodyRoot);
+		// string temporaryResponseBody = JSONUtils::toString(temporaryResponseBodyRoot);
 
 		// 2020-02-08: content length has to be calculated before the substitution from % to %%
 		// because for FCGX_FPrintF (below used) %% is just one character
-		contentLength = temporaryResponseBody.length();
+		contentLength = responseBody.length();
 
 		string toBeSearched = "%";
 		string replacedWith = "%%";
-		responseBody = regex_replace(temporaryResponseBody, regex(toBeSearched), replacedWith);
+		responseBody = regex_replace(responseBody, regex(toBeSearched), replacedWith);
 	}
 	else
 	{
-		json responseBodyRoot;
-		responseBodyRoot["status"] = to_string(htmlResponseCode);
-		responseBodyRoot["error"] = errorMessage;
+		// json responseBodyRoot;
+		// responseBodyRoot["status"] = to_string(htmlResponseCode);
+		// responseBodyRoot["error"] = errorMessage;
 
-		responseBody = JSONUtils::toString(responseBodyRoot);
+		// responseBody = JSONUtils::toString(responseBodyRoot);
 
 		// 2020-02-08: content length has to be calculated before the substitution from % to %%
 		// because for FCGX_FPrintF (below used) %% is just one character
@@ -792,6 +792,7 @@ void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string e
 	_fcgxFinishDone = true;
 }
 
+/*
 void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 {
 	string endLine = "\r\n";
@@ -846,6 +847,7 @@ void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 		completeHttpResponse
 	);
 }
+*/
 
 string FastCGIAPI::getClientIPAddress(unordered_map<string, string> &requestDetails)
 {
@@ -875,6 +877,8 @@ string FastCGIAPI::getHtmlStandardMessage(int htmlResponseCode)
 		return string("Found");
 	case 307:
 		return string("Temporary Redirect");
+	case 308:
+		return string("Permanent Redirect");
 	case 403:
 		return string("Forbidden");
 	case 400:

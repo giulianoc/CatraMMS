@@ -2983,3 +2983,12 @@ void API::mmsSupport(
 		throw runtime_error(errorMessage);
 	}
 }
+
+void API::sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage)
+{
+	json responseBodyRoot;
+	responseBodyRoot["status"] = to_string(htmlResponseCode);
+	responseBodyRoot["error"] = errorMessage;
+
+	FastCGIAPI::sendError(request, htmlResponseCode, JSONUtils::toString(responseBodyRoot));
+}
