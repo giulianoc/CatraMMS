@@ -3790,8 +3790,8 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 			sqlWhere += fmt::format("and ej.encoderKey = {} ", encoderKey);
 		if (status == "All")
 			;
-		else if (status == "Completed")
-			sqlWhere += ("and ej.status like 'End_%' ");
+		else if (status == "Completed")											   // like non va bene per motivi di performance
+			sqlWhere += ("and ej.status not in ('ToBeProcessed', 'Processing') "); // like 'End_%' ");
 		else if (status == "Processing")
 			sqlWhere += ("and ej.status = 'Processing' ");
 		else if (status == "ToBeProcessed")
@@ -4111,11 +4111,15 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 				//	This is independently by the specific instance of mms-engine (because in this scenario
 				//	often the processor field is empty) but someone has to do it
 				//	This scenario may happen in case the mms-engine is shutdown not in friendly way
-				string sqlStatement = "select ij.ingestionJobKey, ej.encodingJobKey, "
-									  "ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
-									  "from MMS_IngestionJob ij, MMS_EncodingJob ej "
-									  "where ij.ingestionJobKey = ej.ingestionJobKey "
-									  "and ij.status like 'End_%' and ej.status not like 'End_%'";
+				string sqlStatement =
+					"select ij.ingestionJobKey, ej.encodingJobKey, "
+					"ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
+					"from MMS_IngestionJob ij, MMS_EncodingJob ej "
+					"where ij.ingestionJobKey = ej.ingestionJobKey "
+					// like non va bene per motivi di performance
+					"and ij.status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+					"'SourceUploadingInProgress', 'EncodingQueued') "	 // like 'End_%' "
+					"and ej.status in ('ToBeProcessed', 'Processing') "; // not like 'End_%'";
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.exec(sqlStatement);
 				for (auto row : res)

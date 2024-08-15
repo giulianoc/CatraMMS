@@ -156,10 +156,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					"and scheduleStart_virtual < (NOW() at time zone 'utc' + INTERVAL '{} minutes') "
 					"order by ij.priority asc, ij.processingStartingFrom asc "
 					"limit {} offset {} for update skip locked",
-					// trans.quote(toString(IngestionStatus::Start_TaskQueued)),
-					// trans.quote(toString(IngestionStatus::SourceDownloadingInProgress)),
-					// trans.quote(toString(IngestionStatus::SourceMovingInProgress)),
-					// trans.quote(toString(IngestionStatus::SourceCopingInProgress)),
+					// trans.quote(toString(IngestionStatus::Start_TaskQueued)), trans.quote(toString(IngestionStatus::SourceDownloadingInProgress)),
+					// trans.quote(toString(IngestionStatus::SourceMovingInProgress)), trans.quote(toString(IngestionStatus::SourceCopingInProgress)),
 					// trans.quote(toString(IngestionStatus::SourceUploadingInProgress)),
 					_doNotManageIngestionsOlderThanDays, timeBeforeToPrepareResourcesInMinutes, mysqlRowCount, _getIngestionJobsCurrentIndex
 				);
@@ -2130,10 +2128,14 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 
 		if (errorMessageForSQL != "")
 		{
+			// like: non lo uso per motivi di performance
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_IngestionJob "
 				"set errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20) "
-				"where ingestionJobKey = {} and status not like 'End_%' returning 1) select count(*) from rows",
+				"where ingestionJobKey = {} "
+				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') " // not like 'End_%' "
+				"returning 1) select count(*) from rows",
 				trans.quote(errorMessageForSQL), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -4698,9 +4700,11 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 		if (jsonParametersCondition != "")
 			sqlWhere += fmt::format("and {} ", jsonParametersCondition);
 		if (status == "completed")
-			sqlWhere += ("and ij.status like 'End_%' ");
+			sqlWhere += ("and ij.status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', "
+						 "'SourceCopingInProgress', 'SourceUploadingInProgress', 'EncodingQueued') "); // like 'End_%' "
 		else if (status == "notCompleted")
-			sqlWhere += ("and ij.status not like 'End_%' ");
+			sqlWhere += ("and ij.status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+						 "'SourceUploadingInProgress', 'EncodingQueued') "); // not like 'End_%' "
 
 		json responseRoot;
 		{
@@ -5637,7 +5641,10 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 					"ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
 					"from MMS_IngestionJob ij, MMS_EncodingJob ej "
 					"where ij.ingestionJobKey = ej.ingestionJobKey "
-					"and ij.status not like 'End_%' and ej.status like 'End_%'"
+					// like non va bene per motivi di performance
+					"and ij.status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+					"'SourceUploadingInProgress', 'EncodingQueued') "		// not like 'End_%' "
+					"and ej.status not in ('ToBeProcessed', 'Processing') " // like 'End_%'"
 					"and ej.encodingJobEnd < NOW() at time zone 'utc' - INTERVAL '{} hours'",
 					toleranceInHours
 				);

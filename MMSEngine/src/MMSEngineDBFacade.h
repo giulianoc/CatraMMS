@@ -326,6 +326,7 @@ class MMSEngineDBFacade
 			));
 	}
 
+	// se si aggiungono/eliminano status, verificare le query dove compare status in (...)
 	enum class EncodingStatus
 	{
 		ToBeProcessed = 0,
@@ -952,6 +953,7 @@ class MMSEngineDBFacade
 			));
 	}
 
+	// se si aggiungono/eliminano status, verificare le query dove compare status in (...)
 	enum class IngestionStatus
 	{
 		Start_TaskQueued,

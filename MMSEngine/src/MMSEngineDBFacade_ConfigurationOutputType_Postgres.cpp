@@ -660,9 +660,12 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
 		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
 		{
+			// like: non lo uso per motivi di performance
 			string sqlStatement = fmt::format(
 				"select ingestionJobKey  from MMS_IngestionJob where "
-				"status like 'End_%' and ingestionJobKey in ("
+				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
+				"and ingestionJobKey in ("
 				"select distinct reservedByIngestionJobKey from MMS_Conf_AWSChannel where "
 				"workspaceKey = {} and reservedByIngestionJobKey is not null)",
 				workspaceKey
@@ -1940,9 +1943,12 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
 		// outputIndex (stesso ingestion con ad esempio 2 CDN77)
 		{
+			// like: non lo uso per motivi di performance
 			string sqlStatement = fmt::format(
 				"select ingestionJobKey  from MMS_IngestionJob where "
-				"status like 'End_%' and ingestionJobKey in ("
+				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
+				"and ingestionJobKey in ("
 				"select distinct reservedByIngestionJobKey from MMS_Conf_CDN77Channel where "
 				"workspaceKey = {} and reservedByIngestionJobKey is not null)",
 				workspaceKey
@@ -3248,9 +3254,12 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
 		// outputIndex (stesso ingestion con ad esempio 2 RTMP)
 		{
+			// like: non lo uso per motivi di performance
 			string sqlStatement = fmt::format(
 				"select ingestionJobKey  from MMS_IngestionJob where "
-				"status like 'End_%' and ingestionJobKey in ("
+				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
+				"and ingestionJobKey in ("
 				"select distinct reservedByIngestionJobKey from MMS_Conf_RTMPChannel where "
 				"workspaceKey = {} and reservedByIngestionJobKey is not null)",
 				workspaceKey
@@ -4541,9 +4550,12 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
 		// outputIndex (stesso ingestion con ad esempio 2 HLS)
 		{
+			// like: non lo uso per motivi di performance
 			string sqlStatement = fmt::format(
 				"select ingestionJobKey  from MMS_IngestionJob where "
-				"status like 'End_%' and ingestionJobKey in ("
+				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
+				"and ingestionJobKey in ("
 				"select distinct reservedByIngestionJobKey from MMS_Conf_HLSChannel where "
 				"workspaceKey = {} and reservedByIngestionJobKey is not null)",
 				workspaceKey
@@ -4974,4 +4986,3 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 		throw e;
 	}
 }
-

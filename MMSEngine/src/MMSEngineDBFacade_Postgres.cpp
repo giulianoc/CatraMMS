@@ -436,9 +436,12 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			_logger->info(
 				__FILEREF__ + "resetProcessingJobsIfNeeded. IngestionJobs assigned without final state" + ", processorMMS: " + processorMMS
 			);
+			// like: non lo uso per motivi di performance
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_IngestionJob set processorMMS = NULL where processorMMS = {} "
-				"and status not like 'End_%' returning 1) select count(*) from rows",
+				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') " // not like 'End_%' "
+				"returning 1) select count(*) from rows",
 				trans.quote(processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

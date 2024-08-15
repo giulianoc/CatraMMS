@@ -469,11 +469,13 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 	try
 	{
 		{
+			// like: non lo uso per motivi di performance
 			string sqlStatement = fmt::format(
 				"select count(*) from MMS_IngestionJobDependency ijd, MMS_IngestionJob ij where "
 				"ijd.ingestionJobKey = ij.ingestionJobKey "
 				"and ijd.dependOnIngestionJobKey = {} "
-				"and ij.status not like 'End_%'",
+				"and ij.status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') ", // not like 'End_%' "
 				ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
