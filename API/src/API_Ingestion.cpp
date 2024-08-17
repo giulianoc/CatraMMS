@@ -14,6 +14,7 @@
 #include "API.h"
 #include "JSONUtils.h"
 #include "MMSCURL.h"
+#include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
 #include "Validator.h"
 #include "catralibraries/Convert.h"
@@ -2803,18 +2804,12 @@ void API::uploadedBinary(
 		bool segmentedContent = false;
 		try
 		{
-			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-				_mmsEngineDBFacade->getIngestionJobDetails(
-					workspace->_workspaceKey, ingestionJobKey,
-					// 2022-12-18: l'ingestionJob potrebbe essere stato
-					// appena aggiunto
-					true
-				);
-
-			string parameters;
-			tie(ignore, ignore, ignore, parameters, ignore) = ingestionJobDetails;
-
-			json parametersRoot = JSONUtils::toJson(parameters);
+			json parametersRoot = _mmsEngineDBFacade->ingestionJob_MetadataContent(
+				workspace->_workspaceKey, ingestionJobKey,
+				// 2022-12-18: l'ingestionJob potrebbe essere stato
+				// appena aggiunto
+				true
+			);
 
 			string field = "fileFormat";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -2826,9 +2821,19 @@ void API::uploadedBinary(
 					segmentedContent = true;
 			}
 		}
+		catch (DBRecordNotFound &e)
+		{
+			string errorMessage = string("ingestionJob_MetadataContent failed") +
+								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
+								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
+								  ", destBinaryPathName: " + destBinaryPathName + ", e.what: " + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("mmsEngineDBFacade->getIngestionJobDetails failed") +
+			string errorMessage = string("ingestionJob_MetadataContent failed") +
 								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
 								  ", destBinaryPathName: " + destBinaryPathName + ", e.what: " + e.what();
@@ -2838,7 +2843,7 @@ void API::uploadedBinary(
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("mmsEngineDBFacade->getIngestionJobDetails failed") +
+			string errorMessage = string("ingestionJob_MetadataContent failed") +
 								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
 								  ", destBinaryPathName: " + destBinaryPathName;
@@ -3635,12 +3640,30 @@ void API::ingestionRootMetaDataContent(
 			processedMetadata = (processedMetadataIt->second == "true" ? true : false);
 
 		{
+			string ingestionRootMetaDataContent;
+			if (processedMetadata)
+				_mmsEngineDBFacade->ingestionRoot_ProcessedMetadataContent(
+					workspace->_workspaceKey, ingestionRootKey,
+					// 2022-12-18: IngestionJobKey dovrebbe essere stato
+					// aggiunto da tempo
+					false
+				);
+			else
+				_mmsEngineDBFacade->ingestionRoot_MetadataContent(
+					workspace->_workspaceKey, ingestionRootKey,
+					// 2022-12-18: IngestionJobKey dovrebbe essere stato
+					// aggiunto da tempo
+					false
+				);
+
+			/*
 			string ingestionRootMetaDataContent = _mmsEngineDBFacade->getIngestionRootMetaDataContent(
 				workspace, ingestionRootKey, processedMetadata,
 				// 2022-12-18: IngestionJobKey dovrebbe essere stato
 				// aggiunto da tempo
 				false
 			);
+			*/
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, ingestionRootMetaDataContent);
 		}
@@ -3991,15 +4014,11 @@ void API::cancelIngestionJob(
 				forceCancel = false;
 		}
 
-		MMSEngineDBFacade::IngestionStatus ingestionStatus;
-
-		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-			_mmsEngineDBFacade->getIngestionJobDetails(
-				workspace->_workspaceKey, ingestionJobKey,
-				// 2022-12-18: meglio avere una info sicura
-				true
-			);
-		tie(ignore, ignore, ingestionStatus, ignore, ignore) = ingestionJobDetails;
+		MMSEngineDBFacade::IngestionStatus ingestionStatus = _mmsEngineDBFacade->ingestionJob_Status(
+			workspace->_workspaceKey, ingestionJobKey,
+			// 2022-12-18: meglio avere una info sicura
+			true
+		);
 
 		if (!forceCancel && ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 		{
@@ -4024,6 +4043,17 @@ void API::cancelIngestionJob(
 
 		string responseBody;
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
 	}
 	catch (runtime_error &e)
 	{
@@ -4076,23 +4106,15 @@ void API::updateIngestionJob(
 		try
 		{
 			_logger->info(
-				__FILEREF__ + "getIngestionJobDetails" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
+				__FILEREF__ + "ingestionJob_IngestionTypeStatus" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
 				", ingestionJobKey: " + to_string(ingestionJobKey)
 			);
 
-			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-				_mmsEngineDBFacade->getIngestionJobDetails(
-					workspace->_workspaceKey, ingestionJobKey,
-					// 2022-12-18: meglio avere una informazione sicura
-					true
-				);
-
-			string label;
-			MMSEngineDBFacade::IngestionType ingestionType;
-			MMSEngineDBFacade::IngestionStatus ingestionStatus;
-			string metaDataContent;
-
-			tie(label, ingestionType, ingestionStatus, metaDataContent, ignore) = ingestionJobDetails;
+			auto [ingestionType, ingestionStatus] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatus(
+				workspace->_workspaceKey, ingestionJobKey,
+				// 2022-12-18: meglio avere una informazione sicura
+				true
+			);
 
 			if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 			{
@@ -4218,6 +4240,17 @@ void API::updateIngestionJob(
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
+		catch (DBRecordNotFound &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 		catch (runtime_error &e)
 		{
 			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
@@ -4322,24 +4355,17 @@ void API::changeLiveProxyPlaylist(
 		try
 		{
 			SPDLOG_INFO(
-				"getIngestionJobDetails"
+				"ingestionJob_IngestionTypeStatusMetadataContent"
 				", workspace->_workspaceKey: {}"
 				", broadcasterIngestionJobKey: {}",
 				workspace->_workspaceKey, broadcasterIngestionJobKey
 			);
 
-			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-				_mmsEngineDBFacade->getIngestionJobDetails(
-					workspace->_workspaceKey, broadcasterIngestionJobKey,
-					// 2022-12-18: meglio avere una informazione sicura
-					true
-				);
-
-			MMSEngineDBFacade::IngestionType ingestionType;
-			MMSEngineDBFacade::IngestionStatus ingestionStatus;
-			string metaDataContent;
-
-			tie(ignore, ingestionType, ingestionStatus, metaDataContent, ignore) = ingestionJobDetails;
+			auto [ingestionType, ingestionStatus, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
+				workspace->_workspaceKey, broadcasterIngestionJobKey,
+				// 2022-12-18: meglio avere una informazione sicura
+				true
+			);
 
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 			{
@@ -4369,8 +4395,6 @@ void API::changeLiveProxyPlaylist(
 
 				throw runtime_error(errorMessage);
 			}
-
-			json metadataContentRoot = JSONUtils::toJson(metaDataContent);
 
 			string field = "internalMMS";
 			json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, field, json(), true);
@@ -4764,6 +4788,22 @@ void API::changeLiveProxyPlaylist(
 			}
 		}
 		catch (JsonFieldNotFound &e)
+		{
+			SPDLOG_ERROR(
+				"{} failed"
+				", broadcasterIngestionJobKey: {}"
+				", e.what(): {}",
+				api, broadcasterIngestionJobKey, e.what()
+			);
+
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch (DBRecordNotFound &e)
 		{
 			SPDLOG_ERROR(
 				"{} failed"
@@ -5530,6 +5570,22 @@ void API::changeLiveProxyPlaylist(
 				}
 			}
 		}
+		catch (DBRecordNotFound &e)
+		{
+			SPDLOG_ERROR(
+				"{} failed"
+				", broadcasterIngestionJobKey: {}"
+				", e.what(): {}",
+				api, broadcasterIngestionJobKey, e.what()
+			);
+
+			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 		catch (runtime_error &e)
 		{
 			SPDLOG_ERROR(
@@ -5572,25 +5628,18 @@ void API::changeLiveProxyPlaylist(
 		try
 		{
 			SPDLOG_INFO(
-				"getIngestionJobDetails"
+				"ingestionJob_IngestionTypeMetadataContent"
 				", workspace->_workspaceKey: {}"
 				", broadcasterIngestionJobKey: {}"
 				", broadcastIngestionJobKey: {}",
 				workspace->_workspaceKey, broadcasterIngestionJobKey, broadcastIngestionJobKey
 			);
 
-			tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-				_mmsEngineDBFacade->getIngestionJobDetails(
-					workspace->_workspaceKey, broadcastIngestionJobKey,
-					// 2022-12-18: meglio avere una informazione sicura
-					true
-				);
-
-			MMSEngineDBFacade::IngestionType ingestionType;
-			MMSEngineDBFacade::IngestionStatus ingestionStatus;
-			string metaDataContent;
-
-			tie(ignore, ingestionType, ingestionStatus, metaDataContent, ignore) = ingestionJobDetails;
+			auto [ingestionType, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeMetadataContent(
+				workspace->_workspaceKey, broadcastIngestionJobKey,
+				// 2022-12-18: meglio avere una informazione sicura
+				true
+			);
 
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy && ingestionType != MMSEngineDBFacade::IngestionType::VODProxy &&
 				ingestionType != MMSEngineDBFacade::IngestionType::Countdown)
@@ -5609,19 +5658,24 @@ void API::changeLiveProxyPlaylist(
 
 			string newPlaylist = JSONUtils::toString(newPlaylistRoot);
 
-			string broadcastParameters;
+			json broadcastParametersRoot;
 			int64_t broadcastEncodingJobKey = -1;
 			int64_t broadcastEncoderKey = -1;
 			try
 			{
-				tuple<int64_t, int64_t, string> encodingJobDetails = _mmsEngineDBFacade->getEncodingJobDetailsByIngestionJobKey(
-					broadcastIngestionJobKey,
-					// 2022-12-18: l'IngestionJob potrebbe essere stato
-					// appena aggiunto
-					true
-				);
+				tie(broadcastEncodingJobKey, broadcastEncoderKey, broadcastParametersRoot) =
+					_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKeyParameters(
+						broadcastIngestionJobKey,
+						// 2022-12-18: l'IngestionJob potrebbe essere stato
+						// appena aggiunto
+						true
+					);
+			}
+			catch (DBRecordNotFound &e)
+			{
+				SPDLOG_WARN(e.what());
 
-				tie(broadcastEncodingJobKey, broadcastEncoderKey, broadcastParameters) = encodingJobDetails;
+				// throw runtime_error(errorMessage);
 			}
 			catch (runtime_error &e)
 			{
@@ -5634,8 +5688,6 @@ void API::changeLiveProxyPlaylist(
 			// because will be executed in the future
 			if (broadcastEncodingJobKey != -1)
 			{
-				json broadcastParametersRoot = JSONUtils::toJson(broadcastParameters);
-
 				// update of the parameters
 				string field = "inputsRoot";
 				broadcastParametersRoot[field] = newPlaylistRoot;
@@ -5675,8 +5727,6 @@ void API::changeLiveProxyPlaylist(
 					broadcasterIngestionJobKey, broadcastIngestionJobKey, broadcastEncodingJobKey
 				);
 
-				json metadataContentRoot = JSONUtils::toJson(metaDataContent);
-
 				// update of the parameters
 				json mmsInternalRoot;
 				json broadcasterRoot;
@@ -5705,6 +5755,24 @@ void API::changeLiveProxyPlaylist(
 
 			string responseBody;
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+		catch (DBRecordNotFound e)
+		{
+			SPDLOG_ERROR(
+				"{} failed"
+				", broadcasterIngestionJobKey: {}"
+				", ffmpegEncoderURL: {}"
+				", response.str: {}"
+				", e.what(): {}",
+				api, broadcasterIngestionJobKey, ffmpegEncoderURL, response.str(), e.what()
+			);
+
+			string errorMessage = "Internal server error";
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 		catch (runtime_error e)
 		{
@@ -5880,6 +5948,17 @@ void API::changeLiveProxyOverlayText(
 					otherHeaders
 				);
 			}
+		}
+		catch (DBRecordNotFound &e)
+		{
+			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+
+			string errorMessage = string("Internal server error: ") + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 		catch (runtime_error &e)
 		{

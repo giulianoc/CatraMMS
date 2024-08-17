@@ -16,6 +16,7 @@
 #include "JSONUtils.h"
 #include "MMSCURL.h"
 #include "MMSDeliveryAuthorization.h"
+#include "MMSEngineDBFacade.h"
 #include <regex>
 
 bool EncoderProxy::liveProxy(string proxyType)
@@ -913,34 +914,41 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				{
 					try
 					{
-						tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> encodingJobDetails =
-							_mmsEngineDBFacade->getEncodingJobDetails(
-								_encodingItem->_encodingJobKey,
-								// 2022-12-18: true because the
-								// inputsRoot maybe was just updated
-								true
-							);
+						// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated
+						_encodingItem->_encodingParametersRoot = _mmsEngineDBFacade->encodingJob_Parameters(_encodingItem->_encodingJobKey, true);
+					}
+					catch (DBRecordNotFound &e)
+					{
+						SPDLOG_ERROR(
+							"encodingJob_Parameters failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", e.what(): {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
+						);
 
-						string encodingParameters;
-
-						tie(ignore, ignore, ignore, ignore, encodingParameters) = encodingJobDetails;
-
-						_encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
+						throw e;
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "getEncodingJobDetails failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+						SPDLOG_ERROR(
+							"encodingJob_Parameters failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", e.what(): {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 						);
 
 						throw e;
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ + "getEncodingJobDetails failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						SPDLOG_ERROR(
+							"encodingJob_Parameters failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", e.what(): {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 						);
 
 						throw e;

@@ -1,5 +1,6 @@
 
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
 /*
@@ -322,6 +323,17 @@ void MMSEngineProcessor::manageVODProxy(
 			utcProxyPeriodStart, localOutputsRoot, maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
 			_mmsWorkflowIngestionURL
 		);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			string() + "manageVODProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
+		);
+
+		// Update IngestionJob done in the calling method
+
+		throw e;
 	}
 	catch (runtime_error &e)
 	{

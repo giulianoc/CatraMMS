@@ -326,15 +326,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	{
 		// create authorization for a live request
 
-		tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-			_mmsEngineDBFacade->getIngestionJobDetails(
-				requestWorkspace->_workspaceKey, ingestionJobKey,
-				// 2022-12-18: it is a live request, it has time to be present into the slave
-				false
-			);
-		MMSEngineDBFacade::IngestionType ingestionType;
-		string metaDataContent;
-		tie(ignore, ingestionType, ignore, metaDataContent, ignore) = ingestionJobDetails;
+		auto [ingestionType, ingestionJobRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeMetadataContent(
+			requestWorkspace->_workspaceKey, ingestionJobKey,
+			// 2022-12-18: it is a live request, it has time to be present into the slave
+			false
+		);
 
 		if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy && ingestionType != MMSEngineDBFacade::IngestionType::VODProxy &&
 			ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid && ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder &&
@@ -345,8 +341,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			throw runtime_error(errorMessage);
 		}
-
-		json ingestionJobRoot = JSONUtils::toJson(metaDataContent, false);
 
 		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy || ingestionType == MMSEngineDBFacade::IngestionType::VODProxy ||
 			ingestionType == MMSEngineDBFacade::IngestionType::Countdown || ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)

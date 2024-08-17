@@ -1,6 +1,7 @@
 
 #include "FFMpeg.h"
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
 /*
@@ -1385,6 +1386,41 @@ void MMSEngineProcessor::manageCutMediaThread(
 				_mmsBinaryIngestionURL, _mmsIngestionURL, encodingPriority, newUtcStartTimeInMilliSecs, newUtcEndTimeInMilliSecs
 			);
 		}
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			string() + "manageCutMediaThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
+		);
+
+		SPDLOG_INFO(
+			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
+		);
+
+		try
+		{
+			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+		}
+		catch (runtime_error &re)
+		{
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
+			);
+		}
+		catch (exception &ex)
+		{
+			SPDLOG_INFO(
+				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
+			);
+		}
+
+		// it's a thread, no throw
+		// throw e;
+		return;
 	}
 	catch (runtime_error &e)
 	{

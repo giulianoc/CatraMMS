@@ -1,5 +1,6 @@
 
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 /*
 #include <stdio.h>
@@ -169,6 +170,17 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 			workspace, ingestionJobKey, sourcesRoot, encodingProfileKey, encodingProfileDetailsRoot, _mmsWorkflowIngestionURL, _mmsBinaryIngestionURL,
 			_mmsIngestionURL, encodingPriority
 		);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			string() + "manageAddSilentAudioTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
+		);
+
+		// Update IngestionJob done in the calling method
+
+		throw e;
 	}
 	catch (runtime_error &e)
 	{

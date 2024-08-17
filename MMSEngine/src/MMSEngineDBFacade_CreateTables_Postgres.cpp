@@ -1348,6 +1348,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			// 2024-08-15: ho pensato di partizionare MMS_IngestionJob in base al campo status (partizione not_completed e completed)
+			// Il vantaggio sarebbe:
+			// 1. avere migliori performance in quanto la maggioranza delle query solo sul not_completed che sarebbe molto piccolo
+			// 2. la view della GUI potrebbe togliere il vincolo sulla data e mostrerebbe tutti gli ingestion/encoding running
+			// Il problema è che, per come postgres vuole le partizioni, bisognerebbe aggiungere status nella primary key insieme a ingestionJobKey.
+			// Questo è un problema perchè abbiamo tante foreign key in altre tabelle che puntano a ingestionjobkey e non avrebbe senso aggiungere
+			// anche il campo status nella foreign key.
 			string sqlStatement =
 				"create table if not exists MMS_IngestionJob ("
 				"ingestionJobKey  			bigint GENERATED ALWAYS AS IDENTITY,"

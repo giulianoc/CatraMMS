@@ -1,5 +1,6 @@
 
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 
 void MMSEngineProcessor::manageIntroOutroOverlayTask(
@@ -165,6 +166,17 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 
 			encodingPriority
 		);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			string() + "manageIntroOutroOverlayTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
+		);
+
+		// Update IngestionJob done in the calling method
+
+		throw e;
 	}
 	catch (runtime_error &e)
 	{

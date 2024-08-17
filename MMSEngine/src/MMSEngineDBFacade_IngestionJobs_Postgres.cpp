@@ -2,6 +2,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
+#include "spdlog/spdlog.h"
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
 	vector<tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus>> &ingestionsToBeManaged, string processorMMS,
@@ -1653,149 +1654,6 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 	}
 }
 
-/*
-void MMSEngineDBFacade::getGroupOfTasksChildrenStatus(
-	int64_t groupOfTasksIngestionJobKey,
-	bool fromMaster,
-	vector<pair<int64_t, MMSEngineDBFacade::IngestionStatus>>& groupOfTasksChildrenStatus
-)
-{
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-
-	try
-	{
-		groupOfTasksChildrenStatus.clear();
-
-		{
-			string sqlStatement = fmt::format(
-				"select ingestionJobKey, status "
-				"from MMS_IngestionJob "
-				"where parentGroupOfTasksIngestionJobKey = {}",
-				groupOfTasksIngestionJobKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-			{
-				int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
-				IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(
-					row["status"].as<string>());
-
-				pair<int64_t, MMSEngineDBFacade::IngestionStatus> groupOfTasksChildStatus =
-					make_pair(ingestionJobKey, ingestionStatus);
-
-				groupOfTasksChildrenStatus.push_back(groupOfTasksChildStatus);
-			}
-			SPDLOG_INFO("SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-	}
-	catch(sql_error const &e)
-	{
-		SPDLOG_ERROR("SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch(runtime_error& e)
-	{
-		SPDLOG_ERROR("runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-
-		throw e;
-	}
-	catch(exception& e)
-	{
-		SPDLOG_ERROR("exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-
-		throw e;
-	}
-}
-*/
-
 void MMSEngineDBFacade::updateIngestionJob(int64_t ingestionJobKey, IngestionStatus newIngestionStatus, string errorMessage, string processorMMS)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -3184,69 +3042,245 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 	}
 }
 
-string
-MMSEngineDBFacade::getIngestionRootMetaDataContent(shared_ptr<Workspace> workspace, int64_t ingestionRootKey, bool processedMetadata, bool fromMaster)
+string MMSEngineDBFacade::ingestionRoot_MetadataContent(int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster)
 {
-	string metaDataContent;
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionroot:.metaDataContent"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionRootQuery(requestedColumns, workspaceKey, ingestionRootKey, fromMaster);
 
+		return (*sqlResultSet)[0][0].as<string>("");
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionRootKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionRootKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionRootKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+string MMSEngineDBFacade::ingestionRoot_ProcessedMetadataContent(int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionroot:.processedMetaDataContent"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionRootQuery(requestedColumns, workspaceKey, ingestionRootKey, fromMaster);
+
+		return (*sqlResultSet)[0][0].as<string>("");
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionRootKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionRootKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionRootKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionRootQuery(
+	vector<pair<bool, string>> &requestedColumns,
+	// 2021-02-20: workspaceKey is used just to be sure the ingestionJobKey
+	//	will belong to the specified workspaceKey. We do that because the updateIngestionJob API
+	//	calls this method, to be sure an end user can do an update of any IngestionJob (also
+	//	belonging to another workspace)
+	int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
+)
+{
 	shared_ptr<PostgresConnection> conn = nullptr;
 
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
-
 	try
 	{
+		if (rows > _maxRows)
 		{
-			string columnName;
-			if (processedMetadata)
-				columnName = "processedMetaDataContent";
-			else
-				columnName = "metaDataContent";
+			string errorMessage = fmt::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = fmt::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
+		{
+			string where;
+			where += fmt::format("workspaceKey = {} ", workspaceKey);
+			if (ingestionRootKey != -1)
+				where += fmt::format("{} ingestionRootKey = {} ", where.size() > 0 ? "and" : "", ingestionRootKey);
+
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = fmt::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = fmt::format("offset {} ", startIndex);
+			if (orderBy != "")
+				orderByCondition = fmt::format("order by {} ", orderBy);
 
 			string sqlStatement = fmt::format(
-				"select {} from MMS_IngestionRoot "
-				"where workspaceKey = {} and ingestionRootKey = {}",
-				columnName, workspace->_workspaceKey, ingestionRootKey
+				"select {} "
+				"from MMS_IngestionRoot "
+				"{} {} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
+
+			sqlResultSet = _postgresHelper.buildResult(res);
+
+			chrono::system_clock::time_point endSql = chrono::system_clock::now();
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
 			);
-			if (!empty(res))
-				metaDataContent = res[0][columnName].as<string>();
-			else
-			{
-				string errorMessage = __FILEREF__ + "ingestion root not found" +
-									  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
-									  ", ingestionRootKey: " + to_string(ingestionRootKey);
-				_logger->error(errorMessage);
 
-				throw runtime_error(errorMessage);
+			if (empty(res) && ingestionRootKey != -1 && notFoundAsException)
+			{
+				string errorMessage = fmt::format(
+					"ingestionRoot not found"
+					", workspaceKey: {}"
+					", ingestionRootKey: {}",
+					workspaceKey, ingestionRootKey
+				);
+				// abbiamo il log nel catch
+				// SPDLOG_WARN(errorMessage);
+
+				throw DBRecordNotFound(errorMessage);
 			}
-			_logger->info(
-				__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement + ", workspaceKey: " + to_string(workspace->_workspaceKey) +
-				", ingestionRootKey: " + to_string(ingestionRootKey) + ", res.size: " + to_string(res.size()) + ", elapsed (millisecs): @" +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
-			);
 		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
+
+		return sqlResultSet;
+	}
+	catch (DBRecordNotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
 	}
 	catch (sql_error const &e)
 	{
@@ -3335,10 +3369,9 @@ MMSEngineDBFacade::getIngestionRootMetaDataContent(shared_ptr<Workspace> workspa
 
 		throw e;
 	}
-
-	return metaDataContent;
 }
 
+/*
 tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> MMSEngineDBFacade::getIngestionJobDetails(
 	// 2021-02-20: workspaceKey is used just to be sure the ingestionJobKey
 	//	will belong to the specified workspaceKey. We do that because the updateIngestionJob API
@@ -3550,6 +3583,317 @@ tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStat
 
 	return make_tuple(label, ingestionType, ingestionStatus, metaDataContent, errorMessage);
 }
+*/
+
+tuple<string, MMSEngineDBFacade::IngestionType, json, string>
+MMSEngineDBFacade::ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {
+			{false, "mms_ingestionjob:ij.label"},
+			{false, "mms_ingestionjob:ij.ingestionType"},
+			{false, "mms_ingestionjob:ij.metaDataContent"},
+			{false, "mms_ingestionjob:ij.errorMessage"}
+		};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+
+		return make_tuple(
+			(*sqlResultSet)[0][0].as<string>(""), toIngestionType((*sqlResultSet)[0][1].as<string>("")), (*sqlResultSet)[0][2].as<json>(json()),
+			(*sqlResultSet)[0][3].as<string>("")
+		);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+pair<MMSEngineDBFacade::IngestionType, json>
+MMSEngineDBFacade::ingestionJob_IngestionTypeMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.metaDataContent"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+
+		return make_pair(toIngestionType((*sqlResultSet)[0][0].as<string>("")), (*sqlResultSet)[0][1].as<json>(json()));
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+tuple<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, json>
+MMSEngineDBFacade::ingestionJob_IngestionTypeStatusMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {
+			{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}, {false, "mms_ingestionjob:ij.metaDataContent"}
+		};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+
+		return make_tuple(
+			toIngestionType((*sqlResultSet)[0][0].as<string>("")), toIngestionStatus((*sqlResultSet)[0][1].as<string>("null ingestion status!!!")),
+			(*sqlResultSet)[0][2].as<json>(json())
+		);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+json MMSEngineDBFacade::ingestionJob_MetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.metaDataContent"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+
+		return (*sqlResultSet)[0][0].as<json>(json());
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+MMSEngineDBFacade::IngestionType MMSEngineDBFacade::ingestionJob_IngestionType(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+
+		return toIngestionType((*sqlResultSet)[0][0].as<string>(""));
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+string MMSEngineDBFacade::ingestionJob_Label(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.label"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+
+		return (*sqlResultSet)[0][0].as<string>("");
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
 
 pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
 MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
@@ -3564,6 +3908,68 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_
 			MMSEngineDBFacade::toIngestionStatus((*sqlResultSet)[0][1].as<string>("null ingestion status!!!"));
 
 		return make_pair(ingestionType, ingestionStatus);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+MMSEngineDBFacade::IngestionStatus MMSEngineDBFacade::ingestionJob_Status(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.status"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, fromMaster);
+
+		return MMSEngineDBFacade::toIngestionStatus((*sqlResultSet)[0][0].as<string>(""));
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
 	}
 	catch (runtime_error &e)
 	{

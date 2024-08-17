@@ -1,5 +1,6 @@
 
 #include "JSONUtils.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 /*
 #include <stdio.h>
@@ -449,6 +450,17 @@ void MMSEngineProcessor::manageEncodeTask(
 			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL
 		);
 	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			string() + "manageEncodeTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
+		);
+
+		// Update IngestionJob done in the calling method
+
+		throw e;
+	}
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
@@ -493,7 +505,9 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 
 		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
 
-		_mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems, _timeBeforeToPrepareResourcesInMinutes, _maxEncodingJobsPerEvent);
+		_mmsEngineDBFacade->getToBeProcessedEncodingJobs(
+			_processorMMS, encodingItems, _timeBeforeToPrepareResourcesInMinutes, _maxEncodingJobsPerEvent
+		);
 
 		SPDLOG_INFO(
 			string() + "_pActiveEncodingsManager->addEncodingItems" + ", _processorIdentifier: " + to_string(_processorIdentifier) +

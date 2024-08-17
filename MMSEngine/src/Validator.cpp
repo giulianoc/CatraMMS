@@ -5494,15 +5494,11 @@ void Validator::fillDependencies(
 						//
 						bool isIngestionTaskGeneratingAProfile = false;
 						{
-							MMSEngineDBFacade::IngestionType ingestionType;
-
-							tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
-								labelIngestionTypeAndErrorMessage = _mmsEngineDBFacade->getIngestionJobDetails(
-									workspaceKey, referenceIngestionJobKey,
-									// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
-									true
-								);
-							tie(ignore, ingestionType, ignore, ignore, ignore) = labelIngestionTypeAndErrorMessage;
+							MMSEngineDBFacade::IngestionType ingestionType = _mmsEngineDBFacade->ingestionJob_IngestionType(
+								workspaceKey, referenceIngestionJobKey,
+								// 2022-12-18: il MIK potrebbe essere stato appena inserito dal task precedente
+								true
+							);
 
 							if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
 								isIngestionTaskGeneratingAProfile = true;

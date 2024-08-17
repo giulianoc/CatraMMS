@@ -83,22 +83,12 @@ void MMSEngineProcessor::emailNotificationThread(
 					else // if (dependencyType ==
 						 // Validator::DependencyType::IngestionJobKey)
 					{
-						bool warningIfMissing = false;
-						tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-							_mmsEngineDBFacade->getIngestionJobDetails(
-								workspace->_workspaceKey, key,
-								// 2022-12-18: MIK potrebbe essere stato
-								// appena aggiunto
-								true
-							);
-
-						string label;
-						MMSEngineDBFacade::IngestionType ingestionType;
-						MMSEngineDBFacade::IngestionStatus ingestionStatus;
-						string metaDataContent;
-						string errorMessage;
-
-						tie(label, ingestionType, ingestionStatus, metaDataContent, errorMessage) = ingestionJobDetails;
+						string label = _mmsEngineDBFacade->ingestionJob_Label(
+							workspace->_workspaceKey, key,
+							// 2022-12-18: MIK potrebbe essere stato
+							// appena aggiunto
+							true
+						);
 
 						sDependencies += string("<br>IngestionJob") + ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										 ", ingestionJobKey: " + to_string(key) + ", label: " + label + ". ";
@@ -133,19 +123,13 @@ void MMSEngineProcessor::emailNotificationThread(
 						{
 							int64_t referenceIngestionJobKey = JSONUtils::asInt64(referenceRoot, field, 0);
 
-							string referenceLabel;
-							MMSEngineDBFacade::IngestionType ingestionType;
-							string parameters;
-							string referenceErrorMessage;
-
-							tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-								_mmsEngineDBFacade->getIngestionJobDetails(
+							auto [referenceLabel, ingestionType, parametersRoot, referenceErrorMessage] =
+								_mmsEngineDBFacade->ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(
 									workspace->_workspaceKey, referenceIngestionJobKey,
 									// 2022-12-18: MIK potrebbe essere stato
 									// appena aggiunto
 									true
 								);
-							tie(referenceLabel, ingestionType, ignore, parameters, referenceErrorMessage) = ingestionJobDetails;
 
 							sReferencies += string("<br>IngestionJob") + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType) +
 											", ingestionJobKey: " + to_string(referenceIngestionJobKey) + ", label: " + referenceLabel +
@@ -153,8 +137,6 @@ void MMSEngineProcessor::emailNotificationThread(
 
 							if (ingestionType == MMSEngineDBFacade::IngestionType::CheckStreaming)
 							{
-								json parametersRoot = JSONUtils::toJson(parameters);
-
 								string inputType;
 								field = "inputType";
 								inputType = JSONUtils::asString(parametersRoot, field, "");

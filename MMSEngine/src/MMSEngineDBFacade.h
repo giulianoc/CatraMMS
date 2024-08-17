@@ -1375,8 +1375,6 @@ class MMSEngineDBFacade
 
 	long getIngestionJobOutputsCount(int64_t ingestionJobKey, bool fromMaster);
 
-	tuple<int64_t, int64_t, string> getEncodingJobDetailsByIngestionJobKey(int64_t ingestionJobKey, bool fromMaster);
-
 #ifdef __POSTGRES__
 	int64_t addEncodingProfilesSetIfNotAlreadyPresent(
 		transaction_base *trans, shared_ptr<PostgresConnection> conn, int64_t workspaceKey, MMSEngineDBFacade::ContentType contentType, string label,
@@ -1548,13 +1546,29 @@ class MMSEngineDBFacade
 
 	void updateIngestionJobSourceBinaryTransferred(int64_t ingestionJobKey, bool sourceBinaryTransferred);
 
-	string getIngestionRootMetaDataContent(shared_ptr<Workspace> workspace, int64_t ingestionRootKey, bool processedMetadata, bool fromMaster);
+	// string getIngestionRootMetaDataContent(shared_ptr<Workspace> workspace, int64_t ingestionRootKey, bool processedMetadata, bool fromMaster);
+	string ingestionRoot_MetadataContent(int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster);
+	string ingestionRoot_ProcessedMetadataContent(int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster);
+	shared_ptr<PostgresHelper::SqlResultSet> ingestionRootQuery(
+		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster, int startIndex = -1,
+		int rows = -1, string orderBy = "", bool notFoundAsException = true
+	);
 
-	tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
-	getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	// tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string>
+	// getIngestionJobDetails(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 
 	pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
 	ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	string ingestionJob_Label(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	MMSEngineDBFacade::IngestionStatus ingestionJob_Status(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	tuple<string, MMSEngineDBFacade::IngestionType, json, string>
+	ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	pair<MMSEngineDBFacade::IngestionType, json>
+	ingestionJob_IngestionTypeMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	MMSEngineDBFacade::IngestionType ingestionJob_IngestionType(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	json ingestionJob_MetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	tuple<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, json>
+	ingestionJob_IngestionTypeStatusMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	shared_ptr<PostgresHelper::SqlResultSet> ingestionJobQuery(
 		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster, int startIndex = -1,
 		int rows = -1, string orderBy = "", bool notFoundAsException = true
@@ -1729,7 +1743,7 @@ class MMSEngineDBFacade
 	void fixEncodingJobsHavingWrongStatus();
 	void fixIngestionJobsHavingWrongStatus();
 
-	void getEncodingJobs(
+	void getToBeProcessedEncodingJobs(
 		string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems, int timeBeforeToPrepareResourcesInMinutes,
 		int maxEncodingsNumber
 	);
@@ -1923,7 +1937,10 @@ class MMSEngineDBFacade
 		int playlistEntriesNumber, string manifestDirectoryPath, string manifestFileName, string otherOutputOptions
 	);
 
-	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string> getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster);
+	json encodingJob_Parameters(int64_t ingestionJobKey, bool fromMaster);
+	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
+	encodingJob_IngestionJobKeyTypeEncoderKeyStatus(int64_t encodingJobKey, bool fromMaster);
+	tuple<int64_t, int64_t, json> encodingJob_EncodingJobKeyEncoderKeyParameters(int64_t ingestionJobKey, bool fromMaster);
 	pair<int64_t, int64_t> encodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, bool fromMaster);
 	shared_ptr<PostgresHelper::SqlResultSet> encodingJobQuery(
 		vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey, int64_t ingestionJobKey, bool fromMaster, int startIndex = -1,

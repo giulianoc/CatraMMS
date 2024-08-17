@@ -4,7 +4,7 @@
 #include "PersistenceLock.h"
 #include <regex>
 
-void MMSEngineDBFacade::getEncodingJobs(
+void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 	string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems, int timeBeforeToPrepareResourcesInMinutes,
 	int maxEncodingsNumber
 )
@@ -31,13 +31,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 		int initialGetEncodingJobsCurrentIndex = _getEncodingJobsCurrentIndex;
 
-		_logger->info(__FILEREF__ + "getEncodingJobs" + ", initialGetEncodingJobsCurrentIndex: " + to_string(initialGetEncodingJobsCurrentIndex));
+		_logger->info(
+			__FILEREF__ + "getToBeProcessedEncodingJobs" + ", initialGetEncodingJobsCurrentIndex: " + to_string(initialGetEncodingJobsCurrentIndex)
+		);
 
 		bool stillRows = true;
 		while (encodingItems.size() < maxEncodingsNumber && stillRows)
 		{
 			_logger->info(
-				__FILEREF__ + "getEncodingJobs (before select)" + ", _getEncodingJobsCurrentIndex: " + to_string(_getEncodingJobsCurrentIndex)
+				__FILEREF__ + "getToBeProcessedEncodingJobs (before select)" +
+				", _getEncodingJobsCurrentIndex: " + to_string(_getEncodingJobsCurrentIndex)
 			);
 			// 2022-01-06: I wanted to have this select running in parallel among all the engines.
 			//		For this reason, I have to use 'select for update'.
@@ -75,8 +78,8 @@ void MMSEngineDBFacade::getEncodingJobs(
 				stillRows = false;
 
 			_logger->info(
-				__FILEREF__ + "getEncodingJobs (after select)" + ", _getEncodingJobsCurrentIndex: " + to_string(_getEncodingJobsCurrentIndex) +
-				", encodingResultSet->rowsCount: " + to_string(res.size())
+				__FILEREF__ + "getToBeProcessedEncodingJobs (after select)" + ", _getEncodingJobsCurrentIndex: " +
+				to_string(_getEncodingJobsCurrentIndex) + ", encodingResultSet->rowsCount: " + to_string(res.size())
 			);
 			int resultSetIndex = 0;
 			for (auto row : res)
@@ -102,7 +105,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				string encodingParameters = row["parameters"].as<string>();
 
 				_logger->info(
-					__FILEREF__ + "getEncodingJobs (resultSet loop)" + ", encodingJobKey: " + to_string(encodingJobKey) +
+					__FILEREF__ + "getToBeProcessedEncodingJobs (resultSet loop)" + ", encodingJobKey: " + to_string(encodingJobKey) +
 					", encodingType: " + encodingType + ", initialGetEncodingJobsCurrentIndex: " + to_string(initialGetEncodingJobsCurrentIndex) +
 					", resultSetIndex: " + to_string(resultSetIndex) + "/" + to_string(res.size())
 				);
@@ -164,22 +167,17 @@ void MMSEngineDBFacade::getEncodingJobs(
 					}
 				}
 				_logger->info(
-					__FILEREF__ + "getEncodingJobs (after workspaceKey)" + ", encodingJobKey: " + to_string(encodingJobKey) +
+					__FILEREF__ + "getToBeProcessedEncodingJobs (after workspaceKey)" + ", encodingJobKey: " + to_string(encodingJobKey) +
 					", encodingType: " + encodingType
 				);
 
 				{
-					tuple<string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, string, string> ingestionJobDetails =
-						getIngestionJobDetails(
-							encodingItem->_workspace->_workspaceKey, encodingItem->_ingestionJobKey,
-							// 2022-12-18: probable the ingestionJob is added recently, let's set true
-							true
-						);
+					string sIngestionJobStatus = toString(ingestionJob_Status(
+						encodingItem->_workspace->_workspaceKey, encodingItem->_ingestionJobKey,
+						// 2022-12-18: probable the ingestionJob is added recently, let's set true
+						true
+					));
 
-					IngestionStatus ingestionJobStatus;
-					tie(ignore, ignore, ingestionJobStatus, ignore, ignore) = ingestionJobDetails;
-
-					string sIngestionJobStatus = toString(ingestionJobStatus);
 					string prefix = "End_";
 					if (sIngestionJobStatus.size() >= prefix.size() && 0 == sIngestionJobStatus.compare(0, prefix.size(), prefix))
 					{
@@ -225,7 +223,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					}
 				}
 				_logger->info(
-					__FILEREF__ + "getEncodingJobs (after check ingestionStatus)" + ", encodingJobKey: " + to_string(encodingJobKey) +
+					__FILEREF__ + "getToBeProcessedEncodingJobs (after check ingestionStatus)" + ", encodingJobKey: " + to_string(encodingJobKey) +
 					", encodingType: " + encodingType
 				);
 
@@ -266,7 +264,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 				}
 
 				_logger->info(
-					__FILEREF__ + "getEncodingJobs (after encodingParameters)" + ", encodingJobKey: " + to_string(encodingJobKey) +
+					__FILEREF__ + "getToBeProcessedEncodingJobs (after encodingParameters)" + ", encodingJobKey: " + to_string(encodingJobKey) +
 					", encodingType: " + encodingType
 				);
 
@@ -359,7 +357,10 @@ void MMSEngineDBFacade::getEncodingJobs(
 						// throw runtime_error(errorMessage);
 					}
 				}
-				_logger->info(__FILEREF__ + "getEncodingJobs" + ", encodingJobKey: " + to_string(encodingJobKey) + ", encodingType: " + encodingType);
+				_logger->info(
+					__FILEREF__ + "getToBeProcessedEncodingJobs" + ", encodingJobKey: " + to_string(encodingJobKey) +
+					", encodingType: " + encodingType
+				);
 
 				encodingItems.push_back(encodingItem);
 				othersToBeEncoded++;
@@ -424,7 +425,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 					}
 				}
 				_logger->info(
-					__FILEREF__ + "getEncodingJobs (after encodingJob update)" + ", encodingJobKey: " + to_string(encodingJobKey) +
+					__FILEREF__ + "getToBeProcessedEncodingJobs (after encodingJob update)" + ", encodingJobKey: " + to_string(encodingJobKey) +
 					", encodingType: " + encodingType
 				);
 			}
@@ -446,7 +447,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 		_logger->info(
-			__FILEREF__ + "getEncodingJobs statistics" + ", encodingItems.size: " + to_string(encodingItems.size()) +
+			__FILEREF__ + "getToBeProcessedEncodingJobs statistics" + ", encodingItems.size: " + to_string(encodingItems.size()) +
 			", maxEncodingsNumber: " + to_string(maxEncodingsNumber) + ", liveProxyToBeEncoded: " + to_string(liveProxyToBeEncoded) +
 			", liveRecorderToBeEncoded: " + to_string(liveRecorderToBeEncoded) + ", othersToBeEncoded: " + to_string(othersToBeEncoded) +
 			", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
@@ -460,6 +461,35 @@ void MMSEngineDBFacade::getEncodingJobs(
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 		);
 
 		try
@@ -3055,165 +3085,6 @@ void MMSEngineDBFacade::updateOutputHLSDetails(
 	}
 }
 
-tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus, string>
-MMSEngineDBFacade::getEncodingJobDetails(int64_t encodingJobKey, bool fromMaster)
-{
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-
-	try
-	{
-		int64_t ingestionJobKey;
-		string type;
-		int64_t encoderKey;
-		string parameters;
-		// default initialization, important in case the calling methid calls the tie function
-		EncodingStatus status = EncodingStatus::ToBeProcessed;
-		{
-			string sqlStatement = fmt::format(
-				"select ingestionJobKey, type, encoderKey, status, parameters "
-				"from MMS_EncodingJob "
-				"where encodingJobKey = {}",
-				encodingJobKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO(
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (!empty(res))
-			{
-				ingestionJobKey = res[0]["ingestionJobKey"].as<int64_t>();
-				type = res[0]["type"].as<string>();
-				if (res[0]["encoderKey"].is_null())
-					encoderKey = -1;
-				else
-					encoderKey = res[0]["encoderKey"].as<int64_t>();
-				status = toEncodingStatus(res[0]["status"].as<string>());
-				parameters = res[0]["parameters"].as<string>();
-			}
-			else
-			{
-				string errorMessage =
-					__FILEREF__ + "EncodingJob not found" + ", EncodingJobKey: " + to_string(encodingJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
-		// return make_tuple(ingestionJobKey, type, encoderKey, status, highAvailability, main,
-		//		theOtherEncoderKey, theOtherStatus, theOtherEncodingJobKey);
-		return make_tuple(ingestionJobKey, type, encoderKey, status, parameters);
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-}
-
 pair<int64_t, int64_t> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKey(int64_t ingestionJobKey, bool fromMaster)
 {
 	try
@@ -3245,6 +3116,176 @@ pair<int64_t, int64_t> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKey(i
 			", ingestionJobKey: {}"
 			", fromMaster: {}",
 			ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
+MMSEngineDBFacade::encodingJob_IngestionJobKeyTypeEncoderKeyStatus(int64_t encodingJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {
+			{false, "mms_encodingjob:.ingestionJobKey"},
+			{false, "mms_encodingjob:.type"},
+			{false, "mms_encodingjob:.encoderKey"},
+			{false, "mms_encodingjob:.status"}
+		};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, encodingJobKey, -1, fromMaster);
+
+		int64_t ingestionJobKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<int64_t>(-1) : -1;
+		string type = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][1].as<string>(string("")) : "";
+		int64_t encoderKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][2].as<int64_t>(-1) : -1;
+		EncodingStatus status =
+			sqlResultSet->size() > 0 ? toEncodingStatus((*sqlResultSet)[0][3].as<string>(string(""))) : EncodingStatus::Processing;
+
+		return make_tuple(ingestionJobKey, type, encoderKey, status);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", encodingJobKey: {}"
+			", exceptionMessage: {}",
+			encodingJobKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", encodingJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encodingJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", encodingJobKey: {}"
+			", fromMaster: {}",
+			encodingJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+tuple<int64_t, int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKeyParameters(int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {
+			{false, "mms_encodingjob:.encodingJobKey"}, {false, "mms_encodingjob:.encoderKey"}, {false, "mms_encodingjob:.parameters"}
+		};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, -1, ingestionJobKey, fromMaster);
+
+		if (sqlResultSet->empty())
+		{
+			string errorMessage = fmt::format(
+				"encodingJob not found"
+				", ingestionJobKey: {}",
+				ingestionJobKey
+			);
+			// abbiamo il log nel catch
+			// SPDLOG_WARN(errorMessage);
+
+			throw DBRecordNotFound(errorMessage);
+		}
+
+		int64_t encodingJobKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<int64_t>(-1) : -1;
+		int64_t encoderKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][1].as<int64_t>(-1) : -1;
+		json parametersRoot = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][2].as<json>(json()) : json();
+
+		return make_tuple(encodingJobKey, encoderKey, parametersRoot);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", ingestionJobKey: {}"
+			", exceptionMessage: {}",
+			ingestionJobKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.parameters"}};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, encodingJobKey, -1, fromMaster);
+
+		json parametersRoot = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][4].as<json>(json()) : json();
+
+		return parametersRoot;
+	}
+	catch (DBRecordNotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", exceptionMessage: {}",
+			e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", encodingJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encodingJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", encodingJobKey: {}"
+			", fromMaster: {}",
+			encodingJobKey, fromMaster
 		);
 
 		throw e;
@@ -3478,153 +3519,6 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
 	}
 }
 
-tuple<int64_t, int64_t, string> MMSEngineDBFacade::getEncodingJobDetailsByIngestionJobKey(int64_t ingestionJobKey, bool fromMaster)
-{
-	int64_t encoderKey = -1;
-	int64_t encodingJobKey = -1;
-	string parameters;
-
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-
-	try
-	{
-		{
-			string sqlStatement = fmt::format(
-				"select encodingJobKey, encoderKey, parameters "
-				"from MMS_EncodingJob where ingestionJobKey = {}",
-				ingestionJobKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO(
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (empty(res))
-			{
-				string errorMessage = __FILEREF__ + "No EncodingJob found" + ", ingestionJobKey: " + to_string(ingestionJobKey);
-
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			encodingJobKey = res[0]["encodingJobKey"].as<int64_t>();
-			if (!res[0]["encoderKey"].is_null())
-				encoderKey = res[0]["encoderKey"].as<int64_t>();
-			parameters = res[0]["parameters"].as<string>();
-		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-
-	return make_tuple(encodingJobKey, encoderKey, parameters);
-}
-
 json MMSEngineDBFacade::getEncodingJobsStatus(
 	shared_ptr<Workspace> workspace, int64_t encodingJobKey, int start, int rows,
 	// bool startAndEndIngestionDatePresent,
@@ -3680,16 +3574,6 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				requestParametersRoot[field] = encodingJobKey;
 			}
 
-			/*
-			if (startAndEndIngestionDatePresent)
-			{
-				field = "startIngestionDate";
-				requestParametersRoot[field] = startIngestionDate;
-
-				field = "endIngestionDate";
-				requestParametersRoot[field] = endIngestionDate;
-			}
-			*/
 			if (startIngestionDate != "")
 			{
 				field = "startIngestionDate";
