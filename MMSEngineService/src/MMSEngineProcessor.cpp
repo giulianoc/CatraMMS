@@ -1573,9 +1573,8 @@ MMSEngineProcessor::processDependencyInfo(
 		{
 			mediaItemKey = key;
 
-			bool warningIfMissing = true;
 			tuple<int64_t, int, string, string, int64_t, bool, int64_t> physicalPathDetails = _mmsEngineDBFacade->getSourcePhysicalPath(
-				mediaItemKey, warningIfMissing,
+				mediaItemKey,
 				// 2022-12-18: MIK potrebbe essere stato appena aggiunto
 				true
 			);

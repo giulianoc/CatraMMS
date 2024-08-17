@@ -289,7 +289,7 @@ MMSStorage::getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfile
 	try
 	{
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
-			storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey, warningIfMissing, fromMaster);
+			storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey, fromMaster);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
@@ -490,7 +490,7 @@ MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, 
 	{
 		bool warningIfMissing = false;
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
-			storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey, warningIfMissing, false /* fromMaster */);
+			storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey, false /* fromMaster */);
 
 		int64_t physicalPathKey;
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;

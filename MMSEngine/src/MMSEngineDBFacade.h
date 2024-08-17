@@ -1666,7 +1666,7 @@ class MMSEngineDBFacade
 
 	string getPhysicalPathDetails(int64_t physicalPathKey, bool warningIfMissing, bool fromMaster);
 
-	tuple<int64_t, int, string, string, uint64_t, bool, int64_t> getSourcePhysicalPath(int64_t mediaItemKey, bool warningIfMissing, bool fromMaster);
+	tuple<int64_t, int, string, string, uint64_t, bool, int64_t> getSourcePhysicalPath(int64_t mediaItemKey, bool fromMaster);
 
 	tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
 	getMediaItemKeyDetails(int64_t workspaceKey, int64_t mediaItemKey, bool warningIfMissing, bool fromMaster);
@@ -1713,7 +1713,7 @@ class MMSEngineDBFacade
 	getStorageDetails(int64_t physicalPathKey, bool fromMaster);
 
 	tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, uint64_t, bool>
-	getStorageDetails(int64_t mediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
+	getStorageDetails(int64_t mediaItemKey, int64_t encodingProfileKey, bool fromMaster);
 
 	void getAllStorageDetails(
 		int64_t mediaItemKey, bool fromMaster,

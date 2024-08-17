@@ -998,7 +998,7 @@ tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>
 MMSEngineDBFacade::getStorageDetails(
 	int64_t mediaItemKey,
 	// encodingProfileKey == -1 means it is requested the source file (the one having the bigger size in case there are more than one)
-	int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster
+	int64_t encodingProfileKey, bool fromMaster
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -1114,8 +1114,7 @@ MMSEngineDBFacade::getStorageDetails(
 		}
 		else
 		{
-			tuple<int64_t, int, string, string, int64_t, bool, int64_t> sourcePhysicalPathDetails =
-				getSourcePhysicalPath(mediaItemKey, warningIfMissing, fromMaster);
+			tuple<int64_t, int, string, string, int64_t, bool, int64_t> sourcePhysicalPathDetails = getSourcePhysicalPath(mediaItemKey, fromMaster);
 			tie(physicalPathKey, mmsPartitionNumber, relativePath, fileName, sizeInBytes, externalReadOnlyStorage, ignore) =
 				sourcePhysicalPathDetails;
 
@@ -1153,10 +1152,11 @@ MMSEngineDBFacade::getStorageDetails(
 			{
 				string errorMessage = __FILEREF__ + "MediaItemKey/EncodingProfileKey are not present" + ", mediaItemKey: " + to_string(mediaItemKey) +
 									  ", sqlStatement: " + sqlStatement;
-				if (warningIfMissing)
-					_logger->warn(errorMessage);
-				else
-					_logger->error(errorMessage);
+				// 2024-08-17: warn, sara' il chiamante che deciderà se loggare o no l'errore
+				// if (warningIfMissing)
+				_logger->warn(errorMessage);
+				// else
+				// 	_logger->error(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -1205,13 +1205,15 @@ MMSEngineDBFacade::getStorageDetails(
 	}
 	catch (MediaItemKeyNotFound &e)
 	{
-		if (warningIfMissing)
-			SPDLOG_WARN(
-				"MediaItemKeyNotFound, SQL exception"
-				", exceptionMessage: {}"
-				", conn: {}",
-				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-			);
+		// 2024-08-17: warn, sara' il chiamante che deciderà se loggare o no l'errore
+		// if (warningIfMissing)
+		SPDLOG_WARN(
+			"MediaItemKeyNotFound, SQL exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+		/*
 		else
 			SPDLOG_ERROR(
 				"MediaItemKeyNotFound, SQL exception"
@@ -1219,6 +1221,7 @@ MMSEngineDBFacade::getStorageDetails(
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
+		*/
 
 		try
 		{

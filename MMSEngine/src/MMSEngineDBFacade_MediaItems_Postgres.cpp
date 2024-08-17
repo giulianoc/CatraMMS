@@ -2726,7 +2726,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		else
 		{
 			tuple<int64_t, int, string, string, uint64_t, bool, int64_t> sourcePhysicalPathDetails =
-				getSourcePhysicalPath(referenceMediaItemKey, warningIfMissing, fromMaster);
+				getSourcePhysicalPath(referenceMediaItemKey, fromMaster);
 			tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore) = sourcePhysicalPathDetails;
 		}
 
@@ -3261,8 +3261,7 @@ string MMSEngineDBFacade::getPhysicalPathDetails(int64_t physicalPathKey, bool w
 	}
 }
 
-tuple<int64_t, int, string, string, uint64_t, bool, int64_t>
-MMSEngineDBFacade::getSourcePhysicalPath(int64_t mediaItemKey, bool warningIfMissing, bool fromMaster)
+tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::getSourcePhysicalPath(int64_t mediaItemKey, bool fromMaster)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -3428,10 +3427,11 @@ MMSEngineDBFacade::getSourcePhysicalPath(int64_t mediaItemKey, bool warningIfMis
 			{
 				string errorMessage =
 					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
-				if (warningIfMissing)
-					_logger->warn(errorMessage);
-				else
-					_logger->error(errorMessage);
+				// 2024-08-17: warn, sara' il chiamante che deciderà se loggare o no l'errore
+				// if (warningIfMissing)
+				_logger->warn(errorMessage);
+				// else
+				// 	_logger->error(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3487,13 +3487,15 @@ MMSEngineDBFacade::getSourcePhysicalPath(int64_t mediaItemKey, bool warningIfMis
 	}
 	catch (MediaItemKeyNotFound &e)
 	{
-		if (warningIfMissing)
-			SPDLOG_WARN(
-				"MediaItemKeyNotFound SQL exception"
-				", exceptionMessage: {}"
-				", conn: {}",
-				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-			);
+		// 2024-08-17: warn, sara' il chiamante che deciderà se loggare o no l'errore
+		// if (warningIfMissing)
+		SPDLOG_WARN(
+			"MediaItemKeyNotFound SQL exception"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+		/*
 		else
 			SPDLOG_ERROR(
 				"MediaItemKeyNotFound SQL exception"
@@ -3501,6 +3503,7 @@ MMSEngineDBFacade::getSourcePhysicalPath(int64_t mediaItemKey, bool warningIfMis
 				", conn: {}",
 				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
 			);
+			*/
 
 		try
 		{
