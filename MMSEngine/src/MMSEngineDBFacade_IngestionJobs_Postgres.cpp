@@ -3903,16 +3903,6 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			field = "status";
 			requestParametersRoot[field] = status;
 
-			/*
-			if (startAndEndIngestionDatePresent)
-			{
-				field = "startIngestionDate";
-				requestParametersRoot[field] = startIngestionDate;
-
-				field = "endIngestionDate";
-				requestParametersRoot[field] = endIngestionDate;
-			}
-			*/
 			if (startIngestionDate != "")
 			{
 				field = "startIngestionDate";

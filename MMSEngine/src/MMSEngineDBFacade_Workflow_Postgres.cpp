@@ -2,7 +2,9 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
+#include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
+#include <ranges>
 
 shared_ptr<PostgresConnection> MMSEngineDBFacade::beginWorkflow()
 {
@@ -617,12 +619,8 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 		{
 			string allStatus = "all";
 			// compare case insensitive
-			if (!(status.length() != allStatus.length()
-					  ? false
-					  : equal(status.begin(), status.end(), allStatus.begin(), [](int c1, int c2) { return toupper(c1) == toupper(c2); })))
-			{
+			if (!StringUtils::equalCaseInsensitive(status, allStatus))
 				sqlWhere += fmt::format("and status = {} ", trans.quote(status));
-			}
 		}
 
 		json responseRoot;

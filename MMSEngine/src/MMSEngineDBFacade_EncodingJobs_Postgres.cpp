@@ -3585,16 +3585,6 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				requestParametersRoot[field] = endIngestionDate;
 			}
 
-			/*
-			if (startAndEndEncodingDatePresent)
-			{
-				field = "startEncodingDate";
-				requestParametersRoot[field] = startEncodingDate;
-
-				field = "endEncodingDate";
-				requestParametersRoot[field] = endEncodingDate;
-			}
-			*/
 			if (startEncodingDate != "")
 			{
 				field = "startEncodingDate";
