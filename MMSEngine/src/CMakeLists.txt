@@ -38,6 +38,7 @@ if(DEFINED __POSTGRES__)
       MMSEngineDBFacade_Statistic_Postgres.cpp
       MMSEngineDBFacade_UserWorkspace_Postgres.cpp
       MMSEngineDBFacade_WorkflowLibrary_Postgres.cpp
+      MMSEngineDBFacade_Workflow_Postgres.cpp
       Workspace.cpp
       Validator.cpp
       ActiveEncodingsManager.cpp

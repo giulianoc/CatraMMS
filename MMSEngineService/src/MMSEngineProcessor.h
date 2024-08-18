@@ -260,7 +260,7 @@ class MMSEngineProcessor
 	);
 
 	void manageCountdown(
-		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, string ingestionDate, shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, /* string ingestionDate, */ shared_ptr<Workspace> workspace,
 		json parametersRoot, vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 

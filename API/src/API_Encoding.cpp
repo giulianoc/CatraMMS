@@ -846,7 +846,7 @@ void API::addUpdateEncodingProfilesSet(
 
 		string responseBody;
 #ifdef __POSTGRES__
-		shared_ptr<PostgresConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
+		shared_ptr<PostgresConnection> conn = _mmsEngineDBFacade->beginWorkflow();
 		work trans{*(conn->_sqlConnection)};
 #else
 		shared_ptr<MySQLConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
@@ -903,7 +903,7 @@ void API::addUpdateEncodingProfilesSet(
 
 			bool commit = true;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
@@ -918,7 +918,7 @@ void API::addUpdateEncodingProfilesSet(
 		{
 			bool commit = false;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
@@ -931,7 +931,7 @@ void API::addUpdateEncodingProfilesSet(
 		{
 			bool commit = false;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif

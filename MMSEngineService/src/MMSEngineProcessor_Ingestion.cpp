@@ -3908,7 +3908,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						{
 							try
 							{
-								manageCountdown(ingestionJobKey, ingestionStatus, ingestionDate, workspace, parametersRoot, dependencies);
+								manageCountdown(ingestionJobKey, ingestionStatus, /* ingestionDate, */ workspace, parametersRoot, dependencies);
 							}
 							catch (runtime_error &e)
 							{

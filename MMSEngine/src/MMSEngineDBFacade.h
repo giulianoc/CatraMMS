@@ -1453,13 +1453,13 @@ class MMSEngineDBFacade
 	// );
 
 #ifdef __POSTGRES__
-	shared_ptr<PostgresConnection> beginIngestionJobs();
+	shared_ptr<PostgresConnection> beginWorkflow();
 #else
 	shared_ptr<MySQLConnection> beginIngestionJobs();
 #endif
 
 #ifdef __POSTGRES__
-	int64_t addIngestionRoot(
+	int64_t addWorkflow(
 		shared_ptr<PostgresConnection> conn, work &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel,
 		string metaDataContent
 	);
@@ -1497,8 +1497,6 @@ class MMSEngineDBFacade
 	);
 #endif
 
-	void getIngestionJobsKeyByGlobalLabel(int64_t workspaceKey, string globalIngestionLabel, bool fromMaster, vector<int64_t> &ingestionJobsKey);
-
 	void updateIngestionJobMetadataContent(int64_t ingestionJobKey, string metadataContent);
 
 #ifdef __POSTGRES__
@@ -1530,7 +1528,7 @@ class MMSEngineDBFacade
 	*/
 
 #ifdef __POSTGRES__
-	void endIngestionJobs(shared_ptr<PostgresConnection> conn, work &trans, bool commit, int64_t ingestionRootKey, string processedMetadataContent);
+	void endWorkflow(shared_ptr<PostgresConnection> conn, work &trans, bool commit, int64_t ingestionRootKey, string processedMetadataContent);
 #else
 	shared_ptr<MySQLConnection>
 	endIngestionJobs(shared_ptr<MySQLConnection> conn, bool commit, int64_t ingestionRootKey, string processedMetadataContent);
@@ -1549,7 +1547,8 @@ class MMSEngineDBFacade
 	// string getIngestionRootMetaDataContent(shared_ptr<Workspace> workspace, int64_t ingestionRootKey, bool processedMetadata, bool fromMaster);
 	string ingestionRoot_MetadataContent(int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster);
 	string ingestionRoot_ProcessedMetadataContent(int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster);
-	shared_ptr<PostgresHelper::SqlResultSet> ingestionRootQuery(
+	pair<int64_t, string> workflowQuery_WorkspaceKeyIngestionDate(int64_t ingestionRootKey, bool fromMaster);
+	shared_ptr<PostgresHelper::SqlResultSet> workflowQuery(
 		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster, int startIndex = -1,
 		int rows = -1, string orderBy = "", bool notFoundAsException = true
 	);
@@ -1569,9 +1568,10 @@ class MMSEngineDBFacade
 	json ingestionJob_MetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	tuple<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, json>
 	ingestionJob_IngestionTypeStatusMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	void ingestionJob_IngestionJobKeys(int64_t workspaceKey, string label, bool fromMaster, vector<int64_t> &ingestionJobsKey);
 	shared_ptr<PostgresHelper::SqlResultSet> ingestionJobQuery(
-		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster, int startIndex = -1,
-		int rows = -1, string orderBy = "", bool notFoundAsException = true
+		vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t ingestionJobKey, string label, bool fromMaster,
+		int startIndex = -1, int rows = -1, string orderBy = "", bool notFoundAsException = true
 	);
 
 	json getIngestionRootsStatus(

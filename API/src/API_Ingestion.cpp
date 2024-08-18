@@ -53,7 +53,7 @@ void API::ingestion(
 		json responseBodyTasksRoot = json::array();
 
 #ifdef __POSTGRES__
-		shared_ptr<PostgresConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
+		shared_ptr<PostgresConnection> conn = _mmsEngineDBFacade->beginWorkflow();
 		work trans{*(conn->_sqlConnection)};
 #else
 		shared_ptr<MySQLConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
@@ -95,7 +95,7 @@ void API::ingestion(
 
 #ifdef __POSTGRES__
 			int64_t ingestionRootKey =
-				_mmsEngineDBFacade->addIngestionRoot(conn, trans, workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
+				_mmsEngineDBFacade->addWorkflow(conn, trans, workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
 #else
 			int64_t ingestionRootKey =
 				_mmsEngineDBFacade->addIngestionRoot(conn, workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
@@ -178,7 +178,7 @@ void API::ingestion(
 
 			bool commit = true;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, ingestionRootKey, processedMetadataContent);
+			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, ingestionRootKey, processedMetadataContent);
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, ingestionRootKey, processedMetadataContent);
 #endif
@@ -207,7 +207,7 @@ void API::ingestion(
 		{
 			bool commit = false;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
@@ -220,7 +220,7 @@ void API::ingestion(
 		{
 			bool commit = false;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
@@ -233,7 +233,7 @@ void API::ingestion(
 		{
 			bool commit = false;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endIngestionJobs(conn, trans, commit, -1, string());
+			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
@@ -1654,14 +1654,14 @@ JSONUtils::toString(parametersRoot)
 				{
 					string waitForGlobalIngestionLabel = JSONUtils::asString(waitForLabelRoot, field, "");
 
-					_mmsEngineDBFacade->getIngestionJobsKeyByGlobalLabel(
+					_mmsEngineDBFacade->ingestionJob_IngestionJobKeys(
 						workspace->_workspaceKey, waitForGlobalIngestionLabel,
 						// 2022-12-18: true perchè IngestionJob dovrebbe essere
 						// stato appena aggiunto
 						true, waitForGlobalIngestionJobKeys
 					);
 					_logger->info(
-						__FILEREF__ + "getIngestionJobsKeyByGlobalLabel" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
+						__FILEREF__ + "ingestionJob_IngestionJobKeys" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
 						", taskLabel: " + taskLabel + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
 						", waitForGlobalIngestionLabel: " + waitForGlobalIngestionLabel +
 						", waitForGlobalIngestionJobKeys.size(): " + to_string(waitForGlobalIngestionJobKeys.size())
