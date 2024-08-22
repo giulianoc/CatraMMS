@@ -2,6 +2,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/spdlog.h"
 
 void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 	string processorMMS, vector<tuple<shared_ptr<Workspace>, int64_t, int64_t>> &mediaItemKeyOrPhysicalPathKeyToBeRemoved, int maxEntriesNumber
@@ -1123,8 +1124,8 @@ json MMSEngineDBFacade::getMediaItemsList(
 				}
 				catch (DBRecordNotFound &e)
 				{
-					SPDLOG_ERROR(
-						"getPhysicalPath_MediaItemKey: requested physicalPathKey does not exist"
+					SPDLOG_WARN(
+						"physicalPathKey does not exist"
 						", physicalPathKey: {}",
 						physicalPathKey
 					);
@@ -1143,7 +1144,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				}
 				catch (DBRecordNotFound &e)
 				{
-					SPDLOG_ERROR(
+					SPDLOG_WARN(
 						"getExternalUniqueName_MediaItemKey: requested workspaceKey/uniqueName does not exist"
 						", workspaceKey: {}"
 						", uniqueName: {}",
@@ -1406,7 +1407,14 @@ json MMSEngineDBFacade::getMediaItemsList(
 				{
 					chrono::milliseconds localSqlDuration(0);
 					field = "uniqueName";
-					mediaItemRoot[field] = externalUniqueName_UniqueName(workspaceKey, localMediaItemKey, &localSqlDuration, fromMaster);
+					try
+					{
+						mediaItemRoot[field] = externalUniqueName_UniqueName(workspaceKey, localMediaItemKey, &localSqlDuration, fromMaster);
+					}
+					catch (DBRecordNotFound &e)
+					{
+						mediaItemRoot[field] = "";
+					}
 					internalSqlDuration += localSqlDuration;
 				}
 
@@ -2019,6 +2027,7 @@ int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, ch
 	}
 	catch (DBRecordNotFound &e)
 	{
+		/*
 		SPDLOG_ERROR(
 			"NotFound"
 			", physicalPathKey: {}"
@@ -2026,6 +2035,7 @@ int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, ch
 			", exceptionMessage: {}",
 			physicalPathKey, fromMaster, e.what()
 		);
+		*/
 
 		throw e;
 	}
@@ -2339,23 +2349,34 @@ MMSEngineDBFacade::externalUniqueName_UniqueName(int64_t workspaceKey, int64_t m
 		if (sqlDuration != nullptr)
 			*sqlDuration = sqlResultSet->getSqlDuration();
 
-		return (*sqlResultSet).size() == 0 ? "" : (*sqlResultSet)[0][0].as<string>("");
+		if ((*sqlResultSet).size() == 0)
+		{
+			string errorMessage = fmt::format(
+				"workspaceKey/mediaItemKey not found"
+				", workspaceKey: {}"
+				", mediaItemKey: {}",
+				workspaceKey, mediaItemKey
+			);
+			throw DBRecordNotFound(errorMessage);
+		}
+
+		return (*sqlResultSet)[0][0].as<string>("");
 	}
-	/*
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		/*
+		SPDLOG_WARN(
 			"NotFound"
 			", workspaceKey: {}"
-			", uniqueName: {}"
+			", mediaItemKey: {}"
 			", fromMaster: {}"
 			", exceptionMessage: {}",
-			workspaceKey, uniqueName, fromMaster, e.what()
+			workspaceKey, mediaItemKey, fromMaster, e.what()
 		);
+		*/
 
 		throw e;
 	}
-	*/
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
