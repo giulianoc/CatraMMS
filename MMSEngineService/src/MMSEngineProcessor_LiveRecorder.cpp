@@ -332,7 +332,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			// string youTubePrefix2("https://youtu.be/");
 			// if ((liveURL.size() >= youTubePrefix1.size() && 0 == liveURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
 			// 	(liveURL.size() >= youTubePrefix2.size() && 0 == liveURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
-			if (StringUtils::startWith(liveURL, "https://www.youtube.com/") || StringUtils::startWith(liveURL, "https://youtu.be/"))
+			if (liveURL.starts_with("https://www.youtube.com/") || liveURL.starts_with("https://youtu.be/"))
 			{
 				liveURL = _mmsEngineDBFacade->getStreamingYouTubeLiveURL(workspace, ingestionJobKey, confKey, liveURL);
 			}

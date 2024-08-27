@@ -1987,7 +1987,7 @@ void MMSEngineDBFacade::updateEncodingRealTimeInfo(
 				"numberOfRestartBecauseOfFailure = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				encodingPid == -1 ? "null" : to_string(encodingPid), realTimeFrameRate == -1 ? "null" : to_string(realTimeFrameRate),
-				realTimeBitRate == -1 ? "null" : to_string(realTimeBitRate), numberOfRestartBecauseOfFailure, encodingJobKey
+				realTimeBitRate == -1.0 ? "null" : to_string(realTimeBitRate), numberOfRestartBecauseOfFailure, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();

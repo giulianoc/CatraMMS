@@ -1065,7 +1065,7 @@ void MMSStorage::removePhysicalPathFile(
 		{
 			// string m3u8Suffix(".m3u8");
 
-			if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming || StringUtils::endWith(fileName, ".m3u8")
+			if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming || fileName.ends_with(".m3u8")
 				// fileName.size() >= m3u8Suffix.size()	// end with .m3u8
 				// 		&& 0 == fileName.compare(fileName.size()-m3u8Suffix.size(), m3u8Suffix.size(),
 				// 	m3u8Suffix)
@@ -1818,7 +1818,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			// if (!(sourcePathName.size() >= suffix.size() && 0 == sourcePathName.compare(sourcePathName.size() - suffix.size(), suffix.size(),
 			// suffix)
 			// ))
-			if (!StringUtils::endWith(sourcePathName, suffix))
+			if (!sourcePathName.ends_with(suffix))
 			{
 				string errorMessage = fmt::format(
 					"sourcePathName does not end with '{}'"

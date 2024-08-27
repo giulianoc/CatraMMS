@@ -248,7 +248,7 @@ void MMSEngineProcessor::copyContent(int64_t ingestionJobKey, string mmsAssetPat
 				string suffix = "." + fileFormat;
 				// if (cleanedFileName.size() >= suffix.size() &&
 				//	0 == cleanedFileName.compare(cleanedFileName.size() - suffix.size(), suffix.size(), suffix))
-				if (StringUtils::endWith(cleanedFileName, suffix))
+				if (cleanedFileName.ends_with(suffix))
 					;
 				else
 					cleanedFileName += suffix;
@@ -319,7 +319,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		string mvPrefix("mv://");
 		// if (!(sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix)) &&
 		// 	!(sourceReferenceURL.size() >= mvPrefix.size() && 0 == sourceReferenceURL.compare(0, mvPrefix.size(), mvPrefix)))
-		if (!StringUtils::startWith(sourceReferenceURL, movePrefix) && !StringUtils::startWith(sourceReferenceURL, mvPrefix))
+		if (!sourceReferenceURL.starts_with(movePrefix) && !sourceReferenceURL.starts_with(mvPrefix))
 		{
 			string errorMessage = string("sourceReferenceURL is not a move reference") +
 								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -330,7 +330,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 			throw runtime_error(errorMessage);
 		}
 		string sourcePathName;
-		if (StringUtils::startWith(sourceReferenceURL, movePrefix))
+		if (sourceReferenceURL.starts_with(movePrefix))
 			// if (sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix))
 			sourcePathName = sourceReferenceURL.substr(movePrefix.length());
 		else

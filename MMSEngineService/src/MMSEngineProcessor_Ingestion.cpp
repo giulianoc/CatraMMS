@@ -5701,7 +5701,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 					// 	0 == entry.path().filename().string().compare(
 					// 		 entry.path().filename().string().size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix
 					//  ))
-					if (StringUtils::endWith(entry.path().filename().string(), ".m3u8"))
+					if (entry.path().filename().string().ends_with(".m3u8"))
 					{
 						m3u8FileName = entry.path().filename().string();
 
@@ -7339,24 +7339,24 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool> MMS
 		// 	(mediaSourceURL.size() >= httpsPrefix.size() && 0 == mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix)) ||
 		// 	(mediaSourceURL.size() >= ftpPrefix.size() && 0 == mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix)) ||
 		// 	(mediaSourceURL.size() >= ftpsPrefix.size() && 0 == mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix)))
-		if (StringUtils::startWith(mediaSourceURL, "http://") || StringUtils::startWith(mediaSourceURL, "https://") ||
-			StringUtils::startWith(mediaSourceURL, "ftp://") || StringUtils::startWith(mediaSourceURL, "ftps://"))
+		if (mediaSourceURL.starts_with("http://") || mediaSourceURL.starts_with("https://") || mediaSourceURL.starts_with("ftp://") ||
+			mediaSourceURL.starts_with("ftps://"))
 		{
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress;
 		}
-		else if (StringUtils::startWith(mediaSourceURL, "move://") || StringUtils::startWith(mediaSourceURL, "mv://"))
+		else if (mediaSourceURL.starts_with("move://") || mediaSourceURL.starts_with("mv://"))
 		{
 			// else if ((mediaSourceURL.size() >= movePrefix.size() && 0 == mediaSourceURL.compare(0, movePrefix.size(), movePrefix)) ||
 			// 	 (mediaSourceURL.size() >= mvPrefix.size() && 0 == mediaSourceURL.compare(0, mvPrefix.size(), mvPrefix)))
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress;
 		}
-		else if (StringUtils::startWith(mediaSourceURL, "copy://") || StringUtils::startWith(mediaSourceURL, "cp://"))
+		else if (mediaSourceURL.starts_with("copy://") || mediaSourceURL.starts_with("cp://"))
 		// else if ((mediaSourceURL.size() >= copyPrefix.size() && 0 == mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix)) ||
 		// 	 (mediaSourceURL.size() >= cpPrefix.size() && 0 == mediaSourceURL.compare(0, cpPrefix.size(), cpPrefix)))
 		{
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress;
 		}
-		else if (StringUtils::startWith(mediaSourceURL, "externalStorage://"))
+		else if (mediaSourceURL.starts_with("externalStorage://"))
 		// else if (mediaSourceURL.size() >= externalStoragePrefix.size() &&
 		// 	 0 == mediaSourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix))
 		{
@@ -7734,7 +7734,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	int localM3u8TarGzOrStreaming = m3u8TarGzOrStreaming;
 	// in case of youtube url, the real URL to be used has to be calcolated
 	{
-		if (StringUtils::startWith(sourceReferenceURL, "https://www.youtube.com/") || StringUtils::startWith(sourceReferenceURL, "https://youtu.be/"))
+		if (sourceReferenceURL.starts_with("https://www.youtube.com/") || sourceReferenceURL.starts_with("https://youtu.be/"))
 		// string youTubePrefix1("https://www.youtube.com/");
 		// string youTubePrefix2("https://youtu.be/");
 		// if ((sourceReferenceURL.size() >= youTubePrefix1.size() && 0 == sourceReferenceURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
@@ -7943,7 +7943,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					// 'password' contenga '@', questo deve essere encodato con
 					// %40
 					request.setOpt(new curlpp::options::Url(localSourceReferenceURL));
-					if (StringUtils::startWith(localSourceReferenceURL, "https"))
+					if (localSourceReferenceURL.starts_with("https"))
 					// string httpsPrefix("https");
 					// if (localSourceReferenceURL.size() >= httpsPrefix.size() &&
 					// 	0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
@@ -8032,7 +8032,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					// string httpsPrefix("https");
 					// if (localSourceReferenceURL.size() >= httpsPrefix.size() &&
 					// 	0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
-					if (StringUtils::startWith(localSourceReferenceURL, "https"))
+					if (localSourceReferenceURL.starts_with("https"))
 					{
 						SPDLOG_INFO(string() + "Setting SslEngineDefault" + ", _processorIdentifier: " + to_string(_processorIdentifier));
 						request.setOpt(new curlpp::options::SslEngineDefault());

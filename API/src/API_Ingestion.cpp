@@ -4382,7 +4382,7 @@ void API::changeLiveProxyPlaylist(
 
 			string sIngestionStatus = MMSEngineDBFacade::toString(ingestionStatus);
 			string prefixIngestionStatus = "End_";
-			if (StringUtils::startWith(sIngestionStatus, prefixIngestionStatus))
+			if (sIngestionStatus.starts_with(prefixIngestionStatus))
 			{
 				string errorMessage = fmt::format(
 					"Ingestion job is already finished"
@@ -5893,7 +5893,7 @@ void API::changeLiveProxyOverlayText(
 
 				string sIngestionStatus = MMSEngineDBFacade::toString(ingestionStatus);
 				string prefixIngestionStatus = "End_";
-				if (StringUtils::startWith(sIngestionStatus, "End_"))
+				if (sIngestionStatus.starts_with("End_"))
 				{
 					string errorMessage = fmt::format(
 						"Ingestion job is already finished"

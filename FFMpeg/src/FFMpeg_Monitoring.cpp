@@ -524,7 +524,7 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 			{
 				string value = ffmpegEncodingStatus.substr(startIndex + toSearch.size());
 				value = StringUtils::ltrim(value);
-				if (!StringUtils::startWith(value, "N/A"))
+				if (!value.starts_with("N/A"))
 				{
 					size_t endIndex = value.find("kbits/s");
 					if (endIndex == string::npos)

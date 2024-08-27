@@ -238,7 +238,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string m3u8Suffix(".m3u8");
 					// if (deliveryURI.size() >= m3u8Suffix.size() &&
 					// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
-					if (StringUtils::endWith(deliveryURI, m3u8Suffix))
+					if (deliveryURI.ends_with(m3u8Suffix))
 					{
 						size_t endPathIndex = deliveryURI.find_last_of("/");
 						if (endPathIndex == string::npos)
@@ -267,7 +267,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string m3u8Suffix(".m3u8");
 				// if (deliveryURI.size() >= m3u8Suffix.size() &&
 				// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
-				if (StringUtils::endWith(deliveryURI, m3u8Suffix))
+				if (deliveryURI.ends_with(m3u8Suffix))
 				{
 					size_t endPathIndex = deliveryURI.find_last_of("/");
 					if (endPathIndex == string::npos)
@@ -494,7 +494,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							string m3u8Suffix(".m3u8");
 							// if (deliveryURI.size() >= m3u8Suffix.size() &&
 							// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
-							if (StringUtils::endWith(deliveryURI, m3u8Suffix))
+							if (deliveryURI.ends_with(m3u8Suffix))
 							{
 								size_t endPathIndex = deliveryURI.find_last_of("/");
 								if (endPathIndex == string::npos)
@@ -587,7 +587,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							string m3u8Suffix(".m3u8");
 							// if (deliveryURI.size() >= m3u8Suffix.size() &&
 							// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
-							if (StringUtils::endWith(deliveryURI, m3u8Suffix))
+							if (deliveryURI.ends_with(m3u8Suffix))
 							{
 								size_t endPathIndex = deliveryURI.find_last_of("/");
 								if (endPathIndex == string::npos)
@@ -825,8 +825,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 		string m4sExtension(".m4s");   // dash
 		string m3u8Extension(".m3u8"); // m3u8
 		if ((secondPartOfToken != "")  // secondPartOfToken is the cookie
-			&& (StringUtils::endWith(contentURI, tsExtension) || StringUtils::endWith(contentURI, m4sExtension) ||
-				StringUtils::endWith(contentURI, m3u8Extension)))
+			&& (contentURI.ends_with(tsExtension) || contentURI.ends_with(m4sExtension) || contentURI.ends_with(m3u8Extension)))
 		{
 			// nel caso del manifest secondario, dovrebbe ricevere il cookie (secondPartOfToken) e quindi dovrebbe entrare qui
 			// es: tokenParameter: Z4-QJrfFHFzIYMJ8WDufoiBGJJVCfHzu9cZ4jfTMsjhIG7o1b19~8jQQlxmdn8Y1---0S5rnsVsbCVR7ou9vWmyXA__
@@ -1286,7 +1285,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 		string m3u8Suffix(".m3u8");
 		string tsSuffix(".ts");
-		if (StringUtils::endWith(contentURIToBeVerified, m3u8Suffix))
+		if (contentURIToBeVerified.ends_with(m3u8Suffix))
 		{
 			{
 				size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
@@ -1340,7 +1339,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 				}
 			}
 		}
-		else if (StringUtils::endWith(contentURIToBeVerified, tsSuffix))
+		else if (contentURIToBeVerified.ends_with(tsSuffix))
 		{
 			// 2022-11-29: ci sono 3 casi per il download di un .ts:
 			//	1. download NON dall'interno di un m3u8

@@ -136,12 +136,12 @@ void FFMpeg::encodeContent(
 		// string tsSuffix = ".ts";
 		if (
 			// input is mp4
-			( StringUtils::endWith(mmsSourceAssetPathName, ".mp4")
+			( mmsSourceAssetPathName.ends_with(".mp4")
 			// (mmsSourceAssetPathName.size() >= mp4Suffix.size()
 			// && 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-mp4Suffix.size(), mp4Suffix.size(), mp4Suffix))
 			||
 			// input is ts
-			StringUtils::endWith(mmsSourceAssetPathName, ".ts")
+			mmsSourceAssetPathName.ends_with(".ts")
 			// (mmsSourceAssetPathName.size() >= tsSuffix.size()
 			// && 0 == mmsSourceAssetPathName.compare(mmsSourceAssetPathName.size()-tsSuffix.size(), tsSuffix.size(), tsSuffix))
 			)

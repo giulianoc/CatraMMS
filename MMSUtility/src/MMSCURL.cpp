@@ -592,7 +592,7 @@ string MMSCURL::httpGet(
 			// string httpsPrefix("https");
 			// if (url.size() >= httpsPrefix.size() &&
 			// 	0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
-			if (StringUtils::startWith(url, "https"))
+			if (url.starts_with("https"))
 			{
 				/*
 				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD>
@@ -844,7 +844,7 @@ string MMSCURL::httpDelete(
 
 			// string httpsPrefix("https");
 			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
-			if (StringUtils::startWith(url, "https"))
+			if (url.starts_with("https"))
 			{
 				/*
 				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD>
@@ -1103,7 +1103,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 
 			// string httpsPrefix("https");
 			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
-			if (StringUtils::startWith(url, "https"))
+			if (url.starts_with("https"))
 			{
 				bool bSslVerifyPeer = false;
 				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -1162,7 +1162,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 			// scartati
 			string prefix("HTTP/1.1 100 Continue\r\n\r\n");
 			// while (sHeaderAndBodyResponse.size() >= prefix.size() && 0 == sHeaderAndBodyResponse.compare(0, prefix.size(), prefix))
-			while (StringUtils::startWith(sHeaderAndBodyResponse, prefix))
+			while (sHeaderAndBodyResponse.starts_with(prefix))
 			{
 				sHeaderAndBodyResponse = sHeaderAndBodyResponse.substr(prefix.size());
 			}
@@ -1380,7 +1380,7 @@ string MMSCURL::httpPostPutFile(
 
 			// string httpsPrefix("https");
 			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
-			if (StringUtils::startWith(url, "https"))
+			if (url.starts_with("https"))
 			{
 				bool bSslVerifyPeer = false;
 				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -1586,7 +1586,7 @@ string MMSCURL::httpPostPutFormData(
 
 			// string httpsPrefix("https");
 			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
-			if (StringUtils::startWith(url, "https"))
+			if (url.starts_with("https"))
 			{
 				bool bSslVerifyPeer = false;
 				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -1860,7 +1860,7 @@ string MMSCURL::httpPostPutFileByFormData(
 
 			// string httpsPrefix("https");
 			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
-			if (StringUtils::startWith(url, "https"))
+			if (url.starts_with("https"))
 			{
 				bool bSslVerifyPeer = false;
 				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
@@ -2082,7 +2082,7 @@ void MMSCURL::downloadFile(
 			request.setOpt(new curlpp::options::Url(url));
 			// string httpsPrefix("https");
 			// if (url.size() >= httpsPrefix.size() && 0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
-			if (StringUtils::startWith(url, "https"))
+			if (url.starts_with("https"))
 			{
 				// disconnect if we can't validate server's cert
 				bool bSslVerifyPeer = false;
@@ -2298,7 +2298,7 @@ void MMSCURL::ftpFile(
 
 		// string ftpsPrefix("ftps");
 		// if (ftpUrl.size() >= ftpsPrefix.size() && 0 == ftpUrl.compare(0, ftpsPrefix.size(), ftpsPrefix))
-		if (StringUtils::startWith(ftpUrl, "ftps"))
+		if (ftpUrl.starts_with("ftps"))
 		{
 			/* Next statements is in case we want ftp protocol to use SSL or TLS
 			 * google CURLOPT_FTPSSLAUTH and CURLOPT_FTP_SSL

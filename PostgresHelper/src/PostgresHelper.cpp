@@ -283,7 +283,7 @@ string PostgresHelper::getQueryColumn(
 		else
 			queryColumn = fmt::format("{}.{} as {}", requestedTableNameAlias, sqlColumnSchema->columnName, columnName);
 	}
-	else if (StringUtils::startWith(sqlColumnSchema->dataType, "timestamp"))
+	else if (sqlColumnSchema->dataType.starts_with("timestamp"))
 	{
 		// EPOCH ritorna un float (seconds.milliseconds)
 		if (requestedTableNameAlias.empty())
@@ -336,10 +336,10 @@ string PostgresHelper::getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema
 {
 	string queryColumnName;
 
-	if (StringUtils::startWith(sqlColumnSchema->dataType, "timestamp") || sqlColumnSchema->dataType == "\"char\"" ||
-		sqlColumnSchema->dataType == "integer" || sqlColumnSchema->dataType == "smallint" || sqlColumnSchema->dataType == "bigint" ||
-		sqlColumnSchema->dataType == "numeric" || sqlColumnSchema->dataType == "boolean" || sqlColumnSchema->dataType == "text" ||
-		sqlColumnSchema->dataType == "jsonb" || sqlColumnSchema->dataType == "ARRAY")
+	if (sqlColumnSchema->dataType.starts_with("timestamp") || sqlColumnSchema->dataType == "\"char\"" || sqlColumnSchema->dataType == "integer" ||
+		sqlColumnSchema->dataType == "smallint" || sqlColumnSchema->dataType == "bigint" || sqlColumnSchema->dataType == "numeric" ||
+		sqlColumnSchema->dataType == "boolean" || sqlColumnSchema->dataType == "text" || sqlColumnSchema->dataType == "jsonb" ||
+		sqlColumnSchema->dataType == "ARRAY")
 	{
 		if (requestedTableNameAlias.empty())
 			queryColumnName = sqlColumnSchema->columnName;
@@ -364,7 +364,7 @@ string PostgresHelper::getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema
 bool PostgresHelper::isDataTypeManaged(string dataType, string arrayDataType)
 {
 	if (dataType == "\"char\"" || dataType == "integer" || dataType == "smallint" || dataType == "bigint" || dataType == "numeric" ||
-		StringUtils::startWith(dataType, "timestamp") || dataType == "boolean" || dataType == "text" || dataType == "jsonb")
+		dataType.starts_with("timestamp") || dataType == "boolean" || dataType == "text" || dataType == "jsonb")
 		return true;
 	else if (dataType == "ARRAY")
 	{

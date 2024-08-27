@@ -1890,7 +1890,7 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
 
 				// next statement is endWith and .lck is used during the move of
 				// a file
-				if (StringUtils::endWith(entry.path().filename().string(), ".lck"))
+				if (entry.path().filename().string().ends_with(".lck"))
 					continue;
 				/*
 				string suffix(".lck");

@@ -972,11 +972,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				// if (predefinedProfileDirectoryPath.size() >= videoSuffix.size()
 				//       && 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-videoSuffix.size(),
 				//         videoSuffix.size(), videoSuffix))
-				if (StringUtils::endWith(predefinedProfileDirectoryPath, videoSuffix))
+				if (predefinedProfileDirectoryPath.ends_with(videoSuffix))
 				{
 					contentType = MMSEngineDBFacade::ContentType::Video;
 				}
-				else if (StringUtils::endWith(predefinedProfileDirectoryPath, audioSuffix))
+				else if (predefinedProfileDirectoryPath.ends_with(audioSuffix))
 				// else if (predefinedProfileDirectoryPath.size() >= audioSuffix.size() &&
 				// 	 0 == predefinedProfileDirectoryPath.compare(
 				// 		  predefinedProfileDirectoryPath.size() - audioSuffix.size(), audioSuffix.size(), audioSuffix
@@ -984,7 +984,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				{
 					contentType = MMSEngineDBFacade::ContentType::Audio;
 				}
-				else if (StringUtils::endWith(predefinedProfileDirectoryPath, imageSuffix))
+				else if (predefinedProfileDirectoryPath.ends_with(imageSuffix))
 				// else if (predefinedProfileDirectoryPath.size() >= imageSuffix.size() &&
 				// 	 0 == predefinedProfileDirectoryPath.compare(
 				// 				  predefinedProfileDirectoryPath.size() - imageSuffix.size(), imageSuffix.size(), imageSuffix
@@ -2112,7 +2112,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "encoderKey					bigint NULL,"
 								  "encodingPid				integer NULL,"
 								  "realTimeFrameRate				integer NULL,"
-								  "realTimeBitRate				numeric(5,1) NULL,"
+								  "realTimeBitRate				numeric NULL,"
 								  "numberOfRestartBecauseOfFailure				integer NULL,"
 								  "stagingEncodedAssetPathName text NULL,"
 								  "failuresNumber           	smallint NOT NULL,"

@@ -966,7 +966,7 @@ void API::manageRequestAndResponse(
 				string contentType;
 
 				string m3u8Extension(".m3u8");
-				if (StringUtils::endWith(contentURI, m3u8Extension))
+				if (contentURI.ends_with(m3u8Extension))
 					contentType = "Content-type: application/x-mpegURL";
 				else // dash
 					contentType = "Content-type: application/dash+xml";
@@ -994,7 +994,7 @@ void API::manageRequestAndResponse(
 						throw runtime_error(errorMessage);
 					}
 
-					if (StringUtils::endWith(contentURI, m3u8Extension))
+					if (contentURI.ends_with(m3u8Extension))
 					{
 						std::ifstream manifestFile;
 
@@ -1018,7 +1018,7 @@ void API::manageRequestAndResponse(
 						string endLine = "\n";
 						while (getline(manifestFile, manifestLine))
 						{
-							if (manifestLine[0] != '#' && StringUtils::endWith(manifestLine, tsExtension))
+							if (manifestLine[0] != '#' && manifestLine.ends_with(tsExtension))
 							{
 								/*
 								SPDLOG_INFO(__FILEREF__ + "Creation token parameter for ts"
@@ -1029,7 +1029,7 @@ void API::manageRequestAndResponse(
 								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
 								responseBody += (manifestLine + "?token=" + auth + endLine);
 							}
-							else if (manifestLine[0] != '#' && StringUtils::endWith(manifestLine, m3u8Extension))
+							else if (manifestLine[0] != '#' && manifestLine.ends_with(m3u8Extension))
 							{
 								// scenario where we have several .m3u8 manifest files
 								/*
@@ -1041,7 +1041,7 @@ void API::manageRequestAndResponse(
 								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
 								responseBody += (manifestLine + "?token=" + auth + endLine);
 							}
-							else if (StringUtils::startWith(manifestLine, m3u8ExtXMedia))
+							else if (manifestLine.starts_with(m3u8ExtXMedia))
 							{
 								// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES,
 								// DEFAULT=YES,URI="eng/1247999_384641.m3u8"
