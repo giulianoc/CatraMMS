@@ -3252,7 +3252,7 @@ json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool from
 		vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.parameters"}};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, encodingJobKey, -1, fromMaster);
 
-		json parametersRoot = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][4].as<json>(json()) : json();
+		json parametersRoot = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<json>(json()) : json();
 
 		return parametersRoot;
 	}
