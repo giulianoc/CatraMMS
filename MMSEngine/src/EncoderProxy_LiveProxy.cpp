@@ -1012,15 +1012,6 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				ffmpegEncoderURL = _currentUsedFFMpegEncoderHost + ffmpegURI + "/" + to_string(_encodingItem->_ingestionJobKey) + "/" +
 								   to_string(_encodingItem->_encodingJobKey);
 
-				_logger->info(
-					__FILEREF__ +
-					"LiveProxy. Selection of the transcoder. The transcoder is "
-					"selected by load balancer" +
-					", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", transcoder: " + _currentUsedFFMpegEncoderHost +
-					", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
-				);
-
 				string body;
 				{
 					json liveProxyMetadata;
@@ -1035,6 +1026,18 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 					body = JSONUtils::toString(liveProxyMetadata);
 				}
+
+				SPDLOG_INFO(
+					"LiveProxy. Selection of the transcoder. The transcoder is selected by load balancer"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", transcoder: {}"
+					", _currentUsedFFMpegEncoderKey: {}"
+					", body: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost,
+					_currentUsedFFMpegEncoderKey, body
+				);
 
 				vector<string> otherHeaders;
 				json liveProxyContentResponse;

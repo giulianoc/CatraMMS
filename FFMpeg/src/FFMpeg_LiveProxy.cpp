@@ -45,8 +45,13 @@ void FFMpeg::liveProxy2(
 	// Creating multi outputs: https://trac.ffmpeg.org/wiki/Creating%20multiple%20outputs
 	if (inputsRoot->size() == 0)
 	{
-		string errorMessage = __FILEREF__ + "liveProxy. No input parameters" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", encodingJobKey: " + to_string(encodingJobKey) + ", inputsRoot->size: " + to_string(inputsRoot->size());
+		string errorMessage = fmt::format(
+			"liveProxy. No input parameters"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", inputsRoot: {}",
+			ingestionJobKey, encodingJobKey, JSONUtils::toString(*inputsRoot)
+		);
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
