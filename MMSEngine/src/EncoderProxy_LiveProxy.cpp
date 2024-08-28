@@ -730,11 +730,19 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 	time_t utcProxyPeriodEnd = -1;
 	string streamSourceType;
 
-	string field = "inputsRoot";
-	json inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+	SPDLOG_INFO(
+		"AAAAAAA"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", encodingParametersRoot: {}",
+		_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, JSONUtils::toString(_encodingItem->_encodingParametersRoot)
+	);
+	// string field = "inputsRoot";
+	json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
 
 	json firstInputRoot = inputsRoot[0];
 
+	string field;
 	if (proxyType == "vodProxy")
 		field = "vodInput";
 	else if (proxyType == "liveProxy")
