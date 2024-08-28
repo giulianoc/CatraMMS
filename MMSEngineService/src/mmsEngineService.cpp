@@ -36,12 +36,25 @@ json loadConfigurationFile(string configurationPathName);
 chrono::system_clock::time_point lastSIGSEGVSignal = chrono::system_clock::now();
 void signalHandler(int signal)
 {
-	long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastSIGSEGVSignal).count();
-	if (elapsedInSeconds > 30)
+	if (signal == 11) // SIGSEGV
 	{
-		auto logger = spdlog::get("mmsEngineService");
-		logger->error(__FILEREF__ + "Received a signal" + ", signal: " + to_string(signal));
+		long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastSIGSEGVSignal).count();
+		if (elapsedInSeconds > 60) // è inutile loggare infiniti errori, ne loggo solo uno ogni 60 secondi
+		{
+			lastSIGSEGVSignal = chrono::system_clock::now();
+			SPDLOG_ERROR(
+				"Received a signal"
+				", signal: {}",
+				signal
+			);
+		}
 	}
+	else
+		SPDLOG_ERROR(
+			"Received a signal"
+			", signal: {}",
+			signal
+		);
 }
 
 int main(int iArgc, char *pArgv[])
