@@ -915,28 +915,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				{
 					try
 					{
-						/*
-						SPDLOG_INFO(
-							"AAAAAAA"
-							", ingestionJobKey: {}"
-							", encodingJobKey: {}"
-							", encodingParametersRoot: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
-							JSONUtils::toString(_encodingItem->_encodingParametersRoot)
-						);
-						*/
 						// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated
 						_encodingItem->_encodingParametersRoot = _mmsEngineDBFacade->encodingJob_Parameters(_encodingItem->_encodingJobKey, true);
-						/*
-						SPDLOG_INFO(
-							"AAAAAAA"
-							", ingestionJobKey: {}"
-							", encodingJobKey: {}"
-							", encodingParametersRoot: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
-							JSONUtils::toString(_encodingItem->_encodingParametersRoot)
-						);
-						*/
 					}
 					catch (DBRecordNotFound &e)
 					{
