@@ -17,30 +17,6 @@
 #include "MMSCURL.h"
 #include "catralibraries/System.h"
 #include <regex>
-/*
-#include "AWSSigner.h"
-#include "LocalAssetIngestionEvent.h"
-#include "MMSDeliveryAuthorization.h"
-#include "MultiLocalAssetIngestionEvent.h"
-#include "Validator.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "opencv2/face.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/imgproc.hpp"
-#include "opencv2/objdetect.hpp"
-#include <fstream>
-
-#include <aws/core/Aws.h>
-#include <aws/medialive/MediaLiveClient.h>
-#include <aws/medialive/model/DescribeChannelRequest.h>
-#include <aws/medialive/model/DescribeChannelResult.h>
-#include <aws/medialive/model/StartChannelRequest.h>
-#include <aws/medialive/model/StopChannelRequest.h>
-*/
 
 EncoderProxy::EncoderProxy() {}
 

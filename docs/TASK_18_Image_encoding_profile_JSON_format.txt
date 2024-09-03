@@ -17,9 +17,9 @@
 		// mandatory
 		// if aspectRatio is true the proportion are not mantained
 		// if aspectRatio is false the proportion are mantained
-		"AspectRatio": false,
+		"aspectRatio": false,
 
 		// mandatory: NoInterlace, LineInterlace, PlaneInterlace, PartitionInterlace
-		"InterlaceType": "NoInterlace"
+		"interlaceType": "NoInterlace"
 	}
 }

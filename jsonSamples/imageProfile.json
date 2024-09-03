@@ -3,6 +3,6 @@
 	"Format": "JPG",
 	"width": 40,
 	"height": 50,
-	"AspectRatio": false,
-	"InterlaceType": "NoInterlace"
+	"aspectRatio": false,
+	"interlaceType": "NoInterlace"
 }

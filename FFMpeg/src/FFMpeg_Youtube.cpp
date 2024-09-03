@@ -19,6 +19,7 @@
 #include "FFMpegFilters.h"
 #include "JSONUtils.h"
 #include "MMSCURL.h"
+#include "spdlog/fmt/fmt.h"
 #include <filesystem>
 #include <regex>
 #include <sstream>
@@ -27,20 +28,29 @@
 
 pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey, string youTubeURL)
 {
-	_logger->info(__FILEREF__ + "retrieveStreamingYouTubeURL" + ", youTubeURL: " + youTubeURL + ", ingestionJobKey: " + to_string(ingestionJobKey));
+	SPDLOG_INFO(
+		"retrieveStreamingYouTubeURL"
+		", youTubeURL: {}"
+		", ingestionJobKey: {}",
+		youTubeURL, ingestionJobKey
+	);
 
 	string detailsYouTubeProfilesPath;
 	{
-		detailsYouTubeProfilesPath = _ffmpegTempDir + "/" + to_string(ingestionJobKey) + "-youTubeProfiles.txt";
+		detailsYouTubeProfilesPath = fmt::format("{}/{}-youTubeProfiles.txt", _ffmpegTempDir, ingestionJobKey);
 
-		string youTubeExecuteCommand = _pythonPathName + " " + _youTubeDlPath + "/youtube-dl " + "--list-formats " + youTubeURL + " " + " > " +
-									   detailsYouTubeProfilesPath + " 2>&1";
+		// string youTubeExecuteCommand = _pythonPathName + " " + _youTubeDlPath + "/youtube-dl " + "--list-formats " + youTubeURL + " " + " > " +
+		// 						   detailsYouTubeProfilesPath + " 2>&1";
+		string youTubeExecuteCommand =
+			fmt::format("{} {}/youtube-dl --list-formats {} > {} 2>&1", _pythonPathName, _youTubeDlPath, youTubeURL, detailsYouTubeProfilesPath);
 
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "retrieveStreamingYouTubeURL: Executing youtube command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", youTubeExecuteCommand: " + youTubeExecuteCommand
+			SPDLOG_INFO(
+				"retrieveStreamingYouTubeURL: Executing youtube command"
+				", ingestionJobKey: {}"
+				", youTubeExecuteCommand: {}",
+				ingestionJobKey, youTubeExecuteCommand
 			);
 
 			chrono::system_clock::time_point startYouTubeCommand = chrono::system_clock::now();
@@ -57,48 +67,73 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 				else
 					lastPartOfFfmpegOutputFile = string("file not found: ") + detailsYouTubeProfilesPath;
 
-				string errorMessage =
-					__FILEREF__ + "retrieveStreamingYouTubeURL: youTube command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", executeCommandStatus: " + to_string(executeCommandStatus) + ", youTubeExecuteCommand: " + youTubeExecuteCommand +
-					", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile;
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"retrieveStreamingYouTubeURL: youTube command failed"
+					", ingestionJobKey: {}"
+					", executeCommandStatus: {}"
+					", youTubeExecuteCommand: {}"
+					", lastPartOfFfmpegOutputFile: {}",
+					ingestionJobKey, executeCommandStatus, youTubeExecuteCommand, lastPartOfFfmpegOutputFile
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey);
+				errorMessage = fmt::format(
+					"retrieveStreamingYouTubeURL: command failed"
+					", ingestionJobKey: {}",
+					ingestionJobKey
+				);
 				throw runtime_error(errorMessage);
 			}
 			else if (!fs::exists(detailsYouTubeProfilesPath))
 			{
-				string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: youTube command failed. no profiles file created" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", executeCommandStatus: " + to_string(executeCommandStatus) +
-									  ", youTubeExecuteCommand: " + youTubeExecuteCommand;
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"retrieveStreamingYouTubeURL: youTube command failed. no profiles file created"
+					", ingestionJobKey: {}"
+					", executeCommandStatus: {}"
+					", youTubeExecuteCommand: {}",
+					ingestionJobKey, executeCommandStatus, youTubeExecuteCommand
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: command failed. no profiles file created" +
-							   ", ingestionJobKey: " + to_string(ingestionJobKey);
+				errorMessage = fmt::format(
+					"retrieveStreamingYouTubeURL: command failed. no profiles file created"
+					", ingestionJobKey: {}",
+					ingestionJobKey
+				);
 				throw runtime_error(errorMessage);
 			}
 
 			chrono::system_clock::time_point endYouTubeCommand = chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", youTubeExecuteCommand: " + youTubeExecuteCommand + ", detailsYouTubeProfilesPath size: " +
-				to_string(fs::file_size(detailsYouTubeProfilesPath)) + ", @FFMPEG statistics@ - duration (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()) + "@"
+			SPDLOG_INFO(
+				"retrieveStreamingYouTubeURL: Executed youTube command"
+				", ingestionJobKey: {}"
+				", youTubeExecuteCommand: {}"
+				", detailsYouTubeProfilesPath size: {}"
+				", @FFMPEG statistics@ - duration (secs): @{}@",
+				ingestionJobKey, youTubeExecuteCommand, fs::file_size(detailsYouTubeProfilesPath),
+				chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()
 			);
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			string errorMessage = fmt::format(
+				"retrieveStreamingYouTubeURL, youTube command failed"
+				", ingestionJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			if (fs::exists(detailsYouTubeProfilesPath))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+				SPDLOG_INFO(
+					"Remove"
+					", detailsYouTubeProfilesPath: {}",
+					detailsYouTubeProfilesPath
+				);
 				fs::remove_all(detailsYouTubeProfilesPath);
 			}
 
@@ -106,13 +141,21 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 		}
 		catch (exception &e)
 		{
-			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			string errorMessage = fmt::format(
+				"retrieveStreamingYouTubeURL, youTube command failed"
+				", ingestionJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			if (fs::exists(detailsYouTubeProfilesPath))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+				SPDLOG_INFO(
+					"Remove"
+					", detailsYouTubeProfilesPath: {}",
+					detailsYouTubeProfilesPath
+				);
 				fs::remove_all(detailsYouTubeProfilesPath);
 			}
 

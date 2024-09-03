@@ -79,7 +79,7 @@ FFMpeg::~FFMpeg() {}
 
 void FFMpeg::encodingVideoCodecValidation(string codec, shared_ptr<spdlog::logger> logger)
 {
-	if (codec != "libx264" && codec != "libvpx" && codec != "rawvideo")
+	if (codec != "libx264" && codec != "libvpx" && codec != "rawvideo" && codec != "mpeg4" && codec != "xvid")
 	{
 		string errorMessage = __FILEREF__ + "ffmpeg: Video codec is wrong" + ", codec: " + codec;
 

@@ -21,6 +21,7 @@ set(PROFILEs
     MMS_PNG_1024_576.json
     MMS_JPG_W120.json
     MMS_JPG_W240.json
+    MMS_JPG_W240_H-200.json
     MMS_JPG_W160.json
     MMS_JPG_W576.json
     MMS_JPG_W40.json

@@ -4,8 +4,8 @@
 	"Image": {
 		"width": 1024,
 		"height": 576,
-		"Comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated",
-		"AspectRatio": true,
-		"InterlaceType": "NoInterlace"
+		"comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated",
+		"aspectRatio": true,
+		"interlaceType": "NoInterlace"
 	}
 }

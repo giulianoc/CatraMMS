@@ -6608,7 +6608,7 @@ void Validator::validateEncodingProfileRootImageMetadata(json encodingProfileRoo
 		string field = "Image";
 		json encodingProfileImageRoot = encodingProfileRoot[field];
 
-		vector<string> mandatoryFields = {"width", "height", "AspectRatio", "InterlaceType"};
+		vector<string> mandatoryFields = {"width", "height", "aspectRatio", "interlaceType"};
 		for (string mandatoryField : mandatoryFields)
 		{
 			if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, mandatoryField))

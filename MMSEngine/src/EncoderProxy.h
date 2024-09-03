@@ -179,10 +179,7 @@ class EncoderProxy
 
 	void encodeContentImage();
 	void processEncodedImage();
-	void readingImageProfile(
-		json encodingProfileRoot, string &newFormat, int &newWidth, int &newHeight, bool &newAspectRatio, string &sNewInterlaceType,
-		Magick::InterlaceType &newInterlaceType
-	);
+	tuple<string, int, int, bool, int, int, Magick::InterlaceType> readingImageProfile(json encodingProfileRoot);
 	void encodingImageFormatValidation(string newFormat);
 	Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 

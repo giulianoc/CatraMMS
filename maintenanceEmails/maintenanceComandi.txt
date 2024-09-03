@@ -1,6 +1,14 @@
 source /opt/catramms/CatraMMS/scripts/mmsEnv.sh
 #/opt/catramms/CatraMMS/bin/sendEmail ~/mms/conf/mms.cfg "giulianocatrambone@gmail.com" "Maintenance work transcoder server transcoder-2" /opt/catramms/CatraMMS/maintenanceEmails/maintenanceAnnuncio.html
 
-#2024-08-28
+#In caso di nuova email di maintenance, leggere l'email (files maintenanceAnnuncio e ...Completed) e sicuramente cambiare
+#- date di Start-Stop
+#- servizi impattati
+#- altro?
+
+#2024-08-28: Annuncio
 /opt/catramms/CatraMMS/bin/sendEmail ~/mms/conf/mms.cfg "simone.desalvatore@zwan.it,davide.ippolito@zwan.it" "Maintenance work transcoder server transcoder-2" /opt/catramms/CatraMMS/maintenanceEmails/maintenanceAnnuncio.html
+
+#2024-08-30: Completed
+/opt/catramms/CatraMMS/bin/sendEmail ~/mms/conf/mms.cfg "simone.desalvatore@zwan.it,davide.ippolito@zwan.it" "Update: maintenance work transcoder server transcoder-2" /opt/catramms/CatraMMS/maintenanceEmails/maintenanceCompleted.html
 

@@ -13,34 +13,7 @@
 
 #include "EncoderProxy.h"
 #include "JSONUtils.h"
-/*
-#include "AWSSigner.h"
-#include "FFMpeg.h"
-#include "LocalAssetIngestionEvent.h"
-#include "MMSCURL.h"
-#include "MMSDeliveryAuthorization.h"
-#include "MultiLocalAssetIngestionEvent.h"
-#include "Validator.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include "opencv2/face.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/imgproc.hpp"
-#include "opencv2/objdetect.hpp"
-#include <fstream>
-#include <regex>
-
-#include <aws/core/Aws.h>
-#include <aws/medialive/MediaLiveClient.h>
-#include <aws/medialive/model/DescribeChannelRequest.h>
-#include <aws/medialive/model/DescribeChannelResult.h>
-#include <aws/medialive/model/StartChannelRequest.h>
-#include <aws/medialive/model/StopChannelRequest.h>
-*/
+#include <tuple>
 
 void EncoderProxy::encodeContentImage()
 {
@@ -77,30 +50,25 @@ void EncoderProxy::encodeContentImage()
 				encodedFileName = sourceFileName.substr(0, extensionIndex) + "_" + to_string(encodingProfileKey);
 			}
 
-			string newImageFormat;
-			int newWidth;
-			int newHeight;
-			bool newAspectRatio;
-			string sNewInterlaceType;
-			Magick::InterlaceType newInterlaceType;
+			// added the check of the file size is zero because in this case
+			// the magick library cause the crash of the xmms engine
 			{
-				// added the check of the file size is zero because in this case
-				// the magick library cause the crash of the xmms engine
+				unsigned long ulFileSize = fs::file_size(mmsSourceAssetPathName);
+				if (ulFileSize == 0)
 				{
-					unsigned long ulFileSize = fs::file_size(mmsSourceAssetPathName);
-					if (ulFileSize == 0)
-					{
-						string errorMessage = __FILEREF__ + "source image file size is zero" + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName;
-						_logger->error(errorMessage);
+					string errorMessage = fmt::format(
+						"source image file size is zero"
+						", mmsSourceAssetPathName: {}",
+						mmsSourceAssetPathName
+					);
+					_logger->error(errorMessage);
 
-						throw runtime_error(errorMessage);
-					}
+					throw runtime_error(errorMessage);
 				}
-
-				readingImageProfile(
-					encodingProfileDetailsRoot, newImageFormat, newWidth, newHeight, newAspectRatio, sNewInterlaceType, newInterlaceType
-				);
 			}
+
+			auto [newImageFormat, newWidth, newHeight, newAspectRatio, newMaxWidth, newMaxHeight, newInterlaceType] =
+				readingImageProfile(encodingProfileDetailsRoot);
 
 			Magick::Image imageToEncode;
 
@@ -114,11 +82,19 @@ void EncoderProxy::encodeContentImage()
 			int currentWidth = imageToEncode.columns();
 			int currentHeight = imageToEncode.rows();
 
-			_logger->info(
-				__FILEREF__ + "Image processing" + ", encodingProfileKey: " + to_string(encodingProfileKey) + ", mmsSourceAssetPathName: " +
-				mmsSourceAssetPathName + ", currentImageFormat: " + currentImageFormat + ", currentWidth: " + to_string(currentWidth) +
-				", currentHeight: " + to_string(currentHeight) + ", newImageFormat: " + newImageFormat + ", newWidth: " + to_string(newWidth) +
-				", newHeight: " + to_string(newHeight) + ", newAspectRatio: " + to_string(newAspectRatio) + ", sNewInterlace: " + sNewInterlaceType
+			SPDLOG_INFO(
+				"Image processing"
+				", encodingProfileKey: {}"
+				", mmsSourceAssetPathName: {}"
+				", currentImageFormat: {}"
+				", currentWidth: {}"
+				", currentHeight: {}"
+				", newImageFormat: {}"
+				", newWidth: {}"
+				", newHeight: {}"
+				", newAspectRatio: {}",
+				encodingProfileKey, mmsSourceAssetPathName, currentImageFormat, currentWidth, currentHeight, newImageFormat, newWidth, newHeight,
+				newAspectRatio
 			);
 
 			if (currentImageFormat == newImageFormat && currentWidth == newWidth && currentHeight == newHeight)
@@ -180,13 +156,62 @@ void EncoderProxy::encodeContentImage()
 				newGeometry.aspect(newAspectRatio);
 
 				// if ulAspect is false, it means the aspect is preserved,
-				// the width is fixed and the height will be calculated
+				// the width is fixed and the height will be calculated or viceversa
+
+				// imageToEncode_2 create a new Image in memory but the image data is not copied
+				// (see https://www.imagemagick.org/Magick++/Image++.html)
+				Magick::Image imageToEncode_2 = imageToEncode;
 
 				// also 'scale' could be used
 				imageToEncode.scale(newGeometry);
 				imageToEncode.interlaceType(newInterlaceType);
 
 				imageToEncode.write(stagingEncodedAssetPathName);
+
+				// 2024-09-03: se height è calcolata e abbiamo un max height che viene superato, ridimensioniamo in base al max height
+				if (!newAspectRatio) // aspect is preserved
+				{
+					if (newWidth != 0 && newHeight == 0 && newMaxHeight > 0) // height is calculated and we have a max height
+					{
+						// Magick::Image newImageToEncode;
+
+						// newImageToEncode.read(stagingEncodedAssetPathName.c_str());
+
+						// rows(): height
+						if (imageToEncode.rows() > newMaxHeight)
+						{
+							Magick::Geometry newGeometry_2(0, newMaxHeight);
+
+							newGeometry_2.aspect(newAspectRatio);
+
+							// also 'scale' could be used
+							imageToEncode_2.scale(newGeometry_2);
+							imageToEncode_2.interlaceType(newInterlaceType);
+
+							imageToEncode_2.write(stagingEncodedAssetPathName);
+						}
+					}
+					else if (newWidth == 0 && newHeight != 0 && newMaxWidth > 0) // width is calculated and we have a max width
+					{
+						// Magick::Image newImageToEncode;
+
+						// newImageToEncode.read(stagingEncodedAssetPathName.c_str());
+
+						// columns(): width
+						if (imageToEncode.columns() > newMaxWidth)
+						{
+							Magick::Geometry newGeometry_2(newMaxWidth, 0);
+
+							newGeometry_2.aspect(newAspectRatio);
+
+							// also 'scale' could be used
+							imageToEncode_2.scale(newGeometry_2);
+							imageToEncode_2.interlaceType(newInterlaceType);
+
+							imageToEncode_2.write(stagingEncodedAssetPathName);
+						}
+					}
+				}
 			}
 
 			sourceToBeEncodedRoot["out_stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
@@ -195,9 +220,12 @@ void EncoderProxy::encodeContentImage()
 		}
 		catch (Magick::Error &e)
 		{
-			_logger->info(
-				__FILEREF__ + "ImageMagick exception" + ", e.what(): " + e.what() + ", encodingItem->_encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			SPDLOG_INFO(
+				"ImageMagick exception"
+				", e.what(): {}"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}",
+				e.what(), _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey
 			);
 
 			if (sourcesToBeEncodedRoot.size() == 1 || stopIfReferenceProcessingError)
@@ -720,98 +748,46 @@ void EncoderProxy::processEncodedImage()
 	}
 }
 
-void EncoderProxy::readingImageProfile(
-	json encodingProfileRoot, string &newFormat, int &newWidth, int &newHeight, bool &newAspectRatio, string &sNewInterlaceType,
-	Magick::InterlaceType &newInterlaceType
-)
+tuple<string, int, int, bool, int, int, Magick::InterlaceType> EncoderProxy::readingImageProfile(json encodingProfileRoot)
 {
-	string field;
+	string newFormat;
+	int newWidth;
+	int newHeight;
+	bool newAspectRatio;
+	int newMaxWidth;
+	int newMaxHeight;
+	Magick::InterlaceType newInterlaceType;
 
 	// FileFormat
 	{
-		field = "fileFormat";
-		if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		newFormat = JSONUtils::asString(encodingProfileRoot, field, "");
-
+		newFormat = JSONUtils::asString(encodingProfileRoot, "fileFormat", "", true);
 		encodingImageFormatValidation(newFormat);
 	}
 
 	json encodingProfileImageRoot;
 	{
-		field = "Image";
-		if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
+		if (!JSONUtils::isMetadataPresent(encodingProfileRoot, "Image"))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: Image";
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		encodingProfileImageRoot = encodingProfileRoot[field];
+		encodingProfileImageRoot = encodingProfileRoot["Image"];
 	}
 
-	// Width
-	{
-		field = "width";
-		if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		newWidth = JSONUtils::asInt(encodingProfileImageRoot, field, 0);
-	}
-
-	// Height
-	{
-		field = "height";
-		if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		newHeight = JSONUtils::asInt(encodingProfileImageRoot, field, 0);
-	}
-
-	// Aspect
-	{
-		field = "AspectRatio";
-		if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		newAspectRatio = JSONUtils::asBool(encodingProfileImageRoot, field, false);
-	}
+	newWidth = JSONUtils::asInt(encodingProfileImageRoot, "width", 0, true);
+	newHeight = JSONUtils::asInt(encodingProfileImageRoot, "height", 0, true);
+	newAspectRatio = JSONUtils::asBool(encodingProfileImageRoot, "aspectRatio", false, true);
+	newMaxWidth = JSONUtils::asInt(encodingProfileImageRoot, "maxWidth", 0, false);
+	newMaxHeight = JSONUtils::asInt(encodingProfileImageRoot, "maxHeight", 0, false);
 
 	// Interlace
 	{
-		field = "InterlaceType";
-		if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, field))
-		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		sNewInterlaceType = JSONUtils::asString(encodingProfileImageRoot, field, "");
-
+		string sNewInterlaceType = JSONUtils::asString(encodingProfileImageRoot, "interlaceType", "", true);
 		newInterlaceType = encodingImageInterlaceTypeValidation(sNewInterlaceType);
 	}
+
+	return make_tuple(newFormat, newWidth, newHeight, newAspectRatio, newMaxWidth, newMaxHeight, newInterlaceType);
 }
