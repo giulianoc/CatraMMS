@@ -347,7 +347,7 @@ BEGIN
 							sourceEncodingProfileLabel);
 
 						IF sourceEncodingProfileLabel = 'MMS_JPG_240' THEN
-							SET sourceEncodingProfileLabel = 'MMS_JPG_W240';
+							SET sourceEncodingProfileLabel = 'MMS_JPG_W240_H-200';
 						ELSEIF sourceEncodingProfileLabel = 'MMS_PNG_240' THEN
 							SET sourceEncodingProfileLabel = 'MMS_PNG_W240';
 						ELSEIF sourceEncodingProfileLabel = 'MMS_PNG_1280' THEN

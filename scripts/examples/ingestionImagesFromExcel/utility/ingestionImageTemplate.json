@@ -25,7 +25,7 @@
 							"parameters": {
 								"contentType": "image",
 								"encodingPriority": "Low",
-								"encodingProfileLabel": "MMS_JPG_W240"
+								"encodingProfileLabel": "MMS_JPG_W240_H-200"
 							}
 						},
 						{

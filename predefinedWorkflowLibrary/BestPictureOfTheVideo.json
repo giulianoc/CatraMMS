@@ -98,11 +98,11 @@
 				"processingStartingFrom": "${processingStartingFrom}",
 				"tasks": [
 					{
-						"label": "Encode image MMS_JPG_W240 (Frame): ${title}",
+						"label": "Encode image MMS_JPG_W240_H-200 (Frame): ${title}",
 						"parameters": {
 							"contentType": "image",
 							"encodingPriority": "High",
-							"encodingProfileLabel": "MMS_JPG_W240",
+							"encodingProfileLabel": "MMS_JPG_W240_H-200",
 							"processingStartingFrom": "${processingStartingFrom}"
 						},
 						"type": "Encode"
@@ -142,11 +142,11 @@
 			"processingStartingFrom": "${processingStartingFrom}",
 			"tasks": [
 				{
-					"label": "Encode image MMS_JPG_W240 (FrameContainingFace): ${title}",
+					"label": "Encode image MMS_JPG_W240_H-200 (FrameContainingFace): ${title}",
 					"parameters": {
 						"contentType": "image",
 						"encodingPriority": "High",
-						"encodingProfileLabel": "MMS_JPG_W240",
+						"encodingProfileLabel": "MMS_JPG_W240_H-200",
 						"processingStartingFrom": "${processingStartingFrom}"
 					},
 					"type": "Encode"
