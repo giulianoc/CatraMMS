@@ -1,12 +1,12 @@
 {
-	"label": "MMS_JPG_W150_H-200",
+	"label": "MMS_JPG_W150_H-120",
 	"fileFormat": "JPG",
 	"Image": {
 		"width": 150,
 		"height": 0,
-		"comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated (max 200)",
+		"comment": "Aspect false means the aspect is preserved, width is fixed and height will be calculated (max 120)",
 		"aspectRatio": false,
-		"maxHeight": 200,
+		"maxHeight": 120,
 		"interlaceType": "NoInterlace"
 	}
 }
