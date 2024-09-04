@@ -143,11 +143,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					ingestionToBeManaged;
 
 				SPDLOG_INFO(
-					string() + "json to be processed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", ingestionJobLabel: " + ingestionJobLabel +
-					", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", ingestionDate: " + ingestionDate +
-					", ingestionType: " + MMSEngineDBFacade::toString(ingestionType) +
-					", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", metaDataContent: " + metaDataContent
+					"json to be processed"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", ingestionJobLabel: {}"
+					", workspace->_workspaceKey: {}"
+					", ingestionDate: {}"
+					", ingestionType: {}"
+					", ingestionStatus: {}"
+					", metaDataContent: {}",
+					_processorIdentifier, ingestionJobKey, ingestionJobLabel, workspace->_workspaceKey, ingestionDate,
+					MMSEngineDBFacade::toString(ingestionType), MMSEngineDBFacade::toString(ingestionStatus), metaDataContent
 				);
 
 				try
