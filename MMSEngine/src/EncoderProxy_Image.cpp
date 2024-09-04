@@ -92,9 +92,11 @@ void EncoderProxy::encodeContentImage()
 				", newImageFormat: {}"
 				", newWidth: {}"
 				", newHeight: {}"
-				", newAspectRatio: {}",
+				", newAspectRatio: {}"
+				", newMaxWidth: {}"
+				", newMaxHeight: {}",
 				encodingProfileKey, mmsSourceAssetPathName, currentImageFormat, currentWidth, currentHeight, newImageFormat, newWidth, newHeight,
-				newAspectRatio
+				newAspectRatio, newMaxWidth, newMaxHeight
 			);
 
 			if (currentImageFormat == newImageFormat && currentWidth == newWidth && currentHeight == newHeight)
@@ -168,6 +170,18 @@ void EncoderProxy::encodeContentImage()
 
 				imageToEncode.write(stagingEncodedAssetPathName);
 
+				SPDLOG_INFO(
+					"Image processing, new geometry"
+					", encodingProfileKey: {}"
+					", requested width: {}"
+					", requested height: {}"
+					", resulted width: {}"
+					", resulted height: {}"
+					", newMaxWidth: {}"
+					", newMaxHeight: {}",
+					encodingProfileKey, newWidth, newHeight, imageToEncode.columns(), imageToEncode.rows(), newMaxWidth, newMaxHeight
+				);
+
 				// 2024-09-03: se height è calcolata e abbiamo un max height che viene superato, ridimensioniamo in base al max height
 				if (!newAspectRatio) // aspect is preserved
 				{
@@ -189,6 +203,21 @@ void EncoderProxy::encodeContentImage()
 							imageToEncode_2.interlaceType(newInterlaceType);
 
 							imageToEncode_2.write(stagingEncodedAssetPathName);
+
+							SPDLOG_INFO(
+								"Image processing, max geometry applied"
+								", encodingProfileKey: {}"
+								", requested width: {}"
+								", requested height: {}"
+								", intermediate width: {}"
+								", intermediate height: {}",
+								", resulted width: {}"
+								", resulted height: {}"
+								", newMaxWidth: {}"
+								", newMaxHeight: {}",
+								encodingProfileKey, newWidth, newHeight, imageToEncode.columns(), imageToEncode.rows(), imageToEncode_2.columns(),
+								imageToEncode_2.rows(), newMaxWidth, newMaxHeight
+							);
 						}
 					}
 					else if (newWidth == 0 && newHeight != 0 && newMaxWidth > 0) // width is calculated and we have a max width
@@ -209,6 +238,21 @@ void EncoderProxy::encodeContentImage()
 							imageToEncode_2.interlaceType(newInterlaceType);
 
 							imageToEncode_2.write(stagingEncodedAssetPathName);
+
+							SPDLOG_INFO(
+								"Image processing, max geometry applied"
+								", encodingProfileKey: {}"
+								", requested width: {}"
+								", requested height: {}"
+								", intermediate width: {}"
+								", intermediate height: {}",
+								", resulted width: {}"
+								", resulted height: {}"
+								", newMaxWidth: {}"
+								", newMaxHeight: {}",
+								encodingProfileKey, newWidth, newHeight, imageToEncode.columns(), imageToEncode.rows(), imageToEncode_2.columns(),
+								imageToEncode_2.rows(), newMaxWidth, newMaxHeight
+							);
 						}
 					}
 				}
