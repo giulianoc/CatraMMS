@@ -236,7 +236,7 @@ class PostgresHelper
 	map<string, map<string, shared_ptr<SqlColumnSchema>>> _sqlTablesColumnsSchema;
 
 	string getQueryColumn(shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias, string requestedColumnName = "");
-	string getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias);
+	string getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias, string requestedColumnName);
 	bool isDataTypeManaged(string dataType, string arrayDataType);
 };
 

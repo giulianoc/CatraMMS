@@ -263,7 +263,7 @@ string PostgresHelper::getQueryColumn(
 {
 	string queryColumn;
 
-	string columnName = getColumnName(sqlColumnSchema, requestedTableNameAlias);
+	string columnName = getColumnName(sqlColumnSchema, requestedTableNameAlias, requestedColumnName);
 
 	if (sqlColumnSchema->dataType == "\"char\"")
 	{
@@ -332,19 +332,35 @@ string PostgresHelper::getQueryColumn(
 	return queryColumn;
 }
 
-string PostgresHelper::getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias)
+string PostgresHelper::getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias, string requestedColumnName)
 {
 	string queryColumnName;
 
 	if (sqlColumnSchema->dataType.starts_with("timestamp") || sqlColumnSchema->dataType == "\"char\"" || sqlColumnSchema->dataType == "integer" ||
 		sqlColumnSchema->dataType == "smallint" || sqlColumnSchema->dataType == "bigint" || sqlColumnSchema->dataType == "numeric" ||
-		sqlColumnSchema->dataType == "boolean" || sqlColumnSchema->dataType == "text" || sqlColumnSchema->dataType == "jsonb" ||
-		sqlColumnSchema->dataType == "ARRAY")
+		sqlColumnSchema->dataType == "boolean" || sqlColumnSchema->dataType == "text" || sqlColumnSchema->dataType == "jsonb")
 	{
 		if (requestedTableNameAlias.empty())
 			queryColumnName = sqlColumnSchema->columnName;
 		else
 			queryColumnName = fmt::format("{0}_{1}", requestedTableNameAlias, sqlColumnSchema->columnName);
+	}
+	else if (sqlColumnSchema->dataType == "ARRAY")
+	{
+		string columnName;
+		size_t endOfColumn = requestedColumnName.find("[");
+		if (endOfColumn == string::npos)
+			columnName = sqlColumnSchema->columnName;
+		else
+		{
+			columnName = requestedColumnName.replace(requestedColumnName.find("["), 1, "_");
+			columnName = requestedColumnName.replace(requestedColumnName.find("]"), 1, "_");
+		}
+
+		if (requestedTableNameAlias.empty())
+			queryColumnName = columnName;
+		else
+			queryColumnName = fmt::format("{0}_{1}", requestedTableNameAlias, columnName);
 	}
 	else
 	{

@@ -23,6 +23,7 @@
 #include <curlpp/cURLpp.hpp>
 #include <iterator>
 #include <regex>
+#include <stdexcept>
 #include <vector>
 
 void API::registerUser(string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestBody)
@@ -85,6 +86,24 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 		}
 
 		email = JSONUtils::asString(metadataRoot, "email", "");
+		try
+		{
+			emailFormatCheck(email);
+		}
+		catch (runtime_error &e)
+		{
+			string errorMessage = fmt::format(
+				"Wrong email format"
+				", email: {}",
+				email
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
 		password = JSONUtils::asString(metadataRoot, "password", "");
 		shareWorkspaceCode = JSONUtils::asString(metadataRoot, "shareWorkspaceCode", "");
 
@@ -707,66 +726,22 @@ void API::shareWorkspace_(
 		bool userAlreadyPresent;
 
 		string email = JSONUtils::asString(metadataRoot, "email", "");
-
-		// email format check
+		try
 		{
-			// [[:w:]] ---> word character: digit, number or undescore
-			// l'espressione regolare sotto non accetta il punto nella parte sinistra della @
-			// 2024-05-20: https://stackoverflow.com/questions/48055431/can-it-cause-harm-to-validate-email-addresses-with-a-regex
-			// 	Visto il link sopra, non utilizzero l'espressione regolare per verificare un email address
-			/*
-			regex e("[[:w:]]+@[[:w:]]+\\.[[:w:]]+");
-			if (!regex_match(email, e))
-			{
-				string errorMessage = fmt::format(
-					"Wrong email format"
-					", email: {}",
-					email
-				);
-				SPDLOG_ERROR(errorMessage);
+			emailFormatCheck(email);
+		}
+		catch (runtime_error &e)
+		{
+			string errorMessage = fmt::format(
+				"Wrong email format"
+				", email: {}",
+				email
+			);
+			SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 500, errorMessage);
+			sendError(request, 500, errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
-			*/
-
-			// controlli:
-			// L'indirizzo contiene almeno un @
-			// Il local-part(tutto a sinistra dell'estrema destra @) non è vuoto
-			// La parte domain (tutto a destra dell'estrema destra @) contiene almeno un punto (di nuovo, questo non è strettamente vero, ma
-			// pragmatico)
-
-			size_t endOfLocalPartIndex = email.find_last_of("@");
-			if (endOfLocalPartIndex == string::npos)
-			{
-				string errorMessage = fmt::format(
-					"Wrong email format"
-					", email: {}",
-					email
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			string localPart = email.substr(0, endOfLocalPartIndex);
-			string domainPart = email.substr(endOfLocalPartIndex + 1);
-			if (localPart == "" || domainPart.find(".") == string::npos)
-			{
-				string errorMessage = fmt::format(
-					"Wrong email format"
-					", email: {}",
-					email
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			throw runtime_error(errorMessage);
 		}
 
 		// In case of ActiveDirectory, userAlreadyPresent is always true
@@ -1602,6 +1577,22 @@ void API::updateUser(
 			if (JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
 				email = JSONUtils::asString(metadataRoot, field, "");
+				try
+				{
+					emailFormatCheck(email);
+				}
+				catch (runtime_error &e)
+				{
+					string errorMessage = fmt::format(
+						"Wrong email format"
+						", email: {}",
+						email
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
 				emailChanged = true;
 			}
 
@@ -2765,5 +2756,72 @@ void API::workspaceUsage(
 		sendError(request, 500, e.what());
 
 		throw e;
+	}
+}
+
+void API::emailFormatCheck(string email)
+{
+	// [[:w:]] ---> word character: digit, number or undescore
+	// l'espressione regolare sotto non accetta il punto nella parte sinistra della @
+	// 2024-05-20: https://stackoverflow.com/questions/48055431/can-it-cause-harm-to-validate-email-addresses-with-a-regex
+	// 	Visto il link sopra, non utilizzero l'espressione regolare per verificare un email address
+	/*
+	regex e("[[:w:]]+@[[:w:]]+\\.[[:w:]]+");
+	if (!regex_match(email, e))
+	{
+		string errorMessage = fmt::format(
+			"Wrong email format"
+			", email: {}",
+			email
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	*/
+
+	// controlli:
+	// L'indirizzo contiene almeno un @
+	// Il local-part(tutto a sinistra dell'estrema destra @) non è vuoto
+	// La parte domain (tutto a destra dell'estrema destra @) contiene almeno un punto (di nuovo, questo non è strettamente vero, ma
+	// pragmatico)
+
+	size_t endOfLocalPartIndex = email.find_last_of("@");
+	if (endOfLocalPartIndex == string::npos)
+	{
+		string errorMessage = fmt::format(
+			"Wrong email format"
+			", email: {}",
+			email
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	string localPart = email.substr(0, endOfLocalPartIndex);
+	string domainPart = email.substr(endOfLocalPartIndex + 1);
+	if (localPart == "" || domainPart.find(".") == string::npos)
+	{
+		string errorMessage = fmt::format(
+			"Wrong email format"
+			", email: {}",
+			email
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		{
+			vector<string> emailbody;
+			emailbody.push_back("Il metodo API::emailFormatCheck ha scartato l'email: " + email);
+			MMSCURL::sendEmail(
+				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	   // i.e.: info@catramms-cloud.com
+				"info@catramms-cloud.com", "", "Wrong MMS email format: discarded", emailbody, _emailPassword
+			);
+		}
+
+		throw runtime_error(errorMessage);
 	}
 }

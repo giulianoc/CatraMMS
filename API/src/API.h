@@ -147,6 +147,8 @@ class API : public FastCGIAPI
 
 	void registerUser(string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestBody);
 
+	void emailFormatCheck(string email);
+
 	void updateUser(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, string requestBody,
 		bool admin
