@@ -2694,7 +2694,7 @@ string MMSEngineDBFacade::ingestionRoot_MetadataContent(int64_t workspaceKey, in
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionroot:.metaDataContent"}};
+		vector<string> requestedColumns = {"mms_ingestionroot:.metaDataContent"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = workflowQuery(requestedColumns, workspaceKey, ingestionRootKey, fromMaster);
 
 		return (*sqlResultSet)[0][0].as<string>("");
@@ -2743,7 +2743,7 @@ string MMSEngineDBFacade::ingestionRoot_ProcessedMetadataContent(int64_t workspa
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionroot:.processedMetaDataContent"}};
+		vector<string> requestedColumns = {"mms_ingestionroot:.processedMetaDataContent"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = workflowQuery(requestedColumns, workspaceKey, ingestionRootKey, fromMaster);
 
 		return (*sqlResultSet)[0][0].as<string>("");
@@ -2793,11 +2793,9 @@ MMSEngineDBFacade::ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(in
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {
-			{false, "mms_ingestionjob:ij.label"},
-			{false, "mms_ingestionjob:ij.ingestionType"},
-			{false, "mms_ingestionjob:ij.metaDataContent"},
-			{false, "mms_ingestionjob:ij.errorMessage"}
+		vector<string> requestedColumns = {
+			"mms_ingestionjob:ij.label", "mms_ingestionjob:ij.ingestionType", "mms_ingestionjob:ij.metaDataContent",
+			"mms_ingestionjob:ij.errorMessage"
 		};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
@@ -2851,7 +2849,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeMetadataContent(int64_t workspaceKe
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.metaDataContent"}};
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.ingestionType", "mms_ingestionjob:ij.metaDataContent"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
 		return make_pair(toIngestionType((*sqlResultSet)[0][0].as<string>("")), (*sqlResultSet)[0][1].as<json>(json()));
@@ -2901,9 +2899,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatusMetadataContent(int64_t works
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {
-			{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}, {false, "mms_ingestionjob:ij.metaDataContent"}
-		};
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.ingestionType", "mms_ingestionjob:ij.status", "mms_ingestionjob:ij.metaDataContent"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
 		return make_tuple(
@@ -2955,7 +2951,7 @@ json MMSEngineDBFacade::ingestionJob_MetadataContent(int64_t workspaceKey, int64
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.metaDataContent"}};
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.metaDataContent"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
 		return (*sqlResultSet)[0][0].as<json>(json());
@@ -3004,7 +3000,7 @@ MMSEngineDBFacade::IngestionType MMSEngineDBFacade::ingestionJob_IngestionType(i
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}};
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.ingestionType"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
 		return toIngestionType((*sqlResultSet)[0][0].as<string>(""));
@@ -3053,7 +3049,7 @@ string MMSEngineDBFacade::ingestionJob_Label(int64_t workspaceKey, int64_t inges
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.label"}};
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.label"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
 		return (*sqlResultSet)[0][0].as<string>("");
@@ -3103,7 +3099,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionType"}, {false, "mms_ingestionjob:ij.status"}};
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.ingestionType", "mms_ingestionjob:ij.status"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 		MMSEngineDBFacade::IngestionType ingestionType =
 			MMSEngineDBFacade::toIngestionType((*sqlResultSet)[0][0].as<string>("null ingestion type!!!"));
@@ -3156,7 +3152,7 @@ MMSEngineDBFacade::IngestionStatus MMSEngineDBFacade::ingestionJob_Status(int64_
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.status"}};
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.status"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
 		return MMSEngineDBFacade::toIngestionStatus((*sqlResultSet)[0][0].as<string>(""));
@@ -3205,7 +3201,7 @@ void MMSEngineDBFacade::ingestionJob_IngestionJobKeys(int64_t workspaceKey, stri
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionjob:ij.ingestionJobKey"}};
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.ingestionJobKey"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, -1, label, fromMaster);
 
 		for (auto row : *sqlResultSet)
@@ -3252,7 +3248,7 @@ void MMSEngineDBFacade::ingestionJob_IngestionJobKeys(int64_t workspaceKey, stri
 }
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
-	vector<pair<bool, string>> &requestedColumns,
+	vector<string> &requestedColumns,
 	// 2021-02-20: workspaceKey is used just to be sure the ingestionJobKey
 	//	will belong to the specified workspaceKey. We do that because the updateIngestionJob API
 	//	calls this method, to be sure an end user can do an update of any IngestionJob (also

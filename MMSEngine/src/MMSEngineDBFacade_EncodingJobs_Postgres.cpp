@@ -3089,7 +3089,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKey(i
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.encodingJobKey"}, {false, "mms_encodingjob:.encoderKey"}};
+		vector<string> requestedColumns = {"mms_encodingjob:.encodingJobKey", "mms_encodingjob:.encoderKey"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, -1, ingestionJobKey, fromMaster);
 
 		int64_t encodingJobKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<int64_t>(-1) : -1;
@@ -3127,11 +3127,8 @@ MMSEngineDBFacade::encodingJob_IngestionJobKeyTypeEncoderKeyStatus(int64_t encod
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {
-			{false, "mms_encodingjob:.ingestionJobKey"},
-			{false, "mms_encodingjob:.type"},
-			{false, "mms_encodingjob:.encoderKey"},
-			{false, "mms_encodingjob:.status"}
+		vector<string> requestedColumns = {
+			"mms_encodingjob:.ingestionJobKey", "mms_encodingjob:.type", "mms_encodingjob:.encoderKey", "mms_encodingjob:.status"
 		};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, encodingJobKey, -1, fromMaster);
 
@@ -3184,9 +3181,7 @@ tuple<int64_t, int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncod
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {
-			{false, "mms_encodingjob:.encodingJobKey"}, {false, "mms_encodingjob:.encoderKey"}, {false, "mms_encodingjob:.parameters"}
-		};
+		vector<string> requestedColumns = {"mms_encodingjob:.encodingJobKey", "mms_encodingjob:.encoderKey", "mms_encodingjob:.parameters"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, -1, ingestionJobKey, fromMaster);
 
 		if (sqlResultSet->empty())
@@ -3249,7 +3244,7 @@ json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool from
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_encodingjob:.parameters"}};
+		vector<string> requestedColumns = {"mms_encodingjob:.parameters"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, encodingJobKey, -1, fromMaster);
 
 		json parametersRoot = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<json>(json()) : json();
@@ -3293,8 +3288,8 @@ json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool from
 }
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
-	vector<pair<bool, string>> &requestedColumns, int64_t encodingJobKey, int64_t ingestionJobKey, bool fromMaster, int startIndex, int rows,
-	string orderBy, bool notFoundAsException
+	vector<string> &requestedColumns, int64_t encodingJobKey, int64_t ingestionJobKey, bool fromMaster, int startIndex, int rows, string orderBy,
+	bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;

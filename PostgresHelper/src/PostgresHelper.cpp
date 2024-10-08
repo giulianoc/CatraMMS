@@ -9,9 +9,18 @@
 PostgresHelper::PostgresHelper() {}
 PostgresHelper::~PostgresHelper() = default;
 
-// requestedTableAndColumnNames: { "<tbl name>.<table name alias>.<col name>", ..., "<tbl name 2>.<table name alias>.*" }
-// <table name alias> puo essere una stringa vuota, in tal caso avremo "<tbl name>..<col name>"
-string PostgresHelper::buildQueryColumns(vector<pair<bool, string>> &requestedColumns)
+// Option 1:
+// requestedColumns: { "<tbl name>:<table name alias>.<col name>", ..., "<tbl name 2>:<table name alias>.*" }
+// <table name alias> puo essere una stringa vuota, in tal caso avremo "<tbl name>:.<col name>"
+// Example: {"content:.title", "content:.*", "content:.sections[1]"}
+// Option 2:
+// requestedColumns: #<custom column>
+// Example: {"#sections[0] as sectionId", "#payload ->> 'channel' as channel"}
+// In case of a timestamp column (oid: 1114) you can use
+//    "#EXTRACT(EPOCH FROM <timestamp column> AT TIME ZONE 'UTC') * 1000 as ..."
+//    or
+//    "#to_char(<timestamp column>, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as ...", // output: 2018-11-01T15:21:24Z
+string PostgresHelper::buildQueryColumns(vector<string> &requestedColumns)
 {
 	string queryColumns;
 
@@ -23,15 +32,15 @@ string PostgresHelper::buildQueryColumns(vector<pair<bool, string>> &requestedCo
 		throw runtime_error(errorMessage);
 	}
 
-	for (pair<bool, string> requestedColumn : requestedColumns)
+	for (string requestedColumn : requestedColumns)
 	{
-		auto [custom, column] = requestedColumn;
+		// auto [custom, column] = requestedColumn;
 
-		if (custom)
+		if (!requestedColumn.empty() && requestedColumn[0] == '#')
 		{
 			if (!queryColumns.empty())
 				queryColumns += ", ";
-			queryColumns += column;
+			queryColumns += requestedColumn.substr(1);
 		}
 		else
 		{
@@ -41,7 +50,7 @@ string PostgresHelper::buildQueryColumns(vector<pair<bool, string>> &requestedCo
 			{
 				string requestedTableNameAndAlias;
 
-				stringstream s1(column);
+				stringstream s1(requestedColumn);
 				getline(s1, requestedTableNameAndAlias, '.');
 				getline(s1, requestedColumnName, '.');
 
@@ -162,7 +171,8 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 						sqlValue.setValue(make_shared<SqlType<int32_t>>(field.as<int32_t>()));
 						sqlValueType = PostgresHelper::SqlResultSet::int32;
 						break;
-					case 25: // text
+					case 25:   // text
+					case 1114: // timestamp
 						sqlValue.setValue(make_shared<SqlType<string>>(field.as<string>()));
 						sqlValueType = PostgresHelper::SqlResultSet::text;
 						break;

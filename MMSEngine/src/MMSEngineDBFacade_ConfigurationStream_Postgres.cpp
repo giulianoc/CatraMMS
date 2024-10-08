@@ -1504,20 +1504,20 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {
-			{false, "mms_conf_stream:.confkey"},					  // 0
-			{false, "mms_conf_stream:.sourcetype"},					  // 1
-			{false, "mms_conf_stream:.encoderspoolkey"},			  // 2
-			{false, "mms_conf_stream:.url"},						  // 3
-			{false, "mms_conf_stream:.pushListenTimeout"},			  // 4
-			{false, "mms_conf_stream:.captureLiveVideoDeviceNumber"}, // 5
-			{false, "mms_conf_stream:.captureLiveVideoInputFormat"},  // 6
-			{false, "mms_conf_stream:.captureLiveFrameRate"},		  // 7
-			{false, "mms_conf_stream:.captureLiveWidth"},			  // 8
-			{false, "mms_conf_stream:.captureLiveHeight"},			  // 9
-			{false, "mms_conf_stream:.captureLiveAudioDeviceNumber"}, // 10
-			{false, "mms_conf_stream:.captureLiveChannelsNumber"},	  // 11
-			{false, "mms_conf_stream:.tvSourceTVConfKey"}			  // 12
+		vector<string> requestedColumns = {
+			"mms_conf_stream:.confkey",						 // 0
+			"mms_conf_stream:.sourcetype",					 // 1
+			"mms_conf_stream:.encoderspoolkey",				 // 2
+			"mms_conf_stream:.url",							 // 3
+			"mms_conf_stream:.pushListenTimeout",			 // 4
+			"mms_conf_stream:.captureLiveVideoDeviceNumber", // 5
+			"mms_conf_stream:.captureLiveVideoInputFormat",	 // 6
+			"mms_conf_stream:.captureLiveFrameRate",		 // 7
+			"mms_conf_stream:.captureLiveWidth",			 // 8
+			"mms_conf_stream:.captureLiveHeight",			 // 9
+			"mms_conf_stream:.captureLiveAudioDeviceNumber", // 10
+			"mms_conf_stream:.captureLiveChannelsNumber",	 // 11
+			"mms_conf_stream:.tvSourceTVConfKey"			 // 12
 		};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
 
@@ -1583,13 +1583,13 @@ tuple<string, string, int64_t, bool, int, string> MMSEngineDBFacade::stream_push
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {
-			{false, "mms_conf_stream:.sourceType"},			   // 0
-			{false, "mms_conf_stream:.pushProtocol"},		   // 1
-			{false, "mms_conf_stream:.pushEncoderKey"},		   // 2
-			{false, "mms_conf_stream:.pushPublicEncoderName"}, // 3
-			{false, "mms_conf_stream:.pushServerPort"},		   // 4
-			{false, "mms_conf_stream:.pushUri"}				   // 5
+		vector<string> requestedColumns = {
+			"mms_conf_stream:.sourceType",			  // 0
+			"mms_conf_stream:.pushProtocol",		  // 1
+			"mms_conf_stream:.pushEncoderKey",		  // 2
+			"mms_conf_stream:.pushPublicEncoderName", // 3
+			"mms_conf_stream:.pushServerPort",		  // 4
+			"mms_conf_stream:.pushUri"				  // 5
 		};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
 
@@ -1639,7 +1639,7 @@ int64_t MMSEngineDBFacade::stream_confKey(int64_t workspaceKey, string label)
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_conf_stream:.confkey"}};
+		vector<string> requestedColumns = {"mms_conf_stream:.confkey"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
 
 		return (*sqlResultSet)[0][0].as<int64_t>(-1);
@@ -1685,7 +1685,7 @@ string MMSEngineDBFacade::stream_sourceType(int64_t workspaceKey, string label)
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_conf_stream:.sourcetype"}};
+		vector<string> requestedColumns = {"mms_conf_stream:.sourcetype"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
 
 		return (*sqlResultSet)[0][0].as<string>("null source type!!!");
@@ -1731,7 +1731,7 @@ pair<string, string> MMSEngineDBFacade::stream_sourceTypeUrl(int64_t workspaceKe
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_conf_stream:.sourceType"}, {false, "mms_conf_stream:.url"}};
+		vector<string> requestedColumns = {"mms_conf_stream:.sourceType", "mms_conf_stream:.url"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
 
 		return make_pair((*sqlResultSet)[0][0].as<string>("null source type!!!"), (*sqlResultSet)[0][1].as<string>("null url!!!"));
@@ -1777,9 +1777,7 @@ tuple<int64_t, string, string> MMSEngineDBFacade::stream_confKeySourceTypeUrl(in
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {
-			{false, "mms_conf_stream:.confKey"}, {false, "mms_conf_stream:.sourceType"}, {false, "mms_conf_stream:.url"}
-		};
+		vector<string> requestedColumns = {"mms_conf_stream:.confKey", "mms_conf_stream:.sourceType", "mms_conf_stream:.url"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
 
 		return make_tuple(
@@ -1828,7 +1826,7 @@ json MMSEngineDBFacade::stream_userData(int64_t workspaceKey, int64_t confKey)
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_conf_stream:.userData"}};
+		vector<string> requestedColumns = {"mms_conf_stream:.userData"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey);
 
 		return JSONUtils::toJson((*sqlResultSet)[0][0].as<string>("null source type!!!"));
@@ -1871,8 +1869,8 @@ json MMSEngineDBFacade::stream_userData(int64_t workspaceKey, int64_t confKey)
 }
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
-	vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, int64_t confKey, string label, bool fromMaster, int startIndex, int rows,
-	string orderBy, bool notFoundAsException
+	vector<string> &requestedColumns, int64_t workspaceKey, int64_t confKey, string label, bool fromMaster, int startIndex, int rows, string orderBy,
+	bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;

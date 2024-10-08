@@ -62,7 +62,7 @@ class PostgresHelper
 		shared_ptr<Base> value;
 
 	  public:
-		SqlValue() {};
+		SqlValue(){};
 
 		void setValue(shared_ptr<Base> value) { this->value = value; };
 
@@ -229,7 +229,7 @@ class PostgresHelper
 		return it->second;
 	}
 
-	string buildQueryColumns(vector<pair<bool, string>> &requestedColumns);
+	string buildQueryColumns(vector<string> &requestedColumns);
 	shared_ptr<PostgresHelper::SqlResultSet> buildResult(result result);
 
   private:

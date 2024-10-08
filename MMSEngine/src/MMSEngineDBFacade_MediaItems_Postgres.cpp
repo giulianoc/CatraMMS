@@ -2017,7 +2017,7 @@ int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, ch
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_physicalpath:.mediaitemkey"}};
+		vector<string> requestedColumns = {"mms_physicalpath:.mediaitemkey"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = physicalPathQuery(requestedColumns, physicalPathKey, fromMaster);
 
 		if (sqlDuration != nullptr)
@@ -2068,7 +2068,7 @@ int64_t MMSEngineDBFacade::physicalPath_EncodingProfileKey(int64_t physicalPathK
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_physicalpath:.encodingprofilekey"}};
+		vector<string> requestedColumns = {"mms_physicalpath:.encodingprofilekey"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = physicalPathQuery(requestedColumns, physicalPathKey, fromMaster);
 
 		if (sqlDuration != nullptr)
@@ -2114,8 +2114,7 @@ int64_t MMSEngineDBFacade::physicalPath_EncodingProfileKey(int64_t physicalPathK
 }
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
-	vector<pair<bool, string>> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex, int rows, string orderBy,
-	bool notFoundAsException
+	vector<string> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -2343,7 +2342,7 @@ MMSEngineDBFacade::externalUniqueName_UniqueName(int64_t workspaceKey, int64_t m
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_externaluniquename:.uniquename"}};
+		vector<string> requestedColumns = {"mms_externaluniquename:.uniquename"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = externalUniqueNameQuery(requestedColumns, workspaceKey, "", mediaItemKey, fromMaster);
 
 		if (sqlDuration != nullptr)
@@ -2409,7 +2408,7 @@ MMSEngineDBFacade::externalUniqueName_MediaItemKey(int64_t workspaceKey, string 
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_externaluniquename:.mediaitemkey"}};
+		vector<string> requestedColumns = {"mms_externaluniquename:.mediaitemkey"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = externalUniqueNameQuery(requestedColumns, workspaceKey, uniqueName, -1, fromMaster);
 
 		if (sqlDuration != nullptr)
@@ -2458,8 +2457,8 @@ MMSEngineDBFacade::externalUniqueName_MediaItemKey(int64_t workspaceKey, string 
 }
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQuery(
-	vector<pair<bool, string>> &requestedColumns, int64_t workspaceKey, string uniqueName, int64_t mediaItemKey, bool fromMaster, int startIndex,
-	int rows, string orderBy, bool notFoundAsException
+	vector<string> &requestedColumns, int64_t workspaceKey, string uniqueName, int64_t mediaItemKey, bool fromMaster, int startIndex, int rows,
+	string orderBy, bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;

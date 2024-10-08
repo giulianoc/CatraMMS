@@ -662,9 +662,7 @@ tuple<string, string, string> MMSEngineDBFacade::encoder_LabelPublicServerNameIn
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {
-			{false, "mms_encoder:.label"}, {false, "mms_encoder:.publicServerName"}, {false, "mms_encoder:.internalServerName"}
-		};
+		vector<string> requestedColumns = {"mms_encoder:.label", "mms_encoder:.publicServerName", "mms_encoder:.internalServerName"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
 
 		string label = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<string>("") : "";
@@ -699,8 +697,7 @@ tuple<string, string, string> MMSEngineDBFacade::encoder_LabelPublicServerNameIn
 }
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
-	vector<pair<bool, string>> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex, int rows, string orderBy,
-	bool notFoundAsException
+	vector<string> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
 )
 {
 	shared_ptr<PostgresConnection> conn = nullptr;

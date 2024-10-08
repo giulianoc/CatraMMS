@@ -220,7 +220,7 @@ pair<int64_t, string> MMSEngineDBFacade::workflowQuery_WorkspaceKeyIngestionDate
 {
 	try
 	{
-		vector<pair<bool, string>> requestedColumns = {{false, "mms_ingestionroot:.workspaceKey"}, {false, "mms_ingestionroot:.ingestionDate"}};
+		vector<string> requestedColumns = {"mms_ingestionroot:.workspaceKey", "mms_ingestionroot:.ingestionDate"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = workflowQuery(requestedColumns, -1, ingestionRootKey, fromMaster);
 
 		return make_pair(
@@ -266,7 +266,7 @@ pair<int64_t, string> MMSEngineDBFacade::workflowQuery_WorkspaceKeyIngestionDate
 }
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
-	vector<pair<bool, string>> &requestedColumns,
+	vector<string> &requestedColumns,
 	// 2021-02-20: workspaceKey is used just to be sure the ingestionJobKey
 	//	will belong to the specified workspaceKey. We do that because the updateIngestionJob API
 	//	calls this method, to be sure an end user can do an update of any IngestionJob (also

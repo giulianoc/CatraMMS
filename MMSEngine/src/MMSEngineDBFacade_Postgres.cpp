@@ -1537,7 +1537,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 		int64_t deliveryAuthorizationKey = -1;
 		if (reuseAuthIfPresent)
 		{
-			vector<pair<bool, string>> requestedColumns = {{false, "mms_deliveryauthorization:.deliveryauthorizationkey"}};
+			vector<string> requestedColumns = {"mms_deliveryauthorization:.deliveryauthorizationkey"};
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet =
 				deliveryAuthorizationQuery(requestedColumns, -1, contentType, contentKey, deliveryURI, true, false, -1, -1, "", false);
 
@@ -1662,7 +1662,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 }
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizationQuery(
-	vector<pair<bool, string>> &requestedColumns, int64_t deliveryAuthorizationKey, string contentType, int64_t contentKey, string deliveryURI,
+	vector<string> &requestedColumns, int64_t deliveryAuthorizationKey, string contentType, int64_t contentKey, string deliveryURI,
 	bool notExpiredCheck, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
 )
 {
