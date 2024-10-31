@@ -139,44 +139,88 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 		for (auto field : row)
 		{
 			string fieldName = field.name();
-			PostgresHelper::SqlValue sqlValue;
 			PostgresHelper::SqlResultSet::SqlValueType sqlValueType = PostgresHelper::SqlResultSet::unknown;
+			{
+				switch (field.type())
+				{
+				case 16: // bool
+					sqlValueType = PostgresHelper::SqlResultSet::boolean;
+					break;
+					/*
+				case 18: // char: field.as<char>() sembra non esistere
+					sqlValue.setValue(make_shared<SqlType<char>>(field.as<char>()));
+					sqlValueType = PostgresHelper::SqlResultSet::char_;
+					break;
+					*/
+				case 20: // int8
+					sqlValueType = PostgresHelper::SqlResultSet::int64;
+					break;
+				case 21: // int2
+					sqlValueType = PostgresHelper::SqlResultSet::int16;
+					break;
+				case 23: // int4
+					sqlValueType = PostgresHelper::SqlResultSet::int32;
+					break;
+				case 25:   // text
+				case 1114: // timestamp
+					sqlValueType = PostgresHelper::SqlResultSet::text;
+					break;
+				case 1000: // array of bool
+					sqlValueType = PostgresHelper::SqlResultSet::vectorBoolean;
+					break;
+				case 1007: // array of int32
+					sqlValueType = PostgresHelper::SqlResultSet::vectorInt32;
+					break;
+				case 1009: // _text
+					sqlValueType = PostgresHelper::SqlResultSet::vectorText;
+					break;
+				case 1700: // numeric
+					sqlValueType = PostgresHelper::SqlResultSet::double_;
+					break;
+				case 114:  // json
+				case 3802: // jsonb
+					sqlValueType = PostgresHelper::SqlResultSet::json_;
+					break;
+				default:
+				{
+					// per avere il mapping tra oid e type: select oid, typname from pg_catalog.pg_type
+					string errorMessage = fmt::format(
+						"oid / sql data type not managed"
+						", oid: {}"
+						", fieldName: {}",
+						field.type(), field.name()
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				}
+			}
+			PostgresHelper::SqlValue sqlValue;
 			{
 				if (field.is_null())
 					// sqlValue.setNull();
 					sqlValue.setValue(make_shared<Base>());
 				else
 				{
-					switch (field.type())
+					switch (sqlValueType)
 					{
-					case 16: // bool
+					case PostgresHelper::SqlResultSet::boolean:
 						sqlValue.setValue(make_shared<SqlType<bool>>(field.as<bool>()));
-						sqlValueType = PostgresHelper::SqlResultSet::boolean;
 						break;
-						/*
-					case 18: // char: field.as<char>() sembra non esistere
-						sqlValue.setValue(make_shared<SqlType<char>>(field.as<char>()));
-						sqlValueType = PostgresHelper::SqlResultSet::char_;
-						break;
-						*/
-					case 20: // int8
+					case PostgresHelper::SqlResultSet::int64:
 						sqlValue.setValue(make_shared<SqlType<int64_t>>(field.as<int64_t>()));
-						sqlValueType = PostgresHelper::SqlResultSet::int64;
 						break;
-					case 21: // int2
+					case PostgresHelper::SqlResultSet::int16:
 						sqlValue.setValue(make_shared<SqlType<int16_t>>(field.as<int16_t>()));
-						sqlValueType = PostgresHelper::SqlResultSet::int16;
 						break;
-					case 23: // int4
+					case PostgresHelper::SqlResultSet::int32:
 						sqlValue.setValue(make_shared<SqlType<int32_t>>(field.as<int32_t>()));
-						sqlValueType = PostgresHelper::SqlResultSet::int32;
 						break;
-					case 25:   // text
-					case 1114: // timestamp
+					case PostgresHelper::SqlResultSet::text:
 						sqlValue.setValue(make_shared<SqlType<string>>(field.as<string>()));
-						sqlValueType = PostgresHelper::SqlResultSet::text;
 						break;
-					case 1000: // array of bool
+					case PostgresHelper::SqlResultSet::vectorBoolean:
 					{
 						vector<bool> v;
 
@@ -190,10 +234,9 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 						} while (elem.first != array_parser::juncture::done);
 
 						sqlValue.setValue(make_shared<SqlType<vector<bool>>>(v));
-						sqlValueType = PostgresHelper::SqlResultSet::vectorBoolean;
 					}
 					break;
-					case 1007: // array of int32
+					case PostgresHelper::SqlResultSet::vectorInt32:
 					{
 						vector<int32_t> v;
 
@@ -207,10 +250,9 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 						} while (elem.first != array_parser::juncture::done);
 
 						sqlValue.setValue(make_shared<SqlType<vector<int32_t>>>(v));
-						sqlValueType = PostgresHelper::SqlResultSet::vectorInt32;
 					}
 					break;
-					case 1009: // _text
+					case PostgresHelper::SqlResultSet::vectorText:
 					{
 						vector<string> v;
 
@@ -224,25 +266,21 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 						} while (elem.first != array_parser::juncture::done);
 
 						sqlValue.setValue(make_shared<SqlType<vector<string>>>(v));
-						sqlValueType = PostgresHelper::SqlResultSet::vectorText;
 					}
 					break;
-					case 1700: // numeric
+					case PostgresHelper::SqlResultSet::double_:
 						sqlValue.setValue(make_shared<SqlType<double>>(field.as<double>()));
-						sqlValueType = PostgresHelper::SqlResultSet::double_;
 						break;
-					case 3802: // jsonb
+					case PostgresHelper::SqlResultSet::json_:
 						sqlValue.setValue(make_shared<SqlType<json>>(JSONUtils::toJson(field.as<string>())));
-						sqlValueType = PostgresHelper::SqlResultSet::json_;
 						break;
 					default:
 					{
-						// per avere il mapping tra oid e type: select oid, typname from pg_catalog.pg_type
 						string errorMessage = fmt::format(
-							"oid / sql data type not managed"
-							", oid: {}"
+							"sql data type not managed"
+							", sqlType: {}"
 							", fieldName: {}",
-							field.type(), field.name()
+							(int)sqlValueType, field.name()
 						);
 						SPDLOG_ERROR(errorMessage);
 

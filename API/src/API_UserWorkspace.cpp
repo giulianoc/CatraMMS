@@ -2798,6 +2798,16 @@ void API::emailFormatCheck(string email)
 		);
 		SPDLOG_ERROR(errorMessage);
 
+		{
+			vector<string> emailbody;
+			emailbody.push_back("Il metodo API::emailFormatCheck ha scartato l'email: " + email);
+			MMSCURL::sendEmail(
+				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	   // i.e.: info@catramms-cloud.com
+				"info@catramms-cloud.com", "", "Wrong MMS email format: discarded", emailbody, _emailPassword
+			);
+		}
+
 		throw runtime_error(errorMessage);
 	}
 

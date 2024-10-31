@@ -3642,14 +3642,14 @@ void API::ingestionRootMetaDataContent(
 		{
 			string ingestionRootMetaDataContent;
 			if (processedMetadata)
-				_mmsEngineDBFacade->ingestionRoot_ProcessedMetadataContent(
+				ingestionRootMetaDataContent = _mmsEngineDBFacade->ingestionRoot_ProcessedMetadataContent(
 					workspace->_workspaceKey, ingestionRootKey,
 					// 2022-12-18: IngestionJobKey dovrebbe essere stato
 					// aggiunto da tempo
 					false
 				);
 			else
-				_mmsEngineDBFacade->ingestionRoot_MetadataContent(
+				ingestionRootMetaDataContent = _mmsEngineDBFacade->ingestionRoot_MetadataContent(
 					workspace->_workspaceKey, ingestionRootKey,
 					// 2022-12-18: IngestionJobKey dovrebbe essere stato
 					// aggiunto da tempo

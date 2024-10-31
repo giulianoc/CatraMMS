@@ -137,6 +137,13 @@ class PostgresHelper
 		SqlValueType type(string fieldName);
 		json asJson(string fieldName, SqlValue sqlValue);
 		string getColumnNameByIndex(int columnIndex) { return _sqlColumnTypeByIndex[columnIndex].first; };
+		int getColumnIndexByName(string columnName)
+		{
+			for (int index = 0, size = _sqlColumnTypeByIndex.size(); index < size; index++)
+				if (_sqlColumnTypeByIndex[index].first == columnName)
+					return index;
+			return -1;
+		};
 		vector<vector<SqlValue>>::iterator begin() { return _sqlValuesByIndex.begin(); };
 		vector<vector<SqlValue>>::iterator end() { return _sqlValuesByIndex.end(); };
 		vector<vector<SqlValue>>::const_iterator begin() const { return _sqlValuesByIndex.begin(); };

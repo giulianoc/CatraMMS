@@ -3,6 +3,7 @@
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
 #include <ranges>
 
@@ -569,46 +570,46 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			statusListRoot[field] = requestParametersRoot;
 		}
 
-		vector<int64_t> ingestionTookKeysByMediaItemKey;
-		if (mediaItemKey != -1)
+		vector<int64_t> ingestionRookKeys;
 		{
-			string sqlStatement = fmt::format(
-				"select distinct ir.ingestionRootKey "
-				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_IngestionJobOutput ijo "
-				"where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ijo.ingestionJobKey "
-				"and ir.workspaceKey = {} and ijo.mediaItemKey = {} ",
-				workspace->_workspaceKey, mediaItemKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			for (auto row : res)
-				ingestionTookKeysByMediaItemKey.push_back(row["ingestionRootKey"].as<int64_t>());
-			SPDLOG_INFO(
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
+			if (mediaItemKey != -1)
+			{
+				string sqlStatement = fmt::format(
+					"select distinct ir.ingestionRootKey "
+					"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_IngestionJobOutput ijo "
+					"where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ijo.ingestionJobKey "
+					"and ir.workspaceKey = {} and ijo.mediaItemKey = {} ",
+					workspace->_workspaceKey, mediaItemKey
+				);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				result res = trans.exec(sqlStatement);
+				for (auto row : res)
+					ingestionRookKeys.push_back(row["ingestionRootKey"].as<int64_t>());
+				SPDLOG_INFO(
+					"SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
+			}
+
+			if (ingestionRootKey != -1)
+				ingestionRookKeys.push_back(ingestionRootKey);
 		}
 
 		string sqlWhere = fmt::format("where workspaceKey = {} ", workspace->_workspaceKey);
-		if (ingestionRootKey != -1 || ingestionTookKeysByMediaItemKey.size() > 0)
+		if (ingestionRookKeys.size() > 0)
 		{
-			string ingestionRootKeysWhere;
+			string ingestionRootKeysWhere = accumulate(
+				begin(ingestionRookKeys), end(ingestionRookKeys), string(), [](const string &s, int64_t localIngestionRootKey)
+				{ return (s == "" ? fmt::format("{}", localIngestionRootKey) : (s + fmt::format(", {}", localIngestionRootKey))); }
+			);
 
-			if (ingestionRootKey != -1)
-				ingestionRootKeysWhere = to_string(ingestionRootKey);
-
-			for (int ingestionRookKeyIndex = 0; ingestionRookKeyIndex < ingestionTookKeysByMediaItemKey.size(); ingestionRookKeyIndex++)
-			{
-				if (ingestionRootKeysWhere == "")
-					ingestionRootKeysWhere = to_string(ingestionTookKeysByMediaItemKey[ingestionRookKeyIndex]);
-				else
-					ingestionRootKeysWhere += fmt::format(", {}", ingestionTookKeysByMediaItemKey[ingestionRookKeyIndex]);
-			}
-
-			sqlWhere += fmt::format("and ingestionRootKey in ({}) ", ingestionRootKeysWhere);
+			if (ingestionRookKeys.size() == 1)
+				sqlWhere += fmt::format("and ingestionRootKey = {} ", ingestionRootKeysWhere);
+			else
+				sqlWhere += fmt::format("and ingestionRootKey in ({}) ", ingestionRootKeysWhere);
 		}
 		if (startIngestionDate != "")
 			sqlWhere += fmt::format("and ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
