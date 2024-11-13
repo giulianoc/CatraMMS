@@ -230,7 +230,7 @@ void MMSEngineDBFacade::modifyEncoder(
 				setSQL, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -367,7 +367,7 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 				encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1260,7 +1260,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1277,7 +1277,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1704,7 +1704,7 @@ json MMSEngineDBFacade::getEncoderList(
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2283,7 +2283,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 			string sqlStatement = fmt::format("select count(*) from MMS_EncodersPool {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2513,7 +2513,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, string label, v
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-			if (trans.exec1(sqlStatement)[0].as<int>() == 0)
+			if (trans.exec1(sqlStatement)[0].as<int64_t>() == 0)
 			{
 				string errorMessage = __FILEREF__ + "Encoder is not already associated to the workspace" +
 									  ", workspaceKey: " + to_string(workspaceKey) + ", encoderKey: " + to_string(encoderKey);
@@ -2694,7 +2694,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-			if (trans.exec1(sqlStatement)[0].as<int>() == 0)
+			if (trans.exec1(sqlStatement)[0].as<int64_t>() == 0)
 			{
 				string errorMessage = __FILEREF__ + "Encoder is not already associated to the workspace" +
 									  ", workspaceKey: " + to_string(workspaceKey) + ", encoderKey: " + to_string(encoderKey);
@@ -2731,7 +2731,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 						trans.quote(newLabel), encodersPoolKey
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"
@@ -2812,7 +2812,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 							encodersPoolKey, savedEncoderKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 						SPDLOG_INFO(
 							"SQL statement"
 							", sqlStatement: @{}@"
@@ -2958,7 +2958,7 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 				encodersPoolKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3149,7 +3149,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 					encodersPoolKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			encodersNumber = trans.exec1(sqlStatement)[0].as<int>();
+			encodersNumber = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3291,7 +3291,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 				newLastEncoderIndexUsed, encodersPoolKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3497,7 +3497,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 					encodersPoolKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				encodersNumber = trans.exec1(sqlStatement)[0].as<int>();
+				encodersNumber = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -3515,7 +3515,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 				workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			encodersNumber = trans.exec1(sqlStatement)[0].as<int>();
+			encodersNumber = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"

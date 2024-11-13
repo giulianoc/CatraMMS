@@ -36,7 +36,7 @@ void MMSEngineDBFacade::endWorkflow(
 				trans.quote(processedMetadataContent), ingestionRootKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -629,7 +629,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			string sqlStatement = fmt::format("select count(*) from MMS_IngestionRoot {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -885,7 +885,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						_ingestionWorkflowRetentionInDays, maxToBeRemoved
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"

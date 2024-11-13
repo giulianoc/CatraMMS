@@ -748,7 +748,7 @@ mms_sql_timing_check_service()
 			duration=$6;	\
 			label=$7;	\
 			if (label == "getIngestionsToBeManaged")	\
-				maxSQLDuration = 700;	\
+				maxSQLDuration = 900;	\
 			else if (label == "getIngestionRootsStatus")	\
 				maxSQLDuration = 400;	\
 			if (duration > maxSQLDuration)	\
@@ -794,7 +794,7 @@ server_reachable()
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_server_reachable, mms server IS NOT reachable: ip_address $ip_address, host_name: $host_name" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
-		alarmDetails="The $ip_address mms server IS NOT reachable"
+		alarmDetails="The $host_name ($ip_address) mms server IS NOT reachable"
 		notify "$(hostname)" "alarm_mms_server_reachable" "alarm_mms_server_reachable_$host_name" $alarmNotificationPeriod "$alarmDetails"
 		return 1
 	fi

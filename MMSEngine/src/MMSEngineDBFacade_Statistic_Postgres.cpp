@@ -3,15 +3,9 @@
 #include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 
-
 json MMSEngineDBFacade::addRequestStatistic(
-	int64_t workspaceKey,
-	string ipAddress,
-	string userId,
-	int64_t physicalPathKey,
-	int64_t confStreamKey,
-	string title
-	)
+	int64_t workspaceKey, string ipAddress, string userId, int64_t physicalPathKey, int64_t confStreamKey, string title
+)
 {
 	if (!_statisticsEnabled)
 	{
@@ -24,10 +18,10 @@ json MMSEngineDBFacade::addRequestStatistic(
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
-	conn = connectionPool->borrow();	
+	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
 	try
@@ -41,21 +35,18 @@ json MMSEngineDBFacade::addRequestStatistic(
 				"insert into MMS_RequestStatistic(workspaceKey, ipAddress, userId, physicalPathKey, "
 				"confStreamKey, title, requestTimestamp) values ("
 				"{}, {}, {}, {}, {}, {}, now() at time zone 'utc') returning requestStatisticKey",
-				workspaceKey,
-				(ipAddress == "" ? "null" : trans.quote(ipAddress)),
-				trans.quote(userId),
-				(physicalPathKey == -1 ? "null" : to_string(physicalPathKey)),
-				(confStreamKey == -1 ? "null" : to_string(confStreamKey)),
+				workspaceKey, (ipAddress == "" ? "null" : trans.quote(ipAddress)), trans.quote(userId),
+				(physicalPathKey == -1 ? "null" : to_string(physicalPathKey)), (confStreamKey == -1 ? "null" : to_string(confStreamKey)),
 				trans.quote(title)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			requestStatisticKey = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 
@@ -68,12 +59,12 @@ json MMSEngineDBFacade::addRequestStatistic(
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (!empty(res))
 			{
@@ -89,8 +80,9 @@ json MMSEngineDBFacade::addRequestStatistic(
 							previoudRequestStatisticKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-						SPDLOG_INFO("SQL statement"
+						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+						SPDLOG_INFO(
+							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
@@ -99,11 +91,13 @@ json MMSEngineDBFacade::addRequestStatistic(
 						);
 						if (rowsUpdated != 1)
 						{
-							string errorMessage = fmt::format("no update was done"
+							string errorMessage = fmt::format(
+								"no update was done"
 								", previoudRequestStatisticKey: {}"
 								", rowsUpdated: {}"
 								", sqlStatement: {}",
-								previoudRequestStatisticKey, rowsUpdated, sqlStatement);
+								previoudRequestStatisticKey, rowsUpdated, sqlStatement
+							);
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
@@ -140,9 +134,10 @@ json MMSEngineDBFacade::addRequestStatistic(
 
 		return statisticRoot;
 	}
-	catch(sql_error const &e)
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -153,9 +148,10 @@ json MMSEngineDBFacade::addRequestStatistic(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -168,9 +164,10 @@ json MMSEngineDBFacade::addRequestStatistic(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -180,9 +177,10 @@ json MMSEngineDBFacade::addRequestStatistic(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -193,12 +191,12 @@ json MMSEngineDBFacade::addRequestStatistic(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -207,9 +205,10 @@ json MMSEngineDBFacade::addRequestStatistic(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -220,14 +219,11 @@ json MMSEngineDBFacade::addRequestStatistic(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
 
-int64_t MMSEngineDBFacade::saveLoginStatistics(
-	int userKey, string ip
-)
+int64_t MMSEngineDBFacade::saveLoginStatistics(int userKey, string ip)
 {
 	int64_t loginStatisticKey;
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -236,39 +232,40 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		if (_geoServiceEnabled)
 			saveGEOInfo(ip, &trans, conn);
 
 		{
-			string sqlStatement = fmt::format( 
+			string sqlStatement = fmt::format(
 				"insert into MMS_LoginStatistic (userKey, ip, successfulLogin) values ("
 				"{}, {}, now() at time zone 'utc') returning loginStatisticKey",
-				userKey,
-				ip == "" ? "null" : trans.quote(ip));
+				userKey, ip == "" ? "null" : trans.quote(ip)
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			loginStatisticKey = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -279,9 +276,10 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -294,9 +292,10 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -306,9 +305,10 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -319,12 +319,12 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -333,9 +333,10 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -346,18 +347,13 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 
 	return loginStatisticKey;
 }
 
-void MMSEngineDBFacade::saveGEOInfo(
-	string ipAddress,
-	transaction_base* trans,
-	shared_ptr<PostgresConnection> conn
-	)
+void MMSEngineDBFacade::saveGEOInfo(string ipAddress, transaction_base *trans, shared_ptr<PostgresConnection> conn)
 {
 	try
 	{
@@ -366,7 +362,7 @@ void MMSEngineDBFacade::saveGEOInfo(
 			string sqlStatement = fmt::format(
 				"insert into MMS_GEOInfo(ip, lastGEOUpdate, lastTimeUsed, continent, "
 				"continentCode, country, countryCode, region, city, org, isp) values ("
-				                        "{}, null,          now() at time zone 'utc', null, "
+				"{}, null,          now() at time zone 'utc', null, "
 				"null,          null,    null,        null,   null, null, null) "
 				"ON CONFLICT (ip) DO "
 				"update set lastTimeUsed = now() at time zone 'utc' ",
@@ -374,18 +370,19 @@ void MMSEngineDBFacade::saveGEOInfo(
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans->exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 	}
-	catch(sql_error const &e)
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -394,9 +391,10 @@ void MMSEngineDBFacade::saveGEOInfo(
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -404,9 +402,10 @@ void MMSEngineDBFacade::saveGEOInfo(
 
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -423,55 +422,53 @@ void MMSEngineDBFacade::updateGEOInfo()
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	work trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		{
-			string sqlStatement = fmt::format( 
+			string sqlStatement = fmt::format(
 				"select ip from MMS_GEOInfo "
 				"where lastGEOUpdate is null or "
 				"(lastTimeUsed > lastGEOUpdate and DATE_PART('day', lastTimeUsed - lastGEOUpdate) > {})",
-				_geoServiceMaxDaysBeforeUpdate);
+				_geoServiceMaxDaysBeforeUpdate
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			vector<string> ipsToBeUpdated;
-			for (auto row: res)
+			for (auto row : res)
 			{
 				ipsToBeUpdated.push_back(row["ip"].as<string>());
-				if (ipsToBeUpdated.size() >= 100)	// ip-api gestisce fino a 100 reqs
+				if (ipsToBeUpdated.size() >= 100) // ip-api gestisce fino a 100 reqs
 				{
 					// https://members.ip-api.com/docs/batch
-					vector<tuple<string, string, string, string, string, string, string, string, string>>
-						ipsAPIGEOInfo = getGEOInfo_ipAPI(ipsToBeUpdated);
+					vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo =
+						getGEOInfo_ipAPI(ipsToBeUpdated);
 					// vector<tuple<string, string, string, string, string, string, string, string, string>>
 					// 	ipsAPIGEOInfo = getGEOInfo_ipwhois(ipsToBeUpdated);
 					ipsToBeUpdated.clear();
-					for(tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo: ipsAPIGEOInfo)
+					for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
 					{
 						auto [query, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
 
 						{
-							string sqlStatement = fmt::format( 
+							string sqlStatement = fmt::format(
 								"WITH rows AS (update MMS_GEOInfo "
 								"set lastGEOUpdate = now() at time zone 'utc', "
 								"continent = {}, continentCode = {}, country = {}, countryCode = {}, "
 								"region = {}, city = {}, org = {}, isp = {} "
 								"where ip = {} returning 1) select count(*) from rows",
-								continent == "" ? "null" : trans.quote(continent),
-								continentCode == "" ? "null" : trans.quote(continentCode),
-								country == "" ? "null" : trans.quote(country),
-								countryCode == "" ? "null" : trans.quote(countryCode),
-								regionName == "" ? "null" : trans.quote(regionName),
-								city == "" ? "null" : trans.quote(city),
-								org == "" ? "null" : trans.quote(org),
-								isp == "" ? "null" : trans.quote(isp),
-								trans.quote(query));
+								continent == "" ? "null" : trans.quote(continent), continentCode == "" ? "null" : trans.quote(continentCode),
+								country == "" ? "null" : trans.quote(country), countryCode == "" ? "null" : trans.quote(countryCode),
+								regionName == "" ? "null" : trans.quote(regionName), city == "" ? "null" : trans.quote(city),
+								org == "" ? "null" : trans.quote(org), isp == "" ? "null" : trans.quote(isp), trans.quote(query)
+							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-							SPDLOG_INFO("SQL statement"
+							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+							SPDLOG_INFO(
+								"SQL statement"
 								", sqlStatement: @{}@"
 								", getConnectionId: @{}@"
 								", elapsed (millisecs): @{}@",
@@ -480,53 +477,52 @@ void MMSEngineDBFacade::updateGEOInfo()
 							);
 							if (rowsUpdated != 1)
 							{
-								SPDLOG_ERROR("update failed"
+								SPDLOG_ERROR(
+									"update failed"
 									", rowsUpdated: {}"
 									", sqlStatement: {}",
-									rowsUpdated, sqlStatement) ;
+									rowsUpdated, sqlStatement
+								);
 							}
 						}
 					}
 				}
 			}
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (ipsToBeUpdated.size() > 0)
 			{
 				// https://members.ip-api.com/docs/batch
-				vector<tuple<string, string, string, string, string, string, string, string, string>>
-					ipsAPIGEOInfo = getGEOInfo_ipAPI(ipsToBeUpdated);
+				vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo =
+					getGEOInfo_ipAPI(ipsToBeUpdated);
 				// vector<tuple<string, string, string, string, string, string, string, string, string>>
 				// 	ipsAPIGEOInfo = getGEOInfo_ipwhois(ipsToBeUpdated);
 				ipsToBeUpdated.clear();
-				for(tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo: ipsAPIGEOInfo)
+				for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
 				{
 					auto [query, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
 
 					{
-						string sqlStatement = fmt::format( 
+						string sqlStatement = fmt::format(
 							"WITH rows AS (update MMS_GEOInfo "
 							"set lastGEOUpdate = now() at time zone 'utc', "
 							"continent = {}, continentCode = {}, country = {}, countryCode = {}, "
 							"region = {}, city = {}, org = {}, isp = {} "
 							"where ip = {} returning 1) select count(*) from rows",
-							continent == "" ? "null" : trans.quote(continent),
-							continentCode == "" ? "null" : trans.quote(continentCode),
-							country == "" ? "null" : trans.quote(country),
-							countryCode == "" ? "null" : trans.quote(countryCode),
-							regionName == "" ? "null" : trans.quote(regionName),
-							city == "" ? "null" : trans.quote(city),
-							org == "" ? "null" : trans.quote(org),
-							isp == "" ? "null" : trans.quote(isp),
-							trans.quote(query));
+							continent == "" ? "null" : trans.quote(continent), continentCode == "" ? "null" : trans.quote(continentCode),
+							country == "" ? "null" : trans.quote(country), countryCode == "" ? "null" : trans.quote(countryCode),
+							regionName == "" ? "null" : trans.quote(regionName), city == "" ? "null" : trans.quote(city),
+							org == "" ? "null" : trans.quote(org), isp == "" ? "null" : trans.quote(isp), trans.quote(query)
+						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
-						SPDLOG_INFO("SQL statement"
+						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+						SPDLOG_INFO(
+							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
@@ -535,10 +531,12 @@ void MMSEngineDBFacade::updateGEOInfo()
 						);
 						if (rowsUpdated != 1)
 						{
-							SPDLOG_ERROR("update failed"
+							SPDLOG_ERROR(
+								"update failed"
 								", rowsUpdated: {}"
 								", sqlStatement: {}",
-								rowsUpdated, sqlStatement) ;
+								rowsUpdated, sqlStatement
+							);
 						}
 					}
 				}
@@ -548,10 +546,11 @@ void MMSEngineDBFacade::updateGEOInfo()
 		trans.commit();
 		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -562,9 +561,10 @@ void MMSEngineDBFacade::updateGEOInfo()
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -577,9 +577,10 @@ void MMSEngineDBFacade::updateGEOInfo()
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -589,9 +590,10 @@ void MMSEngineDBFacade::updateGEOInfo()
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -602,12 +604,12 @@ void MMSEngineDBFacade::updateGEOInfo()
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -616,9 +618,10 @@ void MMSEngineDBFacade::updateGEOInfo()
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -629,13 +632,11 @@ void MMSEngineDBFacade::updateGEOInfo()
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 }
 
-vector<tuple<string, string, string, string, string, string, string, string, string>>
-	MMSEngineDBFacade::getGEOInfo_ipAPI(vector<string>& ips)
+vector<tuple<string, string, string, string, string, string, string, string, string>> MMSEngineDBFacade::getGEOInfo_ipAPI(vector<string> &ips)
 {
 	vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo;
 
@@ -651,36 +652,30 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			string geoServiceURL = fmt::format("{}/batch?key={}", _geoServiceURL, _geoServiceKey);
 
 			json bodyRoot = json::array();
-			for(string ip: ips)
+			for (string ip : ips)
 			{
 				json ipRoot;
 				ipRoot["query"] = ip;
 				ipRoot["fields"] = fields;
 				bodyRoot.push_back(ipRoot);
 			}
-			
+
 			vector<string> otherHeaders;
 			json geoServiceResponseRoot = MMSCURL::httpPostStringAndGetJson(
-				_logger,
-				-1,
-				geoServiceURL,
-				_geoServiceTimeoutInSeconds,
-				"",
-				"",
-				JSONUtils::toString(bodyRoot),
-				"application/json",
-				otherHeaders
+				_logger, -1, geoServiceURL, _geoServiceTimeoutInSeconds, "", "", JSONUtils::toString(bodyRoot), "application/json", otherHeaders
 			);
 
-			for(int index = 0, length = geoServiceResponseRoot.size(); index < length; index++)
+			for (int index = 0, length = geoServiceResponseRoot.size(); index < length; index++)
 			{
 				json geoServiceResponseIpRoot = geoServiceResponseRoot[index];
 
-				string status  = JSONUtils::asString(geoServiceResponseIpRoot, "status", "");
+				string status = JSONUtils::asString(geoServiceResponseIpRoot, "status", "");
 				if (status != "success")
 				{
-					SPDLOG_ERROR("geoService failed"
-						", message: {}", JSONUtils::asString(geoServiceResponseIpRoot, "message", "")
+					SPDLOG_ERROR(
+						"geoService failed"
+						", message: {}",
+						JSONUtils::asString(geoServiceResponseIpRoot, "message", "")
 					);
 
 					continue;
@@ -696,32 +691,24 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 				string org = JSONUtils::asString(geoServiceResponseIpRoot, "org", "");
 				string isp = JSONUtils::asString(geoServiceResponseIpRoot, "isp", "");
 
-				ipsAPIGEOInfo.push_back(make_tuple(query, continent, continentCode, country, countryCode, regionName,
-					city, org, isp));
+				ipsAPIGEOInfo.push_back(make_tuple(query, continent, continentCode, country, countryCode, regionName, city, org, isp));
 			}
 		}
 		else // if (ips.size() == 1)
 		{
 			// https://pro.ip-api.com/json/24.48.0.1?key=GvoGDQ05j7fyQmj
-			string geoServiceURL = fmt::format("{}/json/{}?fields={}&key={}",
-				_geoServiceURL, ips[0], fields, _geoServiceKey);
+			string geoServiceURL = fmt::format("{}/json/{}?fields={}&key={}", _geoServiceURL, ips[0], fields, _geoServiceKey);
 
 			vector<string> otherHeaders;
-			json geoServiceResponseIp = MMSCURL::httpGetJson(
-				_logger,
-				-1,
-				geoServiceURL,
-				_geoServiceTimeoutInSeconds,
-				"",
-				"",
-				otherHeaders
-			);
+			json geoServiceResponseIp = MMSCURL::httpGetJson(_logger, -1, geoServiceURL, _geoServiceTimeoutInSeconds, "", "", otherHeaders);
 
-			string status  = JSONUtils::asString(geoServiceResponseIp, "status", "");
+			string status = JSONUtils::asString(geoServiceResponseIp, "status", "");
 			if (status != "success")
 			{
-				SPDLOG_ERROR("geoService failed"
-					", message: {}", JSONUtils::asString(geoServiceResponseIp, "message", "")
+				SPDLOG_ERROR(
+					"geoService failed"
+					", message: {}",
+					JSONUtils::asString(geoServiceResponseIp, "message", "")
 				);
 
 				return ipsAPIGEOInfo;
@@ -737,23 +724,18 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			string org = JSONUtils::asString(geoServiceResponseIp, "org", "");
 			string isp = JSONUtils::asString(geoServiceResponseIp, "isp", "");
 
-			ipsAPIGEOInfo.push_back(make_tuple(query, continent, continentCode, country, countryCode, regionName,
-				city, org, isp));
+			ipsAPIGEOInfo.push_back(make_tuple(query, continent, continentCode, country, countryCode, regionName, city, org, isp));
 		}
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(__FILEREF__ + "geoService failed (exception)"
-			+ ", exception: " + e.what()
-		);
+		_logger->error(__FILEREF__ + "geoService failed (exception)" + ", exception: " + e.what());
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(__FILEREF__ + "geoService failed (exception)"
-			+ ", exception: " + e.what()
-		);
+		_logger->error(__FILEREF__ + "geoService failed (exception)" + ", exception: " + e.what());
 
 		throw e;
 	}
@@ -761,8 +743,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 	return ipsAPIGEOInfo;
 }
 
-vector<tuple<string, string, string, string, string, string, string, string, string>>
-	MMSEngineDBFacade::getGEOInfo_ipwhois(vector<string>& ips)
+vector<tuple<string, string, string, string, string, string, string, string, string>> MMSEngineDBFacade::getGEOInfo_ipwhois(vector<string> &ips)
 {
 	vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo;
 
@@ -771,29 +752,19 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 
 	try
 	{
-		for(string ip: ips)
+		for (string ip : ips)
 		{
 			string geoServiceURL = _geoServiceURL + ip;
 
 			vector<string> otherHeaders;
-			json geoServiceResponse = MMSCURL::httpGetJson(
-				_logger,
-				-1,
-				geoServiceURL,
-				_geoServiceTimeoutInSeconds,
-				"",
-				"",
-				otherHeaders
-			);
+			json geoServiceResponse = MMSCURL::httpGetJson(_logger, -1, geoServiceURL, _geoServiceTimeoutInSeconds, "", "", otherHeaders);
 
 			bool geoSuccess;
 			string field = "success";
 			geoSuccess = JSONUtils::asBool(geoServiceResponse, field, false);
 			if (!geoSuccess)
 			{
-				string errorMessage = __FILEREF__ + "geoService failed"
-					+ ", geoSuccess: " + to_string(geoSuccess)
-				;
+				string errorMessage = __FILEREF__ + "geoService failed" + ", geoSuccess: " + to_string(geoSuccess);
 				_logger->error(errorMessage);
 
 				continue;
@@ -816,23 +787,18 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			field = "isp";
 			string isp = JSONUtils::asString(geoServiceResponse, field, "");
 
-			ipsAPIGEOInfo.push_back(make_tuple(ip, continent, continentCode, country, countryCode, regionName,
-				city, org, isp));
+			ipsAPIGEOInfo.push_back(make_tuple(ip, continent, continentCode, country, countryCode, regionName, city, org, isp));
 		}
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(__FILEREF__ + "geoService failed (exception)"
-			+ ", exception: " + e.what()
-		);
+		_logger->error(__FILEREF__ + "geoService failed (exception)" + ", exception: " + e.what());
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(__FILEREF__ + "geoService failed (exception)"
-			+ ", exception: " + e.what()
-		);
+		_logger->error(__FILEREF__ + "geoService failed (exception)" + ", exception: " + e.what());
 
 		throw e;
 	}
@@ -840,15 +806,12 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 	return ipsAPIGEOInfo;
 }
 
-json MMSEngineDBFacade::getRequestStatisticList (
-	int64_t workspaceKey,
-	string userId,
-	string title,
-	string startStatisticDate, string endStatisticDate,
-	int start, int rows
+json MMSEngineDBFacade::getRequestStatisticList(
+	int64_t workspaceKey, string userId, string title, string startStatisticDate, string endStatisticDate, int start, int rows
 )
 {
-	SPDLOG_INFO("getRequestStatisticList"
+	SPDLOG_INFO(
+		"getRequestStatisticList"
 		", workspaceKey: {}"
 		", userId: {}"
 		", title: {}"
@@ -859,30 +822,30 @@ json MMSEngineDBFacade::getRequestStatisticList (
 		workspaceKey, userId, title, startStatisticDate, endStatisticDate, start, rows
 	);
 
-    json statisticsListRoot;
-    
-    shared_ptr<PostgresConnection> conn = nullptr;
+	json statisticsListRoot;
+
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        string field;
-        
-        {
-            json requestParametersRoot;
+	try
+	{
+		string field;
+
+		{
+			json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
 				requestParametersRoot[field] = workspaceKey;
 			}
-            
+
 			if (userId != "")
 			{
 				field = "userId";
@@ -896,31 +859,31 @@ json MMSEngineDBFacade::getRequestStatisticList (
 			}
 
 			if (startStatisticDate != "")
-            {
-                field = "startStatisticDate";
-                requestParametersRoot[field] = startStatisticDate;
-            }
+			{
+				field = "startStatisticDate";
+				requestParametersRoot[field] = startStatisticDate;
+			}
 
 			if (endStatisticDate != "")
-            {
-                field = "endStatisticDate";
-                requestParametersRoot[field] = endStatisticDate;
-            }
+			{
+				field = "endStatisticDate";
+				requestParametersRoot[field] = endStatisticDate;
+			}
 
 			{
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
-            
+
 			{
 				field = "rows";
 				requestParametersRoot[field] = rows;
 			}
 
-            field = "requestParameters";
-            statisticsListRoot[field] = requestParametersRoot;
-        }
-        
+			field = "requestParameters";
+			statisticsListRoot[field] = requestParametersRoot;
+		}
+
 		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
 		if (userId != "")
 			sqlWhere += fmt::format("and userId like {} ", trans.quote("%" + userId + "%"));
@@ -931,93 +894,94 @@ json MMSEngineDBFacade::getRequestStatisticList (
 		if (endStatisticDate != "")
 			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 
-        json responseRoot;
-        {
-            string sqlStatement = 
-				fmt::format("select count(*) from MMS_RequestStatistic {}", sqlWhere);
+		json responseRoot;
+		{
+			string sqlStatement = fmt::format("select count(*) from MMS_RequestStatistic {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
-            field = "numFound";
-            responseRoot[field] = count;
-        }
+			field = "numFound";
+			responseRoot[field] = count;
+		}
 
-        json statisticsRoot = json::array();
-        {
+		json statisticsRoot = json::array();
+		{
 			string sqlStatement = fmt::format(
-                "select requestStatisticKey, ipAddress, userId, physicalPathKey, confStreamKey, title, "
+				"select requestStatisticKey, ipAddress, userId, physicalPathKey, confStreamKey, title, "
 				"to_char(requestTimestamp, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedRequestTimestamp "
 				"from MMS_RequestStatistic {}"
 				"order by requestTimestamp asc "
 				"limit {} offset {}",
-				sqlWhere, rows, start);
+				sqlWhere, rows, start
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                json statisticRoot;
+			for (auto row : res)
+			{
+				json statisticRoot;
 
-                field = "requestStatisticKey";
+				field = "requestStatisticKey";
 				statisticRoot[field] = row["requestStatisticKey"].as<int64_t>();
 
-                field = "ipAddress";
+				field = "ipAddress";
 				if (row["ipAddress"].is_null())
 					statisticRoot[field] = nullptr;
 				else
 					statisticRoot[field] = row["ipAddress"].as<string>();
 
-                field = "userId";
-                statisticRoot[field] = row["userId"].as<string>();
+				field = "userId";
+				statisticRoot[field] = row["userId"].as<string>();
 
-                field = "physicalPathKey";
+				field = "physicalPathKey";
 				if (row["physicalPathKey"].is_null())
 					statisticRoot[field] = nullptr;
 				else
 					statisticRoot[field] = row["physicalPathKey"].as<int64_t>();
 
-                field = "confStreamKey";
+				field = "confStreamKey";
 				if (row["confStreamKey"].is_null())
 					statisticRoot[field] = nullptr;
 				else
 					statisticRoot[field] = row["confStreamKey"].as<int64_t>();
 
-                field = "title";
-                statisticRoot[field] = row["title"].as<string>();
+				field = "title";
+				statisticRoot[field] = row["title"].as<string>();
 
-                field = "requestTimestamp";
+				field = "requestTimestamp";
 				statisticRoot[field] = row["formattedRequestTimestamp"].as<string>();
 
-                statisticsRoot.push_back(statisticRoot);
-            }
-			SPDLOG_INFO("SQL statement"
+				statisticsRoot.push_back(statisticRoot);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 
-        field = "requestStatistics";
-        responseRoot[field] = statisticsRoot;
+		field = "requestStatistics";
+		responseRoot[field] = statisticsRoot;
 
-        field = "response";
-        statisticsListRoot[field] = responseRoot;
+		field = "response";
+		statisticsListRoot[field] = responseRoot;
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
-    {
-		SPDLOG_ERROR("SQL exception"
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -1028,36 +992,10 @@ json MMSEngineDBFacade::getRequestStatisticList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)                                              
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch(runtime_error& e)
-	{
-		SPDLOG_ERROR("runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1068,12 +1006,41 @@ json MMSEngineDBFacade::getRequestStatisticList (
 			conn = nullptr;
 		}
 
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
 
 		throw e;
 	}
-	catch(exception& e)
-    {
-		SPDLOG_ERROR("exception"
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -1082,11 +1049,12 @@ json MMSEngineDBFacade::getRequestStatisticList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)                                              
+				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
 		}
 		if (conn != nullptr)
@@ -1098,19 +1066,16 @@ json MMSEngineDBFacade::getRequestStatisticList (
 		throw e;
 	}
 
-    return statisticsListRoot;
+	return statisticsListRoot;
 }
 
-json MMSEngineDBFacade::getRequestStatisticPerContentList (
-	int64_t workspaceKey,
-	string title, string userId,
-	string startStatisticDate, string endStatisticDate,
-	int64_t minimalNextRequestDistanceInSeconds,
-	bool totalNumFoundToBeCalculated,
-	int start, int rows
+json MMSEngineDBFacade::getRequestStatisticPerContentList(
+	int64_t workspaceKey, string title, string userId, string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO("getRequestStatisticPerContentList"
+	SPDLOG_INFO(
+		"getRequestStatisticPerContentList"
 		", workspaceKey: {}"
 		", title: {}"
 		", userId: {}"
@@ -1120,8 +1085,8 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 		", totalNumFoundToBeCalculated: {}"
 		", start: {}"
 		", rows: {}",
-		workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-		minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated, start, rows
+		workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds, totalNumFoundToBeCalculated, start,
+		rows
 	);
 
 	json statisticsListRoot;
@@ -1130,24 +1095,24 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
-	conn = connectionPool->borrow();	
+	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        string field;
+	try
+	{
+		string field;
 
-        {
-            json requestParametersRoot;
+		{
+			json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
 				requestParametersRoot[field] = workspaceKey;
 			}
-            
+
 			if (title != "")
 			{
 				field = "title";
@@ -1161,16 +1126,16 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 			}
 
 			if (startStatisticDate != "")
-            {
-                field = "startStatisticDate";
-                requestParametersRoot[field] = startStatisticDate;
-            }
+			{
+				field = "startStatisticDate";
+				requestParametersRoot[field] = startStatisticDate;
+			}
 
 			if (endStatisticDate != "")
-            {
-                field = "endStatisticDate";
-                requestParametersRoot[field] = endStatisticDate;
-            }
+			{
+				field = "endStatisticDate";
+				requestParametersRoot[field] = endStatisticDate;
+			}
 
 			{
 				field = "minimalNextRequestDistanceInSeconds";
@@ -1187,10 +1152,10 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 				requestParametersRoot[field] = rows;
 			}
 
-            field = "requestParameters";
-            statisticsListRoot[field] = requestParametersRoot;
-        }
-        
+			field = "requestParameters";
+			statisticsListRoot[field] = requestParametersRoot;
+		}
+
 		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
 			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
@@ -1203,77 +1168,78 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        json responseRoot;
+		json responseRoot;
 		if (totalNumFoundToBeCalculated)
-        {
-			string sqlStatement = 
-				fmt::format("select title, count(*) from MMS_RequestStatistic {}"
-					"group by title order by count(*) desc ",
-					sqlWhere
-				)
-			;
+		{
+			string sqlStatement = fmt::format(
+				"select title, count(*) from MMS_RequestStatistic {}"
+				"group by title order by count(*) desc ",
+				sqlWhere
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
-            field = "numFound";
-            responseRoot[field] = res.size();
-        }
+			field = "numFound";
+			responseRoot[field] = res.size();
+		}
 		else
 		{
 			field = "numFound";
 			responseRoot[field] = -1;
 		}
 
-        json statisticsRoot = json::array();
-        {
-            string sqlStatement = 
-				fmt::format("select title, count(*) as count from MMS_RequestStatistic {}"
+		json statisticsRoot = json::array();
+		{
+			string sqlStatement = fmt::format(
+				"select title, count(*) as count from MMS_RequestStatistic {}"
 				"group by title order by count(*) desc "
 				"limit {} offset {}",
-				sqlWhere, rows, start);
+				sqlWhere, rows, start
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                json statisticRoot;
+			for (auto row : res)
+			{
+				json statisticRoot;
 
-                field = "title";
-                statisticRoot[field] = row["title"].as<string>();
+				field = "title";
+				statisticRoot[field] = row["title"].as<string>();
 
-                field = "count";
-                statisticRoot[field] = row["count"].as<int64_t>();
+				field = "count";
+				statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.push_back(statisticRoot);
-            }
-			SPDLOG_INFO("SQL statement"
+				statisticsRoot.push_back(statisticRoot);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-        field = "requestStatistics";
-        responseRoot[field] = statisticsRoot;
+		field = "requestStatistics";
+		responseRoot[field] = statisticsRoot;
 
-        field = "response";
-        statisticsListRoot[field] = responseRoot;
+		field = "response";
+		statisticsListRoot[field] = responseRoot;
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -1284,9 +1250,10 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1299,9 +1266,10 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -1311,9 +1279,10 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1324,12 +1293,12 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -1338,9 +1307,10 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1351,23 +1321,19 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
-    return statisticsListRoot;
+
+	return statisticsListRoot;
 }
 
-json MMSEngineDBFacade::getRequestStatisticPerUserList (
-	int64_t workspaceKey,
-	string title, string userId,
-	string startStatisticDate, string endStatisticDate,
-	int64_t minimalNextRequestDistanceInSeconds,
-	bool totalNumFoundToBeCalculated,
-	int start, int rows
+json MMSEngineDBFacade::getRequestStatisticPerUserList(
+	int64_t workspaceKey, string title, string userId, string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO("getRequestStatisticPerUserList"
+	SPDLOG_INFO(
+		"getRequestStatisticPerUserList"
 		", workspaceKey: {}"
 		", title: {}"
 		", userId: {}"
@@ -1376,34 +1342,33 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 		", minimalNextRequestDistanceInSeconds: {}"
 		", start: {}"
 		", rows: {}",
-		workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-		minimalNextRequestDistanceInSeconds, start, rows
+		workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds, start, rows
 	);
 
-    json statisticsListRoot;
+	json statisticsListRoot;
 
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
-	conn = connectionPool->borrow();	
+	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        string field;
+	try
+	{
+		string field;
 
-        {
-            json requestParametersRoot;
+		{
+			json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
 				requestParametersRoot[field] = workspaceKey;
 			}
-            
+
 			if (title != "")
 			{
 				field = "title";
@@ -1417,16 +1382,16 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 			}
 
 			if (startStatisticDate != "")
-            {
-                field = "startStatisticDate";
-                requestParametersRoot[field] = startStatisticDate;
-            }
+			{
+				field = "startStatisticDate";
+				requestParametersRoot[field] = startStatisticDate;
+			}
 
 			if (endStatisticDate != "")
-            {
-                field = "endStatisticDate";
-                requestParametersRoot[field] = endStatisticDate;
-            }
+			{
+				field = "endStatisticDate";
+				requestParametersRoot[field] = endStatisticDate;
+			}
 
 			{
 				field = "minimalNextRequestDistanceInSeconds";
@@ -1437,16 +1402,16 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
-            
+
 			{
 				field = "rows";
 				requestParametersRoot[field] = rows;
 			}
 
-            field = "requestParameters";
-            statisticsListRoot[field] = requestParametersRoot;
-        }
-        
+			field = "requestParameters";
+			statisticsListRoot[field] = requestParametersRoot;
+		}
+
 		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
 			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
@@ -1459,75 +1424,78 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        json responseRoot;
+		json responseRoot;
 		if (totalNumFoundToBeCalculated)
-        {
-			string sqlStatement = 
-				fmt::format("select userId, count(*) from MMS_RequestStatistic {}"
-					"group by userId order by count(*) desc ",
-					sqlWhere);
+		{
+			string sqlStatement = fmt::format(
+				"select userId, count(*) from MMS_RequestStatistic {}"
+				"group by userId order by count(*) desc ",
+				sqlWhere
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
-            field = "numFound";
-            responseRoot[field] = res.size();
-        }
+			field = "numFound";
+			responseRoot[field] = res.size();
+		}
 		else
 		{
 			field = "numFound";
 			responseRoot[field] = -1;
 		}
 
-        json statisticsRoot = json::array();
-        {
-            string sqlStatement = 
-				fmt::format("select userId, count(*) as count from MMS_RequestStatistic {}"
-					"group by userId order by count(*) desc "
-					"limit {} offset {}",
-					sqlWhere, rows, start);
+		json statisticsRoot = json::array();
+		{
+			string sqlStatement = fmt::format(
+				"select userId, count(*) as count from MMS_RequestStatistic {}"
+				"group by userId order by count(*) desc "
+				"limit {} offset {}",
+				sqlWhere, rows, start
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                json statisticRoot;
+			for (auto row : res)
+			{
+				json statisticRoot;
 
-                field = "userId";
-                statisticRoot[field] = row["userId"].as<string>();
+				field = "userId";
+				statisticRoot[field] = row["userId"].as<string>();
 
-                field = "count";
-                statisticRoot[field] = row["count"].as<int64_t>();
+				field = "count";
+				statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.push_back(statisticRoot);
-            }
-			SPDLOG_INFO("SQL statement"
+				statisticsRoot.push_back(statisticRoot);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-        field = "requestStatistics";
-        responseRoot[field] = statisticsRoot;
+		field = "requestStatistics";
+		responseRoot[field] = statisticsRoot;
 
-        field = "response";
-        statisticsListRoot[field] = responseRoot;
+		field = "response";
+		statisticsListRoot[field] = responseRoot;
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -1538,9 +1506,10 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1553,9 +1522,10 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -1565,9 +1535,10 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1578,12 +1549,12 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -1592,9 +1563,10 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1605,23 +1577,19 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
-    return statisticsListRoot;
+
+	return statisticsListRoot;
 }
 
-json MMSEngineDBFacade::getRequestStatisticPerMonthList (
-	int64_t workspaceKey,
-	string title, string userId,
-	string startStatisticDate, string endStatisticDate,
-	int64_t minimalNextRequestDistanceInSeconds,
-	bool totalNumFoundToBeCalculated,
-	int start, int rows
+json MMSEngineDBFacade::getRequestStatisticPerMonthList(
+	int64_t workspaceKey, string title, string userId, string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO("getRequestStatisticPerMonthList"
+	SPDLOG_INFO(
+		"getRequestStatisticPerMonthList"
 		", workspaceKey: {}"
 		", title: {}"
 		", userId: {}"
@@ -1630,34 +1598,33 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 		", minimalNextRequestDistanceInSeconds: {}"
 		", start: {}"
 		", rows: {}",
-		workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-		minimalNextRequestDistanceInSeconds, start, rows
+		workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds, start, rows
 	);
 
-    json statisticsListRoot;
+	json statisticsListRoot;
 
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
-	conn = connectionPool->borrow();	
+	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        string field;
+	try
+	{
+		string field;
 
-        {
-            json requestParametersRoot;
+		{
+			json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
 				requestParametersRoot[field] = workspaceKey;
 			}
-            
+
 			if (title != "")
 			{
 				field = "title";
@@ -1671,16 +1638,16 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			}
 
 			if (startStatisticDate != "")
-            {
-                field = "startStatisticDate";
-                requestParametersRoot[field] = startStatisticDate;
-            }
+			{
+				field = "startStatisticDate";
+				requestParametersRoot[field] = startStatisticDate;
+			}
 
 			if (endStatisticDate != "")
-            {
-                field = "endStatisticDate";
-                requestParametersRoot[field] = endStatisticDate;
-            }
+			{
+				field = "endStatisticDate";
+				requestParametersRoot[field] = endStatisticDate;
+			}
 
 			{
 				field = "minimalNextRequestDistanceInSeconds";
@@ -1691,16 +1658,16 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
-            
+
 			{
 				field = "rows";
 				requestParametersRoot[field] = rows;
 			}
 
-            field = "requestParameters";
-            statisticsListRoot[field] = requestParametersRoot;
-        }
-        
+			field = "requestParameters";
+			statisticsListRoot[field] = requestParametersRoot;
+		}
+
 		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
 			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
@@ -1713,9 +1680,9 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        json responseRoot;
+		json responseRoot;
 		if (totalNumFoundToBeCalculated)
-        {
+		{
 			string sqlStatement = fmt::format(
 				"select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count "
 				"from MMS_RequestStatistic {} "
@@ -1724,26 +1691,26 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
-            field = "numFound";
-            responseRoot[field] = res.size();
-        }
+			field = "numFound";
+			responseRoot[field] = res.size();
+		}
 		else
 		{
 			field = "numFound";
 			responseRoot[field] = -1;
 		}
 
-        json statisticsRoot = json::array();
-        {
-            string sqlStatement = fmt::format(
+		json statisticsRoot = json::array();
+		{
+			string sqlStatement = fmt::format(
 				"select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count "
 				"from MMS_RequestStatistic {} "
 				"group by to_char(requestTimestamp, 'YYYY-MM') order by count(*) desc "
@@ -1752,40 +1719,41 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                json statisticRoot;
+			for (auto row : res)
+			{
+				json statisticRoot;
 
-                field = "date";
-                statisticRoot[field] = row["date"].as<string>();
+				field = "date";
+				statisticRoot[field] = row["date"].as<string>();
 
-                field = "count";
-                statisticRoot[field] = row["count"].as<int64_t>();
+				field = "count";
+				statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.push_back(statisticRoot);
-            }
-			SPDLOG_INFO("SQL statement"
+				statisticsRoot.push_back(statisticRoot);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-        field = "requestStatistics";
-        responseRoot[field] = statisticsRoot;
+		field = "requestStatistics";
+		responseRoot[field] = statisticsRoot;
 
-        field = "response";
-        statisticsListRoot[field] = responseRoot;
+		field = "response";
+		statisticsListRoot[field] = responseRoot;
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -1796,9 +1764,10 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1811,9 +1780,10 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -1823,9 +1793,10 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1836,12 +1807,12 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -1850,9 +1821,10 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -1863,23 +1835,19 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
 
-    return statisticsListRoot;
+	return statisticsListRoot;
 }
 
-json MMSEngineDBFacade::getRequestStatisticPerDayList (
-	int64_t workspaceKey,
-	string title, string userId,
-	string startStatisticDate, string endStatisticDate,
-	int64_t minimalNextRequestDistanceInSeconds,
-	bool totalNumFoundToBeCalculated,
-	int start, int rows
+json MMSEngineDBFacade::getRequestStatisticPerDayList(
+	int64_t workspaceKey, string title, string userId, string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO("getRequestStatisticPerDayList"
+	SPDLOG_INFO(
+		"getRequestStatisticPerDayList"
 		", workspaceKey: {}"
 		", title: {}"
 		", userId: {}"
@@ -1888,34 +1856,33 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 		", minimalNextRequestDistanceInSeconds: {}"
 		", start: {}"
 		", rows: {}",
-		workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-		minimalNextRequestDistanceInSeconds, start, rows
+		workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds, start, rows
 	);
 
-    json statisticsListRoot;
+	json statisticsListRoot;
 
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
-	conn = connectionPool->borrow();	
+	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        string field;
+	try
+	{
+		string field;
 
-        {
-            json requestParametersRoot;
+		{
+			json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
 				requestParametersRoot[field] = workspaceKey;
 			}
-            
+
 			if (title != "")
 			{
 				field = "title";
@@ -1929,16 +1896,16 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 			}
 
 			if (startStatisticDate != "")
-            {
-                field = "startStatisticDate";
-                requestParametersRoot[field] = startStatisticDate;
-            }
+			{
+				field = "startStatisticDate";
+				requestParametersRoot[field] = startStatisticDate;
+			}
 
 			if (endStatisticDate != "")
-            {
-                field = "endStatisticDate";
-                requestParametersRoot[field] = endStatisticDate;
-            }
+			{
+				field = "endStatisticDate";
+				requestParametersRoot[field] = endStatisticDate;
+			}
 
 			{
 				field = "minimalNextRequestDistanceInSeconds";
@@ -1949,16 +1916,16 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
-            
+
 			{
 				field = "rows";
 				requestParametersRoot[field] = rows;
 			}
 
-            field = "requestParameters";
-            statisticsListRoot[field] = requestParametersRoot;
-        }
-        
+			field = "requestParameters";
+			statisticsListRoot[field] = requestParametersRoot;
+		}
+
 		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
 			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
@@ -1971,7 +1938,7 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        json responseRoot;
+		json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
 			string sqlStatement = fmt::format(
@@ -1982,26 +1949,26 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
-            field = "numFound";
-            responseRoot[field] = res.size();
-        }
+			field = "numFound";
+			responseRoot[field] = res.size();
+		}
 		else
 		{
 			field = "numFound";
 			responseRoot[field] = -1;
 		}
 
-        json statisticsRoot = json::array();
-        {
-            string sqlStatement = fmt::format(
+		json statisticsRoot = json::array();
+		{
+			string sqlStatement = fmt::format(
 				"select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
 				"from MMS_RequestStatistic {}"
 				"group by to_char(requestTimestamp, 'YYYY-MM-DD') order by count(*) desc "
@@ -2010,40 +1977,41 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                json statisticRoot;
+			for (auto row : res)
+			{
+				json statisticRoot;
 
-                field = "date";
-                statisticRoot[field] = row["date"].as<string>();
+				field = "date";
+				statisticRoot[field] = row["date"].as<string>();
 
-                field = "count";
-                statisticRoot[field] = row["count"].as<int64_t>();
+				field = "count";
+				statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.push_back(statisticRoot);
-            }
-			SPDLOG_INFO("SQL statement"
+				statisticsRoot.push_back(statisticRoot);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-        field = "requestStatistics";
-        responseRoot[field] = statisticsRoot;
+		field = "requestStatistics";
+		responseRoot[field] = statisticsRoot;
 
-        field = "response";
-        statisticsListRoot[field] = responseRoot;
+		field = "response";
+		statisticsListRoot[field] = responseRoot;
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2054,9 +2022,10 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2069,9 +2038,10 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2081,9 +2051,10 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2094,12 +2065,12 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2108,9 +2079,10 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2121,23 +2093,19 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
-    return statisticsListRoot;
+
+	return statisticsListRoot;
 }
 
-json MMSEngineDBFacade::getRequestStatisticPerHourList (
-	int64_t workspaceKey,
-	string title, string userId,
-	string startStatisticDate, string endStatisticDate,
-	int64_t minimalNextRequestDistanceInSeconds,
-	bool totalNumFoundToBeCalculated,
-	int start, int rows
+json MMSEngineDBFacade::getRequestStatisticPerHourList(
+	int64_t workspaceKey, string title, string userId, string startStatisticDate, string endStatisticDate,
+	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO("getRequestStatisticPerHourList"
+	SPDLOG_INFO(
+		"getRequestStatisticPerHourList"
 		", workspaceKey: {}"
 		", title: {}"
 		", userId: {}"
@@ -2146,34 +2114,33 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 		", minimalNextRequestDistanceInSeconds: {}"
 		", start: {}"
 		", rows: {}",
-		workspaceKey, title, userId, startStatisticDate, endStatisticDate,
-		minimalNextRequestDistanceInSeconds, start, rows
+		workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds, start, rows
 	);
 
-    json statisticsListRoot;
+	json statisticsListRoot;
 
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
-	conn = connectionPool->borrow();	
+	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        string field;
+	try
+	{
+		string field;
 
-        {
-            json requestParametersRoot;
+		{
+			json requestParametersRoot;
 
 			{
 				field = "workspaceKey";
 				requestParametersRoot[field] = workspaceKey;
 			}
-            
+
 			if (title != "")
 			{
 				field = "title";
@@ -2187,16 +2154,16 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 			}
 
 			if (startStatisticDate != "")
-            {
-                field = "startStatisticDate";
-                requestParametersRoot[field] = startStatisticDate;
-            }
+			{
+				field = "startStatisticDate";
+				requestParametersRoot[field] = startStatisticDate;
+			}
 
 			if (endStatisticDate != "")
-            {
-                field = "endStatisticDate";
-                requestParametersRoot[field] = endStatisticDate;
-            }
+			{
+				field = "endStatisticDate";
+				requestParametersRoot[field] = endStatisticDate;
+			}
 
 			{
 				field = "minimalNextRequestDistanceInSeconds";
@@ -2207,16 +2174,16 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
-            
+
 			{
 				field = "rows";
 				requestParametersRoot[field] = rows;
 			}
 
-            field = "requestParameters";
-            statisticsListRoot[field] = requestParametersRoot;
-        }
-        
+			field = "requestParameters";
+			statisticsListRoot[field] = requestParametersRoot;
+		}
+
 		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
 			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
@@ -2229,7 +2196,7 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 		if (minimalNextRequestDistanceInSeconds > 0)
 			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
-        json responseRoot;
+		json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
 			string sqlStatement = fmt::format(
@@ -2240,26 +2207,26 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
-            field = "numFound";
-            responseRoot[field] = res.size();
-        }
+			field = "numFound";
+			responseRoot[field] = res.size();
+		}
 		else
 		{
 			field = "numFound";
 			responseRoot[field] = -1;
 		}
 
-        json statisticsRoot = json::array();
-        {
-            string sqlStatement = fmt::format( 
+		json statisticsRoot = json::array();
+		{
+			string sqlStatement = fmt::format(
 				"select to_char(requestTimestamp, 'YYYY-MM-DD HH24') as date, count(*) as count "
 				"from MMS_RequestStatistic {}"
 				"group by to_char(requestTimestamp, 'YYYY-MM-DD HH24') order by count(*) desc "
@@ -2268,40 +2235,41 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                json statisticRoot;
+			for (auto row : res)
+			{
+				json statisticRoot;
 
-                field = "date";
-                statisticRoot[field] = row["date"].as<string>();
+				field = "date";
+				statisticRoot[field] = row["date"].as<string>();
 
-                field = "count";
-                statisticRoot[field] = row["count"].as<int64_t>();
+				field = "count";
+				statisticRoot[field] = row["count"].as<int64_t>();
 
-                statisticsRoot.push_back(statisticRoot);
-            }
-			SPDLOG_INFO("SQL statement"
+				statisticsRoot.push_back(statisticRoot);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-        }
+		}
 
-        field = "requestStatistics";
-        responseRoot[field] = statisticsRoot;
+		field = "requestStatistics";
+		responseRoot[field] = statisticsRoot;
 
-        field = "response";
-        statisticsListRoot[field] = responseRoot;
+		field = "response";
+		statisticsListRoot[field] = responseRoot;
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
+	}
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2312,9 +2280,10 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2327,9 +2296,10 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2339,9 +2309,10 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2352,12 +2323,12 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2366,9 +2337,10 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2379,24 +2351,23 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList (
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-    
-    return statisticsListRoot;
+
+	return statisticsListRoot;
 }
 
 void MMSEngineDBFacade::retentionOfStatisticData()
 {
 	SPDLOG_INFO("retentionOfStatisticData");
 
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
 	try
@@ -2409,33 +2380,26 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			{
 				// 2022-05-01: changed from one to two months because, the first of each
 				//	month, until this procedure do not run, it would not work
-				chrono::duration<int, ratio<60*60*24*32>> one_month(1);
+				chrono::duration<int, ratio<60 * 60 * 24 * 32>> one_month(1);
 
-				char strDateTime [64];
+				char strDateTime[64];
 				tm tmDateTime;
 				time_t utcTime;
 				chrono::system_clock::time_point today = chrono::system_clock::now();
 
 				chrono::system_clock::time_point nextMonth = today + one_month;
 				utcTime = chrono::system_clock::to_time_t(nextMonth);
-				localtime_r (&utcTime, &tmDateTime);
-				sprintf (strDateTime, "%04d-%02d-01",
-					tmDateTime. tm_year + 1900,
-					tmDateTime. tm_mon + 1);
+				localtime_r(&utcTime, &tmDateTime);
+				sprintf(strDateTime, "%04d-%02d-01", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
 				partition_start = strDateTime;
 
-				sprintf (strDateTime, "%04d_%02d",
-					tmDateTime. tm_year + 1900,
-					tmDateTime. tm_mon + 1);
+				sprintf(strDateTime, "%04d_%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
 				partitionName = fmt::format("requeststatistic_{}", strDateTime);
-
 
 				chrono::system_clock::time_point nextNextMonth = nextMonth + one_month;
 				utcTime = chrono::system_clock::to_time_t(nextNextMonth);
-				localtime_r (&utcTime, &tmDateTime);
-				sprintf (strDateTime, "%04d-%02d-01",
-					tmDateTime. tm_year + 1900,      
-					tmDateTime. tm_mon + 1);   
+				localtime_r(&utcTime, &tmDateTime);
+				sprintf(strDateTime, "%04d-%02d-01", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
 				partition_end = strDateTime;
 			}
 
@@ -2465,12 +2429,12 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int count = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (count == 0)
 			{
@@ -2481,12 +2445,12 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				trans.exec0(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 			}
 		}
@@ -2495,21 +2459,18 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 		{
 			string partitionName;
 			{
-				chrono::duration<int, ratio<60*60*24*31>> retentionMonths(
-					_statisticRetentionInMonths);
+				chrono::duration<int, ratio<60 * 60 * 24 * 31>> retentionMonths(_statisticRetentionInMonths);
 
 				chrono::system_clock::time_point today = chrono::system_clock::now();
 				chrono::system_clock::time_point retention = today - retentionMonths;
 				time_t utcTime_retention = chrono::system_clock::to_time_t(retention);
 
-				char strDateTime [64];
+				char strDateTime[64];
 				tm tmDateTime;
 
-				localtime_r (&utcTime_retention, &tmDateTime);
+				localtime_r(&utcTime_retention, &tmDateTime);
 
-				sprintf (strDateTime, "%04d_%02d",
-					tmDateTime. tm_year + 1900,
-					tmDateTime. tm_mon + 1);
+				sprintf(strDateTime, "%04d_%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
 				partitionName = fmt::format("requeststatistic_{}", strDateTime);
 			}
 
@@ -2526,38 +2487,36 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int count = trans.exec1(sqlStatement)[0].as<int>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 			if (count > 0)
 			{
-				string sqlStatement = fmt::format( 
-					"DROP TABLE {}",
-					partitionName
-				);
+				string sqlStatement = fmt::format("DROP TABLE {}", partitionName);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				trans.exec0(sqlStatement);
-				SPDLOG_INFO("SQL statement"
+				SPDLOG_INFO(
+					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 			}
 		}
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
 	}
-	catch(sql_error const &e)
+	catch (sql_error const &e)
 	{
-		SPDLOG_ERROR("SQL exception"
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2568,9 +2527,10 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2583,9 +2543,10 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 
 		throw e;
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("runtime_error"
+		SPDLOG_ERROR(
+			"runtime_error"
 			", exceptionMessage: {}"
 			", conn: {}",
 			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
@@ -2595,9 +2556,10 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2608,12 +2570,12 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			conn = nullptr;
 		}
 
-
 		throw e;
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("exception"
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2622,9 +2584,10 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2639,12 +2602,10 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 	}
 }
 
-json MMSEngineDBFacade::getLoginStatisticList (
-	string startStatisticDate, string endStatisticDate,
-	int start, int rows
-)
+json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string endStatisticDate, int start, int rows)
 {
-	SPDLOG_INFO("getLoginStatisticList"
+	SPDLOG_INFO(
+		"getLoginStatisticList"
 		", startStatisticDate: {}"
 		", endStatisticDate: {}"
 		", start: {}"
@@ -2652,96 +2613,96 @@ json MMSEngineDBFacade::getLoginStatisticList (
 		startStatisticDate, endStatisticDate, start, rows
 	);
 
-    json statisticsListRoot;
-    
-    shared_ptr<PostgresConnection> conn = nullptr;
+	json statisticsListRoot;
+
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
-        string field;
-        
-        {
-            json requestParametersRoot;
+	try
+	{
+		string field;
+
+		{
+			json requestParametersRoot;
 
 			if (startStatisticDate != "")
-            {
-                field = "startStatisticDate";
-                requestParametersRoot[field] = startStatisticDate;
-            }
+			{
+				field = "startStatisticDate";
+				requestParametersRoot[field] = startStatisticDate;
+			}
 
 			if (endStatisticDate != "")
-            {
-                field = "endStatisticDate";
-                requestParametersRoot[field] = endStatisticDate;
-            }
+			{
+				field = "endStatisticDate";
+				requestParametersRoot[field] = endStatisticDate;
+			}
 
 			{
 				field = "start";
 				requestParametersRoot[field] = start;
 			}
-            
+
 			{
 				field = "rows";
 				requestParametersRoot[field] = rows;
 			}
 
-            field = "requestParameters";
-            statisticsListRoot[field] = requestParametersRoot;
-        }
-        
+			field = "requestParameters";
+			statisticsListRoot[field] = requestParametersRoot;
+		}
+
 		string sqlWhere = "where s.userKey = u.userKey ";
 		if (startStatisticDate != "")
 			sqlWhere += fmt::format("and s.successfulLogin >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
 			sqlWhere += fmt::format("and s.successfulLogin <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 
-        json responseRoot;
-        {
-            string sqlStatement = 
-				fmt::format("select count(*) from MMS_LoginStatistic s, MMS_User u {}", sqlWhere);
+		json responseRoot;
+		{
+			string sqlStatement = fmt::format("select count(*) from MMS_LoginStatistic s, MMS_User u {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
-            field = "numFound";
-            responseRoot[field] = count;
-        }
+			field = "numFound";
+			responseRoot[field] = count;
+		}
 
-        json statisticsRoot = json::array();
-        {
+		json statisticsRoot = json::array();
+		{
 			string sqlStatement = fmt::format(
-                "select u.name as userName, u.eMailAddress as emailAddress, s.loginStatisticKey, "
+				"select u.name as userName, u.eMailAddress as emailAddress, s.loginStatisticKey, "
 				"s.userKey, s.ip, "
 				"to_char(s.successfulLogin, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedSuccessfulLogin "
 				"from MMS_LoginStatistic s, MMS_User u {}"
 				"order by s.successfulLogin desc "
 				"limit {} offset {}",
-				sqlWhere, rows, start);
+				sqlWhere, rows, start
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			for (auto row: res)
-            {
-                json statisticRoot;
+			for (auto row : res)
+			{
+				json statisticRoot;
 
-                field = "loginStatisticKey";
+				field = "loginStatisticKey";
 				statisticRoot[field] = row["loginStatisticKey"].as<int64_t>();
 
-                field = "userKey";
-                statisticRoot[field] = row["userKey"].as<int64_t>();
+				field = "userKey";
+				statisticRoot[field] = row["userKey"].as<int64_t>();
 
 				field = "userName";
 				statisticRoot[field] = row["userName"].as<string>();
@@ -2764,36 +2725,37 @@ json MMSEngineDBFacade::getLoginStatisticList (
 					}
 				}
 
-                field = "successfulLogin";
+				field = "successfulLogin";
 				if (row["formattedSuccessfulLogin"].is_null())
 					statisticRoot[field] = nullptr;
 				else
 					statisticRoot[field] = row["formattedSuccessfulLogin"].as<string>();
 
-                statisticsRoot.push_back(statisticRoot);
-            }
-			SPDLOG_INFO("SQL statement"
+				statisticsRoot.push_back(statisticRoot);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 		}
 
-        field = "loginStatistics";
-        responseRoot[field] = statisticsRoot;
+		field = "loginStatistics";
+		responseRoot[field] = statisticsRoot;
 
-        field = "response";
-        statisticsListRoot[field] = responseRoot;
+		field = "response";
+		statisticsListRoot[field] = responseRoot;
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
-    }
-	catch(sql_error const &e)
-    {
-		SPDLOG_ERROR("SQL exception"
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -2804,36 +2766,10 @@ json MMSEngineDBFacade::getLoginStatisticList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)                                              
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch(runtime_error& e)
-	{
-		SPDLOG_ERROR("runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -2844,12 +2780,41 @@ json MMSEngineDBFacade::getLoginStatisticList (
 			conn = nullptr;
 		}
 
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
 
 		throw e;
 	}
-	catch(exception& e)
-    {
-		SPDLOG_ERROR("exception"
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -2858,11 +2823,12 @@ json MMSEngineDBFacade::getLoginStatisticList (
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)                                              
+				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
 		}
 		if (conn != nullptr)
@@ -2874,50 +2840,56 @@ json MMSEngineDBFacade::getLoginStatisticList (
 		throw e;
 	}
 
-    return statisticsListRoot;
+	return statisticsListRoot;
 }
 
 json MMSEngineDBFacade::getGEOInfo(string ip)
 {
-	SPDLOG_INFO("getGEOInfo"
+	SPDLOG_INFO(
+		"getGEOInfo"
 		", ip: {}",
 		ip
 	);
 
-    shared_ptr<PostgresConnection> conn = nullptr;
+	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata 
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo 
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-    try
-    {
+	try
+	{
 		json geoInfoRoot;
 
-        {
+		{
 			string sqlStatement = fmt::format(
 				"select continent, continentCode, country, countryCode, region, city, org, isp, "
 				"to_char(lastGEOUpdate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedLastGEOUpdate, "
 				"to_char(lastTimeUsed, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedLastTimeUsed "
-				"from MMS_GEOInfo where ip = {} ", trans.quote(ip));
+				"from MMS_GEOInfo where ip = {} ",
+				trans.quote(ip)
+			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			SPDLOG_INFO(
+				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
 
 			if (empty(res))
 			{
-				SPDLOG_WARN("ip was not found"
-					", ip: {}", ip);
+				SPDLOG_WARN(
+					"ip was not found"
+					", ip: {}",
+					ip
+				);
 
 				trans.commit();
 				connectionPool->unborrow(conn);
@@ -2985,14 +2957,15 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 		}
 
 		trans.commit();
-        connectionPool->unborrow(conn);
+		connectionPool->unborrow(conn);
 		conn = nullptr;
 
 		return geoInfoRoot;
-    }
-	catch(sql_error const &e)
-    {
-		SPDLOG_ERROR("SQL exception"
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
 			", query: {}"
 			", exceptionMessage: {}"
 			", conn: {}",
@@ -3003,36 +2976,10 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)                                              
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch(runtime_error& e)
-	{
-		SPDLOG_ERROR("runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
@@ -3043,12 +2990,41 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 			conn = nullptr;
 		}
 
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
 
 		throw e;
 	}
-	catch(exception& e)
-    {
-		SPDLOG_ERROR("exception"
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -3057,11 +3033,12 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 		{
 			trans.abort();
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
-			SPDLOG_ERROR("abort failed"
+			SPDLOG_ERROR(
+				"abort failed"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)                                              
+				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
 		}
 		if (conn != nullptr)
@@ -3073,4 +3050,3 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 		throw e;
 	}
 }
-

@@ -151,7 +151,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								trans.quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 							SPDLOG_INFO(
 								"SQL statement"
 								", sqlStatement: @{}@"
@@ -208,7 +208,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								trans.quote(toString(EncodingStatus::End_CanceledByMMS)), encodingItem->_encodingJobKey
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 							SPDLOG_INFO(
 								"SQL statement"
 								", sqlStatement: @{}@"
@@ -248,7 +248,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 							trans.quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 						SPDLOG_INFO(
 							"SQL statement"
 							", sqlStatement: @{}@"
@@ -307,7 +307,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 									trans.quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
 								);
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-								int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+								int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 								SPDLOG_INFO(
 									"SQL statement"
 									", sqlStatement: @{}@"
@@ -342,7 +342,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								trans.quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 							SPDLOG_INFO(
 								"SQL statement"
 								", sqlStatement: @{}@"
@@ -405,7 +405,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 							trans.quote(toString(EncodingStatus::Processing)), trans.quote(processorMMS), encodingItem->_encodingJobKey
 						);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"
@@ -670,7 +670,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 						);
 					}
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"
@@ -712,7 +712,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					trans.quote(toString(newEncodingStatus)), encodingJobKey, trans.quote(toString(EncodingStatus::Processing))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -750,7 +750,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					trans.quote(toString(newEncodingStatus)), encodingJobKey, trans.quote(toString(EncodingStatus::Processing))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -788,7 +788,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					trans.quote(toString(newEncodingStatus)), encodingJobKey, trans.quote(toString(EncodingStatus::ToBeProcessed))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -826,7 +826,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					trans.quote(toString(newEncodingStatus)), encodingJobKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -865,7 +865,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					trans.quote(toString(newEncodingStatus)), encodingJobKey, trans.quote(toString(EncodingStatus::Processing))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -1102,7 +1102,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 				utcRecordingPeriodStart, utcRecordingPeriodStart, utcRecordingPeriodEnd, utcRecordingPeriodEnd, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1138,7 +1138,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 				utcRecordingPeriodStart, utcRecordingPeriodEnd, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1340,7 +1340,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority(shared_ptr<Workspace> workspac
 				static_cast<int>(newEncodingPriority), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1526,7 +1526,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 				trans.quote(toString(newEncodingStatus)), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1557,7 +1557,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 				trans.quote(toString(newIngestionStatus)), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1695,7 +1695,7 @@ void MMSEngineDBFacade::forceCancelEncodingJob(int64_t ingestionJobKey)
 				trans.quote(toString(encodingStatus)), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1840,7 +1840,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress(int64_t encodingJobKey, double
 				encodingPercentage, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1990,7 +1990,7 @@ void MMSEngineDBFacade::updateEncodingRealTimeInfo(
 				realTimeBitRate == -1.0 ? "null" : to_string(realTimeBitRate), numberOfRestartBecauseOfFailure, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2166,7 +2166,7 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber(int64_t encodingJobKey, 
 				failuresNumber, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2310,7 +2310,7 @@ void MMSEngineDBFacade::updateEncodingJobIsKilled(int64_t encodingJobKey, bool i
 				isKilled, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2452,7 +2452,7 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder(int64_t encodingJobKey, int6
 				encoderKey, trans.quote(stagingEncodedAssetPathName), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2586,7 +2586,7 @@ void MMSEngineDBFacade::updateEncodingJobParameters(int64_t encodingJobKey, stri
 				trans.quote(parameters), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2726,7 +2726,7 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL(int64_t ingestionJobKey, int64
 				trans.quote(path_playUrl), trans.quote("\"" + playURL + "\""), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2758,7 +2758,7 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL(int64_t ingestionJobKey, int64
 				encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2909,7 +2909,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails(
 				trans.quote(path_deliveryCode), trans.quote(to_string(deliveryCode)), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2962,7 +2962,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails(
 				encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3678,7 +3678,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 			string sqlStatement = fmt::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"

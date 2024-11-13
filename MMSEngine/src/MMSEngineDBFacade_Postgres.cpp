@@ -351,7 +351,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.quote(toString(IngestionStatus::SourceCopingInProgress))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -445,7 +445,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.quote(processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -469,7 +469,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.quote(toString(EncodingStatus::ToBeProcessed)), trans.quote(processorMMS), trans.quote(toString(EncodingStatus::Processing))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -487,7 +487,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.quote(processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1988,7 +1988,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 				deliveryAuthorizationKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2130,7 +2130,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 						retention, maxToBeRemoved
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"
@@ -2309,7 +2309,7 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 				trans.quote(today_yyyy_mm_dd), trans.quote(toString(oncePerDayType))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"

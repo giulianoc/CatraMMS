@@ -640,7 +640,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 					userKey, trans.quote(toString(CodeType::UserRegistrationComingFromShareWorkspace)), trans.quote(shareWorkspaceCode)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -1621,7 +1621,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 				trans.quote(to_string(workspaceKey)), workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1852,7 +1852,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 					enabled, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -2098,7 +2098,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 					userKey, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				apiKeyAlreadyPresentForAdminUser = trans->exec1(sqlStatement)[0].as<int>() != 0 ? true : false;
+				apiKeyAlreadyPresentForAdminUser = trans->exec1(sqlStatement)[0].as<int64_t>() != 0 ? true : false;
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -2254,7 +2254,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 
 				string sqlStatement = fmt::format("select count(*) from MMS_APIKey where userKey = {}", userKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int count = trans.exec1(sqlStatement)[0].as<int>();
+				int count = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -2285,7 +2285,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 			string sqlStatement =
 				fmt::format("WITH rows AS (delete from MMS_Workspace where workspaceKey = {} returning 1) select count(*) from rows", workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2319,7 +2319,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 				sUsers
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2515,7 +2515,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 			{
 				string sqlStatement = fmt::format("select count(*) from MMS_APIKey where userKey = {}", userKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int count = trans.exec1(sqlStatement)[0].as<int>();
+				int count = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -2540,7 +2540,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 				userKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2561,7 +2561,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 				userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3108,7 +3108,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 					userKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -3305,7 +3305,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3998,7 +3998,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -4030,7 +4030,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					trans.quote(newExpirationUtcDate), workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -4086,7 +4086,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -4215,7 +4215,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -4260,7 +4260,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				trans.quote(permissions), workspaceKey, userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -4453,7 +4453,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 				userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -4470,7 +4470,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 				trans.quote(apiKey)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -5306,7 +5306,7 @@ json MMSEngineDBFacade::updateUser(
 				setSQL, userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -5669,7 +5669,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 				trans.quote(newPassword), userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"

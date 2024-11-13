@@ -297,7 +297,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				);
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -931,7 +931,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 				newDependOnIngestionJobKey, previousDependOnIngestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1170,7 +1170,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(
 				trans.quote(metadataContent), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1242,7 +1242,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 				parentGroupOfTasksIngestionJobKey, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1474,7 +1474,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 						trans->quote(toString(newIngestionStatus)), trans->quote(errorMessageForSQL), processorMMSUpdate, ingestionJobKey
 					);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -1522,7 +1522,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 						trans->quote(toString(newIngestionStatus)), trans->quote(errorMessageForSQL), processorMMSUpdate, ingestionJobKey
 					);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -1645,7 +1645,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 				trans.quote(errorMessageForSQL), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1907,7 +1907,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 					trans->quote(toString(IngestionStatus::End_NotToBeExecuted)), hierarchicalIngestionJobKeysDependencies
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -2016,7 +2016,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 					trans->quote(toString(newIngestionRootStatus)), ingestionRootKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -2225,7 +2225,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 				downloadingPercentage, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2397,7 +2397,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 				uploadingPercentage, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2576,7 +2576,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 					sourceBinaryTransferred, ingestionJobKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3740,7 +3740,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(int64_t ingestionJobKey, boo
 		{
 			string sqlStatement = fmt::format("select count(*) from MMS_IngestionJobOutput where ingestionJobKey = {}", ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			ingestionJobOutputsCount = trans.exec1(sqlStatement)[0].as<int>();
+			ingestionJobOutputsCount = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -4005,7 +4005,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			string sqlStatement = fmt::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -4779,7 +4779,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 				trans.quote(newPeriodUtcStartDateTime), trans.quote(newPeriodUtcEndDateTime), workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -5190,7 +5190,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 				setSQL, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -5224,7 +5224,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 					ingestionJobKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"

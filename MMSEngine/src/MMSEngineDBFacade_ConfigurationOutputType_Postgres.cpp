@@ -156,7 +156,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 				trans.quote(label), trans.quote(channelId), trans.quote(rtmpURL), trans.quote(playURL), trans.quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -293,7 +293,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(int64_t workspaceKey, int64_t confK
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -460,7 +460,7 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 			string sqlStatement = fmt::format("select count(*) from MMS_Conf_AWSChannel ac {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -705,7 +705,7 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"
@@ -805,7 +805,7 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 				outputIndex, ingestionJobKey, reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -984,7 +984,7 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 				reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1254,7 +1254,7 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 				secureToken == "" ? "null" : trans.quote(secureToken), trans.quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1391,7 +1391,7 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(int64_t workspaceKey, int64_t con
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1558,7 +1558,7 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 			string sqlStatement = fmt::format("select count(*) from MMS_Conf_CDN77Channel cc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1988,7 +1988,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"
@@ -2092,7 +2092,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 				outputIndex, ingestionJobKey, reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2270,7 +2270,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputInde
 				reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2541,7 +2541,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 				playURL == "" ? "null" : trans.quote(playURL), trans.quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2678,7 +2678,7 @@ void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t conf
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2845,7 +2845,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 			string sqlStatement = fmt::format("select count(*) from MMS_Conf_RTMPChannel rc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3299,7 +3299,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"
@@ -3408,7 +3408,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 				outputIndex, ingestionJobKey, reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3588,7 +3588,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 				reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3856,7 +3856,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 				playlistEntriesNumber == -1 ? "null" : to_string(playlistEntriesNumber), trans.quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -3993,7 +3993,7 @@ void MMSEngineDBFacade::removeHLSChannelConf(int64_t workspaceKey, int64_t confK
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -4160,7 +4160,7 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 			string sqlStatement = fmt::format("select count(*) from MMS_Conf_HLSChannel hc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -4595,7 +4595,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 					SPDLOG_INFO(
 						"SQL statement"
 						", sqlStatement: @{}@"
@@ -4698,7 +4698,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 				outputIndex, ingestionJobKey, reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -4876,7 +4876,7 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 				reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"

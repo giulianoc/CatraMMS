@@ -218,7 +218,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				setSQL, confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -407,7 +407,7 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -565,7 +565,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 			string sqlStatement = fmt::format("select count(*) from MMS_Conf_YouTube {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1022,7 +1022,7 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 				trans.quote(label), trans.quote(userAccessToken), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1159,7 +1159,7 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1326,7 +1326,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 			string sqlStatement = fmt::format("select count(*) from MMS_Conf_Facebook {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1766,7 +1766,7 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 				trans.quote(label), trans.quote(refreshToken), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1903,7 +1903,7 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2070,7 +2070,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 			string sqlStatement = fmt::format("select count(*) from MMS_Conf_Twitch {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2509,7 +2509,7 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 				trans.quote(label), trans.quote(token), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2646,7 +2646,7 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -2813,7 +2813,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 			string sqlStatement = fmt::format("select count(*) from MMS_Conf_Tiktok {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"

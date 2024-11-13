@@ -76,7 +76,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 							trans.quote(processorMMS), mediaItemKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 						internalSqlDuration += sqlDuration;
 						SPDLOG_INFO(
@@ -190,7 +190,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 							trans.quote(processorMMS), mediaItemKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 						SPDLOG_INFO(
 							"SQL statement"
 							", sqlStatement: @{}@"
@@ -480,7 +480,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 				ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			dependenciesNumber = trans.exec1(sqlStatement)[0].as<int>();
+			dependenciesNumber = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -596,7 +596,7 @@ json MMSEngineDBFacade::updateMediaItem(
 				setSQL, mediaItemKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -788,7 +788,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 				newRetentionInMinutes == -1 ? "null" : to_string(newRetentionInMinutes), physicalPathKey, mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -1254,7 +1254,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 		{
 			string sqlStatement = fmt::format("select count(*) from MMS_MediaItem mi {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			numFound = trans.exec1(sqlStatement)[0].as<int>();
+			numFound = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -5755,7 +5755,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					currentDirLevel1, currentDirLevel2, currentDirLevel3, workspace->_workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -5996,7 +5996,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					workspaceKey, mediaItemKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -6063,7 +6063,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 							mediaItemKey, chrono::system_clock::now().time_since_epoch().count(), workspaceKey, trans->quote(uniqueName)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+						int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 						SPDLOG_INFO(
 							"SQL statement"
 							", sqlStatement: @{}@"
@@ -6083,7 +6083,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 							workspaceKey, mediaItemKeyOfCurrentUniqueName
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+						int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 						SPDLOG_INFO(
 							"SQL statement"
 							", sqlStatement: @{}@"
@@ -6148,7 +6148,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 								mediaItemKey, chrono::system_clock::now().time_since_epoch().count(), workspaceKey, trans->quote(uniqueName)
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+							int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 							SPDLOG_INFO(
 								"SQL statement"
 								", sqlStatement: @{}@"
@@ -6168,7 +6168,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 								workspaceKey, mediaItemKeyOfCurrentUniqueName
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+							int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 							SPDLOG_INFO(
 								"SQL statement"
 								", sqlStatement: @{}@"
@@ -6191,7 +6191,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					trans->quote(uniqueName), workspaceKey, mediaItemKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -6652,7 +6652,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				mediaItemKey, mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans->exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -7030,7 +7030,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 				physicalPathKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -7164,7 +7164,7 @@ void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 				mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -7519,7 +7519,7 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 				processorMMSForRetention == "" ? "null" : trans.quote(processorMMSForRetention), mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"

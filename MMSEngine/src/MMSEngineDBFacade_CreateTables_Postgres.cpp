@@ -1072,7 +1072,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 									trans.quote(toString(deliveryTechnology)), trans.quote(jsonProfile), encodingProfileKey
 								);
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-								int rowsUpdated = trans.exec1(sqlStatement)[0].as<int>();
+								int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 								SPDLOG_INFO(
 									"SQL statement"
 									", sqlStatement: @{}@"
