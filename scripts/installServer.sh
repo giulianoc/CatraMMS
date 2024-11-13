@@ -175,10 +175,11 @@ install-packages()
 	echo ""
 	apt-get -y install libmysqlcppconn-dev
 
-	echo ""
-	read -n 1 -s -r -p "install libpqxx-dev..."
-	echo ""
-	apt-get -y install libpqxx-dev
+	#istallato in /opt
+	#echo ""
+	#read -n 1 -s -r -p "install libpqxx-dev..."
+	#echo ""
+	#apt-get -y install libpqxx-dev
 
 	echo ""
 	read -n 1 -s -r -p "install libtiff5..."

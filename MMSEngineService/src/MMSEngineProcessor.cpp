@@ -1482,7 +1482,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 		bool uploadingStoppedByUser = false;
 		curlpp::types::ProgressFunctionFunctor functor = bind(
 			&MMSEngineProcessor::progressUploadCallback, this, ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, uploadingStoppedByUser,
-			placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4
+			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4
 		);
 		MMSCURL::ftpFile(
 			_logger, ingestionJobKey, mmsAssetPathName, fileName, sizeInBytes, ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory,

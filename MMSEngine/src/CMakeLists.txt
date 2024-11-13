@@ -108,6 +108,7 @@ execute_process(
 
 include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories("${PROJECT_SOURCE_DIR}/FFMpeg/src")
+include_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/include")
 include_directories("${PROJECT_SOURCE_DIR}/PostgresHelper/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
@@ -137,6 +138,7 @@ if(APPLE)
   link_directories("${PROJECT_SOURCE_DIR}/../usr_local/lib")
 endif()
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
+link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 
 add_library(MMSEngine SHARED ${SOURCES} ${HEADERS})
 

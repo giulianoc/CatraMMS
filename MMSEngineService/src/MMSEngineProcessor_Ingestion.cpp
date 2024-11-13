@@ -1,8 +1,7 @@
 
-#include "CheckIngestionTimes.h"
-#include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
+#include "FFMpeg.h"
 #include "catralibraries/StringUtils.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
@@ -10,6 +9,7 @@
 #include <curlpp/Options.hpp>
 #include <curlpp/cURLpp.hpp>
 #include <openssl/evp.h>
+#include "CheckIngestionTimes.h"
 
 #define MD5BUFFERSIZE 16384
 // #include <fstream>
@@ -7665,7 +7665,7 @@ size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 			", curlDownloadData->maxChunkFileSize: {}"
 			", tellp: {}",
 			curlDownloadData->ingestionJobKey, curlDownloadData->destBinaryPathName, curlDownloadData->currentChunkNumber,
-			curlDownloadData->currentTotalSize, curlDownloadData->maxChunkFileSize, (curlDownloadData->mediaSourceFileStream).tellp()
+			curlDownloadData->currentTotalSize, curlDownloadData->maxChunkFileSize, static_cast<long>((curlDownloadData->mediaSourceFileStream).tellp())
 		);
 	}
 
@@ -7967,7 +7967,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					double lastPercentageUpdated = -1.0;
 					curlpp::types::ProgressFunctionFunctor functor = bind(
 						&MMSEngineProcessor::progressDownloadCallback, this, ingestionJobKey, lastProgressUpdate, lastPercentageUpdated,
-						downloadingStoppedByUser, placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4
+						downloadingStoppedByUser, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4
 					);
 					request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
 					request.setOpt(new curlpp::options::NoProgress(0L));
@@ -8048,7 +8048,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					double lastPercentageUpdated = -1.0;
 					curlpp::types::ProgressFunctionFunctor functor = bind(
 						&MMSEngineProcessor::progressDownloadCallback, this, ingestionJobKey, lastTimeProgressUpdate, lastPercentageUpdated,
-						downloadingStoppedByUser, placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4
+						downloadingStoppedByUser, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4
 					);
 					request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
 					request.setOpt(new curlpp::options::NoProgress(0L));

@@ -89,6 +89,7 @@ execute_process(
 
 include_directories("${PROJECT_SOURCE_DIR}/FastCGIAPI/src")
 include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")
+include_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/include")
 include_directories("${PROJECT_SOURCE_DIR}/PostgresHelper/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
@@ -110,27 +111,17 @@ endif()
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/lib")
-if(APPLE)
-  link_directories(
-    "${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib"
-  )
-else()
-  # ImageMagick, inside the deploy dir, is a link to the real version:
-  # ImageMagick -> ImageMagick-7.0.10
-  link_directories("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
-  link_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
-  link_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
-endif()
-# ffmpeg, inside the deploy dir, is a link to the real version: ffmpeg ->
-# ffmpeg-4.3.1
+link_directories("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
+link_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
+link_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib")
-link_directories("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib64")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/curlpp/lib64")
+link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 # link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
-# API add_executable(api.fcgi ${SOURCES_API} ${COMMON_SOURCES} ${HEADERS})
 add_executable(api.fcgi ${SOURCES_API} ${HEADERS})
+
 target_link_libraries(api.fcgi fastCGIAPI)
 target_link_libraries(api.fcgi MMSUtility)
 target_link_libraries(api.fcgi MMSEngine)
