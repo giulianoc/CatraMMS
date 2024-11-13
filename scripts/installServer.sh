@@ -223,91 +223,97 @@ install-packages()
 
 	if [ "$moduleType" == "engine" ]; then
 
+		dbtype="postgres"
+
 		#MYSQL
-		echo ""
-		read -n 1 -s -r -p "install mysql-client..."
-		echo ""
-		apt-get -y install mysql-client
+		if [ "$dbType" == "mysql" ]; then
+			echo ""
+			read -n 1 -s -r -p "install mysql-client..."
+			echo ""
+			apt-get -y install mysql-client
 
-		echo ""
-		read -n 1 -s -r -p "install mysql-server..."
-		echo ""
-		apt-get -y install mysql-server
+			echo ""
+			read -n 1 -s -r -p "install mysql-server..."
+			echo ""
+			apt-get -y install mysql-server
 
-		echo ""
-		echo -n "Type the DB name: "
-		read dbName
-		echo -n "Type the DB user: "
-		read dbUser
-		echo -n "Type the DB password: "
-		read dbPassword
-		echo "create database $dbName CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci" | mysql -u root -p$dbPassword
-
-
-		echo "CREATE USER '$dbUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		#grant process allows mysqldump
-		echo "GRANT PROCESS ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-
-		echo "CREATE USER '$dbUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		#grant process allows mysqldump
-		echo "GRANT PROCESS ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			echo ""
+			echo -n "Type the DB name: "
+			read dbName
+			echo -n "Type the DB user: "
+			read dbUser
+			echo -n "Type the DB password: "
+			read dbPassword
+			echo "create database $dbName CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci" | mysql -u root -p$dbPassword
 
 
-		readOnlyDBUser=${dbUser}_RO
+			echo "CREATE USER '$dbUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+			echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			#grant process allows mysqldump
+			echo "GRANT PROCESS ON *.* TO '$dbUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
-		echo "CREATE USER '$readOnlyDBUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT SELECT, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		#grant process allows mysqldump
-		echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-
-		echo "CREATE USER '$readOnlyDBUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
-		echo "GRANT SELECT, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
-		#grant process allows mysqldump
-		echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			echo "CREATE USER '$dbUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+			echo "GRANT ALL PRIVILEGES ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			#grant process allows mysqldump
+			echo "GRANT PROCESS ON *.* TO '$dbUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
 
-		echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, mysqlx-bind-address, max_connections, sort_buffer_size, server-id, skip-name-resolve, log_bin, binlog_expire_logs_seconds"
+			readOnlyDBUser=${dbUser}_RO
 
-		echo "Follow the instructions to change the datadir (https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-18-04)"
+			echo "CREATE USER '$readOnlyDBUser'@'%' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+			echo "GRANT SELECT, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			#grant process allows mysqldump
+			echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'%' WITH GRANT OPTION" | mysql -u root -p$dbPassword
 
-		echo "Then restart mysql and run the SQL command: create table if not exists MMS_TestConnection (testConnectionKey BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, constraint MMS_TestConnection_PK PRIMARY KEY (testConnectionKey)) ENGINE=InnoDB"
+			echo "CREATE USER '$readOnlyDBUser'@'localhost' IDENTIFIED BY '$dbPassword'" | mysql -u root -p$dbPassword
+			echo "GRANT SELECT, CREATE TEMPORARY TABLES ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+			#grant process allows mysqldump
+			echo "GRANT PROCESS ON *.* TO '$readOnlyDBUser'@'localhost' WITH GRANT OPTION" | mysql -u root -p$dbPassword
+
+
+			echo "Inside /etc/mysql/mysql.conf.d/mysqld.cnf change: bind-address, mysqlx-bind-address, max_connections, sort_buffer_size, server-id, skip-name-resolve, log_bin, binlog_expire_logs_seconds"
+
+			echo "Follow the instructions to change the datadir (https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-18-04)"
+
+			echo "Then restart mysql and run the SQL command: create table if not exists MMS_TestConnection (testConnectionKey BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, constraint MMS_TestConnection_PK PRIMARY KEY (testConnectionKey)) ENGINE=InnoDB"
+		fi
 
 
 		#Postgres
-		echo ""
-		read -n 1 -s -r -p "install postgres..."
-		echo ""
-		apt-get -y install postgresql postgresql-contrib
+		if [ "$dbType" == "postgres" ]; then
+			echo ""
+			read -n 1 -s -r -p "install postgres..."
+			echo ""
+			apt-get -y install postgresql postgresql-contrib
 
-		dbName=mms
-		dbUser=mms
-		echo -n "Type the DB password: "
-		read dbPassword
-		echo "edit config sudo vi /etc/postgresql/14/main/postgresql.conf, change: listen_addresses, max_connections"
-		echo "change the data directory following my 'postgres' document"
-		echo "Premi un tasto quando fatto per entrambi i punti sopra"
-		read
+			dbName=mms
+			dbUser=mms
+			echo -n "Type the DB password: "
+			read dbPassword
+			echo "edit config sudo vi /etc/postgresql/14/main/postgresql.conf, change: listen_addresses, max_connections"
+			echo "change the data directory following my 'postgres' document"
+			echo "Premi un tasto quando fatto per entrambi i punti sopra"
+			read
 
-		echo "host  mms  mms 10.0.0.0/16 scram-sha-256" >> /etc/postgresql/14/main/pg_hba.conf
-		echo "host replication mms_repl 10.0.0.0/16 md5" >> /etc/postgresql/14/main/pg_hba.conf
+			echo "host  mms  mms 10.0.0.0/16 scram-sha-256" >> /etc/postgresql/14/main/pg_hba.conf
+			echo "host replication mms_repl 10.0.0.0/16 md5" >> /etc/postgresql/14/main/pg_hba.conf
 
-		echo "CREATE ROLE mms_repl REPLICATION LOGIN ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
-		echo "CREATE ROLE mms CREATEDB LOGIN CREATEROLE ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
-		echo "CREATE DATABASE mms OWNER mms ENCODING UTF8" | sudo -u postgres psql
-		#per leggere lo stato dello slave (servicesStatusLibrary.sh):
-		echo "GRANT pg_read_all_stats TO mms" | sudo -u postgres psql
+			echo "CREATE ROLE mms_repl REPLICATION LOGIN ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
+			echo "CREATE ROLE mms CREATEDB LOGIN CREATEROLE ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
+			echo "CREATE DATABASE mms OWNER mms ENCODING UTF8" | sudo -u postgres psql
+			#per leggere lo stato dello slave (servicesStatusLibrary.sh):
+			echo "GRANT pg_read_all_stats TO mms" | sudo -u postgres psql
 
-		echo "sudo vi /etc/hosts inizializzare postgres-master, postgres-slaves e postgres-localhost (usato da servicesStatusLibrary.sh)"
-		echo "Premi un tasto quando fatto"
-		read
+			echo "sudo vi /etc/hosts inizializzare postgres-master, postgres-slaves e postgres-localhost (usato da servicesStatusLibrary.sh)"
+			echo "Premi un tasto quando fatto"
+			read
 
-		echo "se sei in ambiente master/slave seguire il mio documento su postgres"
-		echo "se serve eseguire il comando sotto"
-		echo "create table if not exists MMS_TestConnection (testConnectionKey integer)"
-		echo "Premi un tasto per continuare"
-		read
+			echo "se sei in ambiente master/slave seguire il mio documento su postgres"
+			echo "se serve eseguire il comando sotto"
+			echo "create table if not exists MMS_TestConnection (testConnectionKey integer)"
+			echo "Premi un tasto per continuare"
+			read
+		fi
 	fi
 
 	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
@@ -613,7 +619,8 @@ install-mms-packages()
 {
 	moduleType=$1
 
-	architecture=ubuntu-22.04
+	#architecture=ubuntu-22.04
+	architecture=ubuntu-24.04
 
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
@@ -631,7 +638,7 @@ install-mms-packages()
 	if [ "$moduleType" != "integration" ]; then
 		packageName=ImageMagick
 		echo ""
-		imageMagickVersion=7.1.0
+		imageMagickVersion=7.1.1
 		echo -n "$packageName version (i.e.: $imageMagickVersion)? "
 		read version
 		if [ "$version" == "" ]; then
@@ -669,9 +676,24 @@ install-mms-packages()
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
 
+	packageName=libpqxx
+	echo ""
+	libpqxxVersion=7.9.2
+	echo -n "$packageName version (i.e.: $libpqxxVersion)? "
+	read version
+	if [ "$version" == "" ]; then
+		version=$libpqxxVersion
+	fi
+	package=$packageName-$version
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+
+
 	packageName=nginx
 	echo ""
-	nginxVersion=1.22.0
+	nginxVersion=1.27.2
 	echo -n "$packageName version (i.e.: $nginxVersion)? "
 	read version
 	if [ "$version" == "" ]; then

@@ -59,6 +59,12 @@ prodServers[$((serverIndex*4+2))]=hetzner-mms-key
 prodServers[$((serverIndex*4+3))]=9255
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*4+0))]=hetzner-engine-db-2
+prodServers[$((serverIndex*4+1))]=162.55.245.36
+prodServers[$((serverIndex*4+2))]=hetzner-mms-key
+prodServers[$((serverIndex*4+3))]=9255
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*4+0))]=hetzner-engine-db-3
 prodServers[$((serverIndex*4+1))]=167.235.14.105
 prodServers[$((serverIndex*4+2))]=hetzner-mms-key
