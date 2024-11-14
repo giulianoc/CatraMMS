@@ -258,8 +258,8 @@ else
 			dumpDirectory=${arrayOfDBUserPwd[$((dbUserPwdIndex+3))]}
 
 			if [ "$dbName" == "mms" ];then
-				dumpFileName=${dbUser}_$(date +"%Y-%m-%d")_forSlave.sql
-				postgresDumpFileName=postgres_${dbUser}_$(date +"%Y-%m-%d").sql
+				#dumpFileName=${dbUser}_$(date +"%Y-%m-%d")_forSlave.sql
+				dumpFileName=postgres_${dbUser}_$(date +"%Y-%m-%d").sql
 			else
 				dumpFileName=${dbUser}_$(date +"%Y-%m-%d").sql
 			fi
@@ -269,8 +269,9 @@ else
 			#--include-source-host-port: aggiunge server and port nel comando di CHANGE REPLICATION SOURCE TO
 			#dbUser deve avere i diritti per eseguire SHOW REPLICA STATUS
 			if [ "$dbName" == "mms" ];then
-				mysqldump --no-tablespaces --dump-replica --apply-replica-statements --include-source-host-port -u $dbUser -p$dbPwd -h db-slaves $dbName | gzip > $dumpDirectory$dumpFileName.gz # && gzip -f $dumpDirectory$dumpFileName
-				pg_dump "postgresql://$dbUser:$dbPwd@postgres-slaves:5432/$dbName" --clean --if-exists | gzip > $dumpDirectory$postgresDumpFileName.gz
+				#mysqldump --no-tablespaces --dump-replica --apply-replica-statements --include-source-host-port -u $dbUser -p$dbPwd -h db-slaves $dbName | gzip > $dumpDirectory$dumpFileName.gz # && gzip -f $dumpDirectory$dumpFileName
+				pg_dump "postgresql://$dbUser:$dbPwd@postgres-slaves:5432/$dbName" --clean --if-exists > $dumpDirectory$dumpFileName
+				gzip $dumpDirectory$dumpFileName
 			else
 				mysqldump --no-tablespaces -u $dbUser -p$dbPwd -h db-slaves $dbName | gzip > $dumpDirectory$dumpFileName.gz # && gzip -f $dumpDirectory$dumpFileName
 			fi

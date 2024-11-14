@@ -137,8 +137,12 @@ MMSEngineDBFacade::MMSEngineDBFacade(json configuration, size_t masterDbPoolSize
 	{
 		string masterDbServer = JSONUtils::asString(configuration["postgres"]["master"], "server", "");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->server: " + masterDbServer);
+		int masterDbPort = JSONUtils::asInt(configuration["postgres"]["master"], "port", 5432);
+		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->port: " + to_string(masterDbPort));
 		string slaveDbServer = JSONUtils::asString(configuration["postgres"]["slave"], "server", "");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->server: " + slaveDbServer);
+		int slaveDbPort = JSONUtils::asInt(configuration["postgres"]["slave"], "port", 5432);
+		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->port: " + to_string(slaveDbPort));
 		string masterDbUsername = JSONUtils::asString(configuration["postgres"]["master"], "userName", "");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->userName: " + masterDbUsername);
 		string slaveDbUsername = JSONUtils::asString(configuration["postgres"]["slave"], "userName", "");
@@ -157,9 +161,9 @@ MMSEngineDBFacade::MMSEngineDBFacade(json configuration, size_t masterDbPoolSize
 		_logger->info(__FILEREF__ + "Creating PostgresConnectionFactory...");
 		bool reconnect = true;
 		_postgresMasterConnectionFactory =
-			make_shared<PostgresConnectionFactory>(masterDbServer, masterDbUsername, dbPassword, dbName, selectTestingConnection);
+			make_shared<PostgresConnectionFactory>(masterDbServer, masterDbUsername, masterDbPort, dbPassword, dbName, selectTestingConnection);
 		_postgresSlaveConnectionFactory =
-			make_shared<PostgresConnectionFactory>(slaveDbServer, slaveDbUsername, dbPassword, dbName, selectTestingConnection);
+			make_shared<PostgresConnectionFactory>(slaveDbServer, slaveDbUsername, slaveDbPort, dbPassword, dbName, selectTestingConnection);
 
 		// 2018-04-05: without an open stream the first connection fails
 		// 2018-05-22: It seems the problem is when the stdout of the spdlog is true!!!

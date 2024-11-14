@@ -8,6 +8,8 @@ ssh-port()
 	echo ""
 
 	echo "Port 9255" >> /etc/ssh/sshd_config
+	#capita che il restart del servizio non considera la porta che è stata appena aggiunta. Per cui aggiungo uno sleep
+	sleep 5
 	/etc/init.d/ssh restart
 }
 
@@ -223,7 +225,7 @@ install-packages()
 
 	if [ "$moduleType" == "engine" ]; then
 
-		dbtype="postgres"
+		dbType="postgres"
 
 		#MYSQL
 		if [ "$dbType" == "mysql" ]; then
@@ -290,7 +292,7 @@ install-packages()
 			dbUser=mms
 			echo -n "Type the DB password: "
 			read dbPassword
-			echo "edit config sudo vi /etc/postgresql/14/main/postgresql.conf, change: listen_addresses, max_connections"
+			echo "seguire il paragrafo 'Config initialization' del mio doc di Postgres"
 			echo "change the data directory following my 'postgres' document"
 			echo "Premi un tasto quando fatto per entrambi i punti sopra"
 			read
@@ -422,7 +424,7 @@ create-directory()
 
 	if [ ! -d "/mnt/local-data/logs" ];
 	then
-		mkdir /mnt/local-data/logs
+		mkdir -p /mnt/local-data/logs
 	fi
 	ln -s /mnt/local-data/logs /var/catramms/logs
 
@@ -846,7 +848,7 @@ install-mms-packages()
 	if [ "$moduleType" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		catraLibrariesVersion=1.0.1930
+		catraLibrariesVersion=1.0.1970
 		echo -n "$packageName version (i.e.: $catraLibrariesVersion)? "
 		read version
 		if [ "$version" == "" ]; then
@@ -862,7 +864,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6105
+	catraMMSVersion=1.0.6118
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1011,7 +1013,9 @@ firewall-rules()
 		#read internalNetwork
 		internalNetwork=10.0.0.0/16
 		ufw allow from $internalNetwork to any port 3306
+		#nel caso in cui ci sono diverse versioni di postgres, ognuna ascolta su porte diverse
 		ufw allow from $internalNetwork to any port 5432
+		ufw allow from $internalNetwork to any port 5433
 	elif [ "$moduleType" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)
 		ufw allow 80
