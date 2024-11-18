@@ -8,8 +8,7 @@ ssh-port()
 	echo ""
 
 	echo "Port 9255" >> /etc/ssh/sshd_config
-	#capita che il restart del servizio non considera la porta che è stata appena aggiunta. Per cui aggiungo uno sleep
-	sleep 5
+	#ssh restart non recepisce il cambiamento della porta (non so il motivo) per cui è stato aggiunto anche alla fine di mms-account-creation
 	/etc/init.d/ssh restart
 }
 
@@ -42,6 +41,14 @@ mms-account-creation()
 	read -n 1 -s -r -p "Add the authorized_keys..."
 	vi /home/mms/.ssh/authorized_keys
 	echo ""
+
+	echo "A partire da ubuntu 24.04, l'utente mms non assume l'id 1000 ma 1001. Poichè è importante che l'id sia 1000,"
+	echo "altrimenti ci saranno problemi di scrittura dei file in quanto i mount autorizzano l'id 1000,"
+	echo "forziamo l'id ad essere 1000 con il comando usermod"
+	usermod -u 1000 mms
+
+	#ssh restart aggiunto qui perchè in ssh-port non recepisce il cambiamento
+	/etc/init.d/ssh restart
 }
 
 time-zone()
@@ -177,6 +184,11 @@ install-packages()
 	echo ""
 	apt-get -y install libmysqlcppconn-dev
 
+	echo ""
+	read -n 1 -s -r -p "install libpq-dev..."
+	echo ""
+	apt-get -y install libpq-dev
+
 	#istallato in /opt
 	#echo ""
 	#read -n 1 -s -r -p "install libpqxx-dev..."
@@ -210,12 +222,14 @@ install-packages()
 	apt install -y dvb-tools
 	apt install -y dvblast
 
-	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
 
-		echo ""
-		read -n 1 -s -r -p "install jre..."
-		echo ""
-		apt install -y default-jre
+		#non possiamo far decidere a ubuntu la versione java da istallare, bisogna istallare la versione java
+		#supportata dal nostro applicativo
+		#echo ""
+		#read -n 1 -s -r -p "install jre..."
+		#echo ""
+		#apt install -y default-jre
 
 		echo ""
 		read -n 1 -s -r -p "install openjdk..."
@@ -288,32 +302,22 @@ install-packages()
 			echo ""
 			apt-get -y install postgresql postgresql-contrib
 
-			dbName=mms
-			dbUser=mms
-			echo -n "Type the DB password: "
-			read dbPassword
+			#dbName=mms
+			#dbUser=mms
+			#echo -n "Type the DB password: "
+			#read dbPassword
 			echo "seguire il paragrafo 'Config initialization' del mio doc di Postgres"
+			read
 			echo "change the data directory following my 'postgres' document"
-			echo "Premi un tasto quando fatto per entrambi i punti sopra"
 			read
-
-			echo "host  mms  mms 10.0.0.0/16 scram-sha-256" >> /etc/postgresql/14/main/pg_hba.conf
-			echo "host replication mms_repl 10.0.0.0/16 md5" >> /etc/postgresql/14/main/pg_hba.conf
-
-			echo "CREATE ROLE mms_repl REPLICATION LOGIN ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
-			echo "CREATE ROLE mms CREATEDB LOGIN CREATEROLE ENCRYPTED PASSWORD 'F_-A*kED-34-r*U'" | sudo -u postgres psql
-			echo "CREATE DATABASE mms OWNER mms ENCODING UTF8" | sudo -u postgres psql
-			#per leggere lo stato dello slave (servicesStatusLibrary.sh):
-			echo "GRANT pg_read_all_stats TO mms" | sudo -u postgres psql
-
+			echo "seguire il paragrafo 'Credentials e createDB' del mio doc di Postgres"
+			read
+			echo "seguire il paragrafo 'Nodo slave' o 'Nodo master' rispettivamente se sei uno slave o un master"
+			read
 			echo "sudo vi /etc/hosts inizializzare postgres-master, postgres-slaves e postgres-localhost (usato da servicesStatusLibrary.sh)"
-			echo "Premi un tasto quando fatto"
 			read
-
-			echo "se sei in ambiente master/slave seguire il mio documento su postgres"
 			echo "se serve eseguire il comando sotto"
 			echo "create table if not exists MMS_TestConnection (testConnectionKey integer)"
-			echo "Premi un tasto per continuare"
 			read
 		fi
 	fi
@@ -406,154 +410,140 @@ create-directory()
 	read -n 1 -s -r -p "create-directory..."
 	echo ""
 
-	mkdir /opt/catramms
-
-	mkdir /var/catramms
-	mkdir /var/catramms/pids
-
+	#preparazione mmsStorage (una tantum)
 	if [ "$moduleType" != "integration" ]; then
-		mkdir /var/catramms/storage
-		mkdir /var/catramms/storage/nginxWorkingAreaRepository
-		mkdir /var/catramms/storage/MMSRepository
-		if [ "$moduleType" == "encoder" ]; then
-			ln -s /mnt/MMSTranscoderWorkingAreaRepository /var/catramms/storage/MMSTranscoderWorkingAreaRepository
-		else
-			mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository
+
+		#mmsStorage è montato da tutti i moduli tranne integration
+
+		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
+		mkdir -p /mnt/mmsStorage/commonConfiguration
+		mkdir -p /mnt/mmsStorage/dbDump
+		mkdir -p /mnt/mmsStorage/MMSGUI
+		mkdir -p /mnt/mmsStorage/MMSLive
+		mkdir -p /mnt/mmsStorage/MMSRepository-free
+		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
+
+		#links
+		ln -s /mnt/mmsStorage-1 /mnt/mmsStorage
+		if [ "$moduleType" == "delivery" -o "$moduleType" == "engine" ]; then
+			mkdir -p /mnt/mmsIngestionRepository/users
+			ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
+		fi
+		if [ "$moduleType" == "delivery" -o "$moduleType" == "engine" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
+			ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000
 		fi
 	fi
 
-	if [ ! -d "/mnt/local-data/logs" ];
-	then
-		mkdir -p /mnt/local-data/logs
-	fi
-	ln -s /mnt/local-data/logs /var/catramms/logs
 
-	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
-		mkdir /mnt/local-data/logs/tomcat-gui
-		mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
-		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
-	fi
-	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" ]; then
-		mkdir /mnt/local-data/logs/mmsAPI
-	fi
-	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-		mkdir -p /mnt/local-data/logs/mmsEncoder
-	fi
-	if [ "$moduleType" == "engine" ]; then
-		mkdir /mnt/local-data/logs/mmsEngineService
-	fi
-	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "integration" ]; then
+	mkdir -p /opt/catramms
+
+	mkdir -p /var/catramms
+	mkdir -p /var/catramms/pids
+
+	if [ "$moduleType" == "api" -o "$moduleType" == "api-and-delivery" ]; then
+		mkdir -p /var/catramms/storage
+		ln -s /var/catramms/storage /home/mms
+
+		mkdir -p /mnt/local-data/logs/mmsAPI
+		mkdir -p /mnt/local-data/logs/catraMMSWEBServices
 		mkdir -p /mnt/local-data/logs/nginx
-	fi
-	chown -R mms:mms /mnt/local-data/logs
+		ln -s /mnt/local-data/logs /var/catramms
+		chown -R mms:mms /mnt/local-data/logs
 
-
-	if [ "$moduleType" != "integration" ]; then
-		#if [[ ! -d "/mnt/mmsRepository0000" ]]
-		#then
-		#	mkdir /mnt/mmsRepository0000
-		#	chown mms:mms /mnt/mmsRepository0000
-		#fi
-		if [ ! -e /mnt/mmsRepository0000 ]; then
-			sudo ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000
-		fi
-
-		if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]
-		then
-			if [[ ! -d "/mnt/MMSTranscoderWorkingAreaRepository" ]]
-			then
-				mkdir /mnt/MMSTranscoderWorkingAreaRepository
-				chown mms:mms /mnt/MMSTranscoderWorkingAreaRepository
-			fi
-		fi
-	fi
-
-	if [ "$moduleType" != "integration" ]; then
-		read -n 1 -s -r -p "links..."
-		echo ""
-
-		#if [[ ! -d "/mnt/mmsStorage" ]]
-		#then
-		#	mkdir /mnt/mmsStorage
-		#	chown mms:mms /mnt/mmsStorage
-		#fi
-		if [ ! -e /mnt/mmsStorage ]; then
-			sudo ln -s /mnt/mmsStorage-1 /mnt/mmsStorage
-		fi
-		#if [ ! -d "/mnt/mmsIngestionRepository" ];
-		#then
-		#	mkdir /mnt/mmsIngestionRepository
-		#	chown mms:mms /mnt/mmsIngestionRepository
-		#fi
-		if [ ! -e /mnt/mmsIngestionRepository ]; then
-			sudo ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
-		fi
-		if [ ! -d "/mnt/mmsStorage/MMSGUI" ];
-		then
-			mkdir /mnt/mmsStorage/MMSGUI
-		fi
-		if [ ! -d "/mnt/mmsStorage/MMSWorkingAreaRepository" ];
-		then
-			mkdir /mnt/mmsStorage/MMSWorkingAreaRepository
-		fi
-		if [ ! -d "/mnt/mmsStorage/MMSRepository-free" ];
-		then
-			mkdir /mnt/mmsStorage/MMSRepository-free
-		fi
-		if [ ! -d "/mnt/mmsStorage/MMSLive" ];
-		then
-			mkdir /mnt/mmsStorage/MMSLive
-		fi
-		if [ ! -d "/mnt/mmsStorage/dbDump" ];
-		then
-			mkdir /mnt/mmsStorage/dbDump
-		fi
-		if [ ! -d "/mnt/mmsStorage/commonConfiguration" ];
-		then
-			mkdir /mnt/mmsStorage/commonConfiguration
-		fi
-	fi
-
-	#cache: anche se solo api, webapi e integration usano la cache, bisogna creare la dir anche per encoder, delivery perchè
-	#path proxy_cache_path sono configurati in nginx.conf (globale a tutti gli nginx)
-	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "integration" ]; then
-		if [ ! -d "/mnt/local-data/cache/nginx" ];
-		then
-			mkdir -p /mnt/local-data/cache/nginx
-		fi
+		mkdir -p /mnt/local-data/cache/nginx
 		ln -s /mnt/local-data/cache /var/catramms/cache
 		chown -R mms:mms /mnt/local-data/cache
-	fi
 
-	if [ "$moduleType" == "externalEncoder" ]; then
-		chown mms:mms /mnt/mmsStorage/MMSWorkingAreaRepository
-		chown mms:mms /mnt/mmsStorage/MMSRepository-free
-		chown mms:mms /mnt/mmsStorage/MMSLive
+		ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
 	fi
+	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then	#insieme al delivery abbiamo anche la GUI
+		mkdir -p /var/catramms/storage/MMSRepository
+		ln -s /var/catramms/storage /home/mms
 
-	if [ "$moduleType" != "integration" ]; then
-		#these links will be broken until the partition will not be mounted
+		mkdir -p /mnt/local-data/logs/mmsAPI
+		mkdir -p /mnt/local-data/logs/nginx
+		mkdir -p /mnt/local-data/logs/tomcat-gui
+		mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
+		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
+		mkdir -p /mnt/local-data/cache/nginx
+		ln -s /mnt/local-data/logs /var/catramms
+		ln -s /mnt/local-data/cache /var/catramms/cache
+		chown -R mms:mms /mnt/local-data
 
 		ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+
 		ln -s /mnt/mmsStorage/MMSGUI /var/catramms/storage
-		ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
-		ln -s /mnt/mmsStorage/dbDump /var/catramms/storage
-		ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
-		ln -s /mnt/mmsStorage/MMSRepository-free /var/catramms/storage
-		#Assuming the partition for the first repository containing the media files is /mnt/mmsRepository0000
+
 		ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
 		ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
 
-		ln -s /var/catramms/storage /home/mms
-	fi
+		ln -s /mnt/mmsStorage/MMSRepository-free /var/catramms/storage
 
+		ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+	fi
+	if [ "$moduleType" == "engine" ]; then
+		mkdir -p /var/catramms/storage/MMSRepository
+		ln -s /var/catramms/storage /home/mms
+
+		mkdir -p /mnt/local-data/logs/mmsEngineService
+		#MMSTranscoderWorkingAreaRepository: forse serve all'engine nelle sue attività con ffmpeg!!! da verificare
+		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
+		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
+		ln -s /mnt/local-data/logs /var/catramms
+		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+		chown -R mms:mms /mnt/local-data
+
+		ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+		ln -s /mnt/mmsStorage/dbDump /var/catramms/storage
+		ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+		ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+
+		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository/nginx
+		ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
+	fi
 	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-		if [ ! -d "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist" ];
-		then
-			mkdir /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
-			chown mms:mms /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+		mkdir -p /var/catramms/storage/MMSRepository
+		ln -s /var/catramms/storage /home/mms
+
+		mkdir -p /mnt/local-data/logs/mmsEncoder
+		mkdir -p /mnt/local-data/logs/nginx
+		mkdir -p /var/catramms/storage/MMSRepository
+		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
+		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
+		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+		#cache: anche se solo api, webapi e integration usano la cache, bisogna creare la dir anche per encoder, delivery perchè
+		#path proxy_cache_path sono configurati in nginx.conf (globale a tutti gli nginx)
+		mkdir -p /mnt/local-data/cache/nginx
+		ln -s /mnt/local-data/cache /var/catramms/cache
+		chown -R mms:mms /mnt/local-data
+
+		if [ "$moduleType" == "encoder" ]; then
+			ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+			mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository/nginx
+			ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
+			ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+			ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+		else
+			mkdir -p /mnt/local-data/MMSWorkingAreaRepository/nginx
+			ln -s /mnt/local-data/MMSWorkingAreaRepository /var/catramms/storage
+			mkdir -p /mnt/local-data/mmsRepository0000
+			ln -s /mnt/local-data/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+			mkdir -p /mnt/local-data/MMSLive
+			ln -s /mnt/local-data/MMSLive /var/catramms/storage/MMSRepository
 		fi
-		ln -s /var/catramms/storage /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+	fi
+	if [ "$moduleType" == "integration" ]; then
+		#DA VERIFICARE
+		mkdir -p /mnt/local-data/logs/tomcat-gui
+		mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
+		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
+		mkdir -p /mnt/local-data/logs/nginx
+		mkdir -p /mnt/local-data/cache/nginx
+		ln -s /mnt/local-data/cache /var/catramms/cache
+		chown -R mms:mms /mnt/local-data
 	fi
 
 	ln -s /var/catramms/logs /home/mms
@@ -567,6 +557,7 @@ create-directory()
 	ln -s /opt/catramms/CatraMMS/scripts/nginx.sh /home/mms
 	ln -s /opt/catramms/CatraMMS/scripts/mmsEncoder.sh /home/mms
 
+	ln -s /opt/catramms/CatraMMS/scripts/micro-service.sh /home/mms
 	ln -s /opt/catramms/CatraMMS/scripts/mmsApi.sh /home/mms
 	ln -s /opt/catramms/CatraMMS/scripts/mmsDelivery.sh /home/mms
 
@@ -576,7 +567,6 @@ create-directory()
 	ln -s /opt/catramms/CatraMMS/scripts/printLogFileName.sh /home/mms
 
 	chown -R mms:mms /home/mms/mms
-
 	chown -R mms:mms /opt/catramms
 	chown -R mms:mms /var/catramms
 }
@@ -864,7 +854,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6118
+	catraMMSVersion=1.0.6119
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1013,9 +1003,10 @@ firewall-rules()
 		#read internalNetwork
 		internalNetwork=10.0.0.0/16
 		ufw allow from $internalNetwork to any port 3306
-		#nel caso in cui ci sono diverse versioni di postgres, ognuna ascolta su porte diverse
+		#anche se potrebbero esserci diverse versioni di postgres ognuna che ascolta su porte diverse,
+		#è importante che la porta del postgres attivo sia la 5432 perchè questa porta è usata dappertutto:
+		#dalla conf del load balancer per gli slaves, dagli script (monitoring agent, ....)
 		ufw allow from $internalNetwork to any port 5432
-		ufw allow from $internalNetwork to any port 5433
 	elif [ "$moduleType" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)
 		ufw allow 80
@@ -1074,7 +1065,7 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleType (load-balancer or engine or api or delivery (se è sia api che delivery scrivere delivery) or encoder or externalEncoder or storage or integration)>"
+	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or api_and_delivery or encoder or externalEncoder or storage or integration)>"
 
 	exit
 fi

@@ -29,14 +29,14 @@ testServersNumber=$((serverIndex+1))
 
 declare -a prodServers
 serverIndex=0
-prodServers[$((serverIndex*4+0))]=hetzner-api-1
-prodServers[$((serverIndex*4+1))]=159.69.251.50
+prodServers[$((serverIndex*4+0))]=hetzner-api-3
+prodServers[$((serverIndex*4+1))]=178.63.22.93
 prodServers[$((serverIndex*4+2))]=hetzner-mms-key
 prodServers[$((serverIndex*4+3))]=9255
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*4+0))]=hetzner-api-2
-prodServers[$((serverIndex*4+1))]=168.119.250.162
+prodServers[$((serverIndex*4+0))]=hetzner-api-4
+prodServers[$((serverIndex*4+1))]=78.46.101.27
 prodServers[$((serverIndex*4+2))]=hetzner-mms-key
 prodServers[$((serverIndex*4+3))]=9255
 
@@ -53,12 +53,6 @@ prodServers[$((serverIndex*4+2))]=hetzner-mms-key
 prodServers[$((serverIndex*4+3))]=9255
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*4+0))]=hetzner-engine-db-1
-prodServers[$((serverIndex*4+1))]=167.235.14.44
-prodServers[$((serverIndex*4+2))]=hetzner-mms-key
-prodServers[$((serverIndex*4+3))]=9255
-
-serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*4+0))]=hetzner-engine-db-2
 prodServers[$((serverIndex*4+1))]=162.55.245.36
 prodServers[$((serverIndex*4+2))]=hetzner-mms-key
@@ -67,6 +61,12 @@ prodServers[$((serverIndex*4+3))]=9255
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*4+0))]=hetzner-engine-db-3
 prodServers[$((serverIndex*4+1))]=167.235.14.105
+prodServers[$((serverIndex*4+2))]=hetzner-mms-key
+prodServers[$((serverIndex*4+3))]=9255
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*4+0))]=hetzner-engine-db-4
+prodServers[$((serverIndex*4+1))]=116.202.118.71
 prodServers[$((serverIndex*4+2))]=hetzner-mms-key
 prodServers[$((serverIndex*4+3))]=9255
 
@@ -130,7 +130,32 @@ prodServers[$((serverIndex*4+1))]=d02c0q-hdea2.sphostserver.com
 prodServers[$((serverIndex*4+2))]=cibortv-serverplan
 prodServers[$((serverIndex*4+3))]=9255
 
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*4+0))]=aws-integration-1
+prodServers[$((serverIndex*4+1))]=ec2-54-76-8-245.eu-west-1.compute.amazonaws.com
+prodServers[$((serverIndex*4+2))]=aws-hdea-key-integration-ireland
+prodServers[$((serverIndex*4+3))]=22
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*4+0))]=aws-integration-2
+prodServers[$((serverIndex*4+1))]=ec2-18-202-82-214.eu-west-1.compute.amazonaws.com
+prodServers[$((serverIndex*4+2))]=aws-hdea-key-integration-ireland
+prodServers[$((serverIndex*4+3))]=22
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*4+0))]=aws-integration-3
+prodServers[$((serverIndex*4+1))]=ec2-54-78-165-54.eu-west-1.compute.amazonaws.com
+prodServers[$((serverIndex*4+2))]=aws-hdea-key-integration-ireland
+prodServers[$((serverIndex*4+3))]=22
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*4+0))]=aws-integration-4
+prodServers[$((serverIndex*4+1))]=ec2-63-34-124-54.eu-west-1.compute.amazonaws.com
+prodServers[$((serverIndex*4+2))]=aws-hdea-key-integration-ireland
+prodServers[$((serverIndex*4+3))]=22
+
 prodServersNumber=$((serverIndex+1))
+
 
 #index=0
 #while [ $index -lt $testServersNumber ]

@@ -37,7 +37,7 @@ MMSStorage::MMSStorage(
 
 		if (!_noFileSystemAccess)
 		{
-			MMSStorage::createDirectories(configuration, _logger);
+			// MMSStorage::createDirectories(configuration, _logger);
 
 			refreshPartitionsFreeSizes();
 		}
@@ -54,21 +54,23 @@ MMSStorage::MMSStorage(
 
 MMSStorage::~MMSStorage(void) {}
 
+/* Tutte le dir sono create da installServer.sh
+ * Questo metodo è stato commentato perchè spesso MMSStorage viene istanziato in componenti (come ad es. api)
+ * dove non servono directory ma questo metodo le creava inutilmente creando confusione
 void MMSStorage::createDirectories(json configuration, shared_ptr<spdlog::logger> logger)
 {
 
-	/* 2022-12-22: controllo non aggiunto perchè è un metodo static
-		E' il chiamante che si deve assicurare che ci sia accesso al file system
-	if (noFileSystemAccess)
-	{
-		string errorMessage = string("no rights to execute this method")
-			+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
-		;
-		logger->error(__FILEREF__ + errorMessage);
+	// 2022-12-22: controllo non aggiunto perchè è un metodo static
+	//   E' il chiamante che si deve assicurare che ci sia accesso al file system
+	// if (noFileSystemAccess)
+	// {
+	// 	string errorMessage = string("no rights to execute this method")
+	// 		+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
+	// 	;
+	// 	logger->error(__FILEREF__ + errorMessage);
 
-		throw runtime_error(errorMessage);
-	}
-	*/
+	// 	throw runtime_error(errorMessage);
+	// }
 
 	fs::path storage = JSONUtils::asString(configuration["storage"], "path", "");
 	logger->info(__FILEREF__ + "Configuration item" + ", storage->path: " + storage.string());
@@ -276,6 +278,7 @@ void MMSStorage::createDirectories(json configuration, shared_ptr<spdlog::logger
 		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
 	}
 }
+*/
 
 fs::path MMSStorage::getMMSRootRepository(fs::path storage) { return storage / "MMSRepository"; }
 

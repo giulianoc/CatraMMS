@@ -55,14 +55,14 @@ do
 			echo "" >> $debugFilename
 			mount_error
 
-			echo "" >> $debugFilename
-			sql_slave_off
+			#echo "" >> $debugFilename
+			#mysql_sql_slave_off
 
 			echo "" >> $debugFilename
 			postgres_replication_check
 
-			echo "" >> $debugFilename
-			sql_check
+			#echo "" >> $debugFilename
+			#mysql_check
 
 			echo "" >> $debugFilename
 			postgres_check

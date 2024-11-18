@@ -141,7 +141,7 @@ notify()
 	return 0
 }
 
-sql_slave_off()
+mysql_sql_slave_off()
 {
   #Questo controllo si applica solamente nel caso si tratta di uno slave
 
@@ -221,7 +221,7 @@ postgres_replication_check()
 	fi
 }
 
-sql_check()
+mysql_check()
 {
 	count=$(echo "select count(*) from MMS_Code" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
 
@@ -748,7 +748,7 @@ mms_sql_timing_check_service()
 			duration=$6;	\
 			label=$7;	\
 			if (label == "getIngestionsToBeManaged")	\
-				maxSQLDuration = 900;	\
+				maxSQLDuration = 1200;	\
 			else if (label == "getIngestionRootsStatus")	\
 				maxSQLDuration = 400;	\
 			if (duration > maxSQLDuration)	\
