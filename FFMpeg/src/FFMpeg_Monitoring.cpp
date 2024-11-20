@@ -12,6 +12,7 @@
  */
 #include "FFMpeg.h"
 #include "catralibraries/StringUtils.h"
+#include <exception>
 #include <fstream>
 #include <regex>
 /*
@@ -20,6 +21,7 @@
 #include "JSONUtils.h"
 #include "MMSCURL.h"
 #include "catralibraries/ProcessUtility.h"
+#include "spdlog/spdlog.h"
 #include <filesystem>
 #include <sstream>
 #include <string>
@@ -360,11 +362,15 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 	{
 		if (!fs::exists(_outputFfmpegPathFileName.c_str()))
 		{
-			_logger->info(
-				__FILEREF__ + "getRealTimeInfoByOutputLog: Encoding status not available" +
-				", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
-				", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
-				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"getRealTimeInfoByOutputLog: Encoding status not available"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", _outputFfmpegPathFileName: {}"
+				", _currentMMSSourceAssetPathName: {}"
+				", _currentStagingEncodedAssetPathName: {}",
+				_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+				_currentStagingEncodedAssetPathName
 			);
 
 			throw FFMpegEncodingStatusNotAvailable();
@@ -378,11 +384,15 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "getRealTimeInfoByOutputLog: Failure reading the encoding status file" +
-				", ingestionJobKey: " + to_string(_currentIngestionJobKey) + ", encodingJobKey: " + to_string(_currentEncodingJobKey) +
-				", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
-				", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+			SPDLOG_ERROR(
+				"getRealTimeInfoByOutputLog: Failure reading the encoding status file"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", _outputFfmpegPathFileName: {}"
+				", _currentMMSSourceAssetPathName: {}"
+				", _currentStagingEncodedAssetPathName: {}",
+				_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+				_currentStagingEncodedAssetPathName
 			);
 
 			throw FFMpegEncodingStatusNotAvailable();
@@ -393,11 +403,15 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 			size_t startIndex = ffmpegEncodingStatus.rfind(toSearch);
 			if (startIndex == string::npos)
 			{
-				_logger->warn(
-					__FILEREF__ + "ffmpeg: frame info was not found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-					", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-					", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-					_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+				SPDLOG_WARN(
+					"getRealTimeInfoByOutputLog: ffmpeg: frame info was not found"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", _outputFfmpegPathFileName: {}"
+					", _currentMMSSourceAssetPathName: {}"
+					", _currentStagingEncodedAssetPathName: {}",
+					_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+					_currentStagingEncodedAssetPathName
 				);
 			}
 			else
@@ -407,17 +421,41 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 				size_t endIndex = value.find(" ");
 				if (endIndex == string::npos)
 				{
-					_logger->error(
-						__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-						", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-						_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+					SPDLOG_ERROR(
+						"getRealTimeInfoByOutputLog: ffmpeg: encodingStatus bad format"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _outputFfmpegPathFileName: {}"
+						", _currentMMSSourceAssetPathName: {}"
+						", _currentStagingEncodedAssetPathName: {}",
+						_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+						_currentStagingEncodedAssetPathName
 					);
 				}
 				else
 				{
 					value = value.substr(0, endIndex);
-					frame = stol(value);
+					if (!value.starts_with("N/A"))
+					{
+						try
+						{
+							frame = stol(value);
+						}
+						catch (exception &e)
+						{
+							SPDLOG_ERROR(
+								"getRealTimeInfoByOutputLog: ffmpeg: frame bad format"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", _outputFfmpegPathFileName: {}"
+								", _currentMMSSourceAssetPathName: {}"
+								", _currentStagingEncodedAssetPathName: {}"
+								", size: {}",
+								_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+								_currentStagingEncodedAssetPathName, value
+							);
+						}
+					}
 				}
 			}
 		}
@@ -426,11 +464,15 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 			size_t startIndex = ffmpegEncodingStatus.rfind(toSearch);
 			if (startIndex == string::npos)
 			{
-				_logger->warn(
-					__FILEREF__ + "ffmpeg: size info was not found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-					", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-					", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-					_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+				SPDLOG_WARN(
+					"getRealTimeInfoByOutputLog: ffmpeg: size info was not found"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", _outputFfmpegPathFileName: {}"
+					", _currentMMSSourceAssetPathName: {}"
+					", _currentStagingEncodedAssetPathName: {}",
+					_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+					_currentStagingEncodedAssetPathName
 				);
 			}
 			else
@@ -440,17 +482,41 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 				size_t endIndex = value.find(" ");
 				if (endIndex == string::npos)
 				{
-					_logger->error(
-						__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-						", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-						_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+					SPDLOG_ERROR(
+						"getRealTimeInfoByOutputLog: ffmpeg: encodingStatus bad format"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _outputFfmpegPathFileName: {}"
+						", _currentMMSSourceAssetPathName: {}"
+						", _currentStagingEncodedAssetPathName: {}",
+						_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+						_currentStagingEncodedAssetPathName
 					);
 				}
 				else
 				{
 					value = value.substr(0, endIndex);
-					size = stol(value);
+					if (!value.starts_with("N/A"))
+					{
+						try
+						{
+							size = stol(value);
+						}
+						catch (exception &e)
+						{
+							SPDLOG_ERROR(
+								"getRealTimeInfoByOutputLog: ffmpeg: size bad format"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", _outputFfmpegPathFileName: {}"
+								", _currentMMSSourceAssetPathName: {}"
+								", _currentStagingEncodedAssetPathName: {}"
+								", size: {}",
+								_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+								_currentStagingEncodedAssetPathName, value
+							);
+						}
+					}
 				}
 			}
 		}
@@ -459,11 +525,15 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 			size_t startIndex = ffmpegEncodingStatus.rfind(toSearch);
 			if (startIndex == string::npos)
 			{
-				_logger->warn(
-					__FILEREF__ + "ffmpeg: time info was not found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-					", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-					", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-					_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+				SPDLOG_WARN(
+					"getRealTimeInfoByOutputLog: ffmpeg: time info was not found"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", _outputFfmpegPathFileName: {}"
+					", _currentMMSSourceAssetPathName: {}"
+					", _currentStagingEncodedAssetPathName: {}",
+					_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+					_currentStagingEncodedAssetPathName
 				);
 			}
 			else
@@ -473,38 +543,61 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 				size_t endIndex = value.find(" ");
 				if (endIndex == string::npos)
 				{
-					_logger->error(
-						__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-						", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-						_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+					SPDLOG_ERROR(
+						"getRealTimeInfoByOutputLog: ffmpeg: encodingStatus bad format"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _outputFfmpegPathFileName: {}"
+						", _currentMMSSourceAssetPathName: {}"
+						", _currentStagingEncodedAssetPathName: {}",
+						_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+						_currentStagingEncodedAssetPathName
 					);
 				}
 				else
 				{
 					value = value.substr(0, endIndex);
+					if (!value.starts_with("N/A"))
+					{
+						try
+						{
+							// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x
+							stringstream ss(value);
+							string hours;
+							string minutes;
+							string seconds;
+							string centsOfSeconds;
+							char delim = ':';
+							getline(ss, hours, delim);
+							getline(ss, minutes, delim);
+							delim = '.';
+							getline(ss, seconds, delim);
+							getline(ss, centsOfSeconds, delim);
 
-					// frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x
-					stringstream ss(value);
-					string hours;
-					string minutes;
-					string seconds;
-					string centsOfSeconds;
-					char delim = ':';
-					getline(ss, hours, delim);
-					getline(ss, minutes, delim);
-					delim = '.';
-					getline(ss, seconds, delim);
-					getline(ss, centsOfSeconds, delim);
+							int iHours = atoi(hours.c_str());
+							int iMinutes = atoi(minutes.c_str());
+							int iSeconds = atoi(seconds.c_str());
+							double dCentsOfSeconds = atoi(centsOfSeconds.c_str());
 
-					int iHours = atoi(hours.c_str());
-					int iMinutes = atoi(minutes.c_str());
-					int iSeconds = atoi(seconds.c_str());
-					double dCentsOfSeconds = atoi(centsOfSeconds.c_str());
-
-					// dCentsOfSeconds deve essere double altrimenti (dCentsOfSeconds / 100) sarà arrotontado ai secondi
-					timeInMilliSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (dCentsOfSeconds / 100);
-					timeInMilliSeconds *= 1000;
+							// dCentsOfSeconds deve essere double altrimenti (dCentsOfSeconds / 100) sarà arrotontado ai secondi
+							timeInMilliSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (dCentsOfSeconds / 100);
+							timeInMilliSeconds *= 1000;
+						}
+						catch (exception &e)
+						{
+							SPDLOG_ERROR(
+								"getRealTimeInfoByOutputLog: ffmpeg: time bad format"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", _outputFfmpegPathFileName: {}"
+								", _currentMMSSourceAssetPathName: {}"
+								", _currentStagingEncodedAssetPathName: {}"
+								", size: {}",
+								_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+								_currentStagingEncodedAssetPathName, value
+							);
+						}
+					}
 				}
 			}
 		}
@@ -513,11 +606,15 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 			size_t startIndex = ffmpegEncodingStatus.rfind(toSearch);
 			if (startIndex == string::npos)
 			{
-				_logger->warn(
-					__FILEREF__ + "ffmpeg: bitrate info was not found" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-					", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-					", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-					_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
+				SPDLOG_WARN(
+					"getRealTimeInfoByOutputLog: ffmpeg: bitrate info was not found"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", _outputFfmpegPathFileName: {}"
+					", _currentMMSSourceAssetPathName: {}"
+					", _currentStagingEncodedAssetPathName: {}",
+					_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+					_currentStagingEncodedAssetPathName
 				);
 			}
 			else
@@ -526,20 +623,41 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 				value = StringUtils::ltrim(value);
 				if (!value.starts_with("N/A"))
 				{
-					size_t endIndex = value.find("kbits/s");
-					if (endIndex == string::npos)
+					try
 					{
-						_logger->error(
-							__FILEREF__ + "ffmpeg: encodingStatus bad format" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-							", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-							", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName + ", _currentStagingEncodedAssetPathName: " +
-							_currentStagingEncodedAssetPathName + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus
-						);
+						size_t endIndex = value.find("kbits/s");
+						if (endIndex == string::npos)
+						{
+							SPDLOG_ERROR(
+								"getRealTimeInfoByOutputLog: ffmpeg: bitrate bad format"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", _outputFfmpegPathFileName: {}"
+								", _currentMMSSourceAssetPathName: {}"
+								", _currentStagingEncodedAssetPathName: {}",
+								_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+								_currentStagingEncodedAssetPathName
+							);
+						}
+						else
+						{
+							value = value.substr(0, endIndex);
+							bitRate = stof(value);
+						}
 					}
-					else
+					catch (exception &e)
 					{
-						value = value.substr(0, endIndex);
-						bitRate = stof(value);
+						SPDLOG_ERROR(
+							"getRealTimeInfoByOutputLog: ffmpeg: bitrate bad format"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", _outputFfmpegPathFileName: {}"
+							", _currentMMSSourceAssetPathName: {}"
+							", _currentStagingEncodedAssetPathName: {}"
+							", size: {}",
+							_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+							_currentStagingEncodedAssetPathName, value
+						);
 					}
 				}
 			}
@@ -565,22 +683,30 @@ tuple<long, long, double, double, int> FFMpeg::getRealTimeInfoByOutputLog()
 	}
 	catch (FFMpegEncodingStatusNotAvailable &e)
 	{
-		_logger->info(
-			__FILEREF__ + "getRealTimeInfoByOutputLog failed" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-			", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-			", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
-			", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName + ", e.what(): " + e.what()
+		SPDLOG_WARN(
+			"getRealTimeInfoByOutputLog failed"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", _outputFfmpegPathFileName: {}"
+			", _currentMMSSourceAssetPathName: {}"
+			", _currentStagingEncodedAssetPathName: {}",
+			_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+			_currentStagingEncodedAssetPathName
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "getRealTimeInfoByOutputLog failed" + ", ingestionJobKey: " + to_string(_currentIngestionJobKey) +
-			", encodingJobKey: " + to_string(_currentEncodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-			", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName +
-			", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+		SPDLOG_ERROR(
+			"getRealTimeInfoByOutputLog failed"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", _outputFfmpegPathFileName: {}"
+			", _currentMMSSourceAssetPathName: {}"
+			", _currentStagingEncodedAssetPathName: {}",
+			_currentIngestionJobKey, _currentEncodingJobKey, _outputFfmpegPathFileName, _currentMMSSourceAssetPathName,
+			_currentStagingEncodedAssetPathName
 		);
 
 		throw e;
