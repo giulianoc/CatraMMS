@@ -8,7 +8,6 @@ ssh-port()
 	echo ""
 
 	echo "Port 9255" >> /etc/ssh/sshd_config
-	#ssh restart non recepisce il cambiamento della porta (non so il motivo) per cui è stato aggiunto anche alla fine di mms-account-creation
 	/etc/init.d/ssh restart
 }
 
@@ -46,9 +45,6 @@ mms-account-creation()
 	echo "altrimenti ci saranno problemi di scrittura dei file in quanto i mount autorizzano l'id 1000,"
 	echo "forziamo l'id ad essere 1000 con il comando usermod"
 	usermod -u 1000 mms
-
-	#ssh restart aggiunto qui perchè in ssh-port non recepisce il cambiamento
-	/etc/init.d/ssh restart
 }
 
 time-zone()
@@ -222,7 +218,7 @@ install-packages()
 	apt install -y dvb-tools
 	apt install -y dvblast
 
-	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "integration" ]; then
 
 		#non possiamo far decidere a ubuntu la versione java da istallare, bisogna istallare la versione java
 		#supportata dal nostro applicativo
@@ -415,6 +411,10 @@ create-directory()
 
 		#mmsStorage è montato da tutti i moduli tranne integration
 
+		if [ ! -e /mnt/mmsStorage ]; then
+			ln -s /mnt/mmsStorage-1 /mnt/mmsStorage
+		fi
+
 		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
 		mkdir -p /mnt/mmsStorage/commonConfiguration
 		mkdir -p /mnt/mmsStorage/dbDump
@@ -424,13 +424,20 @@ create-directory()
 		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
 
 		#links
-		ln -s /mnt/mmsStorage-1 /mnt/mmsStorage
-		if [ "$moduleType" == "delivery" -o "$moduleType" == "engine" ]; then
+		if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "engine" ]; then
+			if [ ! -e /mnt/mmsIngestionRepository ]; then
+				ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
+			fi
+
 			mkdir -p /mnt/mmsIngestionRepository/users
-			ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
+			if [ ! -e /mnt/mmsIngestionRepository ]; then
+				ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
+			fi
 		fi
-		if [ "$moduleType" == "delivery" -o "$moduleType" == "engine" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-			ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000
+		if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "engine" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
+			if [ ! -e /mnt/mmsRepository0000 ]; then
+				ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000
+			fi
 		fi
 	fi
 
@@ -442,23 +449,33 @@ create-directory()
 
 	if [ "$moduleType" == "api" -o "$moduleType" == "api-and-delivery" ]; then
 		mkdir -p /var/catramms/storage
-		ln -s /var/catramms/storage /home/mms
+		if [ ! -e /home/mms/storage ]; then
+			ln -s /var/catramms/storage /home/mms
+		fi
 
 		mkdir -p /mnt/local-data/logs/mmsAPI
 		mkdir -p /mnt/local-data/logs/catraMMSWEBServices
 		mkdir -p /mnt/local-data/logs/nginx
-		ln -s /mnt/local-data/logs /var/catramms
+		if [ ! -e /var/catramms/logs ]; then
+			ln -s /mnt/local-data/logs /var/catramms
+		fi
 		chown -R mms:mms /mnt/local-data/logs
 
 		mkdir -p /mnt/local-data/cache/nginx
-		ln -s /mnt/local-data/cache /var/catramms/cache
+		if [ ! -e /var/catramms/cache ]; then
+			ln -s /mnt/local-data/cache /var/catramms/cache
+		fi
 		chown -R mms:mms /mnt/local-data/cache
 
-		ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+		if [ ! -e /var/catramms/storage/commonConfiguration ]; then
+			ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+		fi
 	fi
 	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then	#insieme al delivery abbiamo anche la GUI
 		mkdir -p /var/catramms/storage/MMSRepository
-		ln -s /var/catramms/storage /home/mms
+		if [ ! -e /home/mms/storage ]; then
+			ln -s /var/catramms/storage /home/mms
+		fi
 
 		mkdir -p /mnt/local-data/logs/mmsAPI
 		mkdir -p /mnt/local-data/logs/nginx
@@ -466,73 +483,138 @@ create-directory()
 		mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
 		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
 		mkdir -p /mnt/local-data/cache/nginx
-		ln -s /mnt/local-data/logs /var/catramms
-		ln -s /mnt/local-data/cache /var/catramms/cache
-		chown -R mms:mms /mnt/local-data
+		if [ ! -e /var/catramms/logs ]; then
+			ln -s /mnt/local-data/logs /var/catramms
+		fi
+		if [ ! -e /var/catramms/cache ]; then
+			ln -s /mnt/local-data/cache /var/catramms/cache
+		fi
+		chown -R mms:mms /mnt/local-data/logs
+		chown -R mms:mms /mnt/local-data/cache
 
-		ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+		if [ ! -e /var/catramms/storage/IngestionRepository ]; then
+			ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+		fi
 
-		ln -s /mnt/mmsStorage/MMSGUI /var/catramms/storage
+		if [ ! -e /var/catramms/storage/MMSGUI ]; then
+			ln -s /mnt/mmsStorage/MMSGUI /var/catramms/storage
+		fi
 
-		ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-		ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+		if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+			ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		fi
+		if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+			ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+		fi
 
-		ln -s /mnt/mmsStorage/MMSRepository-free /var/catramms/storage
+		if [ ! -e /var/catramms/storage/MMSRepository-free ]; then
+			ln -s /mnt/mmsStorage/MMSRepository-free /var/catramms/storage
+		fi
 
-		ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+		if [ ! -e /var/catramms/storage/commonConfiguration ]; then
+			ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+		fi
 	fi
 	if [ "$moduleType" == "engine" ]; then
 		mkdir -p /var/catramms/storage/MMSRepository
-		ln -s /var/catramms/storage /home/mms
+		if [ ! -e /home/mms/storage ]; then
+			ln -s /var/catramms/storage /home/mms
+		fi
 
 		mkdir -p /mnt/local-data/logs/mmsEngineService
 		#MMSTranscoderWorkingAreaRepository: forse serve all'engine nelle sue attività con ffmpeg!!! da verificare
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
-		ln -s /mnt/local-data/logs /var/catramms
-		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
-		chown -R mms:mms /mnt/local-data
+		if [ ! -e /var/catramms/logs ]; then
+			ln -s /mnt/local-data/logs /var/catramms
+		fi
+		if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
+			ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+		fi
+		chown -R mms:mms /mnt/local-data/logs
+		chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
 
-		ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
-		ln -s /mnt/mmsStorage/dbDump /var/catramms/storage
-		ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
-		ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-		ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+		if [ ! -e /var/catramms/storage/commonConfiguration ]; then
+			ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+		fi
+		if [ ! -e /var/catramms/storage/dbDump ]; then
+			ln -s /mnt/mmsStorage/dbDump /var/catramms/storage
+		fi
+		if [ ! -e /var/catramms/storage/IngestionRepository ]; then
+			ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+		fi
+		if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+			ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		fi
+		if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+			ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+		fi
 
 		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository/nginx
-		ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
+		if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
+			ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
+		fi
 	fi
 	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
 		mkdir -p /var/catramms/storage/MMSRepository
-		ln -s /var/catramms/storage /home/mms
+		if [ ! -e /home/mms/storage ]; then
+			ln -s /var/catramms/storage /home/mms
+		fi
 
 		mkdir -p /mnt/local-data/logs/mmsEncoder
 		mkdir -p /mnt/local-data/logs/nginx
+		if [ ! -e /var/catramms/logs ]; then
+			ln -s /mnt/local-data/logs /var/catramms
+		fi
 		mkdir -p /var/catramms/storage/MMSRepository
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
-		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+		if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
+			ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+		fi
 		#cache: anche se solo api, webapi e integration usano la cache, bisogna creare la dir anche per encoder, delivery perchè
 		#path proxy_cache_path sono configurati in nginx.conf (globale a tutti gli nginx)
 		mkdir -p /mnt/local-data/cache/nginx
-		ln -s /mnt/local-data/cache /var/catramms/cache
-		chown -R mms:mms /mnt/local-data
+		if [ ! -e /var/catramms/cache ]; then
+			ln -s /mnt/local-data/cache /var/catramms
+		fi
+		chown -R mms:mms /mnt/local-data/logs
+		chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
+		chown -R mms:mms /mnt/local-data/cache
 
 		if [ "$moduleType" == "encoder" ]; then
-			ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+			if [ ! -e /var/catramms/storage/commonConfiguration ]; then
+				ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+			fi
 			mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository/nginx
-			ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
-			ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-			ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+			if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
+				ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
+			fi
+			if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+				ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+			fi
+			if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+				ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
+			fi
 		else
 			mkdir -p /mnt/local-data/MMSWorkingAreaRepository/nginx
-			ln -s /mnt/local-data/MMSWorkingAreaRepository /var/catramms/storage
+			if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
+				ln -s /mnt/local-data/MMSWorkingAreaRepository /var/catramms/storage
+			fi
 			mkdir -p /mnt/local-data/mmsRepository0000
-			ln -s /mnt/local-data/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+			if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+				ln -s /mnt/local-data/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+			fi
 			mkdir -p /mnt/local-data/MMSLive
-			ln -s /mnt/local-data/MMSLive /var/catramms/storage/MMSRepository
+			if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+				ln -s /mnt/local-data/MMSLive /var/catramms/storage/MMSRepository
+			fi
+
+			chown -R mms:mms /mnt/local-data/MMSWorkingAreaRepository
+			chown -R mms:mms /mnt/local-data/mmsRepository0000
+			chown -R mms:mms /mnt/local-data/MMSLive
 		fi
 	fi
 	if [ "$moduleType" == "integration" ]; then
@@ -542,33 +624,16 @@ create-directory()
 		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
 		mkdir -p /mnt/local-data/logs/nginx
 		mkdir -p /mnt/local-data/cache/nginx
-		ln -s /mnt/local-data/cache /var/catramms/cache
-		chown -R mms:mms /mnt/local-data
+		if [ ! -e /var/catramms/cache ]; then
+			ln -s /mnt/local-data/cache /var/catramms
+		fi
+		chown -R mms:mms /mnt/local-data/logs
+		chown -R mms:mms /mnt/local-data/cache
 	fi
 
-	ln -s /var/catramms/logs /home/mms
-
-	mkdir -p /home/mms/mms/conf
-	mkdir -p /home/mms/mms/scripts
-
-	ln -s /home/mms/mms/scripts/mmsStatusALL.sh /home/mms
-	ln -s /home/mms/mms/scripts/mmsStartALL.sh /home/mms
-	ln -s /home/mms/mms/scripts/mmsStopALL.sh /home/mms
-	ln -s /opt/catramms/CatraMMS/scripts/nginx.sh /home/mms
-	ln -s /opt/catramms/CatraMMS/scripts/mmsEncoder.sh /home/mms
-
-	ln -s /opt/catramms/CatraMMS/scripts/micro-service.sh /home/mms
-	ln -s /opt/catramms/CatraMMS/scripts/mmsApi.sh /home/mms
-	ln -s /opt/catramms/CatraMMS/scripts/mmsDelivery.sh /home/mms
-
-	ln -s /opt/catramms/CatraMMS/scripts/mmsEngineService.sh /home/mms
-	ln -s /opt/catramms/CatraMMS/scripts/mmsTail.sh /home/mms
-	ln -s /opt/catramms/CatraMMS/scripts/tomcat.sh /home/mms
-	ln -s /opt/catramms/CatraMMS/scripts/printLogFileName.sh /home/mms
-
-	chown -R mms:mms /home/mms/mms
-	chown -R mms:mms /opt/catramms
-	chown -R mms:mms /var/catramms
+	if [ ! -e /home/mms/logs ]; then
+		ln -s /var/catramms/logs /home/mms
+	fi
 }
 
 adds-to-bashrc()
@@ -722,10 +787,10 @@ install-mms-packages()
 	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
 	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
 
-	if [ "$moduleType" == "delivery" -o "$moduleType" == "integration" ]; then
+	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "integration" ]; then
 
 		echo ""
-		tomcatVersion=9.0.89
+		tomcatVersion=9.0.97
 		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat: "
 		read VERSION
 		if [ "$VERSION" == "" ]; then
@@ -854,7 +919,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6119
+	catraMMSVersion=1.0.6120
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -935,8 +1000,58 @@ install-mms-packages()
 
 		chown -R mms:mms ~mms/mms
 	fi
+	if [ "$moduleType" == "api-and-delivery" ]; then
+		packageName=apiAndDeliveryMmsConf
+		echo ""
+		package=$packageName
+		echo "Downloading $package..."
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+		tar xvfz ~/$package.tar.gz -C ~mms
+
+		chown -R mms:mms ~mms/mms
+	fi
 
 	chown -R mms:mms /opt/catramms
+	chown -R mms:mms /var/catramms
+
+	if [ ! -e /home/mms/mmsStatusALL.sh ]; then
+		ln -s /home/mms/mms/scripts/mmsStatusALL.sh /home/mms
+	fi
+	if [ ! -e /home/mms/mmsStartALL.sh ]; then
+		ln -s /home/mms/mms/scripts/mmsStartALL.sh /home/mms
+	fi
+	if [ ! -e /home/mms/mmsStopALL.sh ]; then
+		ln -s /home/mms/mms/scripts/mmsStopALL.sh /home/mms
+	fi
+	if [ ! -e /home/mms/nginx.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/nginx.sh /home/mms
+	fi
+	if [ ! -e /home/mms/mmsEncoder.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/mmsEncoder.sh /home/mms
+	fi
+
+	if [ ! -e /home/mms/micro-service.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/micro-service.sh /home/mms
+	fi
+	if [ ! -e /home/mms/mmsApi.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/mmsApi.sh /home/mms
+	fi
+	if [ ! -e /home/mms/mmsDelivery.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/mmsDelivery.sh /home/mms
+	fi
+
+	if [ ! -e /home/mms/mmsEngineService.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/mmsEngineService.sh /home/mms
+	fi
+	if [ ! -e /home/mms/mmsTail.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/mmsTail.sh /home/mms
+	fi
+	if [ ! -e /home/mms/tomcat.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/tomcat.sh /home/mms
+	fi
+	if [ ! -e /home/mms/printLogFileName.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/printLogFileName.sh /home/mms
+	fi
 }
 
 firewall-rules()
@@ -982,7 +1097,27 @@ firewall-rules()
 		ufw allow 30000:31000/tcp
 		#connection srt from public
 		ufw allow 30000:31000/udp
-	elif [ "$moduleType" == "api" -o "$moduleType" == "delivery" ]; then
+	elif [ "$moduleType" == "api" ]; then
+		# -> http(nginx) and https(nginx)
+		#echo ""
+		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
+		#read internalNetwork
+		internalNetwork=10.0.0.0/16
+		ufw allow from $internalNetwork to any port 8086		#mms-webapi
+		ufw allow from $internalNetwork to any port 8088		#mms-api
+	elif [ "$moduleType" == "delivery" ]; then
+		# -> http(nginx) and https(nginx)
+		#echo ""
+		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
+		#read internalNetwork
+		internalNetwork=10.0.0.0/16
+		ufw allow from $internalNetwork to any port 8088		#mms-api
+		ufw allow from $internalNetwork to any port 8089		#mms-gui
+		ufw allow from $internalNetwork to any port 8090		#mms-binary
+		ufw allow from $internalNetwork to any port 8091		#mms-delivery
+		ufw allow from $internalNetwork to any port 8092		#mms-delivery-path
+		ufw allow from $internalNetwork to any port 8093		#mms-delivery-f
+	elif [ "$moduleType" == "api-and-delivery" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""
 		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
@@ -1065,12 +1200,18 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or api_and_delivery or encoder or externalEncoder or storage or integration)>"
+	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or api-and-delivery or encoder or externalEncoder or storage or integration)>"
 
 	exit
 fi
 
 moduleType=$1
+
+if [ "$moduleType" != "load-balancer" -a "$moduleType" != "engine" -a "$moduleType" != "api" -a "$moduleType" != "delivery" -a "$moduleType" != "api-and-delivery" -a "$moduleType" != "encoder" -a "$moduleType" != "externalEncoder" -a "$moduleType" != "storage" -a "$moduleType" != "integration" ]; then
+	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or api-and-delivery or encoder or externalEncoder or storage or integration)>"
+
+	exit
+fi
 
 #LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE LEGGERE
 

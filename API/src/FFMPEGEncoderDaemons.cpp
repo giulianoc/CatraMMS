@@ -1727,45 +1727,61 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
+						int aaa = 0;
+						SPDLOG_INFO("a: {}", aaa++);
 						auto [realTimeFrame, realTimeSize, realTimeTimeInMilliSeconds, bitRate, timestampDiscontinuityCount] =
 							copiedLiveRecording->_ffmpeg->getRealTimeInfoByOutputLog();
+						SPDLOG_INFO("a: {}", aaa++);
 						sourceLiveRecording->_realTimeFrame = realTimeFrame;
+						SPDLOG_INFO("a: {}", aaa++);
 						sourceLiveRecording->_realTimeSize = realTimeSize;
+						SPDLOG_INFO("a: {}", aaa++);
 						sourceLiveRecording->_realTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds;
+						SPDLOG_INFO("a: {}", aaa++);
 						sourceLiveRecording->_realTimeBitRate = bitRate;
 
+						SPDLOG_INFO("a: {}", aaa++);
 						if (copiedLiveRecording->_realTimeFrame != -1 || copiedLiveRecording->_realTimeSize != -1 ||
 							copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
 						{
 							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
 							// recupero dei dati
 
+							SPDLOG_INFO("a: {}", aaa++);
 							int elapsedInSecondsSinceLastChange =
 								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
 									.count();
 
+							SPDLOG_INFO("a: {}", aaa++);
 							long diffRealTimeFrame = -1;
 							if (realTimeFrame != -1 && copiedLiveRecording->_realTimeFrame != -1)
 							{
+								SPDLOG_INFO("a: {}", aaa++);
 								diffRealTimeFrame = realTimeFrame - copiedLiveRecording->_realTimeFrame;
 								sourceLiveRecording->_realTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
 							}
+							SPDLOG_INFO("a: {}", aaa++);
 							long diffRealTimeSize = -1;
 							if (realTimeSize != -1 && copiedLiveRecording->_realTimeSize != -1)
 								diffRealTimeSize = realTimeSize - copiedLiveRecording->_realTimeSize;
+							SPDLOG_INFO("a: {}", aaa++);
 							double diffRealTimeTimeInMilliSeconds = -1.0;
 							if (realTimeTimeInMilliSeconds != -1.0 && copiedLiveRecording->_realTimeTimeInMilliSeconds != -1.0)
 								diffRealTimeTimeInMilliSeconds = realTimeTimeInMilliSeconds - copiedLiveRecording->_realTimeTimeInMilliSeconds;
 
+							SPDLOG_INFO("a: {}", aaa++);
 							if ((copiedLiveRecording->_realTimeFrame == realTimeFrame && copiedLiveRecording->_realTimeSize == realTimeSize &&
 								 copiedLiveRecording->_realTimeTimeInMilliSeconds == realTimeTimeInMilliSeconds) ||
 								timestampDiscontinuityCount > _maxRealTimeInfoTimestampDiscontinuity)
 							{
+								SPDLOG_INFO("a: {}", aaa++);
 								if (copiedLiveRecording->_monitoringRealTimeInfoEnabled)
 								{
+									SPDLOG_INFO("a: {}", aaa++);
 									// real time info not changed oppure ci sono troppo timestamp discontinuity
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 									{
+										SPDLOG_INFO("a: {}", aaa++);
 										SPDLOG_ERROR(
 											"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live "
 											"Recorder real time info are not changing. LiveRecorder (ffmpeg) is killed in order to be started again"
@@ -1795,6 +1811,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 									else
 									{
+										SPDLOG_INFO("a: {}", aaa++);
 										SPDLOG_INFO(
 											"liveRecordingMonitor. Live Recorder real time info is not changed but within the tolerance"
 											", ingestionJobKey: {}"
@@ -1815,8 +1832,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							else
 							{
+								SPDLOG_INFO("a: {}", aaa++);
 								sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 
+								SPDLOG_INFO("a: {}", aaa++);
 								SPDLOG_INFO(
 									"liveRecordingMonitor. Live Recording real time info is changed"
 									", ingestionJobKey: {}"

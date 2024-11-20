@@ -2,26 +2,26 @@
 
 declare -a testServers
 serverIndex=0
-testServers[$((serverIndex*4+0))]=hetzner-test-api-1
-testServers[$((serverIndex*4+1))]=138.201.245.228
+testServers[$((serverIndex*4+0))]=hetzner-test-api-2
+testServers[$((serverIndex*4+1))]=168.119.250.162
 testServers[$((serverIndex*4+2))]=hetzner-mms-key
 testServers[$((serverIndex*4+3))]=9255
 
 serverIndex=$((serverIndex+1))
-testServers[$((serverIndex*4+0))]=hetzner-test-engine-db-2
-testServers[$((serverIndex*4+1))]=49.12.74.56
+testServers[$((serverIndex*4+0))]=hetzner-test-engine-db-1
+testServers[$((serverIndex*4+1))]=159.69.251.50
 testServers[$((serverIndex*4+2))]=hetzner-mms-key
 testServers[$((serverIndex*4+3))]=9255
 
 serverIndex=$((serverIndex+1))
-testServers[$((serverIndex*4+0))]=hetzner-test-engine-db-3
-testServers[$((serverIndex*4+1))]=142.132.232.196
+testServers[$((serverIndex*4+0))]=hetzner-test-engine-db-4
+testServers[$((serverIndex*4+1))]=168.119.105.223
 testServers[$((serverIndex*4+2))]=hetzner-mms-key
 testServers[$((serverIndex*4+3))]=9255
 
 serverIndex=$((serverIndex+1))
-testServers[$((serverIndex*4+0))]=hetzner-test-transcoder-2
-testServers[$((serverIndex*4+1))]=88.198.47.118
+testServers[$((serverIndex*4+0))]=hetzner-test-transcoder-1
+testServers[$((serverIndex*4+1))]=148.251.187.41
 testServers[$((serverIndex*4+2))]=hetzner-mms-key
 testServers[$((serverIndex*4+3))]=9255
 
