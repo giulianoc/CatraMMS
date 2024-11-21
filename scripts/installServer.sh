@@ -522,7 +522,7 @@ create-directory()
 		fi
 
 		mkdir -p /mnt/local-data/logs/mmsEngineService
-		#MMSTranscoderWorkingAreaRepository: forse serve all'engine nelle sue attività con ffmpeg!!! da verificare
+		#MMSTranscoderWorkingAreaRepository: confermato che serve all'engine per le sue attività con ffmpeg (ad esempio changeFileFormat)
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
@@ -919,7 +919,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6120
+	catraMMSVersion=1.0.6122
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

@@ -977,9 +977,11 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						"SQL statement"
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
-						", elapsed (millisecs): @{}@",
+						", elapsed (millisecs): @{}@"
+						", res.size: {}"
+						", totalRowsUpdated: {}",
 						sqlStatement, conn->getConnectionId(),
-						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count(), res.size(), totalRowsUpdated
 					);
 
 					toBeExecutedAgain = false;

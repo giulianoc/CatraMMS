@@ -41,14 +41,14 @@ prodServers[$((serverIndex*4+2))]=hetzner-mms-key
 prodServers[$((serverIndex*4+3))]=9255
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*4+0))]=hetzner-delivery-binary-gui-1
-prodServers[$((serverIndex*4+1))]=5.9.57.85
+prodServers[$((serverIndex*4+0))]=hetzner-delivery-binary-gui-2
+prodServers[$((serverIndex*4+1))]=116.202.53.105
 prodServers[$((serverIndex*4+2))]=hetzner-mms-key
 prodServers[$((serverIndex*4+3))]=9255
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*4+0))]=hetzner-delivery-binary-gui-5
-prodServers[$((serverIndex*4+1))]=136.243.35.105
+prodServers[$((serverIndex*4+0))]=hetzner-delivery-binary-gui-3
+prodServers[$((serverIndex*4+1))]=116.202.172.245
 prodServers[$((serverIndex*4+2))]=hetzner-mms-key
 prodServers[$((serverIndex*4+3))]=9255
 
