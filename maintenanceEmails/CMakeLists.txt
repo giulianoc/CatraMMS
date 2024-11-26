@@ -17,6 +17,9 @@
 # Commercial use other than under the terms of the GNU General Public License is
 # allowed only after express negotiation of conditions with the authors.
 
-set(MAINTENANCE maintenanceAnnuncio.html maintenanceCompleted.html)
+CMakeFiles/                           CMakeLists.txt                        maintenanceAnnuncio-2024-11-22.html   maintenanceCompleted-2023-10-12.html
+cmake_install.cmake                   maintenanceAnnuncio-2023-10-12.html   maintenanceComandi.txt                Makefile
+
+set(MAINTENANCE maintenanceAnnuncio-2023-10-12.html maintenanceCompleted-2023-10-12.html maintenanceAnnuncio-2024-11-22.html)
 
 install(FILES ${MAINTENANCE} DESTINATION maintenanceEmails)
