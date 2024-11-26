@@ -628,10 +628,12 @@ void MMSEngineProcessor::userHttpCallback(
 				vector<pair<string, string>> formData;
 				{
 					json formDataParametersRoot = JSONUtils::toJson(httpBody);
-					for (auto &[keyRoot, valRoot] : formDataParametersRoot.items())
+					for (int formFieldIndex = 0; formFieldIndex < formDataParametersRoot.size(); formFieldIndex++)
 					{
-						string name = JSONUtils::asString(keyRoot, "", "");
-						string value = JSONUtils::asString(valRoot, "", "");
+						json formFieldRoot = formDataParametersRoot[formFieldIndex];
+
+						string name = JSONUtils::asString(formFieldRoot, "name", "");
+						string value = JSONUtils::asString(formFieldRoot, "value", "");
 
 						if (name != "")
 							formData.push_back(make_pair(name, value));
@@ -658,10 +660,12 @@ void MMSEngineProcessor::userHttpCallback(
 				vector<pair<string, string>> formData;
 				{
 					json formDataParametersRoot = JSONUtils::toJson(httpBody);
-					for (auto &[keyRoot, valRoot] : formDataParametersRoot.items())
+					for (int formFieldIndex = 0; formFieldIndex < formDataParametersRoot.size(); formFieldIndex++)
 					{
-						string name = JSONUtils::asString(keyRoot, "", "");
-						string value = JSONUtils::asString(valRoot, "", "");
+						json formFieldRoot = formDataParametersRoot[formFieldIndex];
+
+						string name = JSONUtils::asString(formFieldRoot, "name", "");
+						string value = JSONUtils::asString(formFieldRoot, "value", "");
 
 						if (name != "")
 							formData.push_back(make_pair(name, value));

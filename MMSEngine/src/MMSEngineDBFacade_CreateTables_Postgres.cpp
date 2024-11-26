@@ -317,7 +317,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "country					text NULL,"
 								  "imageMediaItemKey			bigint NULL,"
 								  "imageUniqueName			text NULL,"
-								  "position					smallint NULL,"
+								  "position					integer NULL,"
 								  "userData					jsonb,"
 								  "constraint MMS_Conf_Stream_PK PRIMARY KEY (confKey), "
 								  "constraint MMS_Conf_Stream_FK foreign key (workspaceKey) "

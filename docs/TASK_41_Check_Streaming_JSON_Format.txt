@@ -15,7 +15,7 @@
 		// mandatory if InputType is Stream
 		"configurationLabel": "Stream A",
 
-		// mandatory if InputType is StreamingUrl
+		// mandatory if InputType is URL
 		"streamingName": "Streaming A",
 		// mandatory if InputType is StreamingUrl
 		"streamingUrl": "https://.....",

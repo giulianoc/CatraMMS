@@ -1105,6 +1105,9 @@ firewall-rules()
 		internalNetwork=10.0.0.0/16
 		ufw allow from $internalNetwork to any port 8086		#mms-webapi
 		ufw allow from $internalNetwork to any port 8088		#mms-api
+
+		echo "remember to add the api IP address to the firewall rules of any external transcoders (if you have them)"
+		read
 	elif [ "$moduleType" == "delivery" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""
@@ -1130,6 +1133,9 @@ firewall-rules()
 		ufw allow from $internalNetwork to any port 8091		#mms-delivery
 		ufw allow from $internalNetwork to any port 8092		#mms-delivery-path
 		ufw allow from $internalNetwork to any port 8093		#mms-delivery-f
+
+		echo "remember to add the api IP address to the firewall rules of any external transcoders (if you have them)"
+		read
 	elif [ "$moduleType" == "engine" ]; then
 		# -> mysql/postgres
 		#ufw allow 3306
@@ -1142,6 +1148,9 @@ firewall-rules()
 		#è importante che la porta del postgres attivo sia la 5432 perchè questa porta è usata dappertutto:
 		#dalla conf del load balancer per gli slaves, dagli script (monitoring agent, ....)
 		ufw allow from $internalNetwork to any port 5432
+
+		echo "remember to add the engine IP address to the firewall rules of any external transcoders (if you have them)"
+		read
 	elif [ "$moduleType" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)
 		ufw allow 80
