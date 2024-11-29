@@ -920,10 +920,12 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "LiveRecorder. Selection of the transcoder" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-						", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					SPDLOG_INFO(
+						"LiveRecorder. Selection of the transcoder..."
+						", _proxyIdentifier: {}"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}",
+						_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 					);
 
 					int64_t encoderKeyToBeSkipped = -1;
