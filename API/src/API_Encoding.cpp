@@ -298,7 +298,7 @@ void API::killOrCancelEncodingJob(
 			encodingJobKey = stoll(encodingJobKeyIt->second);
 		*/
 
-		// "kill", "restartWithinEncoder", "killToRestartByEngine"
+		// killType: "kill", "restartWithinEncoder", "killToRestartByEngine"
 		string killType = getQueryParameter(queryParameters, "killType", string("kill"), false);
 		/*
 		bool lightKill = false;
@@ -316,10 +316,11 @@ void API::killOrCancelEncodingJob(
 				"encodingJob_IngestionJobKeyTypeEncoderKeyStatus"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
+				", killType: {}"
 				", type: {}"
 				", encoderKey: {}"
 				", status: {}",
-				ingestionJobKey, encodingJobKey, type, encoderKey, MMSEngineDBFacade::toString(status)
+				ingestionJobKey, encodingJobKey, killType, type, encoderKey, MMSEngineDBFacade::toString(status)
 			);
 
 			if (type == "LiveRecorder")
@@ -346,8 +347,9 @@ void API::killOrCancelEncodingJob(
 								"killEncodingJob"
 								", encoderKey: {}"
 								", ingestionJobKey: {}"
-								", encodingJobKey: {}",
-								encoderKey, ingestionJobKey, encodingJobKey
+								", encodingJobKey: {}"
+								", killType: {}",
+								encoderKey, ingestionJobKey, encodingJobKey, killType
 							);
 							killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, killType);
 
@@ -358,12 +360,22 @@ void API::killOrCancelEncodingJob(
 								// this is the case 2
 								bool isKilled = true;
 
-								_logger->info(
-									__FILEREF__ + "Setting isKilled flag" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", encodingJobKey: " + to_string(encodingJobKey) + ", isKilled: " + to_string(isKilled)
+								SPDLOG_INFO(
+									"Setting isKilled flag"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", isKilled: {}",
+									ingestionJobKey, encodingJobKey, isKilled
 								);
 								_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
+								SPDLOG_INFO(
+									"sleeping"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", _intervalInSecondsToCheckEncodingFinished: {}",
+									ingestionJobKey, encodingJobKey, _intervalInSecondsToCheckEncodingFinished
+								);
 								// case 3: in case updateEncodingJobIsKilled did not work, we are in scenario 3
 								//		To check that updateEncodingJobIsKilled did not work, we will sleep and check again the status
 								this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -413,12 +425,22 @@ void API::killOrCancelEncodingJob(
 							{
 								bool isKilled = true;
 
-								_logger->info(
-									__FILEREF__ + "Setting isKilled flag" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", encodingJobKey: " + to_string(encodingJobKey) + ", isKilled: " + to_string(isKilled)
+								SPDLOG_INFO(
+									"Setting isKilled flag"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", isKilled: {}",
+									ingestionJobKey, encodingJobKey, isKilled
 								);
 								_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
+								SPDLOG_INFO(
+									"sleeping"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", _intervalInSecondsToCheckEncodingFinished: {}",
+									ingestionJobKey, encodingJobKey, _intervalInSecondsToCheckEncodingFinished
+								);
 								// case 3: in case updateEncodingJobIsKilled did not work, we are in scenario 3
 								//		To check that updateEncodingJobIsKilled did not work, we will sleep and check again the status
 								this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -509,6 +531,13 @@ void API::killOrCancelEncodingJob(
 							);
 							_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
+							SPDLOG_INFO(
+								"sleeping"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", _intervalInSecondsToCheckEncodingFinished: {}",
+								ingestionJobKey, encodingJobKey, _intervalInSecondsToCheckEncodingFinished
+							);
 							// case 3: in case updateEncodingJobIsKilled did not work, we are in scenario 3
 							//		To check that updateEncodingJobIsKilled did not work, we will sleep and check again the status
 							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -571,6 +600,13 @@ void API::killOrCancelEncodingJob(
 							);
 							_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
+							SPDLOG_INFO(
+								"sleeping"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", _intervalInSecondsToCheckEncodingFinished: {}",
+								ingestionJobKey, encodingJobKey, _intervalInSecondsToCheckEncodingFinished
+							);
 							// case 3: in case updateEncodingJobIsKilled did not work, we are in scenario 3
 							//		To check that updateEncodingJobIsKilled did not work, we will sleep and check again the status
 							this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));

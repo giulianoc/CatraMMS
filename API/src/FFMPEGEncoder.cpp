@@ -968,34 +968,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	else if (method == "encodingStatus")
 	{
 		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
-		/*
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end())
-		{
-			string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
-
-			sendError(request, 400, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-		*/
 
 		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
-		/*
-		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-		if (encodingJobKeyIt == queryParameters.end())
-		{
-			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
-
-			sendError(request, 400, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
-		*/
 
 		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
 
@@ -1051,39 +1025,23 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// the check is done
 				{
 					/*
-					 * 2020-11-30
-					 * CIBORTV PROJECT. SCENARIO:
-					 *	- The encodingStatus is called
-					 *by the mmsEngine periodically for each
-					 *running transcoding. Often this method
-					 *takes a lot of times to answer, depend
-					 *on the period encodingStatus is
-					 *called, 50 secs in case it is called
-					 *every 5 seconds, 35 secs in case it is
-					 *called every 30 secs. This because the
-					 *Lock (lock_guard) does not provide any
-					 *guarantee, in case there are a lot of
-					 *threads, as it is our case, may be a
-					 *thread takes the lock and the OS
-					 *switches to another thread. It could
-					 *take time the OS re-switch on the
-					 *previous thread in order to release
+					 * 2020-11-30 CIBORTV PROJECT. SCENARIO: - The encodingStatus is called
+					 *by the mmsEngine periodically for each running transcoding. Often this method
+					 *takes a lot of times to answer, depend on the period encodingStatus is
+					 *called, 50 secs in case it is called every 5 seconds, 35 secs in case it is
+					 *called every 30 secs. This because the Lock (lock_guard) does not provide any
+					 *guarantee, in case there are a lot of threads, as it is our case, may be a
+					 *thread takes the lock and the OS switches to another thread. It could
+					 *take time the OS re-switch on the previous thread in order to release
 					 *the lock.
 					 *
-					 *	To solve this issue we should
-					 *found an algorithm that guarantees the
-					 *Lock is managed in a fast way also in
-					 *case of a lot of threads. I do not
-					 *have now a solution for this. For this
-					 *since I thought:
-					 *	- in case of __VECTOR__ all the
-					 *structure is "fixes", every thing is
-					 *allocated at the beggining and do not
-					 *change
-					 *	- so for this method, since it
-					 *checks some attribute in a "static"
-					 *structure, WE MAY AVOID THE USING OF
-					 *THE LOCK
+					 *	To solve this issue we should found an algorithm that guarantees the
+					 *Lock is managed in a fast way also in case of a lot of threads. I do not
+					 *have now a solution for this. For this since I thought:
+					 *	- in case of __VECTOR__ all the structure is "fixes", every thing is
+					 *allocated at the beggining and do not change
+					 *	- so for this method, since it checks some attribute in a "static"
+					 *structure, WE MAY AVOID THE USING OF THE LOCK
 					 *
 					 */
 					for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy : *_liveProxiesCapability)
