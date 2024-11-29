@@ -29,6 +29,7 @@ class FFMPEGEncoderBase
 		int64_t _encodingJobKey;
 		shared_ptr<FFMpeg> _ffmpeg;
 		bool _ffmpegTerminatedSuccessful;
+		bool _killToRestartByEngine;
 		string _errorMessage;
 	};
 
@@ -65,6 +66,7 @@ class FFMPEGEncoderBase
 
 			liveProxyAndGrid->_available = _available;
 			liveProxyAndGrid->_childPid = _childPid;
+			liveProxyAndGrid->_killToRestartByEngine = _killToRestartByEngine;
 			liveProxyAndGrid->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveProxyAndGrid->_realTimeFrame = _realTimeFrame;
 			liveProxyAndGrid->_realTimeSize = _realTimeSize;
@@ -137,6 +139,7 @@ class FFMPEGEncoderBase
 
 			liveRecording->_available = _available;
 			liveRecording->_childPid = _childPid;
+			liveRecording->_killToRestartByEngine = _killToRestartByEngine;
 			liveRecording->_monitoringEnabled = _monitoringEnabled;
 			liveRecording->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveRecording->_realTimeFrame = _realTimeFrame;
@@ -180,6 +183,7 @@ class FFMPEGEncoderBase
 		bool _completedWithError;
 		string _errorMessage;
 		bool _killedByUser;
+		bool _killToRestartByEngine;
 		bool _urlForbidden;
 		bool _urlNotFound;
 		chrono::system_clock::time_point _timestamp;

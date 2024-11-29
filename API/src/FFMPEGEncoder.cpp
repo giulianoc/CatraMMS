@@ -38,9 +38,11 @@
 #include "catralibraries/StringUtils.h"
 #include "catralibraries/System.h"
 #include "spdlog/fmt/bundled/core.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
 #include <sstream>
 
@@ -374,6 +376,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				selectedEncoding->_available = false;
 				selectedEncoding->_childPid = 0; // not running
+				selectedEncoding->_killToRestartByEngine = false;
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_ffmpegTerminatedSuccessful = false;
 
@@ -647,6 +650,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(60);
 				selectedLiveRecording->_available = false;
 				selectedLiveRecording->_childPid = 0; // not running
+				selectedLiveRecording->_killToRestartByEngine = false;
 				selectedLiveRecording->_encodingJobKey = encodingJobKey;
 
 				_logger->info(
@@ -844,6 +848,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				selectedLiveProxy->_available = false;
 				selectedLiveProxy->_childPid = 0; // not running
+				selectedLiveProxy->_killToRestartByEngine = false;
 				selectedLiveProxy->_encodingJobKey = encodingJobKey;
 				selectedLiveProxy->_method = method;
 
@@ -962,6 +967,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	}
 	else if (method == "encodingStatus")
 	{
+		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
+		/*
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
@@ -973,7 +980,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			throw runtime_error(errorMessage);
 		}
 		int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		*/
 
+		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+		/*
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
@@ -985,6 +995,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			throw runtime_error(errorMessage);
 		}
 		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+		*/
 
 		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
 
@@ -1105,18 +1116,25 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		chrono::system_clock::time_point endLookingForEncodingStatus = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "encodingStatus" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", encodingFound: " + to_string(encodingFound) + (encodingFound ? (", available: " + to_string(selectedEncoding->_available)) : "") +
-			(encodingFound ? (", childPid: " + to_string(selectedEncoding->_childPid)) : "") + ", liveProxyFound: " + to_string(liveProxyFound) +
-			", liveRecordingFound: " + to_string(liveRecordingFound) + ", encodingCompleted: " + to_string(encodingCompleted) +
-			", encodingCompletedMutexDuration: " + to_string(encodingCompletedMutexDuration) +
-			", encodingMutexDuration: " + to_string(encodingMutexDuration) + ", liveProxyMutexDuration: " + to_string(liveProxyMutexDuration) +
-			", liveRecordingMutexDuration: " + to_string(liveRecordingMutexDuration) +
-			", @MMS statistics@ - duration looking for encodingStatus "
-			"(secs): "
-			"@" +
-			to_string(chrono::duration_cast<chrono::seconds>(endLookingForEncodingStatus - startEncodingStatus).count()) + "@"
+		SPDLOG_INFO(
+			"encodingStatus"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", encodingFound: {}"
+			", available: {}"
+			", childPid: {}"
+			", liveProxyFound: {}"
+			", liveRecordingFound: {}"
+			", encodingCompleted: {}"
+			", encodingCompletedMutexDuration: {}"
+			", encodingMutexDuration: {}"
+			", liveProxyMutexDuration: {}"
+			", liveRecordingMutexDuration: {}"
+			", @MMS statistics@ - duration looking for encodingStatus (secs): @{}@",
+			ingestionJobKey, encodingJobKey, encodingFound, encodingFound ? to_string(selectedEncoding->_available) : "not available",
+			encodingFound ? to_string(selectedEncoding->_childPid) : "not available", liveProxyFound, liveRecordingFound, encodingCompleted,
+			encodingCompletedMutexDuration, encodingMutexDuration, liveProxyMutexDuration, liveRecordingMutexDuration,
+			chrono::duration_cast<chrono::seconds>(endLookingForEncodingStatus - startEncodingStatus).count()
 		);
 
 		string responseBody;
@@ -1151,35 +1169,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				json responseBodyRoot;
 
-				string field = "ingestionJobKey";
-				responseBodyRoot[field] = ingestionJobKey;
-
-				field = "encodingJobKey";
-				responseBodyRoot[field] = selectedEncodingCompleted->_encodingJobKey;
-
-				field = "pid";
-				responseBodyRoot[field] = 0;
-
-				field = "killedByUser";
-				responseBodyRoot[field] = selectedEncodingCompleted->_killedByUser;
-
-				field = "urlForbidden";
-				responseBodyRoot[field] = selectedEncodingCompleted->_urlForbidden;
-
-				field = "urlNotFound";
-				responseBodyRoot[field] = selectedEncodingCompleted->_urlNotFound;
-
-				field = "completedWithError";
-				responseBodyRoot[field] = selectedEncodingCompleted->_completedWithError;
-
-				field = "errorMessage";
-				responseBodyRoot[field] = selectedEncodingCompleted->_errorMessage;
-
-				field = "encodingFinished";
-				responseBodyRoot[field] = true;
-
-				field = "encodingProgress";
-				responseBodyRoot[field] = 100.0;
+				responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
+				responseBodyRoot["encodingJobKey"] = selectedEncodingCompleted->_encodingJobKey;
+				responseBodyRoot["pid"] = 0;
+				// killedByUser true implica una uscita dal loop in EncoderProxy (nell'engine). Nel caso in cui pero' il kill era stato fatto
+				// solo per eseguire un restart dell'EncoderProxy verso un nuovo encoder, mettiamo killedByUser a false
+				responseBodyRoot["killedByUser"] = selectedEncodingCompleted->_killedByUser && selectedEncodingCompleted->_killToRestartByEngine
+													   ? false
+													   : selectedEncodingCompleted->_killedByUser;
+				responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_urlForbidden;
+				responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_urlNotFound;
+				responseBodyRoot["completedWithError"] = selectedEncodingCompleted->_completedWithError;
+				responseBodyRoot["errorMessage"] = selectedEncodingCompleted->_errorMessage;
+				responseBodyRoot["encodingFinished"] = true;
+				responseBodyRoot["encodingProgress"] = 100.0;
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1188,26 +1191,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				double encodingProgress = -2.0;
 				if (selectedEncoding->_ffmpegTerminatedSuccessful)
 				{
-					// _ffmpegTerminatedSuccessful è stata
-					// introdotta perchè, soprattutto in
-					// caso di transcoder esterno, una volta
-					// che l'encoding è terminato, è
-					// necessario eseguire l'ingestion in
-					// MMS (PUSH). Questo spesso richiede
-					// parecchio tempo e la GUI mostra 0.0
-					// come percentuale di encoding perchè
-					// ovviamente non abbiamo piu il file di
-					// log dell'encoding. Questo flag fa si
-					// che, in questo periodo di upload del
-					// contenuto in MMS (PUSH), la
+					// _ffmpegTerminatedSuccessful è stata introdotta perchè, soprattutto in caso di transcoder esterno, una volta
+					// che l'encoding è terminato, è necessario eseguire l'ingestion in MMS (PUSH). Questo spesso richiede
+					// parecchio tempo e la GUI mostra 0.0 come percentuale di encoding perchè ovviamente non abbiamo piu il file di
+					// log dell'encoding. Questo flag fa si che, in questo periodo di upload del contenuto in MMS (PUSH), la
 					// percentuale mostrata sia 100%
 
-					// Il problema esiste anche per i
-					// transcoder interni che eseguono
-					// invece una move. Nel caso di file
-					// grandi, anche la move potrebbe
-					// richiedere parecchio tempo e, grazie
-					// a questa variabile, la GUI mostrera
+					// Il problema esiste anche per i transcoder interni che eseguono invece una move. Nel caso di file
+					// grandi, anche la move potrebbe richiedere parecchio tempo e, grazie a questa variabile, la GUI mostrera
 					// anche in questo caso 100%
 
 					encodingProgress = 100.0;
@@ -1233,12 +1224,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
-						string errorMessage = string("_ffmpeg->"
-													 "getEncodingProgress"
-													 " failed") +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-											  ", e.what(): " + e.what();
-						_logger->info(__FILEREF__ + errorMessage);
+						SPDLOG_INFO(
+							"_ffmpeg->getEncodingProgress failed"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", e.what(): {}",
+							ingestionJobKey, encodingJobKey, e.what()
+						);
 
 						// sendError(request, 500,
 						// errorMessage);
@@ -1248,11 +1240,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("_ffmpeg->"
-													 "getEncodingProgress"
-													 " failed") +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-											  ", e.what(): " + e.what();
+						string errorMessage = fmt::format(
+							"_ffmpeg->getEncodingProgress failed"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", e.what(): {}",
+							ingestionJobKey, encodingJobKey, e.what()
+						);
 						_logger->error(__FILEREF__ + errorMessage);
 
 						// sendError(request, 500,
@@ -1265,41 +1259,24 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				json responseBodyRoot;
 
-				string field = "ingestionJobKey";
-				responseBodyRoot[field] = ingestionJobKey;
-
-				field = "encodingJobKey";
-				responseBodyRoot[field] = selectedEncoding->_encodingJobKey;
-
-				field = "pid";
-				responseBodyRoot[field] = selectedEncoding->_childPid;
-
-				field = "killedByUser";
-				responseBodyRoot[field] = false;
-
-				field = "urlForbidden";
-				responseBodyRoot[field] = false;
-
-				field = "urlNotFound";
-				responseBodyRoot[field] = false;
-
-				field = "errorMessage";
-				responseBodyRoot[field] = selectedEncoding->_errorMessage;
-
-				field = "encodingFinished";
-				responseBodyRoot[field] = encodingCompleted;
-
-				field = "encodingProgress";
+				responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
+				responseBodyRoot["encodingJobKey"] = selectedEncoding->_encodingJobKey;
+				responseBodyRoot["pid"] = selectedEncoding->_childPid;
+				responseBodyRoot["killedByUser"] = false;
+				responseBodyRoot["urlForbidden"] = false;
+				responseBodyRoot["urlNotFound"] = false;
+				responseBodyRoot["errorMessage"] = selectedEncoding->_errorMessage;
+				responseBodyRoot["encodingFinished"] = encodingCompleted;
 				if (encodingProgress == -2.0)
 				{
 					if (selectedEncoding->_available && !encodingCompleted) // non dovrebbe
 																			// accadere mai
-						responseBodyRoot[field] = 100.0;
+						responseBodyRoot["encodingProgress"] = 100.0;
 					else
-						responseBodyRoot[field] = nullptr;
+						responseBodyRoot["encodingProgress"] = nullptr;
 				}
 				else
-					responseBodyRoot[field] = encodingProgress;
+					responseBodyRoot["encodingProgress"] = encodingProgress;
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1307,43 +1284,21 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				json responseBodyRoot;
 
-				string field = "ingestionJobKey";
-				responseBodyRoot[field] = selectedLiveProxy->_ingestionJobKey;
-
-				field = "encodingJobKey";
-				responseBodyRoot[field] = selectedLiveProxy->_encodingJobKey;
-
-				field = "pid";
-				responseBodyRoot[field] = selectedLiveProxy->_childPid;
-
-				field = "realTimeFrameRate";
-				responseBodyRoot[field] = selectedLiveProxy->_realTimeFrameRate;
-
-				field = "realTimeBitRate";
-				responseBodyRoot[field] = selectedLiveProxy->_realTimeBitRate;
-
-				field = "numberOfRestartBecauseOfFailure";
-				responseBodyRoot[field] = selectedLiveProxy->_numberOfRestartBecauseOfFailure;
-
-				field = "killedByUser";
-				responseBodyRoot[field] = false;
-
-				field = "urlForbidden";
-				responseBodyRoot[field] = false;
-
-				field = "urlNotFound";
-				responseBodyRoot[field] = false;
-
-				field = "errorMessage";
-				responseBodyRoot[field] = selectedLiveProxy->_errorMessage;
-
-				field = "encodingFinished";
-				responseBodyRoot[field] = encodingCompleted;
+				responseBodyRoot["ingestionJobKey"] = selectedLiveProxy->_ingestionJobKey;
+				responseBodyRoot["encodingJobKey"] = selectedLiveProxy->_encodingJobKey;
+				responseBodyRoot["pid"] = selectedLiveProxy->_childPid;
+				responseBodyRoot["realTimeFrameRate"] = selectedLiveProxy->_realTimeFrameRate;
+				responseBodyRoot["realTimeBitRate"] = selectedLiveProxy->_realTimeBitRate;
+				responseBodyRoot["numberOfRestartBecauseOfFailure"] = selectedLiveProxy->_numberOfRestartBecauseOfFailure;
+				responseBodyRoot["killedByUser"] = false;
+				responseBodyRoot["urlForbidden"] = false;
+				responseBodyRoot["urlNotFound"] = false;
+				responseBodyRoot["errorMessage"] = selectedLiveProxy->_errorMessage;
+				responseBodyRoot["encodingFinished"] = encodingCompleted;
 
 				// 2020-06-11: it's a live, it does not have
 				// sense the encoding progress
-				field = "encodingProgress";
-				responseBodyRoot[field] = nullptr;
+				responseBodyRoot["encodingProgress"] = nullptr;
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1351,46 +1306,24 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				json responseBodyRoot;
 
-				string field = "ingestionJobKey";
-				responseBodyRoot[field] = selectedLiveRecording->_ingestionJobKey;
-
-				field = "encodingJobKey";
-				responseBodyRoot[field] = selectedLiveRecording->_encodingJobKey;
-
-				field = "pid";
-				responseBodyRoot[field] = selectedLiveRecording->_childPid;
-
-				field = "realTimeFrameRate";
-				responseBodyRoot[field] = selectedLiveRecording->_realTimeFrameRate;
-
-				field = "realTimeBitRate";
-				responseBodyRoot[field] = selectedLiveRecording->_realTimeBitRate;
-
-				field = "numberOfRestartBecauseOfFailure";
-				responseBodyRoot[field] = selectedLiveRecording->_numberOfRestartBecauseOfFailure;
-
-				field = "killedByUser";
-				responseBodyRoot[field] = false;
-
-				field = "urlForbidden";
-				responseBodyRoot[field] = false;
-
-				field = "urlNotFound";
-				responseBodyRoot[field] = false;
-
-				field = "errorMessage";
-				responseBodyRoot[field] = selectedLiveRecording->_errorMessage;
-
-				field = "encodingFinished";
-				responseBodyRoot[field] = encodingCompleted;
+				responseBodyRoot["ingestionJobKey"] = selectedLiveRecording->_ingestionJobKey;
+				responseBodyRoot["encodingJobKey"] = selectedLiveRecording->_encodingJobKey;
+				responseBodyRoot["pid"] = selectedLiveRecording->_childPid;
+				responseBodyRoot["realTimeFrameRate"] = selectedLiveRecording->_realTimeFrameRate;
+				responseBodyRoot["realTimeBitRate"] = selectedLiveRecording->_realTimeBitRate;
+				responseBodyRoot["numberOfRestartBecauseOfFailure"] = selectedLiveRecording->_numberOfRestartBecauseOfFailure;
+				responseBodyRoot["killedByUser"] = false;
+				responseBodyRoot["urlForbidden"] = false;
+				responseBodyRoot["urlNotFound"] = false;
+				responseBodyRoot["errorMessage"] = selectedLiveRecording->_errorMessage;
+				responseBodyRoot["encodingFinished"] = encodingCompleted;
 
 				// 2020-10-13: we do not have here the
 				// information to calculate the encoding
 				// progress,
 				//	it is calculated in
 				// EncoderVideoAudioProxy.cpp
-				field = "encodingProgress";
-				responseBodyRoot[field] = nullptr;
+				responseBodyRoot["encodingProgress"] = nullptr;
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1620,6 +1553,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	}
 	else if (method == "killEncodingJob")
 	{
+		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
+		/*
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
@@ -1631,7 +1566,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			throw runtime_error(errorMessage);
 		}
 		int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		*/
 
+		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+		/*
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
@@ -1643,15 +1581,23 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			throw runtime_error(errorMessage);
 		}
 		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+		*/
 
+		// killType: "kill", "restartWithinEncoder", "killToRestartByEngine"
+		string killType = getQueryParameter(queryParameters, "killType", string("kill"), false);
+		/*
 		bool lightKill = false;
 		auto lightKillIt = queryParameters.find("lightKill");
 		if (lightKillIt != queryParameters.end())
 			lightKill = lightKillIt->second == "true" ? true : false;
+		*/
 
-		_logger->info(
-			__FILEREF__ + "Received killEncodingJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey) + ", lightKill: " + to_string(lightKill)
+		SPDLOG_INFO(
+			"Received killEncodingJob"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", lightKill: {}",
+			ingestionJobKey, encodingJobKey, killType
 		);
 
 		// pid_t pidToBeKilled;
@@ -1708,8 +1654,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			string errorMessage = "ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) + ", " +
 								  NoEncodingJobKeyFound().what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1722,8 +1667,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
 			", _childPid: {}"
-			", lightKill: {}",
-			ingestionJobKey, encodingJobKey, selectedEncoding->_childPid, lightKill
+			", killType: {}",
+			ingestionJobKey, encodingJobKey, selectedEncoding->_childPid, killType
 		);
 
 		// if (pidToBeKilled == 0)
@@ -1738,7 +1683,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			);
 
 			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -1749,7 +1694,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		{
 			chrono::system_clock::time_point startKillProcess = chrono::system_clock::now();
 
-			if (lightKill)
+			// killType: "kill", "restartWithinEncoder", "killToRestartByEngine"
+			if (killType == "restartWithinEncoder")
 			{
 				// 2022-11-02: SIGQUIT is managed inside
 				// FFMpeg.cpp by liverecording e liveProxy
@@ -1760,13 +1706,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			}
 			else
 			{
+				if (killType == "killToRestartByEngine")
+					selectedEncoding->_killToRestartByEngine = true;
 				termProcess(selectedEncoding, encodingJobKey, "unknown", "received killEncodingJob", true);
 			}
 
 			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
-			_logger->info(
-				__FILEREF__ + "killProcess statistics" + ", @MMS statistics@ - killProcess (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(endKillProcess - startKillProcess).count()) + "@"
+			SPDLOG_INFO(
+				"killProcess statistics"
+				", @MMS statistics@ - killProcess (secs): @{}@",
+				chrono::duration_cast<chrono::seconds>(endKillProcess - startKillProcess).count()
 			);
 		}
 		catch (runtime_error &e)
@@ -1774,7 +1723,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			string errorMessage = string("ProcessUtility::killProcess failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", _childPid: " + to_string(selectedEncoding->_childPid) +
 								  ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 

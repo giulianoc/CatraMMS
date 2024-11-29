@@ -271,7 +271,12 @@ else
 			if [ "$dbName" == "mms" ];then
 				#mysqldump --no-tablespaces --dump-replica --apply-replica-statements --include-source-host-port -u $dbUser -p$dbPwd -h db-slaves $dbName | gzip > $dumpDirectory$dumpFileName.gz # && gzip -f $dumpDirectory$dumpFileName
 				pg_dump "postgresql://$dbUser:$dbPwd@postgres-slaves:5432/$dbName" --clean --if-exists > $dumpDirectory$dumpFileName
-				gzip $dumpDirectory$dumpFileName
+				pgDumpReturn=$?
+				if [ $pgDumpReturn -eq 0 ];then
+					gzip -f $dumpDirectory$dumpFileName
+				else
+					echo "$(date): pg_dump failed: $pgDumpReturn" >> $debugFilename
+				fi
 			else
 				mysqldump --no-tablespaces -u $dbUser -p$dbPwd -h db-slaves $dbName | gzip > $dumpDirectory$dumpFileName.gz # && gzip -f $dumpDirectory$dumpFileName
 			fi

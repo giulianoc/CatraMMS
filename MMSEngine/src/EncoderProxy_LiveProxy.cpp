@@ -1237,14 +1237,19 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					// );
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage, urlForbidden, urlNotFound, ignore, encodingPid,
 						realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure) = getEncodingStatus();
-					_logger->info(
-						__FILEREF__ + "getEncodingStatus" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-						", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors) +
-						", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors) +
-						", encodingFinished: " + to_string(encodingFinished) + ", killedByUser: " + to_string(killedByUser) +
-						", completedWithError: " + to_string(completedWithError) + ", urlForbidden: " + to_string(urlForbidden) +
-						", urlNotFound: " + to_string(urlNotFound)
+					SPDLOG_INFO(
+						"getEncodingStatus"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", currentAttemptsNumberInCaseOfErrors: {}"
+						", maxAttemptsNumberInCaseOfErrors: {}"
+						", encodingFinished: {}"
+						", killedByUser: {}"
+						", completedWithError: {}"
+						", urlForbidden: {}"
+						", urlNotFound: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors,
+						maxAttemptsNumberInCaseOfErrors, encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound
 					);
 
 					encoderNotReachableFailures = 0;

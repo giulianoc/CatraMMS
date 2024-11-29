@@ -17,6 +17,7 @@
 #include "MMSEngineDBFacade.h"
 #include "Validator.h"
 #include "catralibraries/Convert.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <curlpp/Easy.hpp>
 #include <curlpp/Exception.hpp>
@@ -281,19 +282,30 @@ void API::killOrCancelEncodingJob(
 {
 	string api = "killOrCancelEncodingJob";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
 
 	try
 	{
+		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), false);
+		/*
 		int64_t encodingJobKey = -1;
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
 			encodingJobKey = stoll(encodingJobKeyIt->second);
+		*/
 
+		// "kill", "restartWithinEncoder", "killToRestartByEngine"
+		string killType = getQueryParameter(queryParameters, "killType", string("kill"), false);
+		/*
 		bool lightKill = false;
 		auto lightKillIt = queryParameters.find("lightKill");
 		if (lightKillIt != queryParameters.end() && lightKillIt->second != "")
 			lightKill = lightKillIt->second == "true" ? true : false;
+		*/
 
 		{
 			// 2022-12-18: fromMaster true perchè serve una info sicura
@@ -330,15 +342,18 @@ void API::killOrCancelEncodingJob(
 						// In case 3, the EncodingJob is updated to KilledByUser
 						try
 						{
-							_logger->info(
-								__FILEREF__ + "killEncodingJob" + ", encoderKey: " + to_string(encoderKey) +
-								", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey)
+							SPDLOG_INFO(
+								"killEncodingJob"
+								", encoderKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}",
+								encoderKey, ingestionJobKey, encodingJobKey
 							);
-							killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, lightKill);
+							killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, killType);
 
 							// to make sure EncoderVideoProxyThread resources are released,
 							// the isKilled flag is also set
-							if (!lightKill)
+							if (killType == "kill")
 							{
 								// this is the case 2
 								bool isKilled = true;
@@ -394,7 +409,7 @@ void API::killOrCancelEncodingJob(
 						catch (...)
 						{
 							// this is the case 2
-							if (!lightKill)
+							if (killType == "kill")
 							{
 								bool isKilled = true;
 
@@ -453,7 +468,7 @@ void API::killOrCancelEncodingJob(
 			{
 				if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 				{
-					// In this case we may have 2 scenarios:
+					// In this case we may have 3 scenarios:
 					// 1. process (ffmpeg) is running
 					// 2. process (ffmpeg) fails to run and we have the Task in the loop
 					//		within EncoderVideoAudioProxy trying to make ffmpeg starting calling the Transcoder.
@@ -469,22 +484,28 @@ void API::killOrCancelEncodingJob(
 
 					try
 					{
-						_logger->info(
-							__FILEREF__ + "killEncodingJob" + ", encoderKey: " + to_string(encoderKey) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey)
+						SPDLOG_INFO(
+							"killEncodingJob"
+							", encoderKey: {}"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}",
+							encoderKey, ingestionJobKey, encodingJobKey
 						);
-						killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, lightKill);
+						killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, killType);
 
 						// to make sure EncoderVideoProxyThread resources are released,
 						// the isKilled flag is also set
-						if (!lightKill)
+						if (killType == "kill")
 						{
 							// this is the case 2
 							bool isKilled = true;
 
-							_logger->info(
-								__FILEREF__ + "Setting isKilled flag" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								", encodingJobKey: " + to_string(encodingJobKey) + ", isKilled: " + to_string(isKilled)
+							SPDLOG_INFO(
+								"Setting isKilled flag"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", isKilled: {}",
+								ingestionJobKey, encodingJobKey, isKilled
 							);
 							_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
@@ -509,16 +530,20 @@ void API::killOrCancelEncodingJob(
 
 							if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 							{
-								_logger->info(
-									__FILEREF__ + "killEncodingJob and updateEncodingJobIsKilled failed, force update of the status" +
-									", encoderKey: " + to_string(encoderKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", encodingJobKey: " + to_string(encodingJobKey)
+								SPDLOG_INFO(
+									"killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
+									", encoderKey: {}"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}",
+									encoderKey, ingestionJobKey, encodingJobKey
 								);
 
 								{
-									_logger->info(
-										__FILEREF__ + "updateEncodingJob KilledByUser" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", encodingJobKey: " + to_string(encodingJobKey)
+									SPDLOG_INFO(
+										"updateEncodingJob KilledByUser"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}",
+										ingestionJobKey, encodingJobKey
 									);
 
 									_mmsEngineDBFacade->updateEncodingJob(
@@ -533,13 +558,16 @@ void API::killOrCancelEncodingJob(
 					catch (runtime_error &e)
 					{
 						// this is the case 2
-						if (!lightKill)
+						if (killType == "kill")
 						{
 							bool isKilled = true;
 
-							_logger->info(
-								__FILEREF__ + "Setting isKilled flag" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								", encodingJobKey: " + to_string(encodingJobKey) + ", isKilled: " + to_string(isKilled)
+							SPDLOG_INFO(
+								"Setting isKilled flag"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", isKilled: {}",
+								ingestionJobKey, encodingJobKey, isKilled
 							);
 							_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
@@ -564,16 +592,20 @@ void API::killOrCancelEncodingJob(
 
 							if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 							{
-								_logger->info(
-									__FILEREF__ + "killEncodingJob and updateEncodingJobIsKilled failed, force update of the status" +
-									", encoderKey: " + to_string(encoderKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", encodingJobKey: " + to_string(encodingJobKey)
+								SPDLOG_INFO(
+									"killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
+									", encoderKey: {}"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}",
+									encoderKey, ingestionJobKey, encodingJobKey
 								);
 
 								{
-									_logger->info(
-										__FILEREF__ + "updateEncodingJob KilledByUser" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", encodingJobKey: " + to_string(encodingJobKey)
+									SPDLOG_INFO(
+										"updateEncodingJob KilledByUser"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}",
+										ingestionJobKey, encodingJobKey
 									);
 
 									_mmsEngineDBFacade->updateEncodingJob(
@@ -588,7 +620,7 @@ void API::killOrCancelEncodingJob(
 				}
 				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)
 				{
-					if (!lightKill)
+					if (killType == "kill")
 					{
 						MMSEngineDBFacade::EncodingError encodingError = MMSEngineDBFacade::EncodingError::CanceledByUser;
 						_mmsEngineDBFacade->updateEncodingJob(
@@ -603,15 +635,18 @@ void API::killOrCancelEncodingJob(
 			{
 				if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 				{
-					_logger->info(
-						__FILEREF__ + "killEncodingJob" + ", encoderKey: " + to_string(encoderKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey)
+					SPDLOG_INFO(
+						"killEncodingJob"
+						", encoderKey: {}"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}",
+						encoderKey, ingestionJobKey, encodingJobKey
 					);
-					killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, lightKill);
+					killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, killType);
 				}
 				else if (status == MMSEngineDBFacade::EncodingStatus::ToBeProcessed)
 				{
-					if (!lightKill)
+					if (killType == "kill")
 					{
 						MMSEngineDBFacade::EncodingError encodingError = MMSEngineDBFacade::EncodingError::CanceledByUser;
 						_mmsEngineDBFacade->updateEncodingJob(
@@ -638,7 +673,7 @@ void API::killOrCancelEncodingJob(
 		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -655,7 +690,7 @@ void API::killOrCancelEncodingJob(
 		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -672,7 +707,7 @@ void API::killOrCancelEncodingJob(
 		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1228,7 +1263,10 @@ void API::removeEncodingProfilesSet(
 	}
 }
 
-void API::killEncodingJob(int64_t encoderKey, int64_t ingestionJobKey, int64_t encodingJobKey, bool lightKill)
+void API::killEncodingJob(
+	int64_t encoderKey, int64_t ingestionJobKey, int64_t encodingJobKey,
+	string killType // "kill", "restartWithinEncoder", "killToRestartByEngine"
+)
 {
 	string ffmpegEncoderURL;
 	ostringstream response;
@@ -1242,8 +1280,10 @@ void API::killEncodingJob(int64_t encoderKey, int64_t ingestionJobKey, int64_t e
 		// 	+ "://"
 		// 	+ transcoderHost + ":"
 		// 	+ to_string(_ffmpegEncoderPort)
-		ffmpegEncoderURL = transcoderHost + _ffmpegEncoderKillEncodingURI + "/" + to_string(ingestionJobKey) + "/" + to_string(encodingJobKey) +
-						   "?lightKill=" + (lightKill ? "true" : "false");
+		// ffmpegEncoderURL = transcoderHost + _ffmpegEncoderKillEncodingURI + "/" + to_string(ingestionJobKey) + "/" + to_string(encodingJobKey) +
+		// 			   "?lightKill=" + (lightKill ? "true" : "false");
+		ffmpegEncoderURL =
+			fmt::format("{}{}/{}/{}?killType={}", transcoderHost, _ffmpegEncoderKillEncodingURI, ingestionJobKey, encodingJobKey, killType);
 
 		vector<string> otherHeaders;
 		MMSCURL::httpDelete(

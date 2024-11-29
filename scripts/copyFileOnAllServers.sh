@@ -16,10 +16,10 @@ source /opt/catrasoftware/CatraMMS/scripts/servers.sh
 index=0
 while [ $index -lt $prodServersNumber ]
 do
-	serverName=${prodServers[$((index*4+0))]}
-	serverAddress=${prodServers[$((index*4+1))]}
-	serverKey=${prodServers[$((index*4+2))]}
-	serverPort=${prodServers[$((index*4+3))]}
+	serverName=${prodServers[$((index*5+0))]}
+	serverAddress=${prodServers[$((index*5+1))]}
+	serverKey=${prodServers[$((index*5+2))]}
+	serverPort=${prodServers[$((index*5+3))]}
 
 	echo ""
 	echo "serverName: $serverName"

@@ -1143,7 +1143,8 @@ firewall-rules()
 		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
 		#read internalNetwork
 		internalNetwork=10.0.0.0/16
-		ufw allow from $internalNetwork to any port 3306
+		#3306: commentato perchè non abbiamo piu mysql
+		#ufw allow from $internalNetwork to any port 3306
 		#anche se potrebbero esserci diverse versioni di postgres ognuna che ascolta su porte diverse,
 		#è importante che la porta del postgres attivo sia la 5432 perchè questa porta è usata dappertutto:
 		#dalla conf del load balancer per gli slaves, dagli script (monitoring agent, ....)

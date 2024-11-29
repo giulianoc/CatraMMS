@@ -926,10 +926,10 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		json encodingProfileDetailsRoot = nullptr;
 		MMSEngineDBFacade::ContentType encodingProfileContentType = MMSEngineDBFacade::ContentType::Video;
 		string awsChannelConfigurationLabel;
-		bool awsSignedURL;
-		int awsExpirationInMinutes;
+		bool awsSignedURL = false;
+		int awsExpirationInMinutes = -1;
 		string cdn77ChannelConfigurationLabel;
-		int cdn77ExpirationInMinutes;
+		int cdn77ExpirationInMinutes = -1;
 		string rtmpChannelConfigurationLabel;
 		string hlsChannelConfigurationLabel;
 		string udpUrl;

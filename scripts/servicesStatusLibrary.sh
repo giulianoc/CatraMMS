@@ -132,11 +132,13 @@ notify()
 		--data-urlencode "text=${message}" \
 		"https://api.telegram.org/bot${TELEGRAM_GROUPALARMS_BOT_TOKEN}/sendMessage" > /dev/null
 
-	alarmNotificationIntegration="/home/mms/mms/scripts/alarmNotificationIntegration.sh"
-	if [ -x "$alarmNotificationIntegration" ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): Calling $alarmNotificationIntegration" >> $debugFilename
-		$alarmNotificationIntegration "$alarmType" "${message}" >> $debugFilename 2>&1
-	fi
+	#alarmNotificationIntegration.sh conteneva una curl come quella sopra.
+	#Forse per mandare ad una specifica coda!!! Boh
+	#alarmNotificationIntegration="/home/mms/mms/scripts/alarmNotificationIntegration.sh"
+	#if [ -x "$alarmNotificationIntegration" ]; then
+	#	echo "$(date +'%Y/%m/%d %H:%M:%S'): Calling $alarmNotificationIntegration" >> $debugFilename
+	#	$alarmNotificationIntegration "$alarmType" "${message}" >> $debugFilename 2>&1
+	#fi
 
 	return 0
 }
@@ -683,7 +685,7 @@ mms_webservices_timing_check_service()
 			if (method == "startChannels"	\
 				|| method == "checkChannels"	\
 			)	\
-				maxDuration = 15000;	\
+				maxDuration = 20000;	\
 			else if (method == "epgUpdate"	\
 			)	\
 				maxDuration = 150000;	\
@@ -737,7 +739,7 @@ mms_sql_timing_check_service()
 
 	#incrementato a 300 perchè capita di avere poco piu di 200 anche per query perfettamente indicizzate che impiegano al 99.9% 1 millisecs
 	# e poco piu di 200 nello 0.1%
-	maxSQLDuration=300
+	maxSQLDuration=500
 	warningMessage=$(grep "statement, sqlStatement" $logFilePathName | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxSQLDuration=$maxSQLDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
 	{	\
 		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
@@ -748,7 +750,7 @@ mms_sql_timing_check_service()
 			duration=$6;	\
 			label=$7;	\
 			if (label == "getIngestionsToBeManaged")	\
-				maxSQLDuration = 1200;	\
+				maxSQLDuration = 3000;	\
 			else if (label == "getIngestionRootsStatus")	\
 				maxSQLDuration = 400;	\
 			if (duration > maxSQLDuration)	\

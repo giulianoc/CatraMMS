@@ -1547,6 +1547,9 @@ string MMSCURL::httpPostPutFormData(
 	long timeoutInSeconds, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
+	// per vedere cosa manda curl
+	// curl --trace-ascii - "https://....."
+
 	string sResponse;
 	int retryNumber = -1;
 
