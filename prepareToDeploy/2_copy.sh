@@ -46,6 +46,12 @@ if [ "$deploy" == "y" ]; then
 		serverAddress=${prodServers[$((index*5+1))]}
 		serverKey=${prodServers[$((index*5+2))]}
 		serverPort=${prodServers[$((index*5+3))]}
+		serverType=${prodServers[$((index*5+4))]}
+
+		if [ "$serverType" == "integration" ]; then
+			index=$((index+1))
+			continue
+		fi
 
 		echo $serverName
 		scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms

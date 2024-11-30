@@ -17,6 +17,8 @@
 #include "MMSCURL.h"
 #include "MMSDeliveryAuthorization.h"
 #include "MMSEngineDBFacade.h"
+#include "spdlog/fmt/bundled/format.h"
+#include "spdlog/spdlog.h"
 #include <regex>
 
 bool EncoderProxy::liveProxy(string proxyType)
@@ -908,10 +910,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 			if (_encodingItem->_encoderKey == -1)
 			{
-				// 2021-12-14: we have to read again encodingParametersRoot
-				// because,
-				//	in case the playlist (inputsRoot) is changed, the
-				// updated inputsRoot 	is into DB
+				// 2021-12-14: we have to read again encodingParametersRoot because, in case the playlist (inputsRoot) is changed, the
+				// updated inputsRoot is into DB
 				{
 					try
 					{
@@ -993,8 +993,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					// l'engine deve comunicare 	con il transcoder. Questa url
 					// dipende solamente dal fatto che il transcoder 	sia interno
 					// o esterno
-					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // , pushEncoderName);
-					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
+					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) =
+						_mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // , pushEncoderName);
 
 					SPDLOG_INFO(
 						"Retrieved updated Stream info"
@@ -1010,18 +1010,22 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				{
 					int64_t encoderKeyToBeSkipped = -1;
 					bool externalEncoderAllowed = true;
-					tuple<int64_t, string, bool> encoderDetails = _encodersLoadBalancer->getEncoderURL(
-						_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace, encoderKeyToBeSkipped, externalEncoderAllowed
-					);
-					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
+					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) =
+						_encodersLoadBalancer->getEncoderURL(
+							_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace, encoderKeyToBeSkipped, externalEncoderAllowed
+						);
 				}
 
-				_logger->info(
-					__FILEREF__ + "Configuration item" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _currentUsedFFMpegEncoderHost: " +
-					_currentUsedFFMpegEncoderHost + ", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+				SPDLOG_INFO(
+					"Configuration item"
+					", _proxyIdentifier: {}"
+					", _currentUsedFFMpegEncoderHost: {}"
+					", _currentUsedFFMpegEncoderKey: {}",
+					_proxyIdentifier, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey
 				);
-				ffmpegEncoderURL = _currentUsedFFMpegEncoderHost + ffmpegURI + "/" + to_string(_encodingItem->_ingestionJobKey) + "/" +
-								   to_string(_encodingItem->_encodingJobKey);
+				ffmpegEncoderURL = fmt::format(
+					"{}{}/{}/{}", _currentUsedFFMpegEncoderHost, ffmpegURI, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+				);
 
 				string body;
 				{
@@ -1067,19 +1071,13 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					if (error.find(EncodingIsAlreadyRunning().what()) != string::npos)
 					{
 						// 2023-03-26:
-						// Questo scenario indica che per il DB "l'encoding è da
-						// eseguire" mentre abbiamo un Encoder che lo sta già
-						// eseguendo Si tratta di una inconsistenza che non
-						// dovrebbe mai accadere. Oggi pero' ho visto questo
-						// scenario e l'ho risolto facendo ripartire sia
-						// l'encoder che gli engines Gestire questo scenario
-						// rende il sistema piu' robusto e recupera facilmente
-						// una situazione che altrimenti richiederebbe una
-						// gestione manuale Inoltre senza guardare nel log, non
-						// si riuscirebbe a capire che siamo in questo scenario.
+						// Questo scenario indica che per il DB "l'encoding è da eseguire" mentre abbiamo un Encoder che lo sta già
+						// eseguendo Si tratta di una inconsistenza che non dovrebbe mai accadere. Oggi pero' ho visto questo
+						// scenario e l'ho risolto facendo ripartire sia l'encoder che gli engines Gestire questo scenario
+						// rende il sistema piu' robusto e recupera facilmente una situazione che altrimenti richiederebbe una
+						// gestione manuale Inoltre senza guardare nel log, non si riuscirebbe a capire che siamo in questo scenario.
 
-						// La gestione di questo scenario consiste nell'ignorare
-						// questa eccezione facendo andare avanti la procedura,
+						// La gestione di questo scenario consiste nell'ignorare questa eccezione facendo andare avanti la procedura,
 						// come se non avesse generato alcun errore
 						_logger->error(
 							__FILEREF__ +
@@ -1094,33 +1092,6 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					else
 						throw e;
 				}
-
-				/* 2023-03-26; non si verifica mai, se FFMPEGEncoder genera un
-				errore, ritorna un HTTP status diverso da 200 e quindi MMSCURL
-				genera un eccezione
-				{
-					string field = "error";
-					if (JSONUtils::isMetadataPresent(liveProxyContentResponse,
-				field))
-					{
-						string error =
-				JSONUtils::asString(liveProxyContentResponse, field, "");
-
-						string errorMessage = string("FFMPEGEncoder error")
-							+ ", _proxyIdentifier: " +
-				to_string(_proxyIdentifier)
-							+ ", _ingestionJobKey: " +
-				to_string(_encodingItem->_ingestionJobKey)
-							+ ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey)
-							+ ", error: " + error
-						;
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-				*/
 			}
 			else
 			{
@@ -1133,14 +1104,10 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _encodingItem->_encoderKey
 				);
 
-				pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
-				tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
+				tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
 				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
-				// manifestFilePathName =
-				// _encodingItem->_stagingEncodedAssetPathName;
 
-				// we have to reset _encodingItem->_encoderKey because in case
-				// we will come back in the above 'while' loop, we have to
+				// we have to reset _encodingItem->_encoderKey because in case we will come back in the above 'while' loop, we have to
 				// select another encoder
 				_encodingItem->_encoderKey = -1;
 
