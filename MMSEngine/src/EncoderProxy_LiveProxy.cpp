@@ -995,6 +995,16 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					// o esterno
 					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // , pushEncoderName);
 					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
+
+					SPDLOG_INFO(
+						"Retrieved updated Stream info"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", streamConfigurationLabel: {}"
+						", updatedPushEncoderKey: {}"
+						", updatedURL: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, streamConfigurationLabel, updatedPushEncoderKey, updatedURL
+					);
 				}
 				else
 				{
