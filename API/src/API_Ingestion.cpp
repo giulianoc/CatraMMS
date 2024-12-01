@@ -4307,13 +4307,11 @@ void API::ingestionJobSwitchToEncoder(
 	{
 		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
 
-		// mandatory nel caso di broadcaster, servono:
+		// mandatory nel caso di broadcaster e broadcast, servono:
 		int64_t newPushEncoderKey = getQueryParameter(queryParameters, "newPushEncoderKey", static_cast<int64_t>(-1), false);
 		// pushPublicEncoderName: indica se bisogna usare l'IP pubblico o quello interno/privato
 		bool newPushPublicEncoderName = getQueryParameter(queryParameters, "newPushPublicEncoderName", false, false);
-
-		// mandatory nel caso di "no broadcaster"
-		string newEncodersPool = getQueryParameter(queryParameters, "newEncodersPool", string(""), false);
+		string newEncodersPoolLabel = getQueryParameter(queryParameters, "newEncodersPoolLabel", string(""), false);
 
 		SPDLOG_INFO(
 			"ingestionJob_IngestionTypeStatus"
@@ -4321,8 +4319,8 @@ void API::ingestionJobSwitchToEncoder(
 			", ingestionJobKey: {}"
 			", newPushEncoderKey: {}"
 			", newPushPublicEncoderName: {}"
-			", newEncodersPool: {}",
-			workspace->_workspaceKey, ingestionJobKey, newPushEncoderKey, newPushPublicEncoderName, newEncodersPool
+			", newEncodersPoolLabel: {}",
+			workspace->_workspaceKey, ingestionJobKey, newPushEncoderKey, newPushPublicEncoderName, newEncodersPoolLabel
 		);
 
 		auto [ingestionType, ingestionStatus, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
@@ -4352,35 +4350,16 @@ void API::ingestionJobSwitchToEncoder(
 			json broadcasterRoot = JSONUtils::asJson(metadataContentRoot["internalMMS"], "broadcaster");
 			if (broadcasterRoot != nullptr)
 			{
-				// ingestionJobKey is referring a Broadcaster /Live Channel
-
-				// modifico il pushEncoderKey dello Stream associato al Broadcaster
-				// e faccio ripartire l'encodingJob in modo che venga usato il nuovo encoder
+				// ingestionJobKey is referring a Broadcaster / Live Channel
 
 				// verificare che newPushEncoderKey sia uno degli encoder gestiti dal workspace
 				{
-					auto [broadcasterEncodingJobKey, broadcasterEncoderKey, encodingJobParametersRoot] =
-						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKeyParameters(ingestionJobKey, true);
-
-					json streamInputRoot = JSONUtils::asJson(encodingJobParametersRoot["inputsRoot"][0], "streamInput");
-					if (streamInputRoot == nullptr)
+					json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, "internalMMS");
+					json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
+					if (encodersDetailsRoot == nullptr)
 					{
-						// errore: il broadcaster deve ricevere come input lo stream mandato dal broadcast
 						string errorMessage = fmt::format(
-							"The Broadcaster ingestionJob does not have the inputsRoot json "
-							", ingestionJobKey: {}",
-							ingestionJobKey
-						);
-						SPDLOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					int64_t broadcasterStreamConfKey = JSONUtils::asInt64(streamInputRoot, "confKey", -1);
-					if (broadcasterStreamConfKey == -1)
-					{
-						// errore: non è stato trovato il confKey dello Stream associato al Broadcaster
-						string errorMessage = fmt::format(
-							"The Broadcaster ingestionJob does not have the confKey field "
+							"No encodersDetails json found"
 							", ingestionJobKey: {}",
 							ingestionJobKey
 						);
@@ -4389,13 +4368,15 @@ void API::ingestionJobSwitchToEncoder(
 						throw runtime_error(errorMessage);
 					}
 
-					// aggiorno pushEncoderKey
-					_mmsEngineDBFacade->modifyStream(
-						broadcasterStreamConfKey, "", workspace->_workspaceKey, false, "", false, "", false, -1, false, "", false, "", true,
-						newPushEncoderKey, true, newPushPublicEncoderName, false, -1, false, "", false, -1, false, -1, false, "", false, -1, false,
-						-1, false, -1, false, -1, false, -1, false, -1, false, "", false, "", false, "", false, "", false, "", false, -1, "", false,
-						-1, false, nullptr
-					);
+					encodersDetailsRoot["pushEncoderKey"] = newPushEncoderKey;
+					encodersDetailsRoot["pushPublicEncoderName"] = newPushPublicEncoderName;
+					internalMMSRoot["encodersDetails"] = encodersDetailsRoot;
+					metadataContentRoot["internalMMS"] = internalMMSRoot;
+
+					_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(metadataContentRoot));
+
+					auto [broadcasterEncodingJobKey, broadcasterEncoderKey] =
+						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(ingestionJobKey, true);
 					// dopo aver modificato il pushEncoderKey, killo l'encodingjob del broadcaster
 					// solo per farlo ripartire in modo da usare il nuovo encoder
 					killEncodingJob(broadcasterEncoderKey, ingestionJobKey, broadcasterEncodingJobKey, "killToRestartByEngine");
@@ -4403,74 +4384,54 @@ void API::ingestionJobSwitchToEncoder(
 
 				int64_t broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, "broadcastIngestionJobKey", -1);
 
-				// per il broadcast è necessario aggiornare i parametersRoot dell'encodingJob, in particolare
-				// il campo outputsRoot[0]->udpUrl in modo che il broadcast mandi al nuovo encoder
-				// Infine far ripartire l'encodingJob in modo che venga usato il nuovo udpUrl
 				{
-					auto [broadcastEncodingJobKey, broadcastEncoderKey, encodingJobParametersRoot] =
-						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKeyParameters(broadcastIngestionJobKey, true);
-
-					json outputsRoot = encodingJobParametersRoot["outputsRoot"];
-					if (outputsRoot == nullptr)
-					{
-						string errorMessage = fmt::format(
-							"The Broadcast encodingJob does not have the outputsRoot json "
-							", broadcastIngestionJobKey: {}",
-							broadcastIngestionJobKey
+					auto [broadcastIngestionType, broadcastIngestionStatus, broadcastMetadataContentRoot] =
+						_mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
+							workspace->_workspaceKey, broadcastIngestionJobKey,
+							// 2022-12-18: meglio avere una informazione sicura
+							true
 						);
-						SPDLOG_ERROR(errorMessage);
 
-						throw runtime_error(errorMessage);
-					}
-					json outputRoot = outputsRoot[0];
-					if (outputRoot == nullptr)
+					if (broadcastIngestionStatus != MMSEngineDBFacade::IngestionStatus::EncodingQueued)
 					{
 						string errorMessage = fmt::format(
-							"The Broadcast encodingJob does not have the outputRoot json "
-							", broadcastIngestionJobKey: {}",
-							broadcastIngestionJobKey
-						);
-						SPDLOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string udpUrl = JSONUtils::asString(outputRoot, "udpUrl", "");
-					if (udpUrl == "")
-					{
-						// errore: il broadcast deve avere un udp output per mandare lo stream al broadcaster
-						string errorMessage = fmt::format(
-							"The Broadcast encodingJob does not have the udpUrl field "
-							", broadcastIngestionJobKey: {}",
-							broadcastIngestionJobKey
+							"It is not possible to switch to a new encoder when "
+							"ingestionJob is not in EncodingQueued status"
+							", broadcastIngestionJobKey: {}"
+							", broadcastIngestionStatus: {}",
+							broadcastIngestionJobKey, MMSEngineDBFacade::toString(broadcastIngestionStatus)
 						);
 						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 
-					string pushEncoderName = newPushPublicEncoderName ? _mmsEngineDBFacade->encoder_PublicServerName(newPushEncoderKey, true)
-																	  : _mmsEngineDBFacade->encoder_InternalServerName(newPushEncoderKey, true);
-
-					// udp://ec2-15-161-78-89.eu-south-1.compute.amazonaws.com:30031
-					if (!udpUrl.starts_with("udp://") || udpUrl.find_last_of(":") == string::npos)
+					json internalMMSRoot = JSONUtils::asJson(broadcastMetadataContentRoot, "internalMMS");
+					json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
+					if (encodersDetailsRoot == nullptr)
 					{
 						string errorMessage = fmt::format(
-							"The Broadcast encodingJob has a wrong udpUrl field "
-							", broadcastIngestionJobKey: {}",
-							broadcastIngestionJobKey
+							"No encodersDetails json found"
+							", ingestionJobKey: {}",
+							ingestionJobKey
 						);
 						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 
-					string newUdpUrl = fmt::format("udp://{}{}", pushEncoderName, udpUrl.substr(udpUrl.find_last_of(":")));
+					encodersDetailsRoot["encodersPoolLabel"] = newEncodersPoolLabel;
+					internalMMSRoot["encodersDetails"] = encodersDetailsRoot;
+					broadcastMetadataContentRoot["internalMMS"] = internalMMSRoot;
 
-					outputRoot["udpUrl"] = newUdpUrl;
-					outputsRoot[0] = outputRoot;
-					encodingJobParametersRoot["outputsRoot"] = outputsRoot;
-					_mmsEngineDBFacade->updateEncodingJobParameters(broadcastEncodingJobKey, JSONUtils::toString(encodingJobParametersRoot));
+					_mmsEngineDBFacade->updateIngestionJobMetadataContent(
+						broadcastIngestionJobKey, JSONUtils::toString(broadcastMetadataContentRoot)
+					);
 
+					auto [broadcastEncodingJobKey, broadcastEncoderKey] =
+						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(broadcastIngestionJobKey, true);
+					// dopo aver modificato il pushEncoderKey, killo l'encodingjob del broadcaster
+					// solo per farlo ripartire in modo da usare il nuovo encoder
 					killEncodingJob(broadcastEncoderKey, broadcastIngestionJobKey, broadcastEncodingJobKey, "killToRestartByEngine");
 				}
 			}
