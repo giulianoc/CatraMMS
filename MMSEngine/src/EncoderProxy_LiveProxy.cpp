@@ -19,6 +19,7 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
+#include <cstdint>
 #include <regex>
 
 bool EncoderProxy::liveProxy(string proxyType)
@@ -748,43 +749,31 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 	{
 		if (proxyType == "liveProxy")
 		{
-			field = "url";
-			url = JSONUtils::asString(streamInputRoot, field, "");
+			url = JSONUtils::asString(streamInputRoot, "url", "");
 
-			field = "streamSourceType";
-			streamSourceType = JSONUtils::asString(streamInputRoot, field, "");
+			streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
 		}
 
-		field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
-		waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 600);
+		waitingSecondsBetweenAttemptsInCaseOfErrors =
+			JSONUtils::asInt(_encodingItem->_encodingParametersRoot, "waitingSecondsBetweenAttemptsInCaseOfErrors", 600);
 
-		field = "maxAttemptsNumberInCaseOfErrors";
-		maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_ingestedParametersRoot, field, -1);
+		maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_ingestedParametersRoot, "maxAttemptsNumberInCaseOfErrors", -1);
 
 		{
-			field = "timePeriod";
-			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
+			timePeriod = JSONUtils::asBool(firstInputRoot, "timePeriod", false);
 
 			if (timePeriod)
-			{
-				field = "utcScheduleStart";
-				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
-			}
+				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, "utcScheduleStart", -1);
 
 			json lastInputRoot = inputsRoot[inputsRoot.size() - 1];
 
-			field = "timePeriod";
-			timePeriod = JSONUtils::asBool(lastInputRoot, field, false);
+			timePeriod = JSONUtils::asBool(lastInputRoot, "timePeriod", false);
 
 			if (timePeriod)
 			{
-				field = "utcScheduleEnd";
-				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
+				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, "utcScheduleEnd", -1);
 				if (utcProxyPeriodEnd == -1)
-				{
-					field = "utcProxyPeriodEnd";
-					utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
-				}
+					utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, "utcProxyPeriodEnd", -1);
 			}
 		}
 	}
@@ -793,10 +782,12 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 	bool urlForbidden = false;
 	bool urlNotFound = false;
 
-	_logger->info(
-		__FILEREF__ + "check maxAttemptsNumberInCaseOfErrors" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-		", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors)
+	SPDLOG_INFO(
+		"check maxAttemptsNumberInCaseOfErrors"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", maxAttemptsNumberInCaseOfErrors: {}",
+		_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, maxAttemptsNumberInCaseOfErrors
 	);
 
 	long currentAttemptsNumberInCaseOfErrors = 0;
@@ -819,13 +810,14 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 		//	it is 0 because our variable is set to 0
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "updateEncodingJobFailuresNumber" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey)
+			SPDLOG_INFO(
+				"updateEncodingJobFailuresNumber"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
 				// + ", encodingStatusFailures: " +
 				// to_string(encodingStatusFailures)
-				+ ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
+				", currentAttemptsNumberInCaseOfErrors: {}",
+				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
 			);
 
 			killedByUser = _mmsEngineDBFacade->updateEncodingJobFailuresNumber(
@@ -969,18 +961,55 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					// 		nell'outputRoot che punta al transcoder iniziale. Questo campo udpUrl è stato inizializzato
 					// 		in CatraMMSBroadcaster.java (method: addBroadcaster).
 
-					json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
+					int64_t updatedPushEncoderKey = -1;
+					string updatedUrl;
+					{
+						json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
 
-					// se è IP_PUSH vuol dire anche che siamo nel caso di proxyType == "liveProxy" che quindi ha il campo streamInput
-					json streamInputRoot = inputsRoot[0]["streamInput"];
+						// se è IP_PUSH vuol dire anche che siamo nel caso di proxyType == "liveProxy" che quindi ha il campo streamInput
+						json streamInputRoot = inputsRoot[0]["streamInput"];
 
-					string streamConfigurationLabel = JSONUtils::asString(streamInputRoot, "configurationLabel", "");
+						string streamConfigurationLabel = JSONUtils::asString(streamInputRoot, "configurationLabel", "");
 
-					auto [updatedPushEncoderKey, updatedURL] = _mmsEngineDBFacade->getStreamInputPushDetails(
-						_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel
-					);
+						json encodersDetailsRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "encodersDetails", nullptr);
+						if (encodersDetailsRoot == nullptr)
+						{
+							// quando elimino questo if, verifica se anche la funzione getStreamInputPushDetails possa essere eliminata
+							// per essere sostituita da getStreamPushServerUrl
+							tie(updatedPushEncoderKey, updatedUrl) = _mmsEngineDBFacade->getStreamInputPushDetails(
+								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel
+							);
+						}
+						else
+						{
+							// questo quello corretto, l'if sopra dovrebbe essere eliminato
+
+							updatedPushEncoderKey = JSONUtils::asInt64(encodersDetailsRoot, "pushEncoderKey", static_cast<int64_t>(-1));
+							if (updatedPushEncoderKey == -1)
+							{
+								string errorMessage = fmt::format(
+									"Wrong pushEncoderKey"
+									", _ingestionJobKey: {}"
+									", _encodingJobKey: {}"
+									", encodersDetailsRoot: {}",
+									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, JSONUtils::toString(encodersDetailsRoot)
+								);
+								SPDLOG_ERROR(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+
+							bool pushPublicEncoderName = JSONUtils::asBool(encodersDetailsRoot, "pushPublicEncoderName", false);
+
+							updatedUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
+								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel,
+								updatedPushEncoderKey, pushPublicEncoderName
+							);
+						}
+					}
+
 					streamInputRoot["pushEncoderKey"] = updatedPushEncoderKey;
-					streamInputRoot["url"] = updatedURL;
+					streamInputRoot["url"] = updatedUrl;
 					inputsRoot[0]["streamInput"] = streamInputRoot;
 					(_encodingItem->_encodingParametersRoot)["inputsRoot"] = inputsRoot;
 
@@ -996,13 +1025,12 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 						_mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // , pushEncoderName);
 
 					SPDLOG_INFO(
-						"Retrieved updated Stream info"
+						"LiveProxy. Retrieved updated Stream info"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
-						", streamConfigurationLabel: {}"
 						", updatedPushEncoderKey: {}"
-						", updatedURL: {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, streamConfigurationLabel, updatedPushEncoderKey, updatedURL
+						", updatedUrl: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, updatedPushEncoderKey, updatedUrl
 					);
 				}
 				else
@@ -1020,7 +1048,11 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 						json streamInputRoot = inputsRoot[0]["streamInput"];
 
-						encodersPool = JSONUtils::asString(streamInputRoot, "encodersPoolLabel", "");
+						json encodersDetailsRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "encodersDetails", nullptr);
+						if (encodersDetailsRoot == nullptr)
+							encodersPool = JSONUtils::asString(streamInputRoot, "encodersPoolLabel", "");
+						else // questo quello corretto, l'if sopra dovrebbe essere eliminato
+							encodersPool = JSONUtils::asString(encodersDetailsRoot, "encodersPoolLabel", string());
 					}
 
 					int64_t encoderKeyToBeSkipped = -1;

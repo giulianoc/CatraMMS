@@ -4,6 +4,7 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
+#include <cstdint>
 
 int64_t
 MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server, int port, string userName, string password, string remoteDirectory)
@@ -1704,7 +1705,6 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 			stream_pushInfo(workspaceKey, configurationLabel);
 
 		string url;
-
 		if (streamSourceType == "IP_PUSH")
 		{
 			if (pushEncoderKey < 0)
@@ -1721,15 +1721,7 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 				throw runtime_error(errorMessage);
 			}
 
-			auto [pushEncoderLabel, publicServerName, internalServerName] = // getEncoderDetails(pushEncoderKey);
-				encoder_LabelPublicServerNameInternalServerName(pushEncoderKey);
-
-			if (pushProtocol == "srt")
-				url = pushProtocol + "://" + (pushPublicEncoderName ? publicServerName : internalServerName) + ":" + to_string(pushServerPort) +
-					  "?mode=listener";
-			else
-				url = pushProtocol + "://" + (pushPublicEncoderName ? publicServerName : internalServerName) + ":" + to_string(pushServerPort) +
-					  pushUri;
+			url = getStreamPushServerUrl(workspaceKey, ingestionJobKey, configurationLabel, pushEncoderKey, pushPublicEncoderName);
 		}
 
 		return make_pair(pushEncoderKey, url);
@@ -1765,6 +1757,63 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 			", ingestionJobKey: {}"
 			", configurationLabel: {}",
 			ingestionJobKey, configurationLabel
+		);
+
+		throw e;
+	}
+}
+
+string MMSEngineDBFacade::getStreamPushServerUrl(
+	int64_t workspaceKey, int64_t ingestionJobKey, string streamConfigurationLabel, int64_t pushEncoderKey, bool pushPublicEncoderName
+)
+{
+	try
+	{
+		auto [pushEncoderLabel, publicServerName, internalServerName] = // getEncoderDetails(pushEncoderKey);
+			encoder_LabelPublicServerNameInternalServerName(pushEncoderKey);
+
+		string pushProtocol;
+		int pushServerPort;
+		string pushUri;
+		tie(ignore, pushProtocol, ignore, ignore, pushServerPort, pushUri) = stream_pushInfo(workspaceKey, streamConfigurationLabel);
+
+		string url;
+		if (pushProtocol == "srt")
+			url = pushProtocol + "://" + (pushPublicEncoderName ? publicServerName : internalServerName) + ":" + to_string(pushServerPort) +
+				  "?mode=listener";
+		else
+			url = pushProtocol + "://" + (pushPublicEncoderName ? publicServerName : internalServerName) + ":" + to_string(pushServerPort) + pushUri;
+
+		return url;
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"getPushServerUrl failed"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"getPushServerUrl failed"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"getPushServerUrl failed"
+			", ingestionJobKey: {}",
+			ingestionJobKey
 		);
 
 		throw e;

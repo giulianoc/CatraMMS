@@ -3,41 +3,6 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
-/*
-#include <stdio.h>
-
-#include "CheckEncodingTimes.h"
-#include "CheckIngestionTimes.h"
-#include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "ContentRetentionTimes.h"
-#include "DBDataRetentionTimes.h"
-#include "GEOInfoTimes.h"
-#include "MMSCURL.h"
-#include "PersistenceLock.h"
-#include "ThreadsStatisticTimes.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-#include <fstream>
-#include <iomanip>
-#include <regex>
-#include <sstream>
-// #include "EMailSender.h"
-#include "Magick++.h"
-// #include <openssl/md5.h>
-#include "spdlog/spdlog.h"
-#include <openssl/evp.h>
-
-#define MD5BUFFERSIZE 16384
-*/
 
 // this is to generate one Frame
 void MMSEngineProcessor::generateAndIngestFrameThread(
@@ -278,9 +243,14 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = string() + "generate and ingest frame failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex);
-				+", dependencies.size(): " + to_string(dependencies.size());
+				string errorMessage = fmt::format(
+					"generate and ingest frame failed"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", dependencyIndex: {}"
+					", dependencies.size(): {}",
+					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)

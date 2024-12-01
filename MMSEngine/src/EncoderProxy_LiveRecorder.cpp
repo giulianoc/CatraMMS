@@ -899,24 +899,70 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 					// 	- La getStreamInputPushDetails sotto mi serve in questo loop per recuperare avere l'encoder aggiornato configurato nello
 					// Stream 		altrimenti rimarremmo con l'encoder e l'url calcolata all'inizio e non potremmo evitare l'outage
 
-					string streamConfigurationLabel = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "configurationLabel", "");
+					int64_t updatedPushEncoderKey = -1;
+					string updatedUrl;
+					{
+						string streamConfigurationLabel = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "configurationLabel", "");
 
-					auto [updatedPushEncoderKey, updatedURL] = _mmsEngineDBFacade->getStreamInputPushDetails(
-						_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel
-					);
+						json encodersDetailsRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "encodersDetails", nullptr);
+						if (encodersDetailsRoot == nullptr)
+						{
+							// quando elimino questo if, verifica se anche la funzione getStreamInputPushDetails possa essere eliminata
+							// per essere sostituita da getStreamPushServerUrl
+							tie(updatedPushEncoderKey, updatedUrl) = _mmsEngineDBFacade->getStreamInputPushDetails(
+								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel
+							);
+						}
+						else
+						{
+							// questo quello corretto, l'if sopra dovrebbe essere eliminato
+
+							updatedPushEncoderKey = JSONUtils::asInt64(encodersDetailsRoot, "pushEncoderKey", static_cast<int64_t>(-1));
+							if (updatedPushEncoderKey == -1)
+							{
+								string errorMessage = fmt::format(
+									"Wrong pushEncoderKey"
+									", _ingestionJobKey: {}"
+									", _encodingJobKey: {}"
+									", encodersDetailsRoot: {}",
+									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, JSONUtils::toString(encodersDetailsRoot)
+								);
+								SPDLOG_ERROR(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+
+							bool pushPublicEncoderName = JSONUtils::asBool(encodersDetailsRoot, "pushPublicEncoderName", false);
+
+							updatedUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
+								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel,
+								updatedPushEncoderKey, pushPublicEncoderName
+							);
+						}
+					}
+
 					_encodingItem->_encodingParametersRoot["pushEncoderKey"] = updatedPushEncoderKey;
-					_encodingItem->_encodingParametersRoot["liveURL"] = updatedURL;
+					_encodingItem->_encodingParametersRoot["liveURL"] = updatedUrl;
 
 					_currentUsedFFMpegEncoderKey = updatedPushEncoderKey;
-					// 2023-05-14: pushEncoderName è importante che sia usato
+					// 2023-12-18: pushEncoderName è importante che sia usato
 					// nella url rtmp
 					//	dove il transcoder ascolta per il flusso di streaming
 					//	ma non deve essere usato per decidere l'url con cui
 					// l'engine deve comunicare 	con il transcoder. Questa url
 					// dipende solamente dal fatto che il transcoder 	sia interno
 					// o esterno
-					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // pushEncoderName);
-					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
+					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) =
+						_mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // , pushEncoderName);
+
+					SPDLOG_INFO(
+						"LiveRecorder. Retrieved updated Stream info"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", updatedPushEncoderKey: {}"
+						", updatedUrl: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, updatedPushEncoderKey, updatedUrl
+					);
 				}
 				else
 				{

@@ -4356,6 +4356,8 @@ void API::ingestionJobSwitchToEncoder(
 
 				// modifico il pushEncoderKey dello Stream associato al Broadcaster
 				// e faccio ripartire l'encodingJob in modo che venga usato il nuovo encoder
+
+				// verificare che newPushEncoderKey sia uno degli encoder gestiti dal workspace
 				{
 					auto [broadcasterEncodingJobKey, broadcasterEncoderKey, encodingJobParametersRoot] =
 						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKeyParameters(ingestionJobKey, true);

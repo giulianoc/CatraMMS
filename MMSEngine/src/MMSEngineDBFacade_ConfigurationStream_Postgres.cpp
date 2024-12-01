@@ -1640,6 +1640,54 @@ tuple<string, string, int64_t, bool, int, string> MMSEngineDBFacade::stream_push
 	}
 }
 
+string MMSEngineDBFacade::stream_pushProtocol(int64_t workspaceKey, int64_t confKey)
+{
+	try
+	{
+		vector<string> requestedColumns = {
+			"mms_conf_stream:.pushProtocol" // 0
+		};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey);
+
+		return (*sqlResultSet)[0][0].as<string>("");
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", exceptionMessage: {}",
+			workspaceKey, confKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", exceptionMessage: {}",
+			workspaceKey, confKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", confKey: {}",
+			workspaceKey, confKey
+		);
+
+		throw e;
+	}
+}
+
 int64_t MMSEngineDBFacade::stream_confKey(int64_t workspaceKey, string label)
 {
 	try

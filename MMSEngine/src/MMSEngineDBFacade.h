@@ -2111,6 +2111,7 @@ class MMSEngineDBFacade
 	tuple<int64_t, string, string, string, int64_t, bool, int, int, string, int, int, int, int, int, int64_t>
 	stream_aLot(int64_t workspaceKey, string label);
 	tuple<string, string, int64_t, bool, int, string> stream_pushInfo(int64_t workspaceKey, string label);
+	string stream_pushProtocol(int64_t workspaceKey, int64_t confKey);
 	int64_t stream_confKey(int64_t workspaceKey, string label);
 	string stream_sourceType(int64_t workspaceKey, string label);
 	tuple<string, string, int64_t, bool> stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderName(int64_t workspaceKey, string label);
@@ -2374,6 +2375,9 @@ class MMSEngineDBFacade
 		json filtersRoot
 	);
 	pair<int64_t, string> getStreamInputPushDetails(int64_t workspaceKey, int64_t ingestionJobKey, string configurationLabel);
+	string getStreamPushServerUrl(
+		int64_t workspaceKey, int64_t ingestionJobKey, string streamConfigurationLabel, int64_t pushEncoderKey, bool pushPublicEncoderName
+	);
 
 	json getVodInputRoot(MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot);
 

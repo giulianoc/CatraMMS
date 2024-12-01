@@ -105,9 +105,14 @@ void MMSEngineProcessor::localCopyContentThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = string() + "local copy Content failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex);
-				+", dependencies.size(): " + to_string(dependencies.size());
+				string errorMessage = fmt::format(
+					"local copy Content failed"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", dependencyIndex: {}"
+					", dependencies.size(): {}",
+					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
