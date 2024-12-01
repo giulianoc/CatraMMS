@@ -1502,17 +1502,9 @@ json MMSEngineDBFacade::getStreamInputRoot(
 		int64_t tvSourceTVConfKey = -1;
 
 		{
-			tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat,
-				captureFrameRate, captureWidth, captureHeight, captureAudioDeviceNumber, captureChannelsNumber, tvSourceTVConfKey) =
-				stream_aLot(workspace->_workspaceKey, configurationLabel);
-			/*
-			bool warningIfMissing = false;
-			tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
-				channelConfDetails = getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
-			tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri,
-				pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight,
-				captureAudioDeviceNumber, captureChannelsNumber, tvSourceTVConfKey) = channelConfDetails;
-			*/
+			tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, ignore, ignore, pushListenTimeout, captureVideoDeviceNumber,
+				captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight, captureAudioDeviceNumber, captureChannelsNumber,
+				tvSourceTVConfKey) = stream_aLot(workspace->_workspaceKey, configurationLabel);
 
 			// default is IP_PULL
 			if (streamSourceType == "")

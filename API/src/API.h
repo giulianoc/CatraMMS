@@ -244,6 +244,11 @@ class API : public FastCGIAPI
 		int64_t userKey, unordered_map<string, string> queryParameters, string requestBody, bool admin
 	);
 
+	void ingestionJobSwitchToEncoder(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+		int64_t userKey, unordered_map<string, string> queryParameters, bool admin
+	);
+
 	void encodingJobsStatus(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters, string requestBody

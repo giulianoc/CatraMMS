@@ -32,6 +32,9 @@ void MMSEngineProcessor::manageLiveProxy(
 		string configurationLabel;
 
 		string streamSourceType;
+		int64_t pushEncoderKey;
+		bool pushPublicEncoderName;
+		string streamEncodersPoolLabel;
 		bool defaultBroadcast = false;
 		int maxWidth = -1;
 		string userAgent;
@@ -53,15 +56,10 @@ void MMSEngineProcessor::manageLiveProxy(
 				useVideoTrackFromMediaItemKey = JSONUtils::asInt64(parametersRoot, field, -1);
 
 				{
-					/*
-					bool warningIfMissing = false;
-					tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
-						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(ignore, streamSourceType, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
-						ignore, ignore, ignore, ignore) = channelConfDetails;
-					*/
-
-					streamSourceType = _mmsEngineDBFacade->stream_sourceType(workspace->_workspaceKey, configurationLabel);
+					tie(streamSourceType, streamEncodersPoolLabel, pushEncoderKey, pushPublicEncoderName) =
+						_mmsEngineDBFacade->stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderName(
+							workspace->_workspaceKey, configurationLabel
+						);
 
 					// default is IP_PULL
 					if (streamSourceType == "")
@@ -70,27 +68,48 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 
 			// EncodersPool override the one included in ChannelConf if present
-			string field = "encodersPool";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, field, "");
+			taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, "encodersPool", "");
 
-			field = "defaultBroadcast";
-			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
-
-			field = "timePeriod";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			// aggiungiomo 'encodersDetails' in ingestion parameters. In questo oggetto json mettiamo
+			// l'encodersPool o l'encoderKey in caso di IP_PUSH che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
+			// In questo modo è possibile cambiare tramite API l'encoder per fare uno switch di un ingestionJob da un encoder ad un'altro
 			{
-				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
+				json encodersDetailsRoot;
+
+				if (streamSourceType == "IP_PUSH")
+				{
+					encodersDetailsRoot["pushEncoderKey"] = pushEncoderKey;
+					encodersDetailsRoot["pushPublicEncoderName"] = pushPublicEncoderName;
+				}
+				else
+					encodersDetailsRoot["encodersPoolLabel"] = taskEncodersPoolLabel != "" ? taskEncodersPoolLabel : streamEncodersPoolLabel;
+
+				if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS"))
+					parametersRoot["internalMMS"]["encodersDetails"] = encodersDetailsRoot;
+				else
+				{
+					json internalMMSRoot;
+					internalMMSRoot["encodersDetails"] = encodersDetailsRoot;
+					parametersRoot["internalMMS"] = internalMMSRoot;
+				}
+
+				_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(parametersRoot));
+			}
+
+			defaultBroadcast = JSONUtils::asBool(parametersRoot, "defaultBroadcast", false);
+
+			if (JSONUtils::isMetadataPresent(parametersRoot, "timePeriod"))
+			{
+				timePeriod = JSONUtils::asBool(parametersRoot, "timePeriod", false);
 				if (timePeriod)
 				{
-					field = "schedule";
-					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					if (!JSONUtils::isMetadataPresent(parametersRoot, "schedule"))
 					{
 						string errorMessage = fmt::format(
 							"Field is not present or it is null"
 							", _processorIdentifier: {}"
 							", field: {}",
-							_processorIdentifier, field
+							_processorIdentifier, "schedule"
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -100,52 +119,38 @@ void MMSEngineProcessor::manageLiveProxy(
 					// Validator validator(_logger, _mmsEngineDBFacade,
 					// _configuration);
 
-					json proxyPeriodRoot = parametersRoot[field];
+					json proxyPeriodRoot = parametersRoot["schedule"];
 
-					field = "start";
-					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "", true);
+					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, "start", "", true);
 					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
 
-					field = "end";
-					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "", true);
+					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, "end", "", true);
 					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
 
-			field = "maxWidth";
-			maxWidth = JSONUtils::asInt(parametersRoot, field, -1);
+			maxWidth = JSONUtils::asInt(parametersRoot, "maxWidth", -1);
 
-			field = "userAgent";
-			userAgent = JSONUtils::asString(parametersRoot, field, "");
+			userAgent = JSONUtils::asString(parametersRoot, "userAgent", "");
 
-			field = "otherInputOptions";
-			otherInputOptions = JSONUtils::asString(parametersRoot, field, "");
+			otherInputOptions = JSONUtils::asString(parametersRoot, "otherInputOptions", "");
 
-			// field = "maxAttemptsNumberInCaseOfErrors";
-			// if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-			// 	maxAttemptsNumberInCaseOfErrors = 3;
-			// else
-			// 	maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(
-			// 		parametersRoot, field, 0);
+			waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, "waitingSecondsBetweenAttemptsInCaseOfErrors", 5);
 
-			field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
-			waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, field, 5);
-
-			field = "outputs";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 			{
 				string errorMessage = fmt::format(
 					"Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", field: {}",
-					_processorIdentifier, field
+					_processorIdentifier, "outputs"
 				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				outputsRoot = parametersRoot[field];
+			if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
+				outputsRoot = parametersRoot["outputs"];
 			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs",
 				 // false))
 				outputsRoot = parametersRoot["Outputs"];

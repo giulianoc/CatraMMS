@@ -25,13 +25,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string streamSourceType;
 		string encodersPoolLabel;
 		string pullUrl;
-		/*
-		string pushProtocol;
 		int64_t pushEncoderKey = -1;
-		string pushEncoderName;
-		int pushServerPort = -1;
-		string pushUri;
-		*/
+		bool pushPublicEncoderName = false;
 		int pushListenTimeout = -1;
 		int captureVideoDeviceNumber = -1;
 		string captureVideoInputFormat;
@@ -77,31 +72,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 				{
-					/*
-					bool warningIfMissing = false;
-					tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
-						channelConfDetails = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
-					tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort,
-						pushUri, pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight,
-						captureAudioDeviceNumber, captureChannelsNumber, tvSourceTVConfKey) = channelConfDetails;
-						*/
+					tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushEncoderKey, pushPublicEncoderName, pushListenTimeout,
+						captureVideoDeviceNumber, captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight, captureAudioDeviceNumber,
+						captureChannelsNumber, tvSourceTVConfKey) = _mmsEngineDBFacade->stream_aLot(workspace->_workspaceKey, configurationLabel);
 
-					// bool pushPublicEncoderName = false;
-					tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushListenTimeout, captureVideoDeviceNumber, captureVideoInputFormat,
-						captureFrameRate, captureWidth, captureHeight, captureAudioDeviceNumber, captureChannelsNumber, tvSourceTVConfKey) =
-						_mmsEngineDBFacade->stream_aLot(workspace->_workspaceKey, configurationLabel);
-
-					/*
-					if (pushEncoderKey >= 0)
-					{
-						auto [pushEncoderLabel, publicServerName, internalServerName] = _mmsEngineDBFacade->getEncoderDetails(pushEncoderKey);
-
-						if (pushPublicEncoderName)
-							pushEncoderName = publicServerName;
-						else
-							pushEncoderName = internalServerName;
-					}
-					*/
 					// default is IP_PULL
 					if (streamSourceType == "")
 						streamSourceType = "IP_PULL";
@@ -111,6 +85,32 @@ void MMSEngineProcessor::manageLiveRecorder(
 			// EncodersPool override the one included in ChannelConf if present
 			field = "encodersPool";
 			encodersPoolLabel = JSONUtils::asString(parametersRoot, field, encodersPoolLabel);
+
+			// aggiungiomo 'encodersDetails' in ingestion parameters. In questo oggetto json mettiamo
+			// l'encodersPool o l'encoderKey in caso di IP_PUSH che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
+			// In questo modo è possibile cambiare tramite API l'encoder per fare uno switch di un ingestionJob da un encoder ad un'altro
+			{
+				json encodersDetailsRoot;
+
+				if (streamSourceType == "IP_PUSH")
+				{
+					encodersDetailsRoot["pushEncoderKey"] = pushEncoderKey;
+					encodersDetailsRoot["pushPublicEncoderName"] = pushPublicEncoderName;
+				}
+				else
+					encodersDetailsRoot["encodersPoolLabel"] = encodersPoolLabel;
+
+				if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS"))
+					parametersRoot["internalMMS"]["encodersDetails"] = encodersDetailsRoot;
+				else
+				{
+					json internalMMSRoot;
+					internalMMSRoot["encodersDetails"] = encodersDetailsRoot;
+					parametersRoot["internalMMS"] = internalMMSRoot;
+				}
+
+				_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(parametersRoot));
+			}
 
 			field = "schedule";
 			json recordingPeriodRoot = parametersRoot[field];
@@ -322,7 +322,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int tvVideoPid = -1;
 		int tvAudioItalianPid = -1;
 		string liveURL;
-		int64_t pushEncoderKey = -1;
 
 		if (streamSourceType == "IP_PULL")
 		{

@@ -2,6 +2,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
@@ -665,9 +666,14 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 				else if (workspaceType != static_cast<int>(WorkspaceType::IngestionAndDelivery) &&
 						 workspaceType != static_cast<int>(WorkspaceType::EncodingOnly))
 				{
-					string errorMessage = __FILEREF__ + "Workspace is not enabled to ingest content" + ", workspaceKey: " + to_string(workspaceKey);
-					+", workspaceType: " + to_string(static_cast<int>(workspaceType)) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = fmt::format(
+						"Workspace is not enabled to ingest content"
+						", workspaceKey: {}"
+						", workspaceType: {}"
+						", sqlStatement: {}",
+						workspaceKey, static_cast<int>(workspaceType), sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}

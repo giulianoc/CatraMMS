@@ -1938,6 +1938,7 @@ class MMSEngineDBFacade
 	);
 
 	json encodingJob_Parameters(int64_t ingestionJobKey, bool fromMaster);
+	pair<int64_t, json> encodingJob_EncodingJobKeyParameters(int64_t ingestionJobKey, bool fromMaster);
 	tuple<int64_t, string, int64_t, MMSEngineDBFacade::EncodingStatus>
 	encodingJob_IngestionJobKeyTypeEncoderKeyStatus(int64_t encodingJobKey, bool fromMaster);
 	tuple<int64_t, int64_t, json> encodingJob_EncodingJobKeyEncoderKeyParameters(int64_t ingestionJobKey, bool fromMaster);
@@ -2107,10 +2108,12 @@ class MMSEngineDBFacade
 	json getStreamFreePushEncoderPort(int64_t encoderKey, bool fromMaster = false);
 #endif
 
-	tuple<int64_t, string, string, string, int, int, string, int, int, int, int, int, int64_t> stream_aLot(int64_t workspaceKey, string label);
+	tuple<int64_t, string, string, string, int64_t, bool, int, int, string, int, int, int, int, int, int64_t>
+	stream_aLot(int64_t workspaceKey, string label);
 	tuple<string, string, int64_t, bool, int, string> stream_pushInfo(int64_t workspaceKey, string label);
 	int64_t stream_confKey(int64_t workspaceKey, string label);
 	string stream_sourceType(int64_t workspaceKey, string label);
+	tuple<string, string, int64_t, bool> stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderName(int64_t workspaceKey, string label);
 	pair<string, string> stream_sourceTypeUrl(int64_t workspaceKey, string label);
 	tuple<int64_t, string, string> stream_confKeySourceTypeUrl(int64_t workspaceKey, string label);
 	json stream_userData(int64_t workspaceKey, int64_t confKey);
@@ -2304,6 +2307,8 @@ class MMSEngineDBFacade
 
 	// tuple<string, string, string> getEncoderDetails(int64_t encoderKey);
 	tuple<string, string, string> encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster = false);
+	string encoder_PublicServerName(int64_t encoderKey, bool fromMaster = false);
+	string encoder_InternalServerName(int64_t encoderKey, bool fromMaster = false);
 	shared_ptr<PostgresHelper::SqlResultSet> encoderQuery(
 		vector<string> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex = -1, int rows = -1, string orderBy = "",
 		bool notFoundAsException = true

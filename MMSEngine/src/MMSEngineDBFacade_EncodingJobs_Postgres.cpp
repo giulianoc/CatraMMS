@@ -3,6 +3,7 @@
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
 #include <regex>
+#include <utility>
 
 void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 	string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems, int timeBeforeToPrepareResourcesInMinutes,
@@ -3202,6 +3203,68 @@ tuple<int64_t, int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncod
 		json parametersRoot = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][2].as<json>(json()) : json();
 
 		return make_tuple(encodingJobKey, encoderKey, parametersRoot);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", ingestionJobKey: {}"
+			", exceptionMessage: {}",
+			ingestionJobKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+pair<int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyParameters(int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<string> requestedColumns = {"mms_encodingjob:.encodingJobKey", "mms_encodingjob:.parameters"};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, -1, ingestionJobKey, fromMaster);
+
+		if (sqlResultSet->empty())
+		{
+			string errorMessage = fmt::format(
+				"encodingJob not found"
+				", ingestionJobKey: {}",
+				ingestionJobKey
+			);
+			// abbiamo il log nel catch
+			// SPDLOG_WARN(errorMessage);
+
+			throw DBRecordNotFound(errorMessage);
+		}
+
+		int64_t encodingJobKey = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<int64_t>(-1) : -1;
+		json parametersRoot = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][1].as<json>(json()) : json();
+
+		return make_pair(encodingJobKey, parametersRoot);
 	}
 	catch (DBRecordNotFound &e)
 	{

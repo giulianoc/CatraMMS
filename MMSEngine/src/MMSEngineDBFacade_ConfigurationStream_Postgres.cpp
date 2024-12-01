@@ -2,6 +2,7 @@
 #include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "spdlog/spdlog.h"
 
 json MMSEngineDBFacade::addStream(
 	int64_t workspaceKey, string label, string sourceType, int64_t encodersPoolKey, string url, string pushProtocol, int64_t pushEncoderKey,
@@ -1499,7 +1500,7 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 	}
 }
 
-tuple<int64_t, string, string, string, int, int, string, int, int, int, int, int, int64_t>
+tuple<int64_t, string, string, string, int64_t, bool, int, int, string, int, int, int, int, int, int64_t>
 MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 {
 	try
@@ -1509,15 +1510,17 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 			"mms_conf_stream:.sourcetype",					 // 1
 			"mms_conf_stream:.encoderspoolkey",				 // 2
 			"mms_conf_stream:.url",							 // 3
-			"mms_conf_stream:.pushListenTimeout",			 // 4
-			"mms_conf_stream:.captureLiveVideoDeviceNumber", // 5
-			"mms_conf_stream:.captureLiveVideoInputFormat",	 // 6
-			"mms_conf_stream:.captureLiveFrameRate",		 // 7
-			"mms_conf_stream:.captureLiveWidth",			 // 8
-			"mms_conf_stream:.captureLiveHeight",			 // 9
-			"mms_conf_stream:.captureLiveAudioDeviceNumber", // 10
-			"mms_conf_stream:.captureLiveChannelsNumber",	 // 11
-			"mms_conf_stream:.tvSourceTVConfKey"			 // 12
+			"mms_conf_stream:.pushEncoderKey",				 // 4
+			"mms_conf_stream:.pushPublicEncoderName",		 // 5
+			"mms_conf_stream:.pushListenTimeout",			 // 6
+			"mms_conf_stream:.captureLiveVideoDeviceNumber", // 7
+			"mms_conf_stream:.captureLiveVideoInputFormat",	 // 8
+			"mms_conf_stream:.captureLiveFrameRate",		 // 9
+			"mms_conf_stream:.captureLiveWidth",			 // 10
+			"mms_conf_stream:.captureLiveHeight",			 // 11
+			"mms_conf_stream:.captureLiveAudioDeviceNumber", // 12
+			"mms_conf_stream:.captureLiveChannelsNumber",	 // 13
+			"mms_conf_stream:.tvSourceTVConfKey"			 // 14
 		};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
 
@@ -1538,9 +1541,10 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 		}
 		return make_tuple(
 			(*sqlResultSet)[0][0].as<int64_t>(-1), (*sqlResultSet)[0][1].as<string>(""), encodersPoolLabel, (*sqlResultSet)[0][3].as<string>(""),
-			(*sqlResultSet)[0][4].as<int>(-1), (*sqlResultSet)[0][5].as<int>(-1), (*sqlResultSet)[0][6].as<string>(""),
-			(*sqlResultSet)[0][7].as<int>(-1), (*sqlResultSet)[0][8].as<int>(-1), (*sqlResultSet)[0][9].as<int>(-1),
-			(*sqlResultSet)[0][10].as<int>(-1), (*sqlResultSet)[0][11].as<int>(-1), (*sqlResultSet)[0][12].as<int64_t>(-1)
+			(*sqlResultSet)[0][4].as<int64_t>(-1), (*sqlResultSet)[0][5].as<bool>(false), (*sqlResultSet)[0][6].as<int>(-1),
+			(*sqlResultSet)[0][7].as<int>(-1), (*sqlResultSet)[0][8].as<string>(""), (*sqlResultSet)[0][9].as<int>(-1),
+			(*sqlResultSet)[0][10].as<int>(-1), (*sqlResultSet)[0][11].as<int>(-1), (*sqlResultSet)[0][12].as<int>(-1),
+			(*sqlResultSet)[0][13].as<int>(-1), (*sqlResultSet)[0][14].as<int64_t>(-1)
 		);
 	}
 	catch (DBRecordNotFound &e)
@@ -1579,6 +1583,7 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 		throw e;
 	}
 }
+
 tuple<string, string, int64_t, bool, int, string> MMSEngineDBFacade::stream_pushInfo(int64_t workspaceKey, string label)
 {
 	try
@@ -1689,6 +1694,80 @@ string MMSEngineDBFacade::stream_sourceType(int64_t workspaceKey, string label)
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
 
 		return (*sqlResultSet)[0][0].as<string>("null source type!!!");
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", label: {}"
+			", exceptionMessage: {}",
+			workspaceKey, label, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", label: {}"
+			", exceptionMessage: {}",
+			workspaceKey, label, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", label: {}",
+			workspaceKey, label
+		);
+
+		throw e;
+	}
+}
+
+tuple<string, string, int64_t, bool>
+MMSEngineDBFacade::stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderName(int64_t workspaceKey, string label)
+{
+	try
+	{
+		vector<string> requestedColumns = {
+			"mms_conf_stream:.sourceType",			  // 0
+			"mms_conf_stream:.pushEncoderKey",		  // 1
+			"mms_conf_stream:.pushPublicEncoderName", // 2
+			"mms_conf_stream:.encoderspoolkey"		  // 3
+		};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, -1, label);
+
+		string encodersPoolLabel;
+		{
+			int64_t encodersPoolKey = (*sqlResultSet)[0][3].as<int64_t>(-1);
+			if (encodersPoolKey != -1)
+			{
+				try
+				{
+					encodersPoolLabel = getEncodersPoolDetails(encodersPoolKey);
+				}
+				catch (exception &e)
+				{
+					SPDLOG_ERROR(
+						"getEncodersPoolDetails failed"
+						", encodersPoolKey: {}",
+						encodersPoolKey
+					);
+				}
+			}
+		}
+
+		return make_tuple(
+			(*sqlResultSet)[0][0].as<string>(""), encodersPoolLabel, (*sqlResultSet)[0][1].as<int64_t>(-1), (*sqlResultSet)[0][2].as<bool>(false)
+		);
 	}
 	catch (DBRecordNotFound &e)
 	{

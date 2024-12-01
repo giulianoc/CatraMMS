@@ -723,7 +723,6 @@ bool EncoderProxy::liveProxy(string proxyType)
 bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 {
 
-	string encodersPool;
 	string url;
 	long waitingSecondsBetweenAttemptsInCaseOfErrors;
 	long maxAttemptsNumberInCaseOfErrors;
@@ -747,17 +746,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 	json streamInputRoot = firstInputRoot[field];
 
 	{
-		if (proxyType == "vodProxy" || proxyType == "countdownProxy")
+		if (proxyType == "liveProxy")
 		{
-			// both vodProxy and countdownProxy work with VOD
-			field = "encodersPool";
-			encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, field, "");
-		}
-		else
-		{
-			field = "encodersPoolLabel";
-			encodersPool = JSONUtils::asString(streamInputRoot, field, "");
-
 			field = "url";
 			url = JSONUtils::asString(streamInputRoot, field, "");
 
@@ -915,8 +905,14 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				{
 					try
 					{
-						// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated
+						// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated (modifying the playlist)
 						_encodingItem->_encodingParametersRoot = _mmsEngineDBFacade->encodingJob_Parameters(_encodingItem->_encodingJobKey, true);
+
+						// 2024-12-01: ricarichiamo ingestedParameters perchè potrebbe essere stato modificato con un nuovo 'encodersDetails' (nello
+						// scenario in cui si vuole eseguire lo switch di un ingestionjob su un nuovo encoder)
+						_encodingItem->_ingestedParametersRoot = _mmsEngineDBFacade->ingestionJob_MetadataContent(
+							_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, true
+						);
 					}
 					catch (DBRecordNotFound &e)
 					{
@@ -956,6 +952,9 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					}
 				}
 
+				// IN ingestionJob->metadataParameters abbiamo già il campo encodersPool.
+				// Aggiungiamo encoderKey nel caso di IP_PUSH in modo da avere un posto unico (ingestionJob->metadataParameters)
+				// per questa informazione
 				if (streamSourceType == "IP_PUSH")
 				{
 					// scenario:
@@ -972,7 +971,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 					json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
 
-					// se è IP_PUSH vuol dire anche che siamo nel caso di proxyType == "liveProxy"
+					// se è IP_PUSH vuol dire anche che siamo nel caso di proxyType == "liveProxy" che quindi ha il campo streamInput
 					json streamInputRoot = inputsRoot[0]["streamInput"];
 
 					string streamConfigurationLabel = JSONUtils::asString(streamInputRoot, "configurationLabel", "");
@@ -1008,6 +1007,22 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
 				else
 				{
+					string encodersPool;
+					if (proxyType == "vodProxy" || proxyType == "countdownProxy")
+					{
+						// both vodProxy and countdownProxy work with VODs and
+						// the encodersPool is defined by the ingestedParameters field
+						encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
+					}
+					else
+					{
+						json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
+
+						json streamInputRoot = inputsRoot[0]["streamInput"];
+
+						encodersPool = JSONUtils::asString(streamInputRoot, "encodersPoolLabel", "");
+					}
+
 					int64_t encoderKeyToBeSkipped = -1;
 					bool externalEncoderAllowed = true;
 					tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) =

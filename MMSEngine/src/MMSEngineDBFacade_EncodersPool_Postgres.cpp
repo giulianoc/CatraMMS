@@ -478,186 +478,6 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 	}
 }
 
-/*
-tuple<string, string, string> MMSEngineDBFacade::getEncoderDetails(int64_t encoderKey)
-{
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-
-	try
-	{
-		string field;
-
-		SPDLOG_INFO(
-			"getEncoderDetails"
-			", encoderKey: {}",
-			encoderKey
-		);
-
-		string label;
-		string publicServerName;
-		string internalServerName;
-
-		{
-			string sqlStatement = fmt::format(
-				"select label, publicServerName, internalServerName "
-				"from MMS_Encoder where encoderKey = {}",
-				encoderKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO(
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (empty(res))
-			{
-				string errorMessage = string("Encoder was not found") + ", encoderKey: " + to_string(encoderKey);
-				SPDLOG_ERROR(errorMessage);
-
-				throw EncoderNotFound(errorMessage);
-			}
-
-			label = res[0]["label"].as<string>();
-			publicServerName = res[0]["publicServerName"].as<string>();
-			internalServerName = res[0]["internalServerName"].as<string>();
-		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
-		return make_tuple(label, publicServerName, internalServerName);
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (EncoderNotFound &e)
-	{
-		SPDLOG_ERROR(
-			"Encoder Not Found"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-}
-*/
-
 tuple<string, string, string> MMSEngineDBFacade::encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster)
 {
 	try
@@ -665,11 +485,121 @@ tuple<string, string, string> MMSEngineDBFacade::encoder_LabelPublicServerNameIn
 		vector<string> requestedColumns = {"mms_encoder:.label", "mms_encoder:.publicServerName", "mms_encoder:.internalServerName"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
 
-		string label = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<string>("") : "";
-		string publicServerName = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][1].as<string>("") : "";
-		string internalServerName = sqlResultSet->size() > 0 ? (*sqlResultSet)[0][2].as<string>("") : "";
+		string label = (*sqlResultSet)[0][0].as<string>("");
+		string publicServerName = (*sqlResultSet)[0][1].as<string>("");
+		string internalServerName = (*sqlResultSet)[0][2].as<string>("");
 
 		return make_tuple(label, publicServerName, internalServerName);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		/*
+		SPDLOG_ERROR(
+			"NotFound"
+			", encoderKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encoderKey, fromMaster, e.what()
+		);
+		*/
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", encoderKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encoderKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", encoderKey: {}"
+			", fromMaster: {}",
+			encoderKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+string MMSEngineDBFacade::encoder_PublicServerName(int64_t encoderKey, bool fromMaster)
+{
+	try
+	{
+		vector<string> requestedColumns = {"mms_encoder:.publicServerName"};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
+
+		return (*sqlResultSet)[0][0].as<string>("");
+	}
+	catch (DBRecordNotFound &e)
+	{
+		/*
+		SPDLOG_ERROR(
+			"NotFound"
+			", encoderKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encoderKey, fromMaster, e.what()
+		);
+		*/
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", encoderKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encoderKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", encoderKey: {}"
+			", fromMaster: {}",
+			encoderKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+string MMSEngineDBFacade::encoder_InternalServerName(int64_t encoderKey, bool fromMaster)
+{
+	try
+	{
+		vector<string> requestedColumns = {"mms_encoder:.internalServerName"};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
+
+		return (*sqlResultSet)[0][0].as<string>("");
+	}
+	catch (DBRecordNotFound &e)
+	{
+		/*
+		SPDLOG_ERROR(
+			"NotFound"
+			", encoderKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encoderKey, fromMaster, e.what()
+		);
+		*/
+
+		throw e;
 	}
 	catch (runtime_error &e)
 	{

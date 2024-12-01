@@ -125,6 +125,7 @@
 		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/([0-9]*)/?$ /api?version=$1&method=updateIngestionJob&ingestionJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/([0-9]+)/switchToNewEncoder/?$ /api?version=$1&method=ingestionJobSwitchToEncoder&ingestionJobKey=$2 last;
 		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/liveProxy/playlist/([0-9]*)/?$ /api?version=$1&method=changeLiveProxyPlaylist&ingestionJobKey=$2 last;

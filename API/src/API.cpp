@@ -1786,6 +1786,24 @@ void API::manageRequestAndResponse(
 
 		updateIngestionJob(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, userKey, queryParameters, requestBody, admin);
 	}
+	else if (method == "ingestionJobSwitchToEncoder")
+	{
+		if (!admin && !editMedia)
+		{
+			string errorMessage = fmt::format(
+				"APIKey does not have the permission"
+				", editMedia: {}",
+				editMedia
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 403, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		ingestionJobSwitchToEncoder(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, userKey, queryParameters, admin);
+	}
 	else if (method == "encodingJobsStatus")
 	{
 		encodingJobsStatus(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
