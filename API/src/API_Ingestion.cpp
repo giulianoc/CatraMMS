@@ -4307,9 +4307,11 @@ void API::ingestionJobSwitchToEncoder(
 	{
 		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
 
-		// mandatory nel caso di broadcaster e broadcast, servono:
+		// mandatory nel caso di broadcaster, servono:
+		// 	- newPushEncoderKey e newPushPublicEncoderName per lo switch del broadcaster
+		// 	- newEncodersPoolLabel per lo switch del broadcast
 		int64_t newPushEncoderKey = getQueryParameter(queryParameters, "newPushEncoderKey", static_cast<int64_t>(-1), false);
-		// pushPublicEncoderName: indica se bisogna usare l'IP pubblico o quello interno/privato
+		// newPushPublicEncoderName: indica se bisogna usare l'IP pubblico o quello interno/privato
 		bool newPushPublicEncoderName = getQueryParameter(queryParameters, "newPushPublicEncoderName", false, false);
 		string newEncodersPoolLabel = getQueryParameter(queryParameters, "newEncodersPoolLabel", string(""), false);
 

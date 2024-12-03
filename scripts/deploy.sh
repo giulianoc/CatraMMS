@@ -35,6 +35,7 @@ removePreviousVersions()
 		tenDaysInMinutes=14400
 
 		echo "Remove previous versions (retention $tenDaysInMinutes)"
+		echo "find /opt/catramms -maxdepth 1 -mmin +$tenDaysInMinutes -name \"CatraMMS-*\" -not -path \"${currentPathNameVersion}*\" -exec rm -rf {} \;"
 		find /opt/catramms -maxdepth 1 -mmin +$tenDaysInMinutes -name "CatraMMS-*" -not -path "${currentPathNameVersion}*" -exec rm -rf {} \;
 	fi
 }
