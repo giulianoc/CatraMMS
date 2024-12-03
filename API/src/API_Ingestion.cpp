@@ -4383,7 +4383,20 @@ void API::ingestionJobSwitchToEncoder(
 						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(ingestionJobKey, true);
 					// dopo aver modificato il pushEncoderKey, killo l'encodingjob del broadcaster
 					// solo per farlo ripartire in modo da usare il nuovo encoder
-					killEncodingJob(broadcasterEncoderKey, ingestionJobKey, broadcasterEncodingJobKey, "killToRestartByEngine");
+					try
+					{
+						killEncodingJob(broadcasterEncoderKey, ingestionJobKey, broadcasterEncodingJobKey, "killToRestartByEngine");
+					}
+					catch (...)
+					{
+						SPDLOG_ERROR(
+							"killEncodingJob (killToRestartByEngine) failed"
+							", broadcasterEncoderKey: {}"
+							", ingestionJobKey: {}"
+							", broadcasterEncodingJobKey: {}",
+							broadcasterEncoderKey, ingestionJobKey, broadcasterEncodingJobKey
+						);
+					}
 				}
 
 				int64_t broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, "broadcastIngestionJobKey", -1);
@@ -4436,7 +4449,20 @@ void API::ingestionJobSwitchToEncoder(
 						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(broadcastIngestionJobKey, true);
 					// dopo aver modificato il pushEncoderKey, killo l'encodingjob del broadcaster
 					// solo per farlo ripartire in modo da usare il nuovo encoder
-					killEncodingJob(broadcastEncoderKey, broadcastIngestionJobKey, broadcastEncodingJobKey, "killToRestartByEngine");
+					try
+					{
+						killEncodingJob(broadcastEncoderKey, broadcastIngestionJobKey, broadcastEncodingJobKey, "killToRestartByEngine");
+					}
+					catch (...)
+					{
+						SPDLOG_ERROR(
+							"killEncodingJob (killToRestartByEngine) failed"
+							", broadcastEncoderKey: {}"
+							", broadcastIngestionJobKey: {}"
+							", broadcastEncodingJobKey: {}",
+							broadcastEncoderKey, broadcastIngestionJobKey, broadcastEncodingJobKey
+						);
+					}
 				}
 			}
 			else
@@ -4484,7 +4510,20 @@ void API::ingestionJobSwitchToEncoder(
 				auto [encodingJobKey, encoderKey] = _mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(ingestionJobKey, true);
 				// dopo aver modificato il pushEncoderKey, killo l'encodingjob del broadcaster
 				// solo per farlo ripartire in modo da usare il nuovo encoder
-				killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, "killToRestartByEngine");
+				try
+				{
+					killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, "killToRestartByEngine");
+				}
+				catch (...)
+				{
+					SPDLOG_ERROR(
+						"killEncodingJob (killToRestartByEngine) failed"
+						", encoderKey: {}"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}",
+						encoderKey, ingestionJobKey, encodingJobKey
+					);
+				}
 			}
 		}
 		else
