@@ -4310,6 +4310,8 @@ void API::ingestionJobSwitchToEncoder(
 		// mandatory nel caso di broadcaster, servono:
 		// 	- newPushEncoderKey e newPushPublicEncoderName per lo switch del broadcaster
 		// 	- newEncodersPoolLabel per lo switch del broadcast
+		// mandatory nel caso di Live-Proxy or VOD-Proxy or CountdownProxy, serve:
+		// 	- newEncodersPoolLabel
 		int64_t newPushEncoderKey = getQueryParameter(queryParameters, "newPushEncoderKey", static_cast<int64_t>(-1), false);
 		// newPushPublicEncoderName: indica se bisogna usare l'IP pubblico o quello interno/privato
 		bool newPushPublicEncoderName = getQueryParameter(queryParameters, "newPushPublicEncoderName", false, false);
@@ -4439,6 +4441,50 @@ void API::ingestionJobSwitchToEncoder(
 			}
 			else
 			{
+				auto [ingestionType, ingestionStatus, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
+					workspace->_workspaceKey, ingestionJobKey,
+					// 2022-12-18: meglio avere una informazione sicura
+					true
+				);
+
+				if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::EncodingQueued)
+				{
+					string errorMessage = fmt::format(
+						"It is not possible to switch to a new encoder when "
+						"ingestionJob is not in EncodingQueued status"
+						", ingestionJobKey: {}"
+						", ingestionStatus: {}",
+						ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus)
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, "internalMMS");
+				json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
+				if (encodersDetailsRoot == nullptr)
+				{
+					string errorMessage = fmt::format(
+						"No encodersDetails json found"
+						", ingestionJobKey: {}",
+						ingestionJobKey
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				encodersDetailsRoot["encodersPoolLabel"] = newEncodersPoolLabel;
+				internalMMSRoot["encodersDetails"] = encodersDetailsRoot;
+				metadataContentRoot["internalMMS"] = internalMMSRoot;
+
+				_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(metadataContentRoot));
+
+				auto [encodingJobKey, encoderKey] = _mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(ingestionJobKey, true);
+				// dopo aver modificato il pushEncoderKey, killo l'encodingjob del broadcaster
+				// solo per farlo ripartire in modo da usare il nuovo encoder
+				killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, "killToRestartByEngine");
 			}
 		}
 
