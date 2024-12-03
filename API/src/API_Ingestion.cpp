@@ -4487,6 +4487,18 @@ void API::ingestionJobSwitchToEncoder(
 				killEncodingJob(encoderKey, ingestionJobKey, encodingJobKey, "killToRestartByEngine");
 			}
 		}
+		else
+		{
+			string errorMessage = fmt::format(
+				"ingestionJobSwitchToEncoder. switch cannot be managed"
+				", ingestionJobKey: {}"
+				", ingestionType: {}",
+				ingestionJobKey, MMSEngineDBFacade::toString(ingestionType)
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
 
 		string responseBody;
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
