@@ -904,7 +904,8 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 					{
 						string streamConfigurationLabel = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "configurationLabel", "");
 
-						json encodersDetailsRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "encodersDetails", nullptr);
+						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", nullptr);
+						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", nullptr);
 						if (encodersDetailsRoot == nullptr)
 						{
 							// quando elimino questo if, verifica se anche la funzione getStreamInputPushDetails possa essere eliminata

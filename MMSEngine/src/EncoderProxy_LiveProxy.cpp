@@ -971,7 +971,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 						string streamConfigurationLabel = JSONUtils::asString(streamInputRoot, "configurationLabel", "");
 
-						json encodersDetailsRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "encodersDetails", nullptr);
+						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", nullptr);
+						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", nullptr);
 						if (encodersDetailsRoot == nullptr)
 						{
 							// quando elimino questo if, verifica se anche la funzione getStreamInputPushDetails possa essere eliminata
@@ -1048,7 +1049,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 						json streamInputRoot = inputsRoot[0]["streamInput"];
 
-						json encodersDetailsRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "encodersDetails", nullptr);
+						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", nullptr);
+						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", nullptr);
 						if (encodersDetailsRoot == nullptr)
 							encodersPool = JSONUtils::asString(streamInputRoot, "encodersPoolLabel", "");
 						else // questo quello corretto, l'if sopra dovrebbe essere eliminato
