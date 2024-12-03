@@ -4316,7 +4316,7 @@ void API::ingestionJobSwitchToEncoder(
 		string newEncodersPoolLabel = getQueryParameter(queryParameters, "newEncodersPoolLabel", string(""), false);
 
 		SPDLOG_INFO(
-			"ingestionJob_IngestionTypeStatus"
+			"ingestionJobSwitchToEncoder"
 			", workspace->_workspaceKey: {}"
 			", ingestionJobKey: {}"
 			", newPushEncoderKey: {}"
