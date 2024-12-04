@@ -1721,7 +1721,7 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 				throw runtime_error(errorMessage);
 			}
 
-			url = getStreamPushServerUrl(workspaceKey, ingestionJobKey, configurationLabel, pushEncoderKey, pushPublicEncoderName);
+			url = getStreamPushServerUrl(workspaceKey, ingestionJobKey, configurationLabel, pushEncoderKey, pushPublicEncoderName, true);
 		}
 
 		return make_pair(pushEncoderKey, url);
@@ -1764,7 +1764,8 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 }
 
 string MMSEngineDBFacade::getStreamPushServerUrl(
-	int64_t workspaceKey, int64_t ingestionJobKey, string streamConfigurationLabel, int64_t pushEncoderKey, bool pushPublicEncoderName
+	int64_t workspaceKey, int64_t ingestionJobKey, string streamConfigurationLabel, int64_t pushEncoderKey, bool pushPublicEncoderName,
+	bool pushUriToBeAdded
 )
 {
 	try
@@ -1782,7 +1783,11 @@ string MMSEngineDBFacade::getStreamPushServerUrl(
 			url = pushProtocol + "://" + (pushPublicEncoderName ? publicServerName : internalServerName) + ":" + to_string(pushServerPort) +
 				  "?mode=listener";
 		else
-			url = pushProtocol + "://" + (pushPublicEncoderName ? publicServerName : internalServerName) + ":" + to_string(pushServerPort) + pushUri;
+		{
+			url = pushProtocol + "://" + (pushPublicEncoderName ? publicServerName : internalServerName) + ":" + to_string(pushServerPort);
+			if (pushUriToBeAdded)
+				url += pushUri;
+		}
 
 		return url;
 	}

@@ -2320,10 +2320,9 @@ class MMSEngineDBFacade
 	pair<bool, int> getEncoderInfo(bool external, string protocol, string publicServerName, string internalServerName, int port);
 
 	void addAssociationWorkspaceEncoder(int64_t workspaceKey, int64_t encoderKey);
-
 	void addAssociationWorkspaceEncoder(int64_t workspaceKey, string sharedEncodersPoolLabel, json sharedEncodersLabel);
-
 	void removeAssociationWorkspaceEncoder(int64_t workspaceKey, int64_t encoderKey);
+	bool encoderWorkspaceMapping_isPresent(int64_t workspaceKey, int64_t encoderKey);
 
 	json getEncoderWorkspacesAssociation(int64_t encoderKey);
 
@@ -2376,7 +2375,8 @@ class MMSEngineDBFacade
 	);
 	pair<int64_t, string> getStreamInputPushDetails(int64_t workspaceKey, int64_t ingestionJobKey, string configurationLabel);
 	string getStreamPushServerUrl(
-		int64_t workspaceKey, int64_t ingestionJobKey, string streamConfigurationLabel, int64_t pushEncoderKey, bool pushPublicEncoderName
+		int64_t workspaceKey, int64_t ingestionJobKey, string streamConfigurationLabel, int64_t pushEncoderKey, bool pushPublicEncoderName,
+		bool pushUriToBeAdded
 	);
 
 	json getVodInputRoot(MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot);

@@ -4356,7 +4356,22 @@ void API::ingestionJobSwitchToEncoder(
 			{
 				// ingestionJobKey is referring a Broadcaster / Live Channel
 
-				// verificare che newPushEncoderKey sia uno degli encoder gestiti dal workspace
+				// verifica se newPushEncoderKey sia uno degli encoder gestiti dal workspace
+				if (!_mmsEngineDBFacade->encoderWorkspaceMapping_isPresent(workspace->_workspaceKey, newPushEncoderKey))
+				{
+					string errorMessage = fmt::format(
+						"EncoderKey is not managed by the workspaceKey"
+						", ingestionJobKey: {}"
+						", workspaceKey: {}"
+						", newPushEncoderKey: {}",
+						ingestionJobKey, workspace->_workspaceKey, newPushEncoderKey
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				// modifica broadcasterIngestionJob->metadataContentRoot in modo che l'engine faccia partire l'encodingJob su newPushEncoderKey
 				{
 					json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, "internalMMS");
 					json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
@@ -4401,6 +4416,8 @@ void API::ingestionJobSwitchToEncoder(
 
 				int64_t broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, "broadcastIngestionJobKey", -1);
 
+				// 1. modifica broadcastIngestionJob->metadataContentRoot in modo che l'engine faccia partire l'encodingJob su newEncodersPoolLabel
+				// 2. modifica broadcastEncodingJob->outputsRoot[0]->udpUrl per farlo puntare al nuovo encoder/server su cui ascolta il broadcaster
 				{
 					auto [broadcastIngestionType, broadcastIngestionStatus, broadcastMetadataContentRoot] =
 						_mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
@@ -4445,8 +4462,29 @@ void API::ingestionJobSwitchToEncoder(
 						broadcastIngestionJobKey, JSONUtils::toString(broadcastMetadataContentRoot)
 					);
 
-					auto [broadcastEncodingJobKey, broadcastEncoderKey] =
-						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKey(broadcastIngestionJobKey, true);
+					auto [broadcastEncodingJobKey, broadcastEncoderKey, broadcastEncodingJobParametersRoot] =
+						_mmsEngineDBFacade->encodingJob_EncodingJobKeyEncoderKeyParameters(broadcastIngestionJobKey, true);
+
+					// nel caso del broadcast, è necessario anche aggiornare outputsRoot[0]->udpUrl
+					// per farlo puntare al nuovo server su cui ascolta il broadcaster
+					{
+						string broadcasterStreamConfigurationLabel = JSONUtils::asString(metadataContentRoot, "configurationLabel");
+
+						string newOutputUdpUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
+							workspace->_workspaceKey, ingestionJobKey, broadcasterStreamConfigurationLabel, newPushEncoderKey,
+							newPushPublicEncoderName, false
+						);
+
+						json outputsRoot = broadcastEncodingJobParametersRoot["outputsRoot"];
+						json outputRoot = outputsRoot[0];
+						outputRoot["udpUrl"] = newOutputUdpUrl;
+						outputsRoot[0] = outputRoot;
+						broadcastEncodingJobParametersRoot["outputsRoot"] = outputsRoot;
+						_mmsEngineDBFacade->updateEncodingJobParameters(
+							broadcastEncodingJobKey, JSONUtils::toString(broadcastEncodingJobParametersRoot)
+						);
+					}
+
 					// dopo aver modificato il pushEncoderKey, killo l'encodingjob del broadcaster
 					// solo per farlo ripartire in modo da usare il nuovo encoder
 					try
@@ -4467,6 +4505,8 @@ void API::ingestionJobSwitchToEncoder(
 			}
 			else
 			{
+				// modifica ingestionJob->metadataContentRoot in modo che l'engine faccia partire l'encodingJob su newEncodersPoolLabel
+
 				auto [ingestionType, ingestionStatus, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
 					workspace->_workspaceKey, ingestionJobKey,
 					// 2022-12-18: meglio avere una informazione sicura

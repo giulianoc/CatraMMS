@@ -1004,7 +1004,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 							updatedUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
 								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel,
-								updatedPushEncoderKey, pushPublicEncoderName
+								updatedPushEncoderKey, pushPublicEncoderName, true
 							);
 						}
 					}

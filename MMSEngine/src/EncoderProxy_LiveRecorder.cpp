@@ -937,7 +937,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 
 							updatedUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
 								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel,
-								updatedPushEncoderKey, pushPublicEncoderName
+								updatedPushEncoderKey, pushPublicEncoderName, true
 							);
 						}
 					}
