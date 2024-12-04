@@ -224,10 +224,11 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 					{
 						vector<bool> v;
 
+						/*
 						auto const array{field.as_sql_array<bool>()};
 						for (int index = 0; index < array.size(); index++)
 							v.push_back(array[index]);
-						/*
+						*/
 						auto array = field.as_array();
 						pair<array_parser::juncture, string> elem;
 						do
@@ -236,7 +237,6 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 							if (elem.first == array_parser::juncture::string_value)
 								v.push_back(elem.second == "t");
 						} while (elem.first != array_parser::juncture::done);
-						*/
 
 						sqlValue.setValue(make_shared<SqlType<vector<bool>>>(v));
 					}
@@ -245,10 +245,11 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 					{
 						vector<int32_t> v;
 
+						/*
 						auto const array{field.as_sql_array<int32_t>()};
 						for (int index = 0; index < array.size(); index++)
 							v.push_back(array[index]);
-						/*
+						*/
 						auto array = field.as_array();
 						pair<array_parser::juncture, string> elem;
 						do
@@ -257,7 +258,6 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 							if (elem.first == array_parser::juncture::string_value)
 								v.push_back(stol(elem.second));
 						} while (elem.first != array_parser::juncture::done);
-						*/
 
 						sqlValue.setValue(make_shared<SqlType<vector<int32_t>>>(v));
 					}
@@ -266,10 +266,11 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 					{
 						vector<string> v;
 
+						/*
 						auto const array{field.as_sql_array<string>()};
 						for (int index = 0; index < array.size(); index++)
 							v.push_back(array[index]);
-						/*
+						*/
 						auto array = field.as_array();
 						pair<array_parser::juncture, string> elem;
 						do
@@ -278,7 +279,6 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 							if (elem.first == array_parser::juncture::string_value)
 								v.push_back(elem.second);
 						} while (elem.first != array_parser::juncture::done);
-						*/
 
 						sqlValue.setValue(make_shared<SqlType<vector<string>>>(v));
 					}

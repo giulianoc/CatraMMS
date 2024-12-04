@@ -1387,10 +1387,11 @@ json MMSEngineDBFacade::getMediaItemsList(
 				{
 					json mediaItemTagsRoot = json::array();
 
+					/*
 					auto const array{row["tags"].as_sql_array<string>()};
 					for (int index = 0; index < array.size(); index++)
 						mediaItemTagsRoot.push_back(array[index]);
-					/*
+					*/
 					{
 						// pqxx::array<string> tagsArray = row["tags"].as<array>();
 						auto tagsArray = row["tags"].as_array();
@@ -1402,7 +1403,6 @@ json MMSEngineDBFacade::getMediaItemsList(
 								mediaItemTagsRoot.push_back(elem.second);
 						} while (elem.first != pqxx::array_parser::juncture::done);
 					}
-					*/
 
 					field = "tags";
 					mediaItemRoot[field] = mediaItemTagsRoot;

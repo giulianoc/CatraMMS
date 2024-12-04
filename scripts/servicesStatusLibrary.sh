@@ -279,7 +279,7 @@ postgres_check()
 
 disks_usage()
 {
-	alarmsDiskUsage=$(df -Ph | grep -v "/snap/" | awk 'BEGIN { alarms=""; maxDiskUsage=70; } { if (NR == 1) next; usagePercentage=substr($5, 0, length($5)-1)+0; if (usagePercentage > maxDiskUsage) { alarms=alarms$6" -> "usagePercentage"%; "; } } END {printf("%s", alarms) } ')
+	alarmsDiskUsage=$(df -Ph | grep -v "/snap/" | grep -v "/sys/firmware/efi/" | awk 'BEGIN { alarms=""; maxDiskUsage=70; } { if (NR == 1) next; usagePercentage=substr($5, 0, length($5)-1)+0; if (usagePercentage > maxDiskUsage) { alarms=alarms$6" -> "usagePercentage"%; "; } } END {printf("%s", alarms) } ')
 	if [ "$alarmsDiskUsage" == "" ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_disks_usage, disks usage is fine" >> $debugFilename
 

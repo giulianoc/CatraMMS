@@ -110,6 +110,27 @@ prodServers[$((serverIndex*5+3))]=9255
 prodServers[$((serverIndex*5+4))]=encoder
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*5+0))]=hetzner-transcoder-3
+prodServers[$((serverIndex*5+1))]=23.88.12.230
+prodServers[$((serverIndex*5+2))]=hetzner-mms-key
+prodServers[$((serverIndex*5+3))]=9255
+prodServers[$((serverIndex*5+4))]=encoder
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*5+0))]=hetzner-transcoder-4
+prodServers[$((serverIndex*5+1))]=23.88.12.229
+prodServers[$((serverIndex*5+2))]=hetzner-mms-key
+prodServers[$((serverIndex*5+3))]=9255
+prodServers[$((serverIndex*5+4))]=encoder
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*5+0))]=hetzner-transcoder-6
+prodServers[$((serverIndex*5+1))]=23.88.13.17
+prodServers[$((serverIndex*5+2))]=hetzner-mms-key
+prodServers[$((serverIndex*5+3))]=9255
+prodServers[$((serverIndex*5+4))]=encoder
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*5+0))]=aws-cibortv-transcoder-mil-1
 prodServers[$((serverIndex*5+1))]=ec2-15-161-78-89.eu-south-1.compute.amazonaws.com
 prodServers[$((serverIndex*5+2))]=aws-cibortv1-key-milan
