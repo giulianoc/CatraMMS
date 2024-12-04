@@ -22,6 +22,28 @@ void MMSEngineProcessor::manageCountdown(
 			throw runtime_error(errorMessage);
 		}
 
+		// aggiungiomo 'encodersDetails' in ingestion parameters. In questo oggetto json mettiamo
+		// l'encodersPool che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
+		// In questo modo è possibile cambiare tramite API l'encoder per fare uno switch di un ingestionJob da un encoder ad un'altro
+		{
+			string taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, "encodersPool", "");
+
+			json encodersDetailsRoot;
+
+			encodersDetailsRoot["encodersPoolLabel"] = taskEncodersPoolLabel;
+
+			if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS"))
+				parametersRoot["internalMMS"]["encodersDetails"] = encodersDetailsRoot;
+			else
+			{
+				json internalMMSRoot;
+				internalMMSRoot["encodersDetails"] = encodersDetailsRoot;
+				parametersRoot["internalMMS"] = internalMMSRoot;
+			}
+
+			_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(parametersRoot));
+		}
+
 		bool defaultBroadcast = false;
 		bool timePeriod = true;
 		int64_t utcProxyPeriodStart = -1;

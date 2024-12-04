@@ -525,6 +525,8 @@ create-directory()
 		#MMSTranscoderWorkingAreaRepository: confermato che serve all'engine per le sue attività con ffmpeg (ad esempio changeFileFormat)
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+		#questo link è importante perchè i path all'interno delle playlist in ffmpegEndlessRecursivePlaylist iniziano con storage/.../...
+		ln -s /var/catramms/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
 		if [ ! -e /var/catramms/logs ]; then
 			ln -s /mnt/local-data/logs /var/catramms
@@ -570,6 +572,8 @@ create-directory()
 		mkdir -p /var/catramms/storage/MMSRepository
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+		#questo link è importante perchè i path all'interno delle playlist in ffmpegEndlessRecursivePlaylist iniziano con storage/.../...
+		ln -s /var/catramms/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
 		if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
 			ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
@@ -583,6 +587,9 @@ create-directory()
 		chown -R mms:mms /mnt/local-data/logs
 		chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
 		chown -R mms:mms /mnt/local-data/cache
+
+		#link comodo per avere accesso ai file di log di ffmpeg
+		ln -s /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg /home/mms/
 
 		if [ "$moduleType" == "encoder" ]; then
 			if [ ! -e /var/catramms/storage/commonConfiguration ]; then

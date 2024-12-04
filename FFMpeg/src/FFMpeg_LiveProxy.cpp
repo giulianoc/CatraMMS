@@ -1721,7 +1721,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 					"Creating ffmpegEndlessRecursivePlaylist file"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
-					", _ffmpegEndlessRecursivePlaylist: {}",
+					", endlessPlaylistListPathName: {}",
 					ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
 				);
 				ofstream playlistListFile(endlessPlaylistListPathName.c_str(), ofstream::trunc);
@@ -1841,7 +1841,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 							"ffmpeg: adding physical path"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
-							", _ffmpegEndlessRecursivePlaylist: {}"
+							", endlessPlaylistListPathName: {}"
 							", sourcePhysicalReference: {}"
 							", content: file '{}'",
 							ingestionJobKey, encodingJobKey, endlessPlaylistListPathName, sourcePhysicalReference,
