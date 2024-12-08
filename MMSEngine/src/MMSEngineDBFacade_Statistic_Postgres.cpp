@@ -455,12 +455,10 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 			if (ipsToBeUpdated.size() < limit)
 				moreGeoInfoToBeUpdated = false;
 
-			int aaa = 0;
 			// https://members.ip-api.com/docs/batch
 			vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo = getGEOInfo_ipAPI(ipsToBeUpdated);
 			for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
 			{
-				SPDLOG_INFO("aaa: {}", aaa++);
 				auto [ip, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
 
 				int64_t geoInfoKey;
@@ -560,11 +558,9 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 				}
 			}
 
-			SPDLOG_INFO("aaa: {}", aaa++);
 			trans.commit();
 			connectionPool->unborrow(conn);
 			conn = nullptr;
-			SPDLOG_INFO("aaa: {}", aaa++);
 		}
 		catch (sql_error const &e)
 		{
@@ -675,13 +671,17 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 	{
 		try
 		{
+			int aaa = 0;
 			vector<string> ipsToBeUpdated;
 			{
 				string sqlStatement = fmt::format("select distinct ip from MMS_LoginStatistic where geoInfoKey is null limit {}", limit);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				SPDLOG_INFO("aaa: {}", aaa++);
 				result res = trans.exec(sqlStatement);
+				SPDLOG_INFO("aaa: {}", aaa++);
 				for (auto row : res)
 					ipsToBeUpdated.push_back(row["ip"].as<string>());
+				SPDLOG_INFO("aaa: {}", aaa++);
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
