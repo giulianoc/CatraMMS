@@ -420,19 +420,14 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
-	int aaa = 0;
-	SPDLOG_INFO("a: {}", aaa++);
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
-	SPDLOG_INFO("a: {}", aaa++);
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	SPDLOG_INFO("a: {}", aaa++);
 	work trans{*(conn->_sqlConnection)};
 
-	SPDLOG_INFO("a: {}", aaa++);
 	// limit 100 perchè ip-api gestisce fino a 100 reqs
 	int limit = 100;
 	bool moreGeoInfoToBeUpdated = true;
@@ -440,25 +435,21 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 	{
 		try
 		{
-			SPDLOG_INFO("a: {}", aaa++);
 			vector<string> ipsToBeUpdated;
 			{
-				SPDLOG_INFO("a: {}", aaa++);
 				string sqlStatement = fmt::format("select distinct ipAddress from MMS_RequestStatistic where geoInfoKey is null limit {}", limit);
-				SPDLOG_INFO("a: {}", aaa++);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				SPDLOG_INFO("a: {}", aaa++);
 				result res = trans.exec(sqlStatement);
-				SPDLOG_INFO("a: {}", aaa++);
 				for (auto row : res)
 					ipsToBeUpdated.push_back(row["ipAddress"].as<string>());
-				SPDLOG_INFO("a: {}", aaa++);
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
-					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					", elapsed (millisecs): @{}@"
+					", ipsToBeUpdated.size: {}",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count(), ipsToBeUpdated.size()
 				);
 			}
 			if (ipsToBeUpdated.size() < limit)
@@ -469,6 +460,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 			for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
 			{
 				auto [ip, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
+				SPDLOG_INFO("ip: {}", ip);
 
 				int64_t geoInfoKey;
 				{
@@ -691,8 +683,10 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
-					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					", elapsed (millisecs): @{}@"
+					", ipsToBeUpdated.size: {}",
+					sqlStatement, conn->getConnectionId(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count(), ipsToBeUpdated.size()
 				);
 			}
 			if (ipsToBeUpdated.size() < limit)
