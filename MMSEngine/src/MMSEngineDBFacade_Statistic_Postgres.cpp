@@ -549,7 +549,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 				{
 					string sqlStatement = fmt::format(
 						"WITH rows AS (update MMS_RequestStatistic "
-						"set getInfoKey = {} "
+						"set geoInfoKey = {} "
 						"where ipAddress = {} returning 1) select count(*) from rows",
 						geoInfoKey, trans.quote(ip)
 					);
@@ -783,7 +783,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 				{
 					string sqlStatement = fmt::format(
 						"WITH rows AS (update MMS_LoginStatistic "
-						"set getInfoKey = {} "
+						"set geoInfoKey = {} "
 						"where ip = {} returning 1) select count(*) from rows",
 						geoInfoKey, trans.quote(ip)
 					);
