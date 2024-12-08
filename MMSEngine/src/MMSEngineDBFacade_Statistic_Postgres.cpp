@@ -502,6 +502,14 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
+					SPDLOG_INFO(
+						"SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					);
 					if (res.empty())
 					{
 						string sqlStatement = fmt::format(
@@ -728,6 +736,14 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
+					SPDLOG_INFO(
+						"SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					);
 					if (res.empty())
 					{
 						string sqlStatement = fmt::format(
