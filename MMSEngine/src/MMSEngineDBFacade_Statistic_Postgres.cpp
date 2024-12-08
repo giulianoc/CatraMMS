@@ -441,7 +441,10 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.exec(sqlStatement);
 				for (auto row : res)
-					ipsToBeUpdated.push_back(row["ipAddress"].as<string>());
+				{
+					if (!row["ipAddress"].is_null())
+						ipsToBeUpdated.push_back(row["ipAddress"].as<string>());
+				}
 				SPDLOG_INFO(
 					"SQL statement"
 					", sqlStatement: @{}@"
@@ -680,7 +683,10 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 				result res = trans.exec(sqlStatement);
 				SPDLOG_INFO("aaa: {}", aaa++);
 				for (auto row : res)
-					ipsToBeUpdated.push_back(row["ip"].as<string>());
+				{
+					if (!row["ip"].is_null())
+						ipsToBeUpdated.push_back(row["ip"].as<string>());
+				}
 				SPDLOG_INFO("aaa: {}", aaa++);
 				SPDLOG_INFO(
 					"SQL statement"
