@@ -37,8 +37,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "upToNextRequestInSeconds	integer null, "
 								  "constraint MMS_RequestStatistic_PK PRIMARY KEY (requestStatisticKey, requestTimestamp), "
 								  "constraint MMS_RequestStatistic_FK foreign key (geoInfoKey) "
-								  "references MMS_GEOInfo (geoInfoKey), "
-								  "partition by range (requestTimestamp))";
+								  "references MMS_GEOInfo (geoInfoKey)) "
+								  "partition by range (requestTimestamp)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
