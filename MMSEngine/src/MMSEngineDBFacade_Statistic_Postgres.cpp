@@ -451,7 +451,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 				result res = trans.exec(sqlStatement);
 				SPDLOG_INFO("a: {}", aaa++);
 				for (auto row : res)
-					ipsToBeUpdated.push_back(row["ip"].as<string>());
+					ipsToBeUpdated.push_back(row["ipAddress"].as<string>());
 				SPDLOG_INFO("a: {}", aaa++);
 				SPDLOG_INFO(
 					"SQL statement"
@@ -682,7 +682,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 		{
 			vector<string> ipsToBeUpdated;
 			{
-				string sqlStatement = fmt::format("select distinct ipAddress from MMS_LoginStatistic where geoInfoKey is null limit {}", limit);
+				string sqlStatement = fmt::format("select distinct ip from MMS_LoginStatistic where geoInfoKey is null limit {}", limit);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.exec(sqlStatement);
 				for (auto row : res)
