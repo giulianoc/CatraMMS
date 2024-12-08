@@ -455,12 +455,13 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 			if (ipsToBeUpdated.size() < limit)
 				moreGeoInfoToBeUpdated = false;
 
+			int aaa = 0;
 			// https://members.ip-api.com/docs/batch
 			vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo = getGEOInfo_ipAPI(ipsToBeUpdated);
 			for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
 			{
+				SPDLOG_INFO("aaa: {}", aaa++);
 				auto [ip, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
-				SPDLOG_INFO("ip: {}", ip);
 
 				int64_t geoInfoKey;
 				{
@@ -559,9 +560,11 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 				}
 			}
 
+			SPDLOG_INFO("aaa: {}", aaa++);
 			trans.commit();
 			connectionPool->unborrow(conn);
 			conn = nullptr;
+			SPDLOG_INFO("aaa: {}", aaa++);
 		}
 		catch (sql_error const &e)
 		{
