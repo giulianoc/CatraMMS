@@ -26,16 +26,19 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// lasciamo solamente la partizione su requestTimestamp
 			string sqlStatement = "create table if not exists MMS_RequestStatistic ("
 								  "requestStatisticKey		bigint GENERATED ALWAYS AS IDENTITY, "
-								  "workspaceKey				bigint not null, "
-								  "ipAddress					text null, "
-								  "userId						text not null, "
+								  "workspaceKey					bigint not null, "
+								  "ipAddress						text null, "
+								  "geoInfoKey						bigint null, "
+								  "userId								text not null, "
 								  "physicalPathKey			bigint null, "
 								  "confStreamKey				bigint null, "
-								  "title						text not null, "
+								  "title								text not null, "
 								  "requestTimestamp			timestamp without time zone not null, "
 								  "upToNextRequestInSeconds	integer null, "
-								  "constraint MMS_RequestStatistic_PK PRIMARY KEY (requestStatisticKey, requestTimestamp)) "
-								  "partition by range (requestTimestamp) ";
+								  "constraint MMS_RequestStatistic_PK PRIMARY KEY (requestStatisticKey, requestTimestamp), "
+								  "constraint MMS_RequestStatistic_FK foreign key (geoInfoKey) "
+								  "references MMS_GEOInfo (geoInfoKey), "
+								  "partition by range (requestTimestamp))";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
@@ -69,6 +72,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			//		where workspaceKey = ? and requestStatisticKey < ? and userId = ?
 			string sqlStatement = "create index if not exists MMS_RequestStatistic_idx2 on MMS_RequestStatistic ("
 								  "workspaceKey, userId, requestStatisticKey)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			// usato da updateRequestStatisticGeoInfo
+			string sqlStatement = "create index if not exists MMS_RequestStatistic_idx3 on MMS_RequestStatistic (ipAddress)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
@@ -733,10 +750,27 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "loginStatisticKey		bigint GENERATED ALWAYS AS IDENTITY,"
 								  "userKey				bigint NOT NULL,"
 								  "ip						text NULL,"
+								  "geoInfoKey						bigint null, "
 								  "successfulLogin		timestamp without time zone NOT NULL,"
 								  "constraint MMS_LoginStatistic_PK PRIMARY KEY (loginStatisticKey), "
 								  "constraint MMS_LoginStatistic_FK foreign key (userKey) "
-								  "references MMS_User (userKey) on delete cascade) ";
+								  "references MMS_User (userKey) on delete cascade, "
+								  "constraint MMS_LoginStatistic_FK2 foreign key (geoInfoKey) "
+								  "references MMS_GEOInfo (geoInfoKey)) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			// usato da updateLoginStatisticGeoInfo
+			string sqlStatement = "create index if not exists MMS_LoginStatistic_idx on MMS_LoginStatistic (ip)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
@@ -750,18 +784,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement = "create table if not exists MMS_GEOInfo ("
-								  "ip						text NULL,"
-								  "lastGEOUpdate			timestamp without time zone NULL,"
-								  "lastTimeUsed			timestamp without time zone default (now() at time zone 'utc'),"
+								  "geoInfoKey				bigint GENERATED ALWAYS AS IDENTITY,"
 								  "continent				text NULL,"
-								  "continentCode			text NULL,"
-								  "country				text NULL,"
+								  "continentCode		text NULL,"
+								  "country					text NULL,"
 								  "countryCode			text NULL,"
-								  "region					text NULL,"
-								  "city					text NULL,"
-								  "org					text NULL,"
-								  "isp					text NULL,"
-								  "constraint MMS_GEOInfo_PK PRIMARY KEY (ip)) ";
+								  "region						text NULL,"
+								  "city							text NULL,"
+								  "org							text NULL,"
+								  "isp							text NULL,"
+								  "constraint MMS_GEOInfo_PK PRIMARY KEY (geoInfoKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(

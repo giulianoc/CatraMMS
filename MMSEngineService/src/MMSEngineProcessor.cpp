@@ -1382,16 +1382,19 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 
 	if (!alreadyExecuted)
 	{
-		chrono::system_clock::time_point start = chrono::system_clock::now();
+		chrono::system_clock::time_point startRequestStatistic = chrono::system_clock::now();
 
 		try
 		{
-			_mmsEngineDBFacade->updateGEOInfo();
+			_mmsEngineDBFacade->updateRequestStatisticGEOInfo();
 		}
 		catch (runtime_error &e)
 		{
 			SPDLOG_ERROR(
-				string() + "GEOInfo: updateGEOInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what()
+				"GEOInfo: updateRequestStatisticGEOInfo failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
 			);
 
 			// no throw since it is running in a detached thread
@@ -1400,7 +1403,41 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
-				string() + "GEOInfo: updateGEOInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what()
+				"GEOInfo: updateRequestStatisticGEOInfo failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+
+		chrono::system_clock::time_point startLoginStatistic = chrono::system_clock::now();
+
+		try
+		{
+			_mmsEngineDBFacade->updateLoginStatisticGEOInfo();
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"GEOInfo: updateLoginStatisticGEOInfo failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"GEOInfo: updateLoginStatisticGEOInfo failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
 			);
 
 			// no throw since it is running in a detached thread
@@ -1408,9 +1445,16 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
+
 		SPDLOG_INFO(
-			string() + "GEOInfo: updateGEOInfo finished" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			"GEOInfo: updateGEOInfo finished"
+			", _processorIdentifier: {}"
+			", @MMS statistics@ - RequestStatistic duration (secs): @{}@"
+			", @MMS statistics@ - LoginStatistic duration (secs): @{}@"
+			", @MMS statistics@ - total duration (secs): @{}@",
+			_processorIdentifier, chrono::duration_cast<chrono::seconds>(startLoginStatistic - startRequestStatistic).count(),
+			chrono::duration_cast<chrono::seconds>(end - startLoginStatistic).count(),
+			chrono::duration_cast<chrono::seconds>(end - startRequestStatistic).count()
 		);
 	}
 }

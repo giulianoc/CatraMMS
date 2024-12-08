@@ -26,8 +26,8 @@ json MMSEngineDBFacade::addRequestStatistic(
 
 	try
 	{
-		if (_geoServiceEnabled)
-			saveGEOInfo(ipAddress, &trans, conn);
+		// if (_geoServiceEnabled)
+		// 	saveGEOInfo(ipAddress, &trans, conn);
 
 		int64_t requestStatisticKey;
 		{
@@ -238,8 +238,8 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(int userKey, string ip)
 
 	try
 	{
-		if (_geoServiceEnabled)
-			saveGEOInfo(ip, &trans, conn);
+		// if (_geoServiceEnabled)
+		// 	saveGEOInfo(ip, &trans, conn);
 
 		{
 			string sqlStatement = fmt::format(
@@ -353,6 +353,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(int userKey, string ip)
 	return loginStatisticKey;
 }
 
+/*
 void MMSEngineDBFacade::saveGEOInfo(string ipAddress, transaction_base *trans, shared_ptr<PostgresConnection> conn)
 {
 	try
@@ -413,8 +414,9 @@ void MMSEngineDBFacade::saveGEOInfo(string ipAddress, transaction_base *trans, s
 		throw e;
 	}
 }
+*/
 
-void MMSEngineDBFacade::updateGEOInfo()
+void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -426,101 +428,92 @@ void MMSEngineDBFacade::updateGEOInfo()
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	work trans{*(conn->_sqlConnection)};
 
-	try
+	// limit 100 perchè ip-api gestisce fino a 100 reqs
+	int limit = 100;
+	bool moreGeoInfoToBeUpdated = true;
+	while (moreGeoInfoToBeUpdated)
 	{
+		try
 		{
-			string sqlStatement = fmt::format(
-				"select ip from MMS_GEOInfo "
-				"where lastGEOUpdate is null or "
-				"(lastTimeUsed > lastGEOUpdate and DATE_PART('day', lastTimeUsed - lastGEOUpdate) > {})",
-				_geoServiceMaxDaysBeforeUpdate
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
 			vector<string> ipsToBeUpdated;
-			for (auto row : res)
 			{
-				ipsToBeUpdated.push_back(row["ip"].as<string>());
-				if (ipsToBeUpdated.size() >= 100) // ip-api gestisce fino a 100 reqs
-				{
-					// https://members.ip-api.com/docs/batch
-					vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo =
-						getGEOInfo_ipAPI(ipsToBeUpdated);
-					// vector<tuple<string, string, string, string, string, string, string, string, string>>
-					// 	ipsAPIGEOInfo = getGEOInfo_ipwhois(ipsToBeUpdated);
-					ipsToBeUpdated.clear();
-					for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
-					{
-						auto [query, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
-
-						{
-							string sqlStatement = fmt::format(
-								"WITH rows AS (update MMS_GEOInfo "
-								"set lastGEOUpdate = now() at time zone 'utc', "
-								"continent = {}, continentCode = {}, country = {}, countryCode = {}, "
-								"region = {}, city = {}, org = {}, isp = {} "
-								"where ip = {} returning 1) select count(*) from rows",
-								continent == "" ? "null" : trans.quote(continent), continentCode == "" ? "null" : trans.quote(continentCode),
-								country == "" ? "null" : trans.quote(country), countryCode == "" ? "null" : trans.quote(countryCode),
-								regionName == "" ? "null" : trans.quote(regionName), city == "" ? "null" : trans.quote(city),
-								org == "" ? "null" : trans.quote(org), isp == "" ? "null" : trans.quote(isp), trans.quote(query)
-							);
-							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
-							SPDLOG_INFO(
-								"SQL statement"
-								", sqlStatement: @{}@"
-								", getConnectionId: @{}@"
-								", elapsed (millisecs): @{}@",
-								sqlStatement, conn->getConnectionId(),
-								chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-							);
-							if (rowsUpdated != 1)
-							{
-								SPDLOG_ERROR(
-									"update failed"
-									", rowsUpdated: {}"
-									", sqlStatement: {}",
-									rowsUpdated, sqlStatement
-								);
-							}
-						}
-					}
-				}
+				string sqlStatement = fmt::format("select distinct ipAddress from MMS_RequestStatistic where geoInfoKey is null limit {}", limit);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				result res = trans.exec(sqlStatement);
+				for (auto row : res)
+					ipsToBeUpdated.push_back(row["ip"].as<string>());
+				SPDLOG_INFO(
+					"SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
 			}
-			SPDLOG_INFO(
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (ipsToBeUpdated.size() > 0)
-			{
-				// https://members.ip-api.com/docs/batch
-				vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo =
-					getGEOInfo_ipAPI(ipsToBeUpdated);
-				// vector<tuple<string, string, string, string, string, string, string, string, string>>
-				// 	ipsAPIGEOInfo = getGEOInfo_ipwhois(ipsToBeUpdated);
-				ipsToBeUpdated.clear();
-				for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
-				{
-					auto [query, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
+			if (ipsToBeUpdated.size() < limit)
+				moreGeoInfoToBeUpdated = false;
 
+			// https://members.ip-api.com/docs/batch
+			vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo = getGEOInfo_ipAPI(ipsToBeUpdated);
+			for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
+			{
+				auto [ip, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
+
+				int64_t geoInfoKey;
+				{
+					string sqlWhere;
+					if (continent != "")
+						sqlWhere += fmt::format("continent = {} ", trans.quote(continent));
+					else
+						sqlWhere += fmt::format("continent is null ");
+					if (continentCode != "")
+						sqlWhere += fmt::format("and continentcode = {} ", trans.quote(continentCode));
+					else
+						sqlWhere += fmt::format("and continentcode is null ");
+					if (country != "")
+						sqlWhere += fmt::format("and country = {} ", trans.quote(country));
+					else
+						sqlWhere += fmt::format("and country is null ");
+					if (countryCode != "")
+						sqlWhere += fmt::format("and countrycode = {} ", trans.quote(countryCode));
+					else
+						sqlWhere += fmt::format("and countrycode is null ");
+					if (regionName != "")
+						sqlWhere += fmt::format("and region = {} ", trans.quote(regionName));
+					else
+						sqlWhere += fmt::format("and region is null ");
+					if (city != "")
+						sqlWhere += fmt::format("and city = {} ", trans.quote(city));
+					else
+						sqlWhere += fmt::format("and city is null ");
+					if (org != "")
+						sqlWhere += fmt::format("and org = {} ", trans.quote(org));
+					else
+						sqlWhere += fmt::format("and org is null ");
+					if (isp != "")
+						sqlWhere += fmt::format("and isp = {} ", trans.quote(isp));
+					else
+						sqlWhere += fmt::format("and isp is null ");
+
+					string sqlStatement = fmt::format(
+						"select geoInfoKey from MMS_GEOInfo "
+						"where {} ",
+						sqlWhere
+					);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					result res = trans.exec(sqlStatement);
+					if (res.empty())
 					{
 						string sqlStatement = fmt::format(
-							"WITH rows AS (update MMS_GEOInfo "
-							"set lastGEOUpdate = now() at time zone 'utc', "
-							"continent = {}, continentCode = {}, country = {}, countryCode = {}, "
-							"region = {}, city = {}, org = {}, isp = {} "
-							"where ip = {} returning 1) select count(*) from rows",
+							"insert into MMS_GEOInfo(continent, continentcode, country, countrycode, region, city, org, isp) values ("
+							"{}, {}, {}, {}, {}, {}, {}, {}) returning geoInfoKey",
 							continent == "" ? "null" : trans.quote(continent), continentCode == "" ? "null" : trans.quote(continentCode),
 							country == "" ? "null" : trans.quote(country), countryCode == "" ? "null" : trans.quote(countryCode),
 							regionName == "" ? "null" : trans.quote(regionName), city == "" ? "null" : trans.quote(city),
-							org == "" ? "null" : trans.quote(org), isp == "" ? "null" : trans.quote(isp), trans.quote(query)
+							org == "" ? "null" : trans.quote(org), isp == "" ? "null" : trans.quote(isp)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+						geoInfoKey = trans.exec1(sqlStatement)[0].as<int64_t>();
 						SPDLOG_INFO(
 							"SQL statement"
 							", sqlStatement: @{}@"
@@ -529,110 +522,349 @@ void MMSEngineDBFacade::updateGEOInfo()
 							sqlStatement, conn->getConnectionId(),
 							chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 						);
-						if (rowsUpdated != 1)
-						{
-							SPDLOG_ERROR(
-								"update failed"
-								", rowsUpdated: {}"
-								", sqlStatement: {}",
-								rowsUpdated, sqlStatement
-							);
-						}
 					}
+					else
+						geoInfoKey = res[0][0].as<int64_t>(-1);
+				}
+
+				{
+					string sqlStatement = fmt::format(
+						"WITH rows AS (update MMS_RequestStatistic "
+						"set getInfoKey = {} "
+						"where ipAddress = {} returning 1) select count(*) from rows",
+						geoInfoKey, trans.quote(ip)
+					);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+					SPDLOG_INFO(
+						"SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@"
+						", rowsUpdated: {}",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count(), rowsUpdated
+					);
 				}
 			}
+
+			trans.commit();
+			connectionPool->unborrow(conn);
+			conn = nullptr;
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
+		catch (sql_error const &e)
 		{
-			trans.abort();
+			SPDLOG_ERROR(
+				"SQL exception"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			);
+
+			try
+			{
+				trans.abort();
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"abort failed"
+					", conn: {}",
+					(conn != nullptr ? conn->getConnectionId() : -1)
+				);
+			}
+			if (conn != nullptr)
+			{
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"runtime_error"
+				", exceptionMessage: {}"
+				", conn: {}",
+				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			);
+
+			try
+			{
+				trans.abort();
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"abort failed"
+					", conn: {}",
+					(conn != nullptr ? conn->getConnectionId() : -1)
+				);
+			}
+			if (conn != nullptr)
+			{
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
 		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
-				"abort failed"
+				"exception"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
+
+			try
+			{
+				trans.abort();
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"abort failed"
+					", conn: {}",
+					(conn != nullptr ? conn->getConnectionId() : -1)
+				);
+			}
+			if (conn != nullptr)
+			{
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
 		}
-		if (conn != nullptr)
+	}
+}
+
+void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	work trans{*(conn->_sqlConnection)};
+
+	// limit 100 perchè ip-api gestisce fino a 100 reqs
+	int limit = 100;
+	bool moreGeoInfoToBeUpdated = true;
+	while (moreGeoInfoToBeUpdated)
+	{
+		try
 		{
+			vector<string> ipsToBeUpdated;
+			{
+				string sqlStatement = fmt::format("select distinct ipAddress from MMS_LoginStatistic where geoInfoKey is null limit {}", limit);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				result res = trans.exec(sqlStatement);
+				for (auto row : res)
+					ipsToBeUpdated.push_back(row["ip"].as<string>());
+				SPDLOG_INFO(
+					"SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				);
+			}
+			if (ipsToBeUpdated.size() < limit)
+				moreGeoInfoToBeUpdated = false;
+
+			// https://members.ip-api.com/docs/batch
+			vector<tuple<string, string, string, string, string, string, string, string, string>> ipsAPIGEOInfo = getGEOInfo_ipAPI(ipsToBeUpdated);
+			for (tuple<string, string, string, string, string, string, string, string, string> ipAPIGEOInfo : ipsAPIGEOInfo)
+			{
+				auto [ip, continent, continentCode, country, countryCode, regionName, city, org, isp] = ipAPIGEOInfo;
+
+				int64_t geoInfoKey;
+				{
+					string sqlWhere;
+					if (continent != "")
+						sqlWhere += fmt::format("continent = {} ", trans.quote(continent));
+					else
+						sqlWhere += fmt::format("continent is null ");
+					if (continentCode != "")
+						sqlWhere += fmt::format("and continentcode = {} ", trans.quote(continentCode));
+					else
+						sqlWhere += fmt::format("and continentcode is null ");
+					if (country != "")
+						sqlWhere += fmt::format("and country = {} ", trans.quote(country));
+					else
+						sqlWhere += fmt::format("and country is null ");
+					if (countryCode != "")
+						sqlWhere += fmt::format("and countrycode = {} ", trans.quote(countryCode));
+					else
+						sqlWhere += fmt::format("and countrycode is null ");
+					if (regionName != "")
+						sqlWhere += fmt::format("and region = {} ", trans.quote(regionName));
+					else
+						sqlWhere += fmt::format("and region is null ");
+					if (city != "")
+						sqlWhere += fmt::format("and city = {} ", trans.quote(city));
+					else
+						sqlWhere += fmt::format("and city is null ");
+					if (org != "")
+						sqlWhere += fmt::format("and org = {} ", trans.quote(org));
+					else
+						sqlWhere += fmt::format("and org is null ");
+					if (isp != "")
+						sqlWhere += fmt::format("and isp = {} ", trans.quote(isp));
+					else
+						sqlWhere += fmt::format("and isp is null ");
+
+					string sqlStatement = fmt::format(
+						"select geoInfoKey from MMS_GEOInfo "
+						"where {} ",
+						sqlWhere
+					);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					result res = trans.exec(sqlStatement);
+					if (res.empty())
+					{
+						string sqlStatement = fmt::format(
+							"insert into MMS_GEOInfo(continent, continentcode, country, countrycode, region, city, org, isp) values ("
+							"{}, {}, {}, {}, {}, {}, {}, {}) returning geoInfoKey",
+							continent == "" ? "null" : trans.quote(continent), continentCode == "" ? "null" : trans.quote(continentCode),
+							country == "" ? "null" : trans.quote(country), countryCode == "" ? "null" : trans.quote(countryCode),
+							regionName == "" ? "null" : trans.quote(regionName), city == "" ? "null" : trans.quote(city),
+							org == "" ? "null" : trans.quote(org), isp == "" ? "null" : trans.quote(isp)
+						);
+						chrono::system_clock::time_point startSql = chrono::system_clock::now();
+						geoInfoKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+						SPDLOG_INFO(
+							"SQL statement"
+							", sqlStatement: @{}@"
+							", getConnectionId: @{}@"
+							", elapsed (millisecs): @{}@",
+							sqlStatement, conn->getConnectionId(),
+							chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+						);
+					}
+					else
+						geoInfoKey = res[0][0].as<int64_t>(-1);
+				}
+
+				{
+					string sqlStatement = fmt::format(
+						"WITH rows AS (update MMS_LoginStatistic "
+						"set getInfoKey = {} "
+						"where ip = {} returning 1) select count(*) from rows",
+						geoInfoKey, trans.quote(ip)
+					);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+					SPDLOG_INFO(
+						"SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@"
+						", rowsUpdated: {}",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count(), rowsUpdated
+					);
+				}
+			}
+
+			trans.commit();
 			connectionPool->unborrow(conn);
 			conn = nullptr;
 		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
+		catch (sql_error const &e)
 		{
-			trans.abort();
+			SPDLOG_ERROR(
+				"SQL exception"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			);
+
+			try
+			{
+				trans.abort();
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"abort failed"
+					", conn: {}",
+					(conn != nullptr ? conn->getConnectionId() : -1)
+				);
+			}
+			if (conn != nullptr)
+			{
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"runtime_error"
+				", exceptionMessage: {}"
+				", conn: {}",
+				e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+			);
+
+			try
+			{
+				trans.abort();
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"abort failed"
+					", conn: {}",
+					(conn != nullptr ? conn->getConnectionId() : -1)
+				);
+			}
+			if (conn != nullptr)
+			{
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
+
+			throw e;
 		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
-				"abort failed"
+				"exception"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+			try
+			{
+				trans.abort();
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"abort failed"
+					", conn: {}",
+					(conn != nullptr ? conn->getConnectionId() : -1)
+				);
+			}
+			if (conn != nullptr)
+			{
+				connectionPool->unborrow(conn);
+				conn = nullptr;
+			}
 
-		try
-		{
-			trans.abort();
+			throw e;
 		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
 	}
 }
 

@@ -47,7 +47,7 @@ class JSONUtils
 
 	static double asDouble(json root, string field = "", double defaultValue = 0.0, bool notFoundAsException = false);
 
-	static bool asBool(json root, string field, bool defaultValue, bool notFoundAsException = false);
+	static bool asBool(json root, string field, bool defaultValue = false, bool notFoundAsException = false);
 
 	static json asJson(json root, string field, json defaultValue = json(), bool notFoundAsException = false);
 
