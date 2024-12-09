@@ -547,7 +547,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 						string sqlStatement = fmt::format(
 							"WITH rows AS (update MMS_RequestStatistic "
 							"set geoInfoKey = {} "
-							"where ipAddress = {} returning 1) select count(*) from rows",
+							"where ipAddress = {} and geoInfoKey is null returning 1) select count(*) from rows",
 							geoInfoKey, trans.quote(ip)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -823,7 +823,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 						string sqlStatement = fmt::format(
 							"WITH rows AS (update MMS_LoginStatistic "
 							"set geoInfoKey = {} "
-							"where ip = {} returning 1) select count(*) from rows",
+							"where ip = {} and geoInfoKey is null returning 1) select count(*) from rows",
 							geoInfoKey, trans.quote(ip)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();

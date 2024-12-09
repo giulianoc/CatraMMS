@@ -85,7 +85,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			// usato da updateRequestStatisticGeoInfo
-			string sqlStatement = "create index if not exists MMS_RequestStatistic_idx3 on MMS_RequestStatistic (ipAddress)";
+			string sqlStatement = "create index if not exists MMS_RequestStatistic_idx3 on MMS_RequestStatistic (ipAddress, geoInfoKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
@@ -770,7 +770,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			// usato da updateLoginStatisticGeoInfo
-			string sqlStatement = "create index if not exists MMS_LoginStatistic_idx on MMS_LoginStatistic (ip)";
+			string sqlStatement = "create index if not exists MMS_LoginStatistic_idx on MMS_LoginStatistic (ip, geoInfoKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
@@ -794,6 +794,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "org							text NULL,"
 								  "isp							text NULL,"
 								  "constraint MMS_GEOInfo_PK PRIMARY KEY (geoInfoKey)) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
+			string sqlStatement = "create unique index if not exists mms_geoinfo_idx on mms_geoinfo (continent, continentcode, country, countrycode, "
+								  "region, city, org, isp)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
