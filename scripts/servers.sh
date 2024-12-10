@@ -61,15 +61,15 @@ prodServers[$((serverIndex*5+3))]=9255
 prodServers[$((serverIndex*5+4))]=delivery
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*5+0))]=hetzner-engine-db-2
-prodServers[$((serverIndex*5+1))]=162.55.245.36
+prodServers[$((serverIndex*5+0))]=hetzner-engine-db-1
+prodServers[$((serverIndex*5+1))]=167.235.10.244
 prodServers[$((serverIndex*5+2))]=hetzner-mms-key
 prodServers[$((serverIndex*5+3))]=9255
 prodServers[$((serverIndex*5+4))]=engine
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*5+0))]=hetzner-engine-db-3
-prodServers[$((serverIndex*5+1))]=167.235.14.105
+prodServers[$((serverIndex*5+0))]=hetzner-engine-db-2
+prodServers[$((serverIndex*5+1))]=162.55.245.36
 prodServers[$((serverIndex*5+2))]=hetzner-mms-key
 prodServers[$((serverIndex*5+3))]=9255
 prodServers[$((serverIndex*5+4))]=engine

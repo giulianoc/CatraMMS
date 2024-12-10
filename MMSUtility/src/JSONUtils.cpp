@@ -61,7 +61,8 @@ string JSONUtils::asString(json root, string field, string defaultValue, bool no
 		{
 			if (!JSONUtils::isMetadataPresent(root, field) || JSONUtils::isNull(root, field))
 				return defaultValue;
-			if (root.at(field).type() == json::value_t::number_integer || root.at(field).type() == json::value_t::number_float)
+			if (root.at(field).type() == json::value_t::number_integer || root.at(field).type() == json::value_t::number_float ||
+				root.at(field).type() == json::value_t::boolean)
 				return to_string(root.at(field));
 			else
 				return root.at(field);
@@ -318,10 +319,17 @@ json JSONUtils::toJson(vector<int32_t> v)
 
 string JSONUtils::toString(json root)
 {
-	if (root == nullptr)
-		return "null";
-	else
-		return root.dump(-1, ' ', true);
+	try
+	{
+		if (root == nullptr)
+			return "null";
+		else
+			return root.dump(-1, ' ', true);
+	}
+	catch (const json::type_error &e)
+	{
+		throw runtime_error(e.what());
+	}
 	/*
 		Json::StreamWriterBuilder wbuilder;
 		wbuilder.settings_["emitUTF8"] = true;

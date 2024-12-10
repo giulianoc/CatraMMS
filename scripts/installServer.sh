@@ -302,6 +302,11 @@ install-packages()
 			#dbUser=mms
 			#echo -n "Type the DB password: "
 			#read dbPassword
+			echo "se serve una diversa versione di postgres bisogna:"
+			echo "- istallare la nuova versione"
+			echo "- rimuovere la vecchia versione"
+			echo "- assegnare la porta 5432 alla nuova versione"
+			read
 			echo "seguire il paragrafo 'Config initialization' del mio doc di Postgres"
 			read
 			echo "change the data directory following my 'postgres' document"
@@ -1238,6 +1243,10 @@ echo ""
 echo "se bisogna formattare e montare dischi"
 echo "sudo fdisk /dev/nvme1n1 (p n p w)"
 echo "sudo mkfs.ext4 /dev/nvme1n1p1"
+echo "in fstab"
+echo "UUID=XXXXXXXXXXXXX  /mnt/local-data-logs ext4 defaults 0 0"
+echo "UUID=XXXXXXXXXXXXX  /mnt/local-data-mmsDatabaseData ext4 defaults 0 0"
+echo "dove lo UUID puo essere recuperato con il comando lsblk -f"
 read -n 1 -s -r -p "premi un tasto per continuare"
 echo ""
 echo ""

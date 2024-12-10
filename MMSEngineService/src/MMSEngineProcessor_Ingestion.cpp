@@ -48,10 +48,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 		if (isMaintenanceMode())
 		{
 			SPDLOG_INFO(
-				string() +
-				"Received handleCheckIngestionEvent, not managed it because of "
-				"MaintenanceMode" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+				"Received handleCheckIngestionEvent, not managed it because of MaintenanceMode"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 
 			return;

@@ -456,10 +456,9 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 		if (isMaintenanceMode())
 		{
 			SPDLOG_INFO(
-				string() +
-				"Received handleCheckEncodingEvent, not managed it because of "
-				"MaintenanceMode" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+				"Received handleCheckEncodingEvent, not managed it because of MaintenanceMode"
+				", _processorIdentifier: {}",
+				_processorIdentifier
 			);
 
 			return;
