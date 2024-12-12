@@ -3,6 +3,7 @@
 #include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/Convert.h"
+#include "spdlog/spdlog.h"
 #include <algorithm>
 
 int64_t MMSEngineDBFacade::addEncoder(
@@ -3144,28 +3145,34 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getRunningEncoderByEncodersPool" + ", workspaceKey: " + to_string(workspaceKey) +
-			", encodersPoolLabel: " + encodersPoolLabel + ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped) +
-			", externalEncoderAllowed: " + to_string(externalEncoderAllowed)
+		SPDLOG_INFO(
+			"getRunningEncoderByEncodersPool"
+			", workspaceKey: {}"
+			", encodersPoolLabel: {}"
+			", encoderKeyToBeSkipped: {}"
+			", externalEncoderAllowed: {}",
+			workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, externalEncoderAllowed
 		);
 
 		int lastEncoderIndexUsed;
 		int64_t encodersPoolKey;
 		{
+			// problema: ho tantissimi canali tutti con lo stesso encodersPoolLabel. Di conseguenza tantissime select for update sullo stesso
+			// encodersPoolLabel. Il risultato è che la select impiega anche 30 secondi e molti canali non partono. Per questo motivo ho deciso di
+			// eliminare il for update, perchè è meglio che gli encoder non vengono presi in modo preciso/continuo rispetto ad un disservizio
 			string sqlStatement;
 			if (encodersPoolLabel == "")
 				sqlStatement = fmt::format(
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
 					"where workspaceKey = {} "
-					"and label is null for update",
+					"and label is null", // for update",
 					workspaceKey
 				);
 			else
 				sqlStatement = fmt::format(
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
 					"where workspaceKey = {} "
-					"and label = {} for update",
+					"and label = {}", // for update",
 					workspaceKey, trans.quote(encodersPoolLabel)
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -3227,6 +3234,8 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		bool encoderFound = false;
 		int encoderIndex = 0;
 
+		// trovo l'encoder successivo da utilizzare. Ci sono encoder che potrebbero non essere utilizzati, ad esempio perchè gli external non sono
+		// allowed oppure perchè non sono enabled oppure perchè sono encoderKeyToBeSkipped o perchè non sono running
 		while (!encoderFound && encoderIndex < encodersNumber)
 		{
 			encoderIndex++;
@@ -3300,9 +3309,12 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 				}
 				else if (encoderKeyToBeSkipped != -1 && encoderKeyToBeSkipped == encoderKey)
 				{
-					_logger->info(
-						__FILEREF__ + "getEncoderByEncodersPool, skipped encoderKey" + ", workspaceKey: " + to_string(workspaceKey) +
-						", encodersPoolLabel: " + encodersPoolLabel + ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped)
+					SPDLOG_INFO(
+						"getEncoderByEncodersPool, skipped encoderKey"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}"
+						", encoderKeyToBeSkipped: {}",
+						workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped
 					);
 
 					continue;
@@ -3311,9 +3323,11 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 				{
 					if (!isEncoderRunning(external, protocol, publicServerName, internalServerName, port))
 					{
-						_logger->info(
-							__FILEREF__ + "getEncoderByEncodersPool, dicarded encoderKey because not running" +
-							", workspaceKey: " + to_string(workspaceKey) + ", encodersPoolLabel: " + encodersPoolLabel
+						SPDLOG_INFO(
+							"getEncoderByEncodersPool, dicarded encoderKey because not running"
+							", workspaceKey: {}"
+							", encodersPoolLabel: {}",
+							workspaceKey, encodersPoolLabel
 						);
 
 						continue;
@@ -3324,9 +3338,13 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "Encoder details not found" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", encodersPoolKey: " + to_string(encodersPoolKey);
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"Encoder details not found"
+					", workspaceKey: {}"
+					", encodersPoolKey: {}",
+					workspaceKey, encodersPoolKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3334,9 +3352,14 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 
 		if (!encoderFound)
 		{
-			string errorMessage = __FILEREF__ + "Encoder was not found" + ", workspaceKey: " + to_string(workspaceKey) +
-								  ", encodersPoolLabel: " + encodersPoolLabel + ", encoderKeyToBeSkipped: " + to_string(encoderKeyToBeSkipped);
-			_logger->error(errorMessage);
+			string errorMessage = fmt::format(
+				"Encoder was not found"
+				", workspaceKey: {}"
+				", encodersPoolLabel: {}"
+				", encoderKeyToBeSkipped: {}",
+				workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw EncoderNotFound(errorMessage);
 		}
@@ -3358,10 +3381,14 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", newLastEncoderIndexUsed: " + to_string(newLastEncoderIndexUsed) +
-									  ", encodersPoolKey: " + to_string(encodersPoolKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(
+					"no update was done"
+					", newLastEncoderIndexUsed: {}"
+					", encodersPoolKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					newLastEncoderIndexUsed, encodersPoolKey, rowsUpdated, sqlStatement
+				);
 
 				// in case of one encoder, no update is done
 				// because newLastEncoderIndexUsed is always the same

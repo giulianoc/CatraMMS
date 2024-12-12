@@ -294,19 +294,25 @@ install-packages()
 		#Postgres
 		if [ "$dbType" == "postgres" ]; then
 			echo ""
-			read -n 1 -s -r -p "install postgres..."
+			read -n 1 -s -r -p "install postgres-17..."
 			echo ""
-			apt-get -y install postgresql postgresql-contrib
+
+			#aggiungo i repository di postgresql
+			sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+			wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc &>/dev/null
+
+			apt-get -y install postgresql-17 postgresql-contrib
 
 			#dbName=mms
 			#dbUser=mms
 			#echo -n "Type the DB password: "
 			#read dbPassword
-			echo "se serve una diversa versione di postgres bisogna:"
-			echo "- istallare la nuova versione"
-			echo "- rimuovere la vecchia versione"
-			echo "- assegnare la porta 5432 alla nuova versione"
-			read
+			echo ""
+			#echo "se serve una versione diversa di postgres bisogna:"
+			#echo "- istallare la nuova versione"
+			#echo "- rimuovere la vecchia versione"
+			#echo "- assegnare la porta 5432 alla nuova versione"
+			#read
 			echo "seguire il paragrafo 'Config initialization' del mio doc di Postgres"
 			read
 			echo "change the data directory following my 'postgres' document"
@@ -539,7 +545,7 @@ create-directory()
 		if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
 			ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
 		fi
-		chown -R mms:mms /mnt/local-data/logs
+		chown -R mms:mms /mnt/local-data/logs/mmsEngineService
 		chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
 
 		if [ ! -e /var/catramms/storage/commonConfiguration ]; then
@@ -931,7 +937,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6142
+	catraMMSVersion=1.0.6156
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

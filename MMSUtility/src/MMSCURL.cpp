@@ -724,9 +724,13 @@ string MMSCURL::httpGet(
 		}
 		catch (curlpp::RuntimeError &e)
 		{
-			logger->error(
-				__FILEREF__ + "httpGet failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+			SPDLOG_ERROR(
+				"httpGet failed (RuntimeError)"
+				", ingestionJobKey: {}"
+				", url: {}"
+				", exception: {}"
+				", response.str(): {}",
+				ingestionJobKey, url, e.what(), responseInitialized ? response.str() : ""
 			);
 
 			if (retryNumber < maxRetryNumber)

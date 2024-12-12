@@ -9,15 +9,15 @@ testServers[$((serverIndex*5+3))]=9255
 testServers[$((serverIndex*5+4))]=api-and-delivery
 
 serverIndex=$((serverIndex+1))
-testServers[$((serverIndex*5+0))]=hetzner-test-engine-db-1
-testServers[$((serverIndex*5+1))]=159.69.251.50
+testServers[$((serverIndex*5+0))]=hetzner-test-engine-db-2
+testServers[$((serverIndex*5+1))]=162.55.245.36
 testServers[$((serverIndex*5+2))]=hetzner-mms-key
 testServers[$((serverIndex*5+3))]=9255
 testServers[$((serverIndex*5+4))]=engine
 
 serverIndex=$((serverIndex+1))
 testServers[$((serverIndex*5+0))]=hetzner-test-engine-db-4
-testServers[$((serverIndex*5+1))]=168.119.105.223
+testServers[$((serverIndex*5+1))]=116.202.118.71
 testServers[$((serverIndex*5+2))]=hetzner-mms-key
 testServers[$((serverIndex*5+3))]=9255
 testServers[$((serverIndex*5+4))]=engine
@@ -68,15 +68,8 @@ prodServers[$((serverIndex*5+3))]=9255
 prodServers[$((serverIndex*5+4))]=engine
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*5+0))]=hetzner-engine-db-2
-prodServers[$((serverIndex*5+1))]=162.55.245.36
-prodServers[$((serverIndex*5+2))]=hetzner-mms-key
-prodServers[$((serverIndex*5+3))]=9255
-prodServers[$((serverIndex*5+4))]=engine
-
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*5+0))]=hetzner-engine-db-4
-prodServers[$((serverIndex*5+1))]=116.202.118.71
+prodServers[$((serverIndex*5+0))]=hetzner-engine-db-3
+prodServers[$((serverIndex*5+1))]=116.202.81.159
 prodServers[$((serverIndex*5+2))]=hetzner-mms-key
 prodServers[$((serverIndex*5+3))]=9255
 prodServers[$((serverIndex*5+4))]=engine
