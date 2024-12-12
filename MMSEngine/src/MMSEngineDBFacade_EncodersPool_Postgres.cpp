@@ -3157,22 +3157,19 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		int lastEncoderIndexUsed;
 		int64_t encodersPoolKey;
 		{
-			// problema: ho tantissimi canali tutti con lo stesso encodersPoolLabel. Di conseguenza tantissime select for update sullo stesso
-			// encodersPoolLabel. Il risultato è che la select impiega anche 30 secondi e molti canali non partono. Per questo motivo ho deciso di
-			// eliminare il for update, perchè è meglio che gli encoder non vengono presi in modo preciso/continuo rispetto ad un disservizio
 			string sqlStatement;
 			if (encodersPoolLabel == "")
 				sqlStatement = fmt::format(
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
 					"where workspaceKey = {} "
-					"and label is null", // for update",
+					"and label is null for update",
 					workspaceKey
 				);
 			else
 				sqlStatement = fmt::format(
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
 					"where workspaceKey = {} "
-					"and label = {}", // for update",
+					"and label = {} for update",
 					workspaceKey, trans.quote(encodersPoolLabel)
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

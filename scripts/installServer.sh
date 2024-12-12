@@ -1096,14 +1096,12 @@ firewall-rules()
 		#connection srt from public
 		ufw allow 30000:31000/udp
 	elif [ "$moduleType" == "externalEncoder" ]; then
-		#external encoder (aws api 1, 2, aws engine 1, 2
-		ufw allow from 63.35.35.24 to any port 8088		# api 1
-		ufw allow from 52.50.243.155 to any port 8088	# api 2
-		ufw allow from 52.48.75.149 to any port 8088	# api 3
-		ufw allow from 34.248.199.119 to any port 8088	# aws engine 1
-		ufw allow from 52.49.243.7 to any port 8088		# aws engine 2
-		ufw allow from 63.34.105.227 to any port 8088	# aws engine 3
-		ufw allow from 52.208.73.64 to any port 8088	# aws engine 4
+		#external encoder (api ..., engine ...
+		ufw allow from 178.63.22.93 to any port 8088 #api-3
+		ufw allow from 78.46.101.27 to any port 8088 #api-4
+		ufw allow from 167.235.10.244 to any port 8088 #engine-db-1
+		ufw allow from 116.202.81.159 to any port 8088 #engine-db-3
+		ufw allow from 5.9.81.10 to any port 8088 #engine-db-5
 
 		#this allows multicast (terrestrial/satellite solution)
 		#ufw allow out proto udp to 224.0.0.0/3
@@ -1124,7 +1122,8 @@ firewall-rules()
 		ufw allow from $internalNetwork to any port 8086		#mms-webapi
 		ufw allow from $internalNetwork to any port 8088		#mms-api
 
-		echo "remember to add the api IP address to the firewall rules of any external transcoders (if you have them)"
+		echo "remember to add the API/ENGINE IP address to the firewall rules of any external transcoders (i.e.: aruba, serverplan, ...). THIS IS VERY IMPORTANT otherwise all those encoder, when called by API/ENGINE appear as 'not running' and the channels are not allocated to the encoder"
+		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
 		read
 	elif [ "$moduleType" == "delivery" ]; then
 		# -> http(nginx) and https(nginx)
@@ -1152,7 +1151,8 @@ firewall-rules()
 		ufw allow from $internalNetwork to any port 8092		#mms-delivery-path
 		ufw allow from $internalNetwork to any port 8093		#mms-delivery-f
 
-		echo "remember to add the api IP address to the firewall rules of any external transcoders (if you have them)"
+		echo "remember to add the API/ENGINE IP address to the firewall rules of any external transcoders (i.e.: aruba, serverplan, ...). THIS IS VERY IMPORTANT otherwise all those encoder, when called by API/ENGINE appear as 'not running' and the channels are not allocated to the encoder"
+		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
 		read
 	elif [ "$moduleType" == "engine" ]; then
 		# -> mysql/postgres
@@ -1168,7 +1168,8 @@ firewall-rules()
 		#dalla conf del load balancer per gli slaves, dagli script (monitoring agent, ....)
 		ufw allow from $internalNetwork to any port 5432
 
-		echo "remember to add the engine IP address to the firewall rules of any external transcoders (if you have them)"
+		echo "remember to add the API/ENGINE IP address to the firewall rules of any external transcoders (i.e.: aruba, serverplan, ...). THIS IS VERY IMPORTANT otherwise all those encoder, when called by API/ENGINE appear as 'not running' and the channels are not allocated to the encoder"
+		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
 		read
 	elif [ "$moduleType" == "load-balancer" ]; then
 		# -> http(nginx) and https(nginx)
