@@ -3690,9 +3690,9 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				{
 					vTypes.push_back(type);
 					if (typesArgument == "")
-						typesArgument = ("'" + type + "'");
+						typesArgument = trans.quote(type);
 					else
-						typesArgument += (", '" + type + "'");
+						typesArgument += (", " + trans.quote(type));
 				}
 			}
 		}
@@ -3731,7 +3731,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 		if (types != "")
 		{
 			if (vTypes.size() == 1)
-				sqlWhere += fmt::format("and ej.type = {} ", types);
+				sqlWhere += fmt::format("and ej.type = {} ", trans.quote(types));
 			else
 				sqlWhere += ("and ej.type in (" + typesArgument + ")");
 		}

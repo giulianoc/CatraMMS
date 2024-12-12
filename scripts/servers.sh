@@ -75,6 +75,13 @@ prodServers[$((serverIndex*5+3))]=9255
 prodServers[$((serverIndex*5+4))]=engine
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*5+0))]=hetzner-engine-db-5
+prodServers[$((serverIndex*5+1))]=5.9.81.10
+prodServers[$((serverIndex*5+2))]=hetzner-mms-key
+prodServers[$((serverIndex*5+3))]=9255
+prodServers[$((serverIndex*5+4))]=engine
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*5+0))]=cibortv-transcoder-4
 prodServers[$((serverIndex*5+1))]=93.58.249.102
 prodServers[$((serverIndex*5+2))]=cibortv-transcoder-4
