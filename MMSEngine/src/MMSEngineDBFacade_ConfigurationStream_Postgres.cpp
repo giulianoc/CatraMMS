@@ -1029,7 +1029,7 @@ json MMSEngineDBFacade::getStreamList(
 		if (region != "")
 			sqlWhere += fmt::format("and region like {} ", trans.quote("%" + region + "%"));
 		if (country != "")
-			sqlWhere += fmt::format("and country like {} ", trans.quote("%" + country + "%"));
+			sqlWhere += fmt::format("and LOWER(country) like LOWER({}) ", trans.quote("%" + country + "%"));
 
 		json responseRoot;
 		{
