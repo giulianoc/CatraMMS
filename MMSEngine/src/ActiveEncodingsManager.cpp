@@ -77,7 +77,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		_mmsEngineDBFacade->recoverEncodingsNotCompleted(processorMMS, encodingItems);
 
 		SPDLOG_INFO(
-			"recoverProcessingEncodingJobs result"
+			"recoverEncodingsNotCompleted result"
 			", _processorMMS: {}"
 			", encodingItems.size: {}",
 			processorMMS, encodingItems.size()
@@ -95,24 +95,26 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
-			"recoverProcessingEncodingJobs failed"
+			"recoverEncodingsNotCompleted failed"
 			", _processorMMS: {}"
 			", e.what: {}",
 			processorMMS, e.what()
 		);
 
-		throw e;
+		// è un thread/costruttore
+		// throw e;
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			"recoverProcessingEncodingJobs failed"
+			"recoverEncodingsNotCompleted failed"
 			", _processorMMS: {}"
 			", e.what: {}",
 			processorMMS, e.what()
 		);
 
-		throw e;
+		// è un thread/costruttore
+		// throw e;
 	}
 }
 

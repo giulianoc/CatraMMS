@@ -604,6 +604,11 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 			processorMMS
 		);
 
+		/*
+		 2024-12-16: nota che abbiamo processorMMS sia in IngestionJob che in EncodingJobs
+			Infatti potrebbe essere che un 'engine' gestisce l'IngestionJob ma un'altro 'engine'
+			si occupa di gestire l'EncodingJob
+		 */
 		{
 			string sqlStatement = fmt::format(
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
@@ -611,7 +616,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 				"ej.utcScheduleStart_virtual "
 				"from MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ij.ingestionJobKey = ej.ingestionJobKey "
-				"where ej.processorMMS = {} and ij.status = {} and ej.status = {} ",
+				"and ej.processorMMS = {} and ij.status = {} and ej.status = {} ",
 				trans.quote(processorMMS), trans.quote(MMSEngineDBFacade::toString(IngestionStatus::EncodingQueued)),
 				trans.quote(MMSEngineDBFacade::toString(EncodingStatus::Processing))
 			);
