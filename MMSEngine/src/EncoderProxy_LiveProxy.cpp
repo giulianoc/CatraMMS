@@ -836,8 +836,6 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 		{
 			if (utcNowCheckToExit >= utcProxyPeriodEnd)
 				break;
-			else if (urlForbidden || urlNotFound)
-				break;
 			else
 				SPDLOG_INFO(
 					"check to exit"
@@ -1240,10 +1238,6 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 				try
 				{
-					// tuple<bool, bool, bool, string, bool, bool, double, int>
-					// encodingStatus = getEncodingStatus(
-					/* _encodingItem->_encodingJobKey */
-					// );
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessage, urlForbidden, urlNotFound, ignore, encodingPid,
 						realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 					SPDLOG_INFO(
@@ -1260,6 +1254,27 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors,
 						maxAttemptsNumberInCaseOfErrors, encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound
 					);
+
+					if (!killedByUser)
+					{
+						// secondo l'encoder l'encoding non è stato killato. Eseguo anche una verifica guardando lo stato
+						// dell'IngestionJob
+						string ingestionStatus = MMSEngineDBFacade::toString(
+							_mmsEngineDBFacade->ingestionJob_Status(_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, true)
+						);
+						if (ingestionStatus.starts_with("End_"))
+						{
+							SPDLOG_INFO(
+								"getEncodingStatus killedByUser is false but the ingestionJob is terminated"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", killedByUser: {}"
+								", ingestionStatus: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, killedByUser, ingestionStatus
+							);
+							killedByUser = true;
+						}
+					}
 
 					encoderNotReachableFailures = 0;
 
