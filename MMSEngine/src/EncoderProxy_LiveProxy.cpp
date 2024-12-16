@@ -836,6 +836,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 		{
 			if (utcNowCheckToExit >= utcProxyPeriodEnd)
 				break;
+			else if (urlForbidden || urlNotFound)
+				break;
 			else
 				SPDLOG_INFO(
 					"check to exit"
