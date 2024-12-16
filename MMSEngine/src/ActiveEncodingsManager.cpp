@@ -74,7 +74,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 	{
 		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
 
-		_mmsEngineDBFacade->recoverProcessingEncodingJobs(processorMMS, encodingItems);
+		_mmsEngineDBFacade->recoverEncodingsNotCompleted(processorMMS, encodingItems);
 
 		SPDLOG_INFO(
 			"recoverProcessingEncodingJobs result"

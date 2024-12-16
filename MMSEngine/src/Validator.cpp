@@ -3154,8 +3154,12 @@ void Validator::validatePostOnFacebookMetadata(
 
 	if (!isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
 	{
-		string errorMessage = __FILEREF__ + "FacebookNodeType is not valid" + ", parametersRoot: " + JSONUtils::toString(parametersRoot);
-		+", label: " + label;
+		string errorMessage = fmt::format(
+			"FacebookNodeType is not valid"
+			", parametersRoot: {}"
+			", label: {}",
+			JSONUtils::toString(parametersRoot), label
+		);
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -4063,16 +4067,24 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	}
 	if (!isFacebookLiveTypeValid(JSONUtils::asString(parametersRoot, "facebookLiveType")))
 	{
-		string errorMessage = __FILEREF__ + "FacebookLiveType is not valid" + ", parametersRoot: " + JSONUtils::toString(parametersRoot);
-		+", label: " + label;
+		string errorMessage = fmt::format(
+			"FacebookLiveType is not valid"
+			", parametersRoot: {}"
+			", label: {}",
+			JSONUtils::toString(parametersRoot), label
+		);
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	if (!isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
 	{
-		string errorMessage = __FILEREF__ + "facebookNodeType is not valid" + ", parametersRoot: " + JSONUtils::toString(parametersRoot);
-		+", label: " + label;
+		string errorMessage = fmt::format(
+			"facebookNodeType is not valid"
+			", parametersRoot: {}"
+			", label: {}",
+			JSONUtils::toString(parametersRoot), label
+		);
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);

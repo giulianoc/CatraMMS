@@ -580,7 +580,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 	}
 }
 
-void MMSEngineDBFacade::recoverProcessingEncodingJobs(string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems)
+void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems)
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -609,9 +609,11 @@ void MMSEngineDBFacade::recoverProcessingEncodingJobs(string processorMMS, vecto
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName, "
 				"ej.utcScheduleStart_virtual "
-				"from MMS_EncodingJob ej "
-				"where ej.processorMMS = {} and ej.status = {} ",
-				trans.quote(processorMMS), trans.quote(MMSEngineDBFacade::toString(EncodingStatus::Processing))
+				"from MMS_IngestionJob ij, MMS_EncodingJob ej "
+				"where ij.ingestionJobKey = ej.ingestionJobKey "
+				"where ej.processorMMS = {} and ij.status = {} and ej.status = {} ",
+				trans.quote(processorMMS), trans.quote(MMSEngineDBFacade::toString(IngestionStatus::EncodingQueued)),
+				trans.quote(MMSEngineDBFacade::toString(EncodingStatus::Processing))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
