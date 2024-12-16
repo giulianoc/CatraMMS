@@ -29,16 +29,19 @@ bool EncoderProxy::liveProxy(string proxyType)
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
 	{
-		string field = "inputsRoot";
-		json inputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+		json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
 
 		if (inputsRoot == nullptr || inputsRoot.size() == 0)
 		{
-			string errorMessage = __FILEREF__ + "No inputsRoot are present" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", inputsRoot.size: " + to_string(inputsRoot.size());
-			_logger->error(errorMessage);
+			string errorMessage = fmt::format(
+				"No inputsRoot are present"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", inputsRoot.size: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, inputsRoot.size()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -46,25 +49,17 @@ bool EncoderProxy::liveProxy(string proxyType)
 		{
 			json firstInputRoot = inputsRoot[0];
 
-			field = "timePeriod";
-			timePeriod = JSONUtils::asBool(firstInputRoot, field, false);
+			timePeriod = JSONUtils::asBool(firstInputRoot, "timePeriod", false);
 
 			if (timePeriod)
-			{
-				field = "utcScheduleStart";
-				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, field, -1);
-			}
+				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, "utcScheduleStart", -1);
 
 			json lastInputRoot = inputsRoot[inputsRoot.size() - 1];
 
-			field = "timePeriod";
-			timePeriod = JSONUtils::asBool(lastInputRoot, field, false);
+			timePeriod = JSONUtils::asBool(lastInputRoot, "timePeriod", false);
 
 			if (timePeriod)
-			{
-				field = "utcScheduleEnd";
-				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, field, -1);
-			}
+				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, "utcScheduleEnd", -1);
 		}
 	}
 
@@ -77,40 +72,46 @@ bool EncoderProxy::liveProxy(string proxyType)
 			utcNow = chrono::system_clock::to_time_t(now);
 		}
 
-		// MMS allocates a thread just 5 minutes before the beginning of the
-		// recording
 		if (utcNow < utcProxyPeriodStart)
 		{
+			// MMS allocates a thread just 5 minutes before the beginning of the recording
 			if (utcProxyPeriodStart - utcNow >= _timeBeforeToPrepareResourcesInMinutes * 60)
 			{
-				_logger->info(
-					__FILEREF__ + "Too early to allocate a thread for proxing" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-					", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", utcProyPeriodStart - utcNow: " + to_string(utcProxyPeriodStart - utcNow) +
-					", _timeBeforeToPrepareResourcesInSeconds: " + to_string(_timeBeforeToPrepareResourcesInMinutes * 60)
+				SPDLOG_INFO(
+					"Too early to allocate a thread for proxing"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", utcProyPeriodStart - utcNow: {}"
+					", _timeBeforeToPrepareResourcesInSeconds: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcProxyPeriodStart - utcNow,
+					_timeBeforeToPrepareResourcesInMinutes * 60
 				);
 
-				// it is simulated a MaxConcurrentJobsReached to avoid
-				// to increase the error counter
+				// it is simulated a MaxConcurrentJobsReached to avoid to increase the error counter
 				throw MaxConcurrentJobsReached();
 			}
 		}
 
 		if (utcProxyPeriodEnd <= utcNow)
 		{
-			string errorMessage = __FILEREF__ + "Too late to activate the proxy" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", utcNow: " + to_string(utcNow);
-			_logger->error(errorMessage);
+			string errorMessage = fmt::format(
+				"Too late to activate the proxy"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", utcProxyPeriodEnd: {}"
+				", utcNow: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcProxyPeriodEnd, utcNow
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
 
 	{
-		string field = "outputsRoot";
-		json outputsRoot = (_encodingItem->_encodingParametersRoot)[field];
+		json outputsRoot = (_encodingItem->_encodingParametersRoot)["outputsRoot"];
 
 		bool killedByUser = false;
 		try
@@ -129,28 +130,12 @@ bool EncoderProxy::liveProxy(string proxyType)
 					bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
 					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot, "awsExpirationInMinutes", 1440);
 
-					/*
-					string awsChannelType;
-					if (awsChannelConfigurationLabel == "")
-						awsChannelType = "SHARED";
-					else
-						awsChannelType = "DEDICATED";
-					*/
-
-					// reserveAWSChannel ritorna exception se non ci sono piu
-					// canali liberi o quello dedicato è già occupato In caso di
-					// ripartenza di mmsEngine, nel caso di richiesta già
-					// attiva, ritornerebbe le stesse info associate a
-					// ingestionJobKey (senza exception)
-					tuple<string, string, string, bool> awsChannelDetails = _mmsEngineDBFacade->reserveAWSChannel(
+					// reserveAWSChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
+					// associate a ingestionJobKey (senza exception)
+					auto [awsChannelId, rtmpURL, playURL, channelAlreadyReserved] = _mmsEngineDBFacade->reserveAWSChannel(
 						_encodingItem->_workspace->_workspaceKey, awsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 					);
-
-					string awsChannelId;
-					string rtmpURL;
-					string playURL;
-					bool channelAlreadyReserved;
-					tie(awsChannelId, rtmpURL, playURL, channelAlreadyReserved) = awsChannelDetails;
 
 					if (awsSignedURL)
 					{
@@ -160,9 +145,12 @@ bool EncoderProxy::liveProxy(string proxyType)
 						}
 						catch (exception &ex)
 						{
-							_logger->error(
-								__FILEREF__ + "getAWSSignedURL failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", playURL: " + playURL
+							SPDLOG_ERROR(
+								"getAWSSignedURL failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", playURL: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, playURL
 							);
 
 							// throw e;
@@ -171,25 +159,14 @@ bool EncoderProxy::liveProxy(string proxyType)
 
 					// update outputsRoot with the new details
 					{
-						field = "awsChannelConfigurationLabel";
-						outputRoot[field] = awsChannelConfigurationLabel;
-
-						field = "rtmpUrl";
-						outputRoot[field] = rtmpURL;
-
-						field = "playUrl";
-						outputRoot[field] = playURL;
-
+						outputRoot["awsChannelConfigurationLabel"] = awsChannelConfigurationLabel;
+						outputRoot["rtmpUrl"] = rtmpURL;
+						outputRoot["playUrl"] = playURL;
 						outputsRoot[outputIndex] = outputRoot;
-
-						field = "outputsRoot";
-						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
 						try
 						{
-							// string encodingParameters = JSONUtils::toString(
-							// 	_encodingItem->_encodingParametersRoot);
-
 							SPDLOG_INFO(
 								"updateOutputRtmpAndPlaURL"
 								", _proxyIdentifier: {}"
@@ -203,41 +180,39 @@ bool EncoderProxy::liveProxy(string proxyType)
 								", channelAlreadyReserved: {}",
 								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
 								_encodingItem->_encodingJobKey, awsChannelConfigurationLabel, awsChannelId, rtmpURL, playURL, channelAlreadyReserved
-								// + ", encodingParameters: " +
-								// encodingParameters
 							);
 
 							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
 							);
-							// _mmsEngineDBFacade->updateEncodingJobParameters(
-							// 	_encodingItem->_encodingJobKey,
-							// 	encodingParameters);
 						}
 						catch (runtime_error &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): ",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
 						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 							);
 
 							// throw e;
 						}
 					}
 
-					// channelAlreadyReserved true means the channel was already
-					// reserved, so it is supposed is already started Maybe just
-					// start again is not an issue!!! Let's see
+					// channelAlreadyReserved true means the channel was already reserved, so it is supposed
+					// is already started Maybe just start again is not an issue!!! Let's see
 					if (!channelAlreadyReserved)
 						awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 				}
@@ -248,30 +223,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 					string cdn77ChannelConfigurationLabel = JSONUtils::asString(outputRoot, "cdn77ChannelConfigurationLabel", "");
 					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, "cdn77ExpirationInMinutes", 1440);
 
-					/*
-					string cdn77ChannelType;
-					if (cdn77ChannelConfigurationLabel == "")
-						cdn77ChannelType = "SHARED";
-					else
-						cdn77ChannelType = "DEDICATED";
-					*/
-
-					// reserveCDN77Channel ritorna exception se non ci sono piu
-					// canali liberi o quello dedicato è già occupato In caso di
-					// ripartenza di mmsEngine, nel caso di richiesta già
-					// attiva, ritornerebbe le stesse info associate a
-					// ingestionJobKey (senza exception)
-					tuple<string, string, string, string, string, bool> cdn77ChannelDetails = _mmsEngineDBFacade->reserveCDN77Channel(
-						_encodingItem->_workspace->_workspaceKey, cdn77ChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
-					);
-
-					string reservedLabel;
-					string rtmpURL;
-					string resourceURL;
-					string filePath;
-					string secureToken;
-					bool channelAlreadyReserved;
-					tie(reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved) = cdn77ChannelDetails;
+					// reserveCDN77Channel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
+					// associate a ingestionJobKey (senza exception)
+					auto [reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved] =
+						_mmsEngineDBFacade->reserveCDN77Channel(
+							_encodingItem->_workspace->_workspaceKey, cdn77ChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
+						);
 
 					if (filePath.size() > 0 && filePath.front() != '/')
 						filePath = "/" + filePath;
@@ -286,41 +244,45 @@ bool EncoderProxy::liveProxy(string proxyType)
 						}
 						catch (exception &ex)
 						{
-							_logger->error(
-								__FILEREF__ + "getSignedCDN77URL failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"getSignedCDN77URL failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 							);
 
 							// throw e;
 						}
 					}
 					else
-					{
 						playURL = "https://" + resourceURL + filePath;
-					}
 
 					// update outputsRoot with the new details
 					{
-						field = "rtmpUrl";
-						outputRoot[field] = rtmpURL;
-
-						field = "playUrl";
-						outputRoot[field] = playURL;
-
+						outputRoot["rtmpUrl"] = rtmpURL;
+						outputRoot["playUrl"] = playURL;
 						outputsRoot[outputIndex] = outputRoot;
-
-						field = "outputsRoot";
-						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
 						try
 						{
-							_logger->info(
-								__FILEREF__ + "updateOutputRtmpAndPlaURL" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) + ", ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								", cdn77ChannelConfigurationLabel: " + cdn77ChannelConfigurationLabel + ", reservedLabel: " + reservedLabel +
-								", rtmpURL: " + rtmpURL + ", resourceURL: " + resourceURL + ", filePath: " + filePath + ", secureToken: " +
-								secureToken + ", channelAlreadyReserved: " + to_string(channelAlreadyReserved) + ", playURL: " + playURL
+							SPDLOG_INFO(
+								"updateOutputRtmpAndPlaURL"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", cdn77ChannelConfigurationLabel: {}"
+								", reservedLabel: {}"
+								", rtmpURL: {}"
+								", resourceURL: {}"
+								", filePath: {}"
+								", secureToken: {}"
+								", channelAlreadyReserved: {}"
+								", playURL: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, cdn77ChannelConfigurationLabel, reservedLabel, rtmpURL, resourceURL, filePath,
+								secureToken, channelAlreadyReserved, playURL
 							);
 
 							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
@@ -329,19 +291,24 @@ bool EncoderProxy::liveProxy(string proxyType)
 						}
 						catch (runtime_error &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
 						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
@@ -354,31 +321,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 
 					string rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot, "rtmpChannelConfigurationLabel", "");
 
-					/*
-					string rtmpChannelType;
-					if (rtmpChannelConfigurationLabel == "")
-						rtmpChannelType = "SHARED";
-					else
-						rtmpChannelType = "DEDICATED";
-					*/
-
-					// reserveRTMPChannel ritorna exception se non ci sono piu
-					// canali liberi o quello dedicato è già occupato In caso di
-					// ripartenza di mmsEngine, nel caso di richiesta già
-					// attiva, ritornerebbe le stesse info associate a
-					// ingestionJobKey (senza exception)
-					tuple<string, string, string, string, string, string, bool> rtmpChannelDetails = _mmsEngineDBFacade->reserveRTMPChannel(
-						_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
-					);
-
-					string reservedLabel;
-					string rtmpURL;
-					string streamName;
-					string userName;
-					string password;
-					string playURL;
-					bool channelAlreadyReserved;
-					tie(reservedLabel, rtmpURL, streamName, userName, password, playURL, channelAlreadyReserved) = rtmpChannelDetails;
+					// reserveRTMPChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
+					// associate a ingestionJobKey (senza exception)
+					auto [reservedLabel, rtmpURL, streamName, userName, password, playURL, channelAlreadyReserved] =
+						_mmsEngineDBFacade->reserveRTMPChannel(
+							_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
+						);
 
 					if (streamName != "")
 					{
@@ -395,25 +344,26 @@ bool EncoderProxy::liveProxy(string proxyType)
 
 					// update outputsRoot with the new details
 					{
-						field = "rtmpUrl";
-						outputRoot[field] = rtmpURL;
-
-						field = "playUrl";
-						outputRoot[field] = playURL;
-
+						outputRoot["rtmpUrl"] = rtmpURL;
+						outputRoot["playUrl"] = playURL;
 						outputsRoot[outputIndex] = outputRoot;
-
-						field = "outputsRoot";
-						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
 						try
 						{
-							_logger->info(
-								__FILEREF__ + "updateOutputRtmpAndPlaURL" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) + ", ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								", rtmpChannelConfigurationLabel: " + rtmpChannelConfigurationLabel + ", reservedLabel: " + reservedLabel +
-								", rtmpURL: " + rtmpURL + ", channelAlreadyReserved: " + to_string(channelAlreadyReserved) + ", playURL: " + playURL
+							SPDLOG_INFO(
+								"updateOutputRtmpAndPlaURL"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", rtmpChannelConfigurationLabel: {}"
+								", reservedLabel: {}"
+								", rtmpURL: {}"
+								", channelAlreadyReserved: {}"
+								", playURL: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved, playURL
 							);
 
 							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
@@ -422,19 +372,24 @@ bool EncoderProxy::liveProxy(string proxyType)
 						}
 						catch (runtime_error &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
 						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
@@ -447,76 +402,56 @@ bool EncoderProxy::liveProxy(string proxyType)
 
 					string hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot, "hlsChannelConfigurationLabel", "");
 
-					/*
-					string hlsChannelType;
-					if (hlsChannelConfigurationLabel == "")
-						hlsChannelType = "SHARED";
-					else
-						hlsChannelType = "DEDICATED";
-					*/
-
-					// reserveHLSChannel ritorna exception se non ci sono piu
-					// canali liberi o quello dedicato è già occupato In caso di
-					// ripartenza di mmsEngine, nel caso di richiesta già
-					// attiva, ritornerebbe le stesse info associate a
-					// ingestionJobKey (senza exception)
-					tuple<string, int64_t, int, int, bool> hlsChannelDetails = _mmsEngineDBFacade->reserveHLSChannel(
-						_encodingItem->_workspace->_workspaceKey, hlsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
-					);
-
-					string reservedLabel;
-					int64_t deliveryCode;
-					int segmentDuration;
-					int playlistEntriesNumber;
-					bool channelAlreadyReserved;
-					tie(reservedLabel, deliveryCode, segmentDuration, playlistEntriesNumber, channelAlreadyReserved) = hlsChannelDetails;
+					// reserveHLSChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
+					// associate a ingestionJobKey (senza exception)
+					auto [reservedLabel, deliveryCode, segmentDuration, playlistEntriesNumber, channelAlreadyReserved] =
+						_mmsEngineDBFacade->reserveHLSChannel(
+							_encodingItem->_workspace->_workspaceKey, hlsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
+						);
 
 					// update outputsRoot with the new details
 					{
-						field = "deliveryCode";
-						outputRoot[field] = deliveryCode;
+						outputRoot["deliveryCode"] = deliveryCode;
 
-						if (segmentDuration > 0)
-						{
-							// if not present, default is decided by the encoder
-							field = "segmentDurationInSeconds";
-							outputRoot[field] = segmentDuration;
-						}
+						if (segmentDuration > 0) // if not present, default is decided by the encoder
+							outputRoot["segmentDurationInSeconds"] = segmentDuration;
 
-						if (playlistEntriesNumber > 0)
-						{
-							// if not present, default is decided by the encoder
-							field = "playlistEntriesNumber";
-							outputRoot[field] = playlistEntriesNumber;
-						}
+						if (playlistEntriesNumber > 0) // if not present, default is decided by the encoder
+							outputRoot["playlistEntriesNumber"] = playlistEntriesNumber;
 
 						string manifestDirectoryPath = _mmsStorage->getLiveDeliveryAssetPath(to_string(deliveryCode), _encodingItem->_workspace);
 						string manifestFileName = to_string(deliveryCode) + ".m3u8";
 
-						field = "manifestDirectoryPath";
-						outputRoot[field] = manifestDirectoryPath;
+						outputRoot["manifestDirectoryPath"] = manifestDirectoryPath;
 
-						field = "manifestFileName";
-						outputRoot[field] = manifestFileName;
+						outputRoot["manifestFileName"] = manifestFileName;
 
-						field = "otherOutputOptions";
-						string otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
+						string otherOutputOptions = JSONUtils::asString(outputRoot, "otherOutputOptions", "");
 
 						outputsRoot[outputIndex] = outputRoot;
 
-						field = "outputsRoot";
-						(_encodingItem->_encodingParametersRoot)[field] = outputsRoot;
+						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
 						try
 						{
-							_logger->info(
-								__FILEREF__ + "updateOutputHLSDetails" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) + ", ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								", hlsChannelConfigurationLabel: " + hlsChannelConfigurationLabel + ", reservedLabel: " + reservedLabel +
-								", deliveryCode: " + to_string(deliveryCode) + ", segmentDuration: " + to_string(segmentDuration) +
-								", playlistEntriesNumber: " + to_string(playlistEntriesNumber) + ", manifestDirectoryPath: " + manifestDirectoryPath +
-								", manifestFileName: " + manifestFileName + ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+							SPDLOG_INFO(
+								"updateOutputHLSDetails"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", hlsChannelConfigurationLabel: {}"
+								", reservedLabel: {}"
+								", deliveryCode: {}"
+								", segmentDuration: {}"
+								", playlistEntriesNumber: {}"
+								", manifestDirectoryPath: {}"
+								", manifestFileName: {}"
+								", channelAlreadyReserved: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, hlsChannelConfigurationLabel, reservedLabel, deliveryCode, segmentDuration,
+								playlistEntriesNumber, manifestDirectoryPath, manifestFileName, channelAlreadyReserved
 							);
 
 							_mmsEngineDBFacade->updateOutputHLSDetails(
@@ -526,19 +461,24 @@ bool EncoderProxy::liveProxy(string proxyType)
 						}
 						catch (runtime_error &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
 						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
@@ -568,10 +508,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseAWSChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"releaseAWSChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
 					}
 				}
 				else if (outputType == "CDN_CDN77")
@@ -585,10 +528,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"releaseCDN77Channel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
 					}
 				}
 				else if (outputType == "RTMP_Channel")
@@ -602,10 +548,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"releaseRTMPChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
 					}
 				}
 				else if (outputType == "HLS_Channel")
@@ -617,20 +566,27 @@ bool EncoderProxy::liveProxy(string proxyType)
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseHLSChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"releaseHLSChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
 					}
 				}
 			}
 
 			if (killedByUser)
 			{
-				string errorMessage = __FILEREF__ + "Encoding killed by the User" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-				_logger->warn(errorMessage);
+				string errorMessage = fmt::format(
+					"Encoding killed by the User"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw EncodingKilledByUser();
 			}
@@ -656,10 +612,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseAWSChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"releaseAWSChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
 					}
 				}
 				else if (outputType == "CDN_CDN77")
@@ -673,10 +632,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"releaseCDN77Channel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
 					}
 				}
 				else if (outputType == "RTMP_Channel")
@@ -690,10 +652,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"releaseRTMPChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
 					}
 				}
 				else if (outputType == "HLS_Channel")
@@ -705,10 +670,13 @@ bool EncoderProxy::liveProxy(string proxyType)
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseHLSChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"releaseHLSChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
 					}
 				}
 			}
@@ -797,17 +765,14 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 	// long encodingStatusFailures = 0;
 	if (maxAttemptsNumberInCaseOfErrors == -1)
 	{
-		// 2022-07-20: -1 means we always has to retry, so we will reset
-		// encodingStatusFailures to 0
+		// 2022-07-20: -1 means we always has to retry, so we will reset encodingStatusFailures to 0
 		alwaysRetry = true;
 
 		// 2022-07-20: this is to allow the next loop to exit after 2 errors
 		maxAttemptsNumberInCaseOfErrors = 2;
 
-		// 2020-04-19: Reset encodingStatusFailures into DB.
-		// That because if we comes from an error/exception
-		//	encodingStatusFailures is > than 0 but we consider here like
-		//	it is 0 because our variable is set to 0
+		// 2020-04-19: Reset encodingStatusFailures into DB. That because if we comes from an error/exception
+		//	encodingStatusFailures is > than 0 but we consider here like it is 0 because our variable is set to 0
 		try
 		{
 			SPDLOG_INFO(
@@ -828,13 +793,12 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 		}
 		catch (...)
 		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJobFailuresNumber FAILED" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey)
-				// + ", encodingStatusFailures: " +
-				// to_string(encodingStatusFailures)
-				+ ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
+			SPDLOG_ERROR(
+				"updateEncodingJobFailuresNumber FAILED"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", currentAttemptsNumberInCaseOfErrors: {}",
+				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
 			);
 		}
 	}
@@ -842,14 +806,11 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 	// 2020-03-11: we saw the following scenarios:
 	//	1. ffmpeg was running
 	//	2. after several hours it failed (1:34 am)
-	//	3. our below loop tried again and this new attempt returned 404 URL NOT
-	// FOUND
+	//	3. our below loop tried again and this new attempt returned 404 URL NOT FOUND
 	//	4. we exit from this loop
 	//	5. crontab started again it after 15 minutes
-	//	In this scenarios, we have to retry again without waiting the crontab
-	// check
-	// 2020-03-12: Removing the urlNotFound management generated duplication of
-	// ffmpeg process
+	//	In this scenarios, we have to retry again without waiting the crontab check
+	// 2020-03-12: Removing the urlNotFound management generated duplication of ffmpeg process
 	//	For this reason we rollbacked as it was before
 	// 2021-05-29: LiveProxy has to exit if:
 	//	- was killed OR
@@ -876,9 +837,12 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			if (utcNowCheckToExit >= utcProxyPeriodEnd)
 				break;
 			else
-				_logger->info(
-					__FILEREF__ + "check to exit" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", still miss (secs): " + to_string(utcProxyPeriodEnd - utcNowCheckToExit)
+				SPDLOG_INFO(
+					"check to exit"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", still miss (secs): {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcProxyPeriodEnd - utcNowCheckToExit
 				);
 		}
 
@@ -1171,10 +1135,13 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				*_status = EncodingJobStatus::Running;
 			}
 
-			_logger->info(
-				__FILEREF__ + "Update EncodingJob" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", transcoder: " + _currentUsedFFMpegEncoderHost +
-				", _currentUsedFFMpegEncoderKey: " + to_string(_currentUsedFFMpegEncoderKey)
+			SPDLOG_INFO(
+				"Update EncodingJob"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", transcoder: {}"
+				", _currentUsedFFMpegEncoderKey: {}",
+				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey
 			);
 			_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderKey, "");
 
@@ -1188,24 +1155,33 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				{
 					double encodingProgress = -1.0;
 
-					_logger->info(
-						__FILEREF__ + "updateEncodingJobProgress" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", encodingProgress: " + to_string(encodingProgress)
+					SPDLOG_INFO(
+						"updateEncodingJobProgress"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", encodingProgress: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingProgress
 					);
 					_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, encodingProgress);
 				}
 				catch (runtime_error &e)
 				{
-					_logger->error(
-						__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+					SPDLOG_ERROR(
+						"updateEncodingJobProgress failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					_logger->error(
-						__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					SPDLOG_ERROR(
+						"updateEncodingJobProgress failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 					);
 				}
 			}
@@ -1227,13 +1203,18 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			long lastNumberOfRestartBecauseOfFailure = 0;
 			long numberOfRestartBecauseOfFailure;
 
-			_logger->info(
-				__FILEREF__ + "starting loop" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", encodingFinished: " + to_string(encodingFinished) +
-				", encoderNotReachableFailures: " + to_string(encoderNotReachableFailures) +
-				", _maxEncoderNotReachableFailures: " + to_string(_maxEncoderNotReachableFailures) +
-				", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors) +
-				", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors) + ", alwaysRetry: " + to_string(alwaysRetry)
+			SPDLOG_INFO(
+				"starting loop"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", encodingFinished: {}"
+				", encoderNotReachableFailures: {}"
+				", _maxEncoderNotReachableFailures: {}"
+				", currentAttemptsNumberInCaseOfErrors: {}"
+				", maxAttemptsNumberInCaseOfErrors: {}"
+				", alwaysRetry: {}",
+				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingFinished, encoderNotReachableFailures,
+				_maxEncoderNotReachableFailures, currentAttemptsNumberInCaseOfErrors, maxAttemptsNumberInCaseOfErrors, alwaysRetry
 			);
 
 			// 2020-11-28: the next while, it was added encodingStatusFailures
@@ -1669,19 +1650,20 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			{
 				if (utcNowCheckToExit < utcProxyPeriodEnd)
 				{
-					_logger->error(
-						__FILEREF__ + "LiveProxy media file completed unexpected" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-						", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-						", still remaining seconds (utcProxyPeriodEnd - "
-						"utcNow): " +
-						to_string(utcProxyPeriodEnd - utcNowCheckToExit) + ", ffmpegEncoderURL: " + ffmpegEncoderURL + ", encodingFinished: " +
-						to_string(encodingFinished)
-						// + ", encodingStatusFailures: " +
-						// to_string(encodingStatusFailures)
-						+ ", killedByUser: " + to_string(killedByUser) + ", @MMS statistics@ - encodingDuration (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@" +
-						", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+					SPDLOG_ERROR(
+						"LiveProxy media file completed unexpected"
+						", _proxyIdentifier: {}"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", still remaining seconds (utcProxyPeriodEnd - utcNow): {}"
+						", ffmpegEncoderURL: {}"
+						", encodingFinished: {}"
+						", killedByUser: {}"
+						", @MMS statistics@ - encodingDuration (secs): @{}@"
+						", _intervalInSecondsToCheckEncodingFinished: {}",
+						_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcProxyPeriodEnd - utcNowCheckToExit,
+						ffmpegEncoderURL, encodingFinished, killedByUser, chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count(),
+						_intervalInSecondsToCheckEncodingFinished
 					);
 
 					try
@@ -1712,43 +1694,58 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "appendIngestionJobErrorMessage failed" +
-							", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+						SPDLOG_ERROR(
+							"appendIngestionJobErrorMessage failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", e.what(): {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 						);
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ + "appendIngestionJobErrorMessage failed" + ", _ingestionJobKey: " +
-							to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						SPDLOG_ERROR(
+							"appendIngestionJobErrorMessage failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", e.what(): {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 						);
 					}
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "LiveProxy media file completed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-						", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-						", encodingFinished: " + to_string(encodingFinished) + ", killedByUser: " + to_string(killedByUser) +
-						", @MMS statistics@ - encodingDuration (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@" +
-						", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+					SPDLOG_INFO(
+						"LiveProxy media file completed"
+						", _proxyIdentifier: {}"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", ffmpegEncoderURL: {}"
+						", encodingFinished: {}"
+						", killedByUser: {}"
+						", @MMS statistics@ - encodingDuration (secs): @{}@"
+						", _intervalInSecondsToCheckEncodingFinished: {}",
+						_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL, encodingFinished,
+						killedByUser, chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count(),
+						_intervalInSecondsToCheckEncodingFinished
 					);
 				}
 			}
 			else
 			{
-				_logger->error(
-					__FILEREF__ + "LiveProxy media file completed unexpected" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-					", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-					", encodingFinished: " + to_string(encodingFinished) + ", killedByUser: " + to_string(killedByUser) +
-					", @MMS statistics@ - encodingDuration (secs): @" +
-					to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count()) + "@" +
-					", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+				SPDLOG_ERROR(
+					"LiveProxy media file completed unexpected"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", ffmpegEncoderURL: {}"
+					", encodingFinished: {}"
+					", killedByUser: {}"
+					", @MMS statistics@ - encodingDuration (secs): @{}@"
+					", _intervalInSecondsToCheckEncodingFinished: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL, encodingFinished,
+					killedByUser, chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count(),
+					_intervalInSecondsToCheckEncodingFinished
 				);
 
 				try
@@ -1779,39 +1776,54 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
 				catch (runtime_error &e)
 				{
-					_logger->error(
-						__FILEREF__ + "appendIngestionJobErrorMessage failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
+					SPDLOG_ERROR(
+						"appendIngestionJobErrorMessage failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					_logger->error(
-						__FILEREF__ + "appendIngestionJobErrorMessage failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					SPDLOG_ERROR(
+						"appendIngestionJobErrorMessage failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 					);
 				}
 			}
 		}
 		catch (YouTubeURLNotRetrieved &e)
 		{
-			string errorMessage = string("YouTubeURLNotRetrieved") + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", response.str(): " + (responseInitialized ? response.str() : "") + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(
+				"YouTubeURLNotRetrieved"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", response.str: {}"
+				", e.what(): {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, responseInitialized ? response.str() : "", e.what()
+			);
 
-			// in this case we will through the exception independently
-			// if the live streaming time (utcRecordingPeriodEnd)
+			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
 			// is finished or not. This task will come back by the MMS system
 			throw e;
 		}
 		catch (EncoderNotFound e)
 		{
-			_logger->error(
-				__FILEREF__ + "Encoder not found" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+			SPDLOG_ERROR(
+				"Encoder not found"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", ffmpegEncoderURL: {}"
+				", response.str: {}"
+				", e.what(): {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL,
+				responseInitialized ? response.str() : "", e.what()
 			);
 
 			// update EncodingJob failures number to notify the GUI EncodingJob
@@ -1826,10 +1838,12 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				// added currentAttemptsNumberInCaseOfErrors++
 				currentAttemptsNumberInCaseOfErrors++;
 
-				_logger->info(
-					__FILEREF__ + "updateEncodingJobFailuresNumber" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
+				SPDLOG_INFO(
+					"updateEncodingJobFailuresNumber"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", currentAttemptsNumberInCaseOfErrors: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
 				);
 
 				int64_t mediaItemKey = -1;
@@ -1838,9 +1852,11 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			}
 			catch (...)
 			{
-				_logger->error(
-					__FILEREF__ + "updateEncodingJobFailuresNumber FAILED" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				SPDLOG_ERROR(
+					"updateEncodingJobFailuresNumber failed"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 				);
 			}
 
@@ -1857,10 +1873,15 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 		}
 		catch (MaxConcurrentJobsReached &e)
 		{
-			string errorMessage = string("MaxConcurrentJobsReached") + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", response.str(): " + (responseInitialized ? response.str() : "") + ", e.what(): " + e.what();
-			_logger->warn(__FILEREF__ + errorMessage);
+			SPDLOG_WARN(
+				"MaxConcurrentJobsReached"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", response.str: {}"
+				", e.what(): {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, responseInitialized ? response.str() : "", e.what()
+			);
 
 			// in this case we will through the exception independently
 			// if the live streaming time (utcRecordingPeriodEnd)
@@ -1872,39 +1893,45 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			string error = e.what();
 			if (error.find(NoEncodingAvailable().what()) != string::npos)
 			{
-				string errorMessage = string("No Encodings available / MaxConcurrentJobsReached") +
-									  ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", error: " + error;
-				_logger->warn(__FILEREF__ + errorMessage);
+				SPDLOG_WARN(
+					"No Encodings available / MaxConcurrentJobsReached"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", e.what(): {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
+				);
 
 				throw MaxConcurrentJobsReached();
 			}
 			else
 			{
-				_logger->error(
-					__FILEREF__ + "Encoding URL failed/runtime_error" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-					", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-					", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+				SPDLOG_ERROR(
+					"Encoding URL failed/runtime_error"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", ffmpegEncoderURL: {}"
+					", response.str: {}"
+					", e.what(): {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL,
+					responseInitialized ? response.str() : "", e.what()
 				);
 
-				// update EncodingJob failures number to notify the GUI
-				// EncodingJob is failing
+				// update EncodingJob failures number to notify the GUI EncodingJob is failing
 				try
 				{
-					// 2021-02-12: scenario, encodersPool does not exist, a
-					// runtime_error is generated contiuosly. The task will
-					// never exist from this loop because
-					// currentAttemptsNumberInCaseOfErrors always remain to 0
-					// and the main loop look
-					// currentAttemptsNumberInCaseOfErrors. So added
-					// currentAttemptsNumberInCaseOfErrors++
+					// 2021-02-12: scenario, encodersPool does not exist, a runtime_error is generated contiuosly. The task will
+					// never exist from this loop because currentAttemptsNumberInCaseOfErrors always remain to 0
+					// and the main loop look currentAttemptsNumberInCaseOfErrors. So added currentAttemptsNumberInCaseOfErrors++
 					currentAttemptsNumberInCaseOfErrors++;
 
-					_logger->info(
-						__FILEREF__ + "updateEncodingJobFailuresNumber" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-						", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
+					SPDLOG_INFO(
+						"updateEncodingJobFailuresNumber"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", currentAttemptsNumberInCaseOfErrors: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
 					);
 
 					int64_t mediaItemKey = -1;
@@ -1913,9 +1940,11 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				}
 				catch (...)
 				{
-					_logger->error(
-						__FILEREF__ + "updateEncodingJobFailuresNumber FAILED" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					SPDLOG_ERROR(
+						"updateEncodingJobFailuresNumber failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 					);
 				}
 
@@ -1933,24 +1962,30 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 		}
 		catch (exception e)
 		{
-			_logger->error(
-				__FILEREF__ + "Encoding URL failed (exception)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", ffmpegEncoderURL: " + ffmpegEncoderURL +
-				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+			SPDLOG_ERROR(
+				"Encoding URL failed (exception)"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", ffmpegEncoderURL: {}"
+				", response.str: {}"
+				", e.what(): {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL,
+				responseInitialized ? response.str() : "", e.what()
 			);
 
-			// update EncodingJob failures number to notify the GUI EncodingJob
-			// is failing
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
 			try
 			{
 				currentAttemptsNumberInCaseOfErrors++;
 				// encodingStatusFailures++;
 
-				_logger->info(
-					__FILEREF__ + "updateEncodingJobFailuresNumber" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors)
+				SPDLOG_INFO(
+					"updateEncodingJobFailuresNumber"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", currentAttemptsNumberInCaseOfErrors: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
 				);
 
 				int64_t mediaItemKey = -1;
@@ -1959,9 +1994,11 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			}
 			catch (...)
 			{
-				_logger->error(
-					__FILEREF__ + "updateEncodingJobFailuresNumber FAILED" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				SPDLOG_ERROR(
+					"updateEncodingJobFailuresNumber failed"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 				);
 			}
 
@@ -1980,30 +2017,40 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 	if (urlForbidden)
 	{
-		string errorMessage = __FILEREF__ + "LiveProxy: URL forbidden" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(
+			"LiveProxy: URL forbidden"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+		);
 
 		throw FFMpegURLForbidden();
 	}
 	else if (urlNotFound)
 	{
-		string errorMessage = __FILEREF__ + "LiveProxy: URL Not Found" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(
+			"LiveProxy: URL Not Found"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+		);
 
 		throw FFMpegURLNotFound();
 	}
 	else if (currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)
 	{
-		string errorMessage = __FILEREF__ + "Reached the max number of attempts to the URL" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-							  ", currentAttemptsNumberInCaseOfErrors: " + to_string(currentAttemptsNumberInCaseOfErrors) +
-							  ", maxAttemptsNumberInCaseOfErrors: " + to_string(maxAttemptsNumberInCaseOfErrors);
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(
+			"Reached the max number of attempts to the URL"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", currentAttemptsNumberInCaseOfErrors: {}"
+			", maxAttemptsNumberInCaseOfErrors: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors,
+			maxAttemptsNumberInCaseOfErrors
+		);
 
 		throw EncoderError();
 	}
@@ -2031,29 +2078,41 @@ void EncoderProxy::processLiveProxy(bool killedByUser)
 			string processorMMS;
 			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", IngestionStatus: " +
-				MMSEngineDBFacade::toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				_encodingItem->_ingestionJobKey, MMSEngineDBFacade::toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus, errorMessage);
 		}
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processLiveProxy failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processLiveProxy failed"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _workspace->_directoryName: {}"
+			", e.what: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processLiveProxy failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processLiveProxy failed"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _workspace->_directoryName: {}"
+			", e.what: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;

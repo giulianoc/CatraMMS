@@ -18,8 +18,8 @@
 #include <fstream>
 
 ActiveEncodingsManager::ActiveEncodingsManager(
-	json configuration, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage,
-	shared_ptr<spdlog::logger> logger
+	json configuration, string processorMMS, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+	shared_ptr<MMSStorage> mmsStorage, shared_ptr<spdlog::logger> logger
 )
 {
 	_logger = logger;
@@ -37,10 +37,6 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		", mms->locks->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
 	);
 
-#ifdef __LOCALENCODER__
-	_runningEncodingsNumber = 0;
-#endif
-
 	{
 		shared_ptr<long> faceRecognitionNumber = make_shared<long>(0);
 		int maxFaceRecognitionNumber = JSONUtils::asInt(_configuration["mms"], "maxFaceRecognitionNumber", 0);
@@ -53,11 +49,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		{
 			encodingJob._encoderProxy.init(
 				lastProxyIdentifier++, &_mtEncodingJobs, _configuration, multiEventsSet, _mmsEngineDBFacade, _mmsStorage, _encodersLoadBalancer,
-				faceRecognitionNumber, maxFaceRecognitionNumber,
-#ifdef __LOCALENCODER__
-				&_runningEncodingsNumber,
-#endif
-				_logger
+				faceRecognitionNumber, maxFaceRecognitionNumber, _logger
 			);
 		}
 
@@ -65,11 +57,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		{
 			encodingJob._encoderProxy.init(
 				lastProxyIdentifier++, &_mtEncodingJobs, _configuration, multiEventsSet, _mmsEngineDBFacade, _mmsStorage, _encodersLoadBalancer,
-				faceRecognitionNumber, maxFaceRecognitionNumber,
-#ifdef __LOCALENCODER__
-				&_runningEncodingsNumber,
-#endif
-				_logger
+				faceRecognitionNumber, maxFaceRecognitionNumber, _logger
 			);
 		}
 
@@ -77,13 +65,54 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		{
 			encodingJob._encoderProxy.init(
 				lastProxyIdentifier++, &_mtEncodingJobs, _configuration, multiEventsSet, _mmsEngineDBFacade, _mmsStorage, _encodersLoadBalancer,
-				faceRecognitionNumber, maxFaceRecognitionNumber,
-#ifdef __LOCALENCODER__
-				&_runningEncodingsNumber,
-#endif
-				_logger
+				faceRecognitionNumber, maxFaceRecognitionNumber, _logger
 			);
 		}
+	}
+
+	try
+	{
+		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
+
+		_mmsEngineDBFacade->recoverProcessingEncodingJobs(processorMMS, encodingItems);
+
+		SPDLOG_INFO(
+			"recoverProcessingEncodingJobs result"
+			", _processorMMS: {}"
+			", encodingItems.size: {}",
+			processorMMS, encodingItems.size()
+		);
+
+		addEncodingItems(encodingItems);
+
+		SPDLOG_INFO(
+			"addEncodingItems successful"
+			", _processorMMS: {}"
+			", encodingItems.size: {}",
+			processorMMS, encodingItems.size()
+		);
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"recoverProcessingEncodingJobs failed"
+			", _processorMMS: {}"
+			", e.what: {}",
+			processorMMS, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"recoverProcessingEncodingJobs failed"
+			", _processorMMS: {}"
+			", e.what: {}",
+			processorMMS, e.what()
+		);
+
+		throw e;
 	}
 }
 
@@ -367,140 +396,6 @@ void ActiveEncodingsManager::operator()()
 		}
 	}
 }
-
-/*
-void ActiveEncodingsManager::getEncodingsProgressThread()
-{
-	bool shutdown = false;
-
-	chrono::seconds secondsToSleep(5);
-
-	vector<MMSEngineDBFacade::EncodingPriority> sortedEncodingPriorities = {
-		MMSEngineDBFacade::EncodingPriority::High,
-		MMSEngineDBFacade::EncodingPriority::Medium,
-		MMSEngineDBFacade::EncodingPriority::Low
-	};
-
-	while (!shutdown)
-	{
-		try
-		{
-			chrono::system_clock::time_point startEvent =
-chrono::system_clock::now();
-
-			_logger->info(__FILEREF__ + "Begin getEncodingsProgressThread");
-
-			for (MMSEngineDBFacade::EncodingPriority encodingPriority:
-sortedEncodingPriorities)
-			{
-				EncodingJob*    encodingJobs;
-				int             maxEncodingsToBeManaged;
-
-				if (encodingPriority ==
-MMSEngineDBFacade::EncodingPriority::High)
-				{
-					// _logger->info(__FILEREF__ + "Processing the high
-encodings...");
-
-					encodingJobs            = _highPriorityEncodingJobs;
-					maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
-				}
-				else if (encodingPriority ==
-MMSEngineDBFacade::EncodingPriority::Medium)
-				{
-					// _logger->info(__FILEREF__ + "Processing the default
-encodings...");
-
-					encodingJobs = _mediumPriorityEncodingJobs;
-					maxEncodingsToBeManaged = MAXMEDIUMENCODINGSTOBEMANAGED;
-				}
-				else // if (encodingPriority ==
-MMSEngineDBFacade::EncodingPriority::Low)
-				{
-					// _logger->info(__FILEREF__ + "Processing the low
-encodings...");
-
-					encodingJobs = _lowPriorityEncodingJobs;
-					maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
-				}
-
-				for (int encodingJobIndex = 0; encodingJobIndex <
-maxEncodingsToBeManaged; encodingJobIndex++)
-				{
-					EncodingJob* encodingJob =
-&(encodingJobs[encodingJobIndex]);
-
-					if (encodingJob->_status ==
-EncoderProxy::EncodingJobStatus::Running)
-					{
-						// We will start to check the encodingProgress after at
-least XXX seconds.
-						// This is because the status is set to
-EncodingJobStatus::Running as soon as it is created
-						// the encoderVideoAudioProxyThread thread. Many times
-the thread returns soon because
-						// of 'No encoding available' and in this case
-getEncodingProgress will return 'No encoding job key found'
-
-						// if (chrono::system_clock::now() -
-encodingJob->_encodingJobStart >= chrono::seconds(secondsToBlock))
-
-						// 2019-03-31: Above commented because it was
-introduced the GoingToRun status try
-						{
-							int encodingPercentage =
-								encodingJob->_encoderProxy.getEncodingProgress();
-
-							_logger->info(__FILEREF__ +
-"updateEncodingJobProgress"
-								+ ", encodingJobKey: "
-								+
-to_string(encodingJob->_encodingItem->_encodingJobKey)
-								+ ", encodingPercentage: " +
-to_string(encodingPercentage)
-							);
-							_mmsEngineDBFacade->updateEncodingJobProgress (
-								encodingJob->_encodingItem->_encodingJobKey,
-encodingPercentage);
-						}
-						catch(FFMpegEncodingStatusNotAvailable& e)
-						{
-
-						}
-						catch(runtime_error& e)
-						{
-							_logger->error(__FILEREF__ + "getEncodingProgress
-failed"
-								+ ", runtime_error: " + e.what()
-							);
-						}
-						catch(exception& e)
-						{
-							_logger->error(__FILEREF__ + "getEncodingProgress
-failed");
-						}
-					}
-				}
-			}
-
-			chrono::system_clock::time_point endEvent =
-chrono::system_clock::now(); long elapsedInSeconds =
-chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
-			_logger->info(__FILEREF__ + "End getEncodingsProgressThread"
-				+ ", @MMS statistics@ - elapsed in seconds: @" +
-to_string(elapsedInSeconds) + "@"
-			);
-
-			this_thread::sleep_for(secondsToSleep);
-		}
-		catch(exception& e)
-		{
-			_logger->info(__FILEREF__ + "getEncodingsProgressThread loop
-failed");
-		}
-	}
-}
-*/
 
 void ActiveEncodingsManager::processEncodingJob(EncodingJob *encodingJob)
 {

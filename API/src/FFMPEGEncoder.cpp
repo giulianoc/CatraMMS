@@ -1554,7 +1554,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			"Received killEncodingJob"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
-			", lightKill: {}",
+			", killType: {}",
 			ingestionJobKey, encodingJobKey, killType
 		);
 

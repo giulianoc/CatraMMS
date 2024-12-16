@@ -1748,6 +1748,7 @@ class MMSEngineDBFacade
 		string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems, int timeBeforeToPrepareResourcesInMinutes,
 		int maxEncodingsNumber
 	);
+	void recoverProcessingEncodingJobs(string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems);
 
 	int64_t getEncodingProfileKeyByLabel(
 		int64_t workspaceKey, MMSEngineDBFacade::ContentType contentType, string encodingProfileLabel, bool contentTypeToBeUsed = true

@@ -2,6 +2,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
+#include "spdlog/spdlog.h"
 #include <regex>
 #include <utility>
 
@@ -180,14 +181,15 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					));
 
 					string prefix = "End_";
-					if (sIngestionJobStatus.size() >= prefix.size() && 0 == sIngestionJobStatus.compare(0, prefix.size(), prefix))
+					if (sIngestionJobStatus.starts_with(prefix))
 					{
-						string errorMessage = string("Found EncodingJob with wrong status") +
-											  ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobStatus: " + sIngestionJobStatus
-							// + ", encodingJobStatus: " + encodingJobStatus
-							;
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(
+							"Found EncodingJob with wrong status"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", ingestionJobStatus: {}",
+							encodingItem->_ingestionJobKey, encodingJobKey, sIngestionJobStatus
+						);
 
 						// 2122-01-05: updateEncodingJob is not used because the row is already locked
 						// updateEncodingJob (
@@ -223,9 +225,11 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						continue;
 					}
 				}
-				_logger->info(
-					__FILEREF__ + "getToBeProcessedEncodingJobs (after check ingestionStatus)" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", encodingType: " + encodingType
+				SPDLOG_INFO(
+					"getToBeProcessedEncodingJobs (after check ingestionStatus)"
+					", encodingJobKey: {}"
+					", encodingType: {}",
+					encodingJobKey, encodingType
 				);
 
 				try
@@ -234,14 +238,16 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				}
 				catch (runtime_error e)
 				{
-					_logger->error(__FILEREF__ + e.what());
+					SPDLOG_ERROR(e.what());
 
 					// in case an encoding job row generate an error, we have to make it to Failed
 					// otherwise we will indefinitely get this error
 					{
-						_logger->info(
-							__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-							", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+						SPDLOG_INFO(
+							"EncodingJob update"
+							", encodingJobKey: {}"
+							", status: {}",
+							encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 						);
 						string sqlStatement = fmt::format(
 							"WITH rows AS (update MMS_EncodingJob set status = {} "
@@ -264,9 +270,11 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					// throw runtime_error(errorMessage);
 				}
 
-				_logger->info(
-					__FILEREF__ + "getToBeProcessedEncodingJobs (after encodingParameters)" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", encodingType: " + encodingType
+				SPDLOG_INFO(
+					"getToBeProcessedEncodingJobs (after encodingParameters)"
+					", encodingJobKey: {}"
+					", encodingType: {}",
+					encodingJobKey, encodingType
 				);
 
 				// encodingItem->_ingestedParametersRoot
@@ -452,6 +460,253 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 			", maxEncodingsNumber: " + to_string(maxEncodingsNumber) + ", liveProxyToBeEncoded: " + to_string(liveProxyToBeEncoded) +
 			", liveRecorderToBeEncoded: " + to_string(liveRecorderToBeEncoded) + ", othersToBeEncoded: " + to_string(othersToBeEncoded) +
 			", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+		);
+	}
+	catch (sql_error const &e)
+	{
+		SPDLOG_ERROR(
+			"SQL exception"
+			", query: {}"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", exceptionMessage: {}"
+			", conn: {}",
+			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", conn: {}",
+			(conn != nullptr ? conn->getConnectionId() : -1)
+		);
+
+		try
+		{
+			trans.abort();
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"abort failed"
+				", conn: {}",
+				(conn != nullptr ? conn->getConnectionId() : -1)
+			);
+		}
+		if (conn != nullptr)
+		{
+			connectionPool->unborrow(conn);
+			conn = nullptr;
+		}
+
+		throw e;
+	}
+}
+
+void MMSEngineDBFacade::recoverProcessingEncodingJobs(string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems)
+{
+	shared_ptr<PostgresConnection> conn = nullptr;
+
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
+
+	conn = connectionPool->borrow();
+	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
+	// Se questo non dovesse essere vero, unborrow non sarà chiamata
+	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
+	nontransaction trans{*(conn->_sqlConnection)};
+
+	try
+	{
+		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
+
+		encodingItems.clear();
+
+		SPDLOG_INFO(
+			"getProcessingEncodingJobsOfProcessorMMS"
+			", processorMMS: {}",
+			processorMMS
+		);
+
+		{
+			string sqlStatement = fmt::format(
+				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
+				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName, "
+				"ej.utcScheduleStart_virtual "
+				"from MMS_EncodingJob ej "
+				"where ej.processorMMS = {} and ej.status = {} ",
+				trans.quote(processorMMS), trans.quote(MMSEngineDBFacade::toString(EncodingStatus::Processing))
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.exec(sqlStatement);
+			for (auto row : res)
+			{
+				int64_t encodingJobKey = row["encodingJobKey"].as<int64_t>();
+
+				shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem = make_shared<MMSEngineDBFacade::EncodingItem>();
+
+				encodingItem->_encodingJobKey = encodingJobKey;
+				encodingItem->_ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+				string encodingType = row["type"].as<string>();
+				encodingItem->_encodingType = toEncodingType(encodingType);
+				encodingItem->_encodingPriority = static_cast<EncodingPriority>(row["encodingPriority"].as<int>());
+				if (row["encoderKey"].is_null())
+					encodingItem->_encoderKey = -1;
+				else
+					encodingItem->_encoderKey = row["encoderKey"].as<int64_t>();
+				if (row["stagingEncodedAssetPathName"].is_null())
+					encodingItem->_stagingEncodedAssetPathName = "";
+				else
+					encodingItem->_stagingEncodedAssetPathName = row["stagingEncodedAssetPathName"].as<string>();
+
+				string encodingParameters = row["parameters"].as<string>();
+
+				{
+					string sqlStatement = fmt::format(
+						"select ir.workspaceKey "
+						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+						"where ir.ingestionRootKey = ij.ingestionRootKey "
+						"and ij.ingestionJobKey = {}",
+						encodingItem->_ingestionJobKey
+					);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					result res = trans.exec(sqlStatement);
+					SPDLOG_INFO(
+						"SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, conn->getConnectionId(),
+						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					);
+					if (empty(res))
+					{
+						SPDLOG_ERROR(
+							"select failed, no row returned"
+							", ingestionJobKey: {}"
+							", sqlStatement: {}",
+							encodingItem->_ingestionJobKey, sqlStatement
+						);
+
+						continue;
+					}
+					encodingItem->_workspace = getWorkspace(res[0]["workspaceKey"].as<int64_t>());
+				}
+
+				try
+				{
+					encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
+
+					encodingItem->_ingestedParametersRoot = ingestionJob_MetadataContent(
+						encodingItem->_workspace->_workspaceKey, encodingItem->_ingestionJobKey,
+						// 2022-12-18: probable the ingestionJob is added recently, let's set true
+						true
+					);
+				}
+				catch (runtime_error e)
+				{
+					SPDLOG_ERROR(e.what());
+
+					continue;
+				}
+
+				encodingItems.push_back(encodingItem);
+			}
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		trans.commit();
+		connectionPool->unborrow(conn);
+		conn = nullptr;
+
+		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
+		SPDLOG_INFO(
+			"recoverProcessingEncodingJobs statistics"
+			", encodingItems.size: {}"
+			", elapsed (secs): {}",
+			encodingItems.size(), chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
 		);
 	}
 	catch (sql_error const &e)

@@ -12,34 +12,6 @@
 #include "CheckIngestionTimes.h"
 
 #define MD5BUFFERSIZE 16384
-// #include <fstream>
-/*
-#include <sstream>
-#include <stdio.h>
-
-#include "CheckEncodingTimes.h"
-#include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "ContentRetentionTimes.h"
-#include "DBDataRetentionTimes.h"
-#include "GEOInfoTimes.h"
-#include "MMSCURL.h"
-#include "PersistenceLock.h"
-#include "ThreadsStatisticTimes.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/System.h"
-#include <iomanip>
-#include <regex>
-// #include "EMailSender.h"
-#include "Magick++.h"
-// #include <openssl/md5.h>
-#include "spdlog/spdlog.h"
-#include <openssl/evp.h>
-
-#define MD5BUFFERSIZE 16384
-*/
 
 void MMSEngineProcessor::handleCheckIngestionEvent()
 {
@@ -129,16 +101,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			int64_t ingestionJobKey;
 			try
 			{
-				string ingestionJobLabel;
-				shared_ptr<Workspace> workspace;
-				string ingestionDate;
-				string metaDataContent;
 				string sourceReference;
-				MMSEngineDBFacade::IngestionType ingestionType;
-				MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-				tie(ingestionJobKey, ingestionJobLabel, workspace, ingestionDate, metaDataContent, ingestionType, ingestionStatus) =
-					ingestionToBeManaged;
+				auto [ingestionJobKey, ingestionJobLabel, workspace, ingestionDate, metaDataContent, ingestionType,ingestionStatus] = ingestionToBeManaged;
 
 				SPDLOG_INFO(
 					"json to be processed"
@@ -870,19 +835,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							// _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/*
-								removeContentTask(
-										ingestionJobKey,
-										workspace,
-										parametersRoot,
-										dependencies);
-								*/
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
 								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
@@ -1012,14 +967,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							// _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/*
-								ftpDeliveryContentTask(
-										ingestionJobKey,
-										ingestionStatus,
-										workspace,
-										parametersRoot,
-										dependencies);
-								*/
 								/* 2021-02-19: check on threads is already done
 								 *in handleCheckIngestionEvent 2021-06-19: we
 								 *still have to check the thread limit because,

@@ -207,10 +207,9 @@ int main(int iArgc, char *pArgv[])
 	logger->info(__FILEREF__ + "Creating MMSEngineDBFacade");
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(configurationRoot, masterDbPoolSize, slaveDbPoolSize, logger);
 
+	string processorMMS = System::getHostName();
 	if (resetdata)
 	{
-		string processorMMS = System::getHostName();
-
 		try
 		{
 			mmsEngineDBFacade->resetProcessingJobsIfNeeded(processorMMS);
@@ -242,7 +241,7 @@ int main(int iArgc, char *pArgv[])
 	multiEventsSet->addDestination(MMSENGINEPROCESSORNAME);
 
 	logger->info(__FILEREF__ + "Creating ActiveEncodingsManager");
-	ActiveEncodingsManager activeEncodingsManager(configurationRoot, multiEventsSet, mmsEngineDBFacade, mmsStorage, logger);
+	ActiveEncodingsManager activeEncodingsManager(configurationRoot, processorMMS, multiEventsSet, mmsEngineDBFacade, mmsStorage, logger);
 
 	mutex cpuUsageMutex;
 	deque<int> cpuUsage;

@@ -307,6 +307,10 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
+	/*
+	 2024-12-16: Questo metodo viene chiamato quando l'engine service viene fatto partire.
+			Serve per ripristinare scenari che altrimenti rimarrebbero in uno stato non corretto.
+	 */
 	try
 	{
 		/*
@@ -335,19 +339,16 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 		// 2022-09-27: next procedure should be already covered by retentionOfIngestionData,
 		//		anyway, we will leave it here
 		{
-			_logger->info(
-				__FILEREF__ + "resetProcessingJobsIfNeeded. Downloading of IngestionJobs not completed" + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"resetProcessingJobsIfNeeded. Downloading of content (pull mode) not completed"
+				", processorMMS: {}",
+				processorMMS
 			);
-			// 2021-07-17: Scenario:
-			//	1. added the new MMS_0003 partition
-			//	2. restarted the engine during the upload of a content
-			//	Found the following combination:
-			//		processorMMS is NULL, status is SourceDownloadingInProgress, sourceBinaryTransferred is 0
-			//	Since we cannot have the above combination (processorMMS is NULL, status is SourceDownloadingInProgress)
-			//	then next update was changed to consider also processorMMS as null
+			//	In caso di trasferimenti incompleti, resettiamo (Start_TaskQueued e processorMMS null) in modo
+			//	che _mmsEngineDBFacade->getIngestionsToBeManaged li possa riprocessare
 			string sqlStatement = fmt::format(
-				"WITH rows AS (update MMS_IngestionJob set status = {} "
-				"where (processorMMS is NULL or processorMMS = {}) and "
+				"WITH rows AS (update MMS_IngestionJob set status = {}, processorMMS = null "
+				"where processorMMS = {} and "
 				"status in ({}, {}, {}) and sourceBinaryTransferred = false "
 				"returning 1) select count(*) from rows",
 				trans.quote(toString(IngestionStatus::Start_TaskQueued)), trans.quote(processorMMS),
@@ -437,14 +438,19 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 		*/
 
 		{
-			_logger->info(
-				__FILEREF__ + "resetProcessingJobsIfNeeded. IngestionJobs assigned without final state" + ", processorMMS: " + processorMMS
+			/* 2024-12-15:
+			 * commentato perchè non la capisco
+			 *
+			SPDLOG_INFO(
+				"resetProcessingJobsIfNeeded. IngestionJobs assigned without final state"
+				", processorMMS: {}",
+				processorMMS
 			);
-			// like: non lo uso per motivi di performance
+			// non uso "not like 'End_%'" per motivi di performance
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_IngestionJob set processorMMS = NULL where processorMMS = {} "
 				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
-				"'SourceUploadingInProgress', 'EncodingQueued') " // not like 'End_%' "
+				"'SourceUploadingInProgress') " // , 'EncodingQueued') "
 				"returning 1) select count(*) from rows",
 				trans.quote(processorMMS)
 			);
@@ -457,16 +463,20 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
+			*/
 		}
 
 		{
-			_logger->info(
-				__FILEREF__ + "resetProcessingJobsIfNeeded. EncodingJobs assigned with state Processing" + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"resetProcessingJobsIfNeeded. EncodingJobs assigned with state Processing"
+				", processorMMS: {}",
+				processorMMS
 			);
 			// transcoder does not have to be reset because the Engine, in case of restart,
-			// is still able to attach to it (encoder)
+			// is still able to attach to it (encoder). Commento per cui non capisco l'update sotto
 			// lastSQLCommand =
 			//   "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ?";
+			/*
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = null "
 				"where processorMMS = {} and status = {} returning 1) select count(*) from rows",
@@ -481,10 +491,15 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
+			*/
 		}
 
 		{
-			_logger->info(__FILEREF__ + "resetProcessingJobsIfNeeded. MediaItems retention assigned" + ", processorMMS: " + processorMMS);
+			SPDLOG_INFO(
+				"resetProcessingJobsIfNeeded. MediaItems retention assigned"
+				", processorMMS: {}",
+				processorMMS
+			);
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = NULL "
 				"where processorMMSForRetention = {} returning 1) select count(*) from rows",

@@ -11,20 +11,6 @@
 #include "catralibraries/GetCpuUsage.h"
 #include "catralibraries/MultiEventsSet.h"
 #include <fstream>
-/*
-#include <deque>
-#include <string>
-#include <vector>
-// #define SPDLOG_DEBUG_ON
-// #define SPDLOG_TRACE_ON
-#ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
-#include "MMSEngineDBFacade.h"
-#include "MMSStorage.h"
-#include "nlohmann/json.hpp"
-#include "spdlog/spdlog.h"
-*/
 
 using json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
