@@ -4,6 +4,7 @@
 #include "PersistenceLock.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
+#include <utility>
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
 	vector<tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus>> &ingestionsToBeManaged, string processorMMS,
@@ -2912,6 +2913,56 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatusMetadataContent(int64_t works
 			toIngestionType((*sqlResultSet)[0][0].as<string>("")), toIngestionStatus((*sqlResultSet)[0][1].as<string>("null ingestion status!!!")),
 			(*sqlResultSet)[0][2].as<json>(json())
 		);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+pair<MMSEngineDBFacade::IngestionStatus, json>
+MMSEngineDBFacade::ingestionJob_StatusMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		vector<string> requestedColumns = {"mms_ingestionjob:ij.status", "mms_ingestionjob:ij.metaDataContent"};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
+
+		return make_pair(toIngestionStatus((*sqlResultSet)[0][0].as<string>("null ingestion status!!!")), (*sqlResultSet)[0][1].as<json>(json()));
 	}
 	catch (DBRecordNotFound &e)
 	{

@@ -834,8 +834,9 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				"check to exit"
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
+				", _encodingItem->_encoderKey: {}"
 				", still miss (secs): {}",
-				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcProxyPeriodEnd - utcNowCheckToExit
+				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _encodingItem->_encoderKey, utcProxyPeriodEnd - utcNowCheckToExit
 			);
 		}
 
@@ -854,14 +855,34 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				{
 					try
 					{
+						MMSEngineDBFacade::IngestionStatus ingestionJobStatus;
+
 						// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated (modifying the playlist)
 						_encodingItem->_encodingParametersRoot = _mmsEngineDBFacade->encodingJob_Parameters(_encodingItem->_encodingJobKey, true);
 
 						// 2024-12-01: ricarichiamo ingestedParameters perchè potrebbe essere stato modificato con un nuovo 'encodersDetails' (nello
 						// scenario in cui si vuole eseguire lo switch di un ingestionjob su un nuovo encoder)
-						_encodingItem->_ingestedParametersRoot = _mmsEngineDBFacade->ingestionJob_MetadataContent(
+						tie(ingestionJobStatus, _encodingItem->_ingestedParametersRoot) = _mmsEngineDBFacade->ingestionJob_StatusMetadataContent(
 							_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, true
 						);
+
+						// viene controllato lo status perchè nello scenario in cui l'IngestionJob sia terminato e all'interno
+						// di questo if viene generata una eccezione (ad es. EncoderNotFound nella call
+						// _encodersLoadBalancer->getEncoderURL), si prosegue nel catch che ci riporta a inizio while
+						// Entriamo quindi in un loop (inizio-while, eccezione EncoderNotFound, inizio-while) quando l'IngestionJob è terminato
+						string sIngestionJobStatus = MMSEngineDBFacade::toString(ingestionJobStatus);
+						if (sIngestionJobStatus.starts_with("End_"))
+						{
+							SPDLOG_INFO(
+								"IngestionJob is terminated"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", ingestionJobStatus: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sIngestionJobStatus
+							);
+							killedByUser = true;
+							continue;
+						}
 					}
 					catch (DBRecordNotFound &e)
 					{

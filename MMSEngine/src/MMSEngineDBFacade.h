@@ -1559,6 +1559,7 @@ class MMSEngineDBFacade
 	json ingestionJob_MetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	tuple<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus, json>
 	ingestionJob_IngestionTypeStatusMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	pair<MMSEngineDBFacade::IngestionStatus, json> ingestionJob_StatusMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	void ingestionJob_IngestionJobKeys(int64_t workspaceKey, string label, bool fromMaster, vector<int64_t> &ingestionJobsKey);
 	shared_ptr<PostgresHelper::SqlResultSet> ingestionJobQuery(
 		vector<string> &requestedColumns, int64_t workspaceKey, int64_t ingestionJobKey, string label, bool fromMaster, int startIndex = -1,
