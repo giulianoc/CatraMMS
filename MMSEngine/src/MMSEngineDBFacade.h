@@ -95,16 +95,6 @@ struct EncoderNotFound : public exception
 	char const *what() const throw() { return _errorMessage.c_str(); };
 };
 
-struct ConfKeyNotFound : public exception
-{
-
-	string _errorMessage;
-
-	ConfKeyNotFound(string errorMessage) { _errorMessage = errorMessage; }
-
-	char const *what() const throw() { return _errorMessage.c_str(); };
-};
-
 struct AlreadyLocked : public exception
 {
 	string _errorMessage;

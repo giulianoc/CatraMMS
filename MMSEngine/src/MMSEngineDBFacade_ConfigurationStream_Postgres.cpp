@@ -3779,7 +3779,7 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 				else
 					_logger->error(errorMessage);
 
-				throw ConfKeyNotFound(errorMessage);
+				throw DBRecordNotFound(errorMessage);
 			}
 
 			type = res[0]["type"].as<string>();
@@ -3835,17 +3835,17 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 
 		throw e;
 	}
-	catch (ConfKeyNotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		if (warningIfMissing)
 			SPDLOG_WARN(
-				"ConfKeyNotFound SQL exception"
+				"DBRecordNotFound SQL exception"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);
 		else
 			SPDLOG_ERROR(
-				"ConfKeyNotFound SQL exception"
+				"DBRecordNotFound SQL exception"
 				", conn: {}",
 				(conn != nullptr ? conn->getConnectionId() : -1)
 			);

@@ -1784,7 +1784,7 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails(int64_t 
 					__FILEREF__ + "Configuration label is not found" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
 				_logger->error(errorMessage);
 
-				throw ConfKeyNotFound(errorMessage);
+				throw DBRecordNotFound(errorMessage);
 			}
 
 			resourceURL = res[0]["resourceURL"].as<string>();
@@ -1829,10 +1829,10 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails(int64_t 
 
 		throw e;
 	}
-	catch (ConfKeyNotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		SPDLOG_ERROR(
-			"ConfKeyNotFound SQL exception"
+			"DBRecordNotFound SQL exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -3092,7 +3092,7 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 				else
 					_logger->error(errorMessage);
 
-				throw ConfKeyNotFound(errorMessage);
+				throw DBRecordNotFound(errorMessage);
 			}
 
 			confKey = res[0]["confKey"].as<int64_t>();
@@ -3143,10 +3143,10 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 
 		throw e;
 	}
-	catch (ConfKeyNotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		SPDLOG_ERROR(
-			"ConfKeyNotFound SQL exception"
+			"DBRecordNotFound SQL exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);
@@ -4392,7 +4392,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 				else
 					_logger->error(errorMessage);
 
-				throw ConfKeyNotFound(errorMessage);
+				throw DBRecordNotFound(errorMessage);
 			}
 
 			confKey = res[0]["confKey"].as<int64_t>();
@@ -4439,10 +4439,10 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 
 		throw e;
 	}
-	catch (ConfKeyNotFound &e)
+	catch (DBRecordNotFound &e)
 	{
 		SPDLOG_ERROR(
-			"ConfKeyNotFound SQL exception"
+			"DBRecordNotFound SQL exception"
 			", conn: {}",
 			(conn != nullptr ? conn->getConnectionId() : -1)
 		);

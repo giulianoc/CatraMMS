@@ -1,6 +1,7 @@
 
 #include "JSONUtils.h"
 #include "MMSCURL.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
@@ -1392,7 +1393,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 								confKey, workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
 							);
 						}
-						catch (ConfKeyNotFound &e)
+						catch (DBRecordNotFound &e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(
 								workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
@@ -1483,7 +1484,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 								confKey, workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
 							);
 						}
-						catch (ConfKeyNotFound &e)
+						catch (DBRecordNotFound &e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(
 								workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
@@ -1983,7 +1984,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 								confKey, workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
 							);
 						}
-						catch (ConfKeyNotFound &e)
+						catch (DBRecordNotFound &e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(
 								workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
@@ -2080,7 +2081,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 								confKey, workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
 							);
 						}
-						catch (ConfKeyNotFound &e)
+						catch (DBRecordNotFound &e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(
 								workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
