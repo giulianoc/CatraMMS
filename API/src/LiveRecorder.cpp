@@ -5,6 +5,7 @@
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/spdlog.h"
 
 LiveRecorder::LiveRecorder(
 	shared_ptr<LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot, mutex *encodingCompletedMutex,
@@ -464,21 +465,17 @@ void LiveRecorder::encodeContent(string requestBody)
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
 
-		char strDateTime[64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r(&utcTime, &tmDateTime);
-			sprintf(
-				strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-				tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-			);
-		}
 		string eWhat = e.what();
-		string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)" + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-							  ", API: " + api + ", requestBody: " + requestBody +
-							  ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat);
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(
+			"{} API failed (EncodingKilledByUser)"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+		);
 
 		// used by FFMPEGEncoderTask
 		if (_liveRecording->_killedBecauseOfNotWorking)
@@ -519,21 +516,18 @@ void LiveRecorder::encodeContent(string requestBody)
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
 
-		char strDateTime[64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r(&utcTime, &tmDateTime);
-			sprintf(
-				strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-				tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-			);
-		}
 		string eWhat = e.what();
-		string errorMessage = string(strDateTime) + " API failed (URLForbidden)" + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-							  ", API: " + api + ", requestBody: " + requestBody +
-							  ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"{} API failed (URLForbidden)"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_liveRecording->_errorMessage = errorMessage;
@@ -564,21 +558,18 @@ void LiveRecorder::encodeContent(string requestBody)
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
 
-		char strDateTime[64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r(&utcTime, &tmDateTime);
-			sprintf(
-				strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-				tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-			);
-		}
 		string eWhat = e.what();
-		string errorMessage = string(strDateTime) + " API failed (URLNotFound)" + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-							  ", API: " + api + ", requestBody: " + requestBody +
-							  ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"{} API failed (URLNotFound)"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_liveRecording->_errorMessage = errorMessage;
@@ -609,21 +600,18 @@ void LiveRecorder::encodeContent(string requestBody)
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
 
-		char strDateTime[64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r(&utcTime, &tmDateTime);
-			sprintf(
-				strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-				tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-			);
-		}
 		string eWhat = e.what();
-		string errorMessage = string(strDateTime) + " API failed (runtime_error)" + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-							  ", API: " + api + ", requestBody: " + requestBody +
-							  ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"{} API failed (runtime_error)"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_liveRecording->_errorMessage = errorMessage;
@@ -654,20 +642,18 @@ void LiveRecorder::encodeContent(string requestBody)
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
 
-		char strDateTime[64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r(&utcTime, &tmDateTime);
-			sprintf(
-				strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-				tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-			);
-		}
 		string eWhat = e.what();
-		string errorMessage = string(strDateTime) + " API failed (exception)" + ", _encodingJobKey: " + to_string(_encodingJobKey) + ", API: " + api +
-							  ", requestBody: " + requestBody + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"{} API failed (exception)"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_liveRecording->_errorMessage = errorMessage;

@@ -8,6 +8,7 @@
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/bundled/format.h"
 #include <sstream>
 
 FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
@@ -948,22 +949,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// ProcessUtility::quitProcess(sourceLiveProxy->_childPid);
 						termProcess(sourceLiveProxy, copiedLiveProxy->_ingestionJobKey, configurationLabel, localErrorMessage, false);
 						// ProcessUtility::termProcess(sourceLiveProxy->_childPid);
-						{
-							char strDateTime[64];
-							{
-								time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-								tm tmDateTime;
-								localtime_r(&utcTime, &tmDateTime);
-								sprintf(
-									strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1,
-									tmDateTime.tm_mday, tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-								);
-							}
-							sourceLiveProxy->_errorMessage = string(strDateTime) +
-															 " "
-															 // + liveProxy->_channelLabel
-															 + localErrorMessage;
-						}
+
+						sourceLiveProxy->_errorMessage = fmt::format(
+							"{} {}", DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), localErrorMessage
+						);
 					}
 					catch (runtime_error &e)
 					{
@@ -1892,19 +1881,11 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							sourceLiveRecording, copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_channelLabel, localErrorMessage, false
 						);
 						// ProcessUtility::termProcess(sourceLiveRecording->_childPid);
-						{
-							char strDateTime[64];
-							{
-								time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-								tm tmDateTime;
-								localtime_r(&utcTime, &tmDateTime);
-								sprintf(
-									strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1,
-									tmDateTime.tm_mday, tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-								);
-							}
-							sourceLiveRecording->_errorMessage = string(strDateTime) + " " + sourceLiveRecording->_channelLabel + localErrorMessage;
-						}
+						//
+						sourceLiveRecording->_errorMessage = fmt::format(
+							"{} {}{}", DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())),
+							sourceLiveRecording->_channelLabel, localErrorMessage
+						);
 					}
 					catch (runtime_error &e)
 					{

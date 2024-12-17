@@ -2,6 +2,7 @@
 #include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "spdlog/spdlog.h"
 
 int64_t MMSEngineDBFacade::addAWSChannelConf(int64_t workspaceKey, string label, string channelId, string rtmpURL, string playURL, string type)
 {
@@ -1999,9 +2000,12 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 					);
 					if (rowsUpdated == 0)
 					{
-						string errorMessage =
-							__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						SPDLOG_WARN(
+							"no update was done"
+							", rowsUpdated: {}"
+							", sqlStatement: {}",
+							rowsUpdated, sqlStatement
+						);
 
 						// throw runtime_error(errorMessage);
 					}

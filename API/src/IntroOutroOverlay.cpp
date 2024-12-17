@@ -3,28 +3,27 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "catralibraries/DateTime.h"
+#include "spdlog/spdlog.h"
 
-
-void IntroOutroOverlay::encodeContent(
-	json metadataRoot)
+void IntroOutroOverlay::encodeContent(json metadataRoot)
 {
-    string api = "introOutroOverlay";
+	string api = "introOutroOverlay";
 
-	_logger->info(__FILEREF__ + "Received " + api
-		+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-		+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-		+ ", requestBody: " + JSONUtils::toString(metadataRoot)
+	_logger->info(
+		__FILEREF__ + "Received " + api + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey) +
+		", requestBody: " + JSONUtils::toString(metadataRoot)
 	);
 
-    try
-    {
-        // json metadataRoot = JSONUtils::toJson(
+	try
+	{
+		// json metadataRoot = JSONUtils::toJson(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);                 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);                  
-		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];                       
-		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];                       
+		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
@@ -33,10 +32,8 @@ void IntroOutroOverlay::encodeContent(
 			string field = "introSourceFileExtension";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -49,10 +46,8 @@ void IntroOutroOverlay::encodeContent(
 			string field = "mainSourceFileExtension";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -65,10 +60,8 @@ void IntroOutroOverlay::encodeContent(
 			string field = "outroSourceFileExtension";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -87,10 +80,8 @@ void IntroOutroOverlay::encodeContent(
 				string field = "introSourceTranscoderStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", Field: " + field;
+					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -101,30 +92,27 @@ void IntroOutroOverlay::encodeContent(
 					size_t endOfDirectoryIndex = introSourceAssetPathName.find_last_of("/");
 					if (endOfDirectoryIndex != string::npos)
 					{
-						string directoryPathName = introSourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
+						string directoryPathName = introSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
+						_logger->info(
+							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
 						);
 						fs::create_directories(directoryPathName);
-						fs::permissions(directoryPathName,
-							fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
-							| fs::perms::group_read | fs::perms::group_exec
-							| fs::perms::others_read | fs::perms::others_exec,
-							fs::perm_options::replace);
+						fs::permissions(
+							directoryPathName,
+							fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_exec |
+								fs::perms::others_read | fs::perms::others_exec,
+							fs::perm_options::replace
+						);
 					}
 				}
 
 				field = "introSourcePhysicalDeliveryURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", Field: " + field;
+					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -132,22 +120,17 @@ void IntroOutroOverlay::encodeContent(
 				string introSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				introSourceAssetPathName = downloadMediaFromMMS(
-					_ingestionJobKey,
-					_encodingJobKey,
-					_encoding->_ffmpeg,
-					introSourceFileExtension,
-					introSourcePhysicalDeliveryURL,
-					introSourceAssetPathName);
+					_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, introSourceFileExtension, introSourcePhysicalDeliveryURL,
+					introSourceAssetPathName
+				);
 			}
 
 			{
 				string field = "mainSourceTranscoderStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", Field: " + field;
+					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -158,30 +141,27 @@ void IntroOutroOverlay::encodeContent(
 					size_t endOfDirectoryIndex = mainSourceAssetPathName.find_last_of("/");
 					if (endOfDirectoryIndex != string::npos)
 					{
-						string directoryPathName = mainSourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
+						string directoryPathName = mainSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
+						_logger->info(
+							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
 						);
 						fs::create_directories(directoryPathName);
-						fs::permissions(directoryPathName,
-							fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
-							| fs::perms::group_read | fs::perms::group_exec
-							| fs::perms::others_read | fs::perms::others_exec,
-							fs::perm_options::replace);
+						fs::permissions(
+							directoryPathName,
+							fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_exec |
+								fs::perms::others_read | fs::perms::others_exec,
+							fs::perm_options::replace
+						);
 					}
 				}
 
 				field = "mainSourcePhysicalDeliveryURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", Field: " + field;
+					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -189,22 +169,17 @@ void IntroOutroOverlay::encodeContent(
 				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				mainSourceAssetPathName = downloadMediaFromMMS(
-					_ingestionJobKey,
-					_encodingJobKey,
-					_encoding->_ffmpeg,
-					mainSourceFileExtension,
-					mainSourcePhysicalDeliveryURL,
-					mainSourceAssetPathName);
+					_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, mainSourceFileExtension, mainSourcePhysicalDeliveryURL,
+					mainSourceAssetPathName
+				);
 			}
 
 			{
 				string field = "outroSourceTranscoderStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", Field: " + field;
+					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -215,30 +190,27 @@ void IntroOutroOverlay::encodeContent(
 					size_t endOfDirectoryIndex = outroSourceAssetPathName.find_last_of("/");
 					if (endOfDirectoryIndex != string::npos)
 					{
-						string directoryPathName = outroSourceAssetPathName.substr(
-							0, endOfDirectoryIndex);
+						string directoryPathName = outroSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(__FILEREF__ + "Creating directory"
-							+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-							+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-							+ ", directoryPathName: " + directoryPathName
+						_logger->info(
+							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
 						);
 						fs::create_directories(directoryPathName);
-						fs::permissions(directoryPathName,
-							fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
-							| fs::perms::group_read | fs::perms::group_exec
-							| fs::perms::others_read | fs::perms::others_exec,
-							fs::perm_options::replace);
+						fs::permissions(
+							directoryPathName,
+							fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_exec |
+								fs::perms::others_read | fs::perms::others_exec,
+							fs::perm_options::replace
+						);
 					}
 				}
 
 				field = "outroSourcePhysicalDeliveryURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", Field: " + field;
+					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 					_logger->error(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -246,21 +218,16 @@ void IntroOutroOverlay::encodeContent(
 				string outroSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				outroSourceAssetPathName = downloadMediaFromMMS(
-					_ingestionJobKey,
-					_encodingJobKey,
-					_encoding->_ffmpeg,
-					outroSourceFileExtension,
-					outroSourcePhysicalDeliveryURL,
-					outroSourceAssetPathName);
+					_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, outroSourceFileExtension, outroSourcePhysicalDeliveryURL,
+					outroSourceAssetPathName
+				);
 			}
 
 			string field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -271,20 +238,19 @@ void IntroOutroOverlay::encodeContent(
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
 				if (endOfDirectoryIndex != string::npos)
 				{
-					string directoryPathName = encodedStagingAssetPathName.substr(
-						0, endOfDirectoryIndex);
+					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(__FILEREF__ + "Creating directory"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", directoryPathName: " + directoryPathName
+					_logger->info(
+						__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+						", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
 					);
 					fs::create_directories(directoryPathName);
-					fs::permissions(directoryPathName,
-						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec
-						| fs::perms::group_read | fs::perms::group_exec
-						| fs::perms::others_read | fs::perms::others_exec,
-						fs::perm_options::replace);
+					fs::permissions(
+						directoryPathName,
+						fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_exec |
+							fs::perms::others_read | fs::perms::others_exec,
+						fs::perm_options::replace
+					);
 				}
 			}
 		}
@@ -293,10 +259,8 @@ void IntroOutroOverlay::encodeContent(
 			string field = "introSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -306,10 +270,8 @@ void IntroOutroOverlay::encodeContent(
 			field = "mainSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -319,10 +281,8 @@ void IntroOutroOverlay::encodeContent(
 			field = "outroSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -332,10 +292,8 @@ void IntroOutroOverlay::encodeContent(
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -343,19 +301,14 @@ void IntroOutroOverlay::encodeContent(
 			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
-		int64_t introSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"introSourceDurationInMilliSeconds", -1);                 
-		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"mainSourceDurationInMilliSeconds", -1);                 
-		int64_t outroSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot,
-			"outroSourceDurationInMilliSeconds", -1);                 
+		int64_t introSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "introSourceDurationInMilliSeconds", -1);
+		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "mainSourceDurationInMilliSeconds", -1);
+		int64_t outroSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "outroSourceDurationInMilliSeconds", -1);
 
-		int introOverlayDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot,
-			"introOverlayDurationInSeconds", -1);                 
-		int outroOverlayDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot,
-			"outroOverlayDurationInSeconds", -1);                 
-		bool muteIntroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteIntroOverlay", true);                 
-		bool muteOutroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteOutroOverlay", true);                 
+		int introOverlayDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot, "introOverlayDurationInSeconds", -1);
+		int outroOverlayDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot, "outroOverlayDurationInSeconds", -1);
+		bool muteIntroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteIntroOverlay", true);
+		bool muteOutroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteOutroOverlay", true);
 
 		// 2023-06-01: ho notato che il comando ffmpeg "accumula" lip-sync ed il problema è
 		//	evidente con video di durata >= 10min. Dipende anche tanto dalla codifica del sorgente,
@@ -367,8 +320,7 @@ void IntroOutroOverlay::encodeContent(
 		// le tre parti risultanti
 		int introOutroDurationInSeconds = 60;
 		if (mainSourceDurationInMilliSeconds >=
-			(introOverlayDurationInSeconds + introOutroDurationInSeconds
-			+ outroOverlayDurationInSeconds + introOutroDurationInSeconds) * 1000)
+			(introOverlayDurationInSeconds + introOutroDurationInSeconds + outroOverlayDurationInSeconds + introOutroDurationInSeconds) * 1000)
 		{
 			/*
 				E' necessario che l'ultimo chunk sia sufficientemente lungo per
@@ -389,7 +341,7 @@ void IntroOutroOverlay::encodeContent(
 			long selectedDistanceFromHalf = -1;
 			{
 				int candidateChunkPeriodInSeconds = introOutroDurationInSeconds;
-				for(int index = 0; index < 10; index++)
+				for (int index = 0; index < 10; index++)
 				{
 					long mod = mainSourceDurationInMilliSeconds % (candidateChunkPeriodInSeconds * 1000);
 					if (selectedDistanceFromHalf == -1)
@@ -402,13 +354,13 @@ void IntroOutroOverlay::encodeContent(
 						int64_t currentDistanceFromHalf = abs(mod - ((candidateChunkPeriodInSeconds * 1000) / 2));
 						if (currentDistanceFromHalf < selectedDistanceFromHalf)
 						{
-							_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds, changing period"
-								+ ", ingestionJobKey: " + to_string(_ingestionJobKey)
-								+ ", encodingJobKey: " + to_string(_encodingJobKey)
-								+ ", prev selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
-								+ ", new selectedChunkPeriodInSeconds: " + to_string(candidateChunkPeriodInSeconds)
-								+ ", prev selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
-								+ ", new selectedDistanceFromHalf: " + to_string(currentDistanceFromHalf)
+							_logger->info(
+								__FILEREF__ + "selectedChunkPeriodInSeconds, changing period" + ", ingestionJobKey: " + to_string(_ingestionJobKey) +
+								", encodingJobKey: " + to_string(_encodingJobKey) +
+								", prev selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds) +
+								", new selectedChunkPeriodInSeconds: " + to_string(candidateChunkPeriodInSeconds) +
+								", prev selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf) +
+								", new selectedDistanceFromHalf: " + to_string(currentDistanceFromHalf)
 							);
 
 							selectedDistanceFromHalf = currentDistanceFromHalf;
@@ -419,28 +371,25 @@ void IntroOutroOverlay::encodeContent(
 					candidateChunkPeriodInSeconds++;
 				}
 			}
-			_logger->info(__FILEREF__ + "selectedChunkPeriodInSeconds"
-				+ ", ingestionJobKey: " + to_string(_ingestionJobKey)
-				+ ", encodingJobKey: " + to_string(_encodingJobKey)
-				+ ", mainSourceDurationInMilliSeconds: " + to_string(mainSourceDurationInMilliSeconds)
-				+ ", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds)
-				+ ", selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
+			_logger->info(
+				__FILEREF__ + "selectedChunkPeriodInSeconds" + ", ingestionJobKey: " + to_string(_ingestionJobKey) + ", encodingJobKey: " +
+				to_string(_encodingJobKey) + ", mainSourceDurationInMilliSeconds: " + to_string(mainSourceDurationInMilliSeconds) +
+				", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds) +
+				", selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
 			);
 
 			// implementazione che utilizza lo split del video
 			string stagingBasePath;
 
 			// ci serve un path dello staging locale al transcoder.
-			// Utilizziamo solo il path di encodedTranscoderStagingAssetPathName che 
+			// Utilizziamo solo il path di encodedTranscoderStagingAssetPathName che
 			// sarebbe il path locale dell'asset path name in caso di transcoder remoto
 			// In questa directory creiamo una sottodirectory perchè avremo tanti files
 			string field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -450,10 +399,9 @@ void IntroOutroOverlay::encodeContent(
 			size_t endOfDirectoryIndex = encodedTranscoderStagingAssetPathName.find_last_of("/");
 			if (endOfDirectoryIndex == string::npos)
 			{
-				string errorMessage = __FILEREF__ + "encodedTranscoderStagingAssetPathName is not well formed"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", encodedTranscoderStagingAssetPathName: " + encodedTranscoderStagingAssetPathName;
+				string errorMessage = __FILEREF__ + "encodedTranscoderStagingAssetPathName is not well formed" +
+									  ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey) +
+									  ", encodedTranscoderStagingAssetPathName: " + encodedTranscoderStagingAssetPathName;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -467,11 +415,8 @@ void IntroOutroOverlay::encodeContent(
 			{
 				string chunkBaseFileName = "sourceChunk";
 				_encoding->_ffmpeg->splitVideoInChunks(
-					_ingestionJobKey,
-					mainSourceAssetPathName,
-					selectedChunkPeriodInSeconds,
-					stagingBasePath,
-					chunkBaseFileName);
+					_ingestionJobKey, mainSourceAssetPathName, selectedChunkPeriodInSeconds, stagingBasePath, chunkBaseFileName
+				);
 
 				string destFileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
 
@@ -479,17 +424,15 @@ void IntroOutroOverlay::encodeContent(
 
 				bool filesAreFinished = false;
 				int currentFileIndex = 0;
-				while(!filesAreFinished)
+				while (!filesAreFinished)
 				{
-					char currentCounter [64];
-					sprintf (currentCounter, "%04d", currentFileIndex);
-					string currentFile = stagingBasePath + "/" + chunkBaseFileName
-						+ "_" + currentCounter + mainSourceFileExtension;
+					char currentCounter[64];
+					sprintf(currentCounter, "%04d", currentFileIndex);
+					string currentFile = stagingBasePath + "/" + chunkBaseFileName + "_" + currentCounter + mainSourceFileExtension;
 
-					char nextCounter [64];
-					sprintf (nextCounter, "%04d", currentFileIndex + 1);
-					string nextFile = stagingBasePath + "/" + chunkBaseFileName
-						+ "_" + nextCounter + mainSourceFileExtension;
+					char nextCounter[64];
+					sprintf(nextCounter, "%04d", currentFileIndex + 1);
+					string nextFile = stagingBasePath + "/" + chunkBaseFileName + "_" + nextCounter + mainSourceFileExtension;
 
 					// il file sorgente è piu lungo di 2 volte il periodo (introOutroDurationInSeconds)
 					// Per cui sappiamo sicuramente che abbiamo almeno due chunks
@@ -504,37 +447,30 @@ void IntroOutroOverlay::encodeContent(
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 								tuple<int64_t, long, json> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
-									true,	// isMMSAssetPathName
-									-1,		// timeoutInSeconds,		// used only in case of URL
-									currentFile,
-									videoTracks,
-									audioTracks);
+									true, // isMMSAssetPathName
+									-1,	  // timeoutInSeconds,		// used only in case of URL
+									currentFile, videoTracks, audioTracks
+								);
 								tie(currentFileDurationInMilliSeconds, ignore, ignore) = mediaInfo;
 							}
-							string introPathName = stagingBasePath + "/" + "destChunk"
-								+ "_" + currentCounter + "." + destFileFormat;
+							string introPathName = stagingBasePath + "/" + "destChunk" + "_" + currentCounter + "." + destFileFormat;
 							concatSourcePhysicalPaths.push_back(introPathName);
 							_encoding->_ffmpeg->introOverlay(
-								introSourceAssetPathName, introSourceDurationInMilliSeconds,
-								currentFile, currentFileDurationInMilliSeconds,
+								introSourceAssetPathName, introSourceDurationInMilliSeconds, currentFile, currentFileDurationInMilliSeconds,
 
-								introOverlayDurationInSeconds,
-								muteIntroOverlay,
+								introOverlayDurationInSeconds, muteIntroOverlay,
 
 								encodingProfileDetailsRoot,
 
 								introPathName,
 
-								_encodingJobKey,
-								_ingestionJobKey,
-								&(_encoding->_childPid));
+								_encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+							);
 						}
 						else
 						{
-							string errorMessage = __FILEREF__ + "chunk file is not present"
-								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-								+ ", currentFile: " + currentFile;
+							string errorMessage = __FILEREF__ + "chunk file is not present" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+												  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", currentFile: " + currentFile;
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
@@ -551,37 +487,30 @@ void IntroOutroOverlay::encodeContent(
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 								tuple<int64_t, long, json> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
-									true,	// isMMSAssetPathName
-									-1,		// timeoutInSeconds,		// used only in case of URL
-									currentFile,
-									videoTracks,
-									audioTracks);
+									true, // isMMSAssetPathName
+									-1,	  // timeoutInSeconds,		// used only in case of URL
+									currentFile, videoTracks, audioTracks
+								);
 								tie(currentFileDurationInMilliSeconds, ignore, ignore) = mediaInfo;
 							}
-							string outroPathName = stagingBasePath + "/" + "destChunk"
-								+ "_" + currentCounter + "." + destFileFormat;
+							string outroPathName = stagingBasePath + "/" + "destChunk" + "_" + currentCounter + "." + destFileFormat;
 							concatSourcePhysicalPaths.push_back(outroPathName);
 							_encoding->_ffmpeg->outroOverlay(
-								currentFile, currentFileDurationInMilliSeconds,
-								outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
+								currentFile, currentFileDurationInMilliSeconds, outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
 
-								outroOverlayDurationInSeconds,
-								muteOutroOverlay,
+								outroOverlayDurationInSeconds, muteOutroOverlay,
 
 								encodingProfileDetailsRoot,
 
 								outroPathName,
 
-								_encodingJobKey,
-								_ingestionJobKey,
-								&(_encoding->_childPid));
+								_encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+							);
 						}
 						else
 						{
-							string errorMessage = __FILEREF__ + "chunk file is not present"
-								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-								+ ", currentFile: " + currentFile;
+							string errorMessage = __FILEREF__ + "chunk file is not present" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+												  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", currentFile: " + currentFile;
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
@@ -600,33 +529,23 @@ void IntroOutroOverlay::encodeContent(
 								vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 								tuple<int64_t, long, json> mediaInfo = _encoding->_ffmpeg->getMediaInfo(
 									_ingestionJobKey,
-									true,	// isMMSAssetPathName
-									-1,		// timeoutInSeconds,		// used only in case of URL
-									currentFile,
-									videoTracks,
-									audioTracks);
+									true, // isMMSAssetPathName
+									-1,	  // timeoutInSeconds,		// used only in case of URL
+									currentFile, videoTracks, audioTracks
+								);
 								tie(currentFileDurationInMilliSeconds, ignore, ignore) = mediaInfo;
 							}
-							string encodedPathName = stagingBasePath + "/" + "destChunk"
-								+ "_" + currentCounter + "." + destFileFormat;
+							string encodedPathName = stagingBasePath + "/" + "destChunk" + "_" + currentCounter + "." + destFileFormat;
 							concatSourcePhysicalPaths.push_back(encodedPathName);
 							_encoding->_ffmpeg->encodeContent(
-								currentFile, currentFileDurationInMilliSeconds,
-								encodedPathName,
-								encodingProfileDetailsRoot,
-								true,
-								nullptr, nullptr,
-								-1, -1,
-								nullptr,
-								-1, _encodingJobKey, _ingestionJobKey,
-								&(_encoding->_childPid));
+								currentFile, currentFileDurationInMilliSeconds, encodedPathName, encodingProfileDetailsRoot, true, nullptr, nullptr,
+								-1, -1, nullptr, -1, _encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+							);
 						}
 						else
 						{
-							string errorMessage = __FILEREF__ + "chunk file is not present"
-								+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-								+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-								+ ", currentFile: " + currentFile;
+							string errorMessage = __FILEREF__ + "chunk file is not present" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+												  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", currentFile: " + currentFile;
 							_logger->error(errorMessage);
 
 							throw runtime_error(errorMessage);
@@ -636,33 +555,26 @@ void IntroOutroOverlay::encodeContent(
 					currentFileIndex++;
 				}
 
-				_encoding->_ffmpeg->concat(
-					_ingestionJobKey,
-					true,
-					concatSourcePhysicalPaths,
-					encodedStagingAssetPathName);
+				_encoding->_ffmpeg->concat(_ingestionJobKey, true, concatSourcePhysicalPaths, encodedStagingAssetPathName);
 
-				_logger->info(__FILEREF__ + "removing temporary directory"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", stagingBasePath: " + stagingBasePath
+				_logger->info(
+					__FILEREF__ + "removing temporary directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+					", _encodingJobKey: " + to_string(_encodingJobKey) + ", stagingBasePath: " + stagingBasePath
 				);
 				fs::remove_all(stagingBasePath);
 			}
-			catch(runtime_error& e)
+			catch (runtime_error &e)
 			{
-				_logger->error(__FILEREF__ + "Intro outro procedure failed"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", e.what(): " + e.what()
+				_logger->error(
+					__FILEREF__ + "Intro outro procedure failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+					", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
 				);
 
 				if (fs::exists(stagingBasePath))
 				{
-					_logger->info(__FILEREF__ + "removing temporary directory"
-						+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-						+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-						+ ", stagingBasePath: " + stagingBasePath
+					_logger->info(
+						__FILEREF__ + "removing temporary directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+						", _encodingJobKey: " + to_string(_encodingJobKey) + ", stagingBasePath: " + stagingBasePath
 					);
 					fs::remove_all(stagingBasePath);
 				}
@@ -674,7 +586,7 @@ void IntroOutroOverlay::encodeContent(
 			string stagingBasePath;
 
 			// ci serve un path dello staging locale al transcoder.
-			// Utilizziamo solo il path di encodedTranscoderStagingAssetPathName che 
+			// Utilizziamo solo il path di encodedTranscoderStagingAssetPathName che
 			// sarebbe il path locale dell'asset path name in caso di transcoder remoto
 			string field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
@@ -889,83 +801,66 @@ void IntroOutroOverlay::encodeContent(
 		else
 		{
 			_encoding->_ffmpeg->introOutroOverlay(
-				introSourceAssetPathName, introSourceDurationInMilliSeconds,
-				mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
+				introSourceAssetPathName, introSourceDurationInMilliSeconds, mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
 				outroSourceAssetPathName, outroSourceDurationInMilliSeconds,
 
-				introOverlayDurationInSeconds, outroOverlayDurationInSeconds,
-				muteIntroOverlay, muteOutroOverlay,
+				introOverlayDurationInSeconds, outroOverlayDurationInSeconds, muteIntroOverlay, muteOutroOverlay,
 
 				encodingProfileDetailsRoot,
 
 				encodedStagingAssetPathName,
 
-				_encodingJobKey,
-				_ingestionJobKey,
-				&(_encoding->_childPid));
+				_encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+			);
 		}
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
 
-        _logger->info(__FILEREF__ + "introOutroOverlay encoding content finished"
-            + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-            + ", _encodingJobKey: " + to_string(_encodingJobKey)
-            + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
-        );
+		_logger->info(
+			__FILEREF__ + "introOutroOverlay encoding content finished" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+			", _encodingJobKey: " + to_string(_encodingJobKey) + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+		);
 
 		if (externalEncoder)
 		{
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", introSourceAssetPathName: " + introSourceAssetPathName
+				_logger->info(
+					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+					", _encodingJobKey: " + to_string(_encodingJobKey) + ", introSourceAssetPathName: " + introSourceAssetPathName
 				);
 
 				fs::remove_all(introSourceAssetPathName);
 			}
 
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", mainSourceAssetPathName: " + mainSourceAssetPathName
+				_logger->info(
+					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+					", _encodingJobKey: " + to_string(_encodingJobKey) + ", mainSourceAssetPathName: " + mainSourceAssetPathName
 				);
 
 				fs::remove_all(mainSourceAssetPathName);
 			}
 
 			{
-				_logger->info(__FILEREF__ + "Remove file"
-					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-					+ ", outroSourceAssetPathName: " + outroSourceAssetPathName
+				_logger->info(
+					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
+					", _encodingJobKey: " + to_string(_encodingJobKey) + ", outroSourceAssetPathName: " + outroSourceAssetPathName
 				);
 
 				fs::remove_all(outroSourceAssetPathName);
 			}
 
-			string workflowLabel =
-				JSONUtils::asString(ingestedParametersRoot, "title", "")
-				+ " (add introOutroOverlay from external transcoder)"
-			;
+			string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add introOutroOverlay from external transcoder)";
 
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot,
-				"encodingProfileKey", -1);
+			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
 
 			// string encodingProfileFileFormat =
 			// 	JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
 
 			uploadLocalMediaToMMS(
-				_ingestionJobKey,
-				_encodingJobKey,
-				ingestedParametersRoot,
-				encodingProfileDetailsRoot,
-				encodingParametersRoot,
-				mainSourceFileExtension,
-				encodedStagingAssetPathName,
-				workflowLabel,
-				"External Transcoder",	// ingester
+				_ingestionJobKey, _encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
+				mainSourceFileExtension, encodedStagingAssetPathName, workflowLabel,
+				"External Transcoder", // ingester
 				// 2023-04-21: Il file generato da introOutroOverlay ha un payload generato dall'encodingProfileKey,
 				//	pero', nello stesso tempo, ha un fileFormat dato dal mainSource (vedi come viene costruito
 				//	l'encodedFileName in MMSEngineService.cpp).
@@ -977,82 +872,66 @@ void IntroOutroOverlay::encodeContent(
 				encodingProfileKey
 			);
 		}
-    }
-	catch(FFMpegEncodingKilledByUser& e)
+	}
+	catch (FFMpegEncodingKilledByUser &e)
 	{
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
 		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (EncodingKilledByUser)"
-			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + JSONUtils::toString(metadataRoot)
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(
+			"{} API failed (EncodingKilledByUser)"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+		);
 
 		// used by FFMPEGEncoderTask
-		_killedByUser			= true;
+		_killedByUser = true;
 
 		throw e;
-    }
-    catch(runtime_error& e)
-    {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
+	}
+	catch (runtime_error &e)
+	{
 		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (runtime_error)"
-			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + JSONUtils::toString(metadataRoot)
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"{} API failed (runtime_error)"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_encoding->_errorMessage = errorMessage;
-		_completedWithError			= true;
+		_completedWithError = true;
 
 		throw e;
-    }
-    catch(exception& e)
-    {
-		char strDateTime [64];
-		{
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-			tm tmDateTime;
-			localtime_r (&utcTime, &tmDateTime);
-			sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-				tmDateTime. tm_year + 1900, tmDateTime. tm_mon + 1, tmDateTime. tm_mday,
-				tmDateTime. tm_hour, tmDateTime. tm_min, tmDateTime. tm_sec);
-		}
+	}
+	catch (exception &e)
+	{
 		string eWhat = e.what();
-        string errorMessage = string(strDateTime) + " API failed (exception)"
-			+ ", _encodingJobKey: " + to_string(_encodingJobKey)
-            + ", API: " + api
-            + ", requestBody: " + JSONUtils::toString(metadataRoot)
-            + ", e.what(): " + (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-        ;
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"{} API failed (exception)"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_encoding->_errorMessage = errorMessage;
-		_completedWithError			= true;
+		_completedWithError = true;
 
 		throw e;
-    }
+	}
 }
