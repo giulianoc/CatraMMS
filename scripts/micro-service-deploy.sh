@@ -2,7 +2,7 @@
 
 if [ $# -ne 1 -a $# -ne 2 ]
 then
-        echo "Usage $0 micro-service-name (i.e.: cibortv, catrammswebservices) conf in case of catrammswebservices (<empty>, cibortv, prod, test)"
+        echo "Usage $0 micro-service-name (i.e.: cibortv, catrammswebservices) conf in case of catrammswebservices (<empty>, prod, test)"
 
         exit
 fi
@@ -39,11 +39,11 @@ if [[ "$conf" == *"test"* ]]; then
 		echo "application-test.yml is used"
 		cp ./src/main/resources/application-test.yml ./src/main/resources/application.yml
 	fi
-elif [[ "$conf" == *"cibortv"* ]]; then
-	if [ -f "./src/main/resources/application-cibortv.yml" ]; then
-		echo "application-cibortv.yml is used"
-		cp ./src/main/resources/application-cibortv.yml ./src/main/resources/application.yml
-	fi
+#elif [[ "$conf" == *"cibortv"* ]]; then
+#	if [ -f "./src/main/resources/application-cibortv.yml" ]; then
+#		echo "application-cibortv.yml is used"
+#		cp ./src/main/resources/application-cibortv.yml ./src/main/resources/application.yml
+#	fi
 elif [[ "$conf" == *"prod"* ]]; then
 	if [ -f "./src/main/resources/application-prod.yml" ]; then
 		echo "application-prod.yml is used"

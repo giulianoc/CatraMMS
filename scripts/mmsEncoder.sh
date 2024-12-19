@@ -65,6 +65,7 @@ elif [ "$command" == "status" ]
 then
 	ps -ef | grep ffmpeg | grep -v grep
 	ps -ef | grep "ffmpegEncoder.fcgi" | grep -v grep | grep -v status
+	ps -ef | grep dvblast | grep -v grep
 elif [ "$command" == "stop" ]
 then
 	#sleepIfNeeded

@@ -301,6 +301,11 @@ cpu_usage()
 	maxCpuUsage=75.0
 
 	cpuUsage=$(cat /proc/stat | grep "cpu " | awk '{ printf("%.2f", 100-(($5*100)/($2+$3+$4+$5+$6+$7+$8+$9+$10))); }')
+	if [[ $cpuUsage == *","* ]]; then
+		#se il sistema operativo è stato istallato in italiano, i decimali sono separati da una virgola e non dal punto
+		#La prossima istruzione rimpiazza la virgola con il punto
+		cpuUsage=$(echo "$cpuUsage" | sed -r 's/,/\./g');
+	fi
 	result=$(echo "${cpuUsage}<${maxCpuUsage}" | bc)                                                                   
 	if [ $result = 1 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_cpu_usage, cpu usage is fine: $cpuUsage" >> $debugFilename
@@ -323,6 +328,11 @@ memory_usage()
 	maxMemoryUsage=60.0
 
 	memoryUsage=$(free -m | awk '{if (NR==2)printf("%.2f", $3*100/$2)}')
+	if [[ $memoryUsage == *","* ]]; then
+		#se il sistema operativo è stato istallato in italiano, i decimali sono separati da una virgola e non dal punto
+		#La prossima istruzione rimpiazza la virgola con il punto
+		memoryUsage=$(echo "$memoryUsage" | sed -r 's/,/\./g');
+	fi
 	result=$(echo "${memoryUsage}<${maxMemoryUsage}" | bc)                                                                   
 	if [ $result = 1 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_memory_usage, memory usage is fine: $memoryUsage" >> $debugFilename

@@ -5,6 +5,7 @@
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/spdlog.h"
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -863,9 +864,12 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 
 		if (!fs::exists(_tvChannelConfigurationDirectory))
 		{
-			_logger->info(
-				__FILEREF__ + "createOrUpdateTVDvbLastConfigurationFile. Create directory" + ", _ingestionJobKey: " + to_string(ingestionJobKey) +
-				", _encodingJobKey: " + to_string(encodingJobKey) + ", _tvChannelConfigurationDirectory: " + _tvChannelConfigurationDirectory
+			SPDLOG_INFO(
+				"createOrUpdateTVDvbLastConfigurationFile. Create directory"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", _tvChannelConfigurationDirectory: {}",
+				ingestionJobKey, encodingJobKey, _tvChannelConfigurationDirectory
 			);
 
 			fs::create_directories(_tvChannelConfigurationDirectory);

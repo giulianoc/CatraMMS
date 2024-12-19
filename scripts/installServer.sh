@@ -599,6 +599,9 @@ create-directory()
 		chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
 		chown -R mms:mms /mnt/local-data/cache
 
+		mkdir -p /var/catramms/tv
+		chown -R mms:mms /var/catramms/tv
+
 		#link comodo per avere accesso ai file di log di ffmpeg
 		ln -s /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg /home/mms/
 
@@ -1103,6 +1106,9 @@ firewall-rules()
 		ufw allow from 116.202.81.159 to any port 8088 #engine-db-3
 		ufw allow from 5.9.81.10 to any port 8088 #engine-db-5
 
+		echo "In case of a terrestrial/satellite solution, remember to add the rule"
+		echo "ufw allow from 192.168.1.249 to 239.255.1.1"
+		read
 		#this allows multicast (terrestrial/satellite solution)
 		#ufw allow out proto udp to 224.0.0.0/3
 		#ufw allow out proto udp to ff00::/8
