@@ -1210,6 +1210,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 			double realTimeBitRate;
 			long lastNumberOfRestartBecauseOfFailure = 0;
 			long numberOfRestartBecauseOfFailure;
+			string lastEncodingErrorMessage;
 
 			SPDLOG_INFO(
 				"starting loop"
@@ -1256,10 +1257,12 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 						", encodingFinished: {}"
 						", killedByUser: {}"
 						", completedWithError: {}"
+						", encodingErrorMessage: {}"
 						", urlForbidden: {}"
 						", urlNotFound: {}",
 						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors,
-						maxAttemptsNumberInCaseOfErrors, encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound
+						maxAttemptsNumberInCaseOfErrors, encodingFinished, killedByUser, completedWithError, encodingErrorMessage, urlForbidden,
+						urlNotFound
 					);
 				}
 				catch (EncoderNotReachable &e)
@@ -1384,7 +1387,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 						}
 					}
 
-					if (encodingErrorMessage != "")
+					if (encodingErrorMessage != "" && encodingErrorMessage != lastEncodingErrorMessage)
 					{
 						SPDLOG_ERROR(
 							"Encoding failed (look the Transcoder logs)"
@@ -1409,6 +1412,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					}
+					lastEncodingErrorMessage = encodingErrorMessage;
 
 					// update currentAttemptsNumberInCaseOfErrors++
 					{
