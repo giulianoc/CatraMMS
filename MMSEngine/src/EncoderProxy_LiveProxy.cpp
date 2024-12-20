@@ -1224,6 +1224,14 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 				_maxEncoderNotReachableFailures, currentAttemptsNumberInCaseOfErrors, maxAttemptsNumberInCaseOfErrors
 			);
 
+			/*
+			 Questo loop server per gestire e controllare l'encoding running nell'Encoder.
+			 La condizione di uscita quindi dovrebbe basarsi solamente su encodingFinished ma ci sono dei casi come
+			 ad esempio 'EncoderNotReachable' in cui è bene aspettare un po prima di abbandonare l'encoding per
+			 essere sicuri che l'encoding sia effettivamente terminato nell'Encoder.
+			 Non vogliamo quindi abbandonare l'encoding ed eventualmente attivare un nuovo encoding su un'altro
+			 Encoder se non siamo sicurissimi che l'encoding attuale sia terminato.
+			*/
 			while (!(encodingFinished || encoderNotReachableFailures >= _maxEncoderNotReachableFailures))
 			{
 				SPDLOG_INFO(
@@ -1253,254 +1261,6 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors,
 						maxAttemptsNumberInCaseOfErrors, encodingFinished, killedByUser, completedWithError, urlForbidden, urlNotFound
 					);
-
-					// resetto encoderNotReachableFailures a 0. Continue 'exception' incrementano questa variabile
-					// ma la prima volta in cui non abbiamo l'exception viene resettata a 0
-					encoderNotReachableFailures = 0;
-
-					// update encodingProgress/encodingPid/real time info
-					{
-						if (timePeriod)
-						{
-							time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
-
-							double encodingProgress;
-
-							if (utcNow < utcProxyPeriodStart)
-								encodingProgress = 0.0;
-							else if (utcProxyPeriodStart < utcNow && utcNow < utcProxyPeriodEnd)
-							{
-								double elapsed = utcNow - utcProxyPeriodStart;
-								double proxyPeriod = utcProxyPeriodEnd - utcProxyPeriodStart;
-								encodingProgress = (elapsed * 100) / proxyPeriod;
-							}
-							else
-								encodingProgress = 100.0;
-
-							try
-							{
-								SPDLOG_INFO(
-									"updateEncodingJobProgress"
-									", ingestionJobKey: {}"
-									", encodingJobKey: {}"
-									", encodingProgress: {}"
-									", utcProxyPeriodStart: {}"
-									", utcNow: {}"
-									", utcProxyPeriodEnd: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingProgress, utcProxyPeriodStart, utcNow,
-									utcProxyPeriodEnd
-								);
-								_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, encodingProgress);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									"updateEncodingJobProgress failed"
-									", _ingestionJobKey: {}"
-									", _encodingJobKey: {}"
-									", encodingProgress: {}"
-									", e.what(): {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingProgress, e.what()
-								);
-							}
-							catch (exception &e)
-							{
-								SPDLOG_ERROR(
-									"updateEncodingJobProgress failed"
-									", _ingestionJobKey: {}"
-									", _encodingJobKey: {}"
-									", encodingProgress: {}"
-									", e.what(): {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingProgress, e.what()
-								);
-							}
-						}
-
-						if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate ||
-							lastNumberOfRestartBecauseOfFailure != numberOfRestartBecauseOfFailure)
-						{
-							try
-							{
-								SPDLOG_INFO(
-									"updateEncodingRealTimeInfo"
-									", ingestionJobKey: {}"
-									", encodingJobKey: {}"
-									", encodingPid: {}"
-									", realTimeFrameRate: {}"
-									", realTimeBitRate: {}"
-									", numberOfRestartBecauseOfFailure: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
-									numberOfRestartBecauseOfFailure
-								);
-								_mmsEngineDBFacade->updateEncodingRealTimeInfo(
-									_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure
-								);
-
-								lastEncodingPid = encodingPid;
-								lastRealTimeFrameRate = realTimeFrameRate;
-								lastRealTimeBitRate = realTimeBitRate;
-								lastNumberOfRestartBecauseOfFailure = numberOfRestartBecauseOfFailure;
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									"updateEncodingRealTimeInfo failed"
-									", ingestionJobKey: {}"
-									", encodingJobKey: {}"
-									", encodingPid: {}"
-									", realTimeFrameRate: {}"
-									", realTimeBitRate: {}"
-									", numberOfRestartBecauseOfFailure: {}"
-									", e.what: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
-									numberOfRestartBecauseOfFailure, e.what()
-								);
-							}
-							catch (exception &e)
-							{
-								SPDLOG_ERROR(
-									"updateEncodingRealTimeInfo failed"
-									", ingestionJobKey: {}"
-									", encodingJobKey: {}"
-									", encodingPid: {}"
-									", realTimeFrameRate: {}"
-									", realTimeBitRate: {}"
-									", numberOfRestartBecauseOfFailure: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
-									numberOfRestartBecauseOfFailure
-								);
-							}
-						}
-						else
-						{
-							SPDLOG_INFO(
-								"encoderPid/bitrate/framerate check, not changed"
-								", ingestionJobKey: {}"
-								", encodingJobKey: {}"
-								", encodingPid: {}"
-								", realTimeFrameRate: {}"
-								", realTimeBitRate: {}"
-								", numberOfRestartBecauseOfFailure: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
-								numberOfRestartBecauseOfFailure
-							);
-						}
-					}
-
-					if (encodingErrorMessage != "")
-					{
-						try
-						{
-							SPDLOG_ERROR(
-								"Encoding failed (look the Transcoder logs)"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", _currentUsedFFMpegEncoderHost: {}"
-								", encodingErrorMessage: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, encodingErrorMessage
-							);
-
-							string firstLineOfEncodingErrorMessage;
-							{
-								string firstLine;
-								stringstream ss(encodingErrorMessage);
-								if (getline(ss, firstLine))
-									firstLineOfEncodingErrorMessage = firstLine;
-								else
-									firstLineOfEncodingErrorMessage = encodingErrorMessage;
-							}
-
-							_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
-						}
-						catch (runtime_error &e)
-						{
-							_logger->error(
-								__FILEREF__ + "appendIngestionJobErrorMessage failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-							);
-						}
-						catch (exception &e)
-						{
-							_logger->error(
-								__FILEREF__ + "appendIngestionJobErrorMessage failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-							);
-						}
-					}
-
-					// update currentAttemptsNumberInCaseOfErrors++
-					{
-						if (completedWithError)
-							currentAttemptsNumberInCaseOfErrors++;
-						else
-							// ffmpeg is running successful, we will make sure currentAttemptsNumberInCaseOfErrors is reset
-							currentAttemptsNumberInCaseOfErrors = 0;
-
-						try
-						{
-							// update EncodingJob failures number to notify the GUI encodingJob is successful
-
-							SPDLOG_INFO(
-								"updateEncodingJobFailuresNumber"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", currentAttemptsNumberInCaseOfErrors: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
-							);
-
-							int64_t mediaItemKey = -1;
-							int64_t encodedPhysicalPathKey = -1;
-							_mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
-						}
-						catch (...)
-						{
-							SPDLOG_ERROR(
-								"updateEncodingJobFailuresNumber failed"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
-							);
-						}
-					}
-
-					if (!killedByUser)
-					{
-						// secondo l'encoder l'encoding non è stato killato. Eseguo per essere sicuro anche
-						// una verifica recuperando lo stato dell'IngestionJob
-						string ingestionStatus = MMSEngineDBFacade::toString(
-							_mmsEngineDBFacade->ingestionJob_Status(_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, true)
-						);
-						if (ingestionStatus.starts_with("End_"))
-						{
-							SPDLOG_INFO(
-								"getEncodingStatus killedByUser is false but the ingestionJob is terminated"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", killedByUser: {}"
-								", ingestionStatus: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, killedByUser, ingestionStatus
-							);
-							killedByUser = true;
-						}
-					}
-					if (!encodingFinished && killedByUser)
-						encodingFinished = true;
-
-					if (!encodingFinished && (urlForbidden || urlNotFound))
-					{
-						SPDLOG_ERROR(
-							"Encoding failed because of URL Forbidden or Not Found (look the Transcoder logs)"
-							", _ingestionJobKey: {}"
-							", _encodingJobKey: {}"
-							", _currentUsedFFMpegEncoderHost: {}"
-							", encodingErrorMessage: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, encodingErrorMessage
-						);
-
-						// è inutile rimanere in questo loop
-						encodingFinished = true;
-					}
 				}
 				catch (EncoderNotReachable &e)
 				{
@@ -1524,6 +1284,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encoderNotReachableFailures, _maxEncoderNotReachableFailures,
 						_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey
 					);
+
+					continue;
 				}
 				catch (...)
 				{
@@ -1539,6 +1301,192 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 						", _currentUsedFFMpegEncoderKey: {}",
 						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encoderNotReachableFailures, _maxEncoderNotReachableFailures,
 						_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey
+					);
+
+					continue;
+				}
+
+				try
+				{
+					// resetto encoderNotReachableFailures a 0. Continue 'exception' incrementano questa variabile
+					// ma la prima volta in cui non abbiamo l'exception viene resettata a 0
+					encoderNotReachableFailures = 0;
+
+					// update encodingProgress/encodingPid/real time info
+					{
+						if (timePeriod)
+						{
+							time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
+
+							double encodingProgress;
+
+							if (utcNow < utcProxyPeriodStart)
+								encodingProgress = 0.0;
+							else if (utcProxyPeriodStart < utcNow && utcNow < utcProxyPeriodEnd)
+							{
+								double elapsed = utcNow - utcProxyPeriodStart;
+								double proxyPeriod = utcProxyPeriodEnd - utcProxyPeriodStart;
+								encodingProgress = (elapsed * 100) / proxyPeriod;
+							}
+							else
+								encodingProgress = 100.0;
+
+							SPDLOG_INFO(
+								"updateEncodingJobProgress"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", encodingProgress: {}"
+								", utcProxyPeriodStart: {}"
+								", utcNow: {}"
+								", utcProxyPeriodEnd: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingProgress, utcProxyPeriodStart, utcNow,
+								utcProxyPeriodEnd
+							);
+							_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, encodingProgress);
+						}
+
+						if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate ||
+							lastNumberOfRestartBecauseOfFailure != numberOfRestartBecauseOfFailure)
+						{
+							SPDLOG_INFO(
+								"updateEncodingRealTimeInfo"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", encodingPid: {}"
+								", realTimeFrameRate: {}"
+								", realTimeBitRate: {}"
+								", numberOfRestartBecauseOfFailure: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+								numberOfRestartBecauseOfFailure
+							);
+							_mmsEngineDBFacade->updateEncodingRealTimeInfo(
+								_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure
+							);
+
+							lastEncodingPid = encodingPid;
+							lastRealTimeFrameRate = realTimeFrameRate;
+							lastRealTimeBitRate = realTimeBitRate;
+							lastNumberOfRestartBecauseOfFailure = numberOfRestartBecauseOfFailure;
+						}
+						else
+						{
+							SPDLOG_INFO(
+								"encoderPid/bitrate/framerate check, not changed"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", encodingPid: {}"
+								", realTimeFrameRate: {}"
+								", realTimeBitRate: {}"
+								", numberOfRestartBecauseOfFailure: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+								numberOfRestartBecauseOfFailure
+							);
+						}
+					}
+
+					if (encodingErrorMessage != "")
+					{
+						SPDLOG_ERROR(
+							"Encoding failed (look the Transcoder logs)"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", _currentUsedFFMpegEncoderHost: {}"
+							", completedWithError: {}"
+							", encodingErrorMessage: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, completedWithError,
+							encodingErrorMessage
+						);
+
+						string firstLineOfEncodingErrorMessage;
+						{
+							string firstLine;
+							stringstream ss(encodingErrorMessage);
+							if (getline(ss, firstLine))
+								firstLineOfEncodingErrorMessage = firstLine;
+							else
+								firstLineOfEncodingErrorMessage = encodingErrorMessage;
+						}
+
+						_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
+					}
+
+					// update currentAttemptsNumberInCaseOfErrors++
+					{
+						if (completedWithError)
+							currentAttemptsNumberInCaseOfErrors++;
+						else
+							// ffmpeg is running successful, we will make sure currentAttemptsNumberInCaseOfErrors is reset
+							currentAttemptsNumberInCaseOfErrors = 0;
+
+						// update EncodingJob failures number to notify the GUI encodingJob is successful
+
+						SPDLOG_INFO(
+							"updateEncodingJobFailuresNumber"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", currentAttemptsNumberInCaseOfErrors: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
+						);
+
+						int64_t mediaItemKey = -1;
+						int64_t encodedPhysicalPathKey = -1;
+						_mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
+					}
+
+					if (!killedByUser)
+					{
+						// secondo l'encoder l'encoding non è stato killato. Eseguo per essere sicuro anche
+						// una verifica recuperando lo stato dell'IngestionJob
+						string ingestionStatus = MMSEngineDBFacade::toString(
+							_mmsEngineDBFacade->ingestionJob_Status(_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, true)
+						);
+						if (ingestionStatus.starts_with("End_"))
+						{
+							SPDLOG_INFO(
+								"getEncodingStatus killedByUser is false but the ingestionJob is terminated"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", killedByUser: {}"
+								", ingestionStatus: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, killedByUser, ingestionStatus
+							);
+							encodingFinished = true;
+							killedByUser = true;
+						}
+					}
+					if (!encodingFinished && (killedByUser || urlForbidden || urlNotFound))
+						SPDLOG_ERROR(
+							"Encoding was killedByUser or urlForbidden or urlNotFound but encodingFinished is false!!!"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", _currentUsedFFMpegEncoderHost: {}"
+							", killedByUser: {}"
+							", urlForbidden: {}"
+							", urlNotFound: {}"
+							", completedWithError: {}"
+							", encodingErrorMessage: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, killedByUser,
+							urlForbidden, urlNotFound, completedWithError, encodingErrorMessage
+						);
+				}
+				catch (runtime_error &e)
+				{
+					SPDLOG_ERROR(
+						"management of the getEncodingJob result failed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", e.what(): {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
+					);
+				}
+				catch (exception &e)
+				{
+					SPDLOG_ERROR(
+						"management of the getEncodingJob result failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 					);
 				}
 			}
