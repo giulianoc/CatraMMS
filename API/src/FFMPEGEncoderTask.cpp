@@ -35,7 +35,7 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 		_tvChannelPort_Start = 8000;
 		_tvChannelPort_MaxNumberOfOffsets = 100;
 
-		_encoding->_errorMessage = "";
+		_encoding->_errorMessages = {}; // clear
 		removeEncodingCompletedIfPresent();
 	}
 	catch (runtime_error &e)
@@ -83,7 +83,7 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 
 	encodingCompleted->_encodingJobKey = _encodingJobKey;
 	encodingCompleted->_completedWithError = _completedWithError;
-	encodingCompleted->_errorMessage = _encoding->_errorMessage;
+	encodingCompleted->_errorMessage = _encoding->_lastErrorMessage;
 	encodingCompleted->_killedByUser = _killedByUser;
 	encodingCompleted->_killToRestartByEngine = _encoding->_killToRestartByEngine;
 	encodingCompleted->_urlForbidden = _urlForbidden;

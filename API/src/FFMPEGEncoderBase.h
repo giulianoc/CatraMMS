@@ -8,6 +8,7 @@
 #include "FFMpeg.h"
 #include "spdlog/spdlog.h"
 #include <chrono>
+#include <queue>
 #include <string>
 
 #ifndef __FILEREF__
@@ -30,7 +31,32 @@ class FFMPEGEncoderBase
 		shared_ptr<FFMpeg> _ffmpeg;
 		bool _ffmpegTerminatedSuccessful;
 		bool _killToRestartByEngine;
-		string _errorMessage;
+
+		mutex _errorMessagesMutex;
+		queue<string> _errorMessages;
+		string _lastErrorMessage;
+
+		void pushErrorMessage(string errorMessage)
+		{
+			lock_guard<mutex> locker(_errorMessagesMutex);
+			_errorMessages.push(errorMessage);
+
+			_lastErrorMessage = errorMessage;
+		}
+
+		string popErrorMessage()
+		{
+			string errorMessage;
+
+			lock_guard<mutex> locker(_errorMessagesMutex);
+
+			if (!_errorMessages.empty())
+			{
+				errorMessage = _errorMessages.front();
+				_errorMessages.pop();
+			}
+			return errorMessage;
+		}
 	};
 
 	struct LiveProxyAndGrid : public Encoding
@@ -79,8 +105,8 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_method = _method;
 			liveProxyAndGrid->_ffmpeg = _ffmpeg;
 			liveProxyAndGrid->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
-			liveProxyAndGrid->_errorMessage = _errorMessage;
-			// liveProxyAndGrid->_liveGridOutputType = _liveGridOutputType;
+			// non serve clonare _errorMessages perchè il monitor eventualmente scrive su _errorMessages del source
+			// liveProxyAndGrid->_errorMessages = _errorMessages;
 
 			liveProxyAndGrid->_ingestionJobKey = _ingestionJobKey;
 
@@ -153,7 +179,8 @@ class FFMPEGEncoderBase
 			liveRecording->_externalEncoder = _externalEncoder;
 			liveRecording->_ffmpeg = _ffmpeg;
 			liveRecording->_killedBecauseOfNotWorking = _killedBecauseOfNotWorking;
-			liveRecording->_errorMessage = _errorMessage;
+			// non serve clonare _errorMessages perchè il monitor eventualmente scrive su _errorMessages del source
+			// liveRecording->_errorMessage = _errorMessage;
 			liveRecording->_ingestionJobKey = _ingestionJobKey;
 			liveRecording->_encodingParametersRoot = _encodingParametersRoot;
 			liveRecording->_ingestedParametersRoot = _ingestedParametersRoot;

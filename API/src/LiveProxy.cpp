@@ -413,7 +413,7 @@ void LiveProxy::encodeContent(string requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->_errorMessage = errorMessage;
+		_liveProxyData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 		_urlForbidden = true;
 
@@ -472,7 +472,7 @@ void LiveProxy::encodeContent(string requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->_errorMessage = errorMessage;
+		_liveProxyData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 		_urlNotFound = true;
 
@@ -531,7 +531,7 @@ void LiveProxy::encodeContent(string requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->_errorMessage = errorMessage;
+		_liveProxyData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
@@ -589,7 +589,7 @@ void LiveProxy::encodeContent(string requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->_errorMessage = errorMessage;
+		_liveProxyData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;

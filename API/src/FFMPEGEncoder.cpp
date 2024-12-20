@@ -1223,7 +1223,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot["killedByUser"] = false;
 				responseBodyRoot["urlForbidden"] = false;
 				responseBodyRoot["urlNotFound"] = false;
-				responseBodyRoot["errorMessage"] = selectedEncoding->_errorMessage;
+				responseBodyRoot["errorMessage"] = selectedEncoding->popErrorMessage();
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 				if (encodingProgress == -2.0)
 				{
@@ -1251,7 +1251,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot["killedByUser"] = false;
 				responseBodyRoot["urlForbidden"] = false;
 				responseBodyRoot["urlNotFound"] = false;
-				responseBodyRoot["errorMessage"] = selectedLiveProxy->_errorMessage;
+				responseBodyRoot["errorMessage"] = selectedLiveProxy->popErrorMessage();
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 
 				// 2020-06-11: it's a live, it does not have
@@ -1273,7 +1273,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				responseBodyRoot["killedByUser"] = false;
 				responseBodyRoot["urlForbidden"] = false;
 				responseBodyRoot["urlNotFound"] = false;
-				responseBodyRoot["errorMessage"] = selectedLiveRecording->_errorMessage;
+				responseBodyRoot["errorMessage"] = selectedLiveRecording->popErrorMessage();
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 
 				// 2020-10-13: we do not have here the

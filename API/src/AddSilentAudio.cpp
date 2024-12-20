@@ -216,7 +216,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_encoding->_errorMessage = errorMessage;
+		_encoding->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
@@ -237,7 +237,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_encoding->_errorMessage = errorMessage;
+		_encoding->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;

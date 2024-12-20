@@ -530,7 +530,7 @@ void LiveRecorder::encodeContent(string requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveRecording->_errorMessage = errorMessage;
+		_liveRecording->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
@@ -572,7 +572,7 @@ void LiveRecorder::encodeContent(string requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveRecording->_errorMessage = errorMessage;
+		_liveRecording->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
@@ -614,7 +614,7 @@ void LiveRecorder::encodeContent(string requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveRecording->_errorMessage = errorMessage;
+		_liveRecording->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
@@ -656,7 +656,7 @@ void LiveRecorder::encodeContent(string requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveRecording->_errorMessage = errorMessage;
+		_liveRecording->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
