@@ -2274,6 +2274,11 @@ class MMSEngineDBFacade
 		int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 	);
 
+	json getRequestStatisticPerCountryList(
+		int64_t workspaceKey, string title, string userId, string startStatisticDate, string endStatisticDate,
+		int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
+	);
+
 	json getLoginStatisticList(string startDate, string endDate, int start, int rows);
 
 	void setLock(

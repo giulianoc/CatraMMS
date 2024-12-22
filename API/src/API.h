@@ -739,6 +739,11 @@ class API : public FastCGIAPI
 		unordered_map<string, string> queryParameters
 	);
 
+	void requestStatisticPerCountryList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters
+	);
+
 	void loginStatisticList(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters

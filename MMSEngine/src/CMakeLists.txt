@@ -59,19 +59,19 @@ else()
       AWSSigner.cpp
       MMSDeliveryAuthorization.cpp
       MMSStorage.cpp
-      MMSEngineDBFacade.cpp
-      MMSEngineDBFacade_Configuration.cpp
-      MMSEngineDBFacade_CreateTables.cpp
-      MMSEngineDBFacade_EncodersPool.cpp
-      MMSEngineDBFacade_EncodingJobs.cpp
-      MMSEngineDBFacade_EncodingProfiles.cpp
-      MMSEngineDBFacade_IngestionJobs.cpp
-      MMSEngineDBFacade_Lock.cpp
-      MMSEngineDBFacade_MediaItems.cpp
-      MMSEngineDBFacade_PartitionInfo.cpp
-      MMSEngineDBFacade_Statistic_Postgres.cpp
-      MMSEngineDBFacade_UserWorkspace.cpp
-      MMSEngineDBFacade_WorkflowLibrary.cpp
+      mysql/MMSEngineDBFacade.cpp
+      mysql/MMSEngineDBFacade_Configuration.cpp
+      mysql/MMSEngineDBFacade_CreateTables.cpp
+      mysql/MMSEngineDBFacade_EncodersPool.cpp
+      mysql/MMSEngineDBFacade_EncodingJobs.cpp
+      mysql/MMSEngineDBFacade_EncodingProfiles.cpp
+      mysql/MMSEngineDBFacade_IngestionJobs.cpp
+      mysql/MMSEngineDBFacade_Lock.cpp
+      mysql/MMSEngineDBFacade_MediaItems.cpp
+      mysql/MMSEngineDBFacade_PartitionInfo.cpp
+      mysql/MMSEngineDBFacade_Statistic_Postgres.cpp
+      mysql/MMSEngineDBFacade_UserWorkspace.cpp
+      mysql/MMSEngineDBFacade_WorkflowLibrary.cpp
       PersistenceLock.cpp
       Workspace.cpp
       Validator.cpp

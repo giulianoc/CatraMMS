@@ -123,7 +123,15 @@ startOfProcess()
 			echo "$(date): dvblast is already running ($frequency)" >> $debugFilename
 		fi
 
-		return 1
+		#invece di ritornare 1, lo killiamo e continuiamo
+		dvbLastPid=$(pgrep -f "dvblast -f $frequency")
+		if [ $debug -eq 1 ]; then
+			echo "$(date): killing dvblast, dvbLastPid: $dvbLastPid" >> $debugFilename
+		fi
+		kill -9 $dvbLastPid > /dev/null 2>&1
+		sleep 2
+
+		#return 1
 	fi
 
 	getFreeDeviceNumber $frequency
@@ -184,7 +192,7 @@ isProcessRunningFunc()
 		localIsProcessRunning=0
 	fi
 	if [ $debug -eq 1 ]; then
-		echo "$(date): isProcessRunning: $localIsProcessRunning" >> $debugFilename
+		echo "$(date): isProcessRunning (dvblast): $localIsProcessRunning" >> $debugFilename
 	fi
 
 	return $localIsProcessRunning
@@ -233,6 +241,7 @@ do
 		echo "$(date): frequency: $frequency, type: $type, symbolRate: $symbolRate, bandwidthInMhz: $bandwidthInMhz, modulation: $modulation" >> $debugFilename
 	fi
 
+	fileSize=$(stat -c%s "$tvChannelConfigurationDirectory/$configurationFileName")
 
 	pidProcessPathName=/var/catramms/pids/tv_$frequency".pid"
 
@@ -245,11 +254,24 @@ do
 		fi
 
 		if [ $isProcessRunning -eq 0 ]; then
-			if [ $debug -eq 1 ]; then
-				echo "$(date): Process is not up and running, start it" >> $debugFilename
-			fi
 
-			startOfProcess $type $frequency $localParam $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
+			#15 because we cannot have a conf less than 15 chars
+			if [ $fileSize -lt 15 ]; then
+				if [ $debug -eq 1 ]; then
+					echo "$(date): Process is not up and running, we should start it but dvblast configuration file is empty ($fileSize), so channel is removed, configurationFileName: $configurationFileName" >> $debugFilename
+				fi
+
+				if [ $debug -eq 1 ]; then
+					echo "$(date): rm -f $tvChannelConfigurationDirectory/$configurationFileName" >> $debugFilename
+				fi
+				rm -f $tvChannelConfigurationDirectory/$configurationFileName
+			else
+				if [ $debug -eq 1 ]; then
+					echo "$(date): Process is not up and running, start it" >> $debugFilename
+				fi
+
+				startOfProcess $type $frequency $localParam $modulation $tvChannelConfigurationDirectory/$configurationFileName $pidProcessPathName
+			fi
 		fi
 
 		continue
@@ -281,7 +303,6 @@ do
 		fi
 	fi
 
-	fileSize=$(stat -c%s "$tvChannelConfigurationDirectory/$configurationFileName")
 	#15 because we cannot have a conf less than 15 chars
 	if [ $fileSize -lt 15 ]; then
 		if [ $debug -eq 1 ]; then
