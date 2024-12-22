@@ -2688,9 +2688,9 @@ void API::manageRequestAndResponse(
 		requestStatisticPerDayList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
 	}
 	else if (method == "requestStatisticPerHourList")
-	{
 		requestStatisticPerHourList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
+	else if (method == "requestStatisticPerCountryList")
+		requestStatisticPerCountryList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
 	else
 	{
 		string errorMessage = fmt::format(
