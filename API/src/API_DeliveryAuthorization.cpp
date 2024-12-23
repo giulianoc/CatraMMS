@@ -17,6 +17,12 @@ void API::createDeliveryAuthorization(
 
 	try
 	{
+		// 2024-12-23: nel caso in cui:
+		// - ci sia un sistema intermedio tra i veri client e MMS e
+		// - sia questo sistema intermedio che crea le richieste di delivery
+		// Questo sistema forward l'IP del client come parametro
+		string remoteIPAddress = getQueryParameter(queryParameters, "remoteIPAddress", clientIPAddress, false);
+
 		int64_t physicalPathKey = -1;
 		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
 		if (physicalPathKeyIt != queryParameters.end())
@@ -173,7 +179,7 @@ void API::createDeliveryAuthorization(
 		{
 			bool warningIfMissingMediaItemKey = false;
 			pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
-				userKey, requestWorkspace, clientIPAddress,
+				userKey, requestWorkspace, remoteIPAddress,
 
 				mediaItemKey, uniqueName, encodingProfileKey, encodingProfileLabel,
 
@@ -345,6 +351,12 @@ void API::createBulkOfDeliveryAuthorization(
 
 		try
 		{
+			// 2024-12-23: nel caso in cui:
+			// - ci sia un sistema intermedio tra i veri client e MMS e
+			// - sia questo sistema intermedio che crea le richieste di delivery
+			// Questo sistema forward l'IP del client come parametro
+			string remoteIPAddress = getQueryParameter(queryParameters, "remoteIPAddress", clientIPAddress, false);
+
 			int ttlInSeconds = _defaultTTLInSeconds;
 			auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
 			if (ttlInSecondsIt != queryParameters.end() && ttlInSecondsIt->second != "")
@@ -396,7 +408,7 @@ void API::createBulkOfDeliveryAuthorization(
 						{
 							bool warningIfMissingMediaItemKey = true;
 							deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
-								userKey, requestWorkspace, clientIPAddress,
+								userKey, requestWorkspace, remoteIPAddress,
 
 								mediaItemKey,
 								"", // uniqueName,
@@ -508,7 +520,7 @@ void API::createBulkOfDeliveryAuthorization(
 						{
 							bool warningIfMissingMediaItemKey = true;
 							deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
-								userKey, requestWorkspace, clientIPAddress,
+								userKey, requestWorkspace, remoteIPAddress,
 
 								-1, // mediaItemKey,
 								uniqueName, encodingProfileKey, encodingProfileLabel,
@@ -608,7 +620,7 @@ void API::createBulkOfDeliveryAuthorization(
 					{
 						bool warningIfMissingMediaItemKey = false;
 						deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
-							userKey, requestWorkspace, clientIPAddress,
+							userKey, requestWorkspace, remoteIPAddress,
 
 							-1, // mediaItemKey,
 							"", // uniqueName,
