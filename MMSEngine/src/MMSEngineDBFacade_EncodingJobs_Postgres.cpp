@@ -680,8 +680,8 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 				{
 					encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
 
-					encodingItem->_ingestedParametersRoot = ingestionJob_MetadataContent(
-						encodingItem->_workspace->_workspaceKey, encodingItem->_ingestionJobKey,
+					encodingItem->_ingestedParametersRoot = ingestionJob_columnAsJson(
+						encodingItem->_workspace->_workspaceKey, "metaDataContent", encodingItem->_ingestionJobKey,
 						// 2022-12-18: probable the ingestionJob is added recently, let's set true
 						true
 					);
@@ -3565,6 +3565,53 @@ pair<int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyParameters(int6
 	}
 }
 
+json MMSEngineDBFacade::encodingJob_columnAsJson(string columnName, int64_t encodingJobKey, bool fromMaster)
+{
+	try
+	{
+		string requestedColumn = fmt::format("mms_encodingjob:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, encodingJobKey, -1, fromMaster);
+
+		return sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<json>(json()) : json();
+	}
+	catch (DBRecordNotFound &e)
+	{
+		// il chiamante decidera se loggarlo come error
+		SPDLOG_WARN(
+			"NotFound exception"
+			", exceptionMessage: {}",
+			e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", encodingJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encodingJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", encodingJobKey: {}"
+			", fromMaster: {}",
+			encodingJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+/*
 json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool fromMaster)
 {
 	try
@@ -3611,6 +3658,7 @@ json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool from
 		throw e;
 	}
 }
+*/
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
 	vector<string> &requestedColumns, int64_t encodingJobKey, int64_t ingestionJobKey, bool fromMaster, int startIndex, int rows, string orderBy,

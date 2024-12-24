@@ -3,6 +3,7 @@
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
+#include <cstdint>
 
 void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 	string processorMMS, vector<tuple<shared_ptr<Workspace>, int64_t, int64_t>> &mediaItemKeyOrPhysicalPathKeyToBeRemoved, int maxEntriesNumber
@@ -1119,7 +1120,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				try
 				{
 					chrono::milliseconds localSqlDuration(0);
-					newMediaItemKey = physicalPath_MediaItemKey(physicalPathKey, &localSqlDuration, fromMaster);
+					newMediaItemKey = physicalPath_columnAsInt64("mediaitemkey", physicalPathKey, &localSqlDuration, fromMaster);
 					internalSqlDuration += localSqlDuration;
 				}
 				catch (DBRecordNotFound &e)
@@ -1139,7 +1140,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				try
 				{
 					chrono::milliseconds localSqlDuration(0);
-					newMediaItemKey = externalUniqueName_MediaItemKey(workspaceKey, uniqueName, &localSqlDuration, fromMaster);
+					newMediaItemKey = externalUniqueName_columnAsInt64(workspaceKey, "mediaitemkey", uniqueName, -1, &localSqlDuration, fromMaster);
 					internalSqlDuration += localSqlDuration;
 				}
 				catch (DBRecordNotFound &e)
@@ -1414,7 +1415,8 @@ json MMSEngineDBFacade::getMediaItemsList(
 					field = "uniqueName";
 					try
 					{
-						mediaItemRoot[field] = externalUniqueName_UniqueName(workspaceKey, localMediaItemKey, &localSqlDuration, fromMaster);
+						mediaItemRoot[field] =
+							externalUniqueName_columnAsString(workspaceKey, "uniquename", "", localMediaItemKey, &localSqlDuration, fromMaster);
 					}
 					catch (DBRecordNotFound &e)
 					{
@@ -2018,17 +2020,18 @@ json MMSEngineDBFacade::getMediaItemsList(
 	return mediaItemsListRoot;
 }
 
-int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+int64_t MMSEngineDBFacade::physicalPath_columnAsInt64(string columnName, int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster)
 {
 	try
 	{
-		vector<string> requestedColumns = {"mms_physicalpath:.mediaitemkey"};
+		string requestedColumn = fmt::format("mms_physicalpath:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = physicalPathQuery(requestedColumns, physicalPathKey, fromMaster);
 
 		if (sqlDuration != nullptr)
 			*sqlDuration = sqlResultSet->getSqlDuration();
 
-		return (*sqlResultSet)[0][0].as<int64_t>(-1);
+		return (*sqlResultSet)[0][0].as<int64_t>(static_cast<int64_t>(-1));
 	}
 	catch (DBRecordNotFound &e)
 	{
@@ -2069,6 +2072,51 @@ int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, ch
 	}
 }
 
+/*
+int64_t MMSEngineDBFacade::physicalPath_MediaItemKey(int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+{
+	try
+	{
+		vector<string> requestedColumns = {"mms_physicalpath:.mediaitemkey"};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = physicalPathQuery(requestedColumns, physicalPathKey, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
+
+		return (*sqlResultSet)[0][0].as<int64_t>(-1);
+	}
+	catch (DBRecordNotFound &e)
+	{
+
+throw e;
+}
+catch (runtime_error &e)
+{
+	SPDLOG_ERROR(
+		"runtime_error"
+		", physicalPathKey: {}"
+		", fromMaster: {}"
+		", exceptionMessage: {}",
+		physicalPathKey, fromMaster, e.what()
+	);
+
+	throw e;
+}
+catch (exception &e)
+{
+	SPDLOG_ERROR(
+		"exception"
+		", physicalPathKey: {}"
+		", fromMaster: {}",
+		physicalPathKey, fromMaster
+	);
+
+	throw e;
+}
+}
+*/
+
+/*
 int64_t MMSEngineDBFacade::physicalPath_EncodingProfileKey(int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster)
 {
 	try
@@ -2117,6 +2165,7 @@ int64_t MMSEngineDBFacade::physicalPath_EncodingProfileKey(int64_t physicalPathK
 		throw e;
 	}
 }
+*/
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 	vector<string> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
@@ -2342,13 +2391,16 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 	}
 }
 
-string
-MMSEngineDBFacade::externalUniqueName_UniqueName(int64_t workspaceKey, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+string MMSEngineDBFacade::externalUniqueName_columnAsString(
+	int64_t workspaceKey, string columnName, string uniqueName, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster
+)
 {
 	try
 	{
-		vector<string> requestedColumns = {"mms_externaluniquename:.uniquename"};
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = externalUniqueNameQuery(requestedColumns, workspaceKey, "", mediaItemKey, fromMaster);
+		string requestedColumn = fmt::format("mms_externaluniquename:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet =
+			externalUniqueNameQuery(requestedColumns, workspaceKey, uniqueName, mediaItemKey, fromMaster);
 
 		if (sqlDuration != nullptr)
 			*sqlDuration = sqlResultSet->getSqlDuration();
@@ -2408,6 +2460,131 @@ MMSEngineDBFacade::externalUniqueName_UniqueName(int64_t workspaceKey, int64_t m
 	}
 }
 
+/*
+string
+MMSEngineDBFacade::externalUniqueName_UniqueName(int64_t workspaceKey, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+{
+	try
+	{
+		vector<string> requestedColumns = {"mms_externaluniquename:.uniquename"};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = externalUniqueNameQuery(requestedColumns, workspaceKey, "", mediaItemKey, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
+
+		if ((*sqlResultSet).size() == 0)
+		{
+			string errorMessage = fmt::format(
+				"workspaceKey/mediaItemKey not found"
+				", workspaceKey: {}"
+				", mediaItemKey: {}",
+				workspaceKey, mediaItemKey
+			);
+			throw DBRecordNotFound(errorMessage);
+		}
+
+		return (*sqlResultSet)[0][0].as<string>("");
+	}
+	catch (DBRecordNotFound &e)
+	{
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", mediaItemKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, mediaItemKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", mediaItemKey: {}"
+			", fromMaster: {}",
+			workspaceKey, mediaItemKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+*/
+
+int64_t MMSEngineDBFacade::externalUniqueName_columnAsInt64(
+	int64_t workspaceKey, string columnName, string uniqueName, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster
+)
+{
+	try
+	{
+		string requestedColumn = fmt::format("mms_externaluniquename:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet =
+			externalUniqueNameQuery(requestedColumns, workspaceKey, uniqueName, mediaItemKey, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
+
+		if ((*sqlResultSet).size() == 0)
+		{
+			string errorMessage = fmt::format(
+				"workspaceKey/mediaItemKey not found"
+				", workspaceKey: {}"
+				", mediaItemKey: {}",
+				workspaceKey, mediaItemKey
+			);
+			throw DBRecordNotFound(errorMessage);
+		}
+
+		return (*sqlResultSet)[0][0].as<int64_t>(-1);
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"NotFound"
+			", workspaceKey: {}"
+			", uniqueName: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, uniqueName, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", uniqueName: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, uniqueName, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", uniqueName: {}"
+			", fromMaster: {}",
+			workspaceKey, uniqueName, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+/*
 int64_t
 MMSEngineDBFacade::externalUniqueName_MediaItemKey(int64_t workspaceKey, string uniqueName, chrono::milliseconds *sqlDuration, bool fromMaster)
 {
@@ -2460,6 +2637,7 @@ MMSEngineDBFacade::externalUniqueName_MediaItemKey(int64_t workspaceKey, string 
 		throw e;
 	}
 }
+*/
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQuery(
 	vector<string> &requestedColumns, int64_t workspaceKey, string uniqueName, int64_t mediaItemKey, bool fromMaster, int startIndex, int rows,

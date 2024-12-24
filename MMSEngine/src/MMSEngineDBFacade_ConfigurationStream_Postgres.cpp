@@ -2,7 +2,9 @@
 #include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
+#include <cstdint>
 
 json MMSEngineDBFacade::addStream(
 	int64_t workspaceKey, string label, string sourceType, int64_t encodersPoolKey, string url, string pushProtocol, int64_t pushEncoderKey,
@@ -1640,6 +1642,54 @@ tuple<string, string, int64_t, bool, int, string> MMSEngineDBFacade::stream_push
 	}
 }
 
+string MMSEngineDBFacade::stream_columnAsString(int64_t workspaceKey, string columnName, int64_t confKey, string label)
+{
+	try
+	{
+		string requestedColumn = fmt::format("mms_conf_stream:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey, label);
+
+		return (*sqlResultSet)[0][0].as<string>(string());
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", exceptionMessage: {}",
+			workspaceKey, confKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", exceptionMessage: {}",
+			workspaceKey, confKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", confKey: {}",
+			workspaceKey, confKey
+		);
+
+		throw e;
+	}
+}
+
+/*
 string MMSEngineDBFacade::stream_pushProtocol(int64_t workspaceKey, int64_t confKey)
 {
 	try
@@ -1687,7 +1737,56 @@ string MMSEngineDBFacade::stream_pushProtocol(int64_t workspaceKey, int64_t conf
 		throw e;
 	}
 }
+*/
 
+int64_t MMSEngineDBFacade::stream_columnAsInt64(int64_t workspaceKey, string columnName, int64_t confKey, string label)
+{
+	try
+	{
+		string requestedColumn = fmt::format("mms_conf_stream:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey, label);
+
+		return (*sqlResultSet)[0][0].as<int64_t>(static_cast<int64_t>(-1));
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", exceptionMessage: {}",
+			workspaceKey, confKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", exceptionMessage: {}",
+			workspaceKey, confKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", confKey: {}",
+			workspaceKey, confKey
+		);
+
+		throw e;
+	}
+}
+
+/*
 int64_t MMSEngineDBFacade::stream_confKey(int64_t workspaceKey, string label)
 {
 	try
@@ -1733,7 +1832,9 @@ int64_t MMSEngineDBFacade::stream_confKey(int64_t workspaceKey, string label)
 		throw e;
 	}
 }
+*/
 
+/*
 string MMSEngineDBFacade::stream_sourceType(int64_t workspaceKey, string label)
 {
 	try
@@ -1779,6 +1880,7 @@ string MMSEngineDBFacade::stream_sourceType(int64_t workspaceKey, string label)
 		throw e;
 	}
 }
+*/
 
 tuple<string, string, int64_t, bool>
 MMSEngineDBFacade::stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderName(int64_t workspaceKey, string label)
@@ -1949,6 +2051,54 @@ tuple<int64_t, string, string> MMSEngineDBFacade::stream_confKeySourceTypeUrl(in
 	}
 }
 
+json MMSEngineDBFacade::stream_columnAsJson(int64_t workspaceKey, string columnName, int64_t confKey, string label)
+{
+	try
+	{
+		string requestedColumn = fmt::format("mms_conf_stream:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey, label);
+
+		return sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<json>(json()) : json();
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", exceptionMessage: {}",
+			workspaceKey, confKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", exceptionMessage: {}",
+			workspaceKey, confKey, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", confKey: {}",
+			workspaceKey, confKey
+		);
+
+		throw e;
+	}
+}
+
+/*
 json MMSEngineDBFacade::stream_userData(int64_t workspaceKey, int64_t confKey)
 {
 	try
@@ -1994,6 +2144,7 @@ json MMSEngineDBFacade::stream_userData(int64_t workspaceKey, int64_t confKey)
 		throw e;
 	}
 }
+*/
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 	vector<string> &requestedColumns, int64_t workspaceKey, int64_t confKey, string label, bool fromMaster, int startIndex, int rows, string orderBy,
@@ -4060,7 +4211,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 
 	try
 	{
-		json channelDataRoot = stream_userData(workspace->_workspaceKey, confKey);
+		json channelDataRoot = stream_columnAsJson(workspace->_workspaceKey, "userData", confKey);
 		/*
 		tuple<string, string, string> channelDetails = getStreamDetails(workspace->_workspaceKey, confKey);
 
@@ -4208,7 +4359,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 {
 	try
 	{
-		json channelDataRoot = stream_userData(workspace->_workspaceKey, confKey);
+		json channelDataRoot = stream_columnAsJson(workspace->_workspaceKey, "userData", confKey);
 		/*
 		tuple<string, string, string> channelDetails = getStreamDetails(workspace->_workspaceKey, confKey);
 

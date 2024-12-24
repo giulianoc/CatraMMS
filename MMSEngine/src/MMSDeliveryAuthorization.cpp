@@ -655,7 +655,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				string configurationLabel = JSONUtils::asString(ingestionJobRoot, field, "");
 
-				int64_t streamConfKey = _mmsEngineDBFacade->stream_confKey(requestWorkspace->_workspaceKey, configurationLabel);
+				int64_t streamConfKey = _mmsEngineDBFacade->stream_columnAsInt64(requestWorkspace->_workspaceKey, "confKey", -1, configurationLabel);
 				/*
 				bool warningIfMissing = false;
 				tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>

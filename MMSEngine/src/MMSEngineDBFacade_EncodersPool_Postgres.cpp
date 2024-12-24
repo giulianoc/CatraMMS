@@ -531,14 +531,15 @@ tuple<string, string, string> MMSEngineDBFacade::encoder_LabelPublicServerNameIn
 	}
 }
 
-string MMSEngineDBFacade::encoder_PublicServerName(int64_t encoderKey, bool fromMaster)
+string MMSEngineDBFacade::encoder_columnAsString(string columnName, int64_t encoderKey, bool fromMaster)
 {
 	try
 	{
-		vector<string> requestedColumns = {"mms_encoder:.publicServerName"};
+		string requestedColumn = fmt::format("mms_encoder:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
 
-		return (*sqlResultSet)[0][0].as<string>("");
+		return (*sqlResultSet)[0][0].as<string>(string());
 	}
 	catch (DBRecordNotFound &e)
 	{
@@ -551,6 +552,46 @@ string MMSEngineDBFacade::encoder_PublicServerName(int64_t encoderKey, bool from
 			encoderKey, fromMaster, e.what()
 		);
 		*/
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", encoderKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			encoderKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", encoderKey: {}"
+			", fromMaster: {}",
+			encoderKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+/*
+string MMSEngineDBFacade::encoder_PublicServerName(int64_t encoderKey, bool fromMaster)
+{
+	try
+	{
+		vector<string> requestedColumns = {"mms_encoder:.publicServerName"};
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
+
+		return (*sqlResultSet)[0][0].as<string>("");
+	}
+	catch (DBRecordNotFound &e)
+	{
 
 		throw e;
 	}
@@ -590,15 +631,6 @@ string MMSEngineDBFacade::encoder_InternalServerName(int64_t encoderKey, bool fr
 	}
 	catch (DBRecordNotFound &e)
 	{
-		/*
-		SPDLOG_ERROR(
-			"NotFound"
-			", encoderKey: {}"
-			", fromMaster: {}"
-			", exceptionMessage: {}",
-			encoderKey, fromMaster, e.what()
-		);
-		*/
 
 		throw e;
 	}
@@ -626,6 +658,7 @@ string MMSEngineDBFacade::encoder_InternalServerName(int64_t encoderKey, bool fr
 		throw e;
 	}
 }
+*/
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 	vector<string> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException

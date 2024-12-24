@@ -2697,6 +2697,57 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 	}
 }
 
+string MMSEngineDBFacade::ingestionRoot_columnAsString(int64_t workspaceKey, string columnName, int64_t ingestionRootKey, bool fromMaster)
+{
+	try
+	{
+		string requestedColumn = fmt::format("mms_ingestionroot:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = workflowQuery(requestedColumns, workspaceKey, ingestionRootKey, fromMaster);
+
+		return (*sqlResultSet)[0][0].as<string>(string());
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionRootKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionRootKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionRootKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionRootKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+/*
 string MMSEngineDBFacade::ingestionRoot_MetadataContent(int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster)
 {
 	try
@@ -2794,6 +2845,7 @@ string MMSEngineDBFacade::ingestionRoot_ProcessedMetadataContent(int64_t workspa
 		throw e;
 	}
 }
+*/
 
 tuple<string, MMSEngineDBFacade::IngestionType, json, string>
 MMSEngineDBFacade::ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
@@ -3004,6 +3056,57 @@ MMSEngineDBFacade::ingestionJob_StatusMetadataContent(int64_t workspaceKey, int6
 	}
 }
 
+json MMSEngineDBFacade::ingestionJob_columnAsJson(int64_t workspaceKey, string columnName, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		string requestedColumn = fmt::format("mms_ingestionjob:ij.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
+
+		return sqlResultSet->size() > 0 ? (*sqlResultSet)[0][0].as<json>(json()) : json();
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+/*
 json MMSEngineDBFacade::ingestionJob_MetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
 {
 	try
@@ -3052,6 +3155,7 @@ json MMSEngineDBFacade::ingestionJob_MetadataContent(int64_t workspaceKey, int64
 		throw e;
 	}
 }
+*/
 
 MMSEngineDBFacade::IngestionType MMSEngineDBFacade::ingestionJob_IngestionType(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
 {
@@ -3102,6 +3206,57 @@ MMSEngineDBFacade::IngestionType MMSEngineDBFacade::ingestionJob_IngestionType(i
 	}
 }
 
+string MMSEngineDBFacade::ingestionJob_columnAsString(int64_t workspaceKey, string columnName, int64_t ingestionJobKey, bool fromMaster)
+{
+	try
+	{
+		string requestedColumn = fmt::format("mms_ingestionjob:ij.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
+
+		return (*sqlResultSet)[0][0].as<string>(string());
+	}
+	catch (DBRecordNotFound &e)
+	{
+		SPDLOG_WARN(
+			"DBRecordNotFound"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"runtime_error"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			workspaceKey, ingestionJobKey, fromMaster, e.what()
+		);
+
+		throw e;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", workspaceKey: {}"
+			", ingestionJobKey: {}"
+			", fromMaster: {}",
+			workspaceKey, ingestionJobKey, fromMaster
+		);
+
+		throw e;
+	}
+}
+
+/*
 string MMSEngineDBFacade::ingestionJob_Label(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
 {
 	try
@@ -3150,6 +3305,7 @@ string MMSEngineDBFacade::ingestionJob_Label(int64_t workspaceKey, int64_t inges
 		throw e;
 	}
 }
+*/
 
 pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
 MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)

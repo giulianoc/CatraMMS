@@ -2805,8 +2805,8 @@ void API::uploadedBinary(
 		bool segmentedContent = false;
 		try
 		{
-			json parametersRoot = _mmsEngineDBFacade->ingestionJob_MetadataContent(
-				workspace->_workspaceKey, ingestionJobKey,
+			json parametersRoot = _mmsEngineDBFacade->ingestionJob_columnAsJson(
+				workspace->_workspaceKey, "metaDataContent", ingestionJobKey,
 				// 2022-12-18: l'ingestionJob potrebbe essere stato
 				// appena aggiunto
 				true
@@ -3643,15 +3643,15 @@ void API::ingestionRootMetaDataContent(
 		{
 			string ingestionRootMetaDataContent;
 			if (processedMetadata)
-				ingestionRootMetaDataContent = _mmsEngineDBFacade->ingestionRoot_ProcessedMetadataContent(
-					workspace->_workspaceKey, ingestionRootKey,
+				ingestionRootMetaDataContent = _mmsEngineDBFacade->ingestionRoot_columnAsString(
+					workspace->_workspaceKey, "processedMetaDataContent", ingestionRootKey,
 					// 2022-12-18: IngestionJobKey dovrebbe essere stato
 					// aggiunto da tempo
 					false
 				);
 			else
-				ingestionRootMetaDataContent = _mmsEngineDBFacade->ingestionRoot_MetadataContent(
-					workspace->_workspaceKey, ingestionRootKey,
+				ingestionRootMetaDataContent = _mmsEngineDBFacade->ingestionRoot_columnAsString(
+					workspace->_workspaceKey, "metaDataContent", ingestionRootKey,
 					// 2022-12-18: IngestionJobKey dovrebbe essere stato
 					// aggiunto da tempo
 					false
@@ -4848,8 +4848,9 @@ void API::changeLiveProxyPlaylist(
 
 								// controllo che tutti i media usano lo stesso encoding profile
 								{
-									int64_t currentEncodingProfileKey =
-										_mmsEngineDBFacade->physicalPath_EncodingProfileKey(broadcastDefaultPhysicalPathKey, nullptr, false);
+									int64_t currentEncodingProfileKey = _mmsEngineDBFacade->physicalPath_columnAsInt64(
+										"encodingprofilekey", broadcastDefaultPhysicalPathKey, nullptr, false
+									);
 									if (firstMediaEncodingProfileKey == -2) // primo media
 										firstMediaEncodingProfileKey = currentEncodingProfileKey;
 									else if (firstMediaEncodingProfileKey != currentEncodingProfileKey)
@@ -5278,7 +5279,7 @@ void API::changeLiveProxyPlaylist(
 								// controllo che tutti i media usano lo stesso encoding profile
 								{
 									int64_t currentEncodingProfileKey =
-										_mmsEngineDBFacade->physicalPath_EncodingProfileKey(physicalPathKey, nullptr, false);
+										_mmsEngineDBFacade->physicalPath_columnAsInt64("encodingprofilekey", physicalPathKey, nullptr, false);
 									if (firstMediaEncodingProfileKey == -2) // primo media
 										firstMediaEncodingProfileKey = currentEncodingProfileKey;
 									else if (firstMediaEncodingProfileKey != currentEncodingProfileKey)

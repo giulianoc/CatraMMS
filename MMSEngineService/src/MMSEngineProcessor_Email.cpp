@@ -83,8 +83,8 @@ void MMSEngineProcessor::emailNotificationThread(
 					else // if (dependencyType ==
 						 // Validator::DependencyType::IngestionJobKey)
 					{
-						string label = _mmsEngineDBFacade->ingestionJob_Label(
-							workspace->_workspaceKey, key,
+						string label = _mmsEngineDBFacade->ingestionJob_columnAsString(
+							workspace->_workspaceKey, "label", key,
 							// 2022-12-18: MIK potrebbe essere stato
 							// appena aggiunto
 							true

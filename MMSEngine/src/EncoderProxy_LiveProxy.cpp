@@ -853,7 +853,8 @@ bool EncoderProxy::liveProxy_through_ffmpeg(string proxyType)
 						MMSEngineDBFacade::IngestionStatus ingestionJobStatus;
 
 						// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated (modifying the playlist)
-						_encodingItem->_encodingParametersRoot = _mmsEngineDBFacade->encodingJob_Parameters(_encodingItem->_encodingJobKey, true);
+						_encodingItem->_encodingParametersRoot =
+							_mmsEngineDBFacade->encodingJob_columnAsJson("parameters", _encodingItem->_encodingJobKey, true);
 
 						// 2024-12-01: ricarichiamo ingestedParameters perchè potrebbe essere stato modificato con un nuovo 'encodersDetails' (nello
 						// scenario in cui si vuole eseguire lo switch di un ingestionjob su un nuovo encoder)
