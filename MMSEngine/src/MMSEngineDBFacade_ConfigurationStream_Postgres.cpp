@@ -922,11 +922,22 @@ json MMSEngineDBFacade::getStreamList(
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getStreamList" + ", workspaceKey: " + to_string(workspaceKey) + ", liveURLKey: " + to_string(liveURLKey) +
-			", start: " + to_string(start) + ", rows: " + to_string(rows) + ", label: " + label + ", labelLike: " + to_string(labelLike) +
-			", url: " + url + ", sourceType: " + sourceType + ", type: " + type + ", name: " + name + ", region: " + region +
-			", country: " + country + ", labelOrder: " + labelOrder
+		SPDLOG_INFO(
+			"getStreamList"
+			", workspaceKey: {}"
+			", liveURLKey: {}"
+			", start: {}"
+			", rows: {}"
+			", label: {}"
+			", labelLike: {}"
+			", url: {}"
+			", sourceType: {}"
+			", type: {}"
+			", name: {}"
+			", region: {}"
+			", country: {}"
+			", labelOrder: {}",
+			workspaceKey, liveURLKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
 		);
 
 		{
@@ -1104,9 +1115,11 @@ json MMSEngineDBFacade::getStreamList(
 						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "getEncodersPoolDetails failed" + ", confKey: " + to_string(confKey) +
-								", encodersPoolKey: " + to_string(encodersPoolKey)
+							SPDLOG_ERROR(
+								"getStreamList. getEncodersPoolDetails failed"
+								", confKey: {}"
+								", encodersPoolKey: {}",
+								confKey, encodersPoolKey
 							);
 						}
 					}
@@ -1172,11 +1185,19 @@ json MMSEngineDBFacade::getStreamList(
 							}
 							catch (DBRecordNotFound &e)
 							{
-								_logger->error(__FILEREF__ + "getEncoderDetails failed" + ", pushEncoderKey: " + to_string(pushEncoderKey));
+								SPDLOG_ERROR(
+									"getStreamList. getEncoderDetails failed"
+									", pushEncoderKey: {}",
+									pushEncoderKey
+								);
 							}
 							catch (exception &e)
 							{
-								_logger->error(__FILEREF__ + "getEncoderDetails failed" + ", pushEncoderKey: " + to_string(pushEncoderKey));
+								SPDLOG_ERROR(
+									"getStreamList. getEncoderDetails failed"
+									", pushEncoderKey: {}",
+									pushEncoderKey
+								);
 							}
 						}
 					}
