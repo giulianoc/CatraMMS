@@ -205,8 +205,8 @@ class EncoderProxy
 	bool liveRecorder_through_ffmpeg();
 	void processLiveRecorder(bool killedByUser);
 
-	bool liveProxy(string proxyType);
-	bool liveProxy_through_ffmpeg(string proxyType);
+	bool liveProxy(MMSEngineDBFacade::EncodingType encodingType);
+	bool liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType encodingType);
 	void processLiveProxy(bool killedByUser);
 
 	void processLiveGrid(bool killedByUser);
@@ -236,6 +236,10 @@ class EncoderProxy
 	string getAWSSignedURL(string playURL, int expirationInMinutes);
 
 	bool waitingEncoding(int maxConsecutiveEncodingStatusFailures);
+	bool waitingLiveProxyOrLiveRecorder(
+		MMSEngineDBFacade::EncodingType encodingType, string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,
+		uint32_t maxAttemptsNumberInCaseOfErrors, string ipPushStreamConfigurationLabel
+	);
 };
 
 #endif
