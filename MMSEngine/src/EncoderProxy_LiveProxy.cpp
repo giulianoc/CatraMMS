@@ -483,6 +483,21 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 			killedByUser = liveProxy_through_ffmpeg(encodingType);
 
+			if (killedByUser)
+			{
+				string errorMessage = fmt::format(
+					"Encoding killed by the User"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+				);
+				SPDLOG_WARN(errorMessage);
+
+				// the catch releaseXXXChannel
+				throw EncodingKilledByUser();
+			}
+
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				json outputRoot = outputsRoot[outputIndex];
@@ -569,20 +584,6 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						);
 					}
 				}
-			}
-
-			if (killedByUser)
-			{
-				string errorMessage = fmt::format(
-					"Encoding killed by the User"
-					", _proxyIdentifier: {}"
-					", _ingestionJobKey: {}"
-					", _encodingJobKey: {}",
-					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
-				);
-				SPDLOG_WARN(errorMessage);
-
-				throw EncodingKilledByUser();
 			}
 		}
 		catch (...)
@@ -690,7 +691,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType enco
 	time_t utcProxyPeriodStart = -1;
 	time_t utcProxyPeriodEnd = -1;
 	long maxAttemptsNumberInCaseOfErrors;
-	string streamConfigurationLabel;
+	string ipPushStreamConfigurationLabel;
 	{
 		json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
 		json firstInputRoot = inputsRoot[0];
@@ -708,7 +709,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType enco
 			// se proxyType == "liveProxy" vuold dire che abbiamo uno Stream
 			string streamSourceType = JSONUtils::asString(proxyInputRoot, "streamSourceType", "");
 			if (streamSourceType == "IP_PUSH")
-				streamConfigurationLabel = JSONUtils::asString(proxyInputRoot, "configurationLabel", "");
+				ipPushStreamConfigurationLabel = JSONUtils::asString(proxyInputRoot, "configurationLabel", "");
 		}
 
 		maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_ingestedParametersRoot, "maxAttemptsNumberInCaseOfErrors", -1);
@@ -737,7 +738,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType enco
 
 	return waitingLiveProxyOrLiveRecorder(
 		encodingType, _ffmpegLiveProxyURI, timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd, maxAttemptsNumberInCaseOfErrors,
-		streamConfigurationLabel
+		ipPushStreamConfigurationLabel
 	);
 }
 

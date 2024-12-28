@@ -17,6 +17,7 @@
 #include "MMSCURL.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/System.h"
+#include "spdlog/spdlog.h"
 #include <regex>
 
 EncoderProxy::EncoderProxy() {}
@@ -1753,30 +1754,27 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	// viene resettato a 0 se !completedWithError
 	long currentAttemptsNumberInCaseOfErrors = 0;
 
-	if (maxAttemptsNumberInCaseOfErrors == -1)
+	try
 	{
-		try
-		{
-			SPDLOG_INFO(
-				"updateEncodingJobFailuresNumber"
-				", _ingestionJobKey: {}"
-				", _encodingJobKey: {}"
-				", currentAttemptsNumberInCaseOfErrors: {}",
-				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
-			);
+		SPDLOG_INFO(
+			"updateEncodingJobFailuresNumber"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", currentAttemptsNumberInCaseOfErrors: {}",
+			_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
+		);
 
-			killedByUser = _mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
-		}
-		catch (...)
-		{
-			SPDLOG_ERROR(
-				"updateEncodingJobFailuresNumber FAILED"
-				", _ingestionJobKey: {}"
-				", _encodingJobKey: {}"
-				", currentAttemptsNumberInCaseOfErrors: {}",
-				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
-			);
-		}
+		killedByUser = _mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
+	}
+	catch (...)
+	{
+		SPDLOG_ERROR(
+			"updateEncodingJobFailuresNumber FAILED"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", currentAttemptsNumberInCaseOfErrors: {}",
+			_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
+		);
 	}
 
 	// 2020-03-11: we saw the following scenarios:
@@ -1805,9 +1803,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	{
 		if (timePeriod)
 		{
-			// if (utcNowCheckToExit >= utcProxyPeriodEnd)
-			// 	break;
-			// else
 			SPDLOG_INFO(
 				"check to exit"
 				", _ingestionJobKey: {}"
@@ -1835,8 +1830,10 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						MMSEngineDBFacade::IngestionStatus ingestionJobStatus;
 
 						// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated (modifying the playlist)
-						_encodingItem->_encodingParametersRoot =
-							_mmsEngineDBFacade->encodingJob_columnAsJson("parameters", _encodingItem->_encodingJobKey, true);
+						if (encodingType == MMSEngineDBFacade::EncodingType::LiveProxy || encodingType == MMSEngineDBFacade::EncodingType::VODProxy ||
+							encodingType == MMSEngineDBFacade::EncodingType::Countdown)
+							_encodingItem->_encodingParametersRoot =
+								_mmsEngineDBFacade->encodingJob_columnAsJson("parameters", _encodingItem->_encodingJobKey, true);
 
 						// 2024-12-01: ricarichiamo ingestedParameters perchè potrebbe essere stato modificato con un nuovo 'encodersDetails' (nello
 						// scenario in cui si vuole eseguire lo switch di un ingestionjob su un nuovo encoder)
@@ -1920,10 +1917,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					int64_t updatedPushEncoderKey = -1;
 					string updatedUrl;
 					{
-						// json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
-
-						// json streamInputRoot = inputsRoot[0]["streamInput"];
-
 						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", nullptr);
 						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", nullptr);
 						/*
@@ -2001,7 +1994,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						_mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // , pushEncoderName);
 
 					SPDLOG_INFO(
-						"LiveProxy. Retrieved updated Stream info"
+						"LiveProxy/Recording. Retrieved updated Stream info"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", updatedPushEncoderKey: {}"
@@ -2062,7 +2055,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				}
 
 				SPDLOG_INFO(
-					"LiveProxy. Selection of the transcoder. The transcoder is selected by load balancer"
+					"LiveProxy/Recording. Selection of the transcoder. The transcoder is selected by load balancer"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -2098,14 +2091,15 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 						// La gestione di questo scenario consiste nell'ignorare questa eccezione facendo andare avanti la procedura,
 						// come se non avesse generato alcun errore
-						_logger->error(
-							__FILEREF__ +
-							"inconsistency: DB says the encoding has to be "
-							"executed but the Encoder is already executing it. "
-							"We will manage it" +
-							", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " +
-							to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-							", body: " + regex_replace(body, regex("\n"), " ") + ", e.what: " + e.what()
+						SPDLOG_ERROR(
+							"inconsistency: DB says the encoding has to be executed but the Encoder is already executing it. We will manage it"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", body: {}"
+							", e.what: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, regex_replace(body, regex("\n"), " "),
+							e.what()
 						);
 					}
 					else
@@ -2115,7 +2109,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			else
 			{
 				SPDLOG_INFO(
-					"LiveProxy. Selection of the transcoder. The transcoder is already saved (DB), the encoding is already running"
+					"LiveProxy/Recording. Selection of the transcoder. The transcoder is already saved (DB), the encoding is already running"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -2491,7 +2485,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			if (!timePeriod || (timePeriod && utcNowCheckToExit < utcPeriodEnd))
 			{
 				SPDLOG_ERROR(
-					"LiveProxy media file completed unexpected"
+					"LiveProxy/Recording media file completed unexpected"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -2509,7 +2503,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				try
 				{
 					string errorMessage = DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())) +
-										  " LiveProxy media file completed unexpected";
+										  " LiveProxy/Recording media file completed unexpected";
 
 					string firstLineOfErrorMessage;
 					{
@@ -2547,7 +2541,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			else
 			{
 				SPDLOG_INFO(
-					"LiveProxy media file completed"
+					"LiveProxy/Recording media file completed"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -2560,6 +2554,48 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					killedByUser, chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count(),
 					_intervalInSecondsToCheckEncodingFinished
 				);
+
+				if (encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+				{
+					json recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)["schedule"];
+					bool autoRenew = JSONUtils::asBool(recordingPeriodRoot, "autoRenew", false);
+					if (autoRenew)
+					{
+						SPDLOG_INFO(
+							"Renew Live Recording"
+							", ingestionJobKey: {}",
+							_encodingItem->_ingestionJobKey
+						);
+
+						time_t recordingPeriodInSeconds = utcPeriodEnd - utcPeriodStart;
+
+						utcPeriodStart = utcPeriodEnd;
+						utcPeriodEnd += recordingPeriodInSeconds;
+
+						SPDLOG_INFO(
+							"Update Encoding LiveRecording Period"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", utcRecordingPeriodStart: {}"
+							", utcRecordingPeriodEnd: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcPeriodStart, utcPeriodEnd
+						);
+						_mmsEngineDBFacade->updateIngestionAndEncodingLiveRecordingPeriod(
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcPeriodStart, utcPeriodEnd
+						);
+
+						// next update is important because the JSON is used in the
+						// getEncodingProgress method 2022-11-09: I do not call
+						// anymore getEncodingProgress 2022-11-20: next update is
+						// mandatory otherwise we will have the folloging error:
+						//		FFMpeg.cpp:8679: LiveRecorder timing. Too late to
+						// start the LiveRecorder
+						{
+							_encodingItem->_encodingParametersRoot["utcScheduleStart"] = utcPeriodStart;
+							_encodingItem->_encodingParametersRoot["utcScheduleEnd"] = utcPeriodEnd;
+						}
+					}
+				}
 			}
 		}
 		catch (YouTubeURLNotRetrieved &e)
@@ -2712,10 +2748,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				int sleepTime = 30;
 				this_thread::sleep_for(chrono::seconds(sleepTime));
 
-				{
-					chrono::system_clock::time_point now = chrono::system_clock::now();
-					utcNowCheckToExit = chrono::system_clock::to_time_t(now);
-				}
+				utcNowCheckToExit = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 				// throw e;
 			}
@@ -2738,7 +2771,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			try
 			{
 				currentAttemptsNumberInCaseOfErrors++;
-				// encodingStatusFailures++;
 
 				SPDLOG_INFO(
 					"updateEncodingJobFailuresNumber"
@@ -2775,7 +2807,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	if (urlForbidden)
 	{
 		SPDLOG_ERROR(
-			"LiveProxy: URL forbidden"
+			"LiveProxy/Recording: URL forbidden"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}",
@@ -2787,7 +2819,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	else if (urlNotFound)
 	{
 		SPDLOG_ERROR(
-			"LiveProxy: URL Not Found"
+			"LiveProxy/Recording: URL Not Found"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}",
