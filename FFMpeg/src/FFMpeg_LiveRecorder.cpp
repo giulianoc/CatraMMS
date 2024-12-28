@@ -15,15 +15,6 @@
 #include "FFMpegFilters.h"
 #include "JSONUtils.h"
 #include "catralibraries/ProcessUtility.h"
-/*
-#include "MMSCURL.h"
-#include "catralibraries/StringUtils.h"
-#include <filesystem>
-#include <fstream>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
 
 void FFMpeg::liveRecorder(
 	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string segmentListPathName, string recordedFileNamePrefix,
@@ -2755,16 +2746,28 @@ void FFMpeg::liveRecorder2(
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
 		if (iReturnedStatus == 9) // 9 means: SIGKILL
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg: ffmpeg execution command failed because killed by the user" +
-						   ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-						   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+			errorMessage = fmt::format(
+				"ffmpeg: ffmpeg execution command failed because killed by the user"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", _outputFfmpegPathFileName: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
 		else
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg execution command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", encodingJobKey: " + to_string(encodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
-						   ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+			errorMessage = fmt::format(
+				"ffmpeg: ffmpeg execution command failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", _outputFfmpegPathFileName: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
+		SPDLOG_ERROR(errorMessage);
 
 		// copy ffmpeg log file
 		/*

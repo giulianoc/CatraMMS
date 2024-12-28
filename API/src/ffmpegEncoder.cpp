@@ -1,18 +1,38 @@
 
-// #include <libxml/tree.h>
-// #include <libxml/parser.h>
-// #include <libxml/xpath.h>
-// #include <libxml/xpathInternals.h>
-
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include <csignal>
 
 #include "FFMPEGEncoder.h"
 #include "FFMPEGEncoderDaemons.h"
 #include "JSONUtils.h"
 #include "LiveRecorderDaemons.h"
 #include "MMSStorage.h"
+
+chrono::system_clock::time_point lastSIGSEGVSignal = chrono::system_clock::now();
+void signalHandler(int signal)
+{
+	if (signal == 11) // SIGSEGV
+	{
+		long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastSIGSEGVSignal).count();
+		if (elapsedInSeconds > 60) // è inutile loggare infiniti errori, ne loggo solo uno ogni 60 secondi
+		{
+			lastSIGSEGVSignal = chrono::system_clock::now();
+			SPDLOG_ERROR(
+				"Received a signal"
+				", signal: {}",
+				signal
+			);
+		}
+	}
+	else
+		SPDLOG_ERROR(
+			"Received a signal"
+			", signal: {}",
+			signal
+		);
+}
 
 int main(int argc, char **argv)
 {
@@ -107,6 +127,12 @@ int main(int argc, char **argv)
 		// spdlog::register_logger(logger);
 
 		spdlog::set_default_logger(logger);
+
+		// install a signal handler
+		signal(SIGSEGV, signalHandler);
+		signal(SIGINT, signalHandler);
+		signal(SIGABRT, signalHandler);
+		// signal(SIGBUS, signalHandler);
 
 		// MMSStorage::createDirectories(configurationRoot, logger);
 
