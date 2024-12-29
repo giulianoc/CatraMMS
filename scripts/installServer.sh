@@ -940,7 +940,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6178
+	catraMMSVersion=1.0.6181
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

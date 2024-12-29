@@ -786,11 +786,9 @@ bool EncoderProxy::liveRecorder()
 
 bool EncoderProxy::liveRecorder_through_ffmpeg()
 {
-	bool exitInCaseOfUrlNotFoundOrForbidden;
 	string streamSourceType;
 	string encodersPool;
 	{
-		exitInCaseOfUrlNotFoundOrForbidden = JSONUtils::asBool(_encodingItem->_ingestedParametersRoot, "exitInCaseOfUrlNotFoundOrForbidden", false);
 		streamSourceType = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "streamSourceType", "");
 		encodersPool = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodersPoolLabel", "");
 	}

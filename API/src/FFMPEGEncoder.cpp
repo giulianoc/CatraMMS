@@ -2600,11 +2600,11 @@ void FFMPEGEncoder::liveRecorderThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (FFMpegURLForbidden &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2613,7 +2613,7 @@ void FFMPEGEncoder::liveRecorderThread(
 	}
 	catch (FFMpegURLNotFound &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2622,7 +2622,7 @@ void FFMPEGEncoder::liveRecorderThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2631,7 +2631,7 @@ void FFMPEGEncoder::liveRecorderThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file

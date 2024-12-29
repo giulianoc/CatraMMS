@@ -14,6 +14,8 @@
 #include "Validator.h"
 #include "JSONUtils.h"
 #include "catralibraries/DateTime.h"
+#include "spdlog/fmt/bundled/format.h"
+#include "spdlog/spdlog.h"
 
 Validator::Validator(shared_ptr<spdlog::logger> logger, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration)
 {
@@ -5861,12 +5863,12 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 
 				if (mediaItemsDetails.size() == 0)
 				{
-					string sParametersRoot = JSONUtils::toString(parametersRoot);
-
-					string errorMessage = __FILEREF__ + "No media items found" +
-										  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
-										  ", sParametersRoot: " + sParametersRoot;
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(
+						"No media items found"
+						", referenceIngestionJobKey: {}"
+						", sParametersRoot: {}",
+						referenceIngestionJobKey, JSONUtils::toString(parametersRoot)
+					);
 				}
 				else
 				{
