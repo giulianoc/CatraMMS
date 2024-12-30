@@ -71,6 +71,20 @@ time-zone()
 	service ntp stop
 	ntpd -gq
 	service ntp start
+
+	#tutti utilizzano /etc/localtime tranne java che utilizza /etc/timezone.
+	#/etc/localtime viene inizializzato correttamente dai comandi sopra.
+	#/etc/timezone lo inizializzo io ora.
+	#Qui trovi il commento trovato su Internet:
+	#GNU libc (and thus any non-embedded Linux), reads /etc/localtime to determine the system's time zone (the default timezone if not overridden
+	#by the TZ environment variable or by an application-specific setting). *BSD does the same thing. Some embedded Linux systems do things differently.
+	#/etc/localtime should be a symbolic link to a file under /usr/share/zoneinfo/. Normal applications don't mind, they only read the contents
+	#of the file, but system management utilities such as timedatectl care more because they can also change the setting, and they would do that
+	#by changing the target of the symbolic link.
+	#Java does (or did?) things differently: it reads /etc/timezone, which contains a timezone name, which should be the path to a file relative
+	#to /usr/share/zoneinfo. I'm not aware of any other program that uses /etc/timezone, and I don't know why Sun chose to do things differently
+	#from the rest of the world.
+	echo "Europe/Rome" > /etc/timezone
 }
 
 install-packages()

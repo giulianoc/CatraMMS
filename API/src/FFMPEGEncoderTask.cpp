@@ -92,9 +92,12 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 
 	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
 
-	_logger->info(
-		__FILEREF__ + "addEncodingCompleted" + ", ingestionJobKey: " + to_string(_ingestionJobKey) +
-		", encodingJobKey: " + to_string(_encodingJobKey) + ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size())
+	SPDLOG_INFO(
+		"addEncodingCompleted"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", encodingCompletedMap size: {}",
+		_ingestionJobKey, _encodingJobKey, _encodingCompletedMap->size()
 	);
 }
 

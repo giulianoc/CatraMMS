@@ -1359,13 +1359,14 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 				ingestionJobKey, utcRecordingPeriodStart, utcRecordingPeriodEnd
 			);
 			// "RecordingPeriod" : { "AutoRenew" : true, "End" : "2020-05-10T02:00:00Z", "Start" : "2020-05-03T02:00:00Z" }
+			// to_timestamp({}) riceve utc ma ritorna la data in local time
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_IngestionJob set "
 				"metaDataContent = jsonb_set("
-				"jsonb_set(metaDataContent, '{{schedule,start}}', ('\"' || to_char(to_timestamp({}), 'YYYY-MM-DD') || 'T' || "
-				"to_char(to_timestamp({}), 'HH24:MI:SS') || 'Z\"')::jsonb), "
-				"'{{schedule,end}}', ('\"' || to_char(to_timestamp({}), 'YYYY-MM-DD') || 'T' || "
-				"to_char(to_timestamp({}), 'HH24:MI:SS') || 'Z\"')::jsonb) "
+				"jsonb_set(metaDataContent, '{{schedule,start}}', ('\"' || to_char(to_timestamp({}) at time zone 'utc', 'YYYY-MM-DD') || 'T' || "
+				"to_char(to_timestamp({}) at time zone 'utc', 'HH24:MI:SS') || 'Z\"')::jsonb), "
+				"'{{schedule,end}}', ('\"' || to_char(to_timestamp({}) at time zone 'utc', 'YYYY-MM-DD') || 'T' || "
+				"to_char(to_timestamp({}) at time zone 'utc', 'HH24:MI:SS') || 'Z\"')::jsonb) "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				utcRecordingPeriodStart, utcRecordingPeriodStart, utcRecordingPeriodEnd, utcRecordingPeriodEnd, ingestionJobKey
 			);
