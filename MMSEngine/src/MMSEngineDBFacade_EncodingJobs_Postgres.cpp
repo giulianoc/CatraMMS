@@ -2,6 +2,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <regex>
 #include <utility>
@@ -1350,16 +1351,20 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 	try
 	{
 		{
-			_logger->info(
-				__FILEREF__ + "IngestionJob update" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", JSON_SET...utcScheduleStart: " +
-				to_string(utcRecordingPeriodStart) + ", JSON_SET....utcScheduleEnd: " + to_string(utcRecordingPeriodEnd)
+			SPDLOG_INFO(
+				"IngestionJob update"
+				", ingestionJobKey: {}"
+				", JSON_SET...utcScheduleStart: {}"
+				", JSON_SET....utcScheduleEnd: {}",
+				ingestionJobKey, utcRecordingPeriodStart, utcRecordingPeriodEnd
 			);
 			// "RecordingPeriod" : { "AutoRenew" : true, "End" : "2020-05-10T02:00:00Z", "Start" : "2020-05-03T02:00:00Z" }
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_IngestionJob set "
-				"metaDataContent = jsonb_set(metaDataContent, '{{schedule,start}}', ('\"' || to_char(to_timestamp({}), 'YYYY-MM-DD') || 'T' || "
+				"metaDataContent = jsonb_set("
+				"jsonb_set(metaDataContent, '{{schedule,start}}', ('\"' || to_char(to_timestamp({}), 'YYYY-MM-DD') || 'T' || "
 				"to_char(to_timestamp({}), 'HH24:MI:SS') || 'Z\"')::jsonb), "
-				"metaDataContent = jsonb_set(metaDataContent, '{{schedule,end}}', ('\"' || to_char(to_timestamp({}), 'YYYY-MM-DD') || 'T' || "
+				"'{{schedule,end}}', ('\"' || to_char(to_timestamp({}), 'YYYY-MM-DD') || 'T' || "
 				"to_char(to_timestamp({}), 'HH24:MI:SS') || 'Z\"')::jsonb) "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				utcRecordingPeriodStart, utcRecordingPeriodStart, utcRecordingPeriodEnd, utcRecordingPeriodEnd, ingestionJobKey
@@ -1377,20 +1382,27 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 			{
 				// 2020-05-10: in case of 'high availability', this update will be done two times
 				//	For this reason it is a warn below and no exception is raised
-				string errorMessage =
-					__FILEREF__ + "no ingestion update was done" + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart) +
-					", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(
+					"no ingestion update was done"
+					", utcRecordingPeriodStart: {}"
+					", utcRecordingPeriodEnd: {}"
+					", ingestionJobKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					utcRecordingPeriodStart, utcRecordingPeriodEnd, ingestionJobKey, rowsUpdated, sqlStatement
+				);
 
 				// throw runtime_error(errorMessage);
 			}
 		}
 
 		{
-			_logger->info(
-				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", JSON_SET...utcScheduleStart: " +
-				to_string(utcRecordingPeriodStart) + ", JSON_SET....utcScheduleEnd: " + to_string(utcRecordingPeriodEnd)
+			SPDLOG_INFO(
+				"EncodingJob update"
+				", encodingJobKey: {}"
+				", JSON_SET...utcScheduleStart: {}"
+				", JSON_SET....utcScheduleEnd: {}",
+				encodingJobKey, utcRecordingPeriodStart, utcRecordingPeriodEnd
 			);
 			string sqlStatement = fmt::format(
 				"WITH rows AS (update MMS_EncodingJob set encodingJobStart = NOW() at time zone 'utc', "
@@ -1411,10 +1423,15 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart) +
-									  ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
+				string errorMessage = fmt::format(
+					"no update was done"
+					", utcRecordingPeriodStart: {}"
+					", utcRecordingPeriodEnd: {}"
+					", encodingJobKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					utcRecordingPeriodStart, utcRecordingPeriodEnd, encodingJobKey, rowsUpdated, sqlStatement
+				);
 				_logger->warn(errorMessage);
 
 				throw runtime_error(errorMessage);
