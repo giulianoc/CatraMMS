@@ -760,12 +760,40 @@ return sResponse;
 }
 */
 
+size_t curlWriteResponseCallback(char *ptr, size_t size, size_t nmemb, void *f)
+{
+	try
+	{
+		SPDLOG_INFO(
+			"curlWriteResponseCallback"
+			", size: {}",
+			size
+		);
+		string *response = (string *)f;
+
+		response->append(ptr, size * nmemb);
+
+		return size * nmemb;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"curlWriteResponseCallback failed"
+			", exception: {}",
+			e.what()
+		);
+		// Docs: Returning 0 will signal end-of-file to the library and cause it to
+		// stop the current transfer
+		return 0;
+	}
+};
+
 string MMSCURL::httpGet(
 	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
 	string basicAuthenticationPassword, vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
-	string sResponse;
+	string response;
 	int retryNumber = -1;
 
 	while (retryNumber < maxRetryNumber)
@@ -775,8 +803,6 @@ string MMSCURL::httpGet(
 		CURL *curl = nullptr;
 		struct curl_slist *headersList = nullptr;
 
-		ostringstream response;
-		bool responseInitialized = false;
 		try
 		{
 			// curlpp::Cleanup cleaner;
@@ -901,7 +927,8 @@ string MMSCURL::httpGet(
 			}
 
 			// request.setOpt(new curlpp::options::WriteStream(&response));
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteResponseCallback);
 
 			SPDLOG_INFO(
 				"httpGet"
@@ -918,7 +945,6 @@ string MMSCURL::httpGet(
 			// curlpp::options::Header(true));
 
 			SPDLOG_INFO("xxxxxxxxxxxx");
-			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
 			// request.perform();
 			CURLcode curlCode = curl_easy_perform(curl);
@@ -949,10 +975,10 @@ string MMSCURL::httpGet(
 			}
 			SPDLOG_INFO("xxxxxxxxxxxx");
 
-			sResponse = response.str();
+			// sResponse = response.str();
 			// LF and CR create problems to the json parser...
-			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
-				sResponse.pop_back();
+			while (response.size() > 0 && (response.back() == 10 || response.back() == 13))
+				response.pop_back();
 
 			SPDLOG_INFO("xxxxxxxxxxxx");
 			// long responseCode = curlpp::infos::ResponseCode::get(request);
@@ -966,7 +992,7 @@ string MMSCURL::httpGet(
 					", ingestionJobKey: {}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
 					", sResponse: {}",
-					ingestionJobKey, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(sResponse, regex("\n"), " ")
+					ingestionJobKey, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(response, regex("\n"), " ")
 				);
 			}
 			else
@@ -977,7 +1003,7 @@ string MMSCURL::httpGet(
 					", @MMS statistics@ - elapsed (secs): @{}@"
 					", sResponse: {}"
 					", responseCode: {}",
-					ingestionJobKey, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(sResponse, regex("\n"), " "),
+					ingestionJobKey, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(response, regex("\n"), " "),
 					responseCode
 				);
 				SPDLOG_ERROR(message);
@@ -1007,7 +1033,7 @@ string MMSCURL::httpGet(
 				", url: {}"
 				", exception: {}"
 				", response.str(): {}",
-				ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
+				ingestionJobKey, url, e.what(), response
 			);
 
 			if (headersList)
@@ -1044,7 +1070,7 @@ string MMSCURL::httpGet(
 				", url: {}"
 				", exception: {}"
 				", response.str(): {}",
-				ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
+				ingestionJobKey, url, e.what(), response
 			);
 
 			if (headersList)
@@ -1075,7 +1101,7 @@ string MMSCURL::httpGet(
 		}
 		catch (runtime_error e)
 		{
-			if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
+			if (response.find("502 Bad Gateway") != string::npos)
 			{
 				SPDLOG_ERROR(
 					"Server is not reachable, is it down?"
@@ -1083,7 +1109,7 @@ string MMSCURL::httpGet(
 					", url: {}"
 					", exception: {}"
 					", response.str(): {}",
-					ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
+					ingestionJobKey, url, e.what(), response
 				);
 
 				if (headersList)
@@ -1120,7 +1146,7 @@ string MMSCURL::httpGet(
 					", url: {}"
 					", exception: {}"
 					", response.str(): {}",
-					ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
+					ingestionJobKey, url, e.what(), response
 				);
 
 				if (headersList)
@@ -1158,7 +1184,7 @@ string MMSCURL::httpGet(
 				", url: {}"
 				", exception: {}"
 				", response.str(): {}",
-				ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
+				ingestionJobKey, url, e.what(), response
 			);
 
 			if (headersList)
@@ -1189,7 +1215,7 @@ string MMSCURL::httpGet(
 		}
 	}
 
-	return sResponse;
+	return response;
 }
 
 string MMSCURL::httpDelete(
