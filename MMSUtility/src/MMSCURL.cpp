@@ -773,9 +773,13 @@ size_t curlWriteResponseCallback(char *ptr, size_t size, size_t nmemb, void *f)
 			", size: {}"
 			", nmemb: {}"
 			", ptr: {}"
-			", response: {}"
-			", response.size: {}",
-			size, nmemb, ptr, *response, response->size()
+			", 5: {}"
+			", 4: {}"
+			", 3: {}"
+			", 2: {}"
+			", 1: {}",
+			size, nmemb, ptr, (int)(ptr[size * nmemb - 5]), (int)(ptr[size * nmemb - 4]), (int)(ptr[size * nmemb - 3]), (int)(ptr[size * nmemb - 2]),
+			(int)(ptr[size * nmemb - 1])
 		);
 
 		return size * nmemb;
