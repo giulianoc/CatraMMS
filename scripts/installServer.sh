@@ -431,13 +431,32 @@ create-directory()
 	read -n 1 -s -r -p "create-directory..."
 	echo ""
 
-	#preparazione mmsStorage (una tantum)
-	if [ "$moduleType" != "integration" ]; then
+	mkdir -p /opt/catramms
 
-		#mmsStorage è montato da tutti i moduli tranne integration
+	mkdir -p /var/catramms
+	mkdir -p /var/catramms/pids
 
-		if [ ! -e /mnt/mmsStorage ]; then
-			ln -s /mnt/mmsStorage-1 /mnt/mmsStorage
+	if [ "$moduleType" == "api" -o "$moduleType" == "api-and-delivery" ]; then
+		if [ "$moduleType" == "api" ]; then
+			read -n 1 -s -r -p "create the following directories (/mnt/mmsStorage-X), press a key once done"
+			echo ""
+			read -n 1 -s -r -p "set /etc/fstab and mount the dirs (es: //u330289.your-storagebox.de/backup     /mnt/mmsStorage-1       cifs    username=XXX,password=YYY,file_mode=0664,dir_mode=0775,uid=1000,gid=1000       0       0)"
+			echo ""
+			read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
+			echo ""
+		else
+			read -n 1 -s -r -p "create the following directories (/mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
+			echo ""
+			read -n 1 -s -r -p "set /etc/fstab and mount the dirs"
+			echo ""
+			read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
+			echo ""
+			read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
+			echo ""
+			read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
+			echo ""
+
+			mkdir -p /mnt/mmsIngestionRepository/users
 		fi
 
 		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
@@ -448,31 +467,7 @@ create-directory()
 		mkdir -p /mnt/mmsStorage/MMSRepository-free
 		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
 
-		#links
-		if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "engine" ]; then
-			if [ ! -e /mnt/mmsIngestionRepository ]; then
-				ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
-			fi
 
-			mkdir -p /mnt/mmsIngestionRepository/users
-			if [ ! -e /mnt/mmsIngestionRepository ]; then
-				ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository
-			fi
-		fi
-		if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "engine" -o "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-			if [ ! -e /mnt/mmsRepository0000 ]; then
-				ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000
-			fi
-		fi
-	fi
-
-
-	mkdir -p /opt/catramms
-
-	mkdir -p /var/catramms
-	mkdir -p /var/catramms/pids
-
-	if [ "$moduleType" == "api" -o "$moduleType" == "api-and-delivery" ]; then
 		mkdir -p /var/catramms/storage
 		if [ ! -e /home/mms/storage ]; then
 			ln -s /var/catramms/storage /home/mms
@@ -497,6 +492,28 @@ create-directory()
 		fi
 	fi
 	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then	#insieme al delivery abbiamo anche la GUI
+		read -n 1 -s -r -p "create the following directories (/mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
+		echo ""
+		read -n 1 -s -r -p "set /etc/fstab and mount the dirs"
+		echo ""
+		read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
+		echo ""
+		read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
+		echo ""
+		read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
+		echo ""
+
+		mkdir -p /mnt/mmsIngestionRepository/users
+
+		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
+		mkdir -p /mnt/mmsStorage/commonConfiguration
+		mkdir -p /mnt/mmsStorage/dbDump
+		mkdir -p /mnt/mmsStorage/MMSGUI
+		mkdir -p /mnt/mmsStorage/MMSLive
+		mkdir -p /mnt/mmsStorage/MMSRepository-free
+		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
+
+
 		mkdir -p /var/catramms/storage/MMSRepository
 		if [ ! -e /home/mms/storage ]; then
 			ln -s /var/catramms/storage /home/mms
@@ -541,12 +558,41 @@ create-directory()
 		fi
 	fi
 	if [ "$moduleType" == "engine" ]; then
+		#Non usiamo RAID. Usiamo un disco separato di 1TB SSD dove mettere dati del DB. 500GB per il logs e 500GB per il sistema operativo
+		read -n 1 -s -r -p "create the following directories (/mnt/local-data-logs /mnt/local-data-mmsDatabaseData /mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
+		echo ""
+		read -n 1 -s -r -p "set /etc/fstab and mount the dirs"
+		echo ""
+		read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
+		echo ""
+		read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
+		echo ""
+		read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
+		echo ""
+
+		mkdir -p /mnt/mmsIngestionRepository/users
+
+		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
+		mkdir -p /mnt/mmsStorage/commonConfiguration
+		mkdir -p /mnt/mmsStorage/dbDump
+		mkdir -p /mnt/mmsStorage/MMSGUI
+		mkdir -p /mnt/mmsStorage/MMSLive
+		mkdir -p /mnt/mmsStorage/MMSRepository-free
+		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
+
+
 		mkdir -p /var/catramms/storage/MMSRepository
 		if [ ! -e /home/mms/storage ]; then
 			ln -s /var/catramms/storage /home/mms
 		fi
 
+		mkdir -p /mnt/local-data
+
+		ln -s /mnt/local-data-logs /mnt/local-data/logs
 		mkdir -p /mnt/local-data/logs/mmsEngineService
+
+		ln -s /mnt/local-data-mmsDatabaseData /mnt/local-data/mmsDatabaseData
+
 		#MMSTranscoderWorkingAreaRepository: confermato che serve all'engine per le sue attività con ffmpeg (ad esempio changeFileFormat)
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
 		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
@@ -584,6 +630,29 @@ create-directory()
 		fi
 	fi
 	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
+		if [ "$moduleType" == "encoder" ]; then
+			read -n 1 -s -r -p "create the following directories (/mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
+			echo ""
+			read -n 1 -s -r -p "set /etc/fstab and mount the dirs"
+			echo ""
+			read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
+			echo ""
+			read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
+			echo ""
+			read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
+			echo ""
+
+			mkdir -p /mnt/mmsIngestionRepository/users
+
+			#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
+			mkdir -p /mnt/mmsStorage/commonConfiguration
+			mkdir -p /mnt/mmsStorage/dbDump
+			mkdir -p /mnt/mmsStorage/MMSGUI
+			mkdir -p /mnt/mmsStorage/MMSLive
+			mkdir -p /mnt/mmsStorage/MMSRepository-free
+			mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
+		fi
+
 		mkdir -p /var/catramms/storage/MMSRepository
 		if [ ! -e /home/mms/storage ]; then
 			ln -s /var/catramms/storage /home/mms
@@ -1268,6 +1337,7 @@ echo ""
 echo ""
 
 echo "se bisogna formattare e montare dischi"
+echo ""
 echo "sudo fdisk /dev/nvme1n1 (p n p w)"
 echo "sudo mkfs.ext4 /dev/nvme1n1p1"
 echo "in fstab"
@@ -1279,16 +1349,13 @@ echo ""
 echo ""
 
 echo "In caso di server dedicato:"
+echo ""
 echo "seguire le istruzioni nel doc Hetzner Info in google drive per far comunicare la rete interna del cloud con il server dedicato"
 read -n 1 -s -r -p "reboot of the server to apply the new network configuration..."
 echo ""
 echo ""
 
-echo "se c'è un mount per /mnt/local-data/logs, /mnt/mmsStorage, /mnt/mmsRepository000?, /mnt/MMSTranscoderWorkingAreaRepository (for encoder) aggiungere in /etc/fstab"
-echo "e creare la directory"
-echo "10.0.0.12:/mnt/mmsStorage /mnt/mmsStorage       nfs     nolock,hard     0       1"
-echo "//u313562.your-storagebox.de/backup	/mnt/mmsRepository0000	cifs	username=u313562,password=vae3zh8wFVtooRiN,file_mode=0664,dir_mode=0775,uid=1000,gid=1000	0	0"
-read -n 1 -s -r -p "andando avando con l'istallazione, dopo l'istallazione del pacchetto nfs e cifs eseguire il mount -a ..."
+read -n 1 -s -r -p "La creazione delle dirs in /mnt viene gestita piu avanti, per cui non bisogna fare nulla"
 echo ""
 echo ""
 

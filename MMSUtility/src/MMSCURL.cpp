@@ -16,6 +16,9 @@
 #include "JSONUtils.h"
 #include "catralibraries/Convert.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/bundled/format.h"
+#include "spdlog/spdlog.h"
+#include <curl/curl.h>
 #include <regex>
 #include <sstream>
 
@@ -554,6 +557,7 @@ size_t curlUploadFormDataCallback(char *ptr, size_t size, size_t nmemb, void *f)
 	return charsRead;
 };
 
+/*
 string MMSCURL::httpGet(
 	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
 	string basicAuthenticationPassword, vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
@@ -588,6 +592,212 @@ string MMSCURL::httpGet(
 			// timeout consistent with nginx configuration
 			// (fastcgi_read_timeout)
 			request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
+
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() &&
+			// 	0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (url.starts_with("https"))
+			{
+
+// disconnect if we can't validate server's cert
+bool bSslVerifyPeer = false;
+curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+request.setOpt(sslVerifyPeer);
+
+curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+request.setOpt(sslVerifyHost);
+
+// request.setOpt(new curlpp::options::SslEngineDefault());
+}
+
+request.setOpt(new curlpp::options::HttpHeader(headers));
+
+request.setOpt(new curlpp::options::WriteStream(&response));
+
+logger->info(__FILEREF__ + "HTTP GET" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url);
+
+// store response headers in the response
+// You simply have to set next option to prefix the header to the
+// normal body output. request.setOpt(new
+// curlpp::options::Header(true));
+
+responseInitialized = true;
+chrono::system_clock::time_point start = chrono::system_clock::now();
+request.perform();
+chrono::system_clock::time_point end = chrono::system_clock::now();
+
+sResponse = response.str();
+// LF and CR create problems to the json parser...
+while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
+	sResponse.pop_back();
+
+long responseCode = curlpp::infos::ResponseCode::get(request);
+if (responseCode == 200)
+{
+	string message = __FILEREF__ + "httpGet" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", @MMS statistics@ - elapsed (secs): @" +
+					 to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@" +
+					 ", sResponse: " + regex_replace(sResponse, regex("\n"), " ");
+	logger->info(message);
+}
+else
+{
+	string message = __FILEREF__ + "httpGet failed, wrong return status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+					 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@" +
+					 ", sResponse: " + sResponse + ", responseCode: " + to_string(responseCode);
+	logger->error(message);
+
+	throw runtime_error(message);
+}
+
+// return sResponse;
+break;
+}
+catch (curlpp::LogicError &e)
+{
+	logger->error(
+		__FILEREF__ + "httpGet failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+		", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+	);
+
+	if (retryNumber < maxRetryNumber)
+	{
+		logger->info(
+			__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+			", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+			", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+		);
+		this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+	}
+	else
+		throw runtime_error(e.what());
+}
+catch (curlpp::RuntimeError &e)
+{
+	SPDLOG_ERROR(
+		"httpGet failed (RuntimeError)"
+		", ingestionJobKey: {}"
+		", url: {}"
+		", exception: {}"
+		", response.str(): {}",
+		ingestionJobKey, url, e.what(), responseInitialized ? response.str() : ""
+	);
+
+	if (retryNumber < maxRetryNumber)
+	{
+		logger->info(
+			__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+			", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+			", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+		);
+		this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+	}
+	else
+		throw runtime_error(e.what());
+}
+catch (runtime_error e)
+{
+	if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
+	{
+		logger->error(
+			__FILEREF__ + "Server is not reachable, is it down?" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+			", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		if (retryNumber < maxRetryNumber)
+		{
+			logger->info(
+				__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+				", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+				", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+			);
+			this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+		}
+		else
+			throw ServerNotReachable();
+	}
+	else
+	{
+		logger->error(
+			__FILEREF__ + "httpGet failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+			", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+		);
+
+		if (retryNumber < maxRetryNumber)
+		{
+			logger->info(
+				__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+				", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+				", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+			);
+			this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+		}
+		else
+			throw e;
+	}
+}
+catch (exception e)
+{
+	logger->error(
+		__FILEREF__ + "httpGet failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
+		", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+	);
+
+	if (retryNumber < maxRetryNumber)
+	{
+		logger->info(
+			__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+			", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
+			", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+		);
+		this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+	}
+	else
+		throw e;
+}
+}
+
+return sResponse;
+}
+*/
+
+string MMSCURL::httpGet(
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, long timeoutInSeconds, string basicAuthenticationUser,
+	string basicAuthenticationPassword, vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
+)
+{
+	string sResponse;
+	int retryNumber = -1;
+
+	while (retryNumber < maxRetryNumber)
+	{
+		retryNumber++;
+
+		CURL *curl = nullptr;
+		struct curl_slist *headersList = nullptr;
+
+		ostringstream response;
+		bool responseInitialized = false;
+		try
+		{
+			// curlpp::Cleanup cleaner;
+			// curlpp::Easy request;
+
+			curl = curl_easy_init();
+			if (!curl)
+			{
+				string errorMessage = "curl_easy_init failed";
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			// request.setOpt(new curlpp::options::Url(url));
+			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+			// timeout consistent with nginx configuration
+			// (fastcgi_read_timeout)
+			// request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
+			curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeoutInSeconds);
 
 			// string httpsPrefix("https");
 			// if (url.size() >= httpsPrefix.size() &&
@@ -652,20 +862,55 @@ string MMSCURL::httpGet(
 
 				// disconnect if we can't validate server's cert
 				bool bSslVerifyPeer = false;
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-				request.setOpt(sslVerifyPeer);
+				// curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				// request.setOpt(sslVerifyPeer);
+				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 
-				curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-				request.setOpt(sslVerifyHost);
+				// curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				// request.setOpt(sslVerifyHost);
+				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
 				// request.setOpt(new curlpp::options::SslEngineDefault());
 			}
 
+			/*
+			list<string> headers;
+			if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
+			{
+				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+				headers.push_back(basicAuthorization);
+			}
+			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
 			request.setOpt(new curlpp::options::HttpHeader(headers));
+			*/
+			{
+				if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
+				{
+					string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
+					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
-			request.setOpt(new curlpp::options::WriteStream(&response));
+					headersList = curl_slist_append(headersList, basicAuthorization.c_str());
+				}
 
-			logger->info(__FILEREF__ + "HTTP GET" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url);
+				for (string header : otherHeaders)
+					headersList = curl_slist_append(headersList, header.c_str());
+
+				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headersList);
+			}
+
+			// request.setOpt(new curlpp::options::WriteStream(&response));
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+			SPDLOG_INFO(
+				"HTTP GET"
+				", ingestionJobKey: {}"
+				", url: {}"
+				", basicAuthenticationUser: {}"
+				", otherHeaders.size: {}",
+				ingestionJobKey, url, basicAuthenticationUser, otherHeaders.size()
+			);
 
 			// store response headers in the response
 			// You simply have to set next option to prefix the header to the
@@ -674,30 +919,75 @@ string MMSCURL::httpGet(
 
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
-			request.perform();
+			// request.perform();
+			CURLcode curlCode = curl_easy_perform(curl);
 			chrono::system_clock::time_point end = chrono::system_clock::now();
+			if (curlCode != CURLE_OK)
+			{
+				string errorMessage = fmt::format(
+					"curl_easy_perform failed"
+					", curlCode: {}",
+					curl_easy_strerror(curlCode)
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				if (headersList)
+				{
+					curl_slist_free_all(headersList); /* free the list */
+					headersList = nullptr;
+				}
+				if (curl)
+				{
+					curl_easy_cleanup(curl);
+					curl = nullptr;
+				}
+
+				throw runtime_error(errorMessage);
+			}
 
 			sResponse = response.str();
 			// LF and CR create problems to the json parser...
 			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 				sResponse.pop_back();
 
-			long responseCode = curlpp::infos::ResponseCode::get(request);
+			// long responseCode = curlpp::infos::ResponseCode::get(request);
+			long responseCode;
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
 			if (responseCode == 200)
 			{
-				string message = __FILEREF__ + "httpGet" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
-								 "@" + ", sResponse: " + regex_replace(sResponse, regex("\n"), " ");
-				logger->info(message);
+				SPDLOG_INFO(
+					"httpGet"
+					", ingestionJobKey: {}"
+					", @MMS statistics@ - elapsed (secs): @{}@"
+					", sResponse: {}",
+					ingestionJobKey, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(sResponse, regex("\n"), " ")
+				);
 			}
 			else
 			{
-				string message = __FILEREF__ + "httpGet failed, wrong return status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								 ", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) +
-								 "@" + ", sResponse: " + sResponse + ", responseCode: " + to_string(responseCode);
-				logger->error(message);
+				string message = fmt::format(
+					"httpGet failed, wrong return status"
+					", ingestionJobKey: {}"
+					", @MMS statistics@ - elapsed (secs): @{}@"
+					", sResponse: {}"
+					", responseCode: {}",
+					ingestionJobKey, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(sResponse, regex("\n"), " "),
+					responseCode
+				);
+				SPDLOG_ERROR(message);
 
 				throw runtime_error(message);
+			}
+
+			if (headersList)
+			{
+				curl_slist_free_all(headersList); /* free the list */
+				headersList = nullptr;
+			}
+			if (curl)
+			{
+				curl_easy_cleanup(curl);
+				curl = nullptr;
 			}
 
 			// return sResponse;
@@ -705,17 +995,35 @@ string MMSCURL::httpGet(
 		}
 		catch (curlpp::LogicError &e)
 		{
-			logger->error(
-				__FILEREF__ + "httpGet failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+			SPDLOG_ERROR(
+				"httpGet failed (LogicError)"
+				", ingestionJobKey: {}"
+				", url: {}"
+				", exception: {}"
+				", response.str(): {}",
+				ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
 			);
+
+			if (headersList)
+			{
+				curl_slist_free_all(headersList); /* free the list */
+				headersList = nullptr;
+			}
+			if (curl)
+			{
+				curl_easy_cleanup(curl);
+				curl = nullptr;
+			}
 
 			if (retryNumber < maxRetryNumber)
 			{
-				logger->info(
-					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				SPDLOG_INFO(
+					"sleep before trying again"
+					", ingestionJobKey: {}"
+					", retryNumber: {}"
+					", maxRetryNumber: {}"
+					", secondsToWaitBeforeToRetry: {}",
+					ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
@@ -730,15 +1038,29 @@ string MMSCURL::httpGet(
 				", url: {}"
 				", exception: {}"
 				", response.str(): {}",
-				ingestionJobKey, url, e.what(), responseInitialized ? response.str() : ""
+				ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
 			);
+
+			if (headersList)
+			{
+				curl_slist_free_all(headersList); /* free the list */
+				headersList = nullptr;
+			}
+			if (curl)
+			{
+				curl_easy_cleanup(curl);
+				curl = nullptr;
+			}
 
 			if (retryNumber < maxRetryNumber)
 			{
-				logger->info(
-					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				SPDLOG_INFO(
+					"sleep before trying again"
+					", ingestionJobKey: {}"
+					", retryNumber: {}"
+					", maxRetryNumber: {}"
+					", secondsToWaitBeforeToRetry: {}",
+					ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
@@ -749,17 +1071,35 @@ string MMSCURL::httpGet(
 		{
 			if (responseInitialized && response.str().find("502 Bad Gateway") != string::npos)
 			{
-				logger->error(
-					__FILEREF__ + "Server is not reachable, is it down?" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
-					", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+				SPDLOG_ERROR(
+					"Server is not reachable, is it down?"
+					", ingestionJobKey: {}"
+					", url: {}"
+					", exception: {}"
+					", response.str(): {}",
+					ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
 				);
+
+				if (headersList)
+				{
+					curl_slist_free_all(headersList); /* free the list */
+					headersList = nullptr;
+				}
+				if (curl)
+				{
+					curl_easy_cleanup(curl);
+					curl = nullptr;
+				}
 
 				if (retryNumber < maxRetryNumber)
 				{
-					logger->info(
-						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+					SPDLOG_INFO(
+						"sleep before trying again"
+						", ingestionJobKey: {}"
+						", retryNumber: {}"
+						", maxRetryNumber: {}"
+						", secondsToWaitBeforeToRetry: {}",
+						ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
@@ -768,17 +1108,35 @@ string MMSCURL::httpGet(
 			}
 			else
 			{
-				logger->error(
-					__FILEREF__ + "httpGet failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
-					", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+				SPDLOG_ERROR(
+					"httpGet failed (exception)"
+					", ingestionJobKey: {}"
+					", url: {}"
+					", exception: {}"
+					", response.str(): {}",
+					ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
 				);
+
+				if (headersList)
+				{
+					curl_slist_free_all(headersList); /* free the list */
+					headersList = nullptr;
+				}
+				if (curl)
+				{
+					curl_easy_cleanup(curl);
+					curl = nullptr;
+				}
 
 				if (retryNumber < maxRetryNumber)
 				{
-					logger->info(
-						__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
-						", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+					SPDLOG_INFO(
+						"sleep before trying again"
+						", ingestionJobKey: {}"
+						", retryNumber: {}"
+						", maxRetryNumber: {}"
+						", secondsToWaitBeforeToRetry: {}",
+						ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
@@ -788,17 +1146,35 @@ string MMSCURL::httpGet(
 		}
 		catch (exception e)
 		{
-			logger->error(
-				__FILEREF__ + "httpGet failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url +
-				", exception: " + e.what() + ", response.str(): " + (responseInitialized ? response.str() : "")
+			SPDLOG_ERROR(
+				"httpGet failed (exception)"
+				", ingestionJobKey: {}"
+				", url: {}"
+				", exception: {}"
+				", response.str(): {}",
+				ingestionJobKey, url, e.what(), (responseInitialized ? response.str() : "")
 			);
+
+			if (headersList)
+			{
+				curl_slist_free_all(headersList); /* free the list */
+				headersList = nullptr;
+			}
+			if (curl)
+			{
+				curl_easy_cleanup(curl);
+				curl = nullptr;
+			}
 
 			if (retryNumber < maxRetryNumber)
 			{
-				logger->info(
-					__FILEREF__ + "sleep before trying again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", retryNumber: " + to_string(retryNumber) + ", maxRetryNumber: " + to_string(maxRetryNumber) +
-					", secondsToWaitBeforeToRetry: " + to_string(secondsToWaitBeforeToRetry)
+				SPDLOG_INFO(
+					"sleep before trying again"
+					", ingestionJobKey: {}"
+					", retryNumber: {}"
+					", maxRetryNumber: {}"
+					", secondsToWaitBeforeToRetry: {}",
+					ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
@@ -2472,113 +2848,119 @@ void MMSCURL::sendEmail(
 	CURLcode res = CURLE_OK;
 
 	curl = curl_easy_init();
-	if (curl)
+	if (!curl)
 	{
-		curl_easy_setopt(curl, CURLOPT_URL, emailServerURL.c_str());
-		if (from != "")
-			curl_easy_setopt(curl, CURLOPT_USERNAME, from.c_str());
-		if (password != "")
-			curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
+		string errorMessage = "curl_easy_init failed";
+		SPDLOG_ERROR(errorMessage);
 
-		// curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-		// curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-
-		/* Note that this option isn't strictly required, omitting it will
-		 * result in libcurl sending the MAIL FROM command with empty sender
-		 * data. All autoresponses should have an empty reverse-path, and should
-		 * be directed to the address in the reverse-path which triggered them.
-		 * Otherwise, they could cause an endless loop. See RFC 5321
-		 * Section 4.5.5 for more details.
-		 */
-		curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from.c_str());
-
-		/* Add two recipients, in this particular case they correspond to the
-		 * To: and Cc: addressees in the header, but they could be any kind of
-		 * recipient. */
-		struct curl_slist *recipients = NULL;
-		{
-			{
-				stringstream ssAddresses(tosCommaSeparated);
-				string address;
-				char delim = ',';
-				while (getline(ssAddresses, address, delim))
-				{
-					if (!address.empty())
-						recipients = curl_slist_append(recipients, address.c_str());
-				}
-			}
-			if (ccsCommaSeparated != "")
-			{
-				stringstream ssAddresses(ccsCommaSeparated);
-				string address;
-				char delim = ',';
-				while (getline(ssAddresses, address, delim))
-				{
-					if (!address.empty())
-						recipients = curl_slist_append(recipients, address.c_str());
-				}
-			}
-
-			curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
-		}
-
-		curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
-
-		/* We're using a callback function to specify the payload (the headers
-		 * and body of the message). You could just use the CURLOPT_READDATA
-		 * option to specify a FILE pointer to read from. */
-		curl_easy_setopt(curl, CURLOPT_READFUNCTION, emailPayloadFeed);
-		curl_easy_setopt(curl, CURLOPT_READDATA, &curlUploadEmailData);
-		curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
-		// curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
-		/* Send the message */
-		{
-			string body;
-			for (string emailLine : curlUploadEmailData.emailLines)
-				body += emailLine;
-			SPDLOG_INFO(
-				"Sending email"
-				", emailServerURL: {}"
-				", from: {}"
-				// + ", password: " + password
-				", to: {}"
-				", cc: {}"
-				", subject: {}"
-				", body: {}",
-				emailServerURL, from, tosCommaSeparated, ccsCommaSeparated, subject, body
-			);
-		}
-
-		res = curl_easy_perform(curl);
-
-		if (res != CURLE_OK)
-		{
-			string errorMessage = curl_easy_strerror(res);
-			SPDLOG_ERROR(
-				"curl_easy_perform() failed"
-				", curl_easy_strerror(res): {}",
-				errorMessage
-			);
-
-			curl_slist_free_all(recipients);
-			curl_easy_cleanup(curl);
-			throw runtime_error(errorMessage);
-		}
-		else
-			SPDLOG_INFO("Email sent successful");
-
-		/* Free the list of recipients */
-		curl_slist_free_all(recipients);
-
-		/* curl won't send the QUIT command until you call cleanup, so you
-		 * should be able to re-use this connection for additional messages
-		 * (setting CURLOPT_MAIL_FROM and CURLOPT_MAIL_RCPT as required, and
-		 * calling curl_easy_perform() again. It may not be a good idea to keep
-		 * the connection open for a very long time though (more than a few
-		 * minutes may result in the server timing out the connection), and you
-		 * do want to clean up in the end.
-		 */
-		curl_easy_cleanup(curl);
+		throw runtime_error(errorMessage);
 	}
+
+	curl_easy_setopt(curl, CURLOPT_URL, emailServerURL.c_str());
+	if (from != "")
+		curl_easy_setopt(curl, CURLOPT_USERNAME, from.c_str());
+	if (password != "")
+		curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
+
+	// curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+	// curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+	/* Note that this option isn't strictly required, omitting it will
+	 * result in libcurl sending the MAIL FROM command with empty sender
+	 * data. All autoresponses should have an empty reverse-path, and should
+	 * be directed to the address in the reverse-path which triggered them.
+	 * Otherwise, they could cause an endless loop. See RFC 5321
+	 * Section 4.5.5 for more details.
+	 */
+	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from.c_str());
+
+	/* Add two recipients, in this particular case they correspond to the
+	 * To: and Cc: addressees in the header, but they could be any kind of
+	 * recipient. */
+	struct curl_slist *recipients = NULL;
+	{
+		{
+			stringstream ssAddresses(tosCommaSeparated);
+			string address;
+			char delim = ',';
+			while (getline(ssAddresses, address, delim))
+			{
+				if (!address.empty())
+					recipients = curl_slist_append(recipients, address.c_str());
+			}
+		}
+		if (ccsCommaSeparated != "")
+		{
+			stringstream ssAddresses(ccsCommaSeparated);
+			string address;
+			char delim = ',';
+			while (getline(ssAddresses, address, delim))
+			{
+				if (!address.empty())
+					recipients = curl_slist_append(recipients, address.c_str());
+			}
+		}
+
+		curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
+	}
+
+	curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
+	/* We're using a callback function to specify the payload (the headers
+	 * and body of the message). You could just use the CURLOPT_READDATA
+	 * option to specify a FILE pointer to read from. */
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, emailPayloadFeed);
+	curl_easy_setopt(curl, CURLOPT_READDATA, &curlUploadEmailData);
+	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+	// curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+
+	/* Send the message */
+	{
+		string body;
+		for (string emailLine : curlUploadEmailData.emailLines)
+			body += emailLine;
+		SPDLOG_INFO(
+			"Sending email"
+			", emailServerURL: {}"
+			", from: {}"
+			// + ", password: " + password
+			", to: {}"
+			", cc: {}"
+			", subject: {}"
+			", body: {}",
+			emailServerURL, from, tosCommaSeparated, ccsCommaSeparated, subject, body
+		);
+	}
+
+	res = curl_easy_perform(curl);
+
+	if (res != CURLE_OK)
+	{
+		string errorMessage = curl_easy_strerror(res);
+		SPDLOG_ERROR(
+			"curl_easy_perform() failed"
+			", curl_easy_strerror(res): {}",
+			errorMessage
+		);
+
+		curl_slist_free_all(recipients);
+		curl_easy_cleanup(curl);
+
+		throw runtime_error(errorMessage);
+	}
+
+	SPDLOG_INFO("Email sent successful");
+
+	/* Free the list of recipients */
+	curl_slist_free_all(recipients);
+
+	/* curl won't send the QUIT command until you call cleanup, so you
+	 * should be able to re-use this connection for additional messages
+	 * (setting CURLOPT_MAIL_FROM and CURLOPT_MAIL_RCPT as required, and
+	 * calling curl_easy_perform() again. It may not be a good idea to keep
+	 * the connection open for a very long time though (more than a few
+	 * minutes may result in the server timing out the connection), and you
+	 * do want to clean up in the end.
+	 */
+	curl_easy_cleanup(curl);
 }
