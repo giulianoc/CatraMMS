@@ -764,19 +764,18 @@ size_t curlWriteResponseCallback(char *ptr, size_t size, size_t nmemb, void *f)
 {
 	try
 	{
-		SPDLOG_INFO(
-			"curlWriteResponseCallback"
-			", size: {}"
-			", nmemb: {}",
-			size, nmemb
-		);
 		string *response = (string *)f;
 
 		response->append(ptr, size * nmemb);
+
 		SPDLOG_INFO(
 			"curlWriteResponseCallback"
-			", response: {}",
-			*response
+			", size: {}"
+			", nmemb: {}"
+			", ptr: {}",
+			", response: {}"
+			", response.size: {}",
+			size, nmemb, ptr, *response, response->size()
 		);
 
 		return size * nmemb;
