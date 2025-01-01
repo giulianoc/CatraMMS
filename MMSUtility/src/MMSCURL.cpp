@@ -772,7 +772,7 @@ size_t curlWriteResponseCallback(char *ptr, size_t size, size_t nmemb, void *f)
 			"curlWriteResponseCallback"
 			", size: {}"
 			", nmemb: {}"
-			", ptr: {}",
+			", ptr: {}"
 			", response: {}"
 			", response.size: {}",
 			size, nmemb, ptr, *response, response->size()
