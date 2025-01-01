@@ -904,7 +904,7 @@ string MMSCURL::httpGet(
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
 			SPDLOG_INFO(
-				"HTTP GET"
+				"httpGet"
 				", ingestionJobKey: {}"
 				", url: {}"
 				", basicAuthenticationUser: {}"
@@ -917,13 +917,16 @@ string MMSCURL::httpGet(
 			// normal body output. request.setOpt(new
 			// curlpp::options::Header(true));
 
+			SPDLOG_INFO("xxxxxxxxxxxx");
 			responseInitialized = true;
 			chrono::system_clock::time_point start = chrono::system_clock::now();
 			// request.perform();
 			CURLcode curlCode = curl_easy_perform(curl);
 			chrono::system_clock::time_point end = chrono::system_clock::now();
+			SPDLOG_INFO("xxxxxxxxxxxx");
 			if (curlCode != CURLE_OK)
 			{
+				SPDLOG_INFO("xxxxxxxxxxxx");
 				string errorMessage = fmt::format(
 					"curl_easy_perform failed"
 					", curlCode: {}",
@@ -944,15 +947,18 @@ string MMSCURL::httpGet(
 
 				throw runtime_error(errorMessage);
 			}
+			SPDLOG_INFO("xxxxxxxxxxxx");
 
 			sResponse = response.str();
 			// LF and CR create problems to the json parser...
 			while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() == 13))
 				sResponse.pop_back();
 
+			SPDLOG_INFO("xxxxxxxxxxxx");
 			// long responseCode = curlpp::infos::ResponseCode::get(request);
 			long responseCode;
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+			SPDLOG_INFO("xxxxxxxxxxxx");
 			if (responseCode == 200)
 			{
 				SPDLOG_INFO(
