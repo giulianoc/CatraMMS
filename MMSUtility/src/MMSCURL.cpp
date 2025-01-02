@@ -931,7 +931,7 @@ string MMSCURL::httpGet(
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteResponseCallback);
 
 			SPDLOG_INFO(
-				"{}"
+				"{} details"
 				", ingestionJobKey: {}"
 				", url: {}"
 				", basicAuthenticationUser: {}"
@@ -982,7 +982,7 @@ string MMSCURL::httpGet(
 			if (responseCode == 200)
 			{
 				SPDLOG_INFO(
-					"{}"
+					"{} success"
 					", ingestionJobKey: {}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
 					", sResponse: {}",
@@ -1558,7 +1558,7 @@ string MMSCURL::httpDelete(
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteResponseCallback);
 
 			SPDLOG_INFO(
-				"{}"
+				"{} details"
 				", ingestionJobKey: {}"
 				", url: {}"
 				", basicAuthenticationUser: {}"
@@ -1609,7 +1609,7 @@ string MMSCURL::httpDelete(
 			if (responseCode == 200)
 			{
 				SPDLOG_INFO(
-					"{}"
+					"{} success"
 					", ingestionJobKey: {}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
 					", sResponse: {}",
