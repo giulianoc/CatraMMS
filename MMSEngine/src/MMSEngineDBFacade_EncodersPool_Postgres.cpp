@@ -3310,7 +3310,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 			);
-			if (!empty(res))
+			if (empty(res))
 			{
 				string errorMessage = fmt::format(
 					"Encoder details not found"
