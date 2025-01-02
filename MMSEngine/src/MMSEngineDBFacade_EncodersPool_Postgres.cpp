@@ -3,6 +3,7 @@
 #include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/Convert.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <algorithm>
 
@@ -3179,7 +3180,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		string field;
 
 		SPDLOG_INFO(
-			"getRunningEncoderByEncodersPool"
+			"Received getRunningEncoderByEncodersPool"
 			", workspaceKey: {}"
 			", encodersPoolLabel: {}"
 			", encoderKeyToBeSkipped: {}"
@@ -3190,19 +3191,22 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		int lastEncoderIndexUsed;
 		int64_t encodersPoolKey;
 		{
+			// 2025-01-02: ho trovato la select che non ritornava (bloccata) per cui elimino il 'for update'
+			// 	tanto serve solamente per rispettare l'ordine di uso degli encoder (lastEncoderIndexUsed) e,
+			// 	anche se si dovesse riutilizzare un encoder, non è un problema, meglio evitare blocchi/deadlock
 			string sqlStatement;
 			if (encodersPoolLabel == "")
 				sqlStatement = fmt::format(
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
 					"where workspaceKey = {} "
-					"and label is null for update",
+					"and label is null", // for update",
 					workspaceKey
 				);
 			else
 				sqlStatement = fmt::format(
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
 					"where workspaceKey = {} "
-					"and label = {} for update",
+					"and label = {}", // for update",
 					workspaceKey, trans.quote(encodersPoolLabel)
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -3216,9 +3220,13 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "encodersPool was not found" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", encodersPoolLabel: " + encodersPoolLabel;
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"encodersPool was not found"
+					", workspaceKey: {}"
+					", encodersPoolLabel: {}",
+					workspaceKey, encodersPoolLabel
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3304,70 +3312,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			);
 			if (!empty(res))
 			{
-				encoderKey = res[0]["encoderKey"].as<int64_t>();
-
-				bool enabled = res[0]["enabled"].as<bool>();
-				external = res[0]["external"].as<bool>();
-				protocol = res[0]["protocol"].as<string>();
-				publicServerName = res[0]["publicServerName"].as<string>();
-				internalServerName = res[0]["internalServerName"].as<string>();
-				port = res[0]["port"].as<int>();
-
-				if (external && !externalEncoderAllowed)
-				{
-					SPDLOG_INFO(
-						"getEncoderByEncodersPool, skipped encoderKey because external encoder are not allowed"
-						", workspaceKey: {}"
-						", encodersPoolLabel: {}"
-						", enabled: {}",
-						workspaceKey, encodersPoolLabel, enabled
-					);
-
-					continue;
-				}
-				else if (!enabled)
-				{
-					SPDLOG_INFO(
-						"getEncoderByEncodersPool, skipped encoderKey because encoder not enabled"
-						", workspaceKey: {}"
-						", encodersPoolLabel: {}"
-						", enabled: {}",
-						workspaceKey, encodersPoolLabel, enabled
-					);
-
-					continue;
-				}
-				else if (encoderKeyToBeSkipped != -1 && encoderKeyToBeSkipped == encoderKey)
-				{
-					SPDLOG_INFO(
-						"getEncoderByEncodersPool, skipped encoderKey"
-						", workspaceKey: {}"
-						", encodersPoolLabel: {}"
-						", encoderKeyToBeSkipped: {}",
-						workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped
-					);
-
-					continue;
-				}
-				else
-				{
-					if (!isEncoderRunning(external, protocol, publicServerName, internalServerName, port))
-					{
-						SPDLOG_INFO(
-							"getEncoderByEncodersPool, dicarded encoderKey because not running"
-							", workspaceKey: {}"
-							", encodersPoolLabel: {}",
-							workspaceKey, encodersPoolLabel
-						);
-
-						continue;
-					}
-				}
-
-				encoderFound = true;
-			}
-			else
-			{
 				string errorMessage = fmt::format(
 					"Encoder details not found"
 					", workspaceKey: {}"
@@ -3378,6 +3322,68 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 
 				throw runtime_error(errorMessage);
 			}
+
+			encoderKey = res[0]["encoderKey"].as<int64_t>();
+
+			bool enabled = res[0]["enabled"].as<bool>();
+			external = res[0]["external"].as<bool>();
+			protocol = res[0]["protocol"].as<string>();
+			publicServerName = res[0]["publicServerName"].as<string>();
+			internalServerName = res[0]["internalServerName"].as<string>();
+			port = res[0]["port"].as<int>();
+
+			if (external && !externalEncoderAllowed)
+			{
+				SPDLOG_INFO(
+					"getEncoderByEncodersPool, skipped encoderKey because external encoder are not allowed"
+					", workspaceKey: {}"
+					", encodersPoolLabel: {}"
+					", enabled: {}",
+					workspaceKey, encodersPoolLabel, enabled
+				);
+
+				continue;
+			}
+			else if (!enabled)
+			{
+				SPDLOG_INFO(
+					"getEncoderByEncodersPool, skipped encoderKey because encoder not enabled"
+					", workspaceKey: {}"
+					", encodersPoolLabel: {}"
+					", enabled: {}",
+					workspaceKey, encodersPoolLabel, enabled
+				);
+
+				continue;
+			}
+			else if (encoderKeyToBeSkipped != -1 && encoderKeyToBeSkipped == encoderKey)
+			{
+				SPDLOG_INFO(
+					"getEncoderByEncodersPool, skipped encoderKey"
+					", workspaceKey: {}"
+					", encodersPoolLabel: {}"
+					", encoderKeyToBeSkipped: {}",
+					workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped
+				);
+
+				continue;
+			}
+			else
+			{
+				if (!isEncoderRunning(external, protocol, publicServerName, internalServerName, port))
+				{
+					SPDLOG_INFO(
+						"getEncoderByEncodersPool, dicarded encoderKey because not running"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}",
+						workspaceKey, encodersPoolLabel
+					);
+
+					continue;
+				}
+			}
+
+			encoderFound = true;
 		}
 
 		if (!encoderFound)
