@@ -207,9 +207,16 @@ class MMSCURL
 		int64_t contentRangeStart = -1, int64_t contentRangeEnd_Excluded = -1
 	);
 
+	/*
 	static void downloadFile(
 		shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, string destBinaryPathName,
 		curlpp::types::ProgressFunctionFunctor functor, int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
+	);
+	*/
+	static void downloadFile(
+		shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url, string destBinaryPathName,
+		function<int(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t)> progressCallback, void *progressData, int maxRetryNumber = 0,
+		int secondsToWaitBeforeToRetry = 15
 	);
 
 	static void ftpFile(

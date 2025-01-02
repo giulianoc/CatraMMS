@@ -861,6 +861,58 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
+static int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+{
+
+	FFMpeg::ProgressData *progressData = (FFMpeg::ProgressData *)clientp;
+
+	int progressUpdatePeriodInSeconds = 15;
+
+	chrono::system_clock::time_point now = chrono::system_clock::now();
+
+	if (dltotal != 0 && (dltotal == dlnow || now - progressData->_lastTimeProgressUpdate >= chrono::seconds(progressUpdatePeriodInSeconds)))
+	{
+		double progress = dltotal == 0 ? 0 : (dlnow / dltotal) * 100;
+		// int downloadingPercentage = floorf(progress * 100) / 100;
+		// this is to have one decimal in the percentage
+		double downloadingPercentage = ((double)((int)(progress * 10))) / 10;
+
+		SPDLOG_INFO(
+			"progressDownloadCallback. Download still running"
+			", ingestionJobKey: {}"
+			", downloadingPercentage: {}"
+			", dltotal: {}"
+			", dlnow: {}"
+			", ultotal: {}"
+			", ulnow: {}",
+			progressData->_ingestionJobKey, downloadingPercentage, dltotal, dlnow, ultotal, ulnow
+		);
+
+		progressData->_lastTimeProgressUpdate = now;
+
+		if (progressData->_lastPercentageUpdated != downloadingPercentage)
+		{
+			/*
+			SPDLOG_INFO(
+				"progressDownloadCallback. Update IngestionJob"
+				", ingestionJobKey: {}"
+				", downloadingPercentage: {}",
+				progressData->_ingestionJobKey, downloadingPercentage
+			);
+			downloadingStoppedByUser = _mmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
+				ingestionJobKey, downloadingPercentage);
+			*/
+
+			progressData->_lastPercentageUpdated = downloadingPercentage;
+		}
+
+		// if (downloadingStoppedByUser)
+		//     return 1;   // stop downloading
+	}
+
+	return 0;
+}
+
 tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, json inputRoot, long maxStreamingDurationInMinutes,
 	vector<string> &ffmpegInputArgumentList
@@ -1799,13 +1851,14 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 						}
 						else
 						{
-							chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
-							double lastPercentageUpdated = -1.0;
-							curlpp::types::ProgressFunctionFunctor functor = bind(
-								&FFMpeg::progressDownloadCallback, this, ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, placeholders::_1,
-								placeholders::_2, placeholders::_3, placeholders::_4
+							ProgressData progressData;
+							progressData._ingestionJobKey = ingestionJobKey;
+							progressData._lastTimeProgressUpdate = chrono::system_clock::now();
+							progressData._lastPercentageUpdated = -1.0;
+
+							MMSCURL::downloadFile(
+								_logger, ingestionJobKey, sourcePhysicalReference, destBinaryPathName, progressDownloadCallback, &progressData
 							);
-							MMSCURL::downloadFile(_logger, ingestionJobKey, sourcePhysicalReference, destBinaryPathName, functor);
 						}
 						// playlist and dowloaded files will be removed by the calling FFMpeg::liveProxy2 method
 						playlistListFile << "file '" << destBinaryFileName << "'" << endl;

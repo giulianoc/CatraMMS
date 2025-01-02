@@ -13,17 +13,6 @@
 #include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "catralibraries/StringUtils.h"
-/*
-#include "FFMpegEncodingParameters.h"
-#include "FFMpegFilters.h"
-#include "MMSCURL.h"
-#include "catralibraries/ProcessUtility.h"
-#include <filesystem>
-#include <fstream>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
 
 FFMpeg::FFMpeg(json configuration, shared_ptr<spdlog::logger> logger)
 {
@@ -103,6 +92,7 @@ void FFMpeg::setStatus(
 	_startFFMpegMethod = chrono::system_clock::now();
 }
 
+/*
 int FFMpeg::progressDownloadCallback(
 	int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, double dltotal, double dlnow,
 	double ultotal, double ulnow
@@ -146,6 +136,57 @@ int FFMpeg::progressDownloadCallback(
 
 	return 0;
 }
+*/
+
+/*
+int FFMpeg::progressDownloadCallback(double dltotal, double dlnow, double ultotal, double ulnow)
+{
+
+	int progressUpdatePeriodInSeconds = 15;
+
+	chrono::system_clock::time_point now = chrono::system_clock::now();
+
+	if (dltotal != 0 && (dltotal == dlnow || now - _lastTimeProgressUpdate >= chrono::seconds(progressUpdatePeriodInSeconds)))
+	{
+		double progress = (dlnow / dltotal) * 100;
+		// int downloadingPercentage = floorf(progress * 100) / 100;
+		// this is to have one decimal in the percentage
+		double downloadingPercentage = ((double)((int)(progress * 10))) / 10;
+
+		SPDLOG_INFO(
+			"Download still running"
+			", ingestionJobKey: {}"
+			", downloadingPercentage: {}"
+			", dltotal: {}"
+			", dlnow: {}"
+			", ultotal: {}"
+			", ulnow: {}",
+			_ingestionJobKey, downloadingPercentage, dltotal, dlnow, ultotal, ulnow
+		);
+
+		_lastTimeProgressUpdate = now;
+
+		if (_lastPercentageUpdated != downloadingPercentage)
+		{
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", downloadingPercentage: {}",
+				_ingestionJobKey, downloadingPercentage
+			);
+			// downloadingStoppedByUser = _mmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
+			//     ingestionJobKey, downloadingPercentage);
+
+			_lastPercentageUpdated = downloadingPercentage;
+		}
+
+		// if (downloadingStoppedByUser)
+		//     return 1;   // stop downloading
+	}
+
+	return 0;
+}
+*/
 
 void FFMpeg::renameOutputFfmpegPathFileName(int64_t ingestionJobKey, int64_t encodingJobKey, string outputFfmpegPathFileName)
 {

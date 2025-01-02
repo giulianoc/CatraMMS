@@ -124,20 +124,6 @@ prodServers[$((serverIndex*5+3))]=22
 prodServers[$((serverIndex*5+4))]=externalEncoder
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*5+0))]=aruba-mms-transcoder-2
-prodServers[$((serverIndex*5+1))]=ru001941.arubabiz.net
-prodServers[$((serverIndex*5+2))]=cibortv-aruba
-prodServers[$((serverIndex*5+3))]=9255
-prodServers[$((serverIndex*5+4))]=externalEncoder
-
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*5+0))]=aruba-mms-transcoder-3
-prodServers[$((serverIndex*5+1))]=ru002148.arubabiz.net
-prodServers[$((serverIndex*5+2))]=cibortv-aruba
-prodServers[$((serverIndex*5+3))]=9255
-prodServers[$((serverIndex*5+4))]=externalEncoder
-
-serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*5+0))]=aruba-mms-transcoder-4
 prodServers[$((serverIndex*5+1))]=ru002553.arubabiz.net
 prodServers[$((serverIndex*5+2))]=cibortv-aruba
@@ -150,20 +136,6 @@ prodServers[$((serverIndex*5+1))]=ru002554.arubabiz.net
 prodServers[$((serverIndex*5+2))]=cibortv-aruba
 prodServers[$((serverIndex*5+3))]=9255
 prodServers[$((serverIndex*5+4))]=externalEncoder
-
-#serverIndex=$((serverIndex+1))
-#prodServers[$((serverIndex*5+0))]=serverplan-mms-transcoder-1
-#prodServers[$((serverIndex*5+1))]=d02c0q-hdea.sphostserver.com
-#prodServers[$((serverIndex*5+2))]=cibortv-serverplan
-#prodServers[$((serverIndex*5+3))]=9255
-#prodServers[$((serverIndex*5+4))]=externalEncoder
-
-#serverIndex=$((serverIndex+1))
-#prodServers[$((serverIndex*5+0))]=serverplan-mms-transcoder-2
-#prodServers[$((serverIndex*5+1))]=d02c0q-hdea2.sphostserver.com
-#prodServers[$((serverIndex*5+2))]=cibortv-serverplan
-#prodServers[$((serverIndex*5+3))]=9255
-#prodServers[$((serverIndex*5+4))]=externalEncoder
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*5+0))]=serverplan-mms-transcoder-3

@@ -19,6 +19,8 @@
 #include "FFMpegFilters.h"
 #include "MMSCURL.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/bundled/format.h"
+#include "spdlog/spdlog.h"
 #include <filesystem>
 #include <regex>
 #include <sstream>
@@ -35,15 +37,23 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 {
 	_currentApiName = APIName::GetMediaInfo;
 
-	_logger->info(
-		__FILEREF__ + "getMediaInfo" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", isMMSAssetPathName: " + to_string(isMMSAssetPathName) +
-		", mediaSource: " + mediaSource
+	SPDLOG_INFO(
+		"getMediaInfo"
+		", ingestionJobKey: {}"
+		", isMMSAssetPathName: {}"
+		", mediaSource: {}",
+		ingestionJobKey, isMMSAssetPathName, mediaSource
 	);
 
 	if (mediaSource == "")
 	{
-		string errorMessage = string("Media Source is wrong") + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource;
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"Media Source is wrong"
+			", ingestionJobKey: {}"
+			", mediaSource: {}",
+			ingestionJobKey, mediaSource
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -668,23 +678,25 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 			durationInMilliSeconds = dDurationInMilliSeconds * 1000;
 		}
 
-		field = "bit_rate";
-		if (!JSONUtils::isMetadataPresent(formatRoot, field))
+		if (!JSONUtils::isMetadataPresent(formatRoot, "bit_rate"))
 		{
 			if (firstVideoCodecName != "" && firstVideoCodecName != "mjpeg")
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource +
-									  ", firstVideoCodecName: " + firstVideoCodecName;
-				+", Field: " + field;
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(
+					"ffmpeg: Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", mediaSource: {}"
+					", firstVideoCodecName: {}"
+					", Field: bit_rate",
+					ingestionJobKey, mediaSource, firstVideoCodecName
+				);
 
 				// throw runtime_error(errorMessage);
 			}
 		}
 		else
 		{
-			string bit_rate = JSONUtils::asString(formatRoot, field, "");
+			string bit_rate = JSONUtils::asString(formatRoot, "bit_rate", "");
 			bitRate = atoll(bit_rate.c_str());
 		}
 

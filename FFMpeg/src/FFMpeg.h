@@ -86,6 +86,13 @@ struct EncodingIsAlreadyRunning : public exception
 class FFMpeg
 {
   public:
+	struct ProgressData
+	{
+		int64_t _ingestionJobKey;
+		chrono::system_clock::time_point _lastTimeProgressUpdate;
+		double _lastPercentageUpdated;
+	};
+
 	FFMpeg(json configuration, shared_ptr<spdlog::logger> logger);
 
 	~FFMpeg();
@@ -552,10 +559,10 @@ class FFMpeg
 
 	void removeFromIncrontab(int64_t ingestionJobKey, int64_t encodingJobKey, string directoryToBeMonitored);
 
-	int progressDownloadCallback(
-		int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, double dltotal,
-		double dlnow, double ultotal, double ulnow
-	);
+	// int progressDownloadCallback(
+	// 	int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, double dltotal,
+	// 	double dlnow, double ultotal, double ulnow
+	// );
 
 	void renameOutputFfmpegPathFileName(int64_t ingestionJobKey, int64_t encodingJobKey, string outputFfmpegPathFileName);
 };
