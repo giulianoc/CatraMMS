@@ -9,7 +9,9 @@
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
+#include "spdlog/spdlog.h"
 #include <sstream>
 
 LiveRecorderDaemons::LiveRecorderDaemons(
@@ -1509,40 +1511,35 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 			addContentTitle, uniqueName, userDataRoot, fileFormat, ingestedParametersRoot, encodingParametersRoot
 		);
 
+		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "internalMMS"))
 		{
-			string field = "internalMMS";
-			if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			json internalMMSRoot = ingestedParametersRoot["internalMMS"];
+
+			if (JSONUtils::isMetadataPresent(internalMMSRoot, "credentials"))
 			{
-				json internalMMSRoot = ingestedParametersRoot[field];
+				json credentialsRoot = internalMMSRoot["credentials"];
 
-				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
-				{
-					json credentialsRoot = internalMMSRoot[field];
+				userKey = JSONUtils::asInt64(credentialsRoot, "userKey", -1);
 
-					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
-
-					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
-					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-				}
+				string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, "apiKey", "");
+				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 			}
 		}
 
 		{
-			string field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, "mmsWorkflowIngestionURL"))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " +
-									  to_string(ingestionJobKey)
-									  // + ", encodingJobKey: " + to_string(encodingJobKey)
-									  + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", Field: mmsWorkflowIngestionURL",
+					ingestionJobKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, "mmsWorkflowIngestionURL", "");
 		}
 
 		vector<string> otherHeaders;
@@ -1559,18 +1556,26 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingestion workflow failed (runtime_error)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingestion workflow failed (runtime_error)"
+			", ingestionJobKey: {}"
+			", mmsWorkflowIngestionURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingestion workflow failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingestion workflow failed (exception)"
+			", ingestionJobKey: {}"
+			", mmsWorkflowIngestionURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
 		throw e;
@@ -1578,9 +1583,12 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 
 	if (addContentIngestionJobKey == -1)
 	{
-		string errorMessage =
-			string("Ingested URL failed, addContentIngestionJobKey is not valid") + ", ingestionJobKey: " + to_string(ingestionJobKey);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"Ingested URL failed, addContentIngestionJobKey is not valid"
+			", ingestionJobKey: {}",
+			ingestionJobKey
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1593,21 +1601,22 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 
 		string mmsBinaryIngestionURL;
 		{
-			string field = "mmsBinaryIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, "mmsBinaryIngestionURL"))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " +
-									  to_string(ingestionJobKey)
-									  // + ", encodingJobKey: " + to_string(encodingJobKey)
-									  + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", Field: mmsBinaryIngestionURL",
+					ingestionJobKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, "mmsBinaryIngestionURL", "");
 		}
 
-		mmsBinaryURL = mmsBinaryIngestionURL + "/" + to_string(addContentIngestionJobKey);
+		mmsBinaryURL = fmt::format("{}/{}", mmsBinaryIngestionURL, addContentIngestionJobKey);
 
 		string sResponse = MMSCURL::httpPostFile(
 			_logger, ingestionJobKey, mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey,
@@ -1617,18 +1626,26 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingestion binary failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsBinaryURL: " + mmsBinaryURL +
-			", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingestion binary failed"
+			", ingestionJobKey: {}"
+			", mmsBinaryURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingestion binary failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsBinaryURL: " + mmsBinaryURL +
-			", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingestion binary failed (exception)"
+			", ingestionJobKey: {}"
+			", mmsBinaryURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
 		);
 
 		throw e;
