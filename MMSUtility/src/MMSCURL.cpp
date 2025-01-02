@@ -27,6 +27,7 @@
 #include <curlpp/Infos.hpp>
 #include <curlpp/Options.hpp>
 #include <curlpp/cURLpp.hpp>
+#include <utility>
 
 // https://everything.curl.dev/libcurl/callbacks/read
 // https://github.com/chrisvana/curlpp_copy/blob/master/include/curlpp/Options.hpp
@@ -1839,6 +1840,7 @@ string MMSCURL::httpDelete(
 	return response;
 }
 
+/*
 pair<string, string> MMSCURL::httpPostPutString(
 	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
 	string requestType, // POST or PUT
@@ -2068,6 +2070,475 @@ pair<string, string> MMSCURL::httpPostPutString(
 	}
 
 	return make_pair(sHeaderResponse, sBodyResponse);
+}
+*/
+
+pair<string, string> MMSCURL::httpPostPutString(
+	shared_ptr<spdlog::logger> logger, int64_t ingestionJobKey, string url,
+	string requestType, // POST or PUT
+	long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string body,
+	string contentType, // i.e.: application/json
+	vector<string> otherHeaders, int maxRetryNumber, int secondsToWaitBeforeToRetry
+)
+{
+	string api = "httpPostPutString";
+
+	string responseHeaderAndBody;
+	string responseHeader;
+	string responseBody;
+	int retryNumber = -1;
+
+	while (retryNumber < maxRetryNumber)
+	{
+		retryNumber++;
+
+		CURL *curl = nullptr;
+		struct curl_slist *headersList = nullptr;
+
+		try
+		{
+			// curlpp::Cleanup cleaner;
+			// curlpp::Easy request;
+
+			curl = curl_easy_init();
+			if (!curl)
+			{
+				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			// request.setOpt(new curlpp::options::Url(url));
+			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+			// request.setOpt(new curlpp::options::CustomRequest(requestType));
+			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, requestType.c_str());
+
+			// request.setOpt(new curlpp::options::PostFields(body));
+			// request.setOpt(new curlpp::options::PostFieldSize(body.length()));
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, body.length());
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+
+			// timeout consistent with nginx configuration
+			// (fastcgi_read_timeout)
+			// request.setOpt(new curlpp::options::Timeout(timeoutInSeconds));
+			curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeoutInSeconds);
+
+			// string httpsPrefix("https");
+			// if (url.size() >= httpsPrefix.size() &&
+			// 	0 == url.compare(0, httpsPrefix.size(), httpsPrefix))
+			if (url.starts_with("https"))
+			{
+				/*
+				typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD>
+				SslCertPasswd; typedef curlpp::OptionTrait<std::string,
+				CURLOPT_SSLKEY> SslKey; typedef curlpp::OptionTrait<std::string,
+				CURLOPT_SSLKEYTYPE> SslKeyType; typedef
+				curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD>
+				SslKeyPasswd; typedef curlpp::OptionTrait<std::string,
+				CURLOPT_SSLENGINE> SslEngine; typedef
+				curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT>
+				SslEngineDefault; typedef curlpp::OptionTrait<long,
+				CURLOPT_SSLVERSION> SslVersion; typedef
+				curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo; typedef
+				curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath; typedef
+				curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE>
+				RandomFile; typedef curlpp::OptionTrait<std::string,
+				CURLOPT_EGDSOCKET> EgdSocket; typedef
+				curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST>
+				SslCipherList; typedef curlpp::OptionTrait<std::string,
+				CURLOPT_KRB4LEVEL> Krb4Level;
+				*/
+
+				/*
+				// cert is stored PEM coded in file...
+				// since PEM is default, we needn't set it for PEM
+				// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+				curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE>
+				sslCertType("PEM"); equest.setOpt(sslCertType);
+
+				// set the cert for client authentication
+				// "testcert.pem"
+				// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+				curlpp::OptionTrait<string, CURLOPT_SSLCERT>
+				sslCert("cert.pem"); request.setOpt(sslCert);
+				*/
+
+				/*
+				// sorry, for engine we must set the passphrase
+				//   (if the key has one...)
+				// const char *pPassphrase = NULL;
+				if(pPassphrase)
+					curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+				// if we use a key stored in a crypto engine,
+				//   we must set the key type to "ENG"
+				// pKeyType  = "PEM";
+				curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+				// set the private key (file or ID in engine)
+				// pKeyName  = "testkey.pem";
+				curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+				// set the file with the certs vaildating the server
+				// *pCACertFile = "cacert.pem";
+				curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+				*/
+
+				// disconnect if we can't validate server's cert
+				bool bSslVerifyPeer = false;
+				// curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+				// request.setOpt(sslVerifyPeer);
+				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+
+				// curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+				// request.setOpt(sslVerifyHost);
+				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+				// request.setOpt(new curlpp::options::SslEngineDefault());
+			}
+
+			/*
+			list<string> headers;
+			if (contentType != "")
+				headers.push_back(string("Content-Type: ") + contentType);
+			if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
+			{
+				string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
+				string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+				headers.push_back(basicAuthorization);
+			}
+			headers.insert(headers.end(), otherHeaders.begin(), otherHeaders.end());
+			request.setOpt(new curlpp::options::HttpHeader(headers));
+			*/
+			{
+				// if (contentType != "")
+				// headers.push_back(string("Content-Type: ") + contentType);
+				if (contentType != "")
+					headersList = curl_slist_append(headersList, fmt::format("Content-Type: {}", contentType).c_str());
+				if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
+				{
+					string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
+					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+					headersList = curl_slist_append(headersList, basicAuthorization.c_str());
+				}
+
+				for (string header : otherHeaders)
+					headersList = curl_slist_append(headersList, header.c_str());
+
+				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headersList);
+			}
+
+			// request.setOpt(new curlpp::options::WriteStream(&response));
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&responseHeaderAndBody);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteResponseCallback);
+
+			// store response headers in the response, You simply have to set next option to prefix the header to the
+			// normal body output.
+			// request.setOpt(new curlpp::options::Header(true));
+			curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
+
+			SPDLOG_INFO(
+				"{} details"
+				", ingestionJobKey: {}"
+				", url: {}"
+				", contentType: {}"
+				", basicAuthenticationUser: {}"
+				", otherHeaders.size: {}"
+				", body: {}",
+				api, ingestionJobKey, url, contentType, basicAuthenticationUser, otherHeaders.size(), regex_replace(body, regex("\n"), " ")
+			);
+
+			chrono::system_clock::time_point start = chrono::system_clock::now();
+			// request.perform();
+			CURLcode curlCode = curl_easy_perform(curl);
+			chrono::system_clock::time_point end = chrono::system_clock::now();
+			if (curlCode != CURLE_OK)
+			{
+				string errorMessage = fmt::format(
+					"{}. curl_easy_perform failed"
+					", curlCode: {}",
+					api, curl_easy_strerror(curlCode)
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				if (headersList)
+				{
+					curl_slist_free_all(headersList); /* free the list */
+					headersList = nullptr;
+				}
+				if (curl)
+				{
+					curl_easy_cleanup(curl);
+					curl = nullptr;
+				}
+
+				throw runtime_error(errorMessage);
+			}
+
+			// long responseCode = curlpp::infos::ResponseCode::get(request);
+			long responseCode;
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+			if (responseCode == 200 || responseCode == 201)
+			{
+				SPDLOG_INFO(
+					"{} success"
+					", ingestionJobKey: {}"
+					", @MMS statistics@ - elapsed (secs): @{}@"
+					", responseHeaderAndBody: {}",
+					api, ingestionJobKey, chrono::duration_cast<chrono::seconds>(end - start).count(), responseHeaderAndBody
+				);
+			}
+			else
+			{
+				string message = fmt::format(
+					"{} failed, wrong return status"
+					", ingestionJobKey: {}"
+					", @MMS statistics@ - elapsed (secs): @{}@"
+					", responseHeaderAndBody: {}"
+					", responseCode: {}",
+					api, ingestionJobKey, chrono::duration_cast<chrono::seconds>(end - start).count(), responseHeaderAndBody, responseCode
+				);
+				SPDLOG_ERROR(message);
+
+				throw runtime_error(message);
+			}
+
+			// 2023-01-09: eventuali HTTP/1.1 100 Continue\r\n\r\n vengono scartate
+			string prefix("HTTP/1.1 100 Continue\r\n\r\n");
+			while (responseHeaderAndBody.starts_with(prefix))
+				responseHeaderAndBody = responseHeaderAndBody.substr(prefix.size());
+
+			size_t beginOfHeaderBodySeparatorIndex;
+			if ((beginOfHeaderBodySeparatorIndex = responseHeaderAndBody.find("\r\n\r\n")) == string::npos)
+			{
+				string errorMessage = fmt::format(
+					"response is wrong"
+					", ingestionJobKey: {}"
+					", url: {}"
+					", responseHeaderAndBody: {}",
+					ingestionJobKey, url, responseHeaderAndBody
+				);
+				logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			responseHeader = responseHeaderAndBody.substr(0, beginOfHeaderBodySeparatorIndex);
+			responseBody = responseHeaderAndBody.substr(beginOfHeaderBodySeparatorIndex + 4);
+
+			// sResponse = response.str();
+			// LF and CR create problems to the json parser...
+			while (responseBody.size() > 0 && (responseBody.back() == 10 || responseBody.back() == 13))
+				responseBody.pop_back();
+
+			if (headersList)
+			{
+				curl_slist_free_all(headersList); /* free the list */
+				headersList = nullptr;
+			}
+			if (curl)
+			{
+				curl_easy_cleanup(curl);
+				curl = nullptr;
+			}
+
+			// return sResponse;
+			break;
+		}
+		catch (curlpp::LogicError &e)
+		{
+			SPDLOG_ERROR(
+				"{} failed (LogicError)"
+				", ingestionJobKey: {}"
+				", url: {}"
+				", exception: {}"
+				", responseHeaderAndBody: {}",
+				api, ingestionJobKey, url, e.what(), responseHeaderAndBody
+			);
+
+			if (headersList)
+			{
+				curl_slist_free_all(headersList); /* free the list */
+				headersList = nullptr;
+			}
+			if (curl)
+			{
+				curl_easy_cleanup(curl);
+				curl = nullptr;
+			}
+
+			if (retryNumber < maxRetryNumber)
+			{
+				SPDLOG_INFO(
+					"{}. Sleep before trying again"
+					", ingestionJobKey: {}"
+					", retryNumber: {}"
+					", maxRetryNumber: {}"
+					", secondsToWaitBeforeToRetry: {}",
+					api, ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw runtime_error(e.what());
+		}
+		catch (curlpp::RuntimeError &e)
+		{
+			SPDLOG_ERROR(
+				"{} failed (RuntimeError)"
+				", ingestionJobKey: {}"
+				", url: {}"
+				", exception: {}"
+				", responseHeaderAndBody: {}",
+				api, ingestionJobKey, url, e.what(), responseHeaderAndBody
+			);
+
+			if (headersList)
+			{
+				curl_slist_free_all(headersList); /* free the list */
+				headersList = nullptr;
+			}
+			if (curl)
+			{
+				curl_easy_cleanup(curl);
+				curl = nullptr;
+			}
+
+			if (retryNumber < maxRetryNumber)
+			{
+				SPDLOG_INFO(
+					"{}. Sleep before trying again"
+					", ingestionJobKey: {}"
+					", retryNumber: {}"
+					", maxRetryNumber: {}"
+					", secondsToWaitBeforeToRetry: {}",
+					api, ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw runtime_error(e.what());
+		}
+		catch (runtime_error e)
+		{
+			if (responseHeaderAndBody.find("502 Bad Gateway") != string::npos)
+			{
+				SPDLOG_ERROR(
+					"{}. Server is not reachable, is it down?"
+					", ingestionJobKey: {}"
+					", url: {}"
+					", exception: {}"
+					", response.str(): {}",
+					api, ingestionJobKey, url, e.what(), responseHeaderAndBody
+				);
+
+				if (headersList)
+				{
+					curl_slist_free_all(headersList); /* free the list */
+					headersList = nullptr;
+				}
+				if (curl)
+				{
+					curl_easy_cleanup(curl);
+					curl = nullptr;
+				}
+
+				if (retryNumber < maxRetryNumber)
+				{
+					SPDLOG_INFO(
+						"{}. Sleep before trying again"
+						", ingestionJobKey: {}"
+						", retryNumber: {}"
+						", maxRetryNumber: {}"
+						", secondsToWaitBeforeToRetry: {}",
+						api, ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+				}
+				else
+					throw ServerNotReachable();
+			}
+			else
+			{
+				SPDLOG_ERROR(
+					"{} failed (exception)"
+					", ingestionJobKey: {}"
+					", url: {}"
+					", exception: {}"
+					", responseHeaderAndBody: {}",
+					api, ingestionJobKey, url, e.what(), responseHeaderAndBody
+				);
+
+				if (headersList)
+				{
+					curl_slist_free_all(headersList); /* free the list */
+					headersList = nullptr;
+				}
+				if (curl)
+				{
+					curl_easy_cleanup(curl);
+					curl = nullptr;
+				}
+
+				if (retryNumber < maxRetryNumber)
+				{
+					SPDLOG_INFO(
+						"{}. Sleep before trying again"
+						", ingestionJobKey: {}"
+						", retryNumber: {}"
+						", maxRetryNumber: {}"
+						", secondsToWaitBeforeToRetry: {}",
+						api, ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					);
+					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+				}
+				else
+					throw e;
+			}
+		}
+		catch (exception e)
+		{
+			SPDLOG_ERROR(
+				"{} failed (exception)"
+				", ingestionJobKey: {}"
+				", url: {}"
+				", exception: {}"
+				", responseHeaderAndBody: {}",
+				api, ingestionJobKey, url, e.what(), responseHeaderAndBody
+			);
+
+			if (headersList)
+			{
+				curl_slist_free_all(headersList); /* free the list */
+				headersList = nullptr;
+			}
+			if (curl)
+			{
+				curl_easy_cleanup(curl);
+				curl = nullptr;
+			}
+
+			if (retryNumber < maxRetryNumber)
+			{
+				SPDLOG_INFO(
+					"{}. Sleep before trying again"
+					", ingestionJobKey: {}"
+					", retryNumber: {}"
+					", maxRetryNumber: {}"
+					", secondsToWaitBeforeToRetry: {}",
+					api, ingestionJobKey, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+				);
+				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
+			}
+			else
+				throw e;
+		}
+	}
+
+	return make_pair(responseHeader, responseBody);
 }
 
 string MMSCURL::httpPostPutFile(
