@@ -84,6 +84,10 @@ class CurlWrapper
 		deque<string> emailLines;
 	};
 
+	static void globalInitialize();
+
+	static void globalTerminate();
+
 	static string escape(const string &url);
 	static string unescape(const string &url);
 

@@ -5,6 +5,7 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
+#include "CurlWrapper.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -48,6 +49,8 @@ int main(int argc, char **argv)
 			if (sAPIType == "NoFileSystem")
 				noFileSystemAccess = true;
 		}
+
+		CurlWrapper::globalInitialize();
 
 		// Init libxml
 		{
@@ -213,6 +216,8 @@ int main(int argc, char **argv)
 			// this is to debug memory for regression tests
 			xmlMemoryDump();
 		}
+
+		CurlWrapper::globalTerminate();
 	}
 	catch (sql::SQLException &se)
 	{

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <thread>
 
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
 #include "catralibraries/Scheduler2.h"
 #include "catralibraries/Service.h"
@@ -66,6 +67,8 @@ int main(int iArgc, char *pArgv[])
 
 		return 1;
 	}
+
+	CurlWrapper::globalInitialize();
 
 	bool noDaemon = false;
 	bool resetdata = false;
@@ -386,6 +389,8 @@ int main(int iArgc, char *pArgv[])
 	// I guess if join is called once the thread is already exits generates
 	// memory leak. I do not care about this because the process is going down
 	schedulerThread.join();
+
+	CurlWrapper::globalTerminate();
 
 	logger->info(__FILEREF__ + "Shutdown done");
 

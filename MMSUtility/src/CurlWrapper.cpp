@@ -30,6 +30,10 @@
 // https://github.com/chrisvana/curlpp_copy/blob/master/include/curlpp/Options.hpp
 // https://curl.se/libcurl/c/CURLOPT_POST.html
 
+void CurlWrapper::globalInitialize() { curl_global_init(CURL_GLOBAL_DEFAULT); }
+
+void CurlWrapper::globalTerminate() { curl_global_cleanup(); }
+
 string CurlWrapper::escape(const string &url)
 {
 	CURL *curl = curl_easy_init();

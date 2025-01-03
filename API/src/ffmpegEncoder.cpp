@@ -4,6 +4,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include <csignal>
 
+#include "CurlWrapper.h"
 #include "FFMPEGEncoder.h"
 #include "FFMPEGEncoderDaemons.h"
 #include "JSONUtils.h"
@@ -45,6 +46,8 @@ int main(int argc, char **argv)
 
 			return 1;
 		}
+
+		CurlWrapper::globalInitialize();
 
 		json configurationRoot = FastCGIAPI::loadConfigurationFile(configurationPathName);
 
@@ -295,6 +298,8 @@ int main(int argc, char **argv)
 			ffmpegEncoderDaemons->stopMonitorThread();
 			ffmpegEncoderDaemons->stopCPUUsageThread();
 		}
+
+		CurlWrapper::globalTerminate();
 
 		logger->info(__FILEREF__ + "FFMPEGEncoder shutdown");
 	}
