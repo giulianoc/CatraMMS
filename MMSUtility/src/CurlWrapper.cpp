@@ -4630,7 +4630,7 @@ void CurlWrapper::downloadFile(
 			request.setOpt(curlDownloadDataData);
 			*/
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&curlDownloadData);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curlDownloadCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlDownloadCallback);
 
 			// request.setOpt(new curlpp::options::Url(url));
 			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
