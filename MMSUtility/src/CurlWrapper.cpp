@@ -4717,9 +4717,11 @@ void CurlWrapper::downloadFile(
 			// placeholders::_3, placeholders::_4);
 			// request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
 			// request.setOpt(new curlpp::options::NoProgress(0L));
+			/*
 			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, &progressCallback);
 			curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progressData);
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+			*/
 
 			if (resumeScenario)
 			{
@@ -4734,8 +4736,9 @@ void CurlWrapper::downloadFile(
 			SPDLOG_INFO(
 				"{} details"
 				"{}"
-				", url: {}",
-				api, referenceToLog, url
+				", url: {}"
+				", resumeScenario: {}",
+				api, referenceToLog, url, resumeScenario
 			);
 
 			chrono::system_clock::time_point start = chrono::system_clock::now();
