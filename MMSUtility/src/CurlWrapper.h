@@ -204,8 +204,8 @@ class CurlWrapper
 	);
 
 	static void downloadFile(
-		string url, string destBinaryPathName, function<int(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t)> progressCallback,
-		void *progressData, long downloadChunkSizeInMegaBytes = 500, string referenceToLog = "", int maxRetryNumber = 0, bool resumeActive = false,
+		string url, string destBinaryPathName, int (*progressCallback)(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t), void *progressData,
+		long downloadChunkSizeInMegaBytes = 500, string referenceToLog = "", int maxRetryNumber = 0, bool resumeActive = false,
 		int secondsToWaitBeforeToRetry = 15
 	);
 

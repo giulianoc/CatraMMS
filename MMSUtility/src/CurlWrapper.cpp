@@ -386,12 +386,6 @@ json CurlWrapper::httpPutFileByFormDataAndGetJson(
 
 size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 {
-	SPDLOG_INFO(
-		"BOOOOOOOOO"
-		", size: {}"
-		", nmemb: {}",
-		size, nmemb
-	);
 	CurlWrapper::CurlDownloadData *curlDownloadData = (CurlWrapper::CurlDownloadData *)f;
 
 	if (curlDownloadData->currentChunkNumber == 0)
@@ -4509,7 +4503,7 @@ void MMSCURL::downloadFile(
 */
 
 void CurlWrapper::downloadFile(
-	string url, string destBinaryPathName, function<int(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t)> progressCallback, void *progressData,
+	string url, string destBinaryPathName, int (*progressCallback)(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t), void *progressData,
 	long downloadChunkSizeInMegaBytes, string referenceToLog, int maxRetryNumber, bool resumeActive, int secondsToWaitBeforeToRetry
 )
 {
@@ -4717,11 +4711,9 @@ void CurlWrapper::downloadFile(
 			// placeholders::_3, placeholders::_4);
 			// request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
 			// request.setOpt(new curlpp::options::NoProgress(0L));
-			/*
-			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, &progressCallback);
+			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progressCallback);
 			curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progressData);
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
-			*/
 
 			if (resumeScenario)
 			{

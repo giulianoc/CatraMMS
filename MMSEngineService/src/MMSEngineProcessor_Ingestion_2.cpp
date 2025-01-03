@@ -3013,7 +3013,7 @@ struct IngestionProgressData
 	bool _stoppedByUser;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 };
-static int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
 	IngestionProgressData *progressData = (IngestionProgressData *)clientp;
 
@@ -3264,6 +3264,43 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				localSourceReferenceURL, destBinaryPathName, progressDownloadCallback, &progressData, _downloadChunkSizeInMegaBytes,
 				fmt::format(", ingestionJobKey: {}", ingestionJobKey), _maxDownloadAttemptNumber, true
 			);
+
+			if (localM3u8TarGzOrStreaming == 1)
+			{
+				try
+				{
+					// by a convention, the directory inside the tar file
+					// has to be named as 'content'
+					string sourcePathName = "/content.tar.gz";
+
+					_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(
+						ingestionJobKey, destBinaryPathName, workspaceIngestionRepository, sourcePathName
+					);
+				}
+				catch (runtime_error &e)
+				{
+					string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments "
+												 "failed") +
+										  ", _processorIdentifier: " + to_string(_processorIdentifier) +
+										  ", ingestionJobKey: " + to_string(ingestionJobKey) +
+										  ", localSourceReferenceURL: " + localSourceReferenceURL;
+
+					SPDLOG_ERROR(string() + errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+
+			{
+				bool downloadingCompleted = true;
+
+				SPDLOG_INFO(
+					string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
+					", ingestionJobKey: " + to_string(ingestionJobKey) + ", destBinaryPathName: " + destBinaryPathName +
+					", downloadingCompleted: " + to_string(downloadingCompleted)
+				);
+				_mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred(ingestionJobKey, downloadingCompleted);
+			}
 		}
 		catch (runtime_error &e)
 		{
@@ -3340,42 +3377,6 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 
 			return;
-		}
-
-		if (localM3u8TarGzOrStreaming == 1)
-		{
-			try
-			{
-				// by a convention, the directory inside the tar file
-				// has to be named as 'content'
-				string sourcePathName = "/content.tar.gz";
-
-				_mmsStorage->manageTarFileInCaseOfIngestionOfSegments(
-					ingestionJobKey, destBinaryPathName, workspaceIngestionRepository, sourcePathName
-				);
-			}
-			catch (runtime_error &e)
-			{
-				string errorMessage = string("manageTarFileInCaseOfIngestionOfSegments "
-											 "failed") +
-									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", localSourceReferenceURL: " + localSourceReferenceURL;
-
-				SPDLOG_ERROR(string() + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		{
-			bool downloadingCompleted = true;
-
-			SPDLOG_INFO(
-				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", destBinaryPathName: " + destBinaryPathName +
-				", downloadingCompleted: " + to_string(downloadingCompleted)
-			);
-			_mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred(ingestionJobKey, downloadingCompleted);
 		}
 
 		/*
