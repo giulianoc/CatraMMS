@@ -835,6 +835,14 @@ size_t curlWriteResponseCallback(char *ptr, size_t size, size_t nmemb, void *f)
 
 		response->append(ptr, size * nmemb);
 
+		SPDLOG_INFO(
+			"curlWriteResponseCallback success"
+			", size: {}"
+			", nmemb: {}"
+			", ptr: {}",
+			size, nmemb, ptr
+		);
+
 		return size * nmemb;
 	}
 	catch (exception &e)
