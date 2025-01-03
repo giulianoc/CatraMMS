@@ -384,8 +384,14 @@ json CurlWrapper::httpPutFileByFormDataAndGetJson(
 	return jsonRoot;
 }
 
-static size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
+size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 {
+	SPDLOG_INFO(
+		"BOOOOOOOOO"
+		", size: {}"
+		", nmemb: {}",
+		size, nmemb
+	);
 	CurlWrapper::CurlDownloadData *curlDownloadData = (CurlWrapper::CurlDownloadData *)f;
 
 	if (curlDownloadData->currentChunkNumber == 0)
@@ -447,19 +453,6 @@ static size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f
 			curlDownloadData->currentTotalSize, curlDownloadData->maxChunkFileSize
 		);
 	}
-	else
-		SPDLOG_INFO(
-			"BOOOOOOOOO"
-			"{}"
-			", curlDownloadData -> destBinaryPathName: {}"
-			", curlDownloadData->currentChunkNumber: {}"
-			", curlDownloadData->currentTotalSize: {}"
-			", curlDownloadData->maxChunkFileSize: {}"
-			", size: {}"
-			", nmemb: {}",
-			curlDownloadData->referenceToLog, curlDownloadData->destBinaryPathName, curlDownloadData->currentChunkNumber,
-			curlDownloadData->currentTotalSize, curlDownloadData->maxChunkFileSize, size, nmemb
-		);
 
 	if (curlDownloadData->mediaSourceFileStream)
 		curlDownloadData->mediaSourceFileStream.write(ptr, size * nmemb);
@@ -834,14 +827,6 @@ size_t curlWriteResponseCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		string *response = (string *)f;
 
 		response->append(ptr, size * nmemb);
-
-		SPDLOG_INFO(
-			"curlWriteResponseCallback success"
-			", size: {}"
-			", nmemb: {}"
-			", ptr: {}",
-			size, nmemb, ptr
-		);
 
 		return size * nmemb;
 	}
@@ -4574,9 +4559,14 @@ void CurlWrapper::downloadFile(
 		try
 		{
 			long long resumeFileSize = 0;
+			bool resumeScenario;
+			if (retryNumber == 0 || !resumeActive)
+				resumeScenario = false;
+			else
+				resumeScenario = true;
 
 			CurlDownloadData curlDownloadData;
-			if (retryNumber == 0 || !resumeActive)
+			if (!resumeScenario)
 			{
 				// primo tentativo
 
@@ -4731,7 +4721,7 @@ void CurlWrapper::downloadFile(
 			curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progressData);
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 
-			if (!(retryNumber == 0 || !resumeActive))
+			if (resumeScenario)
 			{
 				// resume scenario
 
