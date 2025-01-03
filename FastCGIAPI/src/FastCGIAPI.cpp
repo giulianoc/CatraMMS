@@ -1,10 +1,5 @@
 
 #include "Compressor.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
 #include <deque>
 #include <fstream>
 #include <iostream>
@@ -16,6 +11,7 @@
 #endif
 #include "JSONUtils.h"
 #include "spdlog/spdlog.h"
+#include <curl/curl.h>
 #include "FastCGIAPI.h" // has to be the last one otherwise errors...
 
 extern char **environ;
@@ -23,6 +19,51 @@ extern char **environ;
 FastCGIAPI::FastCGIAPI(json configurationRoot, mutex *fcgiAcceptMutex) { init(configurationRoot, fcgiAcceptMutex); }
 
 FastCGIAPI::~FastCGIAPI() = default;
+
+string FastCGIAPI::escape(const string &url)
+{
+	CURL *curl = curl_easy_init();
+	if (!curl)
+		throw runtime_error("curl_easy_init failed");
+
+	char *encoded = curl_easy_escape(curl, url.c_str(), url.size());
+	if (!encoded)
+	{
+		curl_easy_cleanup(curl);
+		throw runtime_error("curl_easy_escape failed");
+	}
+
+	string buffer = encoded;
+
+	curl_free(encoded);
+
+	curl_easy_cleanup(curl);
+
+	return buffer;
+}
+
+string FastCGIAPI::unescape(const string &url)
+{
+	CURL *curl = curl_easy_init();
+	if (!curl)
+		throw runtime_error("curl_easy_init failed");
+
+	int decodelen;
+	char *decoded = curl_easy_unescape(curl, url.c_str(), url.size(), &decodelen);
+	if (!decoded)
+	{
+		curl_easy_cleanup(curl);
+		throw runtime_error("curl_easy_unescape failed");
+	}
+
+	string buffer = decoded;
+
+	curl_free(decoded);
+
+	curl_easy_cleanup(curl);
+
+	return buffer;
+}
 
 void FastCGIAPI::init(json configurationRoot, mutex *fcgiAcceptMutex)
 {
@@ -1011,14 +1052,14 @@ string FastCGIAPI::getQueryParameter(
 			*isParamPresent = true;
 		parameterValue = it->second;
 
-		// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+		// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 		//	That  because if we have really a + char (%2B into the string), and we do the replace
-		//	after curlpp::unescape, this char will be changed to space and we do not want it
+		//	after unescape, this char will be changed to space and we do not want it
 		string plus = "\\+";
 		string plusDecoded = " ";
 		string firstDecoding = regex_replace(parameterValue, regex(plus), plusDecoded);
 
-		parameterValue = curlpp::unescape(firstDecoding);
+		parameterValue = unescape(firstDecoding);
 	}
 	else
 	{

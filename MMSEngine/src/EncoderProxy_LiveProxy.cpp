@@ -14,7 +14,6 @@
 #include "EncoderProxy.h"
 #include "FFMpeg.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSDeliveryAuthorization.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/bundled/format.h"

@@ -12,12 +12,8 @@
  */
 
 #include "API.h"
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
 #include <regex>
 
 void API::addRequestStatistic(
@@ -187,14 +183,14 @@ void API::requestStatisticList(
 		{
 			userId = userIdIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
 
-			userId = curlpp::unescape(firstDecoding);
+			userId = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string title;
@@ -203,14 +199,14 @@ void API::requestStatisticList(
 		{
 			title = titleIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
 
-			title = curlpp::unescape(firstDecoding);
+			title = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string startStatisticDate;
@@ -317,14 +313,14 @@ void API::requestStatisticPerContentList(
 		{
 			title = titleIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
 
-			title = curlpp::unescape(firstDecoding);
+			title = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string userId;
@@ -333,14 +329,14 @@ void API::requestStatisticPerContentList(
 		{
 			userId = userIdIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
 
-			userId = curlpp::unescape(firstDecoding);
+			userId = CurlWrapper::unescape(firstDecoding);
 		}
 
 		// dates are essential in order to make the indexes working
@@ -459,14 +455,14 @@ void API::requestStatisticPerUserList(
 		{
 			title = titleIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
 
-			title = curlpp::unescape(firstDecoding);
+			title = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string userId;
@@ -475,14 +471,14 @@ void API::requestStatisticPerUserList(
 		{
 			userId = userIdIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
 
-			userId = curlpp::unescape(firstDecoding);
+			userId = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string startStatisticDate;
@@ -600,14 +596,14 @@ void API::requestStatisticPerMonthList(
 		{
 			title = titleIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
 
-			title = curlpp::unescape(firstDecoding);
+			title = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string userId;
@@ -616,14 +612,14 @@ void API::requestStatisticPerMonthList(
 		{
 			userId = userIdIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
 
-			userId = curlpp::unescape(firstDecoding);
+			userId = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string startStatisticDate;
@@ -741,14 +737,14 @@ void API::requestStatisticPerDayList(
 		{
 			title = titleIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
 
-			title = curlpp::unescape(firstDecoding);
+			title = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string userId;
@@ -757,14 +753,14 @@ void API::requestStatisticPerDayList(
 		{
 			userId = userIdIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
 
-			userId = curlpp::unescape(firstDecoding);
+			userId = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string startStatisticDate;
@@ -882,14 +878,14 @@ void API::requestStatisticPerHourList(
 		{
 			title = titleIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
 
-			title = curlpp::unescape(firstDecoding);
+			title = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string userId;
@@ -898,14 +894,14 @@ void API::requestStatisticPerHourList(
 		{
 			userId = userIdIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
 
-			userId = curlpp::unescape(firstDecoding);
+			userId = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string startStatisticDate;
@@ -1023,14 +1019,14 @@ void API::requestStatisticPerCountryList(
 		{
 			title = titleIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
 
-			title = curlpp::unescape(firstDecoding);
+			title = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string userId;
@@ -1039,14 +1035,14 @@ void API::requestStatisticPerCountryList(
 		{
 			userId = userIdIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
 
-			userId = curlpp::unescape(firstDecoding);
+			userId = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string startStatisticDate;

@@ -1,6 +1,6 @@
 
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 
 json MMSEngineDBFacade::addRequestStatistic(
@@ -993,8 +993,8 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			}
 
 			vector<string> otherHeaders;
-			json geoServiceResponseRoot = MMSCURL::httpPostStringAndGetJson(
-				_logger, -1, geoServiceURL, _geoServiceTimeoutInSeconds, "", "", JSONUtils::toString(bodyRoot), "application/json", otherHeaders
+			json geoServiceResponseRoot = CurlWrapper::httpPostStringAndGetJson(
+				geoServiceURL, _geoServiceTimeoutInSeconds, "", "", JSONUtils::toString(bodyRoot), "application/json", otherHeaders
 			);
 
 			for (int index = 0, length = geoServiceResponseRoot.size(); index < length; index++)
@@ -1032,7 +1032,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			string geoServiceURL = fmt::format("{}/json/{}?fields={}&key={}", _geoServiceURL, ips[0], fields, _geoServiceKey);
 
 			vector<string> otherHeaders;
-			json geoServiceResponseIp = MMSCURL::httpGetJson(_logger, -1, geoServiceURL, _geoServiceTimeoutInSeconds, "", "", otherHeaders);
+			json geoServiceResponseIp = CurlWrapper::httpGetJson(geoServiceURL, _geoServiceTimeoutInSeconds, "", "", otherHeaders);
 
 			string status = JSONUtils::asString(geoServiceResponseIp, "status", "");
 			if (status != "success")
@@ -1089,7 +1089,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			string geoServiceURL = _geoServiceURL + ip;
 
 			vector<string> otherHeaders;
-			json geoServiceResponse = MMSCURL::httpGetJson(_logger, -1, geoServiceURL, _geoServiceTimeoutInSeconds, "", "", otherHeaders);
+			json geoServiceResponse = CurlWrapper::httpGetJson(geoServiceURL, _geoServiceTimeoutInSeconds, "", "", otherHeaders);
 
 			bool geoSuccess;
 			string field = "success";

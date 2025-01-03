@@ -17,8 +17,8 @@
 # Commercial use other than under the terms of the GNU General Public License is
 # allowed only after express negotiation of conditions with the authors.
 
-set(SOURCES JSONUtils.cpp MMSCURL.cpp StatisticTimer.cpp)
-set(HEADERS JSONUtils.h MMSCURL.h StatisticTimer.h)
+set(SOURCES JSONUtils.cpp CurlWrapper.cpp StatisticTimer.cpp)
+set(HEADERS JSONUtils.h CurlWrapper.h StatisticTimer.h)
 
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(

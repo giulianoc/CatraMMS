@@ -52,7 +52,6 @@ if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")
-include_directories("${PROJECT_SOURCE_DIR}/../deploy/curlpp/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/nlohmann/include")

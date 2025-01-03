@@ -1,8 +1,8 @@
 
 #include "GenerateFrames.h"
 
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
@@ -319,8 +319,9 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					string mmsIngestionJobURL = mmsIngestionURL + "/" + to_string(addContentIngestionJobKey) + "?ingestionJobOutputs=false";
 
 					vector<string> otherHeaders;
-					json ingestionRoot = MMSCURL::httpGetJson(
-						_logger, _ingestionJobKey, mmsIngestionJobURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, otherHeaders,
+					json ingestionRoot = CurlWrapper::httpGetJson(
+						mmsIngestionJobURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, otherHeaders,
+						fmt::format(", ingestionJobKey: {}", _ingestionJobKey),
 						3 // maxRetryNumber
 					);
 
@@ -568,14 +569,13 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 		}
 
 		vector<string> otherHeaders;
-		string sResponse =
-			MMSCURL::httpPostString(
-				_logger, ingestionJobKey, mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-				"application/json", // contentType
-				otherHeaders,
-				3 // maxRetries
-			)
-				.second;
+		string sResponse = CurlWrapper::httpPostString(
+							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+							   "application/json", // contentType
+							   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+							   3 // maxRetries
+		)
+							   .second;
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
@@ -631,9 +631,9 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 
 		mmsBinaryURL = mmsBinaryIngestionURL + "/" + to_string(addContentIngestionJobKey);
 
-		string sResponse = MMSCURL::httpPostFile(
-			_logger, ingestionJobKey, mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey,
-			imagesDirectory + "/" + generatedFrameFileName, frameFileSize,
+		string sResponse = CurlWrapper::httpPostFile(
+			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey, imagesDirectory + "/" + generatedFrameFileName, frameFileSize,
+			fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 	}

@@ -11,10 +11,11 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
+#include "CurlWrapper.h"
 #include "EncoderProxy.h"
 #include "FFMpeg.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
+#include "spdlog/fmt/bundled/format.h"
 
 void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveEncodingStatusFailures)
 {
@@ -88,11 +89,10 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			json encodeContentResponse;
 			try
 			{
-				encodeContentResponse = MMSCURL::httpPostStringAndGetJson(
-					_logger, _encodingItem->_ingestionJobKey, ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser,
-					_ffmpegEncoderPassword, body,
+				encodeContentResponse = CurlWrapper::httpPostStringAndGetJson(
+					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, body,
 					"application/json", // contentType
-					otherHeaders
+					otherHeaders, fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 				);
 			}
 			catch (runtime_error &e)
@@ -129,7 +129,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			}
 
 			/* 2023-03-26; non si verifica mai, se FFMPEGEncoder genera un
-			errore, ritorna un HTTP status diverso da 200 e quindi MMSCURL
+			errore, ritorna un HTTP status diverso da 200 e quindi CurlWrapper
 			genera un eccezione
 			{
 				string field = "error";

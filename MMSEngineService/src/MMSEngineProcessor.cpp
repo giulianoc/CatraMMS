@@ -4,39 +4,14 @@
 #include "CheckIngestionTimes.h"
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "ContentRetentionTimes.h"
+#include "CurlWrapper.h"
 #include "DBDataRetentionTimes.h"
+#include "FFMpeg.h"
 #include "GEOInfoTimes.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "ThreadsStatisticTimes.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/System.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-/*
-#include <stdio.h>
-
-#include "FFMpeg.h"
-#include "PersistenceLock.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include <fstream>
-#include <iomanip>
-#include <regex>
-#include <sstream>
-// #include "EMailSender.h"
-#include "Magick++.h"
-// #include <openssl/md5.h>
-#include "spdlog/spdlog.h"
-#include <openssl/evp.h>
-
-#define MD5BUFFERSIZE 16384
-*/
 
 MMSEngineProcessor::MMSEngineProcessor(
 	int processorIdentifier, shared_ptr<spdlog::logger> logger, shared_ptr<MultiEventsSet> multiEventsSet,
@@ -1504,6 +1479,63 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 	}
 }
 
+struct FTPUploadProgressData
+{
+	int64_t _ingestionJobKey;
+	chrono::system_clock::time_point _lastTimeProgressUpdate;
+	double _lastPercentageUpdated;
+	bool _stoppedByUser;
+	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
+};
+static int progressUploadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+{
+	int progressUpdatePeriodInSeconds = 15;
+
+	FTPUploadProgressData *progressData = (FTPUploadProgressData *)clientp;
+
+	chrono::system_clock::time_point now = chrono::system_clock::now();
+
+	if (dltotal != 0 && (dltotal == dlnow || now - progressData->_lastTimeProgressUpdate >= chrono::seconds(progressUpdatePeriodInSeconds)))
+	{
+		double progress = dltotal == 0 ? 0 : (dlnow / dltotal) * 100;
+		// int downloadingPercentage = floorf(progress * 100) / 100;
+		// this is to have one decimal in the percentage
+		double uploadingPercentage = ((double)((int)(progress * 10))) / 10;
+
+		SPDLOG_INFO(
+			"progressUploadCallback. Upload still running"
+			", ingestionJobKey: {}"
+			", uploadingPercentage: {}"
+			", dltotal: {}"
+			", dlnow: {}"
+			", ultotal: {}"
+			", ulnow: {}",
+			progressData->_ingestionJobKey, uploadingPercentage, dltotal, dlnow, ultotal, ulnow
+		);
+
+		progressData->_lastTimeProgressUpdate = now;
+
+		if (progressData->_lastPercentageUpdated != uploadingPercentage)
+		{
+			SPDLOG_INFO(
+				"progressUploadCallback. Update IngestionJob"
+				", ingestionJobKey: {}"
+				", uploadingPercentage: {}",
+				progressData->_ingestionJobKey, uploadingPercentage
+			);
+			progressData->_stoppedByUser =
+				progressData->_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress(progressData->_ingestionJobKey, uploadingPercentage);
+
+			progressData->_lastPercentageUpdated = uploadingPercentage;
+		}
+
+		if (progressData->_stoppedByUser)
+			return 1; // stop downloading
+	}
+
+	return 0;
+}
+
 void MMSEngineProcessor::ftpUploadMediaSource(
 	string mmsAssetPathName, string fileName, int64_t sizeInBytes, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, int64_t mediaItemKey,
 	int64_t physicalPathKey, string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDirectory,
@@ -1517,20 +1549,22 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 	try
 	{
 		SPDLOG_INFO(
-			string() + "ftpUploadMediaSource" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+			"ftpUploadMediaSource"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}",
+			_processorIdentifier, ingestionJobKey
 		);
 
-		chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
-		double lastPercentageUpdated = -1.0;
-		bool uploadingStoppedByUser = false;
-		curlpp::types::ProgressFunctionFunctor functor = bind(
-			&MMSEngineProcessor::progressUploadCallback, this, ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, uploadingStoppedByUser,
-			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4
-		);
-		MMSCURL::ftpFile(
-			_logger, ingestionJobKey, mmsAssetPathName, fileName, sizeInBytes, ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory,
-			ftpRemoteFileName, functor
+		FTPUploadProgressData progressData;
+		progressData._ingestionJobKey = ingestionJobKey;
+		progressData._lastTimeProgressUpdate = chrono::system_clock::now();
+		progressData._lastPercentageUpdated = -1.0;
+		progressData._stoppedByUser = false;
+		progressData._mmsEngineDBFacade = _mmsEngineDBFacade;
+
+		CurlWrapper::ftpFile(
+			mmsAssetPathName, fileName, sizeInBytes, ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory, ftpRemoteFileName,
+			progressUploadCallback, &progressData, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		{
@@ -1553,6 +1587,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 	}
 }
 
+/*
 int MMSEngineProcessor::progressUploadCallback(
 	int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, bool &uploadingStoppedByUser,
 	double dltotal, double dlnow, double ultotal, double ulnow
@@ -1593,6 +1628,7 @@ int MMSEngineProcessor::progressUploadCallback(
 
 	return 0;
 }
+*/
 
 tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string, string, int64_t, string, string, bool>
 MMSEngineProcessor::processDependencyInfo(

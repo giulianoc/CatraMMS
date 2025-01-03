@@ -1,41 +1,32 @@
 
 #include <chrono>
 
+#include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/bio.h>
 
-#include "MMSEngineDBFacade.h"
 #include "AWSSigner.h"
+#include "MMSEngineDBFacade.h"
 
-AWSSigner::AWSSigner(shared_ptr<spdlog::logger> logger)
-{
-	_logger = logger;
-}
+AWSSigner::AWSSigner(shared_ptr<spdlog::logger> logger) { _logger = logger; }
 
 AWSSigner::~AWSSigner(void) {}
 
-string AWSSigner::calculateSignedURL(
-	string hostName,
-	string uriPath,
-	string keyPairId,
-	string privateKeyPEMPathName,
-	int expirationInSeconds
-)
+string AWSSigner::calculateSignedURL(string hostName, string uriPath, string keyPairId, string privateKeyPEMPathName, int expirationInSeconds)
 {
 
 	/*
 Section 1 : Creating a signed URL using canned policy
 A. Concatenate the following values in the specified order:
-    1. Base URL for the file
-    2. "?" - indicating that query string parameters follow the base URL.
-    3. Your query string parameters, if any&
-	    Please note that your parameters cannot be
-		named Expires, Signature, or Key-Pair-Id. 
-    4. Expires=date and time in Unix time format (in seconds)
+	1. Base URL for the file
+	2. "?" - indicating that query string parameters follow the base URL.
+	3. Your query string parameters, if any&
+		Please note that your parameters cannot be
+		named Expires, Signature, or Key-Pair-Id.
+	4. Expires=date and time in Unix time format (in seconds)
 		and Coordinated Universal Time (UTC)
-    5. &Signature=hashed and signed version of the policy statement
-    6. &Key-Pair-Id=public key ID for the CloudFront public key whose
+	5. &Signature=hashed and signed version of the policy statement
+	6. &Key-Pair-Id=public key ID for the CloudFront public key whose
 		corresponding private key you're using to generate the signature
 B. Remove the white space (including tabs and newline characters) between the parts
 
@@ -44,19 +35,18 @@ A. Creating a policy statement for a signed URL that uses a canned policy-
 	Construct the policy statement as shown in document[3] and remove whitespaces.
 B. Write a method to create the signature for the signed URL that uses
 	the canned policy create above-
-    1. Use the SHA-1 hash function and RSA to hash and sign the policy statement
+	1. Use the SHA-1 hash function and RSA to hash and sign the policy statement
 		that you created in the procedure. I found this[4] external article
 		that seemed to show an example code snippet to do this.
-    2. Remove white space. 
-    3. Base64-encode the string using MIME base64 encoding
-    4. Replace characters that are invalid in a URL query string
+	2. Remove white space.
+	3. Base64-encode the string using MIME base64 encoding
+	4. Replace characters that are invalid in a URL query string
 		with characters that are valid
 */
 
 	if (!fs::exists(privateKeyPEMPathName))
 	{
-		_logger->error(__FILEREF__ + "PEM path name not existing"
-			+ ", privateKeyPEMPathName: " + privateKeyPEMPathName);
+		_logger->error(__FILEREF__ + "PEM path name not existing" + ", privateKeyPEMPathName: " + privateKeyPEMPathName);
 
 		return "";
 	}
@@ -64,10 +54,9 @@ B. Write a method to create the signature for the signed URL that uses
 	string resourceUrlOrPath = string("https://") + hostName + "/" + uriPath;
 
 	time_t utcExpirationTime;
-    {
-		chrono::system_clock::time_point expirationTime = chrono::system_clock::now()
-			+ chrono::seconds(expirationInSeconds);
-		utcExpirationTime  = chrono::system_clock::to_time_t(expirationTime);
+	{
+		chrono::system_clock::time_point expirationTime = chrono::system_clock::now() + chrono::seconds(expirationInSeconds);
+		utcExpirationTime = chrono::system_clock::to_time_t(expirationTime);
 	}
 
 	string cannedPolicy;
@@ -84,12 +73,9 @@ B. Write a method to create the signature for the signed URL that uses
 		// 		}
 		// 	]
 		// }
-		
-		cannedPolicy = string("{\"Statement\":[{\"Resource\":\"")
-                + resourceUrlOrPath
-                + "\",\"Condition\":{\"DateLessThan\":{\"AWS:EpochTime\":"
-                + to_string(utcExpirationTime)
-                + "}}}]}";
+
+		cannedPolicy = string("{\"Statement\":[{\"Resource\":\"") + resourceUrlOrPath +
+					   "\",\"Condition\":{\"DateLessThan\":{\"AWS:EpochTime\":" + to_string(utcExpirationTime) + "}}}]}";
 
 		_logger->info(__FILEREF__ + "cannedPolicy without space: " + cannedPolicy);
 	}
@@ -99,18 +85,11 @@ B. Write a method to create the signature for the signed URL that uses
 	if (signature == "")
 		return "";
 
-	string signedURL = resourceUrlOrPath
-		+ "?Expires=" + to_string(utcExpirationTime)
-		+ "&Signature=" + signature
-		+ "&Key-Pair-Id=" + keyPairId;
+	string signedURL = resourceUrlOrPath + "?Expires=" + to_string(utcExpirationTime) + "&Signature=" + signature + "&Key-Pair-Id=" + keyPairId;
 
-	_logger->info(__FILEREF__ + "calculateSignedURL"
-		+ ", hostName: " + hostName
-		+ ", uriPath: " + uriPath
-		+ ", keyPairId: " + keyPairId
-		+ ", privateKeyPEMPathName: " + privateKeyPEMPathName
-		+ ", expirationInSeconds: " + to_string(expirationInSeconds)
-		+ ", signedURL: " + signedURL
+	_logger->info(
+		__FILEREF__ + "calculateSignedURL" + ", hostName: " + hostName + ", uriPath: " + uriPath + ", keyPairId: " + keyPairId +
+		", privateKeyPEMPathName: " + privateKeyPEMPathName + ", expirationInSeconds: " + to_string(expirationInSeconds) + ", signedURL: " + signedURL
 	);
 
 	return signedURL;
@@ -120,10 +99,7 @@ string AWSSigner::sign(string pemPathName, string message)
 {
 	// initialize OpenSSL
 
-	_logger->info(__FILEREF__ + "sign"
-		+ ", pemPathName: " + pemPathName
-		+ ", message: " + message
-	);
+	_logger->info(__FILEREF__ + "sign" + ", pemPathName: " + pemPathName + ", message: " + message);
 
 	_logger->debug(__FILEREF__ + "OpenSSL initialization");
 
@@ -139,7 +115,7 @@ string AWSSigner::sign(string pemPathName, string message)
 
 	_logger->debug(__FILEREF__ + "createPrivateRSA...");
 	RSA *rsa = NULL;
-	BIO* certbio = NULL;
+	BIO *certbio = NULL;
 	{
 		_logger->debug(__FILEREF__ + "Creating BIO");
 		//  Create the Input/Output BIO's
@@ -155,10 +131,10 @@ string AWSSigner::sign(string pemPathName, string message)
 
 	_logger->debug(__FILEREF__ + "RSASign...");
 	size_t signedMessageLength;
-	unsigned char* signedMessage = NULL;
+	unsigned char *signedMessage = NULL;
 	{
-		EVP_MD_CTX* m_RSASignCtx = EVP_MD_CTX_create();
-		EVP_PKEY* priKey  = EVP_PKEY_new();
+		EVP_MD_CTX *m_RSASignCtx = EVP_MD_CTX_create();
+		EVP_PKEY *priKey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(priKey, rsa);
 
 		_logger->debug(__FILEREF__ + "EVP_DigestSignInit...");
@@ -200,7 +176,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		}
 
 		_logger->debug(__FILEREF__ + "EVP_DigestSignFinal...");
-		signedMessage = (unsigned char*) malloc(signedMessageLength);
+		signedMessage = (unsigned char *)malloc(signedMessageLength);
 		if (EVP_DigestSignFinal(m_RSASignCtx, signedMessage, &signedMessageLength) <= 0)
 		{
 			_logger->error(__FILEREF__ + "EVP_DigestSignFinal failed");
@@ -230,11 +206,9 @@ string AWSSigner::sign(string pemPathName, string message)
 	_logger->debug(__FILEREF__ + "BIO_free...");
 	BIO_free(certbio);
 
-	_logger->debug(__FILEREF__ + "base64Text..."
-		+ ", signedMessageLength: " + to_string(signedMessageLength)
-	);
+	_logger->debug(__FILEREF__ + "base64Text..." + ", signedMessageLength: " + to_string(signedMessageLength));
 	string signature;
-	{ 
+	{
 		BIO *bio, *b64;
 		BUF_MEM *bufferPtr;
 
@@ -258,7 +232,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		// BIO_free(b64);	// useless because of BIO_free_all
 
 		_logger->debug(__FILEREF__ + "base64Text set...");
-		char* base64Text=(*bufferPtr).data;
+		char *base64Text = (*bufferPtr).data;
 
 		signature = base64Text;
 
@@ -274,9 +248,7 @@ string AWSSigner::sign(string pemPathName, string message)
 	::replace(signature.begin(), signature.end(), '=', '_');
 	::replace(signature.begin(), signature.end(), '/', '~');
 
-	signature.erase(
-		remove_if(signature.begin(), signature.end(), ::isspace),
-		signature.end());
+	signature.erase(remove_if(signature.begin(), signature.end(), ::isspace), signature.end());
 
 	_logger->debug(__FILEREF__ + "signature after replace: " + signature);
 
@@ -299,7 +271,6 @@ string AWSSigner::sign(string pemPathName, string message)
 		return;
 	}
 	*/
-
 
 	/*
 	// checks file
@@ -452,7 +423,8 @@ int AWSSigner::awsV4Signature2(
 	auto credential_scope = credentialScope(request_date, region, service, "%2F");
 	auto credential_scope_n = credentialScope(request_date, region, service, "/");
 	string access_key = "APKAUYWFOBAADUMU4IGK";
-	string secret_key = "MIIEpAIBAAKCAQEAh1rbJElzWSQux7qhwnm40wKCsXzcZIQrf7yuxxBDm8q5pwIcF4pVo74J/frT6zzvx4GqQlXJTkC2JjRXofMabOuKzt/nT6mafBSMf9ncnISXLuiLhjrvy46I0N8J1g1Kqewv8VMZiOHZLEF9K5Pd7tJXu6OvXWzjyETHWrz5czG2gzZfptj9+svSbNQQ3B2s5ATFp1Yj/Xji98iJeqzaleTiOzfdfXL5BWj0jQWNCW3wmncKbN4qbJ/vNfwbc2ntt9t364oDDtqbvurmZ3AwAlu6Vrye3jatIvQolCqLRAsT15L0loqg1ih9jqalWqI7xnOS8QBUCuGyBh2HmrT4/QIDAQABAoIBAFzNETSW22wBn8U2k1Nn6y1ZKkwQRHbyG3TP47D92KzG2HTFwIbvRHoogGdPAt7k/6z0nMwwTv3E5l3ZQz/5EmQdNiVSZCA9M3rhB9dcgqIZUiJKM+cLH3+bsPgsA21r3YYVNmWpyPcNib2LBQvMrLviIV64AjL2xlF3vorax9iO/LqXjwWNJMUU6PUGDp4OQQiYnDekLIO3OOSd4L8iFZq+RSdsjdgyH5lOnpwumJ96ZFqAHkzI4XhlqPt4fchi5AM37jopAyJXpfPPgIf9VcarXw8IY+gvqtbQkzqZGQlpBZ1GMMaVDaf6KG4LTVq5gT+9Snv3rpNLwggLqrt2s60CgYEAveMccrkGQseM6pbdkPHe5r/sJ254gOOv6yH4UVrlXdfV2YQQ3SdXrFlIE8ev1UhSVgsxuqieAtKhV9v0XSuFtbIqVmulYY1WdXbg6u2zjDwBNuhc08ZNv+tN3Fn3rvqw3hKQkSNoPeNFq+SeIC0IkFdLTD8DnlL9+r3TAmkkxg8CgYEAtns3AFs9gP0lMuec/vonK1U3GZ1Hm3pvznTEAIMUZz3UJYdewoy+nxxjYNIFjo/ZKADShxyGT4hn7YGv3CFLLHwD58pW2xZVMiEbNBrHkBz4SVx555x0uQ+Wyg2EnTmiDE1qutfQRNlxTtWUbxs6H/j5QppjP397z6U9XzyqPDMCgYB+0n++k5r94P9Z8tcapqCEJyzXjS3Ij8l/1pld5MKKccwvUchdnJgu0RaVt2nVnk73jtRw4YtfQURnRM2pqJbOKqeiPpUfWWGkZHiGD6o6gB0jif/tpWVqSAMhp6kIYgDc4TNS7H4Dz5ZJ3xBJVyqAFP2CeBe3l6Bv5nZXBth7uwKBgQCqOLoP3Qy8XGfs2l17BEKxi2ZAwJRhlo7hWc7UY3IO9IAHGgXtGXlf1w1k7cU9PTZmuI2qd5NacXXw+b7gazZCotTJzdfDu0tx3awQqMJrznpVhKw6v5mqX75bcMy6FV7ydu0Oqe6fqu6liVpTYmSQGqH53SajvvnxssRTKLXsPQKBgQCDDzNz04BrXf7ktbBEE+UV2ArOdGm0/5qO3jM53JqmiQyyzpI7bpXuMkbPpyNW8eeQhMTv6Kv+YkGzQRtLJJHue6ZBE9H/QTbde3kzgzSpU78giPsJqPjLEJB3rdQRKQvtV9+xT31MrgpXJ7y+UFW3NW4GSSX6U25BC/K7uXGKFg==";
+	string secret_key =
+"MIIEpAIBAAKCAQEAh1rbJElzWSQux7qhwnm40wKCsXzcZIQrf7yuxxBDm8q5pwIcF4pVo74J/frT6zzvx4GqQlXJTkC2JjRXofMabOuKzt/nT6mafBSMf9ncnISXLuiLhjrvy46I0N8J1g1Kqewv8VMZiOHZLEF9K5Pd7tJXu6OvXWzjyETHWrz5czG2gzZfptj9+svSbNQQ3B2s5ATFp1Yj/Xji98iJeqzaleTiOzfdfXL5BWj0jQWNCW3wmncKbN4qbJ/vNfwbc2ntt9t364oDDtqbvurmZ3AwAlu6Vrye3jatIvQolCqLRAsT15L0loqg1ih9jqalWqI7xnOS8QBUCuGyBh2HmrT4/QIDAQABAoIBAFzNETSW22wBn8U2k1Nn6y1ZKkwQRHbyG3TP47D92KzG2HTFwIbvRHoogGdPAt7k/6z0nMwwTv3E5l3ZQz/5EmQdNiVSZCA9M3rhB9dcgqIZUiJKM+cLH3+bsPgsA21r3YYVNmWpyPcNib2LBQvMrLviIV64AjL2xlF3vorax9iO/LqXjwWNJMUU6PUGDp4OQQiYnDekLIO3OOSd4L8iFZq+RSdsjdgyH5lOnpwumJ96ZFqAHkzI4XhlqPt4fchi5AM37jopAyJXpfPPgIf9VcarXw8IY+gvqtbQkzqZGQlpBZ1GMMaVDaf6KG4LTVq5gT+9Snv3rpNLwggLqrt2s60CgYEAveMccrkGQseM6pbdkPHe5r/sJ254gOOv6yH4UVrlXdfV2YQQ3SdXrFlIE8ev1UhSVgsxuqieAtKhV9v0XSuFtbIqVmulYY1WdXbg6u2zjDwBNuhc08ZNv+tN3Fn3rvqw3hKQkSNoPeNFq+SeIC0IkFdLTD8DnlL9+r3TAmkkxg8CgYEAtns3AFs9gP0lMuec/vonK1U3GZ1Hm3pvznTEAIMUZz3UJYdewoy+nxxjYNIFjo/ZKADShxyGT4hn7YGv3CFLLHwD58pW2xZVMiEbNBrHkBz4SVx555x0uQ+Wyg2EnTmiDE1qutfQRNlxTtWUbxs6H/j5QppjP397z6U9XzyqPDMCgYB+0n++k5r94P9Z8tcapqCEJyzXjS3Ij8l/1pld5MKKccwvUchdnJgu0RaVt2nVnk73jtRw4YtfQURnRM2pqJbOKqeiPpUfWWGkZHiGD6o6gB0jif/tpWVqSAMhp6kIYgDc4TNS7H4Dz5ZJ3xBJVyqAFP2CeBe3l6Bv5nZXBth7uwKBgQCqOLoP3Qy8XGfs2l17BEKxi2ZAwJRhlo7hWc7UY3IO9IAHGgXtGXlf1w1k7cU9PTZmuI2qd5NacXXw+b7gazZCotTJzdfDu0tx3awQqMJrznpVhKw6v5mqX75bcMy6FV7ydu0Oqe6fqu6liVpTYmSQGqH53SajvvnxssRTKLXsPQKBgQCDDzNz04BrXf7ktbBEE+UV2ArOdGm0/5qO3jM53JqmiQyyzpI7bpXuMkbPpyNW8eeQhMTv6Kv+YkGzQRtLJJHue6ZBE9H/QTbde3kzgzSpU78giPsJqPjLEJB3rdQRKQvtV9+xT31MrgpXJ7y+UFW3NW4GSSX6U25BC/K7uXGKFg==";
 	string canonical_querystring = "";
 	// "Action=CreateUser&UserName=NewUser02&Version=2010-05-08";
 	canonical_querystring += "X-Amz-Algorithm=AWS4-HMAC-SHA256";
@@ -488,7 +460,7 @@ int AWSSigner::awsV4Signature2(
 
 	_logger->info(__FILEREF__ + "request_url: " + request_url);
 	ostringstream os;
-	os << curlpp::options::Url(request_url);
+	os << ...::options::Url(request_url);
 	string asAskedInQuestion = os.str();
 	_logger->info(__FILEREF__ + "asAskedInQuestion: " + asAskedInQuestion);
 
@@ -513,13 +485,14 @@ int AWSSigner::awsV4Signature(
 	string request_parameters = "";
 
 	string access_key = "APKAUYWFOBAADUMU4IGK";
-	string secret_key = "MIIEpAIBAAKCAQEAh1rbJElzWSQux7qhwnm40wKCsXzcZIQrf7yuxxBDm8q5pwIcF4pVo74J/frT6zzvx4GqQlXJTkC2JjRXofMabOuKzt/nT6mafBSMf9ncnISXLuiLhjrvy46I0N8J1g1Kqewv8VMZiOHZLEF9K5Pd7tJXu6OvXWzjyETHWrz5czG2gzZfptj9+svSbNQQ3B2s5ATFp1Yj/Xji98iJeqzaleTiOzfdfXL5BWj0jQWNCW3wmncKbN4qbJ/vNfwbc2ntt9t364oDDtqbvurmZ3AwAlu6Vrye3jatIvQolCqLRAsT15L0loqg1ih9jqalWqI7xnOS8QBUCuGyBh2HmrT4/QIDAQABAoIBAFzNETSW22wBn8U2k1Nn6y1ZKkwQRHbyG3TP47D92KzG2HTFwIbvRHoogGdPAt7k/6z0nMwwTv3E5l3ZQz/5EmQdNiVSZCA9M3rhB9dcgqIZUiJKM+cLH3+bsPgsA21r3YYVNmWpyPcNib2LBQvMrLviIV64AjL2xlF3vorax9iO/LqXjwWNJMUU6PUGDp4OQQiYnDekLIO3OOSd4L8iFZq+RSdsjdgyH5lOnpwumJ96ZFqAHkzI4XhlqPt4fchi5AM37jopAyJXpfPPgIf9VcarXw8IY+gvqtbQkzqZGQlpBZ1GMMaVDaf6KG4LTVq5gT+9Snv3rpNLwggLqrt2s60CgYEAveMccrkGQseM6pbdkPHe5r/sJ254gOOv6yH4UVrlXdfV2YQQ3SdXrFlIE8ev1UhSVgsxuqieAtKhV9v0XSuFtbIqVmulYY1WdXbg6u2zjDwBNuhc08ZNv+tN3Fn3rvqw3hKQkSNoPeNFq+SeIC0IkFdLTD8DnlL9+r3TAmkkxg8CgYEAtns3AFs9gP0lMuec/vonK1U3GZ1Hm3pvznTEAIMUZz3UJYdewoy+nxxjYNIFjo/ZKADShxyGT4hn7YGv3CFLLHwD58pW2xZVMiEbNBrHkBz4SVx555x0uQ+Wyg2EnTmiDE1qutfQRNlxTtWUbxs6H/j5QppjP397z6U9XzyqPDMCgYB+0n++k5r94P9Z8tcapqCEJyzXjS3Ij8l/1pld5MKKccwvUchdnJgu0RaVt2nVnk73jtRw4YtfQURnRM2pqJbOKqeiPpUfWWGkZHiGD6o6gB0jif/tpWVqSAMhp6kIYgDc4TNS7H4Dz5ZJ3xBJVyqAFP2CeBe3l6Bv5nZXBth7uwKBgQCqOLoP3Qy8XGfs2l17BEKxi2ZAwJRhlo7hWc7UY3IO9IAHGgXtGXlf1w1k7cU9PTZmuI2qd5NacXXw+b7gazZCotTJzdfDu0tx3awQqMJrznpVhKw6v5mqX75bcMy6FV7ydu0Oqe6fqu6liVpTYmSQGqH53SajvvnxssRTKLXsPQKBgQCDDzNz04BrXf7ktbBEE+UV2ArOdGm0/5qO3jM53JqmiQyyzpI7bpXuMkbPpyNW8eeQhMTv6Kv+YkGzQRtLJJHue6ZBE9H/QTbde3kzgzSpU78giPsJqPjLEJB3rdQRKQvtV9+xT31MrgpXJ7y+UFW3NW4GSSX6U25BC/K7uXGKFg==";
+	string secret_key =
+"MIIEpAIBAAKCAQEAh1rbJElzWSQux7qhwnm40wKCsXzcZIQrf7yuxxBDm8q5pwIcF4pVo74J/frT6zzvx4GqQlXJTkC2JjRXofMabOuKzt/nT6mafBSMf9ncnISXLuiLhjrvy46I0N8J1g1Kqewv8VMZiOHZLEF9K5Pd7tJXu6OvXWzjyETHWrz5czG2gzZfptj9+svSbNQQ3B2s5ATFp1Yj/Xji98iJeqzaleTiOzfdfXL5BWj0jQWNCW3wmncKbN4qbJ/vNfwbc2ntt9t364oDDtqbvurmZ3AwAlu6Vrye3jatIvQolCqLRAsT15L0loqg1ih9jqalWqI7xnOS8QBUCuGyBh2HmrT4/QIDAQABAoIBAFzNETSW22wBn8U2k1Nn6y1ZKkwQRHbyG3TP47D92KzG2HTFwIbvRHoogGdPAt7k/6z0nMwwTv3E5l3ZQz/5EmQdNiVSZCA9M3rhB9dcgqIZUiJKM+cLH3+bsPgsA21r3YYVNmWpyPcNib2LBQvMrLviIV64AjL2xlF3vorax9iO/LqXjwWNJMUU6PUGDp4OQQiYnDekLIO3OOSd4L8iFZq+RSdsjdgyH5lOnpwumJ96ZFqAHkzI4XhlqPt4fchi5AM37jopAyJXpfPPgIf9VcarXw8IY+gvqtbQkzqZGQlpBZ1GMMaVDaf6KG4LTVq5gT+9Snv3rpNLwggLqrt2s60CgYEAveMccrkGQseM6pbdkPHe5r/sJ254gOOv6yH4UVrlXdfV2YQQ3SdXrFlIE8ev1UhSVgsxuqieAtKhV9v0XSuFtbIqVmulYY1WdXbg6u2zjDwBNuhc08ZNv+tN3Fn3rvqw3hKQkSNoPeNFq+SeIC0IkFdLTD8DnlL9+r3TAmkkxg8CgYEAtns3AFs9gP0lMuec/vonK1U3GZ1Hm3pvznTEAIMUZz3UJYdewoy+nxxjYNIFjo/ZKADShxyGT4hn7YGv3CFLLHwD58pW2xZVMiEbNBrHkBz4SVx555x0uQ+Wyg2EnTmiDE1qutfQRNlxTtWUbxs6H/j5QppjP397z6U9XzyqPDMCgYB+0n++k5r94P9Z8tcapqCEJyzXjS3Ij8l/1pld5MKKccwvUchdnJgu0RaVt2nVnk73jtRw4YtfQURnRM2pqJbOKqeiPpUfWWGkZHiGD6o6gB0jif/tpWVqSAMhp6kIYgDc4TNS7H4Dz5ZJ3xBJVyqAFP2CeBe3l6Bv5nZXBth7uwKBgQCqOLoP3Qy8XGfs2l17BEKxi2ZAwJRhlo7hWc7UY3IO9IAHGgXtGXlf1w1k7cU9PTZmuI2qd5NacXXw+b7gazZCotTJzdfDu0tx3awQqMJrznpVhKw6v5mqX75bcMy6FV7ydu0Oqe6fqu6liVpTYmSQGqH53SajvvnxssRTKLXsPQKBgQCDDzNz04BrXf7ktbBEE+UV2ArOdGm0/5qO3jM53JqmiQyyzpI7bpXuMkbPpyNW8eeQhMTv6Kv+YkGzQRtLJJHue6ZBE9H/QTbde3kzgzSpU78giPsJqPjLEJB3rdQRKQvtV9+xT31MrgpXJ7y+UFW3NW4GSSX6U25BC/K7uXGKFg==";
 
-    // now utc as string
+	// now utc as string
 	time_t t_amz_date;
 	string amz_date;
 	string date_stamp;
-    {
+	{
 		tm          tmDateTime;
 		char        strDateTime [64];
 
@@ -541,7 +514,7 @@ int AWSSigner::awsV4Signature(
 			tmDateTime. tm_mon + 1,
 			tmDateTime. tm_mday);
 		date_stamp = strDateTime;
-    }
+	}
 	_logger->info(__FILEREF__ + "amz_date: " + amz_date
 		+ ", date_stamp: " + date_stamp
 	);
@@ -551,7 +524,7 @@ int AWSSigner::awsV4Signature(
 
 	// Step 1 is to define the verb (GET, POST, etc.)--already done.
 
-	// Step 2: Create canonical URI--the part of the URI from domain to query 
+	// Step 2: Create canonical URI--the part of the URI from domain to query
 	// string (use '/' if no path)
 	// string canonical_uri = "/prod/channels/5499902/start";
 
@@ -605,7 +578,7 @@ int AWSSigner::awsV4Signature(
 	// Put the signature information in a header named Authorization.
 	string authorization_header = STRING_TO_SIGN_ALGO + " Credential=" + access_key
 		+ "/" + credential_scope + ", SignedHeaders=" + signed_headers
-		+ ", Signature=" + signature; 
+		+ ", Signature=" + signature;
 
 	// For DynamoDB, the request can include any headers, but MUST include "host", "x-amz-date",
 	// "x-amz-target", "content-type", and "Authorization". Except for the authorization
@@ -614,7 +587,7 @@ int AWSSigner::awsV4Signature(
 	// # Python note: The 'host' header is added automatically by the Python 'requests' library.
 // COMMENTATO, DA CAPIRE
 	// headers = {'Host':content_type,
-      //      'Authorization':authorization_header}
+	  //      'Authorization':authorization_header}
 
 
 
@@ -622,7 +595,7 @@ int AWSSigner::awsV4Signature(
 
 	// _logger->info(__FILEREF__ + "request_url: " + request_url);
 	// ostringstream os;
-	// os << curlpp::options::Url(request_url);
+	// os << ...::options::Url(request_url);
 	// string asAskedInQuestion = os.str();
 	// _logger->info(__FILEREF__ + "asAskedInQuestion: " + asAskedInQuestion);
 
@@ -683,7 +656,7 @@ const string AWSSigner::canonicalize_uri(const string& uriPath) noexcept
 	if (uriPath.empty()) return "/";
 
 	// Poco::URI::encode(uri.getPath(),"",encoded_path);
-	string encoded_path = curlpp::escape(uriPath);
+	string encoded_path = escape(uriPath);
 	return encoded_path;
 }
 
@@ -705,7 +678,7 @@ const string AWSSigner::canonicalize_query(const string& queryString) noexcept
 		stringstream ss(localQueryString);
 		string parameter;
 		while (getline(ss, parameter, query_delim)) {
-			string encoded_arg = curlpp::escape(parameter);
+			string encoded_arg = escape(parameter);
 			parts.push_back(encoded_arg);
 		}
 	}

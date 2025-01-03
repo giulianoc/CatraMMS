@@ -12,14 +12,10 @@
  */
 
 #include "API.h"
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
 #include "Validator.h"
 #include "catralibraries/StringUtils.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
 #include <regex>
 
 void API::addYouTubeConf(
@@ -422,14 +418,14 @@ void API::youTubeConfList(
 		{
 			label = labelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		{
@@ -777,14 +773,14 @@ void API::facebookConfList(
 			{
 				label = labelIt->second;
 
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				//	after unescape, this char will be changed to space and we do not want it
 				string plus = "\\+";
 				string plusDecoded = " ";
 				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-				label = curlpp::unescape(firstDecoding);
+				label = CurlWrapper::unescape(firstDecoding);
 			}
 		}
 
@@ -1133,14 +1129,14 @@ void API::twitchConfList(
 			{
 				label = labelIt->second;
 
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				//	after unescape, this char will be changed to space and we do not want it
 				string plus = "\\+";
 				string plusDecoded = " ";
 				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-				label = curlpp::unescape(firstDecoding);
+				label = CurlWrapper::unescape(firstDecoding);
 			}
 		}
 
@@ -1489,14 +1485,14 @@ void API::tiktokConfList(
 			{
 				label = labelIt->second;
 
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				//	after unescape, this char will be changed to space and we do not want it
 				string plus = "\\+";
 				string plusDecoded = " ";
 				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-				label = curlpp::unescape(firstDecoding);
+				label = CurlWrapper::unescape(firstDecoding);
 			}
 		}
 
@@ -2065,14 +2061,14 @@ void API::modifyStream(
 			{
 				labelKey = labelIt->second;
 
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				//	after unescape, this char will be changed to space and we do not want it
 				string plus = "\\+";
 				string plusDecoded = " ";
 				string firstDecoding = regex_replace(labelKey, regex(plus), plusDecoded);
 
-				labelKey = curlpp::unescape(firstDecoding);
+				labelKey = CurlWrapper::unescape(firstDecoding);
 			}
 
 			if (confKey == -1 && labelKey == "")
@@ -2164,14 +2160,14 @@ void API::removeStream(
 			{
 				label = labelIt->second;
 
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				//	after unescape, this char will be changed to space and we do not want it
 				string plus = "\\+";
 				string plusDecoded = " ";
 				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-				label = curlpp::unescape(firstDecoding);
+				label = CurlWrapper::unescape(firstDecoding);
 			}
 
 			if (confKey == -1 && label == "")
@@ -2282,14 +2278,14 @@ void API::streamList(
 		{
 			label = labelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		bool labelLike = true;
@@ -2305,14 +2301,14 @@ void API::streamList(
 		{
 			url = urlIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(url, regex(plus), plusDecoded);
 
-			url = curlpp::unescape(firstDecoding);
+			url = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string sourceType;
@@ -2332,14 +2328,14 @@ void API::streamList(
 		{
 			type = typeIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(type, regex(plus), plusDecoded);
 
-			type = curlpp::unescape(firstDecoding);
+			type = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string name;
@@ -2348,14 +2344,14 @@ void API::streamList(
 		{
 			name = nameIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(name, regex(plus), plusDecoded);
 
-			name = curlpp::unescape(firstDecoding);
+			name = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string region;
@@ -2364,14 +2360,14 @@ void API::streamList(
 		{
 			region = regionIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(region, regex(plus), plusDecoded);
 
-			region = curlpp::unescape(firstDecoding);
+			region = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string country;
@@ -2380,14 +2376,14 @@ void API::streamList(
 		{
 			country = countryIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(country, regex(plus), plusDecoded);
 
-			country = curlpp::unescape(firstDecoding);
+			country = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string labelOrder;
@@ -3075,14 +3071,14 @@ void API::sourceTVStreamList(
 		{
 			name = nameIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(name, regex(plus), plusDecoded);
 
-			name = curlpp::unescape(firstDecoding);
+			name = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string lnb;
@@ -3091,14 +3087,14 @@ void API::sourceTVStreamList(
 		{
 			lnb = lnbIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(lnb, regex(plus), plusDecoded);
 
-			lnb = curlpp::unescape(firstDecoding);
+			lnb = CurlWrapper::unescape(firstDecoding);
 		}
 
 		int64_t frequency = -1;
@@ -3117,14 +3113,14 @@ void API::sourceTVStreamList(
 		{
 			audioPids = audioPidsIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(audioPids, regex(plus), plusDecoded);
 
-			audioPids = curlpp::unescape(firstDecoding);
+			audioPids = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string nameOrder;
@@ -3539,14 +3535,14 @@ void API::awsChannelConfList(
 		{
 			label = labelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		int type = 0; // ALL
@@ -4400,14 +4396,14 @@ void API::rtmpChannelConfList(
 		{
 			label = labelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		int type = 0; // ALL
@@ -4810,14 +4806,14 @@ void API::hlsChannelConfList(
 		{
 			label = labelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		int type = 0; // ALL

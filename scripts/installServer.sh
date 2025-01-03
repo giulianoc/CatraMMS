@@ -813,15 +813,6 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleType" != "integration" ]; then
-		package=curlpp
-		read -n 1 -s -r -p "Downloading $package..."
-		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	fi
-
-
 	packageName=ffmpeg
 	echo ""
 	ffmpegVersion=7.0.2

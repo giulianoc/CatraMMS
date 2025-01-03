@@ -1,42 +1,8 @@
 
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSEngineProcessor.h"
 #include <regex>
-/*
-#include <stdio.h>
-
-#include "CheckEncodingTimes.h"
-#include "CheckIngestionTimes.h"
-#include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "ContentRetentionTimes.h"
-#include "DBDataRetentionTimes.h"
-#include "FFMpeg.h"
-#include "GEOInfoTimes.h"
-#include "PersistenceLock.h"
-#include "ThreadsStatisticTimes.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-#include <fstream>
-#include <iomanip>
-#include <sstream>
-// #include "EMailSender.h"
-#include "Magick++.h"
-// #include <openssl/md5.h>
-#include "spdlog/spdlog.h"
-#include <openssl/evp.h>
-
-#define MD5BUFFERSIZE 16384
-*/
 
 void MMSEngineProcessor::httpCallbackThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -650,7 +616,9 @@ void MMSEngineProcessor::userHttpCallback(
 					}
 				}
 
-				MMSCURL::httpPutFormData(_logger, ingestionJobKey, userURL, formData, callbackTimeoutInSeconds, maxRetries);
+				CurlWrapper::httpPutFormData(
+					userURL, formData, callbackTimeoutInSeconds, fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+				);
 			}
 			else
 			{
@@ -658,8 +626,9 @@ void MMSEngineProcessor::userHttpCallback(
 				if (httpBody != "")
 					contentType = "application/json";
 
-				MMSCURL::httpPutString(
-					_logger, ingestionJobKey, userURL, callbackTimeoutInSeconds, userName, password, httpBody, contentType, otherHeaders, maxRetries
+				CurlWrapper::httpPutString(
+					userURL, callbackTimeoutInSeconds, userName, password, httpBody, contentType, otherHeaders,
+					fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
 		}
@@ -682,7 +651,9 @@ void MMSEngineProcessor::userHttpCallback(
 					}
 				}
 
-				MMSCURL::httpPostFormData(_logger, ingestionJobKey, userURL, formData, callbackTimeoutInSeconds, maxRetries);
+				CurlWrapper::httpPostFormData(
+					userURL, formData, callbackTimeoutInSeconds, fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+				);
 			}
 			else
 			{
@@ -690,15 +661,18 @@ void MMSEngineProcessor::userHttpCallback(
 				if (httpBody != "")
 					contentType = "application/json";
 
-				MMSCURL::httpPostString(
-					_logger, ingestionJobKey, userURL, callbackTimeoutInSeconds, userName, password, httpBody, contentType, otherHeaders, maxRetries
+				CurlWrapper::httpPostString(
+					userURL, callbackTimeoutInSeconds, userName, password, httpBody, contentType, otherHeaders,
+					fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
 		}
 		else // if (httpMethod == "GET")
 		{
 			vector<string> otherHeaders;
-			MMSCURL::httpGet(_logger, ingestionJobKey, userURL, callbackTimeoutInSeconds, userName, password, otherHeaders, maxRetries);
+			CurlWrapper::httpGet(
+				userURL, callbackTimeoutInSeconds, userName, password, otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+			);
 		}
 	}
 	catch (runtime_error e)

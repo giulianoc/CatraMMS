@@ -1,7 +1,7 @@
 
 #include "FFMPEGEncoderTask.h"
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
@@ -301,8 +301,9 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			string mmsIngestionJobURL = mmsIngestionURL + "/" + to_string(addContentIngestionJobKey) + "?ingestionJobOutputs=false";
 
 			vector<string> otherHeaders;
-			json ingestionRoot = MMSCURL::httpGetJson(
-				_logger, ingestionJobKey, mmsIngestionJobURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, otherHeaders,
+			json ingestionRoot = CurlWrapper::httpGetJson(
+				mmsIngestionJobURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, otherHeaders,
+				fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetryNumber
 			);
 
@@ -413,14 +414,13 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 	try
 	{
 		vector<string> otherHeaders;
-		string sResponse =
-			MMSCURL::httpPostString(
-				_logger, ingestionJobKey, mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-				"application/json", // contentType
-				otherHeaders,
-				3 // maxRetryNumber
-			)
-				.second;
+		string sResponse = CurlWrapper::httpPostString(
+							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+							   "application/json", // contentType
+							   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+							   3 // maxRetryNumber
+		)
+							   .second;
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
@@ -514,9 +514,9 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 
 		mmsBinaryURL = mmsBinaryIngestionURL + "/" + to_string(addContentIngestionJobKey);
 
-		string sResponse = MMSCURL::httpPostFileSplittingInChunks(
-			_logger, ingestionJobKey, mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey, localBinaryPathFileName,
-			localBinaryFileSizeInBytes,
+		string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
+			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey, localBinaryPathFileName, localBinaryFileSizeInBytes,
+			fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 
@@ -711,10 +711,16 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 	}
 }
 
+struct FFMpegProgressData
+{
+	int64_t _ingestionJobKey;
+	chrono::system_clock::time_point _lastTimeProgressUpdate;
+	double _lastPercentageUpdated;
+};
 static int progressDownloadCallback2(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
 
-	FFMpeg::ProgressData *progressData = (FFMpeg::ProgressData *)clientp;
+	FFMpegProgressData *progressData = (FFMpegProgressData *)clientp;
 
 	int progressUpdatePeriodInSeconds = 15;
 
@@ -794,12 +800,14 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 	}
 	else
 	{
-		FFMpeg::ProgressData progressData;
+		FFMpegProgressData progressData;
 		progressData._ingestionJobKey = ingestionJobKey;
 		progressData._lastTimeProgressUpdate = chrono::system_clock::now();
 		progressData._lastPercentageUpdated = -1.0;
-		MMSCURL::downloadFile(
-			_logger, ingestionJobKey, sourcePhysicalDeliveryURL, localDestAssetPathName, progressDownloadCallback2, &progressData,
+
+		CurlWrapper::downloadFile(
+			sourcePhysicalDeliveryURL, localDestAssetPathName, progressDownloadCallback2, &progressData, 500,
+			fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 	}

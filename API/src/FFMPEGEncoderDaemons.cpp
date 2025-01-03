@@ -2,7 +2,6 @@
 #include "FFMPEGEncoderDaemons.h"
 
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"

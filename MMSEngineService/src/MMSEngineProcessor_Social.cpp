@@ -1,6 +1,6 @@
 
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
@@ -803,10 +803,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				headerList.push_back(header);
 			}
 
-			json responseRoot = MMSCURL::httpPostStringAndGetJson(
-				_logger, ingestionJobKey, youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
+				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
 				"application/json", // contentType
-				headerList
+				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			/* sResponse:
@@ -1017,10 +1017,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				headerList.push_back(header);
 			}
 
-			json responseRoot = MMSCURL::httpPostStringAndGetJson(
-				_logger, ingestionJobKey, youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
+				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
 				"application/json", // contentType
-				headerList
+				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			/* sResponse:
@@ -1192,10 +1192,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 			string body;
 
-			json responseRoot = MMSCURL::httpPostStringAndGetJson(
-				_logger, ingestionJobKey, youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
+				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
 				"", // contentType
-				headerList
+				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			/* sResponse:
@@ -1524,10 +1524,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 
 		vector<string> otherHeaders;
-		MMSCURL::httpPostString(
-			_logger, ingestionJobKey, _mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+		CurlWrapper::httpPostString(
+			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
 			"application/json", // contentType
-			otherHeaders
+			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		SPDLOG_INFO(
@@ -1787,8 +1787,8 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			*/
 			facebookURL = _facebookGraphAPIProtocol + "://" + _facebookGraphAPIHostName + ":" + to_string(_facebookGraphAPIPort) + "/" +
 						  _facebookGraphAPIVersion + regex_replace(_facebookGraphAPILiveVideosURI, regex("__NODEID__"), facebookNodeId) +
-						  "?title=" + curlpp::escape(title) + (description != "" ? ("&description=" + curlpp::escape(description)) : "") +
-						  "&access_token=" + curlpp::escape(facebookToken);
+						  "?title=" + CurlWrapper::escape(title) + (description != "" ? ("&description=" + CurlWrapper::escape(description)) : "") +
+						  "&access_token=" + CurlWrapper::escape(facebookToken);
 			if (facebookLiveType == "LiveNow")
 			{
 				facebookURL += "&status=LIVE_NOW";
@@ -1801,8 +1801,9 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			SPDLOG_INFO(string() + "create a Live Video object" + ", facebookURL: " + facebookURL);
 
 			vector<string> otherHeaders;
-			json responseRoot =
-				MMSCURL::httpPostStringAndGetJson(_logger, ingestionJobKey, facebookURL, _mmsAPITimeoutInSeconds, "", "", "", "", otherHeaders);
+			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
+				facebookURL, _mmsAPITimeoutInSeconds, "", "", "", "", otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			);
 
 			/*
 				{
@@ -2121,10 +2122,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		}
 
 		vector<string> otherHeaders;
-		MMSCURL::httpPostString(
-			_logger, ingestionJobKey, _mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+		CurlWrapper::httpPostString(
+			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
 			"application/json", // contentType
-			otherHeaders
+			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		SPDLOG_INFO(
@@ -2280,8 +2281,9 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			formData.push_back(make_pair("upload_phase", "start"));
 			formData.push_back(make_pair("file_size", to_string(sizeInBytes)));
 
-			json facebookResponseRoot =
-				MMSCURL::httpPostFormDataAndGetJson(_logger, ingestionJobKey, facebookURL, formData, _facebookGraphAPITimeoutInSeconds);
+			json facebookResponseRoot = CurlWrapper::httpPostFormDataAndGetJson(
+				facebookURL, formData, _facebookGraphAPITimeoutInSeconds, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			);
 
 			string field = "upload_session_id";
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
@@ -2357,9 +2359,9 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				formData.push_back(make_pair("start_offset", to_string(startOffset)));
 				formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
-				json facebookResponseRoot = MMSCURL::httpPostFileByFormDataAndGetJson(
-					_logger, ingestionJobKey, facebookURL, formData, _facebookGraphAPITimeoutInSeconds, mmsAssetPathName, sizeInBytes,
-					mediaContentType,
+				json facebookResponseRoot = CurlWrapper::httpPostFileByFormDataAndGetJson(
+					facebookURL, formData, _facebookGraphAPITimeoutInSeconds, mmsAssetPathName, sizeInBytes, mediaContentType,
+					fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 					1,	// maxRetryNumber
 					15, // secondsToWaitBeforeToRetry
 					startOffset, endOffset
@@ -2412,8 +2414,9 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			formData.push_back(make_pair("upload_phase", "finish"));
 			formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
-			json facebookResponseRoot =
-				MMSCURL::httpPostFormDataAndGetJson(_logger, ingestionJobKey, facebookURL, formData, _facebookGraphAPITimeoutInSeconds);
+			json facebookResponseRoot = CurlWrapper::httpPostFormDataAndGetJson(
+				facebookURL, formData, _facebookGraphAPITimeoutInSeconds, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			);
 
 			string field = "success";
 			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
@@ -2621,10 +2624,10 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				headerList.push_back(header);
 			}
 
-			pair<string, string> responseDetails = MMSCURL::httpPostString(
-				_logger, ingestionJobKey, youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+			pair<string, string> responseDetails = CurlWrapper::httpPostString(
+				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
 				"application/json; charset=UTF-8", // contentType
-				headerList
+				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			string sHeaderResponse;
@@ -2674,15 +2677,10 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				youTubeUploadURL = sHeaderResponse.substr(locationStartIndex, locationEndIndex - locationStartIndex);
 		}
 
-		bool contentCompletelyUploaded = false;
-		CurlUploadYouTubeData curlUploadData;
-		curlUploadData.mediaSourceFileStream.open(mmsAssetPathName, ios::binary);
-		curlUploadData.lastByteSent = -1;
-		curlUploadData.fileSizeInBytes = sizeInBytes;
-		while (!contentCompletelyUploaded)
 		{
 			/*
-				// In case of the first request
+				// first request:
+
 				PUT UPLOAD_URL HTTP/1.1
 				Authorization: Bearer AUTH_TOKEN
 				Content-Length: CONTENT_LENGTH
@@ -2690,7 +2688,20 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 				BINARY_FILE_DATA
 
-				// in case of resuming
+				// se la prima richiesta fallisce è necessario un resume
+				// Per sapere il 'range' da dove bisogna ripartire si esegue
+
+				PUT UPLOAD_URL HTTP/1.1
+				Authorization: Bearer AUTH_TOKEN
+				Content-Length: 0
+				Content-Range: bytes *\/CONTENT_LENGTH
+
+				308 Resume Incomplete
+				Content-Length: 0
+				Range: bytes=0-999999
+
+				// e poi, si continua con il resume
+
 				PUT UPLOAD_URL HTTP/1.1
 				Authorization: Bearer AUTH_TOKEN
 				Content-Length: REMAINING_CONTENT_LENGTH
@@ -2698,7 +2709,16 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 				PARTIAL_BINARY_FILE_DATA
 			*/
+		}
 
+		/*
+		bool contentCompletelyUploaded = false;
+		CurlUploadYouTubeData curlUploadData;
+		curlUploadData.mediaSourceFileStream.open(mmsAssetPathName, ios::binary);
+		curlUploadData.lastByteSent = -1;
+		curlUploadData.fileSizeInBytes = sizeInBytes;
+		while (!contentCompletelyUploaded)
+		{
 			{
 				list<string> headerList;
 				headerList.push_back(string("Authorization: Bearer ") + youTubeAccessToken);
@@ -2714,103 +2734,61 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						to_string(sizeInBytes)
 					);
 
-				curlpp::Cleanup cleaner;
-				curlpp::Easy request;
+				// curlpp::Cleanup cleaner;
+				// curlpp::Easy request;
+				CURL *curl = nullptr;
+				struct curl_slist *headersList = nullptr;
+
+				curl = curl_easy_init();
 
 				{
-					curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnYouTubeCallback);
-					curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
-					request.setOpt(curlUploadCallbackFunction);
-					request.setOpt(curlUploadDataData);
+					// curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnYouTubeCallback);
+					// curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
+					// request.setOpt(curlUploadCallbackFunction);
+					// request.setOpt(curlUploadDataData);
+					curl_easy_setopt(curl, CURLOPT_READDATA, (void *)&curlUploadData);
+					curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlUploadVideoOnYouTubeCallback);
 
-					bool upload = true;
-					request.setOpt(new curlpp::options::Upload(upload));
+					// bool upload = true;
+					// request.setOpt(new curlpp::options::Upload(upload));
+					curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 				}
 
-				request.setOpt(new curlpp::options::CustomRequest{"PUT"});
-				request.setOpt(new curlpp::options::Url(youTubeUploadURL));
-				request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSecondsForUploadVideo));
+				// request.setOpt(new curlpp::options::CustomRequest{"PUT"});
+				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+				// request.setOpt(new curlpp::options::Url(youTubeUploadURL));
+				curl_easy_setopt(curl, CURLOPT_URL, youTubeUploadURL.c_str());
+				// request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSecondsForUploadVideo));
+				curl_easy_setopt(curl, CURLOPT_TIMEOUT, _youTubeDataAPITimeoutInSecondsForUploadVideo);
 
 				if (_youTubeDataAPIProtocol == "https")
 				{
-					//                typedef curlpp::OptionTrait<std::string,
-					//                CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-					//                typedef curlpp::OptionTrait<std::string,
-					//                CURLOPT_SSLKEY> SslKey; typedef
-					//                curlpp::OptionTrait<std::string,
-					//                CURLOPT_SSLKEYTYPE> SslKeyType; typedef
-					//                curlpp::OptionTrait<std::string,
-					//                CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-					//                typedef curlpp::OptionTrait<std::string,
-					//                CURLOPT_SSLENGINE> SslEngine; typedef
-					//                curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT>
-					//                SslEngineDefault; typedef
-					//                curlpp::OptionTrait<long,
-					//                CURLOPT_SSLVERSION> SslVersion; typedef
-					//                curlpp::OptionTrait<std::string,
-					//                CURLOPT_CAINFO> CaInfo; typedef
-					//                curlpp::OptionTrait<std::string,
-					//                CURLOPT_CAPATH> CaPath; typedef
-					//                curlpp::OptionTrait<std::string,
-					//                CURLOPT_RANDOM_FILE> RandomFile; typedef
-					//                curlpp::OptionTrait<std::string,
-					//                CURLOPT_EGDSOCKET> EgdSocket; typedef
-					//                curlpp::OptionTrait<std::string,
-					//                CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-					//                typedef curlpp::OptionTrait<std::string,
-					//                CURLOPT_KRB4LEVEL> Krb4Level;
-
-					// cert is stored PEM coded in file...
-					// since PEM is default, we needn't set it for PEM
-					// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-					// curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE>
-					// sslCertType("PEM"); equest.setOpt(sslCertType);
-
-					// set the cert for client authentication
-					// "testcert.pem"
-					// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-					// curlpp::OptionTrait<string, CURLOPT_SSLCERT>
-					// sslCert("cert.pem"); request.setOpt(sslCert);
-
-					// sorry, for engine we must set the passphrase
-					//   (if the key has one...)
-					// const char *pPassphrase = NULL;
-					// if(pPassphrase)
-					//  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-					// if we use a key stored in a crypto engine,
-					//   we must set the key type to "ENG"
-					// pKeyType  = "PEM";
-					// curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-					// set the private key (file or ID in engine)
-					// pKeyName  = "testkey.pem";
-					// curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-					// set the file with the certs vaildating the server
-					// *pCACertFile = "cacert.pem";
-					// curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
 					// disconnect if we can't validate server's cert
+					// bool bSslVerifyPeer = false;
+					// curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+					// request.setOpt(sslVerifyPeer);
+
+					// curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+					// request.setOpt(sslVerifyHost);
+
 					bool bSslVerifyPeer = false;
-					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-					request.setOpt(sslVerifyPeer);
-
-					curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-					request.setOpt(sslVerifyHost);
-
-					// request.setOpt(new curlpp::options::SslEngineDefault());
+					curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+					curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 				}
 
 				for (string headerMessage : headerList)
+				{
 					SPDLOG_INFO(string() + "Adding header message: " + headerMessage);
-				request.setOpt(new curlpp::options::HttpHeader(headerList));
+					headersList = curl_slist_append(headersList, headerMessage.c_str());
+				}
+				// request.setOpt(new curlpp::options::HttpHeader(headerList));
 
 				SPDLOG_INFO(
 					string() + "Calling youTube (upload)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", youTubeUploadURL: " + youTubeUploadURL
 				);
-				request.perform();
+				// request.perform();
+				curl_easy_perform(curl);
 
 				long responseCode = curlpp::infos::ResponseCode::get(request);
 
@@ -2835,21 +2813,11 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						", youTubeUploadURL: " + youTubeUploadURL + ", responseCode: " + to_string(responseCode)
 					);
 
-					/*
-						PUT UPLOAD_URL HTTP/1.1
-						Authorization: Bearer AUTH_TOKEN
-						Content-Length: 0
-						Content-Range: bytes *\/CONTENT_LENGTH
-
-						308 Resume Incomplete
-						Content-Length: 0
-						Range: bytes=0-999999
-					*/
 					{
 						list<string> headerList;
 						headerList.push_back(string("Authorization: Bearer ") + youTubeAccessToken);
 						headerList.push_back(string("Content-Length: 0"));
-						headerList.push_back(string("Content-Range: bytes */") + to_string(sizeInBytes));
+						headerList.push_back(string("Content-Range: bytes * /") + to_string(sizeInBytes));
 
 						curlpp::Cleanup cleaner;
 						curlpp::Easy request;
@@ -2983,7 +2951,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 							throw runtime_error(errorMessage);
 						}
 
-						/* sResponse:
+						 sResponse:
 							HTTP/1.1 308 Resume Incomplete
 							X-GUploader-UploadID:
 						   AEnB2Ur8jQ5DSbXieg8krXWg0f7Bmawvf6XTacURJ7wbITyXdTv8ZeHpepaUwh6F9DB5TvBCzoS4quZMKegyo2x7H9EJOc6ozQ
@@ -2994,7 +2962,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 							Server: UploadServer
 							Content-Type: text/html; charset=UTF-8
 							Alt-Svc: quic=":443"; ma=2592000; v="44,43,39,35"
-						*/
+
 						int rangeStartIndex = sResponse.find("Range: bytes=");
 						rangeStartIndex += string("Range: bytes=").length();
 						int rangeEndIndex = sResponse.find("\r", rangeStartIndex);
@@ -3043,24 +3011,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				}
 			}
 		}
-	}
-	catch (curlpp::LogicError &e)
-	{
-		string errorMessage = string() + "Post video on YouTube failed (LogicError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", youTubeURL: " + youTubeURL + ", youTubeUploadURL: " + youTubeUploadURL + ", exception: " + e.what() +
-							  ", sResponse: " + sResponse;
-		SPDLOG_ERROR(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	catch (curlpp::RuntimeError &e)
-	{
-		string errorMessage = string() + "Post video on YouTube failed (RuntimeError)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", youTubeURL: " + youTubeURL + ", youTubeUploadURL: " + youTubeUploadURL + ", exception: " + e.what() +
-							  ", sResponse: " + sResponse;
-		SPDLOG_ERROR(errorMessage);
-
-		throw runtime_error(errorMessage);
+		*/
 	}
 	catch (runtime_error e)
 	{
@@ -3127,10 +3078,10 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 		*/
 
 		vector<string> otherHeaders;
-		json youTubeResponseRoot = MMSCURL::httpPostStringAndGetJson(
-			_logger, ingestionJobKey, youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+		json youTubeResponseRoot = CurlWrapper::httpPostStringAndGetJson(
+			youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
 			"application/x-www-form-urlencoded", // contentType
-			otherHeaders
+			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		/*
@@ -3190,12 +3141,15 @@ string MMSEngineProcessor::getFacebookPageToken(
 		// access_token=USER-ACCESS-TOKEN"
 
 		facebookURL = _facebookGraphAPIProtocol + "://" + _facebookGraphAPIHostName + ":" + to_string(_facebookGraphAPIPort) + "/" +
-					  _facebookGraphAPIVersion + "/" + facebookPageId + "?fields=access_token" + "&access_token=" + curlpp::escape(userAccessToken);
+					  _facebookGraphAPIVersion + "/" + facebookPageId + "?fields=access_token" +
+					  "&access_token=" + CurlWrapper::escape(userAccessToken);
 
 		SPDLOG_INFO(string() + "Retrieve page token" + ", facebookURL: " + facebookURL);
 
 		vector<string> otherHeaders;
-		json responseRoot = MMSCURL::httpGetJson(_logger, ingestionJobKey, facebookURL, _mmsAPITimeoutInSeconds, "", "", otherHeaders);
+		json responseRoot = CurlWrapper::httpGetJson(
+			facebookURL, _mmsAPITimeoutInSeconds, "", "", otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+		);
 
 		/*
 		{

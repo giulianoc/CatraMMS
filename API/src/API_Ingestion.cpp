@@ -12,8 +12,8 @@
  */
 
 #include "API.h"
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
 #include "Validator.h"
@@ -25,11 +25,6 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
 #include <fstream>
 #include <regex>
 #include <sstream>
@@ -3177,44 +3172,9 @@ void API::fileUploadProgressCheck()
 				otherHeaders.push_back(progressIdHeader);
 				otherHeaders.push_back(hostHeader); // important for the nginx virtual host
 				int curlTimeoutInSeconds = 120;
-				json uploadProgressResponse =
-					MMSCURL::httpGetJson(_logger, itr->_ingestionJobKey, progressURL, curlTimeoutInSeconds, "", "", otherHeaders);
-
-				/*
-curlpp::Cleanup cleaner;
-curlpp::Easy request;
-ostringstream response;
-
-list<string> header;
-header.push_back(progressIdHeader);
-header.push_back(hostHeader);	// important for the nginx virtual host
-
-// Setting the URL to retrive.
-request.setOpt(new curlpp::options::Url(progressURL));
-
-				int curlTimeoutInSeconds = 120;
-				request.setOpt(new
-curlpp::options::Timeout(curlTimeoutInSeconds));
-
-request.setOpt(new curlpp::options::HttpHeader(header));
-request.setOpt(new curlpp::options::WriteStream(&response));
-request.perform();
-
-string sResponse = response.str();
-
-// LF and CR create problems to the json parser...
-while (sResponse.size() > 0 && (sResponse.back() == 10 || sResponse.back() ==
-13)) sResponse.pop_back();
-
-_logger->info(__FILEREF__ + "Call for upload progress response"
-	+ ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
-	+ ", progressId: " + itr->_progressId
-	+ ", binaryVirtualHostName: " + itr->_binaryVirtualHostName
-	+ ", binaryListenHost: " + itr->_binaryListenHost
-	+ ", callFailures: " + to_string(itr->_callFailures)
-	+ ", sResponse: " + sResponse
-);
-				*/
+				json uploadProgressResponse = CurlWrapper::httpGetJson(
+					progressURL, curlTimeoutInSeconds, "", "", otherHeaders, fmt::format(", ingestionJobKey: {}", itr->_ingestionJobKey)
+				);
 
 				try
 				{
@@ -3407,26 +3367,6 @@ _logger->info(__FILEREF__ + "Call for upload progress response"
 					throw runtime_error(errorMessage);
 				}
 			}
-			catch (curlpp::LogicError &e)
-			{
-				_logger->error(
-					__FILEREF__ + "Call for upload progress failed (LogicError)" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-					", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-					", binaryListenHost: " + itr->_binaryListenHost + ", callFailures: " + to_string(itr->_callFailures) + ", exception: " + e.what()
-				);
-
-				itr->_callFailures = itr->_callFailures + 1;
-			}
-			catch (curlpp::RuntimeError &e)
-			{
-				_logger->error(
-					__FILEREF__ + "Call for upload progress failed (RuntimeError)" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-					", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-					", binaryListenHost: " + itr->_binaryListenHost + ", callFailures: " + to_string(itr->_callFailures) + ", exception: " + e.what()
-				);
-
-				itr->_callFailures = itr->_callFailures + 1;
-			}
 			catch (runtime_error e)
 			{
 				_logger->error(
@@ -3524,15 +3464,15 @@ void API::ingestionRootsStatus(
 			label = labelIt->second;
 
 			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply curlpp::unescape
+			// apply unescape
 			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after curlpp::unescape, this char will be
+			// and we do the replace 	after unescape, this char will be
 			// changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string status = "all";
@@ -3746,15 +3686,15 @@ void API::ingestionJobsStatus(
 			label = labelIt->second;
 
 			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply curlpp::unescape
+			// apply unescape
 			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after curlpp::unescape, this char will be
+			// and we do the replace 	after unescape, this char will be
 			// changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		bool labelLike = true;
@@ -3824,15 +3764,15 @@ void API::ingestionJobsStatus(
 			configurationLabel = configurationLabelIt->second;
 
 			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply curlpp::unescape
+			// apply unescape
 			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after curlpp::unescape, this char will be
+			// and we do the replace 	after unescape, this char will be
 			// changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(configurationLabel, regex(plus), plusDecoded);
 
-			configurationLabel = curlpp::unescape(firstDecoding);
+			configurationLabel = CurlWrapper::unescape(firstDecoding);
 		}
 
 		// used in case of live-grid
@@ -3843,15 +3783,15 @@ void API::ingestionJobsStatus(
 			outputChannelLabel = outputChannelLabelIt->second;
 
 			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply curlpp::unescape
+			// apply unescape
 			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after curlpp::unescape, this char will be
+			// and we do the replace 	after unescape, this char will be
 			// changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(outputChannelLabel, regex(plus), plusDecoded);
 
-			outputChannelLabel = curlpp::unescape(firstDecoding);
+			outputChannelLabel = CurlWrapper::unescape(firstDecoding);
 		}
 
 		// used in case of live-recorder
@@ -3880,15 +3820,15 @@ void API::ingestionJobsStatus(
 			jsonParametersCondition = jsonParametersConditionIt->second;
 
 			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply curlpp::unescape
+			// apply unescape
 			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after curlpp::unescape, this char will be
+			// and we do the replace 	after unescape, this char will be
 			// changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(jsonParametersCondition, regex(plus), plusDecoded);
 
-			jsonParametersCondition = curlpp::unescape(firstDecoding);
+			jsonParametersCondition = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string status = "all";
@@ -6034,11 +5974,10 @@ void API::changeLiveProxyPlaylist(
 									   "?interruptPlaylist=" + to_string(interruptPlaylist);
 
 					vector<string> otherHeaders;
-					json encoderResponse = MMSCURL::httpPutStringAndGetJson(
-						_logger, broadcastIngestionJobKey, ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser,
-						_ffmpegEncoderPassword, newPlaylist,
+					json encoderResponse = CurlWrapper::httpPutStringAndGetJson(
+						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, newPlaylist,
 						"application/json", // contentType
-						otherHeaders
+						otherHeaders, fmt::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 					);
 				}
 			}
@@ -6266,11 +6205,10 @@ void API::changeLiveProxyOverlayText(
 				string ffmpegEncoderURL = fmt::format("{}{}/{}", encoderURL, _ffmpegEncoderChangeLiveProxyOverlayTextURI, broadcasterEncodingJobKey);
 
 				vector<string> otherHeaders;
-				MMSCURL::httpPutStringAndGetJson(
-					_logger, broadcasterIngestionJobKey, ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword,
-					requestBody,
+				CurlWrapper::httpPutStringAndGetJson(
+					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, requestBody,
 					"text/plain", // contentType
-					otherHeaders
+					otherHeaders, fmt::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 				);
 			}
 		}

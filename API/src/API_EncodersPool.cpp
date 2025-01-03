@@ -4,102 +4,94 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   API.cpp
  * Author: giuliano
- * 
+ *
  * Created on February 18, 2018, 1:27 AM
  */
 
+#include "API.h"
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
 #include <regex>
-#include <curlpp/cURLpp.hpp>
-#include "API.h"
-
 
 void API::addEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	shared_ptr<Workspace> workspace,
-	string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	string requestBody
+)
 {
-    string api = "addEncoder";
+	string api = "addEncoder";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(
+		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	);
 
-    try
-    {
-        string label;
+	try
+	{
+		string label;
 		bool external;
 		bool enabled;
-        string protocol;
-        string publicServerName;
-        string internalServerName;
-        int port;
+		string protocol;
+		string publicServerName;
+		string internalServerName;
+		int port;
 
-        try
-        {
-            json requestBodyRoot = JSONUtils::toJson(requestBody);
+		try
+		{
+			json requestBodyRoot = JSONUtils::toJson(requestBody);
 
-            string field = "label";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+			string field = "label";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }    
-            label = JSONUtils::asString(requestBodyRoot, field, "");            
+				throw runtime_error(errorMessage);
+			}
+			label = JSONUtils::asString(requestBodyRoot, field, "");
 
-            field = "External";
-			external = JSONUtils::asBool(requestBodyRoot, field, false);            
+			field = "External";
+			external = JSONUtils::asBool(requestBodyRoot, field, false);
 
-            field = "Enabled";
-			enabled = JSONUtils::asBool(requestBodyRoot, field, true);            
+			field = "Enabled";
+			enabled = JSONUtils::asBool(requestBodyRoot, field, true);
 
-            field = "Protocol";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+			field = "Protocol";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }    
-            protocol = JSONUtils::asString(requestBodyRoot, field, "");            
+				throw runtime_error(errorMessage);
+			}
+			protocol = JSONUtils::asString(requestBodyRoot, field, "");
 
-            field = "PublicServerName";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+			field = "PublicServerName";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }    
-            publicServerName = JSONUtils::asString(requestBodyRoot, field, "");            
+				throw runtime_error(errorMessage);
+			}
+			publicServerName = JSONUtils::asString(requestBodyRoot, field, "");
 
-            field = "InternalServerName";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+			field = "InternalServerName";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }    
-            internalServerName = JSONUtils::asString(requestBodyRoot, field, "");            
+				throw runtime_error(errorMessage);
+			}
+			internalServerName = JSONUtils::asString(requestBodyRoot, field, "");
 
-
-            field = "Port";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				port = JSONUtils::asInt(requestBodyRoot, field, 80);            
-            }    
+			field = "Port";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				port = JSONUtils::asInt(requestBodyRoot, field, 80);
+			}
 			else
 			{
 				if (protocol == "http")
@@ -107,402 +99,327 @@ void API::addEncoder(
 				else if (protocol == "https")
 					port = 443;
 			}
-        }
-        catch(runtime_error& e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+		}
+		catch (runtime_error &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        
-        string sResponse;
-        try
-        {
-			int64_t encoderKey = _mmsEngineDBFacade->addEncoder(
-                label, external, enabled, protocol, publicServerName, internalServerName, port);
+			throw runtime_error(errorMessage);
+		}
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"EncoderKey\": " + to_string(encoderKey)
-                    + "}"
-                    );            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+		string sResponse;
+		try
+		{
+			int64_t encoderKey = _mmsEngineDBFacade->addEncoder(label, external, enabled, protocol, publicServerName, internalServerName, port);
 
-            throw e;
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			sResponse = (string("{ ") + "\"EncoderKey\": " + to_string(encoderKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncoder failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
+			throw e;
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncoder failed" + ", e.what(): " + e.what());
 
-        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 201, sResponse);
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw e;
+		}
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::modifyEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters, string requestBody
+)
 {
-    string api = "modifyEncoder";
+	string api = "modifyEncoder";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(
+		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	);
 
-    try
-    {
-        string label;
+	try
+	{
+		string label;
 		bool labelToBeModified;
 
-        bool external;
+		bool external;
 		bool externalToBeModified;
 
-        bool enabled;
+		bool enabled;
 		bool enabledToBeModified;
 
-        string protocol;
+		string protocol;
 		bool protocolToBeModified;
 
-        string publicServerName;
+		string publicServerName;
 		bool publicServerNameToBeModified;
 
-        string internalServerName;
+		string internalServerName;
 		bool internalServerNameToBeModified;
 
-        int port;
+		int port;
 		bool portToBeModified;
 
-        try
-        {
-            json requestBodyRoot = JSONUtils::toJson(requestBody);
-            
-            string field = "label";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+		try
+		{
+			json requestBodyRoot = JSONUtils::toJson(requestBody);
+
+			string field = "label";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				label = JSONUtils::asString(requestBodyRoot, field, "");            
+				label = JSONUtils::asString(requestBodyRoot, field, "");
 				labelToBeModified = true;
 			}
 			else
 				labelToBeModified = false;
 
-            field = "External";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			field = "External";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				external = JSONUtils::asBool(requestBodyRoot, field, false);            
+				external = JSONUtils::asBool(requestBodyRoot, field, false);
 				externalToBeModified = true;
 			}
 			else
 				externalToBeModified = false;
 
-            field = "Enabled";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			field = "Enabled";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				enabled = JSONUtils::asBool(requestBodyRoot, field, true);            
+				enabled = JSONUtils::asBool(requestBodyRoot, field, true);
 				enabledToBeModified = true;
 			}
 			else
 				enabledToBeModified = false;
 
-            field = "Protocol";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				protocol = JSONUtils::asString(requestBodyRoot, field, "");            
+			field = "Protocol";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				protocol = JSONUtils::asString(requestBodyRoot, field, "");
 				protocolToBeModified = true;
-            }
+			}
 			else
 				protocolToBeModified = false;
 
-            field = "PublicServerName";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				publicServerName = JSONUtils::asString(requestBodyRoot, field, "");            
+			field = "PublicServerName";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				publicServerName = JSONUtils::asString(requestBodyRoot, field, "");
 				publicServerNameToBeModified = true;
-            }
+			}
 			else
 				publicServerNameToBeModified = false;
 
-            field = "InternalServerName";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				internalServerName = JSONUtils::asString(requestBodyRoot, field, "");            
+			field = "InternalServerName";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				internalServerName = JSONUtils::asString(requestBodyRoot, field, "");
 				internalServerNameToBeModified = true;
-            }
+			}
 			else
 				internalServerNameToBeModified = false;
 
-            field = "Port";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-				port = JSONUtils::asInt(requestBodyRoot, field, 80);            
+			field = "Port";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				port = JSONUtils::asInt(requestBodyRoot, field, 80);
 				portToBeModified = true;
-            }
+			}
 			else
 				portToBeModified = false;
-        }
-        catch(runtime_error& e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+		}
+		catch (runtime_error &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        
-        string sResponse;
-        try
-        {
-            int64_t encoderKey;
-            auto encoderKeyIt = queryParameters.find("encoderKey");
-            if (encoderKeyIt == queryParameters.end())
-            {
-                string errorMessage = string("The 'encoderKey' parameter is not found");
-                _logger->error(__FILEREF__ + errorMessage);
+			throw runtime_error(errorMessage);
+		}
 
-                sendError(request, 400, errorMessage);
+		string sResponse;
+		try
+		{
+			int64_t encoderKey;
+			auto encoderKeyIt = queryParameters.find("encoderKey");
+			if (encoderKeyIt == queryParameters.end())
+			{
+				string errorMessage = string("The 'encoderKey' parameter is not found");
+				_logger->error(__FILEREF__ + errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
-            encoderKey = stoll(encoderKeyIt->second);
+				sendError(request, 400, errorMessage);
 
-            _mmsEngineDBFacade->modifyEncoder(
-                encoderKey,
-				labelToBeModified, label,
-				externalToBeModified, external,
-				enabledToBeModified, enabled,
-				protocolToBeModified, protocol,
-				publicServerNameToBeModified, publicServerName,
-				internalServerNameToBeModified, internalServerName,
-				portToBeModified, port
+				throw runtime_error(errorMessage);
+			}
+			encoderKey = stoll(encoderKeyIt->second);
+
+			_mmsEngineDBFacade->modifyEncoder(
+				encoderKey, labelToBeModified, label, externalToBeModified, external, enabledToBeModified, enabled, protocolToBeModified, protocol,
+				publicServerNameToBeModified, publicServerName, internalServerNameToBeModified, internalServerName, portToBeModified, port
 			);
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"encoderKey\": " + to_string(encoderKey)
-                    + "}"
-                    );            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			sResponse = (string("{ ") + "\"encoderKey\": " + to_string(encoderKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncoder failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			throw e;
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncoder failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
+			throw e;
+		}
 
-        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 200, sResponse);
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::removeEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters
+)
 {
-    string api = "removeEncoder";
+	string api = "removeEncoder";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
 
-    try
-    {
-        string sResponse;
-        try
-        {
-            int64_t encoderKey;
-            auto encoderKeyIt = queryParameters.find("encoderKey");
-            if (encoderKeyIt == queryParameters.end())
-            {
-                string errorMessage = string("The 'encoderKey' parameter is not found");
-                _logger->error(__FILEREF__ + errorMessage);
+	try
+	{
+		string sResponse;
+		try
+		{
+			int64_t encoderKey;
+			auto encoderKeyIt = queryParameters.find("encoderKey");
+			if (encoderKeyIt == queryParameters.end())
+			{
+				string errorMessage = string("The 'encoderKey' parameter is not found");
+				_logger->error(__FILEREF__ + errorMessage);
 
-                sendError(request, 400, errorMessage);
+				sendError(request, 400, errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
-            encoderKey = stoll(encoderKeyIt->second);
-            
-            _mmsEngineDBFacade->removeEncoder(
-                encoderKey);
+				throw runtime_error(errorMessage);
+			}
+			encoderKey = stoll(encoderKeyIt->second);
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"encoderKey\": " + to_string(encoderKey)
-                    + "}"
-                    );            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			_mmsEngineDBFacade->removeEncoder(encoderKey);
 
-            throw e;
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			sResponse = (string("{ ") + "\"encoderKey\": " + to_string(encoderKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncoder failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
+			throw e;
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncoder failed" + ", e.what(): " + e.what());
 
-        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 200, sResponse);
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+			throw e;
+		}
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::encoderList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace, bool admin,
-		unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, bool admin,
+	unordered_map<string, string> queryParameters
+)
 {
-    string api = "encoderList";
+	string api = "encoderList";
 
-    _logger->info(__FILEREF__ + "Received " + api
-    );
+	_logger->info(__FILEREF__ + "Received " + api);
 
-    try
-    {
+	try
+	{
 		int64_t encoderKey = -1;
 		auto encoderKeyIt = queryParameters.find("encoderKey");
 		if (encoderKeyIt != queryParameters.end() && encoderKeyIt->second != "")
@@ -533,10 +450,8 @@ void API::encoderList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage = __FILEREF__ + "rows parameter too big"
-					+ ", rows: " + to_string(rows)
-					+ ", _maxPageSize: " + to_string(_maxPageSize)
-				;
+				string errorMessage =
+					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
 				throw runtime_error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -549,14 +464,14 @@ void API::encoderList(
 		{
 			label = labelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string serverName;
@@ -565,14 +480,14 @@ void API::encoderList(
 		{
 			serverName = serverNameIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(serverName, regex(plus), plusDecoded);
 
-			serverName = curlpp::unescape(firstDecoding);
+			serverName = CurlWrapper::unescape(firstDecoding);
 		}
 
 		int port = -1;
@@ -589,8 +504,7 @@ void API::encoderList(
 			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
 				labelOrder = labelOrderIt->second;
 			else
-				_logger->warn(__FILEREF__ + "encoderList: 'labelOrder' parameter is unknown"
-					+ ", labelOrder: " + labelOrderIt->second);
+				_logger->warn(__FILEREF__ + "encoderList: 'labelOrder' parameter is unknown" + ", labelOrder: " + labelOrderIt->second);
 		}
 
 		bool runningInfo = false;
@@ -598,9 +512,9 @@ void API::encoderList(
 		if (runningInfoIt != queryParameters.end())
 			runningInfo = (runningInfoIt->second == "true" ? true : false);
 
-        bool allEncoders = false;
+		bool allEncoders = false;
 		int64_t workspaceKey = workspace->_workspaceKey;
-		if(admin)
+		if (admin)
 		{
 			// in case of admin, from the GUI, it is needed to:
 			// - get the list of all encoders
@@ -615,62 +529,51 @@ void API::encoderList(
 				workspaceKey = stoll(workspaceKeyIt->second);
 		}
 
-        {
-            json encoderListRoot = _mmsEngineDBFacade->getEncoderList(
-				admin,
-				start, rows,
-				allEncoders, workspaceKey, runningInfo,
-				encoderKey, label, serverName, port, labelOrder);
+		{
+			json encoderListRoot = _mmsEngineDBFacade->getEncoderList(
+				admin, start, rows, allEncoders, workspaceKey, runningInfo, encoderKey, label, serverName, port, labelOrder
+			);
 
-            string responseBody = JSONUtils::toString(encoderListRoot);
-            
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+			string responseBody = JSONUtils::toString(encoderListRoot);
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::encodersPoolList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace, bool admin,
-		unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, bool admin,
+	unordered_map<string, string> queryParameters
+)
 {
-    string api = "encoderList";
+	string api = "encoderList";
 
-    _logger->info(__FILEREF__ + "Received " + api
-    );
+	_logger->info(__FILEREF__ + "Received " + api);
 
-    try
-    {
+	try
+	{
 		int64_t encodersPoolKey = -1;
 		auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
 		if (encodersPoolKeyIt != queryParameters.end() && encodersPoolKeyIt->second != "")
@@ -697,10 +600,8 @@ void API::encodersPoolList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage = __FILEREF__ + "rows parameter too big"
-					+ ", rows: " + to_string(rows)
-					+ ", _maxPageSize: " + to_string(_maxPageSize)
-				;
+				string errorMessage =
+					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -713,14 +614,14 @@ void API::encodersPoolList(
 		{
 			label = labelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		string labelOrder;
@@ -730,199 +631,159 @@ void API::encodersPoolList(
 			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
 				labelOrder = labelOrderIt->second;
 			else
-				_logger->warn(__FILEREF__ + "encodersPoolList: 'labelOrder' parameter is unknown"
-					+ ", labelOrder: " + labelOrderIt->second);
+				_logger->warn(__FILEREF__ + "encodersPoolList: 'labelOrder' parameter is unknown" + ", labelOrder: " + labelOrderIt->second);
 		}
 
-        {
-            json encodersPoolListRoot = _mmsEngineDBFacade->getEncodersPoolList(
-                    start, rows,
-					workspace->_workspaceKey,
-					encodersPoolKey, label, labelOrder);
+		{
+			json encodersPoolListRoot =
+				_mmsEngineDBFacade->getEncodersPoolList(start, rows, workspace->_workspaceKey, encodersPoolKey, label, labelOrder);
 
-            string responseBody = JSONUtils::toString(encodersPoolListRoot);
-            
-            sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-				request, "", api, 200, responseBody);
-        }
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+			string responseBody = JSONUtils::toString(encodersPoolListRoot);
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::addEncodersPool(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	shared_ptr<Workspace> workspace,
-	string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	string requestBody
+)
 {
-    string api = "addEncodersPool";
+	string api = "addEncodersPool";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(
+		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	);
 
-    try
-    {
-        string label;
-        vector<int64_t> encoderKeys;
+	try
+	{
+		string label;
+		vector<int64_t> encoderKeys;
 
-        try
-        {
-            json requestBodyRoot = JSONUtils::toJson(requestBody);
+		try
+		{
+			json requestBodyRoot = JSONUtils::toJson(requestBody);
 
-            string field = "label";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+			string field = "label";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }    
-            label = JSONUtils::asString(requestBodyRoot, field, "");            
+				throw runtime_error(errorMessage);
+			}
+			label = JSONUtils::asString(requestBodyRoot, field, "");
 
-            field = "encoderKeys";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
+			field = "encoderKeys";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				json encoderKeysRoot = requestBodyRoot[field];
 
-				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size();
-					++encoderIndex)
+				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size(); ++encoderIndex)
 				{
 					encoderKeys.push_back(JSONUtils::asInt64(encoderKeysRoot[encoderIndex]));
 				}
-            }
-        }
-        catch(runtime_error& e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+			}
+		}
+		catch (runtime_error &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        
-        string sResponse;
-        try
-        {
-			int64_t encodersPoolKey = _mmsEngineDBFacade->addEncodersPool(
-				workspace->_workspaceKey, label, encoderKeys);
+			throw runtime_error(errorMessage);
+		}
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"EncodersPoolKey\": " + to_string(encodersPoolKey)
-                    + "}"
-                    );            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodersPool failed"
-                + ", e.what(): " + e.what()
-            );
+		string sResponse;
+		try
+		{
+			int64_t encodersPoolKey = _mmsEngineDBFacade->addEncodersPool(workspace->_workspaceKey, label, encoderKeys);
 
-            throw e;
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodersPool failed"
-                + ", e.what(): " + e.what()
-            );
+			sResponse = (string("{ ") + "\"EncodersPoolKey\": " + to_string(encodersPoolKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodersPool failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
+			throw e;
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodersPool failed" + ", e.what(): " + e.what());
 
-        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 201, sResponse);
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw e;
+		}
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::modifyEncodersPool(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request& request,
-	shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters,
-	string requestBody)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters, string requestBody
+)
 {
-    string api = "modifyEncodersPool";
+	string api = "modifyEncodersPool";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-        + ", requestBody: " + requestBody
-    );
+	_logger->info(
+		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	);
 
-    try
-    {
-        string label;
-        vector<int64_t> encoderKeys;
+	try
+	{
+		string label;
+		vector<int64_t> encoderKeys;
 
 		int64_t encodersPoolKey = -1;
 		auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
@@ -937,222 +798,176 @@ void API::modifyEncodersPool(
 		}
 		encodersPoolKey = stoll(encodersPoolKeyIt->second);
 
-        try
-        {
-            json requestBodyRoot = JSONUtils::toJson(requestBody);
+		try
+		{
+			json requestBodyRoot = JSONUtils::toJson(requestBody);
 
-            string field = "label";
-            if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+			string field = "label";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				_logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }    
-            label = JSONUtils::asString(requestBodyRoot, field, "");            
+				throw runtime_error(errorMessage);
+			}
+			label = JSONUtils::asString(requestBodyRoot, field, "");
 
-            field = "encoderKeys";
-            if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
-            {
+			field = "encoderKeys";
+			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
 				json encoderKeysRoot = requestBodyRoot[field];
 
 				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size(); ++encoderIndex)
 				{
 					encoderKeys.push_back(JSONUtils::asInt64(encoderKeysRoot[encoderIndex]));
 				}
-            }
-        }
-        catch(runtime_error& e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+			}
+		}
+		catch (runtime_error &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
+			_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        catch(exception& e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			_logger->error(__FILEREF__ + errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-        
-        string sResponse;
-        try
-        {
-			_mmsEngineDBFacade->modifyEncodersPool(
-				encodersPoolKey, workspace->_workspaceKey, label, encoderKeys);
+			throw runtime_error(errorMessage);
+		}
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"EncodersPoolKey\": " + to_string(encodersPoolKey)
-                    + "}"
-                    );            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncodersPool failed"
-                + ", e.what(): " + e.what()
-            );
+		string sResponse;
+		try
+		{
+			_mmsEngineDBFacade->modifyEncodersPool(encodersPoolKey, workspace->_workspaceKey, label, encoderKeys);
 
-            throw e;
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncodersPool failed"
-                + ", e.what(): " + e.what()
-            );
+			sResponse = (string("{ ") + "\"EncodersPoolKey\": " + to_string(encodersPoolKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncodersPool failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
+			throw e;
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncodersPool failed" + ", e.what(): " + e.what());
 
-        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 201, sResponse);
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+			throw e;
+		}
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+		sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::removeEncodersPool(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters
+)
 {
-    string api = "removeEncodersPool";
+	string api = "removeEncodersPool";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
 
-    try
-    {
-        string sResponse;
-        try
-        {
-            int64_t encodersPoolKey;
-            auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
-            if (encodersPoolKeyIt == queryParameters.end())
-            {
-                string errorMessage = string("The 'encodersPoolKey' parameter is not found");
-                _logger->error(__FILEREF__ + errorMessage);
+	try
+	{
+		string sResponse;
+		try
+		{
+			int64_t encodersPoolKey;
+			auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
+			if (encodersPoolKeyIt == queryParameters.end())
+			{
+				string errorMessage = string("The 'encodersPoolKey' parameter is not found");
+				_logger->error(__FILEREF__ + errorMessage);
 
-                sendError(request, 400, errorMessage);
+				sendError(request, 400, errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
-            encodersPoolKey = stoll(encodersPoolKeyIt->second);
-            
-            _mmsEngineDBFacade->removeEncodersPool(
-                encodersPoolKey);
+				throw runtime_error(errorMessage);
+			}
+			encodersPoolKey = stoll(encodersPoolKeyIt->second);
 
-            sResponse = (
-                    string("{ ") 
-                    + "\"encodersPoolKey\": " + to_string(encodersPoolKey)
-                    + "}"
-                    );            
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodersPool failed"
-                + ", e.what(): " + e.what()
-            );
+			_mmsEngineDBFacade->removeEncodersPool(encodersPoolKey);
 
-            throw e;
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodersPool failed"
-                + ", e.what(): " + e.what()
-            );
+			sResponse = (string("{ ") + "\"encodersPoolKey\": " + to_string(encodersPoolKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodersPool failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
+			throw e;
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodersPool failed" + ", e.what(): " + e.what());
 
-        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 200, sResponse);
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+			throw e;
+		}
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		sendError(request, 500, errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        sendError(request, 500, errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::addAssociationWorkspaceEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-		unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters
+)
 {
-    string api = "addAssociationWorkspaceEncoder";
+	string api = "addAssociationWorkspaceEncoder";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
 
-    try
-    {
-        string sResponse;
-        try
-        {
+	try
+	{
+		string sResponse;
+		try
+		{
 			int64_t workspaceKey;
 			auto workspaceKeyIt = queryParameters.find("workspaceKey");
 			if (workspaceKeyIt == queryParameters.end())
@@ -1181,80 +996,61 @@ void API::addAssociationWorkspaceEncoder(
 
 			_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey, encoderKey);
 
-			sResponse = (
-				string("{ ") 
-					+ "\"workspaceKey\": " + to_string(workspaceKey)
-					+ ", \"encoderKey\": " + to_string(encoderKey)
-					+ "}"
-				);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			sResponse = (string("{ ") + "\"workspaceKey\": " + to_string(workspaceKey) + ", \"encoderKey\": " + to_string(encoderKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			throw e;
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
+			throw e;
+		}
 
-        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 200, sResponse);
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
 
 void API::removeAssociationWorkspaceEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-		unordered_map<string, string> queryParameters)
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters
+)
 {
-    string api = "removeAssociationWorkspaceEncoder";
+	string api = "removeAssociationWorkspaceEncoder";
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-    );
+	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
 
-    try
-    {
-        string sResponse;
-        try
-        {
+	try
+	{
+		string sResponse;
+		try
+		{
 			int64_t workspaceKey;
 			auto workspaceKeyIt = queryParameters.find("workspaceKey");
 			if (workspaceKeyIt == queryParameters.end())
@@ -1283,60 +1079,43 @@ void API::removeAssociationWorkspaceEncoder(
 
 			_mmsEngineDBFacade->removeAssociationWorkspaceEncoder(workspaceKey, encoderKey);
 
-			sResponse = (
-				string("{ ") 
-					+ "\"workspaceKey\": " + to_string(workspaceKey)
-					+ ", \"encoderKey\": " + to_string(encoderKey)
-					+ "}"
-				);
-        }
-        catch(runtime_error& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			sResponse = (string("{ ") + "\"workspaceKey\": " + to_string(workspaceKey) + ", \"encoderKey\": " + to_string(encoderKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
-        catch(exception& e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed"
-                + ", e.what(): " + e.what()
-            );
+			throw e;
+		}
+		catch (exception &e)
+		{
+			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed" + ", e.what(): " + e.what());
 
-            throw e;
-        }
+			throw e;
+		}
 
-        sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed,
-			request, "", api, 200, sResponse);
-    }
-    catch(runtime_error& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error: ") + e.what();
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception& e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", e.what(): " + e.what()
-        );
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = string("Internal server error");
+		_logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
+		sendError(request, 500, errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
+		throw runtime_error(errorMessage);
+	}
 }
-

@@ -12,18 +12,13 @@
  */
 
 #include "API.h"
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include "Validator.h"
 #include "catralibraries/Convert.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
 #include <regex>
 #include <sstream>
 
@@ -132,14 +127,14 @@ void API::encodingJobsStatus(
 		{
 			types = typesIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(types, regex(plus), plusDecoded);
 
-			types = curlpp::unescape(firstDecoding);
+			types = CurlWrapper::unescape(firstDecoding);
 		}
 
 		bool fromMaster = false;
@@ -847,14 +842,14 @@ void API::encodingProfilesList(
 		{
 			label = labelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
 
-			label = curlpp::unescape(firstDecoding);
+			label = CurlWrapper::unescape(firstDecoding);
 		}
 
 		{
@@ -1322,27 +1317,10 @@ void API::killEncodingJob(
 			fmt::format("{}{}/{}/{}?killType={}", transcoderHost, _ffmpegEncoderKillEncodingURI, ingestionJobKey, encodingJobKey, killType);
 
 		vector<string> otherHeaders;
-		MMSCURL::httpDelete(
-			_logger, ingestionJobKey, ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders
+		CurlWrapper::httpDelete(
+			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders,
+			fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
-	}
-	catch (curlpp::LogicError &e)
-	{
-		_logger->error(
-			__FILEREF__ + "killEncoding URL failed (LogicError)" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ffmpegEncoderURL: " + ffmpegEncoderURL + ", exception: " + e.what() + ", response.str(): " + response.str()
-		);
-
-		throw e;
-	}
-	catch (curlpp::RuntimeError &e)
-	{
-		string errorMessage = string("killEncoding URL failed (RuntimeError)") + ", encodingJobKey: " + to_string(encodingJobKey) +
-							  ", ffmpegEncoderURL: " + ffmpegEncoderURL + ", exception: " + e.what() + ", response.str(): " + response.str();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (runtime_error &e)
 	{

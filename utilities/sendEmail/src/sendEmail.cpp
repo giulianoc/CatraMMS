@@ -1,6 +1,6 @@
 
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "catralibraries/Encrypt.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include <fstream>
@@ -53,7 +53,7 @@ int main(int iArgc, char *pArgv[])
 				emailBody.push_back(line);
 		}
 
-		MMSCURL::sendEmail(
+		CurlWrapper::sendEmail(
 			emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 			emailUserName,	  // i.e.: support@catramms-cloud.com
 			tosCommaSeparated,

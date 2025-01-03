@@ -1,8 +1,8 @@
 
 #include "LiveRecorderDaemons.h"
 
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
 #include "catralibraries/DateTime.h"
@@ -1461,14 +1461,13 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		}
 
 		vector<string> otherHeaders;
-		string sResponse =
-			MMSCURL::httpPostString(
-				_logger, ingestionJobKey, mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-				"application/json", // contentType
-				otherHeaders,
-				3 // maxRetryNumber
-			)
-				.second;
+		string sResponse = CurlWrapper::httpPostString(
+							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+							   "application/json", // contentType
+							   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+							   3 // maxRetryNumber
+		)
+							   .second;
 	}
 	catch (runtime_error e)
 	{
@@ -1543,14 +1542,13 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 		}
 
 		vector<string> otherHeaders;
-		string sResponse =
-			MMSCURL::httpPostString(
-				_logger, ingestionJobKey, mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-				"application/json", // contentType
-				otherHeaders,
-				3 // maxRetryNumber
-			)
-				.second;
+		string sResponse = CurlWrapper::httpPostString(
+							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+							   "application/json", // contentType
+							   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+							   3 // maxRetryNumber
+		)
+							   .second;
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
@@ -1618,9 +1616,9 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 
 		mmsBinaryURL = fmt::format("{}/{}", mmsBinaryIngestionURL, addContentIngestionJobKey);
 
-		string sResponse = MMSCURL::httpPostFile(
-			_logger, ingestionJobKey, mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey,
-			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunkFileSize,
+		string sResponse = CurlWrapper::httpPostFile(
+			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey, chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
+			chunkFileSize, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 	}
@@ -2712,11 +2710,10 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	try
 	{
 		vector<string> otherHeaders;
-		string sResponse = MMSCURL::httpPostString(
-							   _logger, liveRecorderIngestionJobKey, mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(liveRecorderUserKey),
-							   liveRecorderApiKey, workflowMetadata,
+		string sResponse = CurlWrapper::httpPostString(
+							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(liveRecorderUserKey), liveRecorderApiKey, workflowMetadata,
 							   "application/json", // contentType
-							   otherHeaders,
+							   otherHeaders, fmt::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
 							   3 // maxRetryNumber
 		)
 							   .second;
@@ -2778,9 +2775,9 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 			mmsBinaryURL = mmsBinaryIngestionURL + "/" + to_string(addContentIngestionJobKey);
 
-			string sResponse = MMSCURL::httpPostFileSplittingInChunks(
-				_logger, liveRecorderIngestionJobKey, mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(liveRecorderUserKey), liveRecorderApiKey,
-				tarGzStagingLiveRecorderVirtualVODPathName, chunkFileSize,
+			string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
+				mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(liveRecorderUserKey), liveRecorderApiKey,
+				tarGzStagingLiveRecorderVirtualVODPathName, chunkFileSize, fmt::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
 				3 // maxRetryNumber
 			);
 

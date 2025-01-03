@@ -34,7 +34,8 @@ set(SOURCES
     MMSEngineProcessor_Ftp.cpp
     MMSEngineProcessor_GroupOfTasks.cpp
     MMSEngineProcessor_HttpCallback.cpp
-    MMSEngineProcessor_Ingestion.cpp
+    MMSEngineProcessor_Ingestion_1.cpp
+    MMSEngineProcessor_Ingestion_2.cpp
     MMSEngineProcessor_LiveCut.cpp
     MMSEngineProcessor_LiveGrid.cpp
     MMSEngineProcessor_LiveRecorder.cpp

@@ -12,11 +12,12 @@
  */
 
 #include "EncoderProxy.h"
+#include "CurlWrapper.h"
 #include "FFMpeg.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/System.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <regex>
 
@@ -1263,9 +1264,9 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 						   to_string(_encodingItem->_encodingJobKey);
 
 		vector<string> otherHeaders;
-		json encodeStatusResponse = MMSCURL::httpGetJson(
-			_logger, _encodingItem->_ingestionJobKey, ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword,
-			otherHeaders
+		json encodeStatusResponse = CurlWrapper::httpGetJson(
+			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders,
+			fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 		);
 
 		SPDLOG_INFO(
@@ -2070,11 +2071,10 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				json liveProxyContentResponse;
 				try
 				{
-					liveProxyContentResponse = MMSCURL::httpPostStringAndGetJson(
-						_logger, _encodingItem->_ingestionJobKey, ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser,
-						_ffmpegEncoderPassword, body,
+					liveProxyContentResponse = CurlWrapper::httpPostStringAndGetJson(
+						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, body,
 						"application/json", // contentType
-						otherHeaders
+						otherHeaders, fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 					);
 				}
 				catch (runtime_error &e)

@@ -10,11 +10,11 @@
  *
  * Created on February 18, 2018, 1:27 AM
  */
+#include "CurlWrapper.h"
 #include "FFMpeg.h"
 #include "FFMpegEncodingParameters.h"
 #include "FFMpegFilters.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "catralibraries/ProcessUtility.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
@@ -861,10 +861,15 @@ int FFMpeg::getNextLiveProxyInput(
 	return newInputIndex;
 }
 
+struct FFMpegProgressData
+{
+	int64_t _ingestionJobKey;
+	chrono::system_clock::time_point _lastTimeProgressUpdate;
+	double _lastPercentageUpdated;
+};
 static int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
-
-	FFMpeg::ProgressData *progressData = (FFMpeg::ProgressData *)clientp;
+	FFMpegProgressData *progressData = (FFMpegProgressData *)clientp;
 
 	int progressUpdatePeriodInSeconds = 15;
 
@@ -1851,13 +1856,14 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 						}
 						else
 						{
-							ProgressData progressData;
+							FFMpegProgressData progressData;
 							progressData._ingestionJobKey = ingestionJobKey;
 							progressData._lastTimeProgressUpdate = chrono::system_clock::now();
 							progressData._lastPercentageUpdated = -1.0;
 
-							MMSCURL::downloadFile(
-								_logger, ingestionJobKey, sourcePhysicalReference, destBinaryPathName, progressDownloadCallback, &progressData
+							CurlWrapper::downloadFile(
+								sourcePhysicalReference, destBinaryPathName, progressDownloadCallback, &progressData, 500,
+								fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 							);
 						}
 						// playlist and dowloaded files will be removed by the calling FFMpeg::liveProxy2 method

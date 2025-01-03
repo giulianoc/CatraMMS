@@ -14,6 +14,7 @@
 #include "MMSDeliveryAuthorization.h"
 
 #include "AWSSigner.h"
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/Convert.h"
@@ -22,11 +23,6 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
 // #include <openssl/md5.h>
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -251,8 +247,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-				deliveryURL =
-					fmt::format("{}://{}{}?token={},{}", _deliveryProtocol, deliveryHost, deliveryURI, curlpp::escape(md5Base64), expirationTime);
+				deliveryURL = fmt::format(
+					"{}://{}{}?token={},{}", _deliveryProtocol, deliveryHost, deliveryURI, CurlWrapper::escape(md5Base64), expirationTime
+				);
 			}
 
 			if (save && deliveryFileName != "")
@@ -509,7 +506,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 						deliveryURL = fmt::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
-							curlpp::escape(md5Base64), expirationTime
+							CurlWrapper::escape(md5Base64), expirationTime
 						);
 					}
 				}
@@ -602,7 +599,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 						deliveryURL = fmt::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
-							curlpp::escape(md5Base64), expirationTime
+							CurlWrapper::escape(md5Base64), expirationTime
 						);
 					}
 				}
@@ -808,14 +805,14 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 			}
 			firstPartOfToken = tokenParameter.substr(0, endOfTokenIndex);
 			{
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				//	after unescape, this char will be changed to space and we do not want it
 				string plus = "\\+";
 				string plusDecoded = " ";
 				string firstDecoding = regex_replace(firstPartOfToken, regex(plus), plusDecoded);
 
-				firstPartOfToken = curlpp::unescape(firstDecoding);
+				firstPartOfToken = CurlWrapper::unescape(firstDecoding);
 			}
 			secondPartOfToken = tokenParameter.substr(endOfTokenIndex + separator.length());
 		}
@@ -1114,14 +1111,14 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 			/* unescape è gia in checkDeliveryAuthorizationThroughParameter
 			string tokenParameter;
 			{
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after curlpp::unescape, this char will be changed to space and we do not want it
+				//	after unescape, this char will be changed to space and we do not want it
 				string plus = "\\+";
 				string plusDecoded = " ";
 				string firstDecoding = regex_replace(tokenIt->second, regex(plus), plusDecoded);
 
-				tokenParameter = curlpp::unescape(firstDecoding);
+				tokenParameter = CurlWrapper::unescape(firstDecoding);
 			}
 			tokenParameter = fmt::format("{}---{}", tokenParameter, cookie);
 			*/
@@ -1165,14 +1162,14 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 				else
 				{
 					{
-						// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+						// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 						//	That  because if we have really a + char (%2B into the string), and we do the replace
-						//	after curlpp::unescape, this char will be changed to space and we do not want it
+						//	after unescape, this char will be changed to space and we do not want it
 						string plus = "\\+";
 						string plusDecoded = " ";
 						string firstDecoding = regex_replace(token, regex(plus), plusDecoded);
 
-						tokenComingFromURL = curlpp::unescape(firstDecoding);
+						tokenComingFromURL = CurlWrapper::unescape(firstDecoding);
 					}
 					checkSignedMMSPath(tokenComingFromURL, contentURI);
 				}

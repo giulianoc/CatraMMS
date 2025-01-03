@@ -13,6 +13,7 @@
 
 #include "FFMPEGEncoder.h"
 #include "AddSilentAudio.h"
+#include "CurlWrapper.h"
 #include "CutFrameAccurate.h"
 #include "EncodeContent.h"
 #include "FFMPEGEncoderDaemons.h"
@@ -23,7 +24,6 @@
 #include "LiveProxy.h"
 #include "LiveRecorder.h"
 #include "LiveRecorderDaemons.h"
-#include "MMSCURL.h"
 #include "MMSStorage.h"
 #include "OverlayImageOnVideo.h"
 #include "OverlayTextOnVideo.h"
@@ -1450,14 +1450,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				}
 
 				vector<string> otherHeaders;
-				string sResponse =
-					MMSCURL::httpPostString(
-						_logger, ingestionJobKey, mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-						"application/json", // contentType
-						otherHeaders,
-						3 // maxRetryNumber
-					)
-						.second;
+				string sResponse = CurlWrapper::httpPostString(
+									   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+									   "application/json", // contentType
+									   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+									   3 // maxRetryNumber
+				)
+									   .second;
 			}
 		}
 		catch (runtime_error e)

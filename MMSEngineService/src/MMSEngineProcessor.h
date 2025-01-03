@@ -403,15 +403,19 @@ class MMSEngineProcessor
 	// 	string sourcePathName
 	// 	);
 
+	/*
 	int progressDownloadCallback(
 		int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated,
 		bool &downloadingStoppedByUser, double dltotal, double dlnow, double ultotal, double ulnow
 	);
+	*/
 
+	/*
 	int progressUploadCallback(
 		int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated,
 		bool &uploadingStoppedByUser, double dltotal, double dlnow, double ultotal, double ulnow
 	);
+	*/
 
 	void ftpUploadMediaSource(
 		string mmsAssetPathName, string fileName, int64_t sizeInBytes, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, int64_t mediaItemKey,

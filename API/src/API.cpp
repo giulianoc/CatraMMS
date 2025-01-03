@@ -12,8 +12,8 @@
  */
 
 #include "AWSSigner.h"
+#include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "MMSCURL.h"
 #include "Validator.h"
 #include "catralibraries/Convert.h"
 #include "catralibraries/Encrypt.h"
@@ -22,11 +22,6 @@
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
 #include <fstream>
 #include <openssl/evp.h>
 #include <regex>
@@ -889,14 +884,14 @@ void API::manageRequestAndResponse(
 					else
 					{
 						{
-							// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+							// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 							//	That  because if we have really a + char (%2B into the string), and we do the replace
-							//	after curlpp::unescape, this char will be changed to space and we do not want it
+							//	after unescape, this char will be changed to space and we do not want it
 							string plus = "\\+";
 							string plusDecoded = " ";
 							string firstDecoding = regex_replace(tokenComingFromURL, regex(plus), plusDecoded);
 
-							tokenComingFromURL = curlpp::unescape(firstDecoding);
+							tokenComingFromURL = unescape(firstDecoding);
 						}
 						_mmsDeliveryAuthorization->checkSignedMMSPath(tokenComingFromURL, contentURI);
 					}
@@ -2928,7 +2923,7 @@ void API::mmsSupport(
 			emailBody.push_back(string("<p>") + text + "</p>");
 
 			string tosCommaSeparated = "support@catramms-cloud.com";
-			MMSCURL::sendEmail(
+			CurlWrapper::sendEmail(
 				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	   // i.e.: info@catramms-cloud.com
 				tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword

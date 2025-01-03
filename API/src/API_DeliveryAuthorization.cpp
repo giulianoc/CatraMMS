@@ -2,8 +2,8 @@
 #include "API.h"
 #include "JSONUtils.h"
 // #include "catralibraries/Encrypt.h"
+#include "CurlWrapper.h"
 #include "catralibraries/StringUtils.h"
-#include <curlpp/cURLpp.hpp>
 #include <regex>
 
 void API::createDeliveryAuthorization(
@@ -45,14 +45,14 @@ void API::createDeliveryAuthorization(
 		{
 			uniqueName = uniqueNameIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(uniqueName, regex(plus), plusDecoded);
 
-			uniqueName = curlpp::unescape(firstDecoding);
+			uniqueName = CurlWrapper::unescape(firstDecoding);
 		}
 
 		int64_t encodingProfileKey = -1;
@@ -70,14 +70,14 @@ void API::createDeliveryAuthorization(
 		{
 			encodingProfileLabel = encodingProfileLabelIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(encodingProfileLabel, regex(plus), plusDecoded);
 
-			encodingProfileLabel = curlpp::unescape(firstDecoding);
+			encodingProfileLabel = CurlWrapper::unescape(firstDecoding);
 		}
 
 		// this is for live authorization
@@ -165,14 +165,14 @@ void API::createDeliveryAuthorization(
 		{
 			userId = userIdIt->second;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply curlpp::unescape
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
 			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after curlpp::unescape, this char will be changed to space and we do not want it
+			//	after unescape, this char will be changed to space and we do not want it
 			string plus = "\\+";
 			string plusDecoded = " ";
 			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
 
-			userId = curlpp::unescape(firstDecoding);
+			userId = CurlWrapper::unescape(firstDecoding);
 		}
 
 		try

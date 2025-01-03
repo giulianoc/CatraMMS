@@ -86,13 +86,6 @@ struct EncodingIsAlreadyRunning : public exception
 class FFMpeg
 {
   public:
-	struct ProgressData
-	{
-		int64_t _ingestionJobKey;
-		chrono::system_clock::time_point _lastTimeProgressUpdate;
-		double _lastPercentageUpdated;
-	};
-
 	FFMpeg(json configuration, shared_ptr<spdlog::logger> logger);
 
 	~FFMpeg();

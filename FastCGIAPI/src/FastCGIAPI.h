@@ -30,6 +30,9 @@ class FastCGIAPI
 
 	virtual ~FastCGIAPI();
 
+	static string escape(const string &url);
+	static string unescape(const string &url);
+
 	void loadConfiguration();
 
 	int operator()();

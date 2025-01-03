@@ -12,11 +12,6 @@
  */
 
 #include "JSONUtils.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
 #include <regex>
 
 #include "API.h"
