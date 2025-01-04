@@ -90,8 +90,8 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			try
 			{
 				encodeContentResponse = CurlWrapper::httpPostStringAndGetJson(
-					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, body,
-					"application/json", // contentType
+					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
+					body, "application/json", // contentType
 					otherHeaders, fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 				);
 			}

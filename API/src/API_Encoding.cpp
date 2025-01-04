@@ -1318,8 +1318,8 @@ void API::killEncodingJob(
 
 		vector<string> otherHeaders;
 		CurlWrapper::httpDelete(
-			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders,
-			fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
+			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 	}
 	catch (runtime_error &e)

@@ -5,7 +5,12 @@
 #include "MMSEngineProcessor.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
+#include "spdlog/fmt/bundled/format.h"
+#include "spdlog/spdlog.h"
 #include <regex>
+#include <sstream>
+#include <string>
+#include <utility>
 
 void MMSEngineProcessor::postOnFacebookThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -804,7 +809,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
-				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 				"application/json", // contentType
 				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
@@ -1018,7 +1023,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			}
 
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
-				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 				"application/json", // contentType
 				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
@@ -1193,7 +1198,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			string body;
 
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
-				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 				"", // contentType
 				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
@@ -1525,7 +1530,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 		vector<string> otherHeaders;
 		CurlWrapper::httpPostString(
-			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 			"application/json", // contentType
 			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
@@ -1802,7 +1807,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 			vector<string> otherHeaders;
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
-				facebookURL, _mmsAPITimeoutInSeconds, "", "", "", "", otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				facebookURL, _mmsAPITimeoutInSeconds, "", "", "", otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			/*
@@ -2123,7 +2128,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 		vector<string> otherHeaders;
 		CurlWrapper::httpPostString(
-			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 			"application/json", // contentType
 			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
@@ -2625,7 +2630,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 			}
 
 			pair<string, string> responseDetails = CurlWrapper::httpPostString(
-				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 				"application/json; charset=UTF-8", // contentType
 				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
@@ -2709,6 +2714,63 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 				PARTIAL_BINARY_FILE_DATA
 			*/
+			int64_t contentRangeStart = -1;
+			int64_t contentRangeEnd_Excluded = -1;
+			bool contentCompletelyUploaded = false;
+			while (!contentCompletelyUploaded)
+			{
+				try
+				{
+					CurlWrapper::httpPutFile(
+						youTubeUploadURL, _youTubeDataAPITimeoutInSecondsForUploadVideo, CurlWrapper::bearerAuthorization(youTubeAccessToken),
+						mmsAssetPathName, sizeInBytes, videoContentType, fmt::format(", ingestionJobKey: {}", ingestionJobKey), 0, 15,
+						contentRangeStart, contentRangeEnd_Excluded
+					);
+					contentCompletelyUploaded = true;
+				}
+				catch (runtime_error &e)
+				{
+					SPDLOG_ERROR(
+						"youTube upload failed, trying to resume finding the new Range to ask"
+						", ingestionJobKey: {}"
+						", youTubeUploadURL: {}",
+						ingestionJobKey, youTubeUploadURL
+					);
+
+					tie(contentRangeStart, contentRangeEnd_Excluded) =
+						youTubeDetailsToResumePostVideo(ingestionJobKey, youTubeUploadURL, youTubeAccessToken, sizeInBytes);
+
+					SPDLOG_INFO(
+						"Resuming"
+						", ingestionJobKey: {}"
+						", youTubeUploadURL: {}"
+						", contentRangeStart: {}"
+						", contentRangeEnd_Excluded: {}",
+						ingestionJobKey, youTubeUploadURL, contentRangeStart, contentRangeEnd_Excluded
+					);
+				}
+				catch (exception &e)
+				{
+					SPDLOG_ERROR(
+						"youTube upload failed, trying to resume finding the new Range to ask"
+						", ingestionJobKey: {}"
+						", youTubeUploadURL: {}",
+						ingestionJobKey, youTubeUploadURL
+					);
+
+					tie(contentRangeStart, contentRangeEnd_Excluded) =
+						youTubeDetailsToResumePostVideo(ingestionJobKey, youTubeUploadURL, youTubeAccessToken, sizeInBytes);
+
+					SPDLOG_INFO(
+						"Resuming"
+						", ingestionJobKey: {}"
+						", youTubeUploadURL: {}"
+						", contentRangeStart: {}"
+						", contentRangeEnd_Excluded: {}",
+						ingestionJobKey, youTubeUploadURL, contentRangeStart, contentRangeEnd_Excluded
+					);
+				}
+			}
 		}
 
 		/*
@@ -3033,6 +3095,69 @@ void MMSEngineProcessor::postVideoOnYouTube(
 	}
 }
 
+pair<int64_t, int64_t>
+MMSEngineProcessor::youTubeDetailsToResumePostVideo(int64_t ingestionJobKey, string youTubeUploadURL, string youTubeAccessToken, int64_t sizeInBytes)
+{
+	int64_t contentRangeStart;
+	int64_t contentRangeEnd_Excluded;
+
+	vector<string> otherHeaders;
+	otherHeaders.push_back(fmt::format("Content-Range: bytes */{}", sizeInBytes));
+	auto [responseHeader, responseBody] = CurlWrapper::httpPutString(
+		youTubeUploadURL, _youTubeDataAPITimeoutInSecondsForUploadVideo, CurlWrapper::bearerAuthorization(youTubeAccessToken), "", "", otherHeaders,
+		fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+	);
+	{
+		/*
+				 sResponse:
+					HTTP/1.1 308 Resume Incomplete
+					X-GUploader-UploadID:
+				   AEnB2Ur8jQ5DSbXieg8krXWg0f7Bmawvf6XTacURJ7wbITyXdTv8ZeHpepaUwh6F9DB5TvBCzoS4quZMKegyo2x7H9EJOc6ozQ
+					Range: bytes=0-1572863
+					X-Range-MD5: d50bc8fc7ecc41926f841085db3909b3
+					Content-Length: 0
+					Date: Mon, 10 Dec 2018 13:09:51 GMT
+					Server: UploadServer
+					Content-Type: text/html; charset=UTF-8
+					Alt-Svc: quic=":443"; ma=2592000; v="44,43,39,35"
+		*/
+		bool rangeInitialized = false;
+		stringstream ss(responseHeader);
+		string rangeHeader;
+		while (getline(ss, rangeHeader, '\r'))
+		{
+			size_t index;
+			string rangeLabel = "Range: bytes=";
+			if ((index = rangeHeader.find(rangeLabel)) != string::npos)
+			{
+				rangeHeader = rangeHeader.substr(index + rangeLabel.length());
+				if ((index = rangeHeader.find("-")) != string::npos)
+				{
+					contentRangeStart = stoll(rangeHeader.substr(index + 1)) + 1;
+					contentRangeEnd_Excluded = sizeInBytes;
+					rangeInitialized = true;
+				}
+			}
+		}
+		if (!rangeInitialized)
+		{
+			// error
+			string errorMessage = fmt::format(
+				"youTube check range failed"
+				", ingestionJobKey: {}"
+				", youTubeUploadURL: {}"
+				", responseHeader: {}",
+				ingestionJobKey, youTubeUploadURL, responseHeader
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	return make_pair(contentRangeStart, contentRangeEnd_Excluded);
+}
+
 string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, string youTubeConfigurationLabel
 )
@@ -3079,7 +3204,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 
 		vector<string> otherHeaders;
 		json youTubeResponseRoot = CurlWrapper::httpPostStringAndGetJson(
-			youTubeURL, _youTubeDataAPITimeoutInSeconds, "", "", body,
+			youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 			"application/x-www-form-urlencoded", // contentType
 			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
@@ -3147,9 +3272,8 @@ string MMSEngineProcessor::getFacebookPageToken(
 		SPDLOG_INFO(string() + "Retrieve page token" + ", facebookURL: " + facebookURL);
 
 		vector<string> otherHeaders;
-		json responseRoot = CurlWrapper::httpGetJson(
-			facebookURL, _mmsAPITimeoutInSeconds, "", "", otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
-		);
+		json responseRoot =
+			CurlWrapper::httpGetJson(facebookURL, _mmsAPITimeoutInSeconds, "", otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey));
 
 		/*
 		{

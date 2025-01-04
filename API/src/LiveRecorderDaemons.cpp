@@ -1461,13 +1461,14 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		}
 
 		vector<string> otherHeaders;
-		string sResponse = CurlWrapper::httpPostString(
-							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-							   "application/json", // contentType
-							   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
-							   3 // maxRetryNumber
-		)
-							   .second;
+		string sResponse =
+			CurlWrapper::httpPostString(
+				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+				"application/json", // contentType
+				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+				3 // maxRetryNumber
+			)
+				.second;
 	}
 	catch (runtime_error e)
 	{
@@ -1542,13 +1543,14 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 		}
 
 		vector<string> otherHeaders;
-		string sResponse = CurlWrapper::httpPostString(
-							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-							   "application/json", // contentType
-							   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
-							   3 // maxRetryNumber
-		)
-							   .second;
+		string sResponse =
+			CurlWrapper::httpPostString(
+				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+				"application/json", // contentType
+				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+				3 // maxRetryNumber
+			)
+				.second;
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
@@ -1617,8 +1619,9 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 		mmsBinaryURL = fmt::format("{}/{}", mmsBinaryIngestionURL, addContentIngestionJobKey);
 
 		string sResponse = CurlWrapper::httpPostFile(
-			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey, chunksTranscoderStagingContentsPath + currentRecordedAssetFileName,
-			chunkFileSize, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
+			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunkFileSize, "",
+			fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 	}
@@ -2711,7 +2714,8 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	{
 		vector<string> otherHeaders;
 		string sResponse = CurlWrapper::httpPostString(
-							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(liveRecorderUserKey), liveRecorderApiKey, workflowMetadata,
+							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds,
+							   CurlWrapper::basicAuthorization(to_string(liveRecorderUserKey), liveRecorderApiKey), workflowMetadata,
 							   "application/json", // contentType
 							   otherHeaders, fmt::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
 							   3 // maxRetryNumber
@@ -2776,7 +2780,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			mmsBinaryURL = mmsBinaryIngestionURL + "/" + to_string(addContentIngestionJobKey);
 
 			string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
-				mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(liveRecorderUserKey), liveRecorderApiKey,
+				mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(liveRecorderUserKey), liveRecorderApiKey),
 				tarGzStagingLiveRecorderVirtualVODPathName, chunkFileSize, fmt::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
 				3 // maxRetryNumber
 			);

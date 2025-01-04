@@ -1451,7 +1451,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				vector<string> otherHeaders;
 				string sResponse = CurlWrapper::httpPostString(
-									   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+									   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
+									   workflowMetadata,
 									   "application/json", // contentType
 									   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 									   3 // maxRetryNumber

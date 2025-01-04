@@ -1265,8 +1265,8 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 
 		vector<string> otherHeaders;
 		json encodeStatusResponse = CurlWrapper::httpGetJson(
-			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders,
-			fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
+			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
+			otherHeaders, fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 		);
 
 		SPDLOG_INFO(
@@ -2072,7 +2072,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				try
 				{
 					liveProxyContentResponse = CurlWrapper::httpPostStringAndGetJson(
-						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, body,
+						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
+						body,
 						"application/json", // contentType
 						otherHeaders, fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 					);

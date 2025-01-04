@@ -432,6 +432,8 @@ class MMSEngineProcessor
 		string mmsAssetPathName, int64_t sizeInBytes, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, string youTubeConfigurationLabel,
 		string youTubeTitle, string youTubeDescription, json youTubeTags, int youTubeCategoryId, string youTubePrivacy, bool youTubeMadeForKids
 	);
+	pair<int64_t, int64_t>
+	youTubeDetailsToResumePostVideo(int64_t ingestionJobKey, string youTubeUploadURL, string youTubeAccessToken, int64_t sizeInBytes);
 
 	string getYouTubeAccessTokenByConfigurationLabel(int64_t ingestionJobKey, shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
 

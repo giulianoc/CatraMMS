@@ -3173,7 +3173,7 @@ void API::fileUploadProgressCheck()
 				otherHeaders.push_back(hostHeader); // important for the nginx virtual host
 				int curlTimeoutInSeconds = 120;
 				json uploadProgressResponse = CurlWrapper::httpGetJson(
-					progressURL, curlTimeoutInSeconds, "", "", otherHeaders, fmt::format(", ingestionJobKey: {}", itr->_ingestionJobKey)
+					progressURL, curlTimeoutInSeconds, "", otherHeaders, fmt::format(", ingestionJobKey: {}", itr->_ingestionJobKey)
 				);
 
 				try
@@ -5975,7 +5975,8 @@ void API::changeLiveProxyPlaylist(
 
 					vector<string> otherHeaders;
 					json encoderResponse = CurlWrapper::httpPutStringAndGetJson(
-						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, newPlaylist,
+						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
+						newPlaylist,
 						"application/json", // contentType
 						otherHeaders, fmt::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 					);
@@ -6206,7 +6207,8 @@ void API::changeLiveProxyOverlayText(
 
 				vector<string> otherHeaders;
 				CurlWrapper::httpPutStringAndGetJson(
-					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, _ffmpegEncoderUser, _ffmpegEncoderPassword, requestBody,
+					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
+					requestBody,
 					"text/plain", // contentType
 					otherHeaders, fmt::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 				);

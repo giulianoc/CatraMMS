@@ -2049,8 +2049,9 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, string protocol, string 
 		ffmpegEncoderURL = protocol + "://" + (external ? publicServerName : internalServerName) + ":" + to_string(port) + _ffmpegEncoderStatusURI;
 
 		vector<string> otherHeaders;
-		json infoResponseRoot =
-			CurlWrapper::httpGetJson(ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders);
+		json infoResponseRoot = CurlWrapper::httpGetJson(
+			ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword), otherHeaders
+		);
 	}
 	catch (ServerNotReachable e)
 	{
@@ -2100,8 +2101,9 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, string protocol
 		ffmpegEncoderURL = protocol + "://" + (external ? publicServerName : internalServerName) + ":" + to_string(port) + _ffmpegEncoderInfoURI;
 
 		vector<string> otherHeaders;
-		json infoResponseRoot =
-			CurlWrapper::httpGetJson(ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders);
+		json infoResponseRoot = CurlWrapper::httpGetJson(
+			ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword), otherHeaders
+		);
 
 		string field = "cpuUsage";
 		cpuUsage = JSONUtils::asInt(infoResponseRoot, field, 0);

@@ -627,7 +627,7 @@ void MMSEngineProcessor::userHttpCallback(
 					contentType = "application/json";
 
 				CurlWrapper::httpPutString(
-					userURL, callbackTimeoutInSeconds, userName, password, httpBody, contentType, otherHeaders,
+					userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), httpBody, contentType, otherHeaders,
 					fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
@@ -662,7 +662,7 @@ void MMSEngineProcessor::userHttpCallback(
 					contentType = "application/json";
 
 				CurlWrapper::httpPostString(
-					userURL, callbackTimeoutInSeconds, userName, password, httpBody, contentType, otherHeaders,
+					userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), httpBody, contentType, otherHeaders,
 					fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
@@ -671,7 +671,8 @@ void MMSEngineProcessor::userHttpCallback(
 		{
 			vector<string> otherHeaders;
 			CurlWrapper::httpGet(
-				userURL, callbackTimeoutInSeconds, userName, password, otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+				userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), otherHeaders,
+				fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 			);
 		}
 	}

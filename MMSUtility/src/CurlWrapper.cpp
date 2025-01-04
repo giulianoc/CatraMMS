@@ -34,6 +34,13 @@ void CurlWrapper::globalInitialize() { curl_global_init(CURL_GLOBAL_DEFAULT); }
 
 void CurlWrapper::globalTerminate() { curl_global_cleanup(); }
 
+string CurlWrapper::basicAuthorization(const string &user, const string &password)
+{
+	return fmt::format("Basic {}", Convert::base64_encode(user + ":" + password));
+}
+
+string CurlWrapper::bearerAuthorization(const string &bearerToken) { return fmt::format("Bearer {}", bearerToken); }
+
 string CurlWrapper::escape(const string &url)
 {
 	CURL *curl = curl_easy_init();
@@ -80,14 +87,12 @@ string CurlWrapper::unescape(const string &url)
 }
 
 json CurlWrapper::httpGetJson(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, vector<string> otherHeaders,
-	string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
+	string url, long timeoutInSeconds, string authorization, vector<string> otherHeaders, string referenceToLog, int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
 )
 {
-	string response = CurlWrapper::httpGet(
-		url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, otherHeaders, referenceToLog, maxRetryNumber,
-		secondsToWaitBeforeToRetry
-	);
+	string response =
+		CurlWrapper::httpGet(url, timeoutInSeconds, authorization, otherHeaders, referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry);
 
 	json jsonRoot = JSONUtils::toJson(response);
 
@@ -95,7 +100,7 @@ json CurlWrapper::httpGetJson(
 }
 
 pair<string, string> CurlWrapper::httpPostString(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string body,
+	string url, long timeoutInSeconds, string authorization, string body,
 	string contentType, // i.e.: application/json
 	vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
@@ -103,40 +108,38 @@ pair<string, string> CurlWrapper::httpPostString(
 	string requestType = "POST";
 
 	return CurlWrapper::httpPostPutString(
-		url, requestType, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, body,
+		url, requestType, timeoutInSeconds, authorization, body,
 		contentType, // i.e.: application/json
 		otherHeaders, referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry
 	);
 }
 
-string CurlWrapper::httpPutString(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string body,
+pair<string, string> CurlWrapper::httpPutString(
+	string url, long timeoutInSeconds, string authorization, string body,
 	string contentType, // i.e.: application/json
 	vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
 	string requestType = "PUT";
 
-	pair<string, string> responseDetails = CurlWrapper::httpPostPutString(
-		url, requestType, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, body,
+	return CurlWrapper::httpPostPutString(
+		url, requestType, timeoutInSeconds, authorization, body,
 		contentType, // i.e.: application/json
 		otherHeaders, referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry
 	);
-
-	return responseDetails.second;
 }
 
 json CurlWrapper::httpPostStringAndGetJson(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string body,
+	string url, long timeoutInSeconds, string authorization, string body,
 	string contentType, // i.e.: application/json
 	vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
-	string response = CurlWrapper::httpPostString(
-						  url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, body, contentType, otherHeaders,
-						  referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry
-	)
-						  .second;
+	string response =
+		CurlWrapper::httpPostString(
+			url, timeoutInSeconds, authorization, body, contentType, otherHeaders, referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry
+		)
+			.second;
 
 	json jsonRoot = JSONUtils::toJson(response);
 
@@ -144,15 +147,16 @@ json CurlWrapper::httpPostStringAndGetJson(
 }
 
 json CurlWrapper::httpPutStringAndGetJson(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string body,
+	string url, long timeoutInSeconds, string authorization, string body,
 	string contentType, // i.e.: application/json
 	vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
-	string response = CurlWrapper::httpPutString(
-		url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, body, contentType, otherHeaders, referenceToLog, maxRetryNumber,
-		secondsToWaitBeforeToRetry
-	);
+	string response =
+		CurlWrapper::httpPutString(
+			url, timeoutInSeconds, authorization, body, contentType, otherHeaders, referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry
+		)
+			.second;
 
 	json jsonRoot = JSONUtils::toJson(response);
 
@@ -160,42 +164,39 @@ json CurlWrapper::httpPutStringAndGetJson(
 }
 
 string CurlWrapper::httpPostFile(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart,
-	int64_t contentRangeEnd_Excluded
+	string url, long timeoutInSeconds, string authorization, string pathFileName, int64_t fileSizeInBytes, string contentType, string referenceToLog,
+	int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string requestType = "POST";
 
 	return CurlWrapper::httpPostPutFile(
-		url, requestType, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes, referenceToLog,
-		maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
+		url, requestType, timeoutInSeconds, authorization, pathFileName, fileSizeInBytes, contentType, referenceToLog, maxRetryNumber,
+		secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 }
 
 string CurlWrapper::httpPutFile(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart,
-	int64_t contentRangeEnd_Excluded
+	string url, long timeoutInSeconds, string authorization, string pathFileName, int64_t fileSizeInBytes, string contentType, string referenceToLog,
+	int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string requestType = "PUT";
 
 	return CurlWrapper::httpPostPutFile(
-		url, requestType, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes, referenceToLog,
-		maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
+		url, requestType, timeoutInSeconds, authorization, pathFileName, fileSizeInBytes, contentType, referenceToLog, maxRetryNumber,
+		secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
 	);
 }
 
 json CurlWrapper::httpPostFileAndGetJson(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart,
-	int64_t contentRangeEnd_Excluded
+	string url, long timeoutInSeconds, string authorization, string pathFileName, int64_t fileSizeInBytes, string referenceToLog, int maxRetryNumber,
+	int secondsToWaitBeforeToRetry, int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string response = CurlWrapper::httpPostFile(
-		url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes, referenceToLog, maxRetryNumber,
-		secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
+		url, timeoutInSeconds, authorization, pathFileName, fileSizeInBytes, "", referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry,
+		contentRangeStart, contentRangeEnd_Excluded
 	);
 
 	json jsonRoot = JSONUtils::toJson(response);
@@ -204,14 +205,13 @@ json CurlWrapper::httpPostFileAndGetJson(
 }
 
 json CurlWrapper::httpPutFileAndGetJson(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart,
-	int64_t contentRangeEnd_Excluded
+	string url, long timeoutInSeconds, string authorization, string pathFileName, int64_t fileSizeInBytes, string referenceToLog, int maxRetryNumber,
+	int secondsToWaitBeforeToRetry, int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string response = CurlWrapper::httpPutFile(
-		url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes, referenceToLog, maxRetryNumber,
-		secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
+		url, timeoutInSeconds, authorization, pathFileName, fileSizeInBytes, "", referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry,
+		contentRangeStart, contentRangeEnd_Excluded
 	);
 
 	json jsonRoot = JSONUtils::toJson(response);
@@ -220,16 +220,15 @@ json CurlWrapper::httpPutFileAndGetJson(
 }
 
 string CurlWrapper::httpPostFileSplittingInChunks(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string pathFileName,
-	int64_t fileSizeInBytes, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
+	string url, long timeoutInSeconds, string authorization, string pathFileName, int64_t fileSizeInBytes, string referenceToLog, int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
 )
 {
 	int64_t chunkSize = 100 * 1000 * 1000;
 
 	if (fileSizeInBytes <= chunkSize)
 		return httpPostFile(
-			url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes, referenceToLog,
-			maxRetryNumber, secondsToWaitBeforeToRetry
+			url, timeoutInSeconds, authorization, pathFileName, fileSizeInBytes, "", referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry
 		);
 
 	int chunksNumber = fileSizeInBytes / chunkSize;
@@ -275,8 +274,8 @@ string CurlWrapper::httpPostFileSplittingInChunks(
 		*/
 		{
 			lastHttpReturn = httpPostFile(
-				url, timeoutInSeconds, basicAuthenticationUser, basicAuthenticationPassword, pathFileName, fileSizeInBytes, referenceToLog,
-				maxRetryNumber, secondsToWaitBeforeToRetry, contentRangeStart, contentRangeEnd_Excluded
+				url, timeoutInSeconds, authorization, pathFileName, fileSizeInBytes, "", referenceToLog, maxRetryNumber, secondsToWaitBeforeToRetry,
+				contentRangeStart, contentRangeEnd_Excluded
 			);
 		}
 	}
@@ -841,8 +840,8 @@ size_t curlWriteResponseCallback(char *ptr, size_t size, size_t nmemb, void *f)
 };
 
 string CurlWrapper::httpGet(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, vector<string> otherHeaders,
-	string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
+	string url, long timeoutInSeconds, string authorization, vector<string> otherHeaders, string referenceToLog, int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
 )
 {
 	string api = "httpGet";
@@ -966,13 +965,8 @@ string CurlWrapper::httpGet(
 			request.setOpt(new curlpp::options::HttpHeader(headers));
 			*/
 			{
-				if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
-				{
-					string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
-					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-					headersList = curl_slist_append(headersList, basicAuthorization.c_str());
-				}
+				if (authorization != "")
+					headersList = curl_slist_append(headersList, fmt::format("Authorization: {}", authorization).c_str());
 
 				for (string header : otherHeaders)
 					headersList = curl_slist_append(headersList, header.c_str());
@@ -988,9 +982,9 @@ string CurlWrapper::httpGet(
 				"{} details"
 				"{}"
 				", url: {}"
-				", basicAuthenticationUser: {}"
+				", authorization: {}"
 				", otherHeaders.size: {}",
-				api, referenceToLog, url, basicAuthenticationUser, otherHeaders.size()
+				api, referenceToLog, url, authorization, otherHeaders.size()
 			);
 
 			// store response headers in the response
@@ -1392,8 +1386,8 @@ string MMSCURL::httpDelete(
 */
 
 string CurlWrapper::httpDelete(
-	string url, long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, vector<string> otherHeaders,
-	string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
+	string url, long timeoutInSeconds, string authorization, vector<string> otherHeaders, string referenceToLog, int maxRetryNumber,
+	int secondsToWaitBeforeToRetry
 )
 {
 	string api = "httpDelete";
@@ -1520,13 +1514,8 @@ string CurlWrapper::httpDelete(
 			request.setOpt(new curlpp::options::HttpHeader(headers));
 			*/
 			{
-				if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
-				{
-					string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
-					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-					headersList = curl_slist_append(headersList, basicAuthorization.c_str());
-				}
+				if (authorization != "")
+					headersList = curl_slist_append(headersList, fmt::format("Authorization: {}", authorization).c_str());
 
 				for (string header : otherHeaders)
 					headersList = curl_slist_append(headersList, header.c_str());
@@ -1542,9 +1531,9 @@ string CurlWrapper::httpDelete(
 				"{} details"
 				"{}"
 				", url: {}"
-				", basicAuthenticationUser: {}"
+				", authorization: {}"
 				", otherHeaders.size: {}",
-				api, referenceToLog, url, basicAuthenticationUser, otherHeaders.size()
+				api, referenceToLog, url, authorization, otherHeaders.size()
 			);
 
 			// store response headers in the response
@@ -1983,7 +1972,7 @@ pair<string, string> MMSCURL::httpPostPutString(
 pair<string, string> CurlWrapper::httpPostPutString(
 	string url,
 	string requestType, // POST or PUT
-	long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string body,
+	long timeoutInSeconds, string authorization, string body,
 	string contentType, // i.e.: application/json
 	vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
@@ -2125,13 +2114,8 @@ pair<string, string> CurlWrapper::httpPostPutString(
 				// headers.push_back(string("Content-Type: ") + contentType);
 				if (contentType != "")
 					headersList = curl_slist_append(headersList, fmt::format("Content-Type: {}", contentType).c_str());
-				if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
-				{
-					string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
-					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-					headersList = curl_slist_append(headersList, basicAuthorization.c_str());
-				}
+				if (authorization != "")
+					headersList = curl_slist_append(headersList, fmt::format("Authorization: {}", authorization).c_str());
 
 				for (string header : otherHeaders)
 					headersList = curl_slist_append(headersList, header.c_str());
@@ -2153,10 +2137,10 @@ pair<string, string> CurlWrapper::httpPostPutString(
 				"{}"
 				", url: {}"
 				", contentType: {}"
-				", basicAuthenticationUser: {}"
+				", authorization: {}"
 				", otherHeaders.size: {}"
 				", body: {}",
-				api, referenceToLog, url, contentType, basicAuthenticationUser, otherHeaders.size(), regex_replace(body, regex("\n"), " ")
+				api, referenceToLog, url, contentType, authorization, otherHeaders.size(), regex_replace(body, regex("\n"), " ")
 			);
 
 			chrono::system_clock::time_point start = chrono::system_clock::now();
@@ -2190,7 +2174,8 @@ pair<string, string> CurlWrapper::httpPostPutString(
 			// long responseCode = curlpp::infos::ResponseCode::get(request);
 			long responseCode;
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
-			if (responseCode == 200 || responseCode == 201)
+			if (responseCode == 200 || responseCode == 201 || responseCode == 308 // permanently removed/redirect
+			)
 			{
 				SPDLOG_INFO(
 					"{} success"
@@ -2632,8 +2617,8 @@ string MMSCURL::httpPostPutFile(
 string CurlWrapper::httpPostPutFile(
 	string url,
 	string requestType, // POST or PUT
-	long timeoutInSeconds, string basicAuthenticationUser, string basicAuthenticationPassword, string pathFileName, int64_t fileSizeInBytes,
-	string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
+	long timeoutInSeconds, string authorization, string pathFileName, int64_t fileSizeInBytes, string contentType, string referenceToLog,
+	int maxRetryNumber, int secondsToWaitBeforeToRetry, int64_t contentRangeStart, int64_t contentRangeEnd_Excluded
 )
 {
 	string api = "httpPostPutFile";
@@ -2834,13 +2819,10 @@ string CurlWrapper::httpPostPutFile(
 				else
 					contentLengthOrRangeHeader = fmt::format("Content-Length: {}", fileSizeInBytes);
 				headersList = curl_slist_append(headersList, contentLengthOrRangeHeader.c_str());
-				if (basicAuthenticationUser != "" && basicAuthenticationPassword != "")
-				{
-					string userPasswordEncoded = Convert::base64_encode(basicAuthenticationUser + ":" + basicAuthenticationPassword);
-					string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
-
-					headersList = curl_slist_append(headersList, basicAuthorization.c_str());
-				}
+				if (contentType != "")
+					headersList = curl_slist_append(headersList, fmt::format("Content-Type: {}", contentType).c_str());
+				if (authorization != "")
+					headersList = curl_slist_append(headersList, fmt::format("Authorization: {}", authorization).c_str());
 
 				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headersList);
 			}
@@ -2853,10 +2835,10 @@ string CurlWrapper::httpPostPutFile(
 				"{} details"
 				"{}"
 				", url: {}"
-				", basicAuthenticationUser: {}"
+				", authorization: {}"
 				", contentLengthOrRangeHeader: {}"
 				", pathFileName: {}",
-				api, referenceToLog, url, basicAuthenticationUser, contentLengthOrRangeHeader, pathFileName
+				api, referenceToLog, url, authorization, contentLengthOrRangeHeader, pathFileName
 			);
 
 			chrono::system_clock::time_point start = chrono::system_clock::now();
@@ -4986,7 +4968,7 @@ void MMSCURL::ftpFile(
 
 void CurlWrapper::ftpFile(
 	string filePathName, string fileName, int64_t sizeInBytes, string ftpServer, int ftpPort, string ftpUserName, string ftpPassword,
-	string ftpRemoteDirectory, string ftpRemoteFileName, function<int(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t)> progressCallback,
+	string ftpRemoteDirectory, string ftpRemoteFileName, int (*progressCallback)(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t),
 	void *progressData, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
 )
 {
@@ -5132,7 +5114,7 @@ void CurlWrapper::ftpFile(
 			// placeholders::_3, placeholders::_4);
 			// request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
 			// request.setOpt(new curlpp::options::NoProgress(0L));
-			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, &progressCallback);
+			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progressCallback);
 			curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progressData);
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 

@@ -751,12 +751,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		}
 
 		vector<string> otherHeaders;
-		string sResponse = CurlWrapper::httpPostString(
-							   _mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-							   "application/json", // contentType
-							   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
-		)
-							   .second;
+		string sResponse =
+			CurlWrapper::httpPostString(
+				_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+				"application/json", // contentType
+				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			)
+				.second;
 
 		// mancherebbe la parte aggiunta a LiveCut hls segmenter
 
@@ -1439,7 +1440,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 		vector<string> otherHeaders;
 		json workflowResponseRoot = CurlWrapper::httpPostStringAndGetJson(
-			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
+			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 			"application/json", // contentType
 			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
 		);

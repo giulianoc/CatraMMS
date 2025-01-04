@@ -302,7 +302,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 			vector<string> otherHeaders;
 			json ingestionRoot = CurlWrapper::httpGetJson(
-				mmsIngestionJobURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, otherHeaders,
+				mmsIngestionJobURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), otherHeaders,
 				fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetryNumber
 			);
@@ -414,13 +414,14 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 	try
 	{
 		vector<string> otherHeaders;
-		string sResponse = CurlWrapper::httpPostString(
-							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, to_string(userKey), apiKey, workflowMetadata,
-							   "application/json", // contentType
-							   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
-							   3 // maxRetryNumber
-		)
-							   .second;
+		string sResponse =
+			CurlWrapper::httpPostString(
+				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+				"application/json", // contentType
+				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+				3 // maxRetryNumber
+			)
+				.second;
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
@@ -515,8 +516,8 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 		mmsBinaryURL = mmsBinaryIngestionURL + "/" + to_string(addContentIngestionJobKey);
 
 		string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
-			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, to_string(userKey), apiKey, localBinaryPathFileName, localBinaryFileSizeInBytes,
-			fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), localBinaryPathFileName,
+			localBinaryFileSizeInBytes, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 
