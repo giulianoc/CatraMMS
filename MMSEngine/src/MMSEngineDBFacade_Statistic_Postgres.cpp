@@ -2303,7 +2303,7 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList(
 			string sqlStatement = fmt::format(
 				"select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
 				"from MMS_RequestStatistic {}"
-				"group by to_char(requestTimestamp, 'YYYY-MM-DD') order by date asc" // order by count(*) desc "
+				"group by to_char(requestTimestamp, 'YYYY-MM-DD') order by date asc " // order by count(*) desc "
 				"limit {} offset {}",
 				sqlWhere, rows, start
 			);
