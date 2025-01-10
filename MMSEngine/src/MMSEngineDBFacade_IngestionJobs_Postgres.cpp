@@ -1775,9 +1775,12 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 {
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "manageIngestionJobStatusUpdate" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", newIngestionStatus: " + toString(newIngestionStatus) + ", updateIngestionRootStatus: " + to_string(updateIngestionRootStatus)
+		SPDLOG_INFO(
+			"manageIngestionJobStatusUpdate"
+			", ingestionJobKey: {}"
+			", newIngestionStatus: {}"
+			", updateIngestionRootStatus: {}",
+			ingestionJobKey, toString(newIngestionStatus), updateIngestionRootStatus
 		);
 
 		if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
@@ -1831,8 +1834,10 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 							"from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
 							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
 							"and ijd.referenceOutputDependency != 1 "
-							"and ijd.dependOnIngestionJobKey in ({}) and ijd.dependOnSuccess = {}",
-							ingestionJobKeysToFindDependencies, dependOnSuccess
+							"and ijd.dependOnIngestionJobKey {} and ijd.dependOnSuccess = {}",
+							ingestionJobKeysToFindDependencies.find(",") != string::npos ? fmt::format("in ({})", ingestionJobKeysToFindDependencies)
+																						 : fmt::format("= {}", ingestionJobKeysToFindDependencies),
+							dependOnSuccess
 						);
 					}
 					else
@@ -1842,8 +1847,9 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 							"from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
 							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
 							"and ijd.referenceOutputDependency != 1 "
-							"and ijd.dependOnIngestionJobKey in ({})",
-							ingestionJobKeysToFindDependencies
+							"and ijd.dependOnIngestionJobKey {}",
+							ingestionJobKeysToFindDependencies.find(",") != string::npos ? fmt::format("in ({})", ingestionJobKeysToFindDependencies)
+																						 : fmt::format("= {}", ingestionJobKeysToFindDependencies)
 						);
 					}
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1857,12 +1863,12 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 						if (hierarchicalIngestionJobKeysDependencies == "")
 							hierarchicalIngestionJobKeysDependencies = to_string(row["ingestionJobKey"].as<int64_t>());
 						else
-							hierarchicalIngestionJobKeysDependencies += (", " + to_string(row["ingestionJobKey"].as<int64_t>()));
+							hierarchicalIngestionJobKeysDependencies += fmt::format(", {}", row["ingestionJobKey"].as<int64_t>());
 
 						if (ingestionJobKeysToFindDependencies == "")
 							ingestionJobKeysToFindDependencies = to_string(row["ingestionJobKey"].as<int64_t>());
 						else
-							ingestionJobKeysToFindDependencies += (", " + to_string(row["ingestionJobKey"].as<int64_t>()));
+							ingestionJobKeysToFindDependencies += fmt::format(", {}", row["ingestionJobKey"].as<int64_t>());
 					}
 					SPDLOG_INFO(
 						"SQL statement"
@@ -1880,38 +1886,47 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 
 					if (!dependenciesFound)
 					{
-						_logger->info(
-							__FILEREF__ + "Finished to find dependencies" + ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex) +
-							", maxHierarchicalLevelsManaged: " + to_string(maxHierarchicalLevelsManaged) +
-							", ingestionJobKey: " + to_string(ingestionJobKey)
+						SPDLOG_INFO(
+							"Finished to find dependencies"
+							", hierarchicalLevelIndex: {}"
+							", maxHierarchicalLevelsManaged: {}"
+							", ingestionJobKey: {}",
+							hierarchicalLevelIndex, maxHierarchicalLevelsManaged, ingestionJobKey
 						);
 
 						break;
 					}
 					else if (dependenciesFound && hierarchicalLevelIndex + 1 >= maxHierarchicalLevelsManaged)
 					{
-						string errorMessage =
-							__FILEREF__ +
-							"after maxHierarchicalLevelsManaged we still found dependencies, so maxHierarchicalLevelsManaged has to be increased" +
-							", maxHierarchicalLevelsManaged: " + to_string(maxHierarchicalLevelsManaged) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", sqlStatement: " + sqlStatement;
-						_logger->warn(errorMessage);
+						SPDLOG_WARN(
+							"after maxHierarchicalLevelsManaged we still found dependencies, so maxHierarchicalLevelsManaged has to be increased"
+							", maxHierarchicalLevelsManaged: {}"
+							", ingestionJobKey: {}"
+							", sqlStatement: {}",
+							maxHierarchicalLevelsManaged, ingestionJobKey, sqlStatement
+						);
 					}
 				}
 			}
 
 			if (hierarchicalIngestionJobKeysDependencies != "")
 			{
-				_logger->info(
-					__FILEREF__ + "manageIngestionJobStatusUpdate. update" + ", status: " + "End_NotToBeExecuted" + ", ingestionJobKey: " +
-					to_string(ingestionJobKey) + ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
+				SPDLOG_INFO(
+					"manageIngestionJobStatusUpdate. update"
+					", status: End_NotToBeExecuted"
+					", ingestionJobKey: {}"
+					", hierarchicalIngestionJobKeysDependencies: {}",
+					ingestionJobKey, hierarchicalIngestionJobKeysDependencies
 				);
 
 				string sqlStatement = fmt::format(
 					"WITH rows AS (update MMS_IngestionJob set status = {}, "
 					"startProcessing = case when startProcessing IS NULL then NOW() at time zone 'utc' else startProcessing end, "
-					"endProcessing = NOW() at time zone 'utc' where ingestionJobKey in ({}) returning 1) select count(*) from rows",
-					trans->quote(toString(IngestionStatus::End_NotToBeExecuted)), hierarchicalIngestionJobKeysDependencies
+					"endProcessing = NOW() at time zone 'utc' where ingestionJobKey {} returning 1) select count(*) from rows",
+					trans->quote(toString(IngestionStatus::End_NotToBeExecuted)),
+					hierarchicalIngestionJobKeysDependencies.find(",") != string::npos
+						? fmt::format("in ({})", hierarchicalIngestionJobKeysDependencies)
+						: fmt::format("= {}", hierarchicalIngestionJobKeysDependencies)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
@@ -1953,16 +1968,24 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				}
 				else
 				{
-					string errorMessage = __FILEREF__ + "IngestionJob is not found" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = fmt::format(
+						"IngestionJob is not found"
+						", ingestionJobKey: {}"
+						", sqlStatement: {}",
+						ingestionJobKey, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				_logger->info(
-					__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", res.size: " + to_string(res.size()) + ", elapsed (millisecs): @" +
-					to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
+				SPDLOG_INFO(
+					"@SQL statistics@"
+					", sqlStatement: {}"
+					", ingestionJobKey: {}"
+					", res.size: {}"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, ingestionJobKey, res.size(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 			}
 
@@ -1997,10 +2020,13 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				);
 			}
 
-			_logger->info(
-				__FILEREF__ + "Job status" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-				", intermediateStatesCount: " + to_string(intermediateStatesCount) + ", successStatesCount: " + to_string(successStatesCount) +
-				", failureStatesCount: " + to_string(failureStatesCount)
+			SPDLOG_INFO(
+				"Job status"
+				", ingestionRootKey: {}"
+				", intermediateStatesCount: {}"
+				", successStatesCount: {}"
+				", failureStatesCount: {}",
+				ingestionRootKey, intermediateStatesCount, successStatesCount, failureStatesCount
 			);
 
 			IngestionRootStatus newIngestionRootStatus;
@@ -2033,9 +2059,14 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage = __FILEREF__ + "no update was done" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-										  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = fmt::format(
+						"no update was done"
+						", ingestionRootKey: {}"
+						", rowsUpdated: {}"
+						", sqlStatement: {}",
+						ingestionRootKey, rowsUpdated, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}

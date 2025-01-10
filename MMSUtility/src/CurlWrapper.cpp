@@ -36,10 +36,19 @@ void CurlWrapper::globalTerminate() { curl_global_cleanup(); }
 
 string CurlWrapper::basicAuthorization(const string &user, const string &password)
 {
-	return fmt::format("Basic {}", Convert::base64_encode(user + ":" + password));
+	if (user != "")
+		return fmt::format("Basic {}", Convert::base64_encode(user + ":" + password));
+	else
+		return "";
 }
 
-string CurlWrapper::bearerAuthorization(const string &bearerToken) { return fmt::format("Bearer {}", bearerToken); }
+string CurlWrapper::bearerAuthorization(const string &bearerToken)
+{
+	if (bearerToken != "")
+		return fmt::format("Bearer {}", bearerToken);
+	else
+		return "";
+}
 
 string CurlWrapper::escape(const string &url)
 {
@@ -403,7 +412,7 @@ size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		}
 		curlDownloadData->currentChunkNumber += 1;
 
-		SPDLOG_INFO(
+		SPDLOG_DEBUG(
 			"Opening binary file"
 			"{}"
 			", curlDownloadData -> destBinaryPathName: {}"
@@ -435,7 +444,7 @@ size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		}
 		curlDownloadData->currentChunkNumber += 1;
 
-		SPDLOG_INFO(
+		SPDLOG_DEBUG(
 			"Opening binary file"
 			"{}"
 			", curlDownloadData->destBinaryPathName: {}"
@@ -1030,7 +1039,7 @@ string CurlWrapper::httpGet(
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
 			if (responseCode == 200)
 			{
-				SPDLOG_INFO(
+				SPDLOG_DEBUG(
 					"{} success"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -1072,15 +1081,6 @@ string CurlWrapper::httpGet(
 		{
 			if (response.find("502 Bad Gateway") != string::npos)
 			{
-				SPDLOG_ERROR(
-					"{}. Server is not reachable, is it down?"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -1094,30 +1094,35 @@ string CurlWrapper::httpGet(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{}. Server is not reachable, is it down? Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{}. Server is not reachable, is it down?"
+						"{}"
+						", url: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, e.what(), response
+					);
+
 					throw ServerNotReachable();
+				}
 			}
 			else
 			{
-				SPDLOG_ERROR(
-					"{} failed (exception)"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -1131,31 +1136,37 @@ string CurlWrapper::httpGet(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{} failed. Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{} failed"
+						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, timeoutInSeconds, e.what(), response
+					);
+
 					throw e;
+				}
 			}
 		}
 		catch (exception e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", url: {}"
-				", exception: {}"
-				", response.str(): {}",
-				api, referenceToLog, url, e.what(), response
-			);
-
 			if (headersList)
 			{
 				curl_slist_free_all(headersList); /* free the list */
@@ -1169,18 +1180,33 @@ string CurlWrapper::httpGet(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
+					", response.str(): {}",
+					api, referenceToLog, url, timeoutInSeconds, e.what(), response
+				);
+
 				throw e;
+			}
 		}
 	}
 
@@ -1579,7 +1605,7 @@ string CurlWrapper::httpDelete(
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
 			if (responseCode == 200)
 			{
-				SPDLOG_INFO(
+				SPDLOG_DEBUG(
 					"{} success"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -1621,15 +1647,6 @@ string CurlWrapper::httpDelete(
 		{
 			if (response.find("502 Bad Gateway") != string::npos)
 			{
-				SPDLOG_ERROR(
-					"{}. Server is not reachable, is it down?"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -1643,30 +1660,35 @@ string CurlWrapper::httpDelete(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{}. Server is not reachable, is it down? Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{}. Server is not reachable, is it down?"
+						"{}"
+						", url: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, e.what(), response
+					);
+
 					throw ServerNotReachable();
+				}
 			}
 			else
 			{
-				SPDLOG_ERROR(
-					"{} failed (exception)"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -1680,31 +1702,37 @@ string CurlWrapper::httpDelete(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{} failed. Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{} failed"
+						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, timeoutInSeconds, e.what(), response
+					);
+
 					throw e;
+				}
 			}
 		}
 		catch (exception e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", url: {}"
-				", exception: {}"
-				", response.str(): {}",
-				api, referenceToLog, url, e.what(), response
-			);
-
 			if (headersList)
 			{
 				curl_slist_free_all(headersList); /* free the list */
@@ -1718,18 +1746,33 @@ string CurlWrapper::httpDelete(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
+					", response.str(): {}",
+					api, referenceToLog, url, timeoutInSeconds, e.what(), response
+				);
+
 				throw e;
+			}
 		}
 	}
 
@@ -2177,7 +2220,7 @@ pair<string, string> CurlWrapper::httpPostPutString(
 			if (responseCode == 200 || responseCode == 201 || responseCode == 308 // permanently removed/redirect
 			)
 			{
-				SPDLOG_INFO(
+				SPDLOG_DEBUG(
 					"{} success"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -2245,15 +2288,6 @@ pair<string, string> CurlWrapper::httpPostPutString(
 		{
 			if (responseHeaderAndBody.find("502 Bad Gateway") != string::npos)
 			{
-				SPDLOG_ERROR(
-					"{}. Server is not reachable, is it down?"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), responseHeaderAndBody
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -2267,30 +2301,35 @@ pair<string, string> CurlWrapper::httpPostPutString(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{}. Server is not reachable, is it down? Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{}. Server is not reachable, is it down?"
+						"{}"
+						", url: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, e.what(), responseHeaderAndBody
+					);
+
 					throw ServerNotReachable();
+				}
 			}
 			else
 			{
-				SPDLOG_ERROR(
-					"{} failed (exception)"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", responseHeaderAndBody: {}",
-					api, referenceToLog, url, e.what(), responseHeaderAndBody
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -2304,31 +2343,37 @@ pair<string, string> CurlWrapper::httpPostPutString(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{} failed. Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{} failed"
+						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
+						", responseHeaderAndBody: {}",
+						api, referenceToLog, url, timeoutInSeconds, e.what(), responseHeaderAndBody
+					);
+
 					throw e;
+				}
 			}
 		}
 		catch (exception e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", url: {}"
-				", exception: {}"
-				", responseHeaderAndBody: {}",
-				api, referenceToLog, url, e.what(), responseHeaderAndBody
-			);
-
 			if (headersList)
 			{
 				curl_slist_free_all(headersList); /* free the list */
@@ -2342,18 +2387,33 @@ pair<string, string> CurlWrapper::httpPostPutString(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
+					", responseHeaderAndBody: {}",
+					api, referenceToLog, url, timeoutInSeconds, e.what(), responseHeaderAndBody
+				);
+
 				throw e;
+			}
 		}
 	}
 
@@ -2881,7 +2941,7 @@ string CurlWrapper::httpPostPutFile(
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
 			if (responseCode == 200 || responseCode == 201)
 			{
-				SPDLOG_INFO(
+				SPDLOG_DEBUG(
 					"{} success"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -2923,15 +2983,6 @@ string CurlWrapper::httpPostPutFile(
 		{
 			if (response.find("502 Bad Gateway") != string::npos)
 			{
-				SPDLOG_ERROR(
-					"{}. Server is not reachable, is it down?"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -2945,30 +2996,35 @@ string CurlWrapper::httpPostPutFile(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{}. Server is not reachable, is it down? Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{}. Server is not reachable, is it down?"
+						"{}"
+						", url: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, e.what(), response
+					);
+
 					throw ServerNotReachable();
+				}
 			}
 			else
 			{
-				SPDLOG_ERROR(
-					"{} failed (exception)"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -2982,31 +3038,37 @@ string CurlWrapper::httpPostPutFile(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{} failed. Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{} failed"
+						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, timeoutInSeconds, e.what(), response
+					);
+
 					throw e;
+				}
 			}
 		}
 		catch (exception e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", url: {}"
-				", exception: {}"
-				", response.str(): {}",
-				api, referenceToLog, url, e.what(), response
-			);
-
 			if (headersList)
 			{
 				curl_slist_free_all(headersList); /* free the list */
@@ -3020,18 +3082,33 @@ string CurlWrapper::httpPostPutFile(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
+					", response.str(): {}",
+					api, referenceToLog, url, timeoutInSeconds, e.what(), response
+				);
+
 				throw e;
+			}
 		}
 	}
 
@@ -3444,7 +3521,7 @@ string CurlWrapper::httpPostPutFormData(
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
 			if (responseCode == 200 || responseCode == 201)
 			{
-				SPDLOG_INFO(
+				SPDLOG_DEBUG(
 					"{} success"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -3486,15 +3563,6 @@ string CurlWrapper::httpPostPutFormData(
 		{
 			if (response.find("502 Bad Gateway") != string::npos)
 			{
-				SPDLOG_ERROR(
-					"{}. Server is not reachable, is it down?"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -3508,30 +3576,35 @@ string CurlWrapper::httpPostPutFormData(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{}. Server is not reachable, is it down? Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{}. Server is not reachable, is it down?"
+						"{}"
+						", url: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, e.what(), response
+					);
+
 					throw ServerNotReachable();
+				}
 			}
 			else
 			{
-				SPDLOG_ERROR(
-					"{} failed (exception)"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -3545,31 +3618,37 @@ string CurlWrapper::httpPostPutFormData(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{} failed. Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{} failed"
+						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, timeoutInSeconds, e.what(), response
+					);
+
 					throw e;
+				}
 			}
 		}
 		catch (exception e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", url: {}"
-				", exception: {}"
-				", response.str(): {}",
-				api, referenceToLog, url, e.what(), response
-			);
-
 			if (headersList)
 			{
 				curl_slist_free_all(headersList); /* free the list */
@@ -3583,18 +3662,33 @@ string CurlWrapper::httpPostPutFormData(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
+					", response.str(): {}",
+					api, referenceToLog, url, timeoutInSeconds, e.what(), response
+				);
+
 				throw e;
+			}
 		}
 	}
 
@@ -4147,7 +4241,7 @@ string CurlWrapper::httpPostPutFileByFormData(
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
 			if (responseCode == 200 || responseCode == 201)
 			{
-				SPDLOG_INFO(
+				SPDLOG_DEBUG(
 					"{} success"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -4193,15 +4287,6 @@ string CurlWrapper::httpPostPutFileByFormData(
 		{
 			if (response.find("502 Bad Gateway") != string::npos)
 			{
-				SPDLOG_ERROR(
-					"{}. Server is not reachable, is it down?"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -4215,30 +4300,35 @@ string CurlWrapper::httpPostPutFileByFormData(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{}. Server is not reachable, is it down? Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{}. Server is not reachable, is it down?"
+						"{}"
+						", url: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, e.what(), response
+					);
+
 					throw ServerNotReachable();
+				}
 			}
 			else
 			{
-				SPDLOG_ERROR(
-					"{} failed (exception)"
-					"{}"
-					", url: {}"
-					", exception: {}"
-					", response.str(): {}",
-					api, referenceToLog, url, e.what(), response
-				);
-
 				if (headersList)
 				{
 					curl_slist_free_all(headersList); /* free the list */
@@ -4252,31 +4342,37 @@ string CurlWrapper::httpPostPutFileByFormData(
 
 				if (retryNumber < maxRetryNumber)
 				{
-					SPDLOG_INFO(
-						"{}. Sleep before trying again"
+					SPDLOG_WARN(
+						"{} failed. Sleep before trying again"
 						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
 						", retryNumber: {}"
 						", maxRetryNumber: {}"
 						", secondsToWaitBeforeToRetry: {}",
-						api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+						api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 					);
 					this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 				}
 				else
+				{
+					SPDLOG_ERROR(
+						"{} failed"
+						"{}"
+						", url: {}"
+						", timeoutInSeconds: {}"
+						", exception: {}"
+						", response.str(): {}",
+						api, referenceToLog, url, timeoutInSeconds, e.what(), response
+					);
+
 					throw e;
+				}
 			}
 		}
 		catch (exception e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", url: {}"
-				", exception: {}"
-				", response.str(): {}",
-				api, referenceToLog, url, e.what(), response
-			);
-
 			if (headersList)
 			{
 				curl_slist_free_all(headersList); /* free the list */
@@ -4290,18 +4386,33 @@ string CurlWrapper::httpPostPutFileByFormData(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, url, timeoutInSeconds, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", url: {}"
+					", timeoutInSeconds: {}"
+					", exception: {}"
+					", response.str(): {}",
+					api, referenceToLog, url, timeoutInSeconds, e.what(), response
+				);
+
 				throw e;
+			}
 		}
 	}
 
@@ -4573,7 +4684,7 @@ void CurlWrapper::downloadFile(
 				// curlDownloadData.maxChunkFileSize;
 				curlDownloadData.currentTotalSize = resumeFileSize;
 
-				SPDLOG_INFO(
+				SPDLOG_WARN(
 					"Coming from a download failure, trying to Resume"
 					"{}"
 					", destBinaryPathName: {}"
@@ -4740,7 +4851,7 @@ void CurlWrapper::downloadFile(
 
 			(curlDownloadData.mediaSourceFileStream).close();
 
-			SPDLOG_INFO(
+			SPDLOG_DEBUG(
 				"{} success"
 				"{}"
 				", @MMS statistics@ - elapsed (secs): @{}@",
@@ -4757,14 +4868,6 @@ void CurlWrapper::downloadFile(
 		}
 		catch (runtime_error e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", url: {}"
-				", exception: {}",
-				api, referenceToLog, url, e.what()
-			);
-
 			if (curl)
 			{
 				curl_easy_cleanup(curl);
@@ -4773,29 +4876,33 @@ void CurlWrapper::downloadFile(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", url: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, url, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", url: {}"
+					", exception: {}",
+					api, referenceToLog, url, e.what()
+				);
+
 				throw e;
+			}
 		}
 		catch (exception e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", url: {}"
-				", exception: {}",
-				api, referenceToLog, url, e.what()
-			);
-
 			if (curl)
 			{
 				curl_easy_cleanup(curl);
@@ -4804,18 +4911,30 @@ void CurlWrapper::downloadFile(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", url: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, url, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", url: {}"
+					", exception: {}",
+					api, referenceToLog, url, e.what()
+				);
+
 				throw e;
+			}
 		}
 	}
 }
@@ -5150,7 +5269,7 @@ void CurlWrapper::ftpFile(
 				throw runtime_error(errorMessage);
 			}
 
-			SPDLOG_INFO(
+			SPDLOG_DEBUG(
 				"{} success"
 				"{}"
 				", @MMS statistics@ - elapsed (secs): @{}@",
@@ -5167,14 +5286,6 @@ void CurlWrapper::ftpFile(
 		}
 		catch (runtime_error e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", ftpUrl: {}"
-				", exception: {}",
-				api, referenceToLog, ftpUrl, e.what()
-			);
-
 			if (curl)
 			{
 				curl_easy_cleanup(curl);
@@ -5183,29 +5294,33 @@ void CurlWrapper::ftpFile(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", ftpUrl: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, ftpUrl, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", ftpUrl: {}"
+					", exception: {}",
+					api, referenceToLog, ftpUrl, e.what()
+				);
+
 				throw e;
+			}
 		}
 		catch (exception e)
 		{
-			SPDLOG_ERROR(
-				"{} failed (exception)"
-				"{}"
-				", ftpUrl: {}"
-				", exception: {}",
-				api, referenceToLog, ftpUrl, e.what()
-			);
-
 			if (curl)
 			{
 				curl_easy_cleanup(curl);
@@ -5214,18 +5329,30 @@ void CurlWrapper::ftpFile(
 
 			if (retryNumber < maxRetryNumber)
 			{
-				SPDLOG_INFO(
-					"{}. Sleep before trying again"
+				SPDLOG_WARN(
+					"{} failed. Sleep before trying again"
 					"{}"
+					", ftpUrl: {}"
+					", exception: {}"
 					", retryNumber: {}"
 					", maxRetryNumber: {}"
 					", secondsToWaitBeforeToRetry: {}",
-					api, referenceToLog, retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
+					api, referenceToLog, ftpUrl, e.what(), retryNumber, maxRetryNumber, secondsToWaitBeforeToRetry
 				);
 				this_thread::sleep_for(chrono::seconds(secondsToWaitBeforeToRetry));
 			}
 			else
+			{
+				SPDLOG_ERROR(
+					"{} failed"
+					"{}"
+					", ftpUrl: {}"
+					", exception: {}",
+					api, referenceToLog, ftpUrl, e.what()
+				);
+
 				throw e;
+			}
 		}
 	}
 }
@@ -5434,7 +5561,7 @@ void CurlWrapper::sendEmail(
 		throw runtime_error(errorMessage);
 	}
 
-	SPDLOG_INFO("Email sent successful");
+	SPDLOG_DEBUG("Email sent successful");
 
 	/* Free the list of recipients */
 	curl_slist_free_all(recipients);

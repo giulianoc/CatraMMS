@@ -56,6 +56,7 @@ class JSONUtils
 	static string toString(json joValueRoot);
 
 	static json toJson(vector<int32_t> v);
+	static json toJson(vector<string> v);
 };
 
 #endif

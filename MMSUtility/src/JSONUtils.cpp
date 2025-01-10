@@ -317,6 +317,14 @@ json JSONUtils::toJson(vector<int32_t> v)
 	return root;
 }
 
+json JSONUtils::toJson(vector<string> v)
+{
+	json root = json::array();
+	for (string i : v)
+		root.push_back(i);
+	return root;
+}
+
 string JSONUtils::toString(json root)
 {
 	try
