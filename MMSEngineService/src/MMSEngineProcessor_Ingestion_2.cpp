@@ -3163,7 +3163,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	}
 
 	string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-	string destBinaryPathName = fmt::format("{}/{}{}", workspaceIngestionRepository, ingestionJobKey, "_source");
+	string destBinaryPathName = std::format("{}/{}{}", workspaceIngestionRepository, ingestionJobKey, "_source");
 	// 0: no m3u8
 	// 1: m3u8 by .tar.gz
 	// 2: m3u8 by streaming (it will be saved as .mp4)
@@ -3262,7 +3262,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		{
 			CurlWrapper::downloadFile(
 				localSourceReferenceURL, destBinaryPathName, progressDownloadCallback, &progressData, _downloadChunkSizeInMegaBytes,
-				fmt::format(", ingestionJobKey: {}", ingestionJobKey), _maxDownloadAttemptNumber, true
+				std::format(", ingestionJobKey: {}", ingestionJobKey), _maxDownloadAttemptNumber, true
 			);
 
 			if (localM3u8TarGzOrStreaming == 1)

@@ -56,17 +56,24 @@ void FFMpeg::generateFrameToIngest(
 	int iReturnedStatus = 0;
 
 	{
-		char sUtcTimestamp[64];
+		// char sUtcTimestamp[64];
 		tm tmUtcTimestamp;
 		time_t utcTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 		localtime_r(&utcTimestamp, &tmUtcTimestamp);
+		/*
 		sprintf(
 			sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d", tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday,
 			tmUtcTimestamp.tm_hour, tmUtcTimestamp.tm_min, tmUtcTimestamp.tm_sec
 		);
 
-		_outputFfmpegPathFileName = fmt::format("{}/{}_{}_{}.log", _ffmpegTempDir, "generateFrameToIngest", _currentIngestionJobKey, sUtcTimestamp);
+		_outputFfmpegPathFileName = std::format("{}/{}_{}_{}.log", _ffmpegTempDir, "generateFrameToIngest", _currentIngestionJobKey, sUtcTimestamp);
+		*/
+		_outputFfmpegPathFileName = std::format(
+			"{}/{}_{}_{:0>4}-{:0>2}-{:0>2}-{:0>2}-{:0>2}-{:0>2}.log", _ffmpegTempDir, "generateFrameToIngest", _currentIngestionJobKey,
+			tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday, tmUtcTimestamp.tm_hour, tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec
+		);
 	}
 
 	// ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
@@ -211,18 +218,25 @@ void FFMpeg::generateFramesToIngest(
 	int iReturnedStatus = 0;
 
 	{
-		char sUtcTimestamp[64];
+		// char sUtcTimestamp[64];
 		tm tmUtcTimestamp;
 		time_t utcTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 		localtime_r(&utcTimestamp, &tmUtcTimestamp);
+		/*
 		sprintf(
 			sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d", tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday,
 			tmUtcTimestamp.tm_hour, tmUtcTimestamp.tm_min, tmUtcTimestamp.tm_sec
 		);
 
-		_outputFfmpegPathFileName = fmt::format(
+		_outputFfmpegPathFileName = std::format(
 			"{}/{}_{}_{}_{}.log", _ffmpegTempDir, "generateFramesToIngest", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp
+		);
+		*/
+		_outputFfmpegPathFileName = std::format(
+			"{}/{}_{}_{}_{:0>4}-{:0>2}-{:0>2}-{:0>2}-{:0>2}-{:0>2}.log", _ffmpegTempDir, "generateFramesToIngest", _currentIngestionJobKey,
+			_currentEncodingJobKey, tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday, tmUtcTimestamp.tm_hour,
+			tmUtcTimestamp.tm_min, tmUtcTimestamp.tm_sec
 		);
 	}
 

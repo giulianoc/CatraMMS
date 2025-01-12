@@ -13,7 +13,7 @@ bool JSONUtils::isNull(json root, string field)
 {
 	if (root == nullptr)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"JSONUtils::isNull, root is null"
 			", field: {}",
 			field
@@ -30,7 +30,7 @@ string JSONUtils::asString(json root, string field, string defaultValue, bool no
 {
 	if (notFoundAsException && !isMetadataPresent(root, field))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Field not found"
 			", field: {}",
 			field
@@ -78,7 +78,7 @@ int JSONUtils::asInt(json root, string field, int defaultValue, bool notFoundAsE
 {
 	if (notFoundAsException && !isMetadataPresent(root, field))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Field not found"
 			", field: {}",
 			field
@@ -119,7 +119,7 @@ int64_t JSONUtils::asInt64(json root, string field, int64_t defaultValue, bool n
 {
 	if (notFoundAsException && !isMetadataPresent(root, field))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Field not found"
 			", field: {}",
 			field
@@ -160,7 +160,7 @@ double JSONUtils::asDouble(json root, string field, double defaultValue, bool no
 {
 	if (notFoundAsException && !isMetadataPresent(root, field))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Field not found"
 			", field: {}",
 			field
@@ -201,7 +201,7 @@ bool JSONUtils::asBool(json root, string field, bool defaultValue, bool notFound
 {
 	if (notFoundAsException && !isMetadataPresent(root, field))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Field not found"
 			", field: {}",
 			field
@@ -266,7 +266,7 @@ json JSONUtils::asJson(json root, string field, json defaultValue, bool notFound
 
 	if (notFoundAsException && !isPresent)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Field not found"
 			", field: {}",
 			field
@@ -294,7 +294,7 @@ json JSONUtils::toJson(string j, bool warningIfError)
 	}
 	catch (json::parse_error &ex)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"failed to parse the json"
 			", json: {}"
 			", at byte: {}",

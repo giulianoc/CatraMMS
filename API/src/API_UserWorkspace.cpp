@@ -87,7 +87,7 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Wrong email format"
 				", email: {}",
 				email
@@ -727,7 +727,7 @@ void API::shareWorkspace_(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Wrong email format"
 				", email: {}",
 				email
@@ -828,7 +828,7 @@ void API::shareWorkspace_(
 
 				vector<string> emailBody;
 				emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-				emailBody.push_back(fmt::format("<p>&emsp;&emsp;&emsp;&emsp;the '{}' workspace has been shared successfully</p>", workspace->_name));
+				emailBody.push_back(std::format("<p>&emsp;&emsp;&emsp;&emsp;the '{}' workspace has been shared successfully</p>", workspace->_name));
 				emailBody.push_back(
 					string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>") + to_string(userKey) + "</b> and the confirmation code <b>" +
 					shareWorkspaceCode + "</b> to be used to confirm the sharing of the Workspace</p>"
@@ -1578,7 +1578,7 @@ void API::updateUser(
 				}
 				catch (runtime_error &e)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Wrong email format"
 						", email: {}",
 						email
@@ -2764,7 +2764,7 @@ void API::emailFormatCheck(string email)
 	regex e("[[:w:]]+@[[:w:]]+\\.[[:w:]]+");
 	if (!regex_match(email, e))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Wrong email format"
 			", email: {}",
 			email
@@ -2786,7 +2786,7 @@ void API::emailFormatCheck(string email)
 	size_t endOfLocalPartIndex = email.find_last_of("@");
 	if (endOfLocalPartIndex == string::npos)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Wrong email format"
 			", email: {}",
 			email
@@ -2810,7 +2810,7 @@ void API::emailFormatCheck(string email)
 	string domainPart = email.substr(endOfLocalPartIndex + 1);
 	if (localPart == "" || domainPart.find(".") == string::npos)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Wrong email format"
 			", email: {}",
 			email

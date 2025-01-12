@@ -663,7 +663,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			OncePerDayType oncePerDayType = OncePerDayType::DBDataRetention;
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_OncePerDayExecution (type, lastExecutionTime) "
 				"select {}, NULL where not exists "
 				"(select type from MMS_OncePerDayExecution where type = {})",
@@ -682,7 +682,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			OncePerDayType oncePerDayType = OncePerDayType::GEOInfo;
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_OncePerDayExecution (type, lastExecutionTime) "
 				"select {}, NULL where not exists "
 				"(select type from MMS_OncePerDayExecution where type = {})",
@@ -1093,7 +1093,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						{
 							int64_t encodingProfileKey = -1;
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"select encodingProfileKey from MMS_EncodingProfile "
 								"where workspaceKey is null and contentType = {} and label = {}",
 								trans.quote(toString(contentType)), trans.quote(label)
@@ -1112,7 +1112,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							{
 								encodingProfileKey = res[0]["encodingProfileKey"].as<int64_t>();
 
-								string sqlStatement = fmt::format(
+								string sqlStatement = std::format(
 									"WITH rows AS (update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
 									"where encodingProfileKey = {} returning 1) select count(*) from rows",
 									trans.quote(toString(deliveryTechnology)), trans.quote(jsonProfile), encodingProfileKey
@@ -1138,7 +1138,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							}
 							else
 							{
-								string sqlStatement = fmt::format(
+								string sqlStatement = std::format(
 									"insert into MMS_EncodingProfile ("
 									"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
 									"DEFAULT,            NULL,         {},    {},          {},                 {}) ",

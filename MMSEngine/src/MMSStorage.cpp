@@ -451,11 +451,14 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physica
 		}
 		else
 		{
+			/*
 			char pMMSPartitionName[64];
 
 			sprintf(pMMSPartitionName, "/MMS_%04d/", mmsPartitionNumber);
 
 			deliveryURI = pMMSPartitionName + contentWorkspace->_directoryName + relativePath + fileName;
+			*/
+			deliveryURI = std::format("/MMS_{:0>4}/", mmsPartitionNumber) + contentWorkspace->_directoryName + relativePath + fileName;
 		}
 
 		return make_tuple(title, mmsPartitionNumber, deliveryFileName, deliveryURI);
@@ -533,11 +536,14 @@ MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, 
 
 		string deliveryURI;
 		{
+			/*
 			char pMMSPartitionName[64];
 
 			sprintf(pMMSPartitionName, "/MMS_%04d/", mmsPartitionNumber);
 
 			deliveryURI = pMMSPartitionName + contentWorkspace->_directoryName + relativePath + fileName;
+			*/
+			deliveryURI = std::format("/MMS_{:0>4}/", mmsPartitionNumber) + contentWorkspace->_directoryName + relativePath + fileName;
 		}
 
 		return make_tuple(title, mmsPartitionNumber, physicalPathKey, deliveryFileName, deliveryURI);
@@ -773,11 +779,13 @@ fs::path MMSStorage::getStagingAssetPathName(
 	bool removeLinuxPathIfExist
 )
 {
-	char pUniqueFileName[256];
+	// char pUniqueFileName[256];
+	string pUniqueFileName;
 	string localFileName;
 	tm tmDateTime;
 	unsigned long ulMilliSecs;
-	char pDateTime[64];
+	// char pDateTime[64];
+	string pDateTime;
 	fs::path assetPathName;
 
 	if (_noFileSystemAccess)
@@ -792,10 +800,14 @@ fs::path MMSStorage::getStagingAssetPathName(
 
 	if (fileName == "")
 	{
-		sprintf(
-			pUniqueFileName, "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu_%lld_%lld_%s", (unsigned long)(tmDateTime.tm_year + 1900),
-			(unsigned long)(tmDateTime.tm_mon + 1), (unsigned long)(tmDateTime.tm_mday), (unsigned long)(tmDateTime.tm_hour),
-			(unsigned long)(tmDateTime.tm_min), (unsigned long)(tmDateTime.tm_sec), ulMilliSecs, llMediaItemKey, llPhysicalPathKey, _hostName.c_str()
+		// sprintf(
+		// 	pUniqueFileName, "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu_%lld_%lld_%s", (unsigned long)(tmDateTime.tm_year + 1900),
+		// 	(unsigned long)(tmDateTime.tm_mon + 1), (unsigned long)(tmDateTime.tm_mday), (unsigned long)(tmDateTime.tm_hour),
+		// 	(unsigned long)(tmDateTime.tm_min), (unsigned long)(tmDateTime.tm_sec), ulMilliSecs, llMediaItemKey, llPhysicalPathKey, _hostName.c_str()
+		// );
+		pUniqueFileName = std::format(
+			"{:0>4}_{:0>2}_{:0>2}_{:0>2}_{:0>2}_{:0>2}_{:0>4}_{}_{}_{}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+			tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec, ulMilliSecs, llMediaItemKey, llPhysicalPathKey, _hostName
 		);
 
 		localFileName = pUniqueFileName;
@@ -805,10 +817,16 @@ fs::path MMSStorage::getStagingAssetPathName(
 		localFileName = fileName;
 	}
 
+	/*
 	sprintf(
 		pDateTime, "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu", (unsigned long)(tmDateTime.tm_year + 1900), (unsigned long)(tmDateTime.tm_mon + 1),
 		(unsigned long)(tmDateTime.tm_mday), (unsigned long)(tmDateTime.tm_hour), (unsigned long)(tmDateTime.tm_min),
 		(unsigned long)(tmDateTime.tm_sec), ulMilliSecs
+	);
+	*/
+	pDateTime = std::format(
+		"{:0>4}_{:0>2}_{:0>2}_{:0>2}_{:0>2}_{:0>2}_{:0>4}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday, tmDateTime.tm_hour,
+		tmDateTime.tm_min, tmDateTime.tm_sec, ulMilliSecs
 	);
 
 	// create the 'date' directory in staging if not exist
@@ -888,7 +906,8 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
 	Workspace::TerritoriesHashMap &phmTerritories
 )
 {
-	char pMMSPartitionName[64];
+	// char pMMSPartitionName[64];
+	string pMMSPartitionName;
 
 	if (_noFileSystemAccess)
 	{
@@ -898,7 +917,8 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
 		throw runtime_error(errorMessage);
 	}
 
-	sprintf(pMMSPartitionName, "MMS_%04lu", ulCurrentMMSPartitionIndex);
+	// sprintf(pMMSPartitionName, "MMS_%04lu", ulCurrentMMSPartitionIndex);
+	pMMSPartitionName = std::format("MMS_{:0>4}", ulCurrentMMSPartitionIndex);
 
 	fs::path mmsAssetPathName =
 		MMSStorage::getMMSRootRepository(_storage) / string(pMMSPartitionName) / workspaceDirectoryName / relativePath.substr(1);
@@ -1240,7 +1260,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		}
 		catch (NoMoreSpaceInMMSPartition &e)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"getPartitionToBeUsedAndUpdateFreeSpace failed"
 				", ingestionJobKey: {}"
 				", ullFSEntrySizeInBytes: {}",
@@ -1670,9 +1690,11 @@ void MMSStorage::refreshPartitionsFreeSizes()
 	{
 		fs::path partitionPathName;
 		{
-			char pMMSPartitionName[64];
+			// char pMMSPartitionName[64];
+			string pMMSPartitionName;
 
-			sprintf(pMMSPartitionName, "MMS_%04d", partitionKey);
+			// sprintf(pMMSPartitionName, "MMS_%04d", partitionKey);
+			pMMSPartitionName = std::format("MMS_{:0>4}", partitionKey);
 
 			partitionPathName = MMSStorage::getMMSRootRepository(_storage);
 			partitionPathName /= pMMSPartitionName;
@@ -1707,8 +1729,10 @@ void MMSStorage::refreshPartitionsFreeSizes()
 
 		int localFreeSpaceToLeaveInMB;
 		{
-			char pMMSPartitionName[64];
-			sprintf(pMMSPartitionName, "%04d", partitionKey);
+			// char pMMSPartitionName[64];
+			string pMMSPartitionName;
+			// sprintf(pMMSPartitionName, "%04d", partitionKey);
+			pMMSPartitionName = std::format("{:0>4}", partitionKey);
 			string freeSpaceConfField = string("freeSpaceToLeaveInEachPartitionInMB_") + pMMSPartitionName;
 
 			localFreeSpaceToLeaveInMB = JSONUtils::asInt(_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
@@ -1777,7 +1801,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		// in workspaceIngestionRepository perchè se lo stesso user ingesta due tar contemporaneamente,
 		// la directory content viene usata per entrambi i tar creando problemi
 		// Aggiungiamo quindi l'ingestionJobKey
-		string workIngestionDirectory = fmt::format("{}/{}", workspaceIngestionRepository, ingestionJobKey);
+		string workIngestionDirectory = std::format("{}/{}", workspaceIngestionRepository, ingestionJobKey);
 
 		_logger->info(__FILEREF__ + "Creating directory (if needed)" + ", workIngestionDirectory: " + workIngestionDirectory);
 		fs::create_directories(workIngestionDirectory);
@@ -1795,7 +1819,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		// tar into workspaceIngestion directory
 		//	source will be something like <ingestion key>_source
 		//	destination will be the original directory (that has to be the same name of the tar file name)
-		executeCommand = fmt::format("tar xfz {} --directory {}", tarBinaryPathName, workIngestionDirectory);
+		executeCommand = std::format("tar xfz {} --directory {}", tarBinaryPathName, workIngestionDirectory);
 		_logger->info(__FILEREF__ + "Start tar command " + ", executeCommand: " + executeCommand);
 		chrono::system_clock::time_point startTar = chrono::system_clock::now();
 		int executeCommandStatus = ProcessUtility::execute(executeCommand);
@@ -1823,7 +1847,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			// ))
 			if (!sourcePathName.ends_with(suffix))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"sourcePathName does not end with '{}'"
 					", ingestionJobKey: {}"
 					", sourcePathName: '{}'",

@@ -368,7 +368,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (exception)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"

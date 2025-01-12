@@ -852,7 +852,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				if (metaData == "")
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"timesRelativeToMetaDataField cannot be applied "
 						"because source media does not have metaData"
 						", ingestionJobKey: {}"
@@ -869,7 +869,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				string timeCode = JSONUtils::asString(metaDataRoot, timesRelativeToMetaDataField, "");
 				if (timeCode == "")
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"timesRelativeToMetaDataField cannot be applied "
 						"because source media has metaData but does not have "
 						"the timecode"

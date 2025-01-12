@@ -1266,7 +1266,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 		vector<string> otherHeaders;
 		json encodeStatusResponse = CurlWrapper::httpGetJson(
 			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
-			otherHeaders, fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
+			otherHeaders, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 		);
 
 		SPDLOG_INFO(
@@ -1318,7 +1318,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 		}
 		catch (...)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"getEncodingStatus. Response Body json is not well format"
 				", _proxyIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -1937,7 +1937,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							updatedPushEncoderKey = JSONUtils::asInt64(encodersDetailsRoot, "pushEncoderKey", static_cast<int64_t>(-1));
 							if (updatedPushEncoderKey == -1)
 							{
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"Wrong pushEncoderKey"
 									", _ingestionJobKey: {}"
 									", _encodingJobKey: {}"
@@ -2035,7 +2035,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					", _currentUsedFFMpegEncoderKey: {}",
 					_proxyIdentifier, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey
 				);
-				ffmpegEncoderURL = fmt::format(
+				ffmpegEncoderURL = std::format(
 					"{}{}/{}/{}", _currentUsedFFMpegEncoderHost, ffmpegURI, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 				);
 
@@ -2075,7 +2075,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
 						body,
 						"application/json", // contentType
-						otherHeaders, fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
+						otherHeaders, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 					);
 				}
 				catch (runtime_error &e)
@@ -2125,7 +2125,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				// select another encoder
 				_encodingItem->_encoderKey = -1;
 
-				ffmpegEncoderURL = fmt::format("{}{}/{}", _currentUsedFFMpegEncoderHost, ffmpegURI, _encodingItem->_encodingJobKey);
+				ffmpegEncoderURL = std::format("{}{}/{}", _currentUsedFFMpegEncoderHost, ffmpegURI, _encodingItem->_encodingJobKey);
 			}
 
 			chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
@@ -2854,7 +2854,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 		);
 		if (ingestionJobOutputsCount <= 0)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"LiveRecorder: no chunks were generated"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"

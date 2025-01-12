@@ -56,7 +56,7 @@ void EncoderProxy::encodeContentImage()
 				unsigned long ulFileSize = fs::file_size(mmsSourceAssetPathName);
 				if (ulFileSize == 0)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"source image file size is zero"
 						", mmsSourceAssetPathName: {}",
 						mmsSourceAssetPathName

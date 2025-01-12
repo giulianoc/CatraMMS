@@ -156,7 +156,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 	}
 	catch (exception &e)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"getEncoderURL failed"
 			", ingestionJobKey: {}"
 			", workspaceKey: {}"

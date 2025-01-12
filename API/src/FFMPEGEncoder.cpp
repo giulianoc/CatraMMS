@@ -1198,7 +1198,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					}
 					catch (exception &e)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"_ffmpeg->getEncodingProgress failed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -1342,7 +1342,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (encodingCompleted)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"filterNotification, encoding is already finished"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -1385,7 +1385,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!liveProxyFound)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"filterNotification, liveProxy not found"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -1454,7 +1454,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 									   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
 									   workflowMetadata,
 									   "application/json", // contentType
-									   otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+									   otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
 									   3 // maxRetryNumber
 				)
 									   .second;
@@ -1462,7 +1462,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (runtime_error e)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Ingested URL failed (runtime_error)"
 				", ingestionJobKey: {}"
 				", mmsWorkflowIngestionURL: {}"
@@ -1478,7 +1478,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (exception e)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Ingested URL failed (exception)"
 				", ingestionJobKey: {}"
 				", mmsWorkflowIngestionURL: {}"
@@ -1868,7 +1868,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			if (!encodingFound)
 			{
-				string errorMessage = fmt::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
+				string errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
 
 				_logger->error(__FILEREF__ + errorMessage);
 

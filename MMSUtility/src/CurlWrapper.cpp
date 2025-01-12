@@ -37,7 +37,7 @@ void CurlWrapper::globalTerminate() { curl_global_cleanup(); }
 string CurlWrapper::basicAuthorization(const string &user, const string &password)
 {
 	if (user != "")
-		return fmt::format("Basic {}", Convert::base64_encode(user + ":" + password));
+		return std::format("Basic {}", Convert::base64_encode(user + ":" + password));
 	else
 		return "";
 }
@@ -45,7 +45,7 @@ string CurlWrapper::basicAuthorization(const string &user, const string &passwor
 string CurlWrapper::bearerAuthorization(const string &bearerToken)
 {
 	if (bearerToken != "")
-		return fmt::format("Bearer {}", bearerToken);
+		return std::format("Bearer {}", bearerToken);
 	else
 		return "";
 }
@@ -873,7 +873,7 @@ string CurlWrapper::httpGet(
 			curl = curl_easy_init();
 			if (!curl)
 			{
-				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				string errorMessage = std::format("{}. curl_easy_init failed", api);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -975,7 +975,7 @@ string CurlWrapper::httpGet(
 			*/
 			{
 				if (authorization != "")
-					headersList = curl_slist_append(headersList, fmt::format("Authorization: {}", authorization).c_str());
+					headersList = curl_slist_append(headersList, std::format("Authorization: {}", authorization).c_str());
 
 				for (string header : otherHeaders)
 					headersList = curl_slist_append(headersList, header.c_str());
@@ -1007,7 +1007,7 @@ string CurlWrapper::httpGet(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			if (curlCode != CURLE_OK)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"{}. curl_easy_perform failed"
 					", curlCode message: {}"
 					", url: {}",
@@ -1049,7 +1049,7 @@ string CurlWrapper::httpGet(
 			}
 			else
 			{
-				string message = fmt::format(
+				string message = std::format(
 					"{} failed, wrong return status"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -1436,7 +1436,7 @@ string CurlWrapper::httpDelete(
 			curl = curl_easy_init();
 			if (!curl)
 			{
-				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				string errorMessage = std::format("{}. curl_easy_init failed", api);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -1541,7 +1541,7 @@ string CurlWrapper::httpDelete(
 			*/
 			{
 				if (authorization != "")
-					headersList = curl_slist_append(headersList, fmt::format("Authorization: {}", authorization).c_str());
+					headersList = curl_slist_append(headersList, std::format("Authorization: {}", authorization).c_str());
 
 				for (string header : otherHeaders)
 					headersList = curl_slist_append(headersList, header.c_str());
@@ -1573,7 +1573,7 @@ string CurlWrapper::httpDelete(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			if (curlCode != CURLE_OK)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"{}. curl_easy_perform failed"
 					", curlCode message: {}"
 					", url: {}",
@@ -1615,7 +1615,7 @@ string CurlWrapper::httpDelete(
 			}
 			else
 			{
-				string message = fmt::format(
+				string message = std::format(
 					"{} failed, wrong return status"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -2042,7 +2042,7 @@ pair<string, string> CurlWrapper::httpPostPutString(
 			curl = curl_easy_init();
 			if (!curl)
 			{
-				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				string errorMessage = std::format("{}. curl_easy_init failed", api);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -2156,9 +2156,9 @@ pair<string, string> CurlWrapper::httpPostPutString(
 				// if (contentType != "")
 				// headers.push_back(string("Content-Type: ") + contentType);
 				if (contentType != "")
-					headersList = curl_slist_append(headersList, fmt::format("Content-Type: {}", contentType).c_str());
+					headersList = curl_slist_append(headersList, std::format("Content-Type: {}", contentType).c_str());
 				if (authorization != "")
-					headersList = curl_slist_append(headersList, fmt::format("Authorization: {}", authorization).c_str());
+					headersList = curl_slist_append(headersList, std::format("Authorization: {}", authorization).c_str());
 
 				for (string header : otherHeaders)
 					headersList = curl_slist_append(headersList, header.c_str());
@@ -2192,7 +2192,7 @@ pair<string, string> CurlWrapper::httpPostPutString(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			if (curlCode != CURLE_OK)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"{}. curl_easy_perform failed"
 					", curlCode message: {}"
 					", url: {}",
@@ -2230,7 +2230,7 @@ pair<string, string> CurlWrapper::httpPostPutString(
 			}
 			else
 			{
-				string message = fmt::format(
+				string message = std::format(
 					"{} failed, wrong return status"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -2251,7 +2251,7 @@ pair<string, string> CurlWrapper::httpPostPutString(
 			size_t beginOfHeaderBodySeparatorIndex;
 			if ((beginOfHeaderBodySeparatorIndex = responseHeaderAndBody.find("\r\n\r\n")) == string::npos)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"response is wrong"
 					"{}"
 					", url: {}"
@@ -2699,7 +2699,7 @@ string CurlWrapper::httpPostPutFile(
 			curlUploadData.mediaSourceFileStream.open(pathFileName, ios::binary);
 			if (!curlUploadData.mediaSourceFileStream)
 			{
-				string message = fmt::format(
+				string message = std::format(
 					"open file failed"
 					"{}"
 					", pathFileName: {}",
@@ -2723,7 +2723,7 @@ string CurlWrapper::httpPostPutFile(
 			curl = curl_easy_init();
 			if (!curl)
 			{
-				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				string errorMessage = std::format("{}. curl_easy_init failed", api);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -2874,15 +2874,15 @@ string CurlWrapper::httpPostPutFile(
 					// $contentRangeStart-$contentRangeEnd/$binaryFileSize
 
 					contentLengthOrRangeHeader =
-						fmt::format("Content-Range: bytes {}-{}/{}", contentRangeStart, contentRangeEnd_Excluded - 1, fileSizeInBytes);
+						std::format("Content-Range: bytes {}-{}/{}", contentRangeStart, contentRangeEnd_Excluded - 1, fileSizeInBytes);
 				}
 				else
-					contentLengthOrRangeHeader = fmt::format("Content-Length: {}", fileSizeInBytes);
+					contentLengthOrRangeHeader = std::format("Content-Length: {}", fileSizeInBytes);
 				headersList = curl_slist_append(headersList, contentLengthOrRangeHeader.c_str());
 				if (contentType != "")
-					headersList = curl_slist_append(headersList, fmt::format("Content-Type: {}", contentType).c_str());
+					headersList = curl_slist_append(headersList, std::format("Content-Type: {}", contentType).c_str());
 				if (authorization != "")
-					headersList = curl_slist_append(headersList, fmt::format("Authorization: {}", authorization).c_str());
+					headersList = curl_slist_append(headersList, std::format("Authorization: {}", authorization).c_str());
 
 				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headersList);
 			}
@@ -2907,7 +2907,7 @@ string CurlWrapper::httpPostPutFile(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			if (curlCode != CURLE_OK)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"{}. curl_easy_perform failed"
 					", curlCode message: {}"
 					", url: {}",
@@ -2951,7 +2951,7 @@ string CurlWrapper::httpPostPutFile(
 			}
 			else
 			{
-				string message = fmt::format(
+				string message = std::format(
 					"{} failed, wrong return status"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -3371,7 +3371,7 @@ string CurlWrapper::httpPostPutFormData(
 			curl = curl_easy_init();
 			if (!curl)
 			{
-				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				string errorMessage = std::format("{}. curl_easy_init failed", api);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -3464,7 +3464,7 @@ string CurlWrapper::httpPostPutFormData(
 
 			// list<string> headers;
 			// headers.push_back("Content-Type: multipart/form-data; boundary=\"" + boundary + "\"");
-			headersList = curl_slist_append(headersList, fmt::format("Content-Type: multipart/form-data; boundary=\"{}\"", boundary).c_str());
+			headersList = curl_slist_append(headersList, std::format("Content-Type: multipart/form-data; boundary=\"{}\"", boundary).c_str());
 
 			// request.setOpt(new curlpp::options::PostFields(sFormData));
 			// request.setOpt(new curlpp::options::PostFieldSize(sFormData.length()));
@@ -3489,7 +3489,7 @@ string CurlWrapper::httpPostPutFormData(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			if (curlCode != CURLE_OK)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"{}. curl_easy_perform failed"
 					", curlCode message: {}"
 					", url: {}",
@@ -3531,7 +3531,7 @@ string CurlWrapper::httpPostPutFormData(
 			}
 			else
 			{
-				string message = fmt::format(
+				string message = std::format(
 					"{} failed, wrong return status"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -4002,7 +4002,7 @@ string CurlWrapper::httpPostPutFileByFormData(
 			curlUploadFormData.mediaSourceFileStream.open(pathFileName, ios::binary);
 			if (!curlUploadFormData.mediaSourceFileStream)
 			{
-				string message = fmt::format(
+				string message = std::format(
 					"open file failed"
 					"{}"
 					", pathFileName: {}",
@@ -4063,7 +4063,7 @@ string CurlWrapper::httpPostPutFileByFormData(
 			curl = curl_easy_init();
 			if (!curl)
 			{
-				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				string errorMessage = std::format("{}. curl_easy_init failed", api);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -4184,7 +4184,7 @@ string CurlWrapper::httpPostPutFileByFormData(
 			string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
 			header.push_back(contentTypeHeader);
 			*/
-			headersList = curl_slist_append(headersList, fmt::format("Content-Type: multipart/form-data; boundary=\"{}\"", boundary).c_str());
+			headersList = curl_slist_append(headersList, std::format("Content-Type: multipart/form-data; boundary=\"{}\"", boundary).c_str());
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headersList);
 
 			// request.setOpt(new curlpp::options::WriteStream(&response));
@@ -4207,7 +4207,7 @@ string CurlWrapper::httpPostPutFileByFormData(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			if (curlCode != CURLE_OK)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"{}. curl_easy_perform failed"
 					", curlCode message: {}"
 					", url: {}",
@@ -4253,7 +4253,7 @@ string CurlWrapper::httpPostPutFileByFormData(
 			}
 			else
 			{
-				string message = fmt::format(
+				string message = std::format(
 					"{} failed, wrong return status"
 					"{}"
 					", @MMS statistics@ - elapsed (secs): @{}@"
@@ -4700,7 +4700,7 @@ void CurlWrapper::downloadFile(
 			curl = curl_easy_init();
 			if (!curl)
 			{
-				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				string errorMessage = std::format("{}. curl_easy_init failed", api);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -4832,7 +4832,7 @@ void CurlWrapper::downloadFile(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			if (curlCode != CURLE_OK)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"{}. curl_easy_perform failed"
 					", curlCode message: {}"
 					", url: {}",
@@ -5105,7 +5105,7 @@ void CurlWrapper::ftpFile(
 
 		try
 		{
-			ftpUrl = fmt::format("ftp://{}:{}@{}:{}{}", ftpUserName, ftpPassword, ftpServer, ftpPort, ftpRemoteDirectory);
+			ftpUrl = std::format("ftp://{}:{}@{}:{}{}", ftpUserName, ftpPassword, ftpServer, ftpPort, ftpRemoteDirectory);
 
 			if (ftpRemoteDirectory.size() == 0 || ftpRemoteDirectory.back() != '/')
 				ftpUrl += "/";
@@ -5158,7 +5158,7 @@ void CurlWrapper::ftpFile(
 			curl = curl_easy_init();
 			if (!curl)
 			{
-				string errorMessage = fmt::format("{}. curl_easy_init failed", api);
+				string errorMessage = std::format("{}. curl_easy_init failed", api);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -5252,7 +5252,7 @@ void CurlWrapper::ftpFile(
 			chrono::system_clock::time_point end = chrono::system_clock::now();
 			if (curlCode != CURLE_OK)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"{}. curl_easy_perform failed"
 					", curlCode message: {}"
 					", ftpUrl: {}",

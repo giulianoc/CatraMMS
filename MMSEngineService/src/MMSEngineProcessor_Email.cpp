@@ -179,7 +179,7 @@ void MMSEngineProcessor::emailNotificationThread(
 					}
 					catch (DBRecordNotFound &e)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Exception processing referencies"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -192,7 +192,7 @@ void MMSEngineProcessor::emailNotificationThread(
 					}
 					catch (...)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Exception processing referencies"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}",

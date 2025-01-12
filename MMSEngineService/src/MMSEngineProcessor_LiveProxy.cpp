@@ -105,7 +105,7 @@ void MMSEngineProcessor::manageLiveProxy(
 				{
 					if (!JSONUtils::isMetadataPresent(parametersRoot, "schedule"))
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Field is not present or it is null"
 							", _processorIdentifier: {}"
 							", field: {}",
@@ -139,7 +139,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			if (!JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", field: {}",

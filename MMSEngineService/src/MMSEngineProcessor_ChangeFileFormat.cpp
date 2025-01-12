@@ -459,7 +459,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"change file format failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"

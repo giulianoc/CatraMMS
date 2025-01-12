@@ -52,9 +52,9 @@ string StatisticTimer::toString()
 		auto [start, stop, label] = timer;
 		if (log != "")
 			log += ", ";
-		log += fmt::format("{}: {}", label, chrono::duration_cast<chrono::milliseconds>(stop - start).count());
+		log += std::format("{}: {}", label, chrono::duration_cast<chrono::milliseconds>(stop - start).count());
 	}
-	log = fmt::format("statistics ({}): {}", _name, log);
+	log = std::format("statistics ({}): {}", _name, log);
 
 	return log;
 }
@@ -76,7 +76,7 @@ json StatisticTimer::toJson()
 	{
 		auto [start, stop, label] = timer;
 
-		statisticsRoot.push_back(fmt::format("{}: {} millisecs", label, chrono::duration_cast<chrono::milliseconds>(stop - start).count()));
+		statisticsRoot.push_back(std::format("{}: {} millisecs", label, chrono::duration_cast<chrono::milliseconds>(stop - start).count()));
 	}
 
 	json root;

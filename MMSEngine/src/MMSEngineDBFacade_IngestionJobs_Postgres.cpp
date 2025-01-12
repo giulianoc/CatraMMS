@@ -122,7 +122,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				// 2023-02-07: added skip locked. Questa opzione è importante perchè evita che la select
 				//	attenda eventuali lock di altri engine. Considera che un lock su una riga causa anche
 				//	il lock di tutte le righe toccate dalla transazione
-				string sqlStatement = fmt::format("select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
+				string sqlStatement = std::format("select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
 												  "ij.metaDataContent, ij.status, ij.ingestionType "
 												  "from MMS_IngestionJob ij "
 												  "where ij.processorMMS is null ");
@@ -148,9 +148,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 																   // ", 'Countdown'"
 																   ", 'Live-Grid'"
 																   ", 'Add-Silent-Audio'";
-					sqlStatement += fmt::format("and ij.ingestionType in ({}) ", tasksNotInvolvingMMSEngineThreadsList);
+					sqlStatement += std::format("and ij.ingestionType in ({}) ", tasksNotInvolvingMMSEngineThreadsList);
 				}
-				sqlStatement += fmt::format(
+				sqlStatement += std::format(
 					// "and (ij.status = {} "
 					// "or (ij.status in ({}, {}, {}, {}) and ij.sourceBinaryTransferred = true)) "
 					"and toBeManaged_virtual "
@@ -284,7 +284,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				// In this case, if the client has to upload 10 contents sequentially,
 				// the last one is the sum of all the other contents
 
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"WITH rows AS (update MMS_IngestionJob set processorMMS = {} "
 					"where ingestionJobKey = {} returning 1) select count(*) from rows",
 					trans.quote(processorMMS), ingestionJobKey
@@ -292,7 +292,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			}
 			else
 			{
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"WITH rows AS (update MMS_IngestionJob set startProcessing = NOW() at time zone 'utc', "
 					"processorMMS = {} where ingestionJobKey = {} returning 1) select count(*) from rows",
 					trans.quote(processorMMS), ingestionJobKey
@@ -468,7 +468,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 	{
 		bool atLeastOneDependencyRowFound = false;
 
-		string sqlStatement = fmt::format(
+		string sqlStatement = std::format(
 			"select dependOnIngestionJobKey, dependOnSuccess "
 			"from MMS_IngestionJobDependency "
 			"where ingestionJobKey = {} order by orderNumber asc",
@@ -489,7 +489,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 				dependOnIngestionJobKey = row["dependOnIngestionJobKey"].as<int64_t>();
 				dependOnSuccess = row["dependOnSuccess"].as<int>();
 
-				string sqlStatement = fmt::format("select status from MMS_IngestionJob where ingestionJobKey = {}", dependOnIngestionJobKey);
+				string sqlStatement = std::format("select status from MMS_IngestionJob where ingestionJobKey = {}", dependOnIngestionJobKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans->exec(sqlStatement);
 				SPDLOG_INFO(
@@ -641,7 +641,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 	try
 	{
 		{
-			string sqlStatement = fmt::format("select c.enabled, c.workspaceType from MMS_Workspace c where c.workspaceKey = {}", workspaceKey);
+			string sqlStatement = std::format("select c.enabled, c.workspaceType from MMS_Workspace c where c.workspaceKey = {}", workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -667,7 +667,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 				else if (workspaceType != static_cast<int>(WorkspaceType::IngestionAndDelivery) &&
 						 workspaceType != static_cast<int>(WorkspaceType::EncodingOnly))
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Workspace is not enabled to ingest content"
 						", workspaceKey: {}"
 						", workspaceType: {}"
@@ -698,7 +698,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 		string errorMessage;
 		{
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, "
 					"metaDataContent, ingestionType, priority, "
 					"processingStartingFrom, "
@@ -830,7 +830,7 @@ void MMSEngineDBFacade::addIngestionJobDependency(
 		int localOrderNumber = 0;
 		if (orderNumber == -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select max(orderNumber) as maxOrderNumber from MMS_IngestionJobDependency "
 				"where ingestionJobKey = {}",
 				ingestionJobKey
@@ -863,7 +863,7 @@ void MMSEngineDBFacade::addIngestionJobDependency(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_IngestionJobDependency (ingestionJobDependencyKey,"
 				"ingestionJobKey, dependOnSuccess, dependOnIngestionJobKey, "
 				"orderNumber, referenceOutputDependency) values ("
@@ -932,7 +932,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJobDependency set dependOnIngestionJobKey = {} "
 				"where dependOnIngestionJobKey = {} returning 1) select count(*) from rows",
 				newDependOnIngestionJobKey, previousDependOnIngestionJobKey
@@ -1171,7 +1171,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set metadataContent = {} "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				trans.quote(metadataContent), ingestionJobKey
@@ -1243,7 +1243,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set parentGroupOfTasksIngestionJobKey = {} "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				parentGroupOfTasksIngestionJobKey, ingestionJobKey
@@ -1460,20 +1460,20 @@ void MMSEngineDBFacade::updateIngestionJob(
 				if (processorMMS != "noToBeUpdated")
 				{
 					if (processorMMS == "")
-						processorMMSUpdate = fmt::format("processorMMS = null, ");
+						processorMMSUpdate = std::format("processorMMS = null, ");
 					else
-						processorMMSUpdate = fmt::format("processorMMS = {}, ", trans->quote(processorMMS));
+						processorMMSUpdate = std::format("processorMMS = {}, ", trans->quote(processorMMS));
 				}
 
 				if (errorMessageForSQL == "")
-					sqlStatement = fmt::format(
+					sqlStatement = std::format(
 						"WITH rows AS (update MMS_IngestionJob set status = {}, "
 						"{} endProcessing = NOW() at time zone 'utc' "
 						"where ingestionJobKey = {} returning 1) select count(*) from rows",
 						trans->quote(toString(newIngestionStatus)), processorMMSUpdate, ingestionJobKey
 					);
 				else
-					sqlStatement = fmt::format(
+					sqlStatement = std::format(
 						"WITH rows AS (update MMS_IngestionJob set status = {}, "
 						"errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20), "
 						"{} endProcessing = NOW() at time zone 'utc' "
@@ -1508,20 +1508,20 @@ void MMSEngineDBFacade::updateIngestionJob(
 				if (processorMMS != "noToBeUpdated")
 				{
 					if (processorMMS == "")
-						processorMMSUpdate = fmt::format(", processorMMS = null ");
+						processorMMSUpdate = std::format(", processorMMS = null ");
 					else
-						processorMMSUpdate = fmt::format(", processorMMS = {} ", trans->quote(processorMMS));
+						processorMMSUpdate = std::format(", processorMMS = {} ", trans->quote(processorMMS));
 				}
 
 				if (errorMessageForSQL == "")
-					sqlStatement = fmt::format(
+					sqlStatement = std::format(
 						"WITH rows AS (update MMS_IngestionJob set status = {} "
 						"{} "
 						"where ingestionJobKey = {} returning 1) select count(*) from rows",
 						trans->quote(toString(newIngestionStatus)), processorMMSUpdate, ingestionJobKey
 					);
 				else
-					sqlStatement = fmt::format(
+					sqlStatement = std::format(
 						"WITH rows AS (update MMS_IngestionJob set status = {}, "
 						"errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20) "
 						"{} "
@@ -1642,7 +1642,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 		if (errorMessageForSQL != "")
 		{
 			// like: non lo uso per motivi di performance
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob "
 				"set errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20) "
 				"where ingestionJobKey = {} "
@@ -1829,27 +1829,27 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 					string sqlStatement;
 					if (hierarchicalLevelIndex == 0)
 					{
-						sqlStatement = fmt::format(
+						sqlStatement = std::format(
 							"select ijd.ingestionJobKey "
 							"from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
 							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
 							"and ijd.referenceOutputDependency != 1 "
 							"and ijd.dependOnIngestionJobKey {} and ijd.dependOnSuccess = {}",
-							ingestionJobKeysToFindDependencies.find(",") != string::npos ? fmt::format("in ({})", ingestionJobKeysToFindDependencies)
-																						 : fmt::format("= {}", ingestionJobKeysToFindDependencies),
+							ingestionJobKeysToFindDependencies.find(",") != string::npos ? std::format("in ({})", ingestionJobKeysToFindDependencies)
+																						 : std::format("= {}", ingestionJobKeysToFindDependencies),
 							dependOnSuccess
 						);
 					}
 					else
 					{
-						sqlStatement = fmt::format(
+						sqlStatement = std::format(
 							"select ijd.ingestionJobKey "
 							"from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd where "
 							"ij.ingestionJobKey = ijd.ingestionJobKey and ij.ingestionType != 'GroupOfTasks' "
 							"and ijd.referenceOutputDependency != 1 "
 							"and ijd.dependOnIngestionJobKey {}",
-							ingestionJobKeysToFindDependencies.find(",") != string::npos ? fmt::format("in ({})", ingestionJobKeysToFindDependencies)
-																						 : fmt::format("= {}", ingestionJobKeysToFindDependencies)
+							ingestionJobKeysToFindDependencies.find(",") != string::npos ? std::format("in ({})", ingestionJobKeysToFindDependencies)
+																						 : std::format("= {}", ingestionJobKeysToFindDependencies)
 						);
 					}
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1863,12 +1863,12 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 						if (hierarchicalIngestionJobKeysDependencies == "")
 							hierarchicalIngestionJobKeysDependencies = to_string(row["ingestionJobKey"].as<int64_t>());
 						else
-							hierarchicalIngestionJobKeysDependencies += fmt::format(", {}", row["ingestionJobKey"].as<int64_t>());
+							hierarchicalIngestionJobKeysDependencies += std::format(", {}", row["ingestionJobKey"].as<int64_t>());
 
 						if (ingestionJobKeysToFindDependencies == "")
 							ingestionJobKeysToFindDependencies = to_string(row["ingestionJobKey"].as<int64_t>());
 						else
-							ingestionJobKeysToFindDependencies += fmt::format(", {}", row["ingestionJobKey"].as<int64_t>());
+							ingestionJobKeysToFindDependencies += std::format(", {}", row["ingestionJobKey"].as<int64_t>());
 					}
 					SPDLOG_INFO(
 						"SQL statement"
@@ -1919,14 +1919,14 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 					ingestionJobKey, hierarchicalIngestionJobKeysDependencies
 				);
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_IngestionJob set status = {}, "
 					"startProcessing = case when startProcessing IS NULL then NOW() at time zone 'utc' else startProcessing end, "
 					"endProcessing = NOW() at time zone 'utc' where ingestionJobKey {} returning 1) select count(*) from rows",
 					trans->quote(toString(IngestionStatus::End_NotToBeExecuted)),
 					hierarchicalIngestionJobKeysDependencies.find(",") != string::npos
-						? fmt::format("in ({})", hierarchicalIngestionJobKeysDependencies)
-						: fmt::format("= {}", hierarchicalIngestionJobKeysDependencies)
+						? std::format("in ({})", hierarchicalIngestionJobKeysDependencies)
+						: std::format("= {}", hierarchicalIngestionJobKeysDependencies)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
@@ -1946,7 +1946,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 			IngestionRootStatus currentIngestionRootStatus;
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select ir.ingestionRootKey, ir.status "
 					"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 					"where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = {}",
@@ -1968,7 +1968,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				}
 				else
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"IngestionJob is not found"
 						", ingestionJobKey: {}"
 						", sqlStatement: {}",
@@ -1994,7 +1994,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 			int intermediateStatesCount = 0;
 
 			{
-				string sqlStatement = fmt::format("select status from MMS_IngestionJob where ingestionRootKey = {}", ingestionRootKey);
+				string sqlStatement = std::format("select status from MMS_IngestionJob where ingestionRootKey = {}", ingestionRootKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans->exec(sqlStatement);
 				for (auto row : res)
@@ -2043,7 +2043,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 
 			if (newIngestionRootStatus != currentIngestionRootStatus)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_IngestionRoot set lastUpdate = NOW() at time zone 'utc', status = {} "
 					"where ingestionRootKey = {} returning 1) select count(*) from rows",
 					trans->quote(toString(newIngestionRootStatus)), ingestionRootKey
@@ -2059,7 +2059,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"no update was done"
 						", ingestionRootKey: {}"
 						", rowsUpdated: {}"
@@ -2257,7 +2257,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set downloadingProgress = {} "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				downloadingPercentage, ingestionJobKey
@@ -2285,7 +2285,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 		}
 
 		{
-			string sqlStatement = fmt::format("select status from MMS_IngestionJob where ingestionJobKey = {}", ingestionJobKey);
+			string sqlStatement = std::format("select status from MMS_IngestionJob where ingestionJobKey = {}", ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -2429,7 +2429,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set uploadingProgress = {} "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				uploadingPercentage, ingestionJobKey
@@ -2457,7 +2457,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 		}
 
 		{
-			string sqlStatement = fmt::format("select status from MMS_IngestionJob where ingestionJobKey = {}", ingestionJobKey);
+			string sqlStatement = std::format("select status from MMS_IngestionJob where ingestionJobKey = {}", ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -2601,14 +2601,14 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 		{
 			string sqlStatement;
 			if (sourceBinaryTransferred)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"WITH rows AS (update MMS_IngestionJob set sourceBinaryTransferred = {}, "
 					"uploadingProgress = 100 "
 					"where ingestionJobKey = {} returning 1) select count(*) from rows",
 					sourceBinaryTransferred, ingestionJobKey
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"WITH rows AS (update MMS_IngestionJob set sourceBinaryTransferred = {} "
 					"where ingestionJobKey = {} returning 1) select count(*) from rows",
 					sourceBinaryTransferred, ingestionJobKey
@@ -2732,7 +2732,7 @@ string MMSEngineDBFacade::ingestionRoot_columnAsString(int64_t workspaceKey, str
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_ingestionroot:.{}", columnName);
+		string requestedColumn = std::format("mms_ingestionroot:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = workflowQuery(requestedColumns, workspaceKey, ingestionRootKey, fromMaster);
 
@@ -3091,7 +3091,7 @@ json MMSEngineDBFacade::ingestionJob_columnAsJson(int64_t workspaceKey, string c
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_ingestionjob:ij.{}", columnName);
+		string requestedColumn = std::format("mms_ingestionjob:ij.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
@@ -3241,7 +3241,7 @@ string MMSEngineDBFacade::ingestionJob_columnAsString(int64_t workspaceKey, stri
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_ingestionjob:ij.{}", columnName);
+		string requestedColumn = std::format("mms_ingestionjob:ij.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
 
@@ -3513,7 +3513,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 	{
 		if (rows > _maxRows)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
@@ -3531,7 +3531,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Using startIndex/row without orderBy will give inconsistent results"
 				", startIndex: {}"
 				", rows: {}"
@@ -3546,23 +3546,23 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
-			where += fmt::format("ir.ingestionRootKey = ij.ingestionRootKey and ir.workspaceKey = {} ", workspaceKey);
+			where += std::format("ir.ingestionRootKey = ij.ingestionRootKey and ir.workspaceKey = {} ", workspaceKey);
 			if (ingestionJobKey != -1)
-				where += fmt::format("{} ij.ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
+				where += std::format("{} ij.ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
 			if (label != "")
-				where += fmt::format("{} ij.label = {} ", where.size() > 0 ? "and" : "", trans.quote(label));
+				where += std::format("{} ij.label = {} ", where.size() > 0 ? "and" : "", trans.quote(label));
 
 			string limit;
 			string offset;
 			string orderByCondition;
 			if (rows != -1)
-				limit = fmt::format("limit {} ", rows);
+				limit = std::format("limit {} ", rows);
 			if (startIndex != -1)
-				offset = fmt::format("offset {} ", startIndex);
+				offset = std::format("offset {} ", startIndex);
 			if (orderBy != "")
-				orderByCondition = fmt::format("order by {} ", orderBy);
+				orderByCondition = std::format("order by {} ", orderBy);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select {} "
 				"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 				"{} {} "
@@ -3586,7 +3586,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 
 			if (empty(res) && ingestionJobKey != -1 && notFoundAsException)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"ingestionJob not found"
 					", workspaceKey: {}"
 					", ingestionJobKey: {}",
@@ -3852,7 +3852,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 		int newPosition = 0;
 		{
 			string sqlStatement =
-				fmt::format("select max(position) as newPosition from MMS_IngestionJobOutput where ingestionJobKey = {}", ingestionJobKey);
+				std::format("select max(position) as newPosition from MMS_IngestionJobOutput where ingestionJobKey = {}", ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans->exec(sqlStatement);
 			if (!empty(res))
@@ -3871,7 +3871,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey, position) values ("
 				"{}, {}, {}, {})",
 				ingestionJobKey, mediaItemKey, physicalPathKey, newPosition
@@ -3892,7 +3892,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 			newPosition = 0;
 			{
 				string sqlStatement =
-					fmt::format("select max(position) as newPosition from MMS_IngestionJobOutput where ingestionJobKey = {}", sourceIngestionJobKey);
+					std::format("select max(position) as newPosition from MMS_IngestionJobOutput where ingestionJobKey = {}", sourceIngestionJobKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans->exec(sqlStatement);
 				if (!empty(res))
@@ -3910,7 +3910,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 				);
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey, position) values ("
 				"{}, {}, {}, {})",
 				sourceIngestionJobKey, mediaItemKey, physicalPathKey, newPosition
@@ -3982,7 +3982,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(int64_t ingestionJobKey, boo
 	try
 	{
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_IngestionJobOutput where ingestionJobKey = {}", ingestionJobKey);
+			string sqlStatement = std::format("select count(*) from MMS_IngestionJobOutput where ingestionJobKey = {}", ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			ingestionJobOutputsCount = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
@@ -4202,16 +4202,16 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 		}
 
 		string sqlWhere = "where ir.ingestionRootKey = ij.ingestionRootKey ";
-		sqlWhere += fmt::format("and ir.workspaceKey = {} ", workspace->_workspaceKey);
+		sqlWhere += std::format("and ir.workspaceKey = {} ", workspace->_workspaceKey);
 		if (ingestionJobKey != -1)
-			sqlWhere += fmt::format("and ij.ingestionJobKey = {} ", ingestionJobKey);
+			sqlWhere += std::format("and ij.ingestionJobKey = {} ", ingestionJobKey);
 		if (label != "")
 		{
 			// LOWER was used because the column is using utf8_bin that is case sensitive
 			if (labelLike)
-				sqlWhere += fmt::format("and LOWER(ij.label) like LOWER({}) ", trans.quote("%" + label + "%"));
+				sqlWhere += std::format("and LOWER(ij.label) like LOWER({}) ", trans.quote("%" + label + "%"));
 			else
-				sqlWhere += fmt::format("and LOWER(ij.label) = LOWER({}) ", trans.quote(label));
+				sqlWhere += std::format("and LOWER(ij.label) = LOWER({}) ", trans.quote(label));
 		}
 		/*
 		if (startAndEndIngestionDatePresent)
@@ -4219,24 +4219,24 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 		<= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		*/
 		if (startIngestionDate != "")
-			sqlWhere += fmt::format("and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
+			sqlWhere += std::format("and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
 		if (endIngestionDate != "")
-			sqlWhere += fmt::format("and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
+			sqlWhere += std::format("and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
 		if (startScheduleDate != "")
 			sqlWhere +=
-				fmt::format("and ij.scheduleStart_virtual >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startScheduleDate));
+				std::format("and ij.scheduleStart_virtual >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startScheduleDate));
 		if (ingestionType != "")
-			sqlWhere += fmt::format("and ij.ingestionType = {} ", trans.quote(ingestionType));
+			sqlWhere += std::format("and ij.ingestionType = {} ", trans.quote(ingestionType));
 		if (configurationLabel != "")
-			sqlWhere += fmt::format("and ij.configurationLabel_virtual = {} ", trans.quote(configurationLabel));
+			sqlWhere += std::format("and ij.configurationLabel_virtual = {} ", trans.quote(configurationLabel));
 		if (outputChannelLabel != "")
-			sqlWhere += fmt::format("and ij.outputChannelLabel_virtual = {} ", trans.quote(outputChannelLabel));
+			sqlWhere += std::format("and ij.outputChannelLabel_virtual = {} ", trans.quote(outputChannelLabel));
 		if (recordingCode != -1)
-			sqlWhere += fmt::format("and ij.recordingCode_virtual = {} ", recordingCode);
+			sqlWhere += std::format("and ij.recordingCode_virtual = {} ", recordingCode);
 		if (broadcastIngestionJobKeyNotNull)
 			sqlWhere += ("and ij.broadcastIngestionJobKey_virtual is not null ");
 		if (jsonParametersCondition != "")
-			sqlWhere += fmt::format("and {} ", jsonParametersCondition);
+			sqlWhere += std::format("and {} ", jsonParametersCondition);
 		if (status == "completed")
 			sqlWhere += ("and ij.status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', "
 						 "'SourceCopingInProgress', 'SourceUploadingInProgress', 'EncodingQueued') "); // like 'End_%' "
@@ -4246,7 +4246,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -4261,7 +4261,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 
 		json ingestionJobsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
 				"ij.ingestionType, ij.metaDataContent, ij.processorMMS, "
 				"to_char(ij.processingStartingFrom, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as processingStartingFrom, "
@@ -4463,7 +4463,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		json mediaItemsRoot = json::array();
 		if (ingestionJobOutputs)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select mediaItemKey, physicalPathKey, position from MMS_IngestionJobOutput "
 				"where ingestionJobKey = {} order by position",
 				ingestionJobKey
@@ -4595,7 +4595,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 					;
 			else
 			*/
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
 				"to_char(encodingJobStart, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobStart, "
 				"to_char(encodingJobEnd, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobEnd, "
@@ -4761,7 +4761,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 		string periodUtcEndDateTime;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select c.maxIngestionsNumber, cmi.currentIngestionsNumber, c.encodingPeriod, "
 				"to_char(cmi.startDateTime, 'YYYY-MM-DD HH24:MI:SS') as utcStartDateTime, "
 				"to_char(cmi.endDateTime, 'YYYY-MM-DD HH24:MI:SS') as utcEndDateTime "
@@ -4823,18 +4823,27 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 
 		bool ingestionsAllowed = true;
 		bool periodExpired = false;
-		char newPeriodUtcStartDateTime[64];
-		char newPeriodUtcEndDateTime[64];
+		// char newPeriodUtcStartDateTime[64];
+		string newPeriodUtcStartDateTime;
+		// char newPeriodUtcEndDateTime[64];
+		string newPeriodUtcEndDateTime;
 
 		{
-			char strUtcDateTimeNow[64];
+			// char strUtcDateTimeNow[64];
+			string strUtcDateTimeNow;
 			tm tmDateTimeNow;
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			time_t utcTimeNow = chrono::system_clock::to_time_t(now);
 			gmtime_r(&utcTimeNow, &tmDateTimeNow);
 
+			/*
 			sprintf(
 				strUtcDateTimeNow, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTimeNow.tm_year + 1900, tmDateTimeNow.tm_mon + 1, tmDateTimeNow.tm_mday,
+				tmDateTimeNow.tm_hour, tmDateTimeNow.tm_min, tmDateTimeNow.tm_sec
+			);
+			*/
+			strUtcDateTimeNow = std::format(
+				"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTimeNow.tm_year + 1900, tmDateTimeNow.tm_mon + 1, tmDateTimeNow.tm_mday,
 				tmDateTimeNow.tm_hour, tmDateTimeNow.tm_min, tmDateTimeNow.tm_sec
 			);
 
@@ -4859,6 +4868,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 
 				if (encodingPeriod == EncodingPeriod::Daily)
 				{
+					/*
 					sprintf(
 						newPeriodUtcStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTimeNow.tm_year + 1900, tmDateTimeNow.tm_mon + 1,
 						tmDateTimeNow.tm_mday,
@@ -4866,12 +4876,23 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 						0, // tmDateTimeNow. tm_min,
 						0  // tmDateTimeNow. tm_sec
 					);
+					*/
+					newPeriodUtcStartDateTime = std::format(
+						"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTimeNow.tm_year + 1900, tmDateTimeNow.tm_mon + 1, tmDateTimeNow.tm_mday, 0,
+						0, 0
+					);
+					/*
 					sprintf(
 						newPeriodUtcEndDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTimeNow.tm_year + 1900, tmDateTimeNow.tm_mon + 1,
 						tmDateTimeNow.tm_mday,
 						23, // tmCurrentDateTime. tm_hour,
 						59, // tmCurrentDateTime. tm_min,
 						59	// tmCurrentDateTime. tm_sec
+					);
+					*/
+					newPeriodUtcEndDateTime = std::format(
+						"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTimeNow.tm_year + 1900, tmDateTimeNow.tm_mon + 1, tmDateTimeNow.tm_mday,
+						23, 59, 59
 					);
 				}
 				else if (encodingPeriod == EncodingPeriod::Weekly)
@@ -4899,12 +4920,18 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 						time_t utcTimeMondayOfCurrentWeek = chrono::system_clock::to_time_t(mondayOfCurrentWeek);
 						gmtime_r(&utcTimeMondayOfCurrentWeek, &tmMondayOfCurrentWeek);
 
+						/*
 						sprintf(
 							newPeriodUtcStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmMondayOfCurrentWeek.tm_year + 1900,
 							tmMondayOfCurrentWeek.tm_mon + 1, tmMondayOfCurrentWeek.tm_mday,
 							0, // tmDateTimeNow. tm_hour,
 							0, // tmDateTimeNow. tm_min,
 							0  // tmDateTimeNow. tm_sec
+						);
+						*/
+						newPeriodUtcStartDateTime = std::format(
+							"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmMondayOfCurrentWeek.tm_year + 1900, tmMondayOfCurrentWeek.tm_mon + 1,
+							tmMondayOfCurrentWeek.tm_mday, 0, 0, 0
 						);
 					}
 
@@ -4927,6 +4954,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 						time_t utcTimeSundayOfCurrentWeek = chrono::system_clock::to_time_t(sundayOfCurrentWeek);
 						gmtime_r(&utcTimeSundayOfCurrentWeek, &tmSundayOfCurrentWeek);
 
+						/*
 						sprintf(
 							newPeriodUtcEndDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmSundayOfCurrentWeek.tm_year + 1900,
 							tmSundayOfCurrentWeek.tm_mon + 1, tmSundayOfCurrentWeek.tm_mday,
@@ -4934,18 +4962,28 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 							59, // tmSundayOfCurrentWeek. tm_min,
 							59	// tmSundayOfCurrentWeek. tm_sec
 						);
+						*/
+						newPeriodUtcEndDateTime = std::format(
+							"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmSundayOfCurrentWeek.tm_year + 1900, tmSundayOfCurrentWeek.tm_mon + 1,
+							tmSundayOfCurrentWeek.tm_mday, 23, 59, 59
+						);
 					}
 				}
 				else if (encodingPeriod == EncodingPeriod::Monthly)
 				{
 					// first day of the month
 					{
+						/*
 						sprintf(
 							newPeriodUtcStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTimeNow.tm_year + 1900, tmDateTimeNow.tm_mon + 1,
 							1, // tmDateTimeNow. tm_mday,
 							0, // tmDateTimeNow. tm_hour,
 							0, // tmDateTimeNow. tm_min,
 							0  // tmDateTimeNow. tm_sec
+						);
+						*/
+						newPeriodUtcStartDateTime = std::format(
+							"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTimeNow.tm_year + 1900, tmDateTimeNow.tm_mon + 1, 1, 0, 0, 0
 						);
 					}
 
@@ -4975,6 +5013,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 						// Convert back to date and time
 						gmtime_r(&utcTimeLastDayOfCurrentMonth, &tmLastDayOfCurrentMonth);
 
+						/*
 						sprintf(
 							newPeriodUtcEndDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmLastDayOfCurrentMonth.tm_year + 1900,
 							tmLastDayOfCurrentMonth.tm_mon + 1, tmLastDayOfCurrentMonth.tm_mday,
@@ -4982,12 +5021,18 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 							59, // tmDateTimeNow. tm_min,
 							59	// tmDateTimeNow. tm_sec
 						);
+						*/
+						newPeriodUtcEndDateTime = std::format(
+							"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmLastDayOfCurrentMonth.tm_year + 1900, tmLastDayOfCurrentMonth.tm_mon + 1,
+							tmLastDayOfCurrentMonth.tm_mday, 23, 59, 59
+						);
 					}
 				}
 				else // if (encodingPeriod == static_cast<int>(EncodingPeriod::Yearly))
 				{
 					// first day of the year
 					{
+						/*
 						sprintf(
 							newPeriodUtcStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTimeNow.tm_year + 1900,
 							1, // tmDateTimeNow. tm_mon + 1,
@@ -4996,10 +5041,14 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 							0, // tmDateTimeNow. tm_min,
 							0  // tmDateTimeNow. tm_sec
 						);
+						*/
+						newPeriodUtcStartDateTime =
+							std::format("{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTimeNow.tm_year + 1900, 1, 1, 0, 0, 0);
 					}
 
 					// last day of the month
 					{
+						/*
 						sprintf(
 							newPeriodUtcEndDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTimeNow.tm_year + 1900,
 							12, // tmDateTimeNow. tm_mon + 1,
@@ -5008,6 +5057,9 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 							59, // tmDateTimeNow. tm_min,
 							59	// tmDateTimeNow. tm_sec
 						);
+						*/
+						newPeriodUtcEndDateTime =
+							std::format("{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTimeNow.tm_year + 1900, 12, 31, 23, 59, 59);
 					}
 				}
 			}
@@ -5015,7 +5067,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 
 		if (periodExpired)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_WorkspaceMoreInfo set currentIngestionsNumber = 0, "
 				"startDateTime = to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"endDateTime = to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS') "
@@ -5174,7 +5226,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 				//	often the processor field is empty) but someone has to do it
 				//	This scenario may happen in case the mms-engine is shutdown not in friendly way
 				int toleranceInHours = 4;
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select ij.ingestionJobKey, ej.encodingJobKey, "
 					"ij.status as ingestionJobStatus, ej.status as encodingJobStatus "
 					"from MMS_IngestionJob ij, MMS_EncodingJob ej "
@@ -5364,7 +5416,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += fmt::format("label = {}", trans.quote(newIngestionJobLabel));
+				setSQL += std::format("label = {}", trans.quote(newIngestionJobLabel));
 			}
 
 			if (channelLabelModified || recordingPeriodStartModified || recordingPeriodEndModified ||
@@ -5381,13 +5433,13 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 				if (recordingVirtualVODModified && newRecordingVirtualVOD)
 					setSQL += "jsonb_set(";
 				if (channelLabelModified)
-					setSQL += fmt::format("jsonb_set(metaDataContent, {{configurationLabel}}, jsonb {})", trans.quote("\"" + newChannelLabel + "\""));
+					setSQL += std::format("jsonb_set(metaDataContent, {{configurationLabel}}, jsonb {})", trans.quote("\"" + newChannelLabel + "\""));
 				if (recordingVirtualVODModified && newRecordingVirtualVOD)
-					setSQL += fmt::format(", '{{liveRecorderVirtualVOD}}', json '{}')", trans.quote("\"" + newRecordingPeriodStart + "\""));
+					setSQL += std::format(", '{{liveRecorderVirtualVOD}}', json '{}')", trans.quote("\"" + newRecordingPeriodStart + "\""));
 				if (recordingPeriodEndModified)
-					setSQL += fmt::format(", {{schedule,end}}, jsonb {})", trans.quote("\"" + newRecordingPeriodEnd + "\""));
+					setSQL += std::format(", {{schedule,end}}, jsonb {})", trans.quote("\"" + newRecordingPeriodEnd + "\""));
 				if (recordingPeriodStartModified)
-					setSQL += fmt::format(", {{schedule,start}}, jsonb {})", trans.quote("\"" + newRecordingPeriodStart + "\""));
+					setSQL += std::format(", {{schedule,start}}, jsonb {})", trans.quote("\"" + newRecordingPeriodStart + "\""));
 			}
 
 			/*
@@ -5395,7 +5447,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += fmt::format("metaDataContent = jsonb_set(metaDataContent, {{configurationLabel}}, jsonb {})",
+				setSQL += std::format("metaDataContent = jsonb_set(metaDataContent, {{configurationLabel}}, jsonb {})",
 					trans.quote("\"" + newChannelLabel + "\""));
 			}
 
@@ -5403,7 +5455,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += fmt::format("metaDataContent = jsonb_set(metaDataContent, {{schedule,start}}, jsonb {})",
+				setSQL += std::format("metaDataContent = jsonb_set(metaDataContent, {{schedule,start}}, jsonb {})",
 					trans.quote("\"" + newRecordingPeriodStart + "\""));
 			}
 
@@ -5411,7 +5463,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += fmt::format("metaDataContent = jsonb_set(metaDataContent, {{schedule,end}}, jsonb {})",
+				setSQL += std::format("metaDataContent = jsonb_set(metaDataContent, {{schedule,end}}, jsonb {})",
 					trans.quote("\"" + newRecordingPeriodEnd + "\""));
 			}
 
@@ -5428,7 +5480,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 
 			setSQL = "set " + setSQL + " ";
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob {} "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				setSQL, ingestionJobKey
@@ -5461,7 +5513,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 			*/
 			if (recordingVirtualVODModified && !newRecordingVirtualVOD)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_IngestionJob "
 					"set metaDataContent = metaDataContent - 'liveRecorderVirtualVOD' "
 					"where ingestionJobKey = {} returning 1) select count(*) from rows",

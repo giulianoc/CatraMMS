@@ -1126,7 +1126,7 @@ json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Wor
 			{
 				if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathKey"))
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"imageoverlay filter without imagePhysicalPathKey"
 						", ingestionJobKey: {}"
 						", imageoverlay filter: {}",
@@ -1564,7 +1564,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 
 		CurlWrapper::ftpFile(
 			mmsAssetPathName, fileName, sizeInBytes, ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory, ftpRemoteFileName,
-			progressUploadCallback, &progressData, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			progressUploadCallback, &progressData, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		{

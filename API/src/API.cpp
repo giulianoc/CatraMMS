@@ -479,7 +479,7 @@ void API::manageRequestAndResponse(
 	auto methodIt = queryParameters.find("method");
 	if (methodIt == queryParameters.end())
 	{
-		string errorMessage = fmt::format("The 'method' parameter is not found");
+		string errorMessage = std::format("The 'method' parameter is not found");
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 400, errorMessage);
@@ -584,7 +584,7 @@ void API::manageRequestAndResponse(
 						}
 						catch (exception &e)
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
 								", contentRange: {}",
 								contentRange
@@ -640,7 +640,7 @@ void API::manageRequestAndResponse(
 			auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
 			if (tokenIt == requestDetails.end() || originalURIIt == requestDetails.end())
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"deliveryAuthorization, not authorized"
 					", token: {}"
 					", URI: {}",
@@ -656,7 +656,7 @@ void API::manageRequestAndResponse(
 			size_t endOfURIIndex = contentURI.find_last_of("?");
 			if (endOfURIIndex == string::npos)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong URI format"
 					", contentURI: {}",
 					contentURI
@@ -705,7 +705,7 @@ void API::manageRequestAndResponse(
 			auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
 			if (originalURIIt == requestDetails.end())
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"deliveryAuthorization, not authorized"
 					", URI: {}",
 					(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
@@ -749,7 +749,7 @@ void API::manageRequestAndResponse(
 		{
 			if (_noFileSystemAccess)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"no rights to execute this method"
 					", _noFileSystemAccess: {}",
 					_noFileSystemAccess
@@ -805,7 +805,7 @@ void API::manageRequestAndResponse(
 				size_t endOfURIIndex = requestURI.find_last_of("?");
 				if (endOfURIIndex == string::npos)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Wrong URI format"
 						", requestURI: {}",
 						requestURI
@@ -834,7 +834,7 @@ void API::manageRequestAndResponse(
 				tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(secondaryManifest, token, cookie, contentURI);
 
 				/*
-				string tokenParameter = fmt::format("{}---{}", tokenIt->second, cookie);
+				string tokenParameter = std::format("{}---{}", tokenIt->second, cookie);
 				SPDLOG_INFO(
 					"Calling checkDeliveryAuthorizationThroughParameter"
 					", contentURI: {}"
@@ -870,7 +870,7 @@ void API::manageRequestAndResponse(
 					{
 						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Not authorized: token invalid"
 								", contentURI: {}"
 								", tokenComingFromURL: {}",
@@ -909,7 +909,7 @@ void API::manageRequestAndResponse(
 
 					if (sTokenComingFromCookie != tokenComingFromURL)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"cookie invalid, let's check the token"
 							", sTokenComingFromCookie: {}"
 							", tokenComingFromURL: {}",
@@ -921,7 +921,7 @@ void API::manageRequestAndResponse(
 						{
 							if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
 							{
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"Not authorized: token invalid"
 									", contentURI: {}"
 									", tokenComingFromURL: {}",
@@ -979,7 +979,7 @@ void API::manageRequestAndResponse(
 
 					if (!fs::exists(manifestPathFileName))
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"manifest file not existing"
 							", manifestPathFileName: {}",
 							manifestPathFileName.string()
@@ -996,7 +996,7 @@ void API::manageRequestAndResponse(
 						manifestFile.open(manifestPathFileName.string(), ios::in);
 						if (!manifestFile.is_open())
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Not authorized: manifest file not opened"
 								", manifestPathFileName: {}",
 								manifestPathFileName.string()
@@ -1127,7 +1127,7 @@ void API::manageRequestAndResponse(
 						xmlDocPtr doc = xmlParseFile(manifestPathFileName.string().c_str());
 						if (doc == nullptr)
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"xmlParseFile failed"
 								", manifestPathFileName: {}",
 								manifestPathFileName.string()
@@ -1145,7 +1145,7 @@ void API::manageRequestAndResponse(
 						{
 							xmlFreeDoc(doc);
 
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"xmlXPathNewContext failed"
 								", manifestPathFileName: {}",
 								manifestPathFileName.string()
@@ -1160,7 +1160,7 @@ void API::manageRequestAndResponse(
 							xmlXPathFreeContext(xpathCtx);
 							xmlFreeDoc(doc);
 
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"xmlXPathRegisterNs xmlns:xsi"
 								", manifestPathFileName: {}",
 								manifestPathFileName.string()
@@ -1208,7 +1208,7 @@ void API::manageRequestAndResponse(
 							xmlXPathFreeContext(xpathCtx);
 							xmlFreeDoc(doc);
 
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"xmlXPathEvalExpression failed"
 								", manifestPathFileName: {}",
 								manifestPathFileName.string()
@@ -1232,7 +1232,7 @@ void API::manageRequestAndResponse(
 								xmlXPathFreeContext(xpathCtx);
 								xmlFreeDoc(doc);
 
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"nodes->nodeTab[nodeIndex] is null"
 									", manifestPathFileName: {}"
 									", nodeIndex: {}",
@@ -1252,7 +1252,7 @@ void API::manageRequestAndResponse(
 								xmlXPathFreeContext(xpathCtx);
 								xmlFreeDoc(doc);
 
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"xmlGetProp failed"
 									", manifestPathFileName: {}",
 									manifestPathFileName.string()
@@ -1338,7 +1338,7 @@ void API::manageRequestAndResponse(
 					size_t cookiePathIndex = contentURI.find_last_of("/");
 					if (cookiePathIndex == string::npos)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Wrong URI format"
 							", contentURI: {}",
 							contentURI
@@ -1417,7 +1417,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !createRemoveWorkspace)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", createRemoveWorkspace: {}",
 				createRemoveWorkspace
@@ -1435,7 +1435,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !createRemoveWorkspace)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", createRemoveWorkspace: {}",
 				createRemoveWorkspace
@@ -1453,7 +1453,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !shareWorkspace)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", shareWorkspace: {}",
 				shareWorkspace
@@ -1475,7 +1475,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !shareWorkspace)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", shareWorkspace: {}",
 				shareWorkspace
@@ -1497,7 +1497,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -1523,7 +1523,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -1541,7 +1541,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -1559,7 +1559,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -1585,7 +1585,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editEncodersPool)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editEncodersPool: {}",
 				editEncodersPool
@@ -1621,7 +1621,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editEncodersPool)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editEncodersPool: {}",
 				editEncodersPool
@@ -1639,7 +1639,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -1657,7 +1657,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -1675,7 +1675,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !deliveryAuthorization)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", deliveryAuthorization: {}",
 				deliveryAuthorization
@@ -1697,7 +1697,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !deliveryAuthorization)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", deliveryAuthorization: {}",
 				deliveryAuthorization
@@ -1719,7 +1719,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !ingestWorkflow)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", ingestWorkflow: {}",
 				ingestWorkflow
@@ -1749,7 +1749,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !cancelIngestionJob_)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", cancelIngestionJob: {}",
 				cancelIngestionJob_
@@ -1767,7 +1767,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editMedia)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editMedia: {}",
 				editMedia
@@ -1785,7 +1785,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editMedia)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editMedia: {}",
 				editMedia
@@ -1811,7 +1811,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !killEncoding)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", killEncoding: {}",
 				killEncoding
@@ -1841,7 +1841,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editMedia)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editMedia: {}",
 				editMedia
@@ -1859,7 +1859,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editMedia)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editMedia: {}",
 				editMedia
@@ -1888,7 +1888,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !createProfiles)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", createProfiles: {}",
 				createProfiles
@@ -1910,7 +1910,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !createProfiles)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", createProfiles: {}",
 				createProfiles
@@ -1928,7 +1928,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !createProfiles)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", createProfiles: {}",
 				createProfiles
@@ -1946,7 +1946,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !createProfiles)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", createProfiles: {}",
 				createProfiles
@@ -1988,7 +1988,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2006,7 +2006,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2024,7 +2024,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2046,7 +2046,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2064,7 +2064,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2082,7 +2082,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2104,7 +2104,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2122,7 +2122,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2140,7 +2140,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2162,7 +2162,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2180,7 +2180,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2198,7 +2198,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2224,7 +2224,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -2242,7 +2242,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -2260,7 +2260,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -2282,7 +2282,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2300,7 +2300,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2318,7 +2318,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2340,7 +2340,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2358,7 +2358,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2376,7 +2376,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2398,7 +2398,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2416,7 +2416,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2434,7 +2434,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2456,7 +2456,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2474,7 +2474,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2492,7 +2492,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2514,7 +2514,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2532,7 +2532,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2550,7 +2550,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2572,7 +2572,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2590,7 +2590,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2608,7 +2608,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin && !editConfiguration)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", editConfiguration: {}",
 				editConfiguration
@@ -2630,7 +2630,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -2648,7 +2648,7 @@ void API::manageRequestAndResponse(
 	{
 		if (!admin)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"APIKey does not have the permission"
 				", admin: {}",
 				admin
@@ -2688,7 +2688,7 @@ void API::manageRequestAndResponse(
 		requestStatisticPerCountryList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
 	else
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"No API is matched"
 			", requestURI: {}"
 			", method: {}"
@@ -2798,7 +2798,7 @@ void API::parseContentRange(string contentRange, long long &contentRangeStart, l
 		string prefix("bytes ");
 		if (!(contentRange.size() >= prefix.size() && 0 == contentRange.compare(0, prefix.size(), prefix)))
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Content-Range does not start with 'bytes '"
 				", contentRange: {}",
 				contentRange
@@ -2812,7 +2812,7 @@ void API::parseContentRange(string contentRange, long long &contentRangeStart, l
 		int endIndex = contentRange.find("-", startIndex);
 		if (endIndex == string::npos)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Content-Range does not have '-'"
 				", contentRange: {}",
 				contentRange
@@ -2828,7 +2828,7 @@ void API::parseContentRange(string contentRange, long long &contentRangeStart, l
 		int sizeIndex = contentRange.find("/", endIndex);
 		if (sizeIndex == string::npos)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Content-Range does not have '/'"
 				", contentRange: {}",
 				contentRange
@@ -2845,7 +2845,7 @@ void API::parseContentRange(string contentRange, long long &contentRangeStart, l
 	}
 	catch (exception &e)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
 			", contentRange: {}",
 			contentRange
@@ -2894,7 +2894,7 @@ void API::mmsSupport(
 		{
 			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Json field is not present or it is null"
 					", Json field: {}",
 					field
@@ -2943,7 +2943,7 @@ void API::mmsSupport(
 				api, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);

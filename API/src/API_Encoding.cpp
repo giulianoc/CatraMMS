@@ -1314,12 +1314,12 @@ void API::killEncodingJob(
 		// ffmpegEncoderURL = transcoderHost + _ffmpegEncoderKillEncodingURI + "/" + to_string(ingestionJobKey) + "/" + to_string(encodingJobKey) +
 		// 			   "?lightKill=" + (lightKill ? "true" : "false");
 		ffmpegEncoderURL =
-			fmt::format("{}{}/{}/{}?killType={}", transcoderHost, _ffmpegEncoderKillEncodingURI, ingestionJobKey, encodingJobKey, killType);
+			std::format("{}{}/{}/{}?killType={}", transcoderHost, _ffmpegEncoderKillEncodingURI, ingestionJobKey, encodingJobKey, killType);
 
 		vector<string> otherHeaders;
 		CurlWrapper::httpDelete(
 			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
-			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 	}
 	catch (runtime_error &e)

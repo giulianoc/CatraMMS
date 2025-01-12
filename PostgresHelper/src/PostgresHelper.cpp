@@ -75,7 +75,7 @@ string PostgresHelper::buildQueryColumns(vector<string> &requestedColumns)
 			auto itTable = _sqlTablesColumnsSchema.find(requestedTableName);
 			if (itTable == _sqlTablesColumnsSchema.end())
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"requested table name not found"
 					", requestedTableName: {}",
 					requestedTableName
@@ -105,7 +105,7 @@ string PostgresHelper::buildQueryColumns(vector<string> &requestedColumns)
 												 : itTable->second.find(requestedColumnName.substr(0, endOfColumn)));
 				if (itColumn == itTable->second.end())
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"requested column name not found"
 						", requestedTableName: {}"
 						", requestedColumnName: {}",
@@ -184,7 +184,7 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 				default:
 				{
 					// per avere il mapping tra oid e type: select oid, typname from pg_catalog.pg_type
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"oid / sql data type not managed"
 						", oid: {}"
 						", fieldName: {}",
@@ -291,7 +291,7 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 						break;
 					default:
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"sql data type not managed"
 							", sqlType: {}"
 							", fieldName: {}",
@@ -332,9 +332,9 @@ string PostgresHelper::getQueryColumn(
 	{
 		// devo fare il cast a int perchè in buildResult field.as<char>() sembra non esistere
 		if (requestedTableNameAlias.empty())
-			queryColumn = fmt::format("CAST({} as integer) as {}", sqlColumnSchema->columnName, columnName);
+			queryColumn = std::format("CAST({} as integer) as {}", sqlColumnSchema->columnName, columnName);
 		else
-			queryColumn = fmt::format("CAST({}.{} as integer) as {}", requestedTableNameAlias, sqlColumnSchema->columnName, columnName);
+			queryColumn = std::format("CAST({}.{} as integer) as {}", requestedTableNameAlias, sqlColumnSchema->columnName, columnName);
 	}
 	else if (sqlColumnSchema->dataType == "integer" || sqlColumnSchema->dataType == "smallint" || sqlColumnSchema->dataType == "bigint" ||
 			 sqlColumnSchema->dataType == "numeric" || sqlColumnSchema->dataType == "boolean" || sqlColumnSchema->dataType == "json" ||
@@ -342,21 +342,21 @@ string PostgresHelper::getQueryColumn(
 	{
 		if (requestedTableNameAlias.empty())
 			queryColumn = sqlColumnSchema->columnName;
-		// queryColumn = fmt::format("{} as {}", sqlColumnSchema->columnName, columnName); commentato perchè verrebbe "name as name"
+		// queryColumn = std::format("{} as {}", sqlColumnSchema->columnName, columnName); commentato perchè verrebbe "name as name"
 		else
-			queryColumn = fmt::format("{}.{} as {}", requestedTableNameAlias, sqlColumnSchema->columnName, columnName);
+			queryColumn = std::format("{}.{} as {}", requestedTableNameAlias, sqlColumnSchema->columnName, columnName);
 	}
 	else if (sqlColumnSchema->dataType.starts_with("timestamp"))
 	{
 		// EPOCH ritorna un float (seconds.milliseconds)
 		if (requestedTableNameAlias.empty())
-			queryColumn = fmt::format(
+			queryColumn = std::format(
 				"EXTRACT(EPOCH FROM {0} AT TIME ZONE 'UTC') * 1000 as {1}, "
 				"to_char({0}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as \"{1}:iso\"", // output: 2018-11-01T15:21:24Z
 				sqlColumnSchema->columnName, columnName
 			);
 		else
-			queryColumn = fmt::format(
+			queryColumn = std::format(
 				"EXTRACT(EPOCH FROM {0}.{1} AT TIME ZONE 'UTC') * 1000 as {2}, to_char({0}.{1}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as \"{2}:iso\"",
 				requestedTableNameAlias, sqlColumnSchema->columnName, columnName
 			);
@@ -368,21 +368,21 @@ string PostgresHelper::getQueryColumn(
 		{
 			if (requestedTableNameAlias.empty())
 				queryColumn = sqlColumnSchema->columnName;
-			// queryColumn = fmt::format("{} as {}", sqlColumnSchema->columnName, columnName); commentato perchè verrebbe "name as name"
+			// queryColumn = std::format("{} as {}", sqlColumnSchema->columnName, columnName); commentato perchè verrebbe "name as name"
 			else
-				queryColumn = fmt::format("{}.{} as {}", requestedTableNameAlias, sqlColumnSchema->columnName, columnName);
+				queryColumn = std::format("{}.{} as {}", requestedTableNameAlias, sqlColumnSchema->columnName, columnName);
 		}
 		else
 		{
 			if (requestedTableNameAlias.empty())
-				queryColumn = fmt::format("{} as {}", requestedColumnName, columnName);
+				queryColumn = std::format("{} as {}", requestedColumnName, columnName);
 			else
-				queryColumn = fmt::format("{}.{} as {}", requestedTableNameAlias, requestedColumnName, columnName);
+				queryColumn = std::format("{}.{} as {}", requestedTableNameAlias, requestedColumnName, columnName);
 		}
 	}
 	else
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"sql data type not managed"
 			", dataType: {}",
 			sqlColumnSchema->dataType
@@ -406,7 +406,7 @@ string PostgresHelper::getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema
 		if (requestedTableNameAlias.empty())
 			queryColumnName = sqlColumnSchema->columnName;
 		else
-			queryColumnName = fmt::format("{0}_{1}", requestedTableNameAlias, sqlColumnSchema->columnName);
+			queryColumnName = std::format("{0}_{1}", requestedTableNameAlias, sqlColumnSchema->columnName);
 	}
 	else if (sqlColumnSchema->dataType == "ARRAY")
 	{
@@ -423,11 +423,11 @@ string PostgresHelper::getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema
 		if (requestedTableNameAlias.empty())
 			queryColumnName = columnName;
 		else
-			queryColumnName = fmt::format("{0}_{1}", requestedTableNameAlias, columnName);
+			queryColumnName = std::format("{0}_{1}", requestedTableNameAlias, columnName);
 	}
 	else
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"sql data type not managed"
 			", dataType: {}",
 			sqlColumnSchema->dataType
@@ -530,7 +530,7 @@ json PostgresHelper::SqlResultSet::asJson()
 			string fieldName = _sqlColumnTypeByIndex[columnIndex].first;
 			SqlValue sqlValue = row[columnIndex];
 
-			string jsonKey = fieldName; // fmt::format("{} ({})", fieldName, (int)type(fieldName));
+			string jsonKey = fieldName; // std::format("{} ({})", fieldName, (int)type(fieldName));
 			if (sqlValue.isNull())
 				rowRoot[jsonKey] = nullptr;
 			else

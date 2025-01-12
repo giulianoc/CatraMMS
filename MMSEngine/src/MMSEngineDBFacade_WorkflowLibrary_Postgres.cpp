@@ -131,13 +131,13 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 			// and this is checked in the calling call (API_WorkflowLibrary.cpp)
 			string sqlStatement;
 			if (workspaceKey == -1)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select workflowLibraryKey from MMS_WorkflowLibrary "
 					"where workspaceKey is null and label = {}",
 					trans.quote(label)
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select workflowLibraryKey, creatorUserKey from MMS_WorkflowLibrary "
 					"where workspaceKey = {} and label = {}",
 					workspaceKey, trans.quote(label)
@@ -172,7 +172,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 					}
 				}
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_WorkflowLibrary set lastUpdateUserKey = {}, "
 					"thumbnailMediaItemKey = {}, jsonWorkflow = {} "
 					"where workflowLibraryKey = {} returning 1) select count(*) from rows",
@@ -191,7 +191,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 			}
 			else
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_WorkflowLibrary ("
 					"workspaceKey, creatorUserKey, lastUpdateUserKey, "
 					"label, thumbnailMediaItemKey, jsonWorkflow) values ("
@@ -268,7 +268,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(int64_t userKey, int64_t workspa
 			// and this is checked in the calling call (API_WorkflowLibrary.cpp)
 			string sqlStatement;
 			if (workspaceKey == -1)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
 					"and workspaceKey is null returning 1) select count(*) from rows",
 					workflowLibraryKey
@@ -278,13 +278,13 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(int64_t userKey, int64_t workspa
 				// admin is able to remove also WorkflowLibrarys created by others
 				// for this reason the condition on creatorUserKey has to be removed
 				if (admin)
-					sqlStatement = fmt::format(
+					sqlStatement = std::format(
 						"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
 						"and workspaceKey = {} returning 1) select count(*) from rows",
 						workflowLibraryKey, workspaceKey
 					);
 				else
-					sqlStatement = fmt::format(
+					sqlStatement = std::format(
 						"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
 						"and creatorUserKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
 						workspaceKey, userKey, workspaceKey
@@ -429,11 +429,11 @@ json MMSEngineDBFacade::getWorkflowsAsLibraryList(int64_t workspaceKey)
 			workflowsLibraryRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where (workspaceKey = {} or workspaceKey is null) ", workspaceKey);
+		string sqlWhere = std::format("where (workspaceKey = {} or workspaceKey is null) ", workspaceKey);
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_WorkflowLibrary {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_WorkflowLibrary {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -448,7 +448,7 @@ json MMSEngineDBFacade::getWorkflowsAsLibraryList(int64_t workspaceKey)
 
 		json workflowsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select workspaceKey, workflowLibraryKey, creatorUserKey, label, "
 				"thumbnailMediaItemKey, jsonWorkflow from MMS_WorkflowLibrary {}",
 				sqlWhere
@@ -639,7 +639,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent(int64_t workspaceKey, int6
 		);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select jsonWorkflow from MMS_WorkflowLibrary "
 				"where (workspaceKey = {} or workspaceKey is null) "
 				"and workflowLibraryKey = {}",
@@ -784,13 +784,13 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent(int64_t workspaceKey, stri
 		{
 			string sqlStatement;
 			if (workspaceKey == -1)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select jsonWorkflow from MMS_WorkflowLibrary "
 					"where workspaceKey is null and label = {}",
 					trans.quote(label)
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select jsonWorkflow from MMS_WorkflowLibrary "
 					"where workspaceKey = {} and label = {}",
 					workspaceKey, trans.quote(label)

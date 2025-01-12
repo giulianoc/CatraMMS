@@ -169,7 +169,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"post on facebook failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -426,7 +426,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"post on youtube failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -811,7 +811,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
 				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 				"application/json", // contentType
-				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				headerList, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			/* sResponse:
@@ -1025,7 +1025,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
 				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 				"application/json", // contentType
-				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				headerList, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			/* sResponse:
@@ -1200,7 +1200,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
 				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 				"", // contentType
-				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				headerList, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			/* sResponse:
@@ -1532,7 +1532,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		CurlWrapper::httpPostString(
 			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 			"application/json", // contentType
-			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		SPDLOG_INFO(
@@ -1807,7 +1807,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 			vector<string> otherHeaders;
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
-				facebookURL, _mmsAPITimeoutInSeconds, "", "", "", otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				facebookURL, _mmsAPITimeoutInSeconds, "", "", "", otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			/*
@@ -1952,17 +1952,23 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 							string sNow;
 							{
 								tm tmDateTime;
-								char strDateTime[64];
+								// char strDateTime[64];
 
 								chrono::system_clock::time_point now = chrono::system_clock::now();
 								time_t utcNow = chrono::system_clock::to_time_t(now);
 
 								gmtime_r(&utcNow, &tmDateTime);
+								/*
 								sprintf(
 									strDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1,
 									tmDateTime.tm_mday, tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 								);
 								sNow = strDateTime;
+								*/
+								sNow = std::format(
+									"{:0>4}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1,
+									tmDateTime.tm_mday, tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+								);
 							}
 
 							field = "start";
@@ -2130,7 +2136,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		CurlWrapper::httpPostString(
 			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 			"application/json", // contentType
-			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		SPDLOG_INFO(
@@ -2287,7 +2293,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			formData.push_back(make_pair("file_size", to_string(sizeInBytes)));
 
 			json facebookResponseRoot = CurlWrapper::httpPostFormDataAndGetJson(
-				facebookURL, formData, _facebookGraphAPITimeoutInSeconds, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				facebookURL, formData, _facebookGraphAPITimeoutInSeconds, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			string field = "upload_session_id";
@@ -2366,7 +2372,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 				json facebookResponseRoot = CurlWrapper::httpPostFileByFormDataAndGetJson(
 					facebookURL, formData, _facebookGraphAPITimeoutInSeconds, mmsAssetPathName, sizeInBytes, mediaContentType,
-					fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+					std::format(", ingestionJobKey: {}", ingestionJobKey),
 					1,	// maxRetryNumber
 					15, // secondsToWaitBeforeToRetry
 					startOffset, endOffset
@@ -2420,7 +2426,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			formData.push_back(make_pair("upload_session_id", uploadSessionId));
 
 			json facebookResponseRoot = CurlWrapper::httpPostFormDataAndGetJson(
-				facebookURL, formData, _facebookGraphAPITimeoutInSeconds, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				facebookURL, formData, _facebookGraphAPITimeoutInSeconds, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			string field = "success";
@@ -2632,7 +2638,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 			pair<string, string> responseDetails = CurlWrapper::httpPostString(
 				youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 				"application/json; charset=UTF-8", // contentType
-				headerList, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				headerList, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
 
 			string sHeaderResponse;
@@ -2723,7 +2729,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				{
 					CurlWrapper::httpPutFile(
 						youTubeUploadURL, _youTubeDataAPITimeoutInSecondsForUploadVideo, CurlWrapper::bearerAuthorization(youTubeAccessToken),
-						mmsAssetPathName, sizeInBytes, videoContentType, fmt::format(", ingestionJobKey: {}", ingestionJobKey), 0, 15,
+						mmsAssetPathName, sizeInBytes, videoContentType, std::format(", ingestionJobKey: {}", ingestionJobKey), 0, 15,
 						contentRangeStart, contentRangeEnd_Excluded
 					);
 					contentCompletelyUploaded = true;
@@ -3102,10 +3108,10 @@ MMSEngineProcessor::youTubeDetailsToResumePostVideo(int64_t ingestionJobKey, str
 	int64_t contentRangeEnd_Excluded;
 
 	vector<string> otherHeaders;
-	otherHeaders.push_back(fmt::format("Content-Range: bytes */{}", sizeInBytes));
+	otherHeaders.push_back(std::format("Content-Range: bytes */{}", sizeInBytes));
 	auto [responseHeader, responseBody] = CurlWrapper::httpPutString(
 		youTubeUploadURL, _youTubeDataAPITimeoutInSecondsForUploadVideo, CurlWrapper::bearerAuthorization(youTubeAccessToken), "", "", otherHeaders,
-		fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+		std::format(", ingestionJobKey: {}", ingestionJobKey)
 	);
 	{
 		/*
@@ -3142,7 +3148,7 @@ MMSEngineProcessor::youTubeDetailsToResumePostVideo(int64_t ingestionJobKey, str
 		if (!rangeInitialized)
 		{
 			// error
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"youTube check range failed"
 				", ingestionJobKey: {}"
 				", youTubeUploadURL: {}"
@@ -3206,7 +3212,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 		json youTubeResponseRoot = CurlWrapper::httpPostStringAndGetJson(
 			youTubeURL, _youTubeDataAPITimeoutInSeconds, "", body,
 			"application/x-www-form-urlencoded", // contentType
-			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		/*
@@ -3273,7 +3279,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 
 		vector<string> otherHeaders;
 		json responseRoot =
-			CurlWrapper::httpGetJson(facebookURL, _mmsAPITimeoutInSeconds, "", otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey));
+			CurlWrapper::httpGetJson(facebookURL, _mmsAPITimeoutInSeconds, "", otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey));
 
 		/*
 		{

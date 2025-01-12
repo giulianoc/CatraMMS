@@ -133,7 +133,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"FTP content failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"

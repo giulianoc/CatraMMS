@@ -21,7 +21,7 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(int64_t workspaceKey, string label,
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_AWSChannel(workspaceKey, label, channelId, "
 				"rtmpURL, playURL, type) values ("
 				"{}, {}, {}, {}, {}, {}) returning confKey",
@@ -150,7 +150,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_AWSChannel set label = {}, channelId = {}, rtmpURL = {}, "
 				"playURL = {}, type = {} "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -288,7 +288,7 @@ void MMSEngineDBFacade::removeAWSChannelConf(int64_t workspaceKey, int64_t confK
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_AWSChannel where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -446,11 +446,11 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 			awsChannelConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where ac.workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where ac.workspaceKey = {} ", workspaceKey);
 		if (confKey != -1)
-			sqlWhere += fmt::format("and ac.confKey = {} ", confKey);
+			sqlWhere += std::format("and ac.confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += fmt::format("and ac.label = {} ", trans.quote(label));
+			sqlWhere += std::format("and ac.label = {} ", trans.quote(label));
 		if (type == 1)
 			sqlWhere += "and ac.type = 'SHARED' ";
 		else if (type == 2)
@@ -458,7 +458,7 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_AWSChannel ac {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_AWSChannel ac {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -473,7 +473,7 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 
 		json awsChannelRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ac.confKey, ac.label, ac.channelId, ac.rtmpURL, ac.playURL, "
 				"ac.type, ac.outputIndex, ac.reservedByIngestionJobKey, "
 				"ij.metaDataContent ->> 'configurationLabel' as configurationLabel "
@@ -662,7 +662,7 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
 		{
 			// like: non lo uso per motivi di performance
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
 				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
@@ -700,7 +700,7 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 				}
 
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"WITH rows AS (update MMS_Conf_AWSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 						"where reservedByIngestionJobKey in ({}) returning 1) select count(*) from rows",
 						ingestionJobKeyList
@@ -748,7 +748,7 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 				// della riga con ingestionJobKey inizializzato.
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
 					"from MMS_Conf_AWSChannel "
 					"where workspaceKey = {} and type = 'SHARED' "
@@ -762,7 +762,7 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
 				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
 				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select confKey, channelId, rtmpURL, playURL, reservedByIngestionJobKey "
 					"from MMS_Conf_AWSChannel "
 					"where workspaceKey = {} " // and type = 'DEDICATED' "
@@ -800,7 +800,7 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 
 		if (reservedByIngestionJobKey == -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_AWSChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
 				"where confKey = {} returning 1) select count(*) from rows",
 				outputIndex, ingestionJobKey, reservedConfKey
@@ -951,7 +951,7 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 		string reservedChannelId;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, channelId from MMS_Conf_AWSChannel "
 				"where workspaceKey = {} and outputIndex = {} and reservedByIngestionJobKey = {} ",
 				workspaceKey, outputIndex, ingestionJobKey
@@ -979,7 +979,7 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_AWSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = {} returning 1) select count(*) from rows",
 				reservedConfKey
@@ -1117,7 +1117,7 @@ int64_t MMSEngineDBFacade::addCDN77ChannelConf(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_CDN77Channel(workspaceKey, label, rtmpURL, "
 				"resourceURL, filePath, secureToken, type) values ("
 				"{}, {}, {}, {}, {}, {}, {}) returning confKey",
@@ -1247,7 +1247,7 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_CDN77Channel set label = {}, rtmpURL = {}, resourceURL = {}, "
 				"filePath = {}, secureToken = {}, type = {} "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -1386,7 +1386,7 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(int64_t workspaceKey, int64_t con
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_CDN77Channel where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -1544,11 +1544,11 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 			cdn77ChannelConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where cc.workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where cc.workspaceKey = {} ", workspaceKey);
 		if (confKey != -1)
-			sqlWhere += fmt::format("and cc.confKey = {} ", confKey);
+			sqlWhere += std::format("and cc.confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += fmt::format("and cc.label = {} ", trans.quote(label));
+			sqlWhere += std::format("and cc.label = {} ", trans.quote(label));
 		if (type == 1)
 			sqlWhere += "and cc.type = 'SHARED' ";
 		else if (type == 2)
@@ -1556,7 +1556,7 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_CDN77Channel cc {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_CDN77Channel cc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -1571,7 +1571,7 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 
 		json cdn77ChannelRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select cc.confKey, cc.label, cc.rtmpURL, cc.resourceURL, cc.filePath, "
 				"cc.secureToken, cc.type, cc.outputIndex, cc.reservedByIngestionJobKey, "
 				"ij.metaDataContent ->> 'configurationLabel' as configurationLabel "
@@ -1763,7 +1763,7 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails(int64_t 
 		string filePath;
 		string secureToken;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select resourceURL, filePath, secureToken "
 				"from MMS_Conf_CDN77Channel "
 				"where workspaceKey = {} and label = {}",
@@ -1945,7 +1945,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 		// outputIndex (stesso ingestion con ad esempio 2 CDN77)
 		{
 			// like: non lo uso per motivi di performance
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
 				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
@@ -1983,7 +1983,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 				}
 
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"WITH rows AS (update MMS_Conf_CDN77Channel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 						"where reservedByIngestionJobKey in ({}) returning 1) select count(*) from rows",
 						ingestionJobKeyList
@@ -2035,7 +2035,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 				// della riga con ingestionJobKey inizializzato.
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel "
 					"where workspaceKey = {} and type = 'SHARED' "
@@ -2049,7 +2049,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
 				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
 				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel "
 					"where workspaceKey = {} " // and type = 'DEDICATED' "
@@ -2090,7 +2090,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 
 		if (reservedByIngestionJobKey == -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_CDN77Channel set outputIndex = {}, reservedByIngestionJobKey = {} "
 				"where confKey = {} returning 1) select count(*) from rows",
 				outputIndex, ingestionJobKey, reservedConfKey
@@ -2241,7 +2241,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputInde
 		string reservedChannelId;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey from MMS_Conf_CDN77Channel "
 				"where workspaceKey = {} and outputIndex = {} and reservedByIngestionJobKey = {} ",
 				workspaceKey, outputIndex, ingestionJobKey
@@ -2268,7 +2268,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputInde
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_CDN77Channel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = {} returning 1) select count(*) from rows",
 				reservedConfKey
@@ -2404,7 +2404,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_RTMPChannel(workspaceKey, label, rtmpURL, "
 				"streamName, userName, password, playURL, type) values ("
 				"{}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
@@ -2536,7 +2536,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_RTMPChannel set label = {}, rtmpURL = {}, streamName = {}, "
 				"userName = {}, password = {}, playURL = {}, type = {} "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -2676,7 +2676,7 @@ void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t conf
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_RTMPChannel where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -2834,11 +2834,11 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 			rtmpChannelConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where rc.workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where rc.workspaceKey = {} ", workspaceKey);
 		if (confKey != -1)
-			sqlWhere += fmt::format("and rc.confKey = {} ", confKey);
+			sqlWhere += std::format("and rc.confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += fmt::format("and rc.label = {} ", trans.quote(label));
+			sqlWhere += std::format("and rc.label = {} ", trans.quote(label));
 		if (type == 1)
 			sqlWhere += "and rc.type = 'SHARED' ";
 		else if (type == 2)
@@ -2846,7 +2846,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_RTMPChannel rc {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_RTMPChannel rc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -2861,7 +2861,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 
 		json rtmpChannelRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select rc.confKey, rc.label, rc.rtmpURL, rc.streamName, rc.userName, rc.password, "
 				"rc.playURL, rc.type, rc.outputIndex, rc.reservedByIngestionJobKey, "
 				"ij.metaDataContent ->> 'configurationLabel' as configurationLabel "
@@ -3068,7 +3068,7 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 		string password;
 		string playURL;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, rtmpURL, streamName, userName, password, playURL "
 				"from MMS_Conf_RTMPChannel "
 				"where workspaceKey = {} and label = {}",
@@ -3259,7 +3259,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 		// outputIndex (stesso ingestion con ad esempio 2 RTMP)
 		{
 			// like: non lo uso per motivi di performance
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
 				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
@@ -3297,7 +3297,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 				}
 
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"WITH rows AS (update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 						"where reservedByIngestionJobKey in ({}) returning 1) select count(*) from rows",
 						ingestionJobKeyList
@@ -3347,7 +3347,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 				// della riga con ingestionJobKey inizializzato.
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select confKey, label, rtmpURL, streamName, userName, password, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel "
 					"where workspaceKey = {} and type = 'SHARED' "
@@ -3361,7 +3361,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
 				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
 				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select confKey, label, rtmpURL, streamName, userName, password, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel "
 					"where workspaceKey = {} " // and type = 'DEDICATED' "
@@ -3406,7 +3406,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 
 		if (reservedByIngestionJobKey == -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_RTMPChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
 				"where confKey = {} returning 1) select count(*) from rows",
 				outputIndex, ingestionJobKey, reservedConfKey
@@ -3559,7 +3559,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 		string reservedChannelId;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey from MMS_Conf_RTMPChannel "
 				"where workspaceKey = {} and outputIndex = {} and reservedByIngestionJobKey = {} ",
 				workspaceKey, outputIndex, ingestionJobKey
@@ -3586,7 +3586,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = {} returning 1) select count(*) from rows",
 				reservedConfKey
@@ -3722,7 +3722,7 @@ int64_t MMSEngineDBFacade::addHLSChannelConf(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_HLSChannel(workspaceKey, label, deliveryCode, "
 				"segmentDuration, playlistEntriesNumber, type) values ("
 				"{}, {}, {}, {}, {}, {}) returning confKey",
@@ -3852,7 +3852,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_HLSChannel set label = {}, deliveryCode = {}, segmentDuration = {}, "
 				"playlistEntriesNumber = {}, type = {} "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -3991,7 +3991,7 @@ void MMSEngineDBFacade::removeHLSChannelConf(int64_t workspaceKey, int64_t confK
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_HLSChannel where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -4149,11 +4149,11 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 			hlsChannelConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where hc.workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where hc.workspaceKey = {} ", workspaceKey);
 		if (confKey != -1)
-			sqlWhere += fmt::format("and hc.confKey = {} ", confKey);
+			sqlWhere += std::format("and hc.confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += fmt::format("and hc.label = {} ", trans.quote(label));
+			sqlWhere += std::format("and hc.label = {} ", trans.quote(label));
 		if (type == 1)
 			sqlWhere += "and hc.type = 'SHARED' ";
 		else if (type == 2)
@@ -4161,7 +4161,7 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_HLSChannel hc {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_HLSChannel hc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -4176,7 +4176,7 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 
 		json hlsChannelRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select hc.confKey, hc.label, hc.deliveryCode, hc.segmentDuration, hc.playlistEntriesNumber, "
 				"hc.type, hc.outputIndex, hc.reservedByIngestionJobKey, "
 				"ij.metaDataContent ->> 'configurationLabel' as configurationLabel "
@@ -4368,7 +4368,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 		int segmentDuration;
 		int playlistEntriesNumber;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, deliveryCode, segmentDuration, playlistEntriesNumber "
 				"from MMS_Conf_HLSChannel "
 				"where workspaceKey = {} and label = {}",
@@ -4555,7 +4555,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 		// outputIndex (stesso ingestion con ad esempio 2 HLS)
 		{
 			// like: non lo uso per motivi di performance
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ingestionJobKey  from MMS_IngestionJob where "
 				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
 				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
@@ -4593,7 +4593,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 				}
 
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"WITH rows AS (update MMS_Conf_HLSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 						"where reservedByIngestionJobKey in ({}) returning 1) select count(*) from rows",
 						ingestionJobKeyList
@@ -4641,7 +4641,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 				// della riga con ingestionJobKey inizializzato.
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select confKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, "
 					"reservedByIngestionJobKey from MMS_Conf_HLSChannel "
 					"where workspaceKey = {} and type = 'SHARED' "
@@ -4655,7 +4655,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
 				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
 				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select confKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, "
 					"reservedByIngestionJobKey from MMS_Conf_HLSChannel "
 					"where workspaceKey = {} " // and type = 'DEDICATED' "
@@ -4696,7 +4696,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 
 		if (reservedByIngestionJobKey == -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_HLSChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
 				"where confKey = {} returning 1) select count(*) from rows",
 				outputIndex, ingestionJobKey, reservedConfKey
@@ -4847,7 +4847,7 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 		string reservedChannelId;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey from MMS_Conf_HLSChannel "
 				"where workspaceKey = {} and outputIndex = {} and reservedByIngestionJobKey = {} ",
 				workspaceKey, outputIndex, ingestionJobKey
@@ -4874,7 +4874,7 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_HLSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = {} returning 1) select count(*) from rows",
 				reservedConfKey

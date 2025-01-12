@@ -538,21 +538,21 @@ void FastCGIAPI::sendSuccess(
 
 	string endLine = "\r\n";
 
-	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+	string httpStatus = std::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
 	string localContentType;
 	if (responseBody != "")
 	{
 		if (contentType == "")
-			localContentType = fmt::format("Content-Type: application/json; charset=utf-8{}", endLine);
+			localContentType = std::format("Content-Type: application/json; charset=utf-8{}", endLine);
 		else
-			localContentType = fmt::format("{}{}", contentType, endLine);
+			localContentType = std::format("{}{}", contentType, endLine);
 	}
 
 	string cookieHeader;
 	if (cookieName != "" && cookieValue != "")
 	{
-		cookieHeader = fmt::format("Set-Cookie: {}={}", cookieName, cookieValue);
+		cookieHeader = std::format("Set-Cookie: {}={}", cookieName, cookieValue);
 
 		if (cookiePath != "")
 			cookieHeader += ("; Path=" + cookiePath);
@@ -567,7 +567,7 @@ void FastCGIAPI::sendSuccess(
 		if (originHeader != "")
 			origin = originHeader;
 
-		corsGETHeader = fmt::format(
+		corsGETHeader = std::format(
 			"Access-Control-Allow-Origin: {}{}"
 			"Access-Control-Allow-Methods: GET, POST, OPTIONS{}"
 			"Access-Control-Allow-Credentials: true{}"
@@ -583,7 +583,7 @@ void FastCGIAPI::sendSuccess(
 
 		long contentLength = compressedResponseBody.size();
 
-		string headResponse = fmt::format(
+		string headResponse = std::format(
 			"{}"
 			"{}"
 			"{}"
@@ -626,7 +626,7 @@ void FastCGIAPI::sendSuccess(
 			string replacedWith = "%%";
 			string newResponseBody = regex_replace(responseBody, regex(toBeSearched), replacedWith);
 
-			completeHttpResponse = fmt::format(
+			completeHttpResponse = std::format(
 				"{}"
 				"{}"
 				"{}"
@@ -639,7 +639,7 @@ void FastCGIAPI::sendSuccess(
 		}
 		else
 		{
-			completeHttpResponse = fmt::format(
+			completeHttpResponse = std::format(
 				"{}"
 				"{}"
 				"{}"
@@ -689,7 +689,7 @@ void FastCGIAPI::sendRedirect(FCGX_Request &request, string locationURL)
 
 	int htmlResponseCode = 301;
 
-	string completeHttpResponse = fmt::format(
+	string completeHttpResponse = std::format(
 		"Status: {} {}{}"
 		"Location: {}{}{}",
 		htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine, locationURL, endLine, endLine
@@ -722,9 +722,9 @@ void FastCGIAPI::sendHeadSuccess(FCGX_Request &request, int htmlResponseCode, un
 
 	string endLine = "\r\n";
 
-	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+	string httpStatus = std::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
-	string completeHttpResponse = fmt::format(
+	string completeHttpResponse = std::format(
 		"{}"
 		"Content-Range: bytes 0-{}{}{}",
 		httpStatus, fileSize, endLine, endLine
@@ -746,9 +746,9 @@ void FastCGIAPI::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
 {
 	string endLine = "\r\n";
 
-	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+	string httpStatus = std::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
-	string completeHttpResponse = fmt::format(
+	string completeHttpResponse = std::format(
 		"{}"
 		"X-CatraMMS-Resume: {}{}"
 		"{}",
@@ -810,9 +810,9 @@ void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string r
 		contentLength = responseBody.length();
 	}
 
-	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+	string httpStatus = std::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
-	string completeHttpResponse = fmt::format(
+	string completeHttpResponse = std::format(
 		"{}"
 		"Content-Type: application/json; charset=utf-8{}"
 		"Content-Length: {}{}"
@@ -871,9 +871,9 @@ void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 		contentLength = responseBody.length();
 	}
 
-	string httpStatus = fmt::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+	string httpStatus = std::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
 
-	string completeHttpResponse = fmt::format(
+	string completeHttpResponse = std::format(
 		"{}"
 		"Content-Type: application/json; charset=utf-8{}"
 		"Content-Length: {}{}"
@@ -931,7 +931,7 @@ string FastCGIAPI::getHtmlStandardMessage(int htmlResponseCode)
 	case 500:
 		return string("Internal Server Error");
 	default:
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"HTTP status code not managed"
 			", htmlResponseCode: {}",
 			htmlResponseCode
@@ -962,7 +962,7 @@ int32_t FastCGIAPI::getQueryParameter(
 			*isParamPresent = false;
 		if (mandatory)
 		{
-			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			string errorMessage = std::format("The {} query parameter is missing", parameterName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -994,7 +994,7 @@ int64_t FastCGIAPI::getQueryParameter(
 			*isParamPresent = false;
 		if (mandatory)
 		{
-			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			string errorMessage = std::format("The {} query parameter is missing", parameterName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1026,7 +1026,7 @@ bool FastCGIAPI::getQueryParameter(
 			*isParamPresent = false;
 		if (mandatory)
 		{
-			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			string errorMessage = std::format("The {} query parameter is missing", parameterName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1067,7 +1067,7 @@ string FastCGIAPI::getQueryParameter(
 			*isParamPresent = false;
 		if (mandatory)
 		{
-			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			string errorMessage = std::format("The {} query parameter is missing", parameterName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1105,7 +1105,7 @@ vector<int32_t> FastCGIAPI::getQueryParameter(
 			*isParamPresent = false;
 		if (mandatory)
 		{
-			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			string errorMessage = std::format("The {} query parameter is missing", parameterName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1143,7 +1143,7 @@ vector<int64_t> FastCGIAPI::getQueryParameter(
 			*isParamPresent = false;
 		if (mandatory)
 		{
-			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			string errorMessage = std::format("The {} query parameter is missing", parameterName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1181,7 +1181,7 @@ vector<string> FastCGIAPI::getQueryParameter(
 			*isParamPresent = false;
 		if (mandatory)
 		{
-			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			string errorMessage = std::format("The {} query parameter is missing", parameterName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1219,7 +1219,7 @@ set<string> FastCGIAPI::getQueryParameter(
 			*isParamPresent = false;
 		if (mandatory)
 		{
-			string errorMessage = fmt::format("The {} query parameter is missing", parameterName);
+			string errorMessage = std::format("The {} query parameter is missing", parameterName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1323,7 +1323,7 @@ json FastCGIAPI::loadConfigurationFile(const char *configurationPathName)
 	}
 	catch (...)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"wrong json configuration format"
 			", configurationPathName: {}",
 			configurationPathName

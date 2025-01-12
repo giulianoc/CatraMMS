@@ -159,7 +159,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 		bool exact = JSONUtils::asBool(filterRoot, "exact", false);
 
 		// crop=w=100:h=100:x=12:y=34
-		filter = fmt::format("crop=out_w={}:out_h={}:x={}:y={}:keep_aspect={}:exact={}", out_w, out_h, x, y, keep_aspect, exact);
+		filter = std::format("crop=out_w={}:out_h={}:x={}:y={}:keep_aspect={}:exact={}", out_w, out_h, x, y, keep_aspect, exact);
 	}
 	else if (type == "drawbox")
 	{
@@ -177,15 +177,15 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 		string opacity;
 		if (percentageOpacity != -1)
 		{
-			char cOpacity[64];
+			// char cOpacity[64];
 
-			sprintf(cOpacity, "%.1f", ((float)percentageOpacity) / 100.0);
-
-			opacity = ("@" + string(cOpacity));
+			// sprintf(cOpacity, "%.1f", ((float)percentageOpacity) / 100.0);
+			// opacity = ("@" + string(cOpacity));
+			opacity = std::format("@{:.1}", ((float)percentageOpacity) / 100.0);
 		}
 
 		// drawbox=x=700:y=400:w=160:h=90:color=blue:t=5
-		filter = fmt::format("drawbox=x={}:y={}:w={}:h={}:color={}{}:t={}", x, y, width, height, fontColor, opacity, thickness);
+		filter = std::format("drawbox=x={}:y={}:w={}:h={}:color={}{}:t={}", x, y, width, height, fontColor, opacity, thickness);
 	}
 	else if (type == "drawtext")
 	{
@@ -395,7 +395,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 					filter += (":reload=" + to_string(reloadAtFrameInterval));
 			}
 			else
-				filter = fmt::format("drawtext=text='{}'", ffmpegText);
+				filter = std::format("drawtext=text='{}'", ffmpegText);
 			if (textPosition_X_InPixel != "")
 				filter += (":x=" + ffmpegTextPosition_X_InPixel);
 			if (textPosition_Y_InPixel != "")
@@ -409,11 +409,14 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 				filter += (":fontcolor=" + fontColor);
 				if (textPercentageOpacity != -1)
 				{
+					/*
 					char opacity[64];
 
 					sprintf(opacity, "%.1f", ((float)textPercentageOpacity) / 100.0);
 
 					filter += ("@" + string(opacity));
+					*/
+					filter += std::format("@{:.1}", ((float)textPercentageOpacity) / 100.0);
 				}
 			}
 			filter += (":shadowx=" + to_string(shadowX));
@@ -427,11 +430,14 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 					filter += (":boxcolor=" + boxColor);
 					if (boxPercentageOpacity != -1)
 					{
+						/*
 						char opacity[64];
 
 						sprintf(opacity, "%.1f", ((float)boxPercentageOpacity) / 100.0);
 
 						filter += ("@" + string(opacity));
+						*/
+						filter += std::format("@{:.1}", ((float)boxPercentageOpacity) / 100.0);
 					}
 				}
 				if (boxBorderW != -1)
@@ -489,7 +495,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 		}
 
 		// overlay=x=main_w-overlay_w-10:y=main_h-overlay_h-10
-		filter = fmt::format("overlay=x={}:y={}", ffmpegImagePosition_X_InPixel, ffmpegImagePosition_Y_InPixel);
+		filter = std::format("overlay=x={}:y={}", ffmpegImagePosition_X_InPixel, ffmpegImagePosition_Y_InPixel);
 	}
 	else if (type == "fade")
 	{

@@ -223,7 +223,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries, true
 				);
 
-				deliveryURL = fmt::format("{}://{}{}?token={}", _deliveryProtocol, deliveryHost, deliveryURI, authorizationKey);
+				deliveryURL = std::format("{}://{}{}?token={}", _deliveryProtocol, deliveryHost, deliveryURI, authorizationKey);
 			}
 			else
 			{
@@ -247,7 +247,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-				deliveryURL = fmt::format(
+				deliveryURL = std::format(
 					"{}://{}{}?token={},{}", _deliveryProtocol, deliveryHost, deliveryURI, CurlWrapper::escape(md5Base64), expirationTime
 				);
 			}
@@ -283,7 +283,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 #else
 			deliveryHost = _deliveryHost_authorizationThroughPath;
 #endif
-			deliveryURL = fmt::format("{}://{}/token_{},{}{}", _deliveryProtocol, deliveryHost, md5Base64, expirationTime, deliveryURI);
+			deliveryURL = std::format("{}://{}/token_{},{}{}", _deliveryProtocol, deliveryHost, md5Base64, expirationTime, deliveryURI);
 		}
 		/*
 		else
@@ -478,7 +478,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							deliveryURI, ttlInSeconds, maxRetries, true
 						);
 
-						deliveryURL = fmt::format(
+						deliveryURL = std::format(
 							"{}://{}{}?token={}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI, authorizationKey
 						);
 					}
@@ -504,7 +504,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						}
 						string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-						deliveryURL = fmt::format(
+						deliveryURL = std::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
 							CurlWrapper::escape(md5Base64), expirationTime
 						);
@@ -571,7 +571,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							deliveryURI, ttlInSeconds, maxRetries, true
 						);
 
-						deliveryURL = fmt::format(
+						deliveryURL = std::format(
 							"{}://{}{}?token={}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI, authorizationKey
 						);
 					}
@@ -597,7 +597,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						}
 						string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-						deliveryURL = fmt::format(
+						deliveryURL = std::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
 							CurlWrapper::escape(md5Base64), expirationTime
 						);
@@ -793,7 +793,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 			size_t endOfTokenIndex = tokenParameter.rfind(separator);
 			if (endOfTokenIndex == string::npos)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong token format, no --- is present"
 					", contentURI: {}"
 					", tokenParameter: {}",
@@ -846,7 +846,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 
 			if (cookie == "")
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"cookie is wrong"
 					", contentURI: {}"
 					", cookie: {}"
@@ -867,7 +867,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 				size_t beginOfTokenIndex = manifestLineAndToken.rfind(separator);
 				if (beginOfTokenIndex == string::npos)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Wrong parameter format"
 						", contentURI: {}"
 						", manifestLineAndToken: {}",
@@ -908,7 +908,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 				// || contentURI.find(manifestLine) == string::npos
 			)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong parameter format"
 					", contentURI: {}"
 					", manifestLine: {}"
@@ -967,7 +967,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 				}
 				else
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Not authorized: token invalid"
 						", tokenComingFromURL: {}",
 						tokenComingFromURL
@@ -1018,7 +1018,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 		size_t startTokenIndex = contentURI.find("/token_");
 		if (startTokenIndex == string::npos)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Wrong token format"
 				", contentURI: {}",
 				contentURI
@@ -1033,7 +1033,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 		size_t endTokenIndex = contentURI.find(",", startTokenIndex);
 		if (endTokenIndex == string::npos)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Wrong token format"
 				", contentURI: {}",
 				contentURI
@@ -1046,7 +1046,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 		size_t endExpirationIndex = contentURI.find("/", endTokenIndex);
 		if (endExpirationIndex == string::npos)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Wrong token format"
 				", contentURI: {}",
 				contentURI
@@ -1120,9 +1120,9 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 
 				tokenParameter = CurlWrapper::unescape(firstDecoding);
 			}
-			tokenParameter = fmt::format("{}---{}", tokenParameter, cookie);
+			tokenParameter = std::format("{}---{}", tokenParameter, cookie);
 			*/
-			string tokenParameter = fmt::format("{}---{}", token, cookie);
+			string tokenParameter = std::format("{}---{}", token, cookie);
 			SPDLOG_INFO(
 				"Calling checkDeliveryAuthorizationThroughParameter"
 				", contentURI: {}"
@@ -1148,7 +1148,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 				{
 					if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(token), contentURI))
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Not authorized: token invalid"
 							", contentURI: {}"
 							", token: {}",
@@ -1187,7 +1187,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 
 				if (sTokenComingFromCookie != tokenComingFromURL)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"cookie invalid, let's check the token"
 						", sTokenComingFromCookie: {}"
 						", tokenComingFromURL: {}",
@@ -1199,7 +1199,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 					{
 						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Not authorized: token invalid"
 								", contentURI: {}"
 								", tokenComingFromURL: {}",
@@ -1265,7 +1265,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 		size_t endTokenIndex = tokenSigned.find(",");
 		if (endTokenIndex == string::npos)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Wrong token format, no comma and expirationTime present"
 				", tokenSigned: {}",
 				tokenSigned
@@ -1324,7 +1324,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 				if (md5Base64 != tokenSigned)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Wrong token (m3u8)"
 						", md5Base64: {}"
 						", tokenSigned: {}",
@@ -1406,7 +1406,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 						{
 							// non siamo in nessuno dei 3 casi
 
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Wrong token (ts)"
 								", md5Base64: {}"
 								", tokenSigned: {}",
@@ -1435,7 +1435,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 			if (md5Base64 != tokenSigned)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong token"
 					", md5Base64: {}"
 					", tokenSigned: {}",
@@ -1450,7 +1450,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 		time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 		if (expirationTime < utcNow)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Token expired"
 				", expirationTime: {}"
 				", utcNow: {}",
@@ -1481,7 +1481,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expirationTime)
 {
-	string token = fmt::format("{}{}", expirationTime, contentURI);
+	string token = std::format("{}{}", expirationTime, contentURI);
 	string md5Base64;
 	{
 		// unsigned char digest[MD5_DIGEST_LENGTH];

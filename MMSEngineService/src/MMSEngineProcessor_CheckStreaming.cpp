@@ -123,7 +123,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 			if (isVideo && (videoTracks.size() == 0 || audioTracks.size() == 0))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Video with wrong video or audio tracks"
 					", processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -136,7 +136,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			}
 			else if (!isVideo && (videoTracks.size() > 0 || audioTracks.size() == 0))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Audio with wrong video or audio tracks"
 					", processorIdentifier: {}"
 					", ingestionJobKey: {}"

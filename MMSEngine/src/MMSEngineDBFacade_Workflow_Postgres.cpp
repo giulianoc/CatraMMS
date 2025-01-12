@@ -30,7 +30,7 @@ void MMSEngineDBFacade::endWorkflow(
 
 		if (ingestionRootKey != -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionRoot set processedMetaDataContent = {} "
 				"where ingestionRootKey = {} returning 1) select count(*) from rows",
 				trans.quote(processedMetadataContent), ingestionRootKey
@@ -161,7 +161,7 @@ int64_t MMSEngineDBFacade::addWorkflow(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, userKey, type, label, "
 				"metaDataContent, ingestionDate, lastUpdate, status) "
 				"values (                       DEFAULT,          {},            {},       {},    {}, "
@@ -288,7 +288,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 	{
 		if (rows > _maxRows)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
@@ -306,7 +306,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Using startIndex/row without orderBy will give inconsistent results"
 				", startIndex: {}"
 				", rows: {}"
@@ -322,21 +322,21 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 		{
 			string where;
 			if (workspaceKey != -1) // in uno scenario, dato il ingestionRootKey si richiede il workspaceKey (quindi potremmo non avere workspaceKey)
-				where += fmt::format("{} workspaceKey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
+				where += std::format("{} workspaceKey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
 			if (ingestionRootKey != -1)
-				where += fmt::format("{} ingestionRootKey = {} ", where.size() > 0 ? "and" : "", ingestionRootKey);
+				where += std::format("{} ingestionRootKey = {} ", where.size() > 0 ? "and" : "", ingestionRootKey);
 
 			string limit;
 			string offset;
 			string orderByCondition;
 			if (rows != -1)
-				limit = fmt::format("limit {} ", rows);
+				limit = std::format("limit {} ", rows);
 			if (startIndex != -1)
-				offset = fmt::format("offset {} ", startIndex);
+				offset = std::format("offset {} ", startIndex);
 			if (orderBy != "")
-				orderByCondition = fmt::format("order by {} ", orderBy);
+				orderByCondition = std::format("order by {} ", orderBy);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select {} "
 				"from MMS_IngestionRoot "
 				"{} {} "
@@ -360,7 +360,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 
 			if (empty(res) && ingestionRootKey != -1 && notFoundAsException)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"ingestionRoot not found"
 					", workspaceKey: {}"
 					", ingestionRootKey: {}",
@@ -574,7 +574,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 		{
 			if (mediaItemKey != -1)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select distinct ir.ingestionRootKey "
 					"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_IngestionJobOutput ijo "
 					"where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ijo.ingestionJobKey "
@@ -598,35 +598,35 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 				ingestionRookKeys.push_back(ingestionRootKey);
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspace->_workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspace->_workspaceKey);
 		if (ingestionRookKeys.size() > 0)
 		{
 			string ingestionRootKeysWhere = accumulate(
 				begin(ingestionRookKeys), end(ingestionRookKeys), string(), [](const string &s, int64_t localIngestionRootKey)
-				{ return (s == "" ? fmt::format("{}", localIngestionRootKey) : (s + fmt::format(", {}", localIngestionRootKey))); }
+				{ return (s == "" ? std::format("{}", localIngestionRootKey) : (s + std::format(", {}", localIngestionRootKey))); }
 			);
 
 			if (ingestionRookKeys.size() == 1)
-				sqlWhere += fmt::format("and ingestionRootKey = {} ", ingestionRootKeysWhere);
+				sqlWhere += std::format("and ingestionRootKey = {} ", ingestionRootKeysWhere);
 			else
-				sqlWhere += fmt::format("and ingestionRootKey in ({}) ", ingestionRootKeysWhere);
+				sqlWhere += std::format("and ingestionRootKey in ({}) ", ingestionRootKeysWhere);
 		}
 		if (startIngestionDate != "")
-			sqlWhere += fmt::format("and ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
+			sqlWhere += std::format("and ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
 		if (endIngestionDate != "")
-			sqlWhere += fmt::format("and ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
+			sqlWhere += std::format("and ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
 		if (label != "")
-			sqlWhere += fmt::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
+			sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
 		{
 			string allStatus = "all";
 			// compare case insensitive
 			if (!StringUtils::equalCaseInsensitive(status, allStatus))
-				sqlWhere += fmt::format("and status = {} ", trans.quote(status));
+				sqlWhere += std::format("and status = {} ", trans.quote(status));
 		}
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_IngestionRoot {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -641,7 +641,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 
 		json workflowsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ingestionRootKey, userKey, label, status, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedIngestionDate, "
 				"to_char(lastUpdate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as lastUpdate "
@@ -690,7 +690,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 
 				json ingestionJobsRoot = json::array();
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select ingestionRootKey, ingestionJobKey, label, "
 						"ingestionType, metaDataContent, processorMMS, "
 						"to_char(processingStartingFrom, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as processingStartingFrom, "
@@ -876,7 +876,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					//		fixIngestionJobsHavingWrongStatus method
 					//	- ingestion is in a final state but encoding is not: we already have the
 					//		fixEncodingJobsHavingWrongStatus method
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"WITH rows AS (delete from MMS_IngestionRoot where ingestionRootKey in "
 						"(select ingestionRootKey from MMS_IngestionRoot "
 						"where ingestionDate < NOW() at time zone 'utc' - INTERVAL '{} days' "
@@ -946,7 +946,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			{
 				try
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select ingestionJobKey from MMS_IngestionJob "
 						"where status in ({}, {}, {}, {}) and sourceBinaryTransferred = false "
 						"and startProcessing + INTERVAL '{} hours' <= NOW() at time zone 'utc'",
@@ -1038,7 +1038,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				try
 				{
 					// 2021-07-17: In this scenario the IngestionJobs would remain infinite time:
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select ingestionJobKey from MMS_IngestionJob "
 						"where status = {} and NOW() at time zone 'utc' > processingStartingFrom + INTERVAL '{} days'",
 						trans.quote(toString(IngestionStatus::Start_TaskQueued)), _doNotManageIngestionsOlderThanDays

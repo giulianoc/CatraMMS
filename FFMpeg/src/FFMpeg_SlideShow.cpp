@@ -71,7 +71,7 @@ void FFMpeg::slideShow(
 
 	int iReturnedStatus = 0;
 
-	string slideshowListImagesPathName = fmt::format("{}/{}.slideshowListImages.txt", _ffmpegTempDir, ingestionJobKey);
+	string slideshowListImagesPathName = std::format("{}/{}.slideshowListImages.txt", _ffmpegTempDir, ingestionJobKey);
 
 	{
 		ofstream slideshowListFile(slideshowListImagesPathName.c_str(), ofstream::trunc);
@@ -83,7 +83,7 @@ void FFMpeg::slideShow(
 
 			if (!fs::exists(sourcePhysicalPath))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Source asset path name not existing"
 					", ingestionJobKey: {}"
 					// + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -155,7 +155,7 @@ void FFMpeg::slideShow(
 		slideshowListFile.close();
 	}
 
-	string slideshowListAudiosPathName = fmt::format("{}/{}.slideshowListAudios.txt", _ffmpegTempDir, ingestionJobKey);
+	string slideshowListAudiosPathName = std::format("{}/{}.slideshowListAudios.txt", _ffmpegTempDir, ingestionJobKey);
 
 	if (audiosSourcePhysicalPaths.size() > 1)
 	{
@@ -165,7 +165,7 @@ void FFMpeg::slideShow(
 		{
 			if (!fs::exists(sourcePhysicalPath))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Source asset path name not existing"
 					", ingestionJobKey: {}"
 					// + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -304,7 +304,7 @@ void FFMpeg::slideShow(
 			);
 
 			// to hide the ffmpeg staff
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"encodingProfileParameter retrieving failed"
 				" ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -316,17 +316,24 @@ void FFMpeg::slideShow(
 	}
 
 	{
-		char sUtcTimestamp[64];
+		// char sUtcTimestamp[64];
 		tm tmUtcTimestamp;
 		time_t utcTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 		localtime_r(&utcTimestamp, &tmUtcTimestamp);
+		/*
 		sprintf(
 			sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d", tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday,
 			tmUtcTimestamp.tm_hour, tmUtcTimestamp.tm_min, tmUtcTimestamp.tm_sec
 		);
 
-		_outputFfmpegPathFileName = fmt::format("{}/{}_{}_{}.log", _ffmpegTempDir, "slideShow", _currentIngestionJobKey, sUtcTimestamp);
+		_outputFfmpegPathFileName = std::format("{}/{}_{}_{}.log", _ffmpegTempDir, "slideShow", _currentIngestionJobKey, sUtcTimestamp);
+		*/
+		_outputFfmpegPathFileName = std::format(
+			"{}/{}_{}_{:0>4}-{:0>2}-{:0>2}-{:0>2}-{:0>2}-{:0>2}.log", _ffmpegTempDir, "slideShow", _currentIngestionJobKey,
+			tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday, tmUtcTimestamp.tm_hour, tmUtcTimestamp.tm_min,
+			tmUtcTimestamp.tm_sec
+		);
 	}
 
 	// Then you can stream copy or re-encode your files
@@ -438,7 +445,7 @@ void FFMpeg::slideShow(
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
 		if (iReturnedStatus == 9) // 9 means: SIGKILL
-			errorMessage = fmt::format(
+			errorMessage = std::format(
 				"ffmpeg: ffmpeg command failed because killed by the user"
 				", _outputFfmpegPathFileName: {}"
 				", ingestionJobKey: {}"
@@ -449,7 +456,7 @@ void FFMpeg::slideShow(
 				_outputFfmpegPathFileName, ingestionJobKey, encodingJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
 			);
 		else
-			errorMessage = fmt::format(
+			errorMessage = std::format(
 				"ffmpeg: ffmpeg command failed"
 				", _outputFfmpegPathFileName: {}"
 				", ingestionJobKey: {}"

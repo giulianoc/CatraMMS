@@ -13,7 +13,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	{
 		if (dependencies.size() != 2)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"No configured Two Media in order to create the Cross Reference"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -155,7 +155,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 			else
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong content type"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -208,7 +208,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 			else
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong content type"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -263,7 +263,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 			else
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong content type"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -318,7 +318,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 			else
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong content type"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -343,7 +343,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
 			if (firstContentType != MMSEngineDBFacade::ContentType::Video || secondContentType != MMSEngineDBFacade::ContentType::Video)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong content type"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -365,7 +365,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			field = "parameters";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Cross Reference Parameters are not present"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -403,7 +403,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
 			if (firstContentType != MMSEngineDBFacade::ContentType::Audio || secondContentType != MMSEngineDBFacade::ContentType::Audio)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong content type"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -425,7 +425,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			field = "parameters";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Cross Reference Parameters are not present"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -459,7 +459,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 		}
 		else
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Wrong content type"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"

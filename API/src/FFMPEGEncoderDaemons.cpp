@@ -949,7 +949,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						termProcess(sourceLiveProxy, copiedLiveProxy->_ingestionJobKey, configurationLabel, localErrorMessage, false);
 						// ProcessUtility::termProcess(sourceLiveProxy->_childPid);
 
-						sourceLiveProxy->pushErrorMessage(fmt::format(
+						sourceLiveProxy->pushErrorMessage(std::format(
 							"{} {}", DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), localErrorMessage
 						));
 					}
@@ -1881,7 +1881,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						);
 						// ProcessUtility::termProcess(sourceLiveRecording->_childPid);
 						//
-						sourceLiveRecording->pushErrorMessage(fmt::format(
+						sourceLiveRecording->pushErrorMessage(std::format(
 							"{} {}{}", DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())),
 							sourceLiveRecording->_channelLabel, localErrorMessage
 						));

@@ -695,7 +695,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 				{
 					tm tmDateTime;
-					char strCurrentRecordedFileTime[64];
+					// char strCurrentRecordedFileTime[64];
 
 					// from utc to local time
 					localtime_r(&utcCurrentRecordedFileCreationTime, &tmDateTime);
@@ -711,16 +711,17 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 						tmDateTime. tm_sec);
 					*/
 
-					sprintf(strCurrentRecordedFileTime, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
+					// sprintf(strCurrentRecordedFileTime, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 
-					addContentTitle += strCurrentRecordedFileTime; // local time
+					// addContentTitle += strCurrentRecordedFileTime; // local time
+					addContentTitle += std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 				}
 
 				addContentTitle += " - ";
 
 				{
 					tm tmDateTime;
-					char strCurrentRecordedFileTime[64];
+					// char strCurrentRecordedFileTime[64];
 
 					// from utc to local time
 					localtime_r(&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
@@ -735,9 +736,10 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 						tmDateTime. tm_min,
 						tmDateTime. tm_sec);
 					*/
-					sprintf(strCurrentRecordedFileTime, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
+					// sprintf(strCurrentRecordedFileTime, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 
-					addContentTitle += strCurrentRecordedFileTime; // local time
+					// addContentTitle += strCurrentRecordedFileTime; // local time
+					addContentTitle += std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 				}
 
 				// if (!main)
@@ -1133,7 +1135,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 
 								{
 									tm tmDateTime;
-									char strCurrentRecordedFileTime[64];
+									// char strCurrentRecordedFileTime[64];
 
 									time_t toBeIngestedSegmentUtcStartTimeInSeconds = toBeIngestedSegmentUtcStartTimeInMillisecs / 1000;
 									int toBeIngestedSegmentMilliSecs = toBeIngestedSegmentUtcStartTimeInMillisecs % 1000;
@@ -1152,20 +1154,26 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 										tmDateTime. tm_sec);
 									*/
 
+									/*
 									sprintf(
 										strCurrentRecordedFileTime, "%02d:%02d:%02d.%03d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec,
 										toBeIngestedSegmentMilliSecs
 									);
+									*/
 
-									addContentTitle += strCurrentRecordedFileTime; // local
-																				   // time
+									// addContentTitle += strCurrentRecordedFileTime; // local
+									addContentTitle += std::format(
+										"{:0>2}:{:0>2}:{:0>2}.{:0>3}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec,
+										toBeIngestedSegmentMilliSecs
+									);
+									// time
 								}
 
 								addContentTitle += " - ";
 
 								{
 									tm tmDateTime;
-									char strCurrentRecordedFileTime[64];
+									// char strCurrentRecordedFileTime[64];
 
 									time_t toBeIngestedSegmentUtcEndTimeInSeconds = toBeIngestedSegmentUtcEndTimeInMillisecs / 1000;
 									int toBeIngestedSegmentMilliSecs = toBeIngestedSegmentUtcEndTimeInMillisecs % 1000;
@@ -1183,13 +1191,19 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 										tmDateTime. tm_min,
 										tmDateTime. tm_sec);
 									*/
+									/*
 									sprintf(
 										strCurrentRecordedFileTime, "%02d:%02d:%02d.%03d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec,
 										toBeIngestedSegmentMilliSecs
 									);
 
 									addContentTitle += strCurrentRecordedFileTime; // local
-																				   // time
+									*/
+									addContentTitle += std::format(
+										"{:0>2}:{:0>2}:{:0>2}.{:0>3}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec,
+										toBeIngestedSegmentMilliSecs
+									);
+									// time
 								}
 
 								// if (!main)
@@ -1465,7 +1479,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			CurlWrapper::httpPostString(
 				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 				"application/json", // contentType
-				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetryNumber
 			)
 				.second;
@@ -1529,7 +1543,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 		{
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, "mmsWorkflowIngestionURL"))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Field is not present or it is null"
 					", ingestionJobKey: {}"
 					", Field: mmsWorkflowIngestionURL",
@@ -1547,7 +1561,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 			CurlWrapper::httpPostString(
 				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 				"application/json", // contentType
-				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetryNumber
 			)
 				.second;
@@ -1583,7 +1597,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 
 	if (addContentIngestionJobKey == -1)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Ingested URL failed, addContentIngestionJobKey is not valid"
 			", ingestionJobKey: {}",
 			ingestionJobKey
@@ -1603,7 +1617,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 		{
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, "mmsBinaryIngestionURL"))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Field is not present or it is null"
 					", ingestionJobKey: {}"
 					", Field: mmsBinaryIngestionURL",
@@ -1616,12 +1630,12 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, "mmsBinaryIngestionURL", "");
 		}
 
-		mmsBinaryURL = fmt::format("{}/{}", mmsBinaryIngestionURL, addContentIngestionJobKey);
+		mmsBinaryURL = std::format("{}/{}", mmsBinaryIngestionURL, addContentIngestionJobKey);
 
 		string sResponse = CurlWrapper::httpPostFile(
 			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
 			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunkFileSize, "",
-			fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+			std::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 	}
@@ -1780,14 +1794,16 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				variablesWorkflowRoot[field] = variableWorkflowRoot;
 			}
 
-			char currentUtcChunkStartTime_HHMISS[64];
+			// char currentUtcChunkStartTime_HHMISS[64];
+			string currentUtcChunkStartTime_HHMISS;
 			{
 				tm tmDateTime;
 
 				// from utc to local time
 				localtime_r(&utcChunkStartTime, &tmDateTime);
 
-				sprintf(currentUtcChunkStartTime_HHMISS, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
+				// sprintf(currentUtcChunkStartTime_HHMISS, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
+				currentUtcChunkStartTime_HHMISS = std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 			}
 			{
 				json variableWorkflowRoot;
@@ -2194,7 +2210,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				size_t endOfPathIndex = stagingLiveRecorderVirtualVODPathName.find_last_of("/");
 				if (endOfPathIndex == string::npos)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"buildAndIngestVirtualVOD. No stagingLiveRecorderVirtualVODPathName found"
 						", liveRecorderIngestionJobKey: {}"
 						", liveRecorderEncodingJobKey: {}"
@@ -2229,7 +2245,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		string sourceManifestPathFileName = sourceSegmentsDirectoryPathName + "/" + sourceManifestFileName;
 		if (!fs::exists(sourceManifestPathFileName.c_str()))
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"buildAndIngestVirtualVOD. manifest file not existing"
 				", liveRecorderIngestionJobKey: {}"
 				", liveRecorderEncodingJobKey: {}"
@@ -2717,7 +2733,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 							   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds,
 							   CurlWrapper::basicAuthorization(to_string(liveRecorderUserKey), liveRecorderApiKey), workflowMetadata,
 							   "application/json", // contentType
-							   otherHeaders, fmt::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
+							   otherHeaders, std::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
 							   3 // maxRetryNumber
 		)
 							   .second;
@@ -2781,7 +2797,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 			string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
 				mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(liveRecorderUserKey), liveRecorderApiKey),
-				tarGzStagingLiveRecorderVirtualVODPathName, chunkFileSize, fmt::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
+				tarGzStagingLiveRecorderVirtualVODPathName, chunkFileSize, std::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
 				3 // maxRetryNumber
 			);
 

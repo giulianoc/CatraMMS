@@ -346,7 +346,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			);
 			//	In caso di trasferimenti incompleti, resettiamo (Start_TaskQueued e processorMMS null) in modo
 			//	che _mmsEngineDBFacade->getIngestionsToBeManaged li possa riprocessare
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set status = {}, processorMMS = null "
 				"where processorMMS = {} and "
 				"status in ({}, {}, {}) and sourceBinaryTransferred = false "
@@ -447,7 +447,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				processorMMS
 			);
 			// non uso "not like 'End_%'" per motivi di performance
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set processorMMS = NULL where processorMMS = {} "
 				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
 				"'SourceUploadingInProgress') " // , 'EncodingQueued') "
@@ -477,7 +477,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			// lastSQLCommand =
 			//   "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ?";
 			/*
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = null "
 				"where processorMMS = {} and status = {} returning 1) select count(*) from rows",
 				trans.quote(toString(EncodingStatus::ToBeProcessed)), trans.quote(processorMMS), trans.quote(toString(EncodingStatus::Processing))
@@ -500,7 +500,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				", processorMMS: {}",
 				processorMMS
 			);
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = NULL "
 				"where processorMMSForRetention = {} returning 1) select count(*) from rows",
 				trans.quote(processorMMS)
@@ -666,7 +666,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed(int64_t workspaceKey)
 		int currentDirLevel3;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select currentDirLevel1, currentDirLevel2, currentDirLevel3 from MMS_WorkspaceMoreInfo where workspaceKey = {}", workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -695,11 +695,14 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed(int64_t workspaceKey)
 		}
 
 		{
+			/*
 			char pCurrentRelativePath[64];
 
 			sprintf(pCurrentRelativePath, "/%03d/%03d/%03d/", currentDirLevel1, currentDirLevel2, currentDirLevel3);
 
 			relativePathToBeUsed = pCurrentRelativePath;
+			*/
+			relativePathToBeUsed = std::format("/{:0>3}/{:0>3}/{:0>3}/", currentDirLevel1, currentDirLevel2, currentDirLevel3);
 		}
 
 		trans.commit();
@@ -828,7 +831,7 @@ MMSEngineDBFacade::getStorageDetails(int64_t physicalPathKey, bool fromMaster)
 		ContentType contentType;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select mi.workspaceKey, mi.contentType, mi.title, mi.deliveryFileName, pp.externalReadOnlyStorage, "
 				"pp.encodingProfileKey, pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
 				"from MMS_MediaItem mi, MMS_PhysicalPath pp "
@@ -880,7 +883,7 @@ MMSEngineDBFacade::getStorageDetails(int64_t physicalPathKey, bool fromMaster)
 
 		if (encodingProfileKey != -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select deliveryTechnology from MMS_EncodingProfile "
 				"where encodingProfileKey = {} ",
 				encodingProfileKey
@@ -1050,7 +1053,7 @@ MMSEngineDBFacade::getStorageDetails(
 		ContentType contentType;
 		if (encodingProfileKey != -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select mi.workspaceKey, mi.title, mi.contentType, mi.deliveryFileName, "
 				"pp.externalReadOnlyStorage, pp.physicalPathKey, pp.partitionNumber, "
 				"pp.relativePath, pp.fileName, pp.sizeInBytes "
@@ -1086,7 +1089,7 @@ MMSEngineDBFacade::getStorageDetails(
 			if (physicalPathKey == -1)
 			{
 				// warn perchè già loggato come errore nel catch sotto
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"MediaItemKey/EncodingProfileKey are not present"
 					", mediaItemKey: {}"
 					", encodingProfileKey: {}"
@@ -1105,7 +1108,7 @@ MMSEngineDBFacade::getStorageDetails(
 				deliveryTechnology = DeliveryTechnology::Download;
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select deliveryTechnology from MMS_EncodingProfile "
 					"where encodingProfileKey = {} ",
 					encodingProfileKey
@@ -1137,7 +1140,7 @@ MMSEngineDBFacade::getStorageDetails(
 			tie(physicalPathKey, mmsPartitionNumber, relativePath, fileName, sizeInBytes, externalReadOnlyStorage, ignore) =
 				sourcePhysicalPathDetails;
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select workspaceKey, contentType, title, deliveryFileName "
 				"from MMS_MediaItem where mediaItemKey = {}",
 				mediaItemKey
@@ -1351,7 +1354,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 		string fileName;
 		ContentType contentType;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select mi.workspaceKey, mi.contentType, pp.externalReadOnlyStorage, pp.encodingProfileKey, "
 				"pp.partitionNumber, pp.relativePath, pp.fileName, pp.sizeInBytes "
 				"from MMS_MediaItem mi, MMS_PhysicalPath pp "
@@ -1385,7 +1388,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 
 				if (encodingProfileKey != -1)
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select deliveryTechnology from MMS_EncodingProfile "
 						"where encodingProfileKey = {} ",
 						encodingProfileKey
@@ -1565,7 +1568,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 		}
 		if (deliveryAuthorizationKey == -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, "
 				"contentType, contentKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
 				"                                      DEFAULT,                  {},       {}, "
@@ -1698,7 +1701,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 	{
 		if (rows > _maxRows)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
@@ -1716,7 +1719,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Using startIndex/row without orderBy will give inconsistent results"
 				", startIndex: {}"
 				", rows: {}"
@@ -1732,17 +1735,17 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 		{
 			string where;
 			if (deliveryAuthorizationKey != -1)
-				where += fmt::format("{} deliveryAuthorizationKey = {} ", where.size() > 0 ? "and" : "", deliveryAuthorizationKey);
+				where += std::format("{} deliveryAuthorizationKey = {} ", where.size() > 0 ? "and" : "", deliveryAuthorizationKey);
 			if (contentType != "")
-				where += fmt::format("{} contentType = {} ", where.size() > 0 ? "and" : "", trans.quote(contentType));
+				where += std::format("{} contentType = {} ", where.size() > 0 ? "and" : "", trans.quote(contentType));
 			if (contentKey != -1)
-				where += fmt::format("{} contentKey = {} ", where.size() > 0 ? "and" : "", contentKey);
+				where += std::format("{} contentKey = {} ", where.size() > 0 ? "and" : "", contentKey);
 			if (deliveryURI != "")
-				where += fmt::format("{} deliveryURI = {} ", where.size() > 0 ? "and" : "", trans.quote(deliveryURI));
+				where += std::format("{} deliveryURI = {} ", where.size() > 0 ? "and" : "", trans.quote(deliveryURI));
 			if (notExpiredCheck)
 			{
 				long minTimeToLeaveInSeconds = 3 * 3600; // 3h (non servono 3h in caso di un film?)
-				where += fmt::format(
+				where += std::format(
 					"{} extract(epoch from (((authorizationTimestamp + INTERVAL '1 second' * ttlInSeconds) - NOW() at time zone 'utc'))) > {} ",
 					where.size() > 0 ? "and" : "", minTimeToLeaveInSeconds
 				);
@@ -1752,13 +1755,13 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 			string offset;
 			string orderByCondition;
 			if (rows != -1)
-				limit = fmt::format("limit {} ", rows);
+				limit = std::format("limit {} ", rows);
 			if (startIndex != -1)
-				offset = fmt::format("offset {} ", startIndex);
+				offset = std::format("offset {} ", startIndex);
 			if (orderBy != "")
-				orderByCondition = fmt::format("order by {} ", orderBy);
+				orderByCondition = std::format("order by {} ", orderBy);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select {} "
 				"from MMS_DeliveryAuthorization "
 				"{} {} "
@@ -1782,7 +1785,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 
 			if (empty(res) && deliveryAuthorizationKey != -1 && notFoundAsException)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"deliveryAuthorization not found"
 					", deliveryAuthorizationKey: {}",
 					deliveryAuthorizationKey
@@ -1935,7 +1938,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select deliveryURI, currentRetriesNumber, maxRetries, "
 				"extract(epoch from (((authorizationTimestamp + INTERVAL '1 second' * ttlInSeconds) - NOW() at time zone 'utc'))) as "
 				"timeToLiveAvailable "
@@ -2001,7 +2004,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 
 		if (authorizationOK)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_DeliveryAuthorization set currentRetriesNumber = currentRetriesNumber + 1 "
 				"where deliveryAuthorizationKey = {} returning 1) select count(*) from rows",
 				deliveryAuthorizationKey
@@ -2141,7 +2144,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 			{
 				try
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"WITH rows AS (delete from MMS_DeliveryAuthorization where deliveryAuthorizationKey in "
 						"(select deliveryAuthorizationKey from MMS_DeliveryAuthorization "
 						"where (authorizationTimestamp + INTERVAL '1 second' * (ttlInSeconds + {})) < NOW() at time zone 'utc' limit {}) "
@@ -2312,17 +2315,18 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 		string today_yyyy_mm_dd;
 		{
 			tm tmDateTime;
-			char strDateTime[64];
+			// char strDateTime[64];
 			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 			localtime_r(&utcTime, &tmDateTime);
 
-			sprintf(strDateTime, "%04d-%02d-%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday);
-			today_yyyy_mm_dd = strDateTime;
+			// sprintf(strDateTime, "%04d-%02d-%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday);
+			// today_yyyy_mm_dd = strDateTime;
+			today_yyyy_mm_dd = std::format("{:0>4}-{:0>2}-{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday);
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_OncePerDayExecution set lastExecutionTime = {} "
 				"where type = {} returning 1) select count(*) from rows",
 				trans.quote(today_yyyy_mm_dd), trans.quote(toString(oncePerDayType))

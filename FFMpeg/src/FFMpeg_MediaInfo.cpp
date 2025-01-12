@@ -47,7 +47,7 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 
 	if (mediaSource == "")
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"Media Source is wrong"
 			", ingestionJobKey: {}"
 			", mediaSource: {}",

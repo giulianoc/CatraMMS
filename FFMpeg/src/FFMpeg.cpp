@@ -193,17 +193,22 @@ void FFMpeg::renameOutputFfmpegPathFileName(int64_t ingestionJobKey, int64_t enc
 	string debugOutputFfmpegPathFileName;
 	try
 	{
-		char sNow[64];
+		// char sNow[64];
 
 		time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 		tm tmUtcNow;
 		localtime_r(&utcNow, &tmUtcNow);
+		/*
 		sprintf(
 			sNow, "%04d-%02d-%02d-%02d-%02d-%02d", tmUtcNow.tm_year + 1900, tmUtcNow.tm_mon + 1, tmUtcNow.tm_mday, tmUtcNow.tm_hour, tmUtcNow.tm_min,
 			tmUtcNow.tm_sec
 		);
+		*/
 
-		debugOutputFfmpegPathFileName = outputFfmpegPathFileName + "." + sNow;
+		debugOutputFfmpegPathFileName = std::format(
+			"{}.{:0>4}-{:0>2}-{:0>2}-{:0>2}-{:0>2}-{:0>2}", outputFfmpegPathFileName, tmUtcNow.tm_year + 1900, tmUtcNow.tm_mon + 1, tmUtcNow.tm_mday,
+			tmUtcNow.tm_hour, tmUtcNow.tm_min, tmUtcNow.tm_sec
+		);
 
 		_logger->info(
 			__FILEREF__ + "move" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
@@ -236,7 +241,7 @@ bool FFMpeg::isNumber(int64_t ingestionJobKey, string number)
 	}
 	catch (exception &e)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"isNumber failed"
 			", ingestionJobKey: {}"
 			", number: {}"
@@ -330,7 +335,7 @@ pair<double, long> FFMpeg::timeToSeconds(int64_t ingestionJobKey, string time)
 	}
 	catch (exception &e)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"timeToSeconds failed"
 			", ingestionJobKey: {}"
 			", time: {}"
@@ -360,9 +365,12 @@ string FFMpeg::secondsToTime(int64_t ingestionJobKey, double dSeconds)
 
 		string time;
 		{
+			/*
 			char buffer[64];
 			sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds);
 			time = buffer;
+			*/
+			time = format("{:0>2}:{:0>2}:{:0>2}", hours, minutes, seconds);
 			// dLocalSeconds dovrebbe essere 0.12345
 			if (dLocalSeconds > 0.0)
 			{
@@ -382,7 +390,7 @@ string FFMpeg::secondsToTime(int64_t ingestionJobKey, double dSeconds)
 	}
 	catch (exception &e)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"secondsToTime failed"
 			", ingestionJobKey: {}"
 			", dSeconds: {}"
@@ -410,18 +418,20 @@ string FFMpeg::centsOfSecondsToTime(int64_t ingestionJobKey, long centsOfSeconds
 		int seconds = localCentsOfSeconds / 100;
 		localCentsOfSeconds -= (seconds * 100);
 
-		string time;
+		string time = format("{:0>2}:{:0>2}:{:0>2}.{:0>2}", hours, minutes, seconds, localCentsOfSeconds);
 		{
+			/*
 			char buffer[64];
 			sprintf(buffer, "%02d:%02d:%02d.%02ld", hours, minutes, seconds, localCentsOfSeconds);
 			time = buffer;
+			*/
 		}
 
 		return time;
 	}
 	catch (exception &e)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"centsOfSecondsToTime failed"
 			", ingestionJobKey: {}"
 			", centsOfSeconds: {}"
@@ -437,7 +447,7 @@ string FFMpeg::centsOfSecondsToTime(int64_t ingestionJobKey, long centsOfSeconds
 string FFMpeg::getDrawTextTemporaryPathName(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex)
 {
 	if (outputIndex != -1)
-		return fmt::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
+		return std::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
 	else
-		return fmt::format("{}/{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey);
+		return std::format("{}/{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey);
 }

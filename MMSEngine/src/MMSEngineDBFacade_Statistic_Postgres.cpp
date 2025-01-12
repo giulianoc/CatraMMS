@@ -31,7 +31,7 @@ json MMSEngineDBFacade::addRequestStatistic(
 
 		int64_t requestStatisticKey;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_RequestStatistic(workspaceKey, ipAddress, userId, physicalPathKey, "
 				"confStreamKey, title, requestTimestamp) values ("
 				"{}, {}, {}, {}, {}, {}, now() at time zone 'utc') returning requestStatisticKey",
@@ -52,7 +52,7 @@ json MMSEngineDBFacade::addRequestStatistic(
 
 		// update upToNextRequestInSeconds
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select max(requestStatisticKey) as maxRequestStatisticKey from MMS_RequestStatistic "
 				"where workspaceKey = {} and requestStatisticKey < {} and userId = {}",
 				workspaceKey, requestStatisticKey, trans.quote(userId)
@@ -73,7 +73,7 @@ json MMSEngineDBFacade::addRequestStatistic(
 					int64_t previoudRequestStatisticKey = res[0][0].as<int64_t>();
 
 					{
-						sqlStatement = fmt::format(
+						sqlStatement = std::format(
 							"WITH rows AS (update MMS_RequestStatistic "
 							"set upToNextRequestInSeconds = EXTRACT(EPOCH FROM (now() at time zone 'utc' - requestTimestamp)) "
 							"where requestStatisticKey = {} returning 1) SELECT count(*) FROM rows",
@@ -91,7 +91,7 @@ json MMSEngineDBFacade::addRequestStatistic(
 						);
 						if (rowsUpdated != 1)
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"no update was done"
 								", previoudRequestStatisticKey: {}"
 								", rowsUpdated: {}"
@@ -242,7 +242,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(int userKey, string ip)
 		// 	saveGEOInfo(ip, &trans, conn);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_LoginStatistic (userKey, ip, successfulLogin) values ("
 				"{}, {}, now() at time zone 'utc') returning loginStatisticKey",
 				userKey, ip == "" ? "null" : trans.quote(ip)
@@ -360,7 +360,7 @@ void MMSEngineDBFacade::saveGEOInfo(string ipAddress, transaction_base *trans, s
 	{
 		if (ipAddress != "")
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_GEOInfo(ip, lastGEOUpdate, lastTimeUsed, continent, "
 				"continentCode, country, countryCode, region, city, org, isp) values ("
 				"{}, null,          now() at time zone 'utc', null, "
@@ -439,7 +439,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 			{
 				vector<string> ipsToBeUpdated;
 				{
-					string sqlStatement = fmt::format("select distinct ipAddress from MMS_RequestStatistic where geoInfoKey is null limit {}", limit);
+					string sqlStatement = std::format("select distinct ipAddress from MMS_RequestStatistic where geoInfoKey is null limit {}", limit);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
 					for (auto row : res)
@@ -471,39 +471,39 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 					{
 						string sqlWhere;
 						if (continent != "")
-							sqlWhere += fmt::format("continent = {} ", trans.quote(continent));
+							sqlWhere += std::format("continent = {} ", trans.quote(continent));
 						else
-							sqlWhere += fmt::format("continent is null ");
+							sqlWhere += std::format("continent is null ");
 						if (continentCode != "")
-							sqlWhere += fmt::format("and continentcode = {} ", trans.quote(continentCode));
+							sqlWhere += std::format("and continentcode = {} ", trans.quote(continentCode));
 						else
-							sqlWhere += fmt::format("and continentcode is null ");
+							sqlWhere += std::format("and continentcode is null ");
 						if (country != "")
-							sqlWhere += fmt::format("and country = {} ", trans.quote(country));
+							sqlWhere += std::format("and country = {} ", trans.quote(country));
 						else
-							sqlWhere += fmt::format("and country is null ");
+							sqlWhere += std::format("and country is null ");
 						if (countryCode != "")
-							sqlWhere += fmt::format("and countrycode = {} ", trans.quote(countryCode));
+							sqlWhere += std::format("and countrycode = {} ", trans.quote(countryCode));
 						else
-							sqlWhere += fmt::format("and countrycode is null ");
+							sqlWhere += std::format("and countrycode is null ");
 						if (regionName != "")
-							sqlWhere += fmt::format("and region = {} ", trans.quote(regionName));
+							sqlWhere += std::format("and region = {} ", trans.quote(regionName));
 						else
-							sqlWhere += fmt::format("and region is null ");
+							sqlWhere += std::format("and region is null ");
 						if (city != "")
-							sqlWhere += fmt::format("and city = {} ", trans.quote(city));
+							sqlWhere += std::format("and city = {} ", trans.quote(city));
 						else
-							sqlWhere += fmt::format("and city is null ");
+							sqlWhere += std::format("and city is null ");
 						if (org != "")
-							sqlWhere += fmt::format("and org = {} ", trans.quote(org));
+							sqlWhere += std::format("and org = {} ", trans.quote(org));
 						else
-							sqlWhere += fmt::format("and org is null ");
+							sqlWhere += std::format("and org is null ");
 						if (isp != "")
-							sqlWhere += fmt::format("and isp = {} ", trans.quote(isp));
+							sqlWhere += std::format("and isp = {} ", trans.quote(isp));
 						else
-							sqlWhere += fmt::format("and isp is null ");
+							sqlWhere += std::format("and isp is null ");
 
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"select geoInfoKey from MMS_GEOInfo "
 							"where {} ",
 							sqlWhere
@@ -520,7 +520,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 						);
 						if (res.empty())
 						{
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"insert into MMS_GEOInfo(continent, continentcode, country, countrycode, region, city, org, isp) values ("
 								"{}, {}, {}, {}, {}, {}, {}, {}) returning geoInfoKey",
 								continent == "" ? "null" : trans.quote(continent), continentCode == "" ? "null" : trans.quote(continentCode),
@@ -544,7 +544,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 					}
 
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"WITH rows AS (update MMS_RequestStatistic "
 							"set geoInfoKey = {} "
 							"where ipAddress = {} and geoInfoKey is null returning 1) select count(*) from rows",
@@ -715,7 +715,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 			{
 				vector<string> ipsToBeUpdated;
 				{
-					string sqlStatement = fmt::format("select distinct ip from MMS_LoginStatistic where geoInfoKey is null limit {}", limit);
+					string sqlStatement = std::format("select distinct ip from MMS_LoginStatistic where geoInfoKey is null limit {}", limit);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
 					for (auto row : res)
@@ -747,39 +747,39 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 					{
 						string sqlWhere;
 						if (continent != "")
-							sqlWhere += fmt::format("continent = {} ", trans.quote(continent));
+							sqlWhere += std::format("continent = {} ", trans.quote(continent));
 						else
-							sqlWhere += fmt::format("continent is null ");
+							sqlWhere += std::format("continent is null ");
 						if (continentCode != "")
-							sqlWhere += fmt::format("and continentcode = {} ", trans.quote(continentCode));
+							sqlWhere += std::format("and continentcode = {} ", trans.quote(continentCode));
 						else
-							sqlWhere += fmt::format("and continentcode is null ");
+							sqlWhere += std::format("and continentcode is null ");
 						if (country != "")
-							sqlWhere += fmt::format("and country = {} ", trans.quote(country));
+							sqlWhere += std::format("and country = {} ", trans.quote(country));
 						else
-							sqlWhere += fmt::format("and country is null ");
+							sqlWhere += std::format("and country is null ");
 						if (countryCode != "")
-							sqlWhere += fmt::format("and countrycode = {} ", trans.quote(countryCode));
+							sqlWhere += std::format("and countrycode = {} ", trans.quote(countryCode));
 						else
-							sqlWhere += fmt::format("and countrycode is null ");
+							sqlWhere += std::format("and countrycode is null ");
 						if (regionName != "")
-							sqlWhere += fmt::format("and region = {} ", trans.quote(regionName));
+							sqlWhere += std::format("and region = {} ", trans.quote(regionName));
 						else
-							sqlWhere += fmt::format("and region is null ");
+							sqlWhere += std::format("and region is null ");
 						if (city != "")
-							sqlWhere += fmt::format("and city = {} ", trans.quote(city));
+							sqlWhere += std::format("and city = {} ", trans.quote(city));
 						else
-							sqlWhere += fmt::format("and city is null ");
+							sqlWhere += std::format("and city is null ");
 						if (org != "")
-							sqlWhere += fmt::format("and org = {} ", trans.quote(org));
+							sqlWhere += std::format("and org = {} ", trans.quote(org));
 						else
-							sqlWhere += fmt::format("and org is null ");
+							sqlWhere += std::format("and org is null ");
 						if (isp != "")
-							sqlWhere += fmt::format("and isp = {} ", trans.quote(isp));
+							sqlWhere += std::format("and isp = {} ", trans.quote(isp));
 						else
-							sqlWhere += fmt::format("and isp is null ");
+							sqlWhere += std::format("and isp is null ");
 
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"select geoInfoKey from MMS_GEOInfo "
 							"where {} ",
 							sqlWhere
@@ -796,7 +796,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 						);
 						if (res.empty())
 						{
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"insert into MMS_GEOInfo(continent, continentcode, country, countrycode, region, city, org, isp) values ("
 								"{}, {}, {}, {}, {}, {}, {}, {}) returning geoInfoKey",
 								continent == "" ? "null" : trans.quote(continent), continentCode == "" ? "null" : trans.quote(continentCode),
@@ -820,7 +820,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 					}
 
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"WITH rows AS (update MMS_LoginStatistic "
 							"set geoInfoKey = {} "
 							"where ip = {} and geoInfoKey is null returning 1) select count(*) from rows",
@@ -981,7 +981,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 		if (ips.size() > 1)
 		{
 			// https://pro.ip-api.com/batch?key=GvoGDQ05j7fyQmj
-			string geoServiceURL = fmt::format("{}/batch?key={}", _geoServiceURL, _geoServiceKey);
+			string geoServiceURL = std::format("{}/batch?key={}", _geoServiceURL, _geoServiceKey);
 
 			json bodyRoot = json::array();
 			for (string ip : ips)
@@ -1029,7 +1029,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 		else // if (ips.size() == 1)
 		{
 			// https://pro.ip-api.com/json/24.48.0.1?key=GvoGDQ05j7fyQmj
-			string geoServiceURL = fmt::format("{}/json/{}?fields={}&key={}", _geoServiceURL, ips[0], fields, _geoServiceKey);
+			string geoServiceURL = std::format("{}/json/{}?fields={}&key={}", _geoServiceURL, ips[0], fields, _geoServiceKey);
 
 			vector<string> otherHeaders;
 			json geoServiceResponseIp = CurlWrapper::httpGetJson(geoServiceURL, _geoServiceTimeoutInSeconds, "", otherHeaders);
@@ -1216,19 +1216,19 @@ json MMSEngineDBFacade::getRequestStatisticList(
 			statisticsListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (userId != "")
-			sqlWhere += fmt::format("and userId like {} ", trans.quote("%" + userId + "%"));
+			sqlWhere += std::format("and userId like {} ", trans.quote("%" + userId + "%"));
 		if (title != "")
-			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
+			sqlWhere += std::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += std::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += std::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_RequestStatistic {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_RequestStatistic {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
@@ -1245,7 +1245,7 @@ json MMSEngineDBFacade::getRequestStatisticList(
 
 		json statisticsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select requestStatisticKey, ipAddress, userId, physicalPathKey, confStreamKey, title, "
 				"to_char(requestTimestamp, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedRequestTimestamp "
 				"from MMS_RequestStatistic {}"
@@ -1488,22 +1488,22 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList(
 			statisticsListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
-			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
+			sqlWhere += std::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
 		if (userId != "")
-			sqlWhere += fmt::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
+			sqlWhere += std::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += std::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += std::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 		if (minimalNextRequestDistanceInSeconds > 0)
-			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
+			sqlWhere += std::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
 		json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select title, count(*) from MMS_RequestStatistic {}"
 				"group by title ", // order by count(*) desc ",
 				sqlWhere
@@ -1529,7 +1529,7 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList(
 
 		json statisticsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select title, count(*) as count from MMS_RequestStatistic {}"
 				"group by title order by count(*) desc "
 				"limit {} offset {}",
@@ -1744,22 +1744,22 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList(
 			statisticsListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
-			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
+			sqlWhere += std::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
 		if (userId != "")
-			sqlWhere += fmt::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
+			sqlWhere += std::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += std::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += std::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 		if (minimalNextRequestDistanceInSeconds > 0)
-			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
+			sqlWhere += std::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
 		json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select userId, count(*) from MMS_RequestStatistic {}"
 				"group by userId ", // order by count(*) desc ",
 				sqlWhere
@@ -1785,7 +1785,7 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList(
 
 		json statisticsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select userId, count(*) as count from MMS_RequestStatistic {}"
 				"group by userId order by count(*) desc "
 				"limit {} offset {}",
@@ -2000,22 +2000,22 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList(
 			statisticsListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
-			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
+			sqlWhere += std::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
 		if (userId != "")
-			sqlWhere += fmt::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
+			sqlWhere += std::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += std::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += std::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 		if (minimalNextRequestDistanceInSeconds > 0)
-			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
+			sqlWhere += std::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
 		json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count "
 				"from MMS_RequestStatistic {} "
 				"group by to_char(requestTimestamp, 'YYYY-MM') ", // order by count(*) desc ",
@@ -2042,7 +2042,7 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList(
 
 		json statisticsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count "
 				"from MMS_RequestStatistic {} "
 				"group by to_char(requestTimestamp, 'YYYY-MM') order by date asc "
@@ -2258,22 +2258,22 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList(
 			statisticsListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
-			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
+			sqlWhere += std::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
 		if (userId != "")
-			sqlWhere += fmt::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
+			sqlWhere += std::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += std::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += std::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 		if (minimalNextRequestDistanceInSeconds > 0)
-			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
+			sqlWhere += std::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
 		json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
 				"from MMS_RequestStatistic {} "
 				"group by to_char(requestTimestamp, 'YYYY-MM-DD') ", // order by count(*) desc ",
@@ -2300,7 +2300,7 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList(
 
 		json statisticsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
 				"from MMS_RequestStatistic {}"
 				"group by to_char(requestTimestamp, 'YYYY-MM-DD') order by date asc " // order by count(*) desc "
@@ -2516,22 +2516,22 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList(
 			statisticsListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (title != "")
-			sqlWhere += fmt::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
+			sqlWhere += std::format("and LOWER(title) like LOWER({}) ", trans.quote("%" + title + "%"));
 		if (userId != "")
-			sqlWhere += fmt::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
+			sqlWhere += std::format("and LOWER(userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += std::format("and requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += std::format("and requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 		if (minimalNextRequestDistanceInSeconds > 0)
-			sqlWhere += fmt::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
+			sqlWhere += std::format("and upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
 		json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select to_char(requestTimestamp, 'YYYY-MM-DD HH24') as date, count(*) as count "
 				"from MMS_RequestStatistic {}"
 				"group by to_char(requestTimestamp, 'YYYY-MM-DD HH24') ", // order by count(*) desc ",
@@ -2558,7 +2558,7 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList(
 
 		json statisticsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select to_char(requestTimestamp, 'YYYY-MM-DD HH24') as date, count(*) as count "
 				"from MMS_RequestStatistic {}"
 				"group by to_char(requestTimestamp, 'YYYY-MM-DD HH24') order by date asc "
@@ -2775,22 +2775,22 @@ json MMSEngineDBFacade::getRequestStatisticPerCountryList(
 		}
 
 		string sqlWhere = "where r.geoinfokey = g.geoinfokey and ";
-		sqlWhere += fmt::format("r.workspaceKey = {} ", workspaceKey);
+		sqlWhere += std::format("r.workspaceKey = {} ", workspaceKey);
 		if (title != "")
-			sqlWhere += fmt::format("and LOWER(r.title) like LOWER({}) ", trans.quote("%" + title + "%"));
+			sqlWhere += std::format("and LOWER(r.title) like LOWER({}) ", trans.quote("%" + title + "%"));
 		if (userId != "")
-			sqlWhere += fmt::format("and LOWER(r.userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
+			sqlWhere += std::format("and LOWER(r.userId) like LOWER({}) ", trans.quote("%" + userId + "%"));
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and r.requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += std::format("and r.requestTimestamp >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and r.requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += std::format("and r.requestTimestamp <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 		if (minimalNextRequestDistanceInSeconds > 0)
-			sqlWhere += fmt::format("and r.upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
+			sqlWhere += std::format("and r.upToNextRequestInSeconds >= {} ", minimalNextRequestDistanceInSeconds);
 
 		json responseRoot;
 		if (totalNumFoundToBeCalculated)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select g.country, count(*) as count "
 				"from MMS_RequestStatistic r, MMS_GeoInfo g {}"
 				"group by g.country ", // order by count(*) desc ",
@@ -2817,7 +2817,7 @@ json MMSEngineDBFacade::getRequestStatisticPerCountryList(
 
 		json statisticsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select g.country, count(*) as count "
 				"from MMS_RequestStatistic r, MMS_GeoInfo g {}"
 				"group by g.country order by count(*) desc "
@@ -2972,7 +2972,8 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 				//	month, until this procedure do not run, it would not work
 				chrono::duration<int, ratio<60 * 60 * 24 * 32>> one_month(1);
 
-				char strDateTime[64];
+				// char strDateTime[64];
+				string strDateTime;
 				tm tmDateTime;
 				time_t utcTime;
 				chrono::system_clock::time_point today = chrono::system_clock::now();
@@ -2980,16 +2981,19 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 				chrono::system_clock::time_point nextMonth = today + one_month;
 				utcTime = chrono::system_clock::to_time_t(nextMonth);
 				localtime_r(&utcTime, &tmDateTime);
-				sprintf(strDateTime, "%04d-%02d-01", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
+				// sprintf(strDateTime, "%04d-%02d-01", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
+				strDateTime = std::format("{:0>4}-{:0>2}-01", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
 				partition_start = strDateTime;
 
-				sprintf(strDateTime, "%04d_%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
-				partitionName = fmt::format("requeststatistic_{}", strDateTime);
+				// sprintf(strDateTime, "%04d_%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
+				strDateTime = std::format("{:0>4}_{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
+				partitionName = std::format("requeststatistic_{}", strDateTime);
 
 				chrono::system_clock::time_point nextNextMonth = nextMonth + one_month;
 				utcTime = chrono::system_clock::to_time_t(nextNextMonth);
 				localtime_r(&utcTime, &tmDateTime);
-				sprintf(strDateTime, "%04d-%02d-01", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
+				// sprintf(strDateTime, "%04d-%02d-01", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
+				strDateTime = std::format("{:0>4}-{:0>2}-01", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
 				partition_end = strDateTime;
 			}
 
@@ -3006,7 +3010,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 				JOIN pg_namespace nmsp_child    ON nmsp_child.oid   = child.relnamespace
 			WHERE parent.relname='mms_requeststatistic';
 			*/
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select count(*) "
 				"FROM pg_inherits "
 				"JOIN pg_class parent ON pg_inherits.inhparent = parent.oid "
@@ -3028,7 +3032,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			);
 			if (count == 0)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"CREATE TABLE {} PARTITION OF MMS_RequestStatistic "
 					"FOR VALUES FROM ({}) TO ({}) ",
 					partitionName, trans.quote(partition_start), trans.quote(partition_end)
@@ -3055,16 +3059,18 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 				chrono::system_clock::time_point retention = today - retentionMonths;
 				time_t utcTime_retention = chrono::system_clock::to_time_t(retention);
 
-				char strDateTime[64];
+				// char strDateTime[64];
+				string strDateTime;
 				tm tmDateTime;
 
 				localtime_r(&utcTime_retention, &tmDateTime);
 
-				sprintf(strDateTime, "%04d_%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
-				partitionName = fmt::format("requeststatistic_{}", strDateTime);
+				// sprintf(strDateTime, "%04d_%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
+				strDateTime = std::format("{:0>4}_{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1);
+				partitionName = std::format("requeststatistic_{}", strDateTime);
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select count(*) "
 				"FROM pg_inherits "
 				"JOIN pg_class parent ON pg_inherits.inhparent = parent.oid "
@@ -3086,7 +3092,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			);
 			if (count > 0)
 			{
-				string sqlStatement = fmt::format("DROP TABLE {}", partitionName);
+				string sqlStatement = std::format("DROP TABLE {}", partitionName);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				trans.exec0(sqlStatement);
 				SPDLOG_INFO(
@@ -3250,13 +3256,13 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 
 		string sqlWhere = "where s.userKey = u.userKey ";
 		if (startStatisticDate != "")
-			sqlWhere += fmt::format("and s.successfulLogin >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
+			sqlWhere += std::format("and s.successfulLogin >= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startStatisticDate));
 		if (endStatisticDate != "")
-			sqlWhere += fmt::format("and s.successfulLogin <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
+			sqlWhere += std::format("and s.successfulLogin <= TO_TIMESTAMP({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endStatisticDate));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_LoginStatistic s, MMS_User u {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_LoginStatistic s, MMS_User u {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
@@ -3273,7 +3279,7 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 
 		json statisticsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select u.name as userName, u.eMailAddress as emailAddress, s.loginStatisticKey, "
 				"s.userKey, s.ip, "
 				"to_char(s.successfulLogin, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedSuccessfulLogin "
@@ -3456,7 +3462,7 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 		json geoInfoRoot;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select continent, continentCode, country, countryCode, region, city, org, isp, "
 				"to_char(lastGEOUpdate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedLastGEOUpdate, "
 				"to_char(lastTimeUsed, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedLastTimeUsed "

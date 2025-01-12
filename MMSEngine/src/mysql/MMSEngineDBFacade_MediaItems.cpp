@@ -5424,7 +5424,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                 if (startPublishing == "NOW")
                 {
                     tm          tmDateTime;
-                    char        strDateTime [64];
+                    // char        strDateTime [64];
+                    string strDateTime;
 
                     chrono::system_clock::time_point now = chrono::system_clock::now();
                     time_t utcTime = chrono::system_clock::to_time_t(now);
@@ -5432,6 +5433,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					// 2019-03-31: in case startPublishing is wrong, check how gmtime is used in MMSEngineDBFacade_Lock.cpp
                 	gmtime_r (&utcTime, &tmDateTime);
 
+                    /*
                     sprintf (strDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
                             tmDateTime. tm_year + 1900,
                             tmDateTime. tm_mon + 1,
@@ -5439,6 +5441,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                             tmDateTime. tm_hour,
                             tmDateTime. tm_min,
                             tmDateTime. tm_sec);
+                            */
+				strDateTime = fmt::format(
+					"{:0>4}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+				);
 
                     startPublishing = strDateTime;
                 }
@@ -5446,7 +5453,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                 if (endPublishing == "FOREVER")
                 {
                     tm          tmDateTime;
-                    char        strDateTime [64];
+                    // char        strDateTime [64];
+                    string strDateTime;
 
                     chrono::system_clock::time_point forever = chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
 
@@ -5455,6 +5463,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					// 2019-03-31: in case startPublishing is wrong, check how gmtime is used in MMSEngineDBFacade_Lock.cpp
                 	gmtime_r (&utcTime, &tmDateTime);
 
+                    /*
                     sprintf (strDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
                             tmDateTime. tm_year + 1900,
                             tmDateTime. tm_mon + 1,
@@ -5462,6 +5471,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                             tmDateTime. tm_hour,
                             tmDateTime. tm_min,
                             tmDateTime. tm_sec);
+                            */
+				strDateTime = fmt::format(
+					"{:0>4}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+				);
 
                     endPublishing = strDateTime;
                 }

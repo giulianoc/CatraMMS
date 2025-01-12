@@ -411,7 +411,7 @@ json loadConfigurationFile(string configurationPathName)
 	}
 	catch (...)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"wrong json configuration format"
 			", configurationPathName: {}",
 			configurationPathName

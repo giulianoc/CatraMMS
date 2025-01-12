@@ -243,7 +243,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"generate and ingest frame failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"

@@ -3,11 +3,8 @@
 #include <sstream>
 
 ThreadsStatistic::ThreadStatistic::ThreadStatistic(
-	shared_ptr<ThreadsStatistic> mmsThreadsStatistic,
-	string threadName,
-	int processorIdentifier,
-	int currentThreadsNumber,
-	int64_t ingestionJobKey)
+	shared_ptr<ThreadsStatistic> mmsThreadsStatistic, string threadName, int processorIdentifier, int currentThreadsNumber, int64_t ingestionJobKey
+)
 {
 	try
 	{
@@ -23,13 +20,13 @@ ThreadsStatistic::ThreadStatistic::ThreadStatistic(
 
 		_mmsThreadsStatistic->addThread(_threadId, threadData);
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
@@ -43,13 +40,13 @@ ThreadsStatistic::ThreadStatistic::~ThreadStatistic()
 	{
 		_mmsThreadsStatistic->removeThread(_threadId);
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
 		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
@@ -57,12 +54,7 @@ ThreadsStatistic::ThreadStatistic::~ThreadStatistic()
 	}
 }
 
-ThreadsStatistic::ThreadsStatistic(
-	shared_ptr<spdlog::logger> logger
-)
-{
-	_logger = logger;
-}
+ThreadsStatistic::ThreadsStatistic(shared_ptr<spdlog::logger> logger) { _logger = logger; }
 
 void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 {
@@ -77,26 +69,34 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it != _runningThreads.end())
 		{
-			SPDLOG_ERROR("threadsStatistic: thread already added"
+			SPDLOG_ERROR(
+				"threadsStatistic: thread already added"
 				", input threadId: {}"
 				", input threadName: {}"
-				", threadName in map: {}"
-				, sThreadId, threadData._threadName, (it->second)._threadName);
+				", threadName in map: {}",
+				sThreadId, threadData._threadName, (it->second)._threadName
+			);
 
 			return;
 		}
 
 		_runningThreads.insert(make_pair(sThreadId, threadData));
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("threadsStatistic addThread failed"
-			", exception: {}", e.what());
+		SPDLOG_ERROR(
+			"threadsStatistic addThread failed"
+			", exception: {}",
+			e.what()
+		);
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("threadsStatistic addThread failed"
-			", exception: {}", e.what());
+		SPDLOG_ERROR(
+			"threadsStatistic addThread failed"
+			", exception: {}",
+			e.what()
+		);
 	}
 }
 
@@ -113,8 +113,11 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it == _runningThreads.end())
 		{
-			SPDLOG_ERROR("threadsStatistic: thread not found"
-				", threadId: {}", sThreadId);
+			SPDLOG_ERROR(
+				"threadsStatistic: thread not found"
+				", threadId: {}",
+				sThreadId
+			);
 
 			return;
 		}
@@ -122,26 +125,32 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 		ThreadData threadData = it->second;
 		_runningThreads.erase(it);
 
-		SPDLOG_INFO("threadsStatistic"
+		SPDLOG_INFO(
+			"threadsStatistic"
 			", threadName: {}"
 			", processorIdentifier: {}"
 			", currentThreadsNumber: {}"
 			", ingestionJobKey: {}"
 			", @MMS statistics@ - threadDuration (secs): @{}@",
-			threadData._threadName, threadData._processorIdentifier, threadData._currentThreadsNumber,
-			threadData._ingestionJobKey, chrono::duration_cast<chrono::seconds>(
-				chrono::system_clock::now() - threadData._startThread).count()
+			threadData._threadName, threadData._processorIdentifier, threadData._currentThreadsNumber, threadData._ingestionJobKey,
+			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - threadData._startThread).count()
 		);
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR("threadsStatistic removeThread failed"
-			", exception: {}", e.what());
+		SPDLOG_ERROR(
+			"threadsStatistic removeThread failed"
+			", exception: {}",
+			e.what()
+		);
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		SPDLOG_ERROR("threadsStatistic removeThread failed"
-			", exception: ", e.what());
+		SPDLOG_ERROR(
+			"threadsStatistic removeThread failed"
+			", exception: ",
+			e.what()
+		);
 	}
 }
 
@@ -154,8 +163,7 @@ void ThreadsStatistic::logRunningThreads(bool asError)
 		string message = to_string(_runningThreads.size()) + ". ";
 		bool firstThreadData = true;
 		int threadCounter = 1;
-		for (map<string, ThreadData>::iterator it = _runningThreads.begin();
-			it != _runningThreads.end(); it++)
+		for (map<string, ThreadData>::iterator it = _runningThreads.begin(); it != _runningThreads.end(); it++)
 		{
 			string sThreadId = it->first;
 			// stringstream ss;
@@ -171,14 +179,10 @@ void ThreadsStatistic::logRunningThreads(bool asError)
 				firstThreadData = false;
 			}
 
-			message += fmt::format(
+			message += std::format(
 				// to_string(threadCounter++) + "-"
-				"{}. {}-{}-{}",
-				threadData._currentThreadsNumber,
-				sThreadId,
-				threadData._threadName,
-				chrono::duration_cast<chrono::seconds>(
-					chrono::system_clock::now() - threadData._startThread).count()
+				"{}. {}-{}-{}", threadData._currentThreadsNumber, sThreadId, threadData._threadName,
+				chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - threadData._startThread).count()
 			);
 		}
 		if (asError)
@@ -186,17 +190,12 @@ void ThreadsStatistic::logRunningThreads(bool asError)
 		else
 			SPDLOG_INFO("threadsStatistic, running threads: {}", message);
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "threadsStatistic logRunningThreads failed"
-			+ ", exception: " + e.what()
-		);
+		_logger->error(__FILEREF__ + "threadsStatistic logRunningThreads failed" + ", exception: " + e.what());
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "threadsStatistic logRunningThreads failed"
-			+ ", exception: " + e.what()
-		);
+		_logger->error(__FILEREF__ + "threadsStatistic logRunningThreads failed" + ", exception: " + e.what());
 	}
 }
-

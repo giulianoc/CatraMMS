@@ -238,7 +238,7 @@ void API::createDeliveryAuthorization(
 				api, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -253,7 +253,7 @@ void API::createDeliveryAuthorization(
 				api, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -397,7 +397,7 @@ void API::createBulkOfDeliveryAuthorization(
 					field = "userId";
 					string userId = JSONUtils::asString(valRoot, field, "");
 
-					string requestKey = fmt::format(
+					string requestKey = std::format(
 						"{}_{}_{}_{}_{}_{}", mediaItemKey, encodingProfileKey, encodingProfileLabel, deliveryType, filteredByStatistic, userId
 					);
 					map<string, string>::const_iterator searchIt = deliveryURLAlreadyCreated.find(requestKey);
@@ -509,7 +509,7 @@ void API::createBulkOfDeliveryAuthorization(
 					field = "userId";
 					string userId = JSONUtils::asString(uniqueNameRoot, field, "");
 
-					string requestKey = fmt::format(
+					string requestKey = std::format(
 						"{}_{}_{}_{}_{}_{}", uniqueName, encodingProfileKey, encodingProfileLabel, deliveryType, filteredByStatistic, userId
 					);
 					map<string, string>::const_iterator searchIt = deliveryURLAlreadyCreated.find(requestKey);
@@ -706,7 +706,7 @@ void API::createBulkOfDeliveryAuthorization(
 				api, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);

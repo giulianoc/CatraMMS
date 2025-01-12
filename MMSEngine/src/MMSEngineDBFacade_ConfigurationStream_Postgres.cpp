@@ -30,7 +30,7 @@ json MMSEngineDBFacade::addStream(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_Stream(workspaceKey, label, sourceType, "
 				"encodersPoolKey, url, "
 				"pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri, "
@@ -467,7 +467,7 @@ json MMSEngineDBFacade::modifyStream(
 				throw runtime_error(errorMessage);
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_Stream {} "
 				"where {} = {} and workspaceKey = {} returning 1) select count(*) from rows",
 				setSQL, confKey != -1 ? "confKey" : "label", confKey != -1 ? to_string(confKey) : trans.quote(label), workspaceKey
@@ -663,13 +663,13 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 		{
 			string sqlStatement;
 			if (confKey != -1)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"WITH rows AS (delete from MMS_Conf_Stream where confKey = {} and workspaceKey = {} "
 					"returning 1) select count(*) from rows",
 					confKey, workspaceKey
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"WITH rows AS (delete from MMS_Conf_Stream where label = {} and workspaceKey = {} "
 					"returning 1) select count(*) from rows",
 					trans.quote(label), workspaceKey
@@ -1021,32 +1021,32 @@ json MMSEngineDBFacade::getStreamList(
 			streamListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (liveURLKey != -1)
-			sqlWhere += fmt::format("and confKey = {} ", liveURLKey);
+			sqlWhere += std::format("and confKey = {} ", liveURLKey);
 		if (label != "")
 		{
 			if (labelLike)
-				sqlWhere += fmt::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
+				sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
 			else
-				sqlWhere += fmt::format("and LOWER(label) = LOWER({}) ", trans.quote(label));
+				sqlWhere += std::format("and LOWER(label) = LOWER({}) ", trans.quote(label));
 		}
 		if (url != "")
-			sqlWhere += fmt::format("and url like {} ", trans.quote("%" + url + "%"));
+			sqlWhere += std::format("and url like {} ", trans.quote("%" + url + "%"));
 		if (sourceType != "")
-			sqlWhere += fmt::format("and sourceType = {} ", trans.quote(sourceType));
+			sqlWhere += std::format("and sourceType = {} ", trans.quote(sourceType));
 		if (type != "")
-			sqlWhere += fmt::format("and type = {} ", trans.quote(type));
+			sqlWhere += std::format("and type = {} ", trans.quote(type));
 		if (name != "")
-			sqlWhere += fmt::format("and LOWER(name) like LOWER({}) ", trans.quote("%" + name + "%"));
+			sqlWhere += std::format("and LOWER(name) like LOWER({}) ", trans.quote("%" + name + "%"));
 		if (region != "")
-			sqlWhere += fmt::format("and region like {} ", trans.quote("%" + region + "%"));
+			sqlWhere += std::format("and region like {} ", trans.quote("%" + region + "%"));
 		if (country != "")
-			sqlWhere += fmt::format("and LOWER(country) like LOWER({}) ", trans.quote("%" + country + "%"));
+			sqlWhere += std::format("and LOWER(country) like LOWER({}) ", trans.quote("%" + country + "%"));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_Stream {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_Stream {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -1063,9 +1063,9 @@ json MMSEngineDBFacade::getStreamList(
 		{
 			string orderByCondition;
 			if (labelOrder != "")
-				orderByCondition = fmt::format("order by label {}", labelOrder);
+				orderByCondition = std::format("order by label {}", labelOrder);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, label, sourceType, encodersPoolKey, url, "
 				"pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri, "
 				"pushListenTimeout, captureLiveVideoDeviceNumber, "
@@ -1405,7 +1405,7 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 		{
 			// si vuole recuperare la prima pushserverport di un encoder non configurata tra tutti gli streams di tutti i workspace
 			// Per questo motivo non bisogna aggiungere la condizione del workspace key
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select max(pushServerPort) as pushServerPort "
 				"from MMS_Conf_Stream "
 				"where sourceType = {} and pushEncoderKey = {}",
@@ -1667,7 +1667,7 @@ string MMSEngineDBFacade::stream_columnAsString(int64_t workspaceKey, string col
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_conf_stream:.{}", columnName);
+		string requestedColumn = std::format("mms_conf_stream:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey, label);
 
@@ -1764,7 +1764,7 @@ int64_t MMSEngineDBFacade::stream_columnAsInt64(int64_t workspaceKey, string col
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_conf_stream:.{}", columnName);
+		string requestedColumn = std::format("mms_conf_stream:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey, label);
 
@@ -2076,7 +2076,7 @@ json MMSEngineDBFacade::stream_columnAsJson(int64_t workspaceKey, string columnN
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_conf_stream:.{}", columnName);
+		string requestedColumn = std::format("mms_conf_stream:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey, label);
 
@@ -2185,7 +2185,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 	{
 		if (rows > _maxRows)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
@@ -2203,7 +2203,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Using startIndex/row without orderBy will give inconsistent results"
 				", startIndex: {}"
 				", rows: {}"
@@ -2218,23 +2218,23 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
-			where += fmt::format("{} workspacekey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
+			where += std::format("{} workspacekey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
 			if (confKey != -1)
-				where += fmt::format("{} confkey = {} ", where.size() > 0 ? "and" : "", confKey);
+				where += std::format("{} confkey = {} ", where.size() > 0 ? "and" : "", confKey);
 			if (label != "")
-				where += fmt::format("{} label = {} ", where.size() > 0 ? "and" : "", trans.quote(label));
+				where += std::format("{} label = {} ", where.size() > 0 ? "and" : "", trans.quote(label));
 
 			string limit;
 			string offset;
 			string orderByCondition;
 			if (rows != -1)
-				limit = fmt::format("limit {} ", rows);
+				limit = std::format("limit {} ", rows);
 			if (startIndex != -1)
-				offset = fmt::format("offset {} ", startIndex);
+				offset = std::format("offset {} ", startIndex);
 			if (orderBy != "")
-				orderByCondition = fmt::format("order by {} ", orderBy);
+				orderByCondition = std::format("order by {} ", orderBy);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select {} "
 				"from MMS_Conf_Stream "
 				"where "
@@ -2259,7 +2259,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 
 			if (notFoundAsException && empty(res) && (confKey != -1 || label != ""))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Stream not found"
 					", workspaceKey: {}"
 					", label: {}",
@@ -2434,7 +2434,7 @@ MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool war
 		int captureLiveChannelsNumber = -1;
 		int64_t tvSourceTVConfKey = -1;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, sourceType, "
 				"encodersPoolKey, url, "
 				"pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri, "
@@ -2674,7 +2674,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(int64_t worksp
 		string channelName;
 		string userData;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select url, name, userData from MMS_Conf_Stream "
 				"where workspaceKey = {} and confKey = {}",
 				workspaceKey, confKey
@@ -2820,7 +2820,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_SourceTVStream( "
 				"type, serviceId, networkId, transportStreamId, "
 				"name, satellite, frequency, lnb, "
@@ -2886,7 +2886,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 
 			if (sourceTVStreamsRoot.size() != 1)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong channelConf"
 					", confKey: {}"
 					", sourceTVStreamsRoot.size: {}",
@@ -3182,7 +3182,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 				throw runtime_error(errorMessage);
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_SourceTVStream {} "
 				"where confKey = {} returning 1) select count(*) from rows",
 				setSQL, confKey
@@ -3365,7 +3365,7 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_SourceTVStream where confKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey
@@ -3588,65 +3588,65 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 		if (confKey != -1)
 		{
 			if (sqlWhere == "")
-				sqlWhere += fmt::format("sc.confKey = {} ", confKey);
+				sqlWhere += std::format("sc.confKey = {} ", confKey);
 			else
-				sqlWhere += fmt::format("and sc.confKey = {} ", confKey);
+				sqlWhere += std::format("and sc.confKey = {} ", confKey);
 		}
 		if (type != "")
 		{
 			if (sqlWhere == "")
-				sqlWhere += fmt::format("sc.type = {} ", trans.quote(type));
+				sqlWhere += std::format("sc.type = {} ", trans.quote(type));
 			else
-				sqlWhere += fmt::format("and sc.type = {} ", trans.quote(type));
+				sqlWhere += std::format("and sc.type = {} ", trans.quote(type));
 		}
 		if (serviceId != -1)
 		{
 			if (sqlWhere == "")
-				sqlWhere += fmt::format("sc.serviceId = {} ", serviceId);
+				sqlWhere += std::format("sc.serviceId = {} ", serviceId);
 			else
-				sqlWhere += fmt::format("and sc.serviceId = {} ", serviceId);
+				sqlWhere += std::format("and sc.serviceId = {} ", serviceId);
 		}
 		if (name != "")
 		{
 			if (sqlWhere == "")
-				sqlWhere += fmt::format("LOWER(sc.name) like LOWER({}) ", trans.quote("%" + name + "%"));
+				sqlWhere += std::format("LOWER(sc.name) like LOWER({}) ", trans.quote("%" + name + "%"));
 			else
-				sqlWhere += fmt::format("and LOWER(sc.name) like LOWER({}) ", trans.quote("%" + name + "%"));
+				sqlWhere += std::format("and LOWER(sc.name) like LOWER({}) ", trans.quote("%" + name + "%"));
 		}
 		if (frequency != -1)
 		{
 			if (sqlWhere == "")
-				sqlWhere += fmt::format("sc.frequency = {} ", frequency);
+				sqlWhere += std::format("sc.frequency = {} ", frequency);
 			else
-				sqlWhere += fmt::format("and sc.frequency = {} ", frequency);
+				sqlWhere += std::format("and sc.frequency = {} ", frequency);
 		}
 		if (lnb != "")
 		{
 			if (sqlWhere == "")
-				sqlWhere += fmt::format("LOWER(sc.lnb) like LOWER({}) ", trans.quote("%" + lnb + "%"));
+				sqlWhere += std::format("LOWER(sc.lnb) like LOWER({}) ", trans.quote("%" + lnb + "%"));
 			else
-				sqlWhere += fmt::format("and LOWER(sc.lnb) like LOWER({}) ", trans.quote("%" + lnb + "%"));
+				sqlWhere += std::format("and LOWER(sc.lnb) like LOWER({}) ", trans.quote("%" + lnb + "%"));
 		}
 		if (videoPid != -1)
 		{
 			if (sqlWhere == "")
-				sqlWhere += fmt::format("sc.videoPid = {} ", videoPid);
+				sqlWhere += std::format("sc.videoPid = {} ", videoPid);
 			else
-				sqlWhere += fmt::format("and sc.videoPid = {} ", videoPid);
+				sqlWhere += std::format("and sc.videoPid = {} ", videoPid);
 		}
 		if (audioPids != "")
 		{
 			if (sqlWhere == "")
-				sqlWhere += fmt::format("sc.audioPids = {} ", trans.quote(audioPids));
+				sqlWhere += std::format("sc.audioPids = {} ", trans.quote(audioPids));
 			else
-				sqlWhere += fmt::format("and sc.audioPids = {} ", trans.quote(audioPids));
+				sqlWhere += std::format("and sc.audioPids = {} ", trans.quote(audioPids));
 		}
 		if (sqlWhere != "")
-			sqlWhere = fmt::format("where {}", sqlWhere);
+			sqlWhere = std::format("where {}", sqlWhere);
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_SourceTVStream sc {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_SourceTVStream sc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -3662,9 +3662,9 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 		json streamsRoot = json::array();
 		{
 			string orderByCondition;
-			orderByCondition = fmt::format("order by sc.name {}", nameOrder);
+			orderByCondition = std::format("order by sc.name {}", nameOrder);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select sc.confKey, sc.type, sc.serviceId, "
 				"sc.networkId, sc.transportStreamId, sc.name, sc.satellite, "
 				"sc.frequency, sc.lnb, sc.videoPid, sc.audioPids, "
@@ -3927,7 +3927,7 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 		int videoPid;
 		int audioItalianPid;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select type, serviceId, frequency, symbolRate, "
 				"bandwidthInHz, modulation, videoPid, audioItalianPid "
 				"from MMS_Conf_SourceTVStream "
@@ -4348,7 +4348,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 	}
 	catch (DBRecordNotFound &e)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"getLastYouTubeURLDetails failed"
 			", ingestionKey: {}"
 			", workspaceKey: {}"
@@ -4361,7 +4361,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 	}
 	catch (...)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"getLastYouTubeURLDetails failed"
 			", ingestionKey: {}"
 			", workspaceKey: {}"
@@ -4397,16 +4397,23 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 
 			json youTubeLiveURLRoot;
 			{
-				char strNow[64];
+				// char strNow[64];
+				string strNow;
 				{
 					time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 					tm tmNow;
 
 					localtime_r(&utcNow, &tmNow);
+					/*
 					sprintf(
 						strNow, "%04d-%02d-%02d %02d:%02d:%02d", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min,
 						tmNow.tm_sec
+					);
+					*/
+					strNow = std::format(
+						"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour,
+						tmNow.tm_min, tmNow.tm_sec
 					);
 				}
 				field = "timestamp";
@@ -4516,7 +4523,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"updateChannelDataWithNewYouTubeURL failed"
 			", ingestionKey: {}"
 			", workspaceKey: {}"
@@ -4530,7 +4537,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 	}
 	catch (...)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"updateChannelDataWithNewYouTubeURL failed"
 			", ingestionKey: {}"
 			", workspaceKey: {}"

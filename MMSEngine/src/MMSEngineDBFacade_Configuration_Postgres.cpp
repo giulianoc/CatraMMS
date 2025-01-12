@@ -24,7 +24,7 @@ MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server,
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_FTP(workspaceKey, label, server, port, userName, password, "
 				"remoteDirectory) values ("
 				"{}, {}, {}, {}, {}, {}, {}) returning confKey",
@@ -154,7 +154,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_FTP set label = {}, server = {}, port = {}, "
 				"userName = {}, password = {}, remoteDirectory = {} "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -293,7 +293,7 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_FTP where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -442,11 +442,11 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 			ftpConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_FTP {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_FTP {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -462,7 +462,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 		json ftpRoot = json::array();
 		{
 			string sqlStatement =
-				fmt::format("select confKey, label, server, port, userName, password, remoteDirectory from MMS_Conf_FTP {}", sqlWhere);
+				std::format("select confKey, label, server, port, userName, password, remoteDirectory from MMS_Conf_FTP {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row : res)
@@ -621,7 +621,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 		_logger->info(__FILEREF__ + "getFTPByConfigurationLabel" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select server, port, userName, password, remoteDirectory from MMS_Conf_FTP "
 				"where workspaceKey = {} and label = {}",
 				workspaceKey, trans.quote(label)
@@ -766,7 +766,7 @@ int64_t MMSEngineDBFacade::addEMailConf(int64_t workspaceKey, string label, stri
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_EMail(workspaceKey, label, addresses, subject, message) values ("
 				"{}, {}, {}, {}, {}) returning confKey",
 				workspaceKey, trans.quote(label), trans.quote(addresses), trans.quote(subject), trans.quote(message)
@@ -892,7 +892,7 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_EMail set label = {}, addresses = {}, subject = {}, "
 				"message = {} "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -1030,7 +1030,7 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_EMail where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -1179,11 +1179,11 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 			emailConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_EMail {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_EMail {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -1198,7 +1198,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 
 		json emailRoot = json::array();
 		{
-			string sqlStatement = fmt::format("select confKey, label, addresses, subject, message from MMS_Conf_EMail {}", sqlWhere);
+			string sqlStatement = std::format("select confKey, label, addresses, subject, message from MMS_Conf_EMail {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row : res)
@@ -1351,7 +1351,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 		_logger->info(__FILEREF__ + "getEMailByConfigurationLabel" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select addresses, subject, message from MMS_Conf_EMail "
 				"where workspaceKey = {} and label = {}",
 				workspaceKey, trans.quote(label)
@@ -1709,7 +1709,7 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 		{
 			if (pushEncoderKey < 0)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Wrong pushEncoderKey in case of IP_PUSH"
 					", configurationLabel: {}"
 					", pushEncoderKey: {}",

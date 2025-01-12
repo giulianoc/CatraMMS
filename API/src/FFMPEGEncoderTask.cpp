@@ -303,7 +303,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			vector<string> otherHeaders;
 			json ingestionRoot = CurlWrapper::httpGetJson(
 				mmsIngestionJobURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), otherHeaders,
-				fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+				std::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetryNumber
 			);
 
@@ -418,7 +418,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 			CurlWrapper::httpPostString(
 				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 				"application/json", // contentType
-				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetryNumber
 			)
 				.second;
@@ -517,7 +517,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 
 		string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
 			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), localBinaryPathFileName,
-			localBinaryFileSizeInBytes, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+			localBinaryFileSizeInBytes, std::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 
@@ -808,7 +808,7 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 
 		CurlWrapper::downloadFile(
 			sourcePhysicalDeliveryURL, localDestAssetPathName, progressDownloadCallback2, &progressData, 500,
-			fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+			std::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 	}

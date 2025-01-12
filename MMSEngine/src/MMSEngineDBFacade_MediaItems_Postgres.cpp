@@ -34,7 +34,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 		bool noMoreRowsReturned = false;
 		while (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() < maxEntriesNumber && !noMoreRowsReturned)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select workspaceKey, mediaItemKey, ingestionJobKey, retentionInMinutes, title, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate "
 				"from MMS_MediaItem where "
@@ -70,7 +70,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				if (!ingestionDependingOnMediaItemKey)
 				{
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
 							"where mediaItemKey = {} and processorMMSForRetention is null "
 							"returning 1) select count(*) from rows",
@@ -145,7 +145,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 		noMoreRowsReturned = false;
 		while (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() < maxEntriesNumber && !noMoreRowsReturned)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select mi.workspaceKey, mi.mediaItemKey, p.physicalPathKey, mi.ingestionJobKey, "
 				"p.retentionInMinutes, mi.title, "
 				"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate "
@@ -184,7 +184,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				if (!ingestionDependingOnMediaItemKey)
 				{
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
 							"where mediaItemKey = {} and processorMMSForRetention is null "
 							"returning 1) select count(*) from rows",
@@ -472,7 +472,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 	{
 		{
 			// like: non lo uso per motivi di performance
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select count(*) from MMS_IngestionJobDependency ijd, MMS_IngestionJob ij where "
 				"ijd.ingestionJobKey = ij.ingestionJobKey "
 				"and ijd.dependOnIngestionJobKey = {} "
@@ -555,7 +555,7 @@ json MMSEngineDBFacade::updateMediaItem(
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += fmt::format("title = {}", trans.quote(newTitle));
+				setSQL += std::format("title = {}", trans.quote(newTitle));
 			}
 
 			if (userDataModified)
@@ -565,26 +565,26 @@ json MMSEngineDBFacade::updateMediaItem(
 				if (newUserData == "")
 					setSQL += ("userData = null");
 				else
-					setSQL += fmt::format("userData = {}", trans.quote(newUserData));
+					setSQL += std::format("userData = {}", trans.quote(newUserData));
 			}
 
 			if (retentionInMinutesModified)
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += fmt::format("retentionInMinutes = {}", newRetentionInMinutes);
+				setSQL += std::format("retentionInMinutes = {}", newRetentionInMinutes);
 			}
 
 			if (tagsModified)
 			{
 				if (setSQL != "")
 					setSQL += ", ";
-				setSQL += fmt::format("tags = {}", getPostgresArray(tagsRoot, true, &trans));
+				setSQL += std::format("tags = {}", getPostgresArray(tagsRoot, true, &trans));
 			}
 
 			setSQL = "set " + setSQL + " ";
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_MediaItem {} "
 				"where mediaItemKey = {} "
 				// 2021-02: in case the user is not the owner and it is a shared workspace
@@ -782,7 +782,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_PhysicalPath set retentionInMinutes = {} "
 				"where physicalPathKey = {} and mediaItemKey = {} "
 				"returning 1) select count(*) from rows",
@@ -1159,7 +1159,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 		}
 
 		string sqlWhere;
-		sqlWhere = fmt::format("where mi.workspaceKey = {} and mi.markedAsRemoved = false ", workspaceKey);
+		sqlWhere = std::format("where mi.workspaceKey = {} and mi.markedAsRemoved = false ", workspaceKey);
 		if (newMediaItemKey != -1)
 		{
 			if (otherMediaItemsKey.size() > 0)
@@ -1171,16 +1171,16 @@ json MMSEngineDBFacade::getMediaItemsList(
 				sqlWhere += ") ";
 			}
 			else
-				sqlWhere += fmt::format("and mi.mediaItemKey = {} ", newMediaItemKey);
+				sqlWhere += std::format("and mi.mediaItemKey = {} ", newMediaItemKey);
 		}
 		if (contentTypePresent)
-			sqlWhere += fmt::format("and mi.contentType = {} ", trans.quote(toString(contentType)));
+			sqlWhere += std::format("and mi.contentType = {} ", trans.quote(toString(contentType)));
 		if (startIngestionDate != "")
-			sqlWhere += fmt::format("and mi.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
+			sqlWhere += std::format("and mi.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
 		if (endIngestionDate != "")
-			sqlWhere += fmt::format("and mi.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
+			sqlWhere += std::format("and mi.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
 		if (title != "")
-			sqlWhere += fmt::format(
+			sqlWhere += std::format(
 				"and LOWER(mi.title) like LOWER({}) ", trans.quote("%" + title + "%")
 			); // LOWER was used because the column is using utf8_bin that is case sensitive
 		/*
@@ -1198,7 +1198,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 			// sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
 		}
 		if (recordingCode != -1)
-			sqlWhere += fmt::format("and mi.recordingCode_virtual = {} ", recordingCode);
+			sqlWhere += std::format("and mi.recordingCode_virtual = {} ", recordingCode);
 
 		if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
 		{
@@ -1211,7 +1211,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 			// first chunk of the cut
 			// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodStartTimeInMilliSeconds
-			sqlWhere += fmt::format(
+			sqlWhere += std::format(
 				"(mi.utcStartTimeInMilliSecs_virtual <= {} and {} < mi.utcEndTimeInMilliSecs_virtual) ", utcCutPeriodStartTimeInMilliSeconds,
 				utcCutPeriodStartTimeInMilliSeconds
 			);
@@ -1220,7 +1220,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 			// internal chunk of the cut
 			// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
-			sqlWhere += fmt::format(
+			sqlWhere += std::format(
 				"({} <= mi.utcStartTimeInMilliSecs_virtual and mi.utcEndTimeInMilliSecs_virtual <= {}) ", utcCutPeriodStartTimeInMilliSeconds,
 				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
 			);
@@ -1229,7 +1229,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 			// last chunk of the cut
 			// utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
-			sqlWhere += fmt::format(
+			sqlWhere += std::format(
 				"(mi.utcStartTimeInMilliSecs_virtual < {} and {} <= mi.utcEndTimeInMilliSecs_virtual) ",
 				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
 			);
@@ -1240,12 +1240,12 @@ json MMSEngineDBFacade::getMediaItemsList(
 		if (tagsIn.size() > 0)
 		{
 			// &&: Gli array si sovrappongono, cioè hanno qualche elemento in comune?
-			sqlWhere += fmt::format("and mi.tags && {} = true ", getPostgresArray(tagsIn, true, &trans));
+			sqlWhere += std::format("and mi.tags && {} = true ", getPostgresArray(tagsIn, true, &trans));
 		}
 		if (tagsNotIn.size() > 0)
 		{
 			// &&: Gli array si sovrappongono, cioè hanno qualche elemento in comune?
-			sqlWhere += fmt::format("and mi.tags && {} = false ", getPostgresArray(tagsNotIn, true, &trans));
+			sqlWhere += std::format("and mi.tags && {} = false ", getPostgresArray(tagsNotIn, true, &trans));
 		}
 
 		if (jsonCondition != "")
@@ -1253,7 +1253,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 		int64_t numFound;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_MediaItem mi {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_MediaItem mi {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			numFound = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
@@ -1275,7 +1275,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 		else // if (orderBy != "" && jsonOrderBy != "")
 			orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
 
-		string sqlStatement = fmt::format(
+		string sqlStatement = std::format(
 			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, "
 			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedIngestionDate, "
 			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedStartPublishing, "
@@ -1433,7 +1433,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						json mediaItemReferencesRoot = json::array();
 
 						{
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"select sourceMediaItemKey, type, parameters "
 								"from MMS_CrossReference "
 								"where targetMediaItemKey = {}",
@@ -1478,7 +1478,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						}
 
 						{
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"select type, targetMediaItemKey, parameters "
 								"from MMS_CrossReference "
 								"where sourceMediaItemKey = {}",
@@ -1536,7 +1536,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				{
 					json mediaItemProfilesRoot = json::array();
 
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage, "
 						"deliveryInfo ->> 'externalDeliveryTechnology' as externalDeliveryTechnology, "
 						"deliveryInfo ->> 'externalDeliveryURL' as externalDeliveryURL, "
@@ -2024,7 +2024,7 @@ int64_t MMSEngineDBFacade::physicalPath_columnAsInt64(string columnName, int64_t
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_physicalpath:.{}", columnName);
+		string requestedColumn = std::format("mms_physicalpath:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = physicalPathQuery(requestedColumns, physicalPathKey, fromMaster);
 
@@ -2184,7 +2184,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 	{
 		if (rows > _maxRows)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
@@ -2202,7 +2202,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Using startIndex/row without orderBy will give inconsistent results"
 				", startIndex: {}"
 				", rows: {}"
@@ -2218,19 +2218,19 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 		{
 			string where;
 			if (physicalPathKey != -1)
-				where += fmt::format("{} physicalPathKey = {} ", where.size() > 0 ? "and" : "", physicalPathKey);
+				where += std::format("{} physicalPathKey = {} ", where.size() > 0 ? "and" : "", physicalPathKey);
 
 			string limit;
 			string offset;
 			string orderByCondition;
 			if (rows != -1)
-				limit = fmt::format("limit {} ", rows);
+				limit = std::format("limit {} ", rows);
 			if (startIndex != -1)
-				offset = fmt::format("offset {} ", startIndex);
+				offset = std::format("offset {} ", startIndex);
 			if (orderBy != "")
-				orderByCondition = fmt::format("order by {} ", orderBy);
+				orderByCondition = std::format("order by {} ", orderBy);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select {} "
 				"from MMS_PhysicalPath "
 				"{} {} "
@@ -2254,7 +2254,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 
 			if (empty(res) && physicalPathKey != -1 && notFoundAsException)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"physicalPath not found"
 					", physicalPathKey: {}",
 					physicalPathKey
@@ -2397,7 +2397,7 @@ string MMSEngineDBFacade::externalUniqueName_columnAsString(
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_externaluniquename:.{}", columnName);
+		string requestedColumn = std::format("mms_externaluniquename:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet =
 			externalUniqueNameQuery(requestedColumns, workspaceKey, uniqueName, mediaItemKey, fromMaster);
@@ -2407,7 +2407,7 @@ string MMSEngineDBFacade::externalUniqueName_columnAsString(
 
 		if ((*sqlResultSet).size() == 0)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"workspaceKey/mediaItemKey not found"
 				", workspaceKey: {}"
 				", mediaItemKey: {}",
@@ -2474,7 +2474,7 @@ MMSEngineDBFacade::externalUniqueName_UniqueName(int64_t workspaceKey, int64_t m
 
 		if ((*sqlResultSet).size() == 0)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"workspaceKey/mediaItemKey not found"
 				", workspaceKey: {}"
 				", mediaItemKey: {}",
@@ -2523,7 +2523,7 @@ int64_t MMSEngineDBFacade::externalUniqueName_columnAsInt64(
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_externaluniquename:.{}", columnName);
+		string requestedColumn = std::format("mms_externaluniquename:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet =
 			externalUniqueNameQuery(requestedColumns, workspaceKey, uniqueName, mediaItemKey, fromMaster);
@@ -2533,7 +2533,7 @@ int64_t MMSEngineDBFacade::externalUniqueName_columnAsInt64(
 
 		if ((*sqlResultSet).size() == 0)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"workspaceKey/mediaItemKey not found"
 				", workspaceKey: {}"
 				", mediaItemKey: {}",
@@ -2657,7 +2657,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 	{
 		if (rows > _maxRows)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
@@ -2675,7 +2675,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Using startIndex/row without orderBy will give inconsistent results"
 				", startIndex: {}"
 				", rows: {}"
@@ -2691,23 +2691,23 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 		{
 			string where;
 			if (workspaceKey != -1)
-				where += fmt::format("{} workspaceKey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
+				where += std::format("{} workspaceKey = {} ", where.size() > 0 ? "and" : "", workspaceKey);
 			if (uniqueName != "")
-				where += fmt::format("{} uniqueName = {} ", where.size() > 0 ? "and" : "", trans.quote(uniqueName));
+				where += std::format("{} uniqueName = {} ", where.size() > 0 ? "and" : "", trans.quote(uniqueName));
 			if (mediaItemKey != -1)
-				where += fmt::format("{} mediaItemKey = {} ", where.size() > 0 ? "and" : "", mediaItemKey);
+				where += std::format("{} mediaItemKey = {} ", where.size() > 0 ? "and" : "", mediaItemKey);
 
 			string limit;
 			string offset;
 			string orderByCondition;
 			if (rows != -1)
-				limit = fmt::format("limit {} ", rows);
+				limit = std::format("limit {} ", rows);
 			if (startIndex != -1)
-				offset = fmt::format("offset {} ", startIndex);
+				offset = std::format("offset {} ", startIndex);
 			if (orderBy != "")
-				orderByCondition = fmt::format("order by {} ", orderBy);
+				orderByCondition = std::format("order by {} ", orderBy);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select {} "
 				"from MMS_ExternalUniqueName "
 				"{} {} "
@@ -2731,7 +2731,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 
 			if (empty(res) && workspaceKey != -1 && uniqueName != "" && notFoundAsException)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"workspaceKey/uniqueName not found"
 					", physicalPathKey: {}"
 					", uniqueName: {}",
@@ -2896,7 +2896,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 	{
 		if (encodingProfileKey != -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} "
 				"and encodingProfileKey = {}",
 				referenceMediaItemKey, encodingProfileKey
@@ -3089,7 +3089,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 	{
 		int64_t encodingProfileKey = -1;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encodingProfileKey from MMS_EncodingProfile "
 				"where (workspaceKey = {} or workspaceKey is null) and "
 				"contentType = {} and label = {}",
@@ -3118,7 +3118,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} "
 				"and encodingProfileKey = {}",
 				mediaItemKey, encodingProfileKey
@@ -3299,7 +3299,7 @@ string MMSEngineDBFacade::getPhysicalPathDetails(int64_t physicalPathKey, bool w
 	{
 		string metaData;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select metaData "
 				"from MMS_PhysicalPath p "
 				"where physicalPathKey = {}",
@@ -3517,7 +3517,7 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 			//	- se esiste un 'cource content' avente encodingProfileKey null viene considerato
 			//		questo contenuto come 'source'
 			//	- se non esiste viene cercato il source tra quelli con encodingProfileKey inizializzato
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select physicalPathKey, sizeInBytes, fileName, relativePath, partitionNumber, "
 				"externalReadOnlyStorage, durationInMilliSeconds, encodingProfileKey "
 				"from MMS_PhysicalPath where mediaItemKey = {}",
@@ -3809,7 +3809,7 @@ MMSEngineDBFacade::getMediaItemKeyDetails(int64_t workspaceKey, int64_t mediaIte
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select contentType, title, userData, ingestionJobKey, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate, "
 				"EXTRACT(EPOCH FROM (willBeRemovedAt_virtual - NOW() at time zone 'utc')) as willBeRemovedInSeconds "
@@ -4015,7 +4015,7 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(int64_t workspaceKey,
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, "
 				"mi.ingestionJobKey, p.fileName, p.relativePath, p.durationInMilliSeconds, "
 				"to_char(ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as ingestionDate "
@@ -4230,7 +4230,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 	{
 		IngestionType ingestionType;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ingestionType from MMS_IngestionJob "
 				"where ingestionJobKey = {} ",
 				referenceIngestionJobKey
@@ -4286,7 +4286,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				orderBy = "order by ijo.position asc ";
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ijo.mediaItemKey, ijo.physicalPathKey "
 				"from MMS_IngestionJobOutput ijo, MMS_MediaItem mi "
 				"where mi.workspaceKey = {} and ijo.mediaItemKey = mi.mediaItemKey "
@@ -4310,7 +4310,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 
 				ContentType contentType;
 				{
-					string sqlStatement = fmt::format("select contentType from MMS_MediaItem where mediaItemKey = {}", mediaItemKey);
+					string sqlStatement = std::format("select contentType from MMS_MediaItem where mediaItemKey = {}", mediaItemKey);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
 					SPDLOG_INFO(
@@ -4510,7 +4510,7 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, stri
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select mi.mediaItemKey, mi.contentType "
 				"from MMS_MediaItem mi, MMS_ExternalUniqueName eun "
 				"where mi.mediaItemKey = eun.mediaItemKey "
@@ -4701,7 +4701,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 	{
 		if (physicalPathKey == -1)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select durationInMilliSeconds "
 				"from MMS_PhysicalPath "
 				"where mediaItemKey = {} and encodingProfileKey is null",
@@ -4741,7 +4741,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 		}
 		else
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select durationInMilliSeconds "
 				"from MMS_PhysicalPath "
 				"where physicalPathKey = {}",
@@ -4930,7 +4930,7 @@ void MMSEngineDBFacade::getVideoDetails(
 		if (physicalPathKey == -1)
 		{
 			string sqlStatement =
-				fmt::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
+				std::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -4960,7 +4960,7 @@ void MMSEngineDBFacade::getVideoDetails(
 		audioTracks.clear();
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select videoTrackKey, trackIndex, durationInMilliSeconds, width, height, avgFrameRate, "
 				"codecName, profile, bitRate "
 				"from MMS_VideoTrack where physicalPathKey = {}",
@@ -5010,7 +5010,7 @@ void MMSEngineDBFacade::getVideoDetails(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select audioTrackKey, trackIndex, durationInMilliSeconds, codecName, bitRate, sampleRate, channels, language "
 				"from MMS_AudioTrack where physicalPathKey = {}",
 				localPhysicalPathKey
@@ -5202,7 +5202,7 @@ void MMSEngineDBFacade::getAudioDetails(
 		if (physicalPathKey == -1)
 		{
 			string sqlStatement =
-				fmt::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
+				std::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -5231,7 +5231,7 @@ void MMSEngineDBFacade::getAudioDetails(
 		audioTracks.clear();
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select audioTrackKey, trackIndex, durationInMilliSeconds, "
 				"codecName, bitRate, sampleRate, channels, language "
 				"from MMS_AudioTrack where physicalPathKey = {}",
@@ -5430,7 +5430,7 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 		if (physicalPathKey == -1)
 		{
 			string sqlStatement =
-				fmt::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
+				std::format("select physicalPathKey from MMS_PhysicalPath where mediaItemKey = {} and encodingProfileKey is null", mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -5462,7 +5462,7 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 		int quality;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select width, height, format, quality "
 				"from MMS_ImageItemProfile where physicalPathKey = {}",
 				localPhysicalPathKey
@@ -5698,15 +5698,22 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				if (startPublishing == "NOW")
 				{
 					tm tmDateTime;
-					char strUtcDateTime[64];
+					// char strUtcDateTime[64];
+					string strUtcDateTime;
 
 					chrono::system_clock::time_point now = chrono::system_clock::now();
 					time_t utcTime = chrono::system_clock::to_time_t(now);
 
 					gmtime_r(&utcTime, &tmDateTime);
 
+					/*
 					sprintf(
 						strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+						tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+					);
+					*/
+					strUtcDateTime = std::format(
+						"{:0>4}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 						tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 					);
 
@@ -5716,7 +5723,8 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				if (endPublishing == "FOREVER")
 				{
 					tm tmDateTime;
-					char strUtcDateTime[64];
+					// char strUtcDateTime[64];
+					string strUtcDateTime;
 
 					chrono::system_clock::time_point forever = chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
 
@@ -5724,8 +5732,14 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 					gmtime_r(&utcTime, &tmDateTime);
 
+					/*
 					sprintf(
 						strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+						tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+					);
+					*/
+					strUtcDateTime = std::format(
+						"{:0>4}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 						tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 					);
 
@@ -5742,7 +5756,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				tags = getPostgresArray(tagsRoot, true, &trans);
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, "
 				"deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
 				"startPublishing, endPublishing, "
@@ -5872,7 +5886,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			int currentDirLevel3;
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select currentDirLevel1, currentDirLevel2, currentDirLevel3 "
 					"from MMS_WorkspaceMoreInfo where workspaceKey = {}",
 					workspace->_workspaceKey
@@ -5930,7 +5944,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_WorkspaceMoreInfo set currentDirLevel1 = {}, currentDirLevel2 = {}, "
 					"currentDirLevel3 = {}, currentIngestionsNumber = currentIngestionsNumber + 1 "
 					"where workspaceKey = {} "
@@ -6172,7 +6186,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 			// delete it if present
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (delete from MMS_ExternalUniqueName "
 					"where workspaceKey = {} and mediaItemKey = {} "
 					"returning 1) select count(*) from rows",
@@ -6195,7 +6209,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 		// look if it is an insert (we do NOT have one) or an update (we already have one)
 		string currentUniqueName;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select uniqueName from MMS_ExternalUniqueName "
 				"where workspaceKey = {} and mediaItemKey = {}",
 				workspaceKey, mediaItemKey
@@ -6219,7 +6233,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 			if (allowUniqueNameOverride)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select mediaItemKey from MMS_ExternalUniqueName "
 					"where workspaceKey = {} and uniqueName = {}",
 					workspaceKey, trans->quote(uniqueName)
@@ -6238,7 +6252,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					int64_t mediaItemKeyOfCurrentUniqueName = res[0]["mediaItemKey"].as<int64_t>();
 
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"WITH rows AS (update MMS_ExternalUniqueName "
 							"set uniqueName = uniqueName || '-' || '{}' || '-' || '{}' "
 							"where workspaceKey = {} and uniqueName = {} "
@@ -6258,7 +6272,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					}
 
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"WITH rows AS (update MMS_MediaItem "
 							"set markedAsRemoved = true "
 							"where workspaceKey = {} and mediaItemKey = {} "
@@ -6280,7 +6294,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 			}
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_ExternalUniqueName (workspaceKey, mediaItemKey, uniqueName) "
 					"values ({}, {}, {})",
 					workspaceKey, mediaItemKey, trans->quote(uniqueName)
@@ -6302,7 +6316,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 			if (allowUniqueNameOverride)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select mediaItemKey from MMS_ExternalUniqueName "
 					"where workspaceKey = {} and uniqueName = {}",
 					workspaceKey, trans->quote(uniqueName)
@@ -6323,7 +6337,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					if (mediaItemKeyOfCurrentUniqueName != mediaItemKey)
 					{
 						{
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"WITH rows AS (update MMS_ExternalUniqueName "
 								"set uniqueName = uniqueName || '-' || '{}' || '-' || '{}' "
 								"where workspaceKey = {} and uniqueName = {} "
@@ -6343,7 +6357,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 						}
 
 						{
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"WITH rows AS (update MMS_MediaItem "
 								"set markedAsRemoved = true "
 								"where workspaceKey = {} and mediaItemKey = {} "
@@ -6366,7 +6380,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 			}
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_ExternalUniqueName "
 					"set uniqueName = {} "
 					"where workspaceKey = {} and mediaItemKey = {} "
@@ -6576,7 +6590,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 	{
 		MMSEngineDBFacade::ContentType contentType;
 		{
-			string sqlStatement = fmt::format("select contentType from MMS_MediaItem where mediaItemKey = {}", mediaItemKey);
+			string sqlStatement = std::format("select contentType from MMS_MediaItem where mediaItemKey = {}", mediaItemKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -6630,7 +6644,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				", encodedFileName: " + encodedFileName + ", encodingProfileKey: " + to_string(encodingProfileKey) +
 				", deliveryInfo: " + deliveryInfo + ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
 			);
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
 				"fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, "
 				"durationInMilliSeconds, bitRate, deliveryInfo, metaData, creationDate, retentionInMinutes) values ("
@@ -6668,7 +6682,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				tie(videoTrackIndex, videoDurationInMilliSeconds, videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate,
 					videoBitRate) = videoTrack;
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_VideoTrack (videoTrackKey, physicalPathKey, "
 					"trackIndex, durationInMilliSeconds, width, height, avgFrameRate, "
 					"codecName, bitRate, profile) values ("
@@ -6703,7 +6717,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				tie(audioTrackIndex, audioDurationInMilliSeconds, audioCodecName, audioSampleRate, audioChannels, audioBitRate, language) =
 					audioTrack;
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_AudioTrack (audioTrackKey, physicalPathKey, "
 					"trackIndex, durationInMilliSeconds, codecName, bitRate, sampleRate, channels, language) values ("
 					"DEFAULT, {}, {}, {}, {}, {}, {}, {}, {})",
@@ -6726,7 +6740,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		}
 		else if (contentType == ContentType::Image)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_ImageItemProfile (physicalPathKey, width, height, format, "
 				"quality) values ("
 				"{}, {}, {}, {}, {})",
@@ -6798,7 +6812,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 	{
 		// make sure the mediaitemkey belong to the workspace
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select mediaItemKey from MMS_MediaItem "
 				"where workspaceKey = {} and mediaItemKey = {}",
 				workspaceKey, mediaItemKey
@@ -6815,7 +6829,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 			);
 			if (empty(res))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"cross references cannot be updated because mediaItemKey does not belong to the workspace"
 					", workspaceKey: {}"
 					", mediaItemKey: {}",
@@ -6828,7 +6842,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_CrossReference "
 				"where sourceMediaItemKey = {} or targetMediaItemKey = {} "
 				"returning 1) select count(*) from rows",
@@ -7119,13 +7133,13 @@ void MMSEngineDBFacade::addCrossReference(
 		{
 			string sqlStatement;
 			if (crossReferenceParameters != "")
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey, parameters) "
 					"values ({}, {}, {}, {})",
 					sourceMediaItemKey, trans->quote(toString(crossReferenceType)), targetMediaItemKey, trans->quote(crossReferenceParameters)
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"insert into MMS_CrossReference (sourceMediaItemKey, type, targetMediaItemKey, parameters) "
 					"values ({}, {}, {}, NULL)",
 					sourceMediaItemKey, trans->quote(toString(crossReferenceType)), targetMediaItemKey
@@ -7206,7 +7220,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_PhysicalPath "
 				"where physicalPathKey = {} "
 				"returning 1) select count(*) from rows",
@@ -7340,7 +7354,7 @@ void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_MediaItem "
 				"where mediaItemKey = {} "
 				"returning 1) select count(*) from rows",
@@ -7524,9 +7538,9 @@ json MMSEngineDBFacade::getTagsList(
 		}
 
 		string sqlWhere;
-		sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (contentTypePresent)
-			sqlWhere += fmt::format("and contentType = {} ", trans.quote(toString(contentType)));
+			sqlWhere += std::format("and contentType = {} ", trans.quote(toString(contentType)));
 		if (liveRecordingChunk == 0)
 			sqlWhere += ("and userData -> 'mmsData' ->> 'liveRecordingChunk' is NULL ");
 		else if (liveRecordingChunk == 1)
@@ -7534,13 +7548,13 @@ json MMSEngineDBFacade::getTagsList(
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select count(distinct tagName) from ("
 				"select unnest(tags) as tagName from MMS_MediaItem {}) t ",
 				sqlWhere
 			);
 			if (tagNameFilter != "")
-				sqlStatement += fmt::format("where lower(tagName) like {} ", trans.quote("%" + tagNameFilterLowerCase + "%"));
+				sqlStatement += std::format("where lower(tagName) like {} ", trans.quote("%" + tagNameFilterLowerCase + "%"));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int>();
@@ -7555,14 +7569,14 @@ json MMSEngineDBFacade::getTagsList(
 
 		json tagsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select distinct tagName from ("
 				"select unnest(tags) as tagName from MMS_MediaItem {}) t ",
 				sqlWhere
 			);
 			if (tagNameFilter != "")
-				sqlStatement += fmt::format("where lower(tagName) like {} ", trans.quote("%" + tagNameFilterLowerCase + "%"));
-			sqlStatement += fmt::format("order by tagName limit {} offset {}", rows, start);
+				sqlStatement += std::format("where lower(tagName) like {} ", trans.quote("%" + tagNameFilterLowerCase + "%"));
+			sqlStatement += std::format("order by tagName limit {} offset {}", rows, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row : res)
@@ -7695,7 +7709,7 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
 				"where mediaItemKey = {} "
 				"returning 1) select count(*) from rows",

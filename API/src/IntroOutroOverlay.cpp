@@ -426,12 +426,15 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				int currentFileIndex = 0;
 				while (!filesAreFinished)
 				{
-					char currentCounter[64];
-					sprintf(currentCounter, "%04d", currentFileIndex);
+					// char currentCounter[64];
+					string currentCounter;
+					// sprintf(currentCounter, "%04d", currentFileIndex);
+					currentCounter = std::format("{:0>4}", currentFileIndex);
 					string currentFile = stagingBasePath + "/" + chunkBaseFileName + "_" + currentCounter + mainSourceFileExtension;
 
-					char nextCounter[64];
-					sprintf(nextCounter, "%04d", currentFileIndex + 1);
+					// char nextCounter[64];
+					// sprintf(nextCounter, "%04d", currentFileIndex + 1);
+					string nextCounter = std::format("{:0>4}", currentFileIndex + 1);
 					string nextFile = stagingBasePath + "/" + chunkBaseFileName + "_" + nextCounter + mainSourceFileExtension;
 
 					// il file sorgente è piu lungo di 2 volte il periodo (introOutroDurationInSeconds)
@@ -895,7 +898,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 	catch (runtime_error &e)
 	{
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (runtime_error)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -916,7 +919,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 	catch (exception &e)
 	{
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (exception)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"

@@ -321,7 +321,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					vector<string> otherHeaders;
 					json ingestionRoot = CurlWrapper::httpGetJson(
 						mmsIngestionJobURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), otherHeaders,
-						fmt::format(", ingestionJobKey: {}", _ingestionJobKey),
+						std::format(", ingestionJobKey: {}", _ingestionJobKey),
 						3 // maxRetryNumber
 					);
 
@@ -462,7 +462,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (runtime_error)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -492,7 +492,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (exception)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -573,7 +573,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			CurlWrapper::httpPostString(
 				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 				"application/json", // contentType
-				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetries
 			)
 				.second;
@@ -634,7 +634,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 
 		string sResponse = CurlWrapper::httpPostFile(
 			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
-			imagesDirectory + "/" + generatedFrameFileName, frameFileSize, "", fmt::format(", ingestionJobKey: {}", ingestionJobKey),
+			imagesDirectory + "/" + generatedFrameFileName, frameFileSize, "", std::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 	}

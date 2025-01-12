@@ -218,7 +218,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Extract track failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"

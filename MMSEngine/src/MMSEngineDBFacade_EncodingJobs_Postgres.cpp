@@ -58,7 +58,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 			//	to update the same set of rows simultaneously. It locks the selected rows but skips
 			//	over any rows already locked by other transactions,
 			//	thereby reducing the likelihood of deadlocks.
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName, "
 				"ej.utcScheduleStart_virtual "
@@ -115,7 +115,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				resultSetIndex++;
 
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select ir.workspaceKey "
 						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 						"where ir.ingestionRootKey = ij.ingestionRootKey "
@@ -147,7 +147,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
 								", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 							);
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"WITH rows AS (update MMS_EncodingJob set status = {}, "
 								"encodingJobEnd = NOW() at time zone 'utc' "
 								"where encodingJobKey = {} returning 1) select count(*) from rows",
@@ -205,7 +205,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
 								", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_CanceledByMMS)
 							);
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"WITH rows AS (update MMS_EncodingJob set status = {}, "
 								"encodingJobEnd = NOW() at time zone 'utc' "
 								"where encodingJobKey = {} returning 1) select count(*) from rows",
@@ -250,7 +250,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 							", status: {}",
 							encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 						);
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"WITH rows AS (update MMS_EncodingJob set status = {} "
 							"where encodingJobKey = {} returning 1) select count(*) from rows",
 							trans.quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
@@ -281,7 +281,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				// encodingItem->_ingestedParametersRoot
 				{
 					string sqlStatement =
-						fmt::format("select metaDataContent from MMS_IngestionJob where ingestionJobKey = {}", encodingItem->_ingestionJobKey);
+						std::format("select metaDataContent from MMS_IngestionJob where ingestionJobKey = {}", encodingItem->_ingestionJobKey);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
 					SPDLOG_INFO(
@@ -311,7 +311,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 									__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
 									", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 								);
-								string sqlStatement = fmt::format(
+								string sqlStatement = std::format(
 									"WITH rows AS (update MMS_EncodingJob set status = {} "
 									"where encodingJobKey = {} returning 1) select count(*) from rows",
 									trans.quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
@@ -346,7 +346,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
 								", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
 							);
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"WITH rows AS (update MMS_EncodingJob set status = {} "
 								"where encodingJobKey = {} returning 1) select count(*) from rows",
 								trans.quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
@@ -400,14 +400,14 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					);
 					string sqlStatement;
 					if (!row["utcScheduleStart_virtual"].is_null())
-						sqlStatement = fmt::format(
+						sqlStatement = std::format(
 							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = {} "
 							"where encodingJobKey = {} and processorMMS is null "
 							"returning 1) select count(*) from rows",
 							trans.quote(toString(EncodingStatus::Processing)), trans.quote(processorMMS), encodingItem->_encodingJobKey
 						);
 					else
-						sqlStatement = fmt::format(
+						sqlStatement = std::format(
 							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = {}"
 							", encodingJobStart = NOW() at time zone 'utc' "
 							"where encodingJobKey = {} and processorMMS is null "
@@ -611,7 +611,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 			si occupa di gestire l'EncodingJob
 		 */
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ej.encodingJobKey, ej.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.encodingPriority, ej.encoderKey, ej.stagingEncodedAssetPathName, "
 				"ej.utcScheduleStart_virtual "
@@ -646,7 +646,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 				string encodingParameters = row["parameters"].as<string>();
 
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select ir.workspaceKey "
 						"from MMS_IngestionRoot ir, MMS_IngestionJob ij "
 						"where ir.ingestionRootKey = ij.ingestionRootKey "
@@ -869,7 +869,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 			{
 				string type;
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select type, failuresNumber from MMS_EncodingJob "
 						"where encodingJobKey = {}",
 						encodingJobKey
@@ -912,7 +912,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 							__FILEREF__ + "update EncodingJob" + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus) +
 							", encodingFailureNumber: " + to_string(encodingFailureNumber) + ", encodingJobKey: " + to_string(encodingJobKey)
 						);
-						sqlStatement = fmt::format(
+						sqlStatement = std::format(
 							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, failuresNumber = {}, "
 							"encodingProgress = NULL where encodingJobKey = {} and status = {} "
 							"returning 1) select count(*) from rows",
@@ -925,7 +925,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 						newEncodingStatus = EncodingStatus::ToBeProcessed;
 						encodingFailureNumber++;
 
-						sqlStatement = fmt::format(
+						sqlStatement = std::format(
 							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, encoderKey = NULL, "
 							"failuresNumber = {}, encodingProgress = NULL where encodingJobKey = {} "
 							"and status = {} returning 1) select count(*) from rows",
@@ -969,7 +969,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					", status: " + MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" + ", encoderKey = NULL" +
 					", encodingProgress: " + "NULL"
 				);
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encoderKey = NULL, encodingProgress = NULL "
 					"where encodingJobKey = {} and status = {} returning 1) select count(*) from rows",
@@ -1007,7 +1007,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", status: " +
 					MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" + ", encodingJobEnd: " + "NOW() at time zone 'utc'"
 				);
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encodingJobEnd = NOW() at time zone 'utc' "
 					"where encodingJobKey = {} and status = {} returning 1) select count(*) from rows",
@@ -1045,7 +1045,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", status: " +
 					MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" + ", encodingJobEnd: " + "NOW() at time zone 'utc'"
 				);
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encodingJobEnd = NOW() at time zone 'utc' "
 					"where encodingJobKey = {} and status = {} returning 1) select count(*) from rows",
@@ -1083,7 +1083,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", status: " +
 					MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" + ", encodingJobEnd: " + "NOW() at time zone 'utc'"
 				);
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encodingJobEnd = NOW() at time zone 'utc' "
 					"where encodingJobKey = {} returning 1) select count(*) from rows",
@@ -1122,7 +1122,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					", status: " + MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" +
 					", encodingJobEnd: " + "NOW() at time zone 'utc'" + ", encodingProgress: " + "100"
 				);
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encodingJobEnd = NOW() at time zone 'utc', encodingProgress = 100 "
 					"where encodingJobKey = {} and status = {} returning 1) select count(*) from rows",
@@ -1360,7 +1360,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 			);
 			// "RecordingPeriod" : { "AutoRenew" : true, "End" : "2020-05-10T02:00:00Z", "Start" : "2020-05-03T02:00:00Z" }
 			// to_timestamp({}) riceve utc ma ritorna la data in local time
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set "
 				"metaDataContent = jsonb_set("
 				"jsonb_set(metaDataContent, '{{schedule,start}}', ('\"' || to_char(to_timestamp({}) at time zone 'utc', 'YYYY-MM-DD') || 'T' || "
@@ -1405,7 +1405,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 				", JSON_SET....utcScheduleEnd: {}",
 				encodingJobKey, utcRecordingPeriodStart, utcRecordingPeriodEnd
 			);
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set encodingJobStart = NOW() at time zone 'utc', "
 				"parameters = jsonb_set("
 				"jsonb_set(parameters, '{{utcScheduleStart}}', jsonb '{}'), "
@@ -1424,7 +1424,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"no update was done"
 					", utcRecordingPeriodStart: {}"
 					", utcRecordingPeriodEnd: {}"
@@ -1549,7 +1549,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority(shared_ptr<Workspace> workspac
 		EncodingStatus currentEncodingStatus;
 		EncodingPriority currentEncodingPriority;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select status, encodingPriority from MMS_EncodingJob "
 				// "where encodingJobKey = ?";
 				"where encodingJobKey = {}",
@@ -1615,7 +1615,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority(shared_ptr<Workspace> workspac
 				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) +
 				", encodingPriority: " + to_string(static_cast<int>(newEncodingPriority))
 			);
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set encodingPriority = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				static_cast<int>(newEncodingPriority), encodingJobKey
@@ -1755,7 +1755,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 		EncodingStatus currentEncodingStatus;
 		int64_t ingestionJobKey;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select status, ingestionJobKey from MMS_EncodingJob "
 				// "where encodingJobKey = ?";
 				"where encodingJobKey = {}",
@@ -1801,7 +1801,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) +
 				", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
 			);
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set status = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				trans.quote(toString(newEncodingStatus)), encodingJobKey
@@ -1832,7 +1832,7 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 
 		IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set status = {} "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				trans.quote(toString(newIngestionStatus)), ingestionJobKey
@@ -1970,7 +1970,7 @@ void MMSEngineDBFacade::forceCancelEncodingJob(int64_t ingestionJobKey)
 	{
 		{
 			EncodingStatus encodingStatus = EncodingStatus::End_CanceledByUser;
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set status = {} "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
 				trans.quote(toString(encodingStatus)), ingestionJobKey
@@ -2115,7 +2115,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress(int64_t encodingJobKey, double
 				+ ", encodingProgress: " + to_string(encodingPercentage)
 				);
 			*/
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set encodingProgress = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				encodingPercentage, encodingJobKey
@@ -2263,7 +2263,7 @@ void MMSEngineDBFacade::updateEncodingRealTimeInfo(
 				+ ", encodingProgress: " + to_string(encodingPercentage)
 				);
 			*/
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set encodingPid = {}, realTimeFrameRate = {}, realTimeBitRate = {}, "
 				"numberOfRestartBecauseOfFailure = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
@@ -2407,7 +2407,7 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber(int64_t encodingJobKey, 
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select COALESCE(isKilled, false) as isKilled "
 				"from MMS_EncodingJob "
 				"where encodingJobKey = {}",
@@ -2441,7 +2441,7 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber(int64_t encodingJobKey, 
 				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) +
 				", failuresNumber: " + to_string(failuresNumber)
 			);
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set failuresNumber = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				failuresNumber, encodingJobKey
@@ -2585,7 +2585,7 @@ void MMSEngineDBFacade::updateEncodingJobIsKilled(int64_t encodingJobKey, bool i
 			_logger->info(
 				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", isKilled: " + to_string(isKilled)
 			);
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set isKilled = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				isKilled, encodingJobKey
@@ -2727,7 +2727,7 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder(int64_t encodingJobKey, int6
 			_logger->info(
 				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", encoderKey: " + to_string(encoderKey)
 			);
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set encoderKey = {}, "
 				"stagingEncodedAssetPathName = {} where encodingJobKey = {} returning 1) select count(*) from rows",
 				encoderKey, trans.quote(stagingEncodedAssetPathName), encodingJobKey
@@ -2861,7 +2861,7 @@ void MMSEngineDBFacade::updateEncodingJobParameters(int64_t encodingJobKey, stri
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set parameters = {} "
 				"where encodingJobKey = {} returning 1) select count(*) from rows",
 				trans.quote(parameters), encodingJobKey
@@ -2999,8 +2999,8 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL(int64_t ingestionJobKey, int64
 	{
 		// PlayUrl in MMS_IngestionJob per il play del canale
 		{
-			string path_playUrl = fmt::format("{{outputs,{},playUrl}}", outputIndex);
-			string sqlStatement = fmt::format(
+			string path_playUrl = std::format("{{outputs,{},playUrl}}", outputIndex);
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set "
 				"metaDataContent = jsonb_set(metaDataContent, {}, jsonb {}) "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
@@ -3027,9 +3027,9 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL(int64_t ingestionJobKey, int64
 		}
 
 		{
-			string path_playUrl = fmt::format("{{outputsRoot,{},playUrl}}", outputIndex);
-			string path_rtmpUrl = fmt::format("{{outputsRoot,{},rtmpUrl}}", outputIndex);
-			string sqlStatement = fmt::format(
+			string path_playUrl = std::format("{{outputsRoot,{},playUrl}}", outputIndex);
+			string path_rtmpUrl = std::format("{{outputsRoot,{},rtmpUrl}}", outputIndex);
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set "
 				"parameters = jsonb_set("
 				"jsonb_set(parameters, {}, jsonb {}), "
@@ -3182,8 +3182,8 @@ void MMSEngineDBFacade::updateOutputHLSDetails(
 			// 2023-08-03: in MMSEngineService.cpp ho aggiunto outputs in MMS_IngestionJob nel caso di monitor/virtualVOD
 			//	perchè penso IF nel sql statement sotto non funzionava in alcuni casi (quando outputs non esisteva)
 			//	Per cui ho semplificato il comando sotto
-			string path_deliveryCode = fmt::format("{{outputs,{},deliveryCode}}", outputIndex);
-			string sqlStatement = fmt::format(
+			string path_deliveryCode = std::format("{{outputs,{},deliveryCode}}", outputIndex);
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionJob set "
 				"metaDataContent = jsonb_set(metaDataContent, {}, jsonb {}) "
 				"where ingestionJobKey = {} returning 1) select count(*) from rows",
@@ -3209,13 +3209,13 @@ void MMSEngineDBFacade::updateOutputHLSDetails(
 		}
 
 		{
-			string path_deliveryCode = fmt::format("{{outputsRoot,{},deliveryCode}}", outputIndex);
-			string path_segmentDuration = fmt::format("{{outputsRoot,{},segmentDurationInSeconds}}", outputIndex);
-			string path_playlistEntries = fmt::format("{{outputsRoot,{},playlistEntriesNumber}}", outputIndex);
-			string path_manifestDirectoryPath = fmt::format("{{outputsRoot,{},manifestDirectoryPath}}", outputIndex);
-			string path_manifestFileName = fmt::format("{{outputsRoot,{},manifestFileName}}", outputIndex);
-			string path_otherOutputOptions = fmt::format("{{outputsRoot,{},otherOutputOptions}}", outputIndex);
-			string sqlStatement = fmt::format(
+			string path_deliveryCode = std::format("{{outputsRoot,{},deliveryCode}}", outputIndex);
+			string path_segmentDuration = std::format("{{outputsRoot,{},segmentDurationInSeconds}}", outputIndex);
+			string path_playlistEntries = std::format("{{outputsRoot,{},playlistEntriesNumber}}", outputIndex);
+			string path_manifestDirectoryPath = std::format("{{outputsRoot,{},manifestDirectoryPath}}", outputIndex);
+			string path_manifestFileName = std::format("{{outputsRoot,{},manifestFileName}}", outputIndex);
+			string path_otherOutputOptions = std::format("{{outputsRoot,{},otherOutputOptions}}", outputIndex);
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set "
 				"parameters = ",
 				trans.quote(path_deliveryCode), trans.quote(to_string(deliveryCode))
@@ -3228,12 +3228,12 @@ void MMSEngineDBFacade::updateOutputHLSDetails(
 			if (segmentDurationInSeconds != -1)
 				sqlStatement += "jsonb_set(";
 			sqlStatement +=
-				fmt::format("jsonb_set(parameters, {}, jsonb {}), ", trans.quote(path_deliveryCode), trans.quote(to_string(deliveryCode)));
+				std::format("jsonb_set(parameters, {}, jsonb {}), ", trans.quote(path_deliveryCode), trans.quote(to_string(deliveryCode)));
 			if (segmentDurationInSeconds != -1)
-				sqlStatement += fmt::format("{}, jsonb {}), ", trans.quote(path_segmentDuration), trans.quote(to_string(segmentDurationInSeconds)));
+				sqlStatement += std::format("{}, jsonb {}), ", trans.quote(path_segmentDuration), trans.quote(to_string(segmentDurationInSeconds)));
 			if (playlistEntriesNumber != -1)
-				sqlStatement += fmt::format("{}, jsonb {}), ", trans.quote(path_playlistEntries), trans.quote(to_string(playlistEntriesNumber)));
-			sqlStatement += fmt::format(
+				sqlStatement += std::format("{}, jsonb {}), ", trans.quote(path_playlistEntries), trans.quote(to_string(playlistEntriesNumber)));
+			sqlStatement += std::format(
 				"{}, jsonb {}), "
 				"{}, jsonb {}), "
 				"{}, jsonb {}) "
@@ -3467,7 +3467,7 @@ tuple<int64_t, int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncod
 
 		if (sqlResultSet->empty())
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"encodingJob not found"
 				", ingestionJobKey: {}",
 				ingestionJobKey
@@ -3530,7 +3530,7 @@ pair<int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyParameters(int6
 
 		if (sqlResultSet->empty())
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"encodingJob not found"
 				", ingestionJobKey: {}",
 				ingestionJobKey
@@ -3587,7 +3587,7 @@ json MMSEngineDBFacade::encodingJob_columnAsJson(string columnName, int64_t enco
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_encodingjob:.{}", columnName);
+		string requestedColumn = std::format("mms_encodingjob:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encodingJobQuery(requestedColumns, encodingJobKey, -1, fromMaster);
 
@@ -3696,7 +3696,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
 	{
 		if (rows > _maxRows)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
@@ -3714,7 +3714,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
 			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Using startIndex/row without orderBy will give inconsistent results"
 				", startIndex: {}"
 				", rows: {}"
@@ -3730,21 +3730,21 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
 		{
 			string where;
 			if (encodingJobKey != -1)
-				where += fmt::format("{} encodingJobKey = {} ", where.size() > 0 ? "and" : "", encodingJobKey);
+				where += std::format("{} encodingJobKey = {} ", where.size() > 0 ? "and" : "", encodingJobKey);
 			if (ingestionJobKey != -1)
-				where += fmt::format("{} ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
+				where += std::format("{} ingestionJobKey = {} ", where.size() > 0 ? "and" : "", ingestionJobKey);
 
 			string limit;
 			string offset;
 			string orderByCondition;
 			if (rows != -1)
-				limit = fmt::format("limit {} ", rows);
+				limit = std::format("limit {} ", rows);
 			if (startIndex != -1)
-				offset = fmt::format("offset {} ", startIndex);
+				offset = std::format("offset {} ", startIndex);
 			if (orderBy != "")
-				orderByCondition = fmt::format("order by {} ", orderBy);
+				orderByCondition = std::format("order by {} ", orderBy);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select {} "
 				"from MMS_EncodingJob "
 				"{} {} "
@@ -3768,7 +3768,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encodingJobQuery(
 
 			if (empty(res) && encodingJobKey != -1 && notFoundAsException)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"encodingJob not found"
 					", encodingJobKey: {}",
 					encodingJobKey
@@ -4029,25 +4029,25 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 		if (alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
 			;
 		else
-			sqlWhere += fmt::format("and ir.workspaceKey = {} ", workspace->_workspaceKey);
+			sqlWhere += std::format("and ir.workspaceKey = {} ", workspace->_workspaceKey);
 		if (encodingJobKey != -1)
-			sqlWhere += fmt::format("and ej.encodingJobKey = {} ", encodingJobKey);
+			sqlWhere += std::format("and ej.encodingJobKey = {} ", encodingJobKey);
 		// if (startAndEndIngestionDatePresent)
 		//     sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and
 		//     ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (startIngestionDate != "")
-			sqlWhere += fmt::format("and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
+			sqlWhere += std::format("and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
 		if (endIngestionDate != "")
-			sqlWhere += fmt::format("and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
+			sqlWhere += std::format("and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
 		// if (startAndEndEncodingDatePresent)
 		//     sqlWhere += ("and ej.encodingJobStart >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and
 		//     ej.encodingJobStart <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (startEncodingDate != "")
-			sqlWhere += fmt::format("and ej.encodingJobStart >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startEncodingDate));
+			sqlWhere += std::format("and ej.encodingJobStart >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startEncodingDate));
 		if (endEncodingDate != "")
-			sqlWhere += fmt::format("and ej.encodingJobStart <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endEncodingDate));
+			sqlWhere += std::format("and ej.encodingJobStart <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endEncodingDate));
 		if (encoderKey != -1)
-			sqlWhere += fmt::format("and ej.encoderKey = {} ", encoderKey);
+			sqlWhere += std::format("and ej.encoderKey = {} ", encoderKey);
 		if (status == "All")
 			;
 		else if (status == "Completed")											   // like non va bene per motivi di performance
@@ -4059,14 +4059,14 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 		if (types != "")
 		{
 			if (vTypes.size() == 1)
-				sqlWhere += fmt::format("and ej.type = {} ", trans.quote(types));
+				sqlWhere += std::format("and ej.type = {} ", trans.quote(types));
 			else
 				sqlWhere += ("and ej.type in (" + typesArgument + ")");
 		}
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -4081,7 +4081,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 
 		json encodingJobsRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.status, ej.encodingProgress, ej.processorMMS, ej.encoderKey, ej.encodingPid, "
 				"ej.realTimeFrameRate, ej.realTimeBitRate, ej.numberOfRestartBecauseOfFailure, ej.failuresNumber, ej.encodingPriority, "
@@ -4604,7 +4604,7 @@ void MMSEngineDBFacade::addEncodingJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, "
 				"processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "
@@ -4830,7 +4830,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
@@ -5037,7 +5037,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
@@ -5267,7 +5267,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
@@ -5468,7 +5468,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, "
 				"parameters, encodingPriority, encodingJobStart, encodingJobEnd, "
 				"encodingProgress, status, processorMMS, encoderKey, "
@@ -5636,7 +5636,7 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
@@ -5799,7 +5799,7 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
@@ -6066,7 +6066,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 				//	will be managed as soon as possible
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
@@ -6259,7 +6259,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 				//	will be managed as soon as possible
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
@@ -6447,7 +6447,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 			int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
@@ -6630,7 +6630,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob(
 				//	will be managed as soon as possible
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
@@ -6800,7 +6800,7 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob(shared_ptr<Workspace> workspace,
 				//	will be managed as soon as possible
 				int savedEncodingPriority = static_cast<int>(EncodingPriority::High);
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
@@ -7016,7 +7016,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
@@ -7202,7 +7202,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
@@ -7441,7 +7441,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
 				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
@@ -7696,7 +7696,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, "
 				"status, processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "
@@ -7922,7 +7922,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 				savedEncodingPriority = workspace->_maxEncodingPriority;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, "
 				"status, processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "

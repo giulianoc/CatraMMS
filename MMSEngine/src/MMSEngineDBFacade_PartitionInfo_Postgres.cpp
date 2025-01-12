@@ -21,7 +21,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 	{
 		SPDLOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select partitionPathName, currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where partitionKey = {} for update",
 				partitionKey
@@ -55,7 +55,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 					(int64_t)(savedCurrentFreeSizeInBytes - currentFreeSizeInBytes)
 				);
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_PartitionInfo set currentFreeSizeInBytes = {}, "
 					"lastUpdateFreeSize = NOW() at time zone 'utc' "
 					"where partitionKey = {} returning 1) select count(*) from rows",
@@ -74,7 +74,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 			}
 			else
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_PartitionInfo ("
 					"partitionKey, partitionPathName, currentFreeSizeInBytes, "
 					"freeSpaceToLeaveInMB, lastUpdateFreeSize, enabled) values ("
@@ -204,7 +204,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(in
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select partitionKey, currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where (currentFreeSizeInBytes / 1000) - (freeSpaceToLeaveInMB * 1000) > {} / 1000 "
 				"and enabled = true "
@@ -226,7 +226,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(in
 
 			if (res.size() == 0)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"No more space in MMS Partitions"
 					", ingestionJobKey: {}"
 					", fsEntrySizeInBytes: {}",
@@ -269,7 +269,7 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(in
 		// 	currentFreeSizeInBytes, fsEntrySizeInBytes, newCurrentFreeSizeInBytes);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_PartitionInfo set currentFreeSizeInBytes = {}, "
 				"lastUpdateFreeSize = NOW() at time zone 'utc' "
 				"where partitionKey = {} returning 1) select count(*) from rows",
@@ -406,7 +406,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(int partitionKey, u
 		uint64_t currentFreeSizeInBytes;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where partitionKey = {} for update",
 				partitionKey
@@ -446,7 +446,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(int partitionKey, u
 		);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_PartitionInfo set currentFreeSizeInBytes = {} "
 				"where partitionKey = {} returning 1) select count(*) from rows",
 				newCurrentFreeSizeInBytes, partitionKey
@@ -574,7 +574,7 @@ fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select partitionPathName from MMS_PartitionInfo "
 				"where partitionKey = {} ",
 				partitionKey
@@ -711,7 +711,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>> &partition
 		partitionsInfo.clear();
 
 		{
-			string sqlStatement = fmt::format("select partitionKey, currentFreeSizeInBytes from MMS_PartitionInfo ");
+			string sqlStatement = std::format("select partitionKey, currentFreeSizeInBytes from MMS_PartitionInfo ");
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row : res)

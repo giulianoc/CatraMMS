@@ -400,7 +400,7 @@ void LiveProxy::encodeContent(string requestBody)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (URLForbidden)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -459,7 +459,7 @@ void LiveProxy::encodeContent(string requestBody)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (URLNotFound)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -518,7 +518,7 @@ void LiveProxy::encodeContent(string requestBody)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (runtime_error)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -576,7 +576,7 @@ void LiveProxy::encodeContent(string requestBody)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (exception)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"

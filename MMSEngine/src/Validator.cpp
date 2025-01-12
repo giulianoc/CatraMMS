@@ -3156,7 +3156,7 @@ void Validator::validatePostOnFacebookMetadata(
 
 	if (!isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"FacebookNodeType is not valid"
 			", parametersRoot: {}"
 			", label: {}",
@@ -4069,7 +4069,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	}
 	if (!isFacebookLiveTypeValid(JSONUtils::asString(parametersRoot, "facebookLiveType")))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"FacebookLiveType is not valid"
 			", parametersRoot: {}"
 			", label: {}",
@@ -4081,7 +4081,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	}
 	if (!isFacebookNodeTypeValid(JSONUtils::asString(parametersRoot, "facebookNodeType")))
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"facebookNodeType is not valid"
 			", parametersRoot: {}"
 			", label: {}",

@@ -25,6 +25,7 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
+#include <format>
 #include <fstream>
 #include <regex>
 #include <sstream>
@@ -1676,15 +1677,22 @@ JSONUtils::toString(parametersRoot)
 		if (processingStartingFrom == "")
 		{
 			tm tmUTCDateTime;
-			char sProcessingStartingFrom[64];
+			// char sProcessingStartingFrom[64];
+			string sProcessingStartingFrom;
 
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			time_t utcNow = chrono::system_clock::to_time_t(now);
 
 			gmtime_r(&utcNow, &tmUTCDateTime);
+			/*
 			sprintf(
 				sProcessingStartingFrom, "%04d-%02d-%02dT%02d:%02d:%02dZ", tmUTCDateTime.tm_year + 1900, tmUTCDateTime.tm_mon + 1,
 				tmUTCDateTime.tm_mday, tmUTCDateTime.tm_hour, tmUTCDateTime.tm_min, tmUTCDateTime.tm_sec
+			);
+			*/
+			sProcessingStartingFrom = std::format(
+				"{:0>4}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", tmUTCDateTime.tm_year + 1900, tmUTCDateTime.tm_mon + 1, tmUTCDateTime.tm_mday,
+				tmUTCDateTime.tm_hour, tmUTCDateTime.tm_min, tmUTCDateTime.tm_sec
 			);
 
 			processingStartingFrom = sProcessingStartingFrom;
@@ -2187,15 +2195,22 @@ GroupOfTasks item"; _logger->error(errorMessage);
 		if (processingStartingFrom == "")
 		{
 			tm tmUTCDateTime;
-			char sProcessingStartingFrom[64];
+			// char sProcessingStartingFrom[64];
+			string sProcessingStartingFrom;
 
 			chrono::system_clock::time_point now = chrono::system_clock::now();
 			time_t utcNow = chrono::system_clock::to_time_t(now);
 
 			gmtime_r(&utcNow, &tmUTCDateTime);
+			/*
 			sprintf(
 				sProcessingStartingFrom, "%04d-%02d-%02dT%02d:%02d:%02dZ", tmUTCDateTime.tm_year + 1900, tmUTCDateTime.tm_mon + 1,
 				tmUTCDateTime.tm_mday, tmUTCDateTime.tm_hour, tmUTCDateTime.tm_min, tmUTCDateTime.tm_sec
+			);
+			*/
+			sProcessingStartingFrom = std::format(
+				"{:0>4}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", tmUTCDateTime.tm_year + 1900, tmUTCDateTime.tm_mon + 1, tmUTCDateTime.tm_mday,
+				tmUTCDateTime.tm_hour, tmUTCDateTime.tm_min, tmUTCDateTime.tm_sec
 			);
 
 			processingStartingFrom = sProcessingStartingFrom;
@@ -3173,7 +3188,7 @@ void API::fileUploadProgressCheck()
 				otherHeaders.push_back(hostHeader); // important for the nginx virtual host
 				int curlTimeoutInSeconds = 120;
 				json uploadProgressResponse = CurlWrapper::httpGetJson(
-					progressURL, curlTimeoutInSeconds, "", otherHeaders, fmt::format(", ingestionJobKey: {}", itr->_ingestionJobKey)
+					progressURL, curlTimeoutInSeconds, "", otherHeaders, std::format(", ingestionJobKey: {}", itr->_ingestionJobKey)
 				);
 
 				try
@@ -4275,7 +4290,7 @@ void API::ingestionJobSwitchToEncoder(
 
 		if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::EncodingQueued)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"It is not possible to switch to a new encoder when "
 				"ingestionJob is not in EncodingQueued status"
 				", ingestionJobKey: {}"
@@ -4299,7 +4314,7 @@ void API::ingestionJobSwitchToEncoder(
 				// verifica se newPushEncoderKey sia uno degli encoder gestiti dal workspace
 				if (!_mmsEngineDBFacade->encoderWorkspaceMapping_isPresent(workspace->_workspaceKey, newPushEncoderKey))
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"EncoderKey is not managed by the workspaceKey"
 						", ingestionJobKey: {}"
 						", workspaceKey: {}"
@@ -4317,7 +4332,7 @@ void API::ingestionJobSwitchToEncoder(
 					json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
 					if (encodersDetailsRoot == nullptr)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"No encodersDetails json found"
 							", ingestionJobKey: {}",
 							ingestionJobKey
@@ -4368,7 +4383,7 @@ void API::ingestionJobSwitchToEncoder(
 
 					if (broadcastIngestionStatus != MMSEngineDBFacade::IngestionStatus::EncodingQueued)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"It is not possible to switch to a new encoder when "
 							"ingestionJob is not in EncodingQueued status"
 							", broadcastIngestionJobKey: {}"
@@ -4384,7 +4399,7 @@ void API::ingestionJobSwitchToEncoder(
 					json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
 					if (encodersDetailsRoot == nullptr)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"No encodersDetails json found"
 							", ingestionJobKey: {}",
 							ingestionJobKey
@@ -4455,7 +4470,7 @@ void API::ingestionJobSwitchToEncoder(
 
 				if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::EncodingQueued)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"It is not possible to switch to a new encoder when "
 						"ingestionJob is not in EncodingQueued status"
 						", ingestionJobKey: {}"
@@ -4471,7 +4486,7 @@ void API::ingestionJobSwitchToEncoder(
 				json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
 				if (encodersDetailsRoot == nullptr)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"No encodersDetails json found"
 						", ingestionJobKey: {}",
 						ingestionJobKey
@@ -4508,7 +4523,7 @@ void API::ingestionJobSwitchToEncoder(
 		}
 		else
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"ingestionJobSwitchToEncoder. switch cannot be managed"
 				", ingestionJobKey: {}"
 				", ingestionType: {}",
@@ -4633,7 +4648,7 @@ void API::changeLiveProxyPlaylist(
 
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Ingestion type is not a Live/VODProxy"
 					", broadcasterIngestionJobKey: {}"
 					", ingestionType: {}",
@@ -4648,7 +4663,7 @@ void API::changeLiveProxyPlaylist(
 			string prefixIngestionStatus = "End_";
 			if (sIngestionStatus.starts_with(prefixIngestionStatus))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Ingestion job is already finished"
 					", broadcasterIngestionJobKey: {}"
 					", sIngestionStatus: {}"
@@ -4665,7 +4680,7 @@ void API::changeLiveProxyPlaylist(
 			/*
 			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Field is not present or it is null"
 					", broadcasterIngestionJobKey: {}"
 					", Field: {}",
@@ -4683,7 +4698,7 @@ void API::changeLiveProxyPlaylist(
 			/*
 			if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Field is not present or it is null"
 					", broadcasterIngestionJobKey: {}"
 					", Field: {}",
@@ -4795,7 +4810,7 @@ void API::changeLiveProxyPlaylist(
 										firstMediaEncodingProfileKey = currentEncodingProfileKey;
 									else if (firstMediaEncodingProfileKey != currentEncodingProfileKey)
 									{
-										string errorMessage = fmt::format(
+										string errorMessage = std::format(
 											"Media are not using the same encoding profile"
 											", broadcasterIngestionJobKey: {}"
 											", firstMediaEncodingProfileKey: {}"
@@ -4983,7 +4998,7 @@ void API::changeLiveProxyPlaylist(
 						}
 						if (!isDrawTextFilterPresent)
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Countdown has to have the drawText filter"
 								", broadcasterIngestionJobKey: {}"
 								", broadcastDefaultPlaylistItemRoot: {}",
@@ -5017,7 +5032,7 @@ void API::changeLiveProxyPlaylist(
 					}
 					else
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Broadcaster data: unknown MediaType"
 							", broadcasterIngestionJobKey: {}"
 							", broadcastDefaultMediaType: {}",
@@ -5030,7 +5045,7 @@ void API::changeLiveProxyPlaylist(
 				}
 				else
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Broadcaster data: no mediaType is present"
 						", broadcasterIngestionJobKey: {}",
 						broadcasterIngestionJobKey
@@ -5042,7 +5057,7 @@ void API::changeLiveProxyPlaylist(
 			}
 			else
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Broadcaster data: no broadcastDefaultPlaylistItem is present"
 					", broadcasterIngestionJobKey: {}",
 					broadcasterIngestionJobKey
@@ -5061,7 +5076,7 @@ void API::changeLiveProxyPlaylist(
 				api, broadcasterIngestionJobKey, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -5077,7 +5092,7 @@ void API::changeLiveProxyPlaylist(
 				api, broadcasterIngestionJobKey, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -5093,7 +5108,7 @@ void API::changeLiveProxyPlaylist(
 				api, broadcasterIngestionJobKey, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -5109,7 +5124,7 @@ void API::changeLiveProxyPlaylist(
 				api, broadcasterIngestionJobKey, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -5178,7 +5193,7 @@ void API::changeLiveProxyPlaylist(
 							/*
 							if (!JSONUtils::isMetadataPresent(vodInputRoot, "sources"))
 							{
-								string errorMessage = fmt::format("sources is missing, json data: {}", requestBody);
+								string errorMessage = std::format("sources is missing, json data: {}", requestBody);
 								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
@@ -5188,7 +5203,7 @@ void API::changeLiveProxyPlaylist(
 
 							if (sourcesRoot.size() == 0)
 							{
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"No source is present"
 									", broadcasterIngestionJobKey: {}"
 									", json data: {}",
@@ -5209,7 +5224,7 @@ void API::changeLiveProxyPlaylist(
 								// field = "physicalPathKey";
 								if (!JSONUtils::isMetadataPresent(sourceRoot, "physicalPathKey"))
 								{
-									string errorMessage = fmt::format("physicalPathKey is missing, json data: {}", requestBody);
+									string errorMessage = std::format("physicalPathKey is missing, json data: {}", requestBody);
 									SPDLOG_ERROR(errorMessage);
 
 									throw runtime_error(errorMessage);
@@ -5224,7 +5239,7 @@ void API::changeLiveProxyPlaylist(
 										firstMediaEncodingProfileKey = currentEncodingProfileKey;
 									else if (firstMediaEncodingProfileKey != currentEncodingProfileKey)
 									{
-										string errorMessage = fmt::format(
+										string errorMessage = std::format(
 											"Media are not using the same encoding profile"
 											", broadcasterIngestionJobKey: {}"
 											", firstMediaEncodingProfileKey: {}"
@@ -5328,7 +5343,7 @@ void API::changeLiveProxyPlaylist(
 							// field = "physicalPathKey";
 							if (!JSONUtils::isMetadataPresent(countdownInputRoot, "physicalPathKey"))
 							{
-								string errorMessage = fmt::format("physicalPathKey is missing, json data: {}", requestBody);
+								string errorMessage = std::format("physicalPathKey is missing, json data: {}", requestBody);
 								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
@@ -5510,23 +5525,23 @@ void API::changeLiveProxyPlaylist(
 						string partialMessage;
 
 						if (utcCurrentBroadcasterStart > utcProxyPeriodStart)
-							partialMessage = fmt::format(
+							partialMessage = std::format(
 								"utcCurrentBroadcasterStart {} ({}) > utcProxyPeriodStart {} ({})", utcCurrentBroadcasterStart,
 								DateTime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart,
 								DateTime::utcToUtcString(utcProxyPeriodStart)
 							);
 						else if (utcProxyPeriodStart >= utcProxyPeriodEnd)
-							partialMessage = fmt::format(
+							partialMessage = std::format(
 								"utcProxyPeriodStart {} ({}) >= utcProxyPeriodEnd {} ({})", utcProxyPeriodStart,
 								DateTime::utcToUtcString(utcProxyPeriodStart), utcProxyPeriodEnd, DateTime::utcToUtcString(utcProxyPeriodEnd)
 							);
 						else if (utcProxyPeriodEnd > utcBroadcasterEnd)
-							partialMessage = fmt::format(
+							partialMessage = std::format(
 								"utcProxyPeriodEnd {} ({}) > utcBroadcasterEnd {} ({})", utcProxyPeriodEnd,
 								DateTime::utcToUtcString(utcProxyPeriodEnd), utcBroadcasterEnd, DateTime::utcToUtcString(utcBroadcasterEnd)
 							);
 
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Wrong dates ({})"
 							", newReceivedPlaylistIndex: {}",
 							partialMessage, newReceivedPlaylistIndex
@@ -5561,7 +5576,7 @@ void API::changeLiveProxyPlaylist(
 								newdPlaylistItemToBeAddedRoot["streamInput"] = broadcastDefaultStreamInputRoot;
 							else
 							{
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"Broadcaster data: no default Stream present"
 									", broadcasterIngestionJobKey: {}",
 									broadcasterIngestionJobKey
@@ -5577,7 +5592,7 @@ void API::changeLiveProxyPlaylist(
 								newdPlaylistItemToBeAddedRoot["vodInput"] = broadcastDefaultVodInputRoot;
 							else
 							{
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"Broadcaster data: no default Media present"
 									", broadcasterIngestionJobKey: {}",
 									broadcasterIngestionJobKey
@@ -5593,7 +5608,7 @@ void API::changeLiveProxyPlaylist(
 								newdPlaylistItemToBeAddedRoot["countdownInput"] = broadcastDefaultCountdownInputRoot;
 							else
 							{
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"Broadcaster data: no default Countdown present"
 									", broadcasterIngestionJobKey: {}",
 									broadcasterIngestionJobKey
@@ -5609,7 +5624,7 @@ void API::changeLiveProxyPlaylist(
 								newdPlaylistItemToBeAddedRoot["directURLInput"] = broadcastDefaultDirectURLInputRoot;
 							else
 							{
-								string errorMessage = fmt::format(
+								string errorMessage = std::format(
 									"Broadcaster data: no default DirectURL present"
 									", broadcasterIngestionJobKey: {}",
 									broadcasterIngestionJobKey
@@ -5621,7 +5636,7 @@ void API::changeLiveProxyPlaylist(
 						}
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: unknown MediaType"
 								", broadcasterIngestionJobKey: {}"
 								", broadcastDefaultMediaType: {}",
@@ -5663,7 +5678,7 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["streamInput"] = broadcastDefaultStreamInputRoot;
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: no default Stream present"
 								", broadcasterIngestionJobKey: {}",
 								broadcasterIngestionJobKey
@@ -5679,7 +5694,7 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["vodInput"] = broadcastDefaultVodInputRoot;
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: no default Media present"
 								", broadcasterIngestionJobKey: {}",
 								broadcasterIngestionJobKey
@@ -5695,7 +5710,7 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["countdownInput"] = broadcastDefaultCountdownInputRoot;
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: no default Countdown present"
 								", broadcasterIngestionJobKey: {}",
 								broadcasterIngestionJobKey
@@ -5711,7 +5726,7 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["directURLInput"] = broadcastDefaultDirectURLInputRoot;
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: no default Direct URL present"
 								", broadcasterIngestionJobKey: {}",
 								broadcasterIngestionJobKey
@@ -5723,7 +5738,7 @@ void API::changeLiveProxyPlaylist(
 					}
 					else
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Broadcaster data: unknown MediaType"
 							", broadcasterIngestionJobKey: {}"
 							", broadcastDefaultMediaType: {}",
@@ -5760,7 +5775,7 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["streamInput"] = broadcastDefaultStreamInputRoot;
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: no default Stream present"
 								", broadcasterIngestionJobKey: {}",
 								broadcasterIngestionJobKey
@@ -5776,7 +5791,7 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["vodInput"] = broadcastDefaultVodInputRoot;
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: no default Media present"
 								", broadcasterIngestionJobKey: {}",
 								broadcasterIngestionJobKey
@@ -5792,7 +5807,7 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["countdownInput"] = broadcastDefaultCountdownInputRoot;
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: no default Countdown present"
 								", broadcasterIngestionJobKey: {}",
 								broadcasterIngestionJobKey
@@ -5808,7 +5823,7 @@ void API::changeLiveProxyPlaylist(
 							newdPlaylistItemToBeAddedRoot["directURLInput"] = broadcastDefaultDirectURLInputRoot;
 						else
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"Broadcaster data: no default Direct URL present"
 								", broadcasterIngestionJobKey: {}",
 								broadcasterIngestionJobKey
@@ -5820,7 +5835,7 @@ void API::changeLiveProxyPlaylist(
 					}
 					else
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Broadcaster data: unknown MediaType"
 							", broadcasterIngestionJobKey: {}"
 							", broadcastDefaultMediaType: {}",
@@ -5844,7 +5859,7 @@ void API::changeLiveProxyPlaylist(
 				api, broadcasterIngestionJobKey, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -5860,7 +5875,7 @@ void API::changeLiveProxyPlaylist(
 				api, broadcasterIngestionJobKey, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -5876,7 +5891,7 @@ void API::changeLiveProxyPlaylist(
 				api, broadcasterIngestionJobKey, e.what()
 			);
 
-			string errorMessage = fmt::format("Internal server error: {}", e.what());
+			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -5909,7 +5924,7 @@ void API::changeLiveProxyPlaylist(
 			if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy && ingestionType != MMSEngineDBFacade::IngestionType::VODProxy &&
 				ingestionType != MMSEngineDBFacade::IngestionType::Countdown)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Ingestion type is not a LiveProxy-VODProxy-Countdown"
 					", broadcasterIngestionJobKey: {}"
 					", broadcastIngestionJobKey: {}"
@@ -5978,7 +5993,7 @@ void API::changeLiveProxyPlaylist(
 						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
 						newPlaylist,
 						"application/json", // contentType
-						otherHeaders, fmt::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
+						otherHeaders, std::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 					);
 				}
 			}
@@ -6145,7 +6160,7 @@ void API::changeLiveProxyOverlayText(
 
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Ingestion type is not a Live/VODProxy"
 						", broadcasterIngestionJobKey: {}"
 						", ingestionType: {}",
@@ -6160,7 +6175,7 @@ void API::changeLiveProxyOverlayText(
 				string prefixIngestionStatus = "End_";
 				if (sIngestionStatus.starts_with("End_"))
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Ingestion job is already finished"
 						", broadcasterIngestionJobKey: {}"
 						", sIngestionStatus: {}"
@@ -6187,7 +6202,7 @@ void API::changeLiveProxyOverlayText(
 
 				if (broadcasterEncodingJobKey == -1 || broadcasterEncoderKey == -1)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"encodingJobKey and/or encoderKey not found"
 						", broadcasterEncodingJobKey: {}",
 						", broadcasterEncoderKey: {}", ", broadcasterIngestionJobKey: {}", broadcasterEncodingJobKey, broadcasterEncoderKey,
@@ -6203,14 +6218,14 @@ void API::changeLiveProxyOverlayText(
 				string encoderURL;
 				tie(encoderURL, ignore) = _mmsEngineDBFacade->getEncoderURL(broadcasterEncoderKey);
 
-				string ffmpegEncoderURL = fmt::format("{}{}/{}", encoderURL, _ffmpegEncoderChangeLiveProxyOverlayTextURI, broadcasterEncodingJobKey);
+				string ffmpegEncoderURL = std::format("{}{}/{}", encoderURL, _ffmpegEncoderChangeLiveProxyOverlayTextURI, broadcasterEncodingJobKey);
 
 				vector<string> otherHeaders;
 				CurlWrapper::httpPutStringAndGetJson(
 					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
 					requestBody,
 					"text/plain", // contentType
-					otherHeaders, fmt::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
+					otherHeaders, std::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 				);
 			}
 		}
@@ -6290,7 +6305,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 			{
 				if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathKey"))
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"imageoverlay filter without imagePhysicalPathKey"
 						", ingestionJobKey: {}"
 						", imageoverlay filter: {}",

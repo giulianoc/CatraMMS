@@ -17,7 +17,7 @@ int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int a
 
 	try
 	{
-		string sqlStatement = fmt::format(
+		string sqlStatement = std::format(
 			"insert into MMS_Invoice_(userKey, creationDate, description, amount, "
 			"expirationDate, paid, paymentDate) values ("
 			"{}, now() at time zone 'utc', {}, {}, {}, false, null) returning invoiceKey",
@@ -211,11 +211,11 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 
 		string sqlWhere;
 		if (!admin)
-			sqlWhere = fmt::format("where userKey = {} ", userKey);
+			sqlWhere = std::format("where userKey = {} ", userKey);
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Invoice {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Invoice {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
@@ -237,7 +237,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 				orderBy = "order by creationDate desc";
 			else
 				orderBy = "order by paid asc, creationDate desc";
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select invoiceKey, userKey, description, amount, paid, paymentDate, "
 				"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedCreationDate, "
 				"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as expirationDate "

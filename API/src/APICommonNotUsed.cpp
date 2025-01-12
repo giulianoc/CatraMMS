@@ -26,9 +26,7 @@
 extern char **environ;
 
 APICommon::APICommon(
-	json configurationRoot, mutex *fcgiAcceptMutex,
-	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-	shared_ptr<spdlog::logger> logger
+	json configurationRoot, mutex *fcgiAcceptMutex, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<spdlog::logger> logger
 )
 {
 	_accessToDBAllowed = true;
@@ -37,10 +35,7 @@ APICommon::APICommon(
 	init(configurationRoot, fcgiAcceptMutex, logger);
 }
 
-APICommon::APICommon(
-	json configurationRoot, mutex *fcgiAcceptMutex,
-	shared_ptr<spdlog::logger> logger
-)
+APICommon::APICommon(json configurationRoot, mutex *fcgiAcceptMutex, shared_ptr<spdlog::logger> logger)
 {
 	_accessToDBAllowed = false;
 
@@ -49,10 +44,7 @@ APICommon::APICommon(
 
 APICommon::~APICommon() = default;
 
-void APICommon::init(
-	json configurationRoot, mutex *fcgiAcceptMutex,
-	shared_ptr<spdlog::logger> logger
-)
+void APICommon::init(json configurationRoot, mutex *fcgiAcceptMutex, shared_ptr<spdlog::logger> logger)
 {
 	_configurationRoot = configurationRoot;
 	_fcgiAcceptMutex = fcgiAcceptMutex;
@@ -62,51 +54,23 @@ void APICommon::init(
 
 	_requestIdentifier = 0;
 
-	_maxAPIContentLength =
-		JSONUtils::asInt64(_configurationRoot["api"], "maxContentLength", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", api->maxContentLength: " + to_string(_maxAPIContentLength)
-	);
+	_maxAPIContentLength = JSONUtils::asInt64(_configurationRoot["api"], "maxContentLength", 0);
+	_logger->info(__FILEREF__ + "Configuration item" + ", api->maxContentLength: " + to_string(_maxAPIContentLength));
 	json api = _configurationRoot["api"];
-	_maxBinaryContentLength =
-		JSONUtils::asInt64(api["binary"], "maxContentLength", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", api->binary->maxContentLength: " + to_string(_maxBinaryContentLength)
-	);
+	_maxBinaryContentLength = JSONUtils::asInt64(api["binary"], "maxContentLength", 0);
+	_logger->info(__FILEREF__ + "Configuration item" + ", api->binary->maxContentLength: " + to_string(_maxBinaryContentLength));
 
-	_guiProtocol =
-		JSONUtils::asString(_configurationRoot["mms"], "guiProtocol", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", mms->guiProtocol: " + _guiProtocol
-	);
-	_guiHostname =
-		JSONUtils::asString(_configurationRoot["mms"], "guiHostname", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", mms->guiHostname: " + _guiHostname
-	);
+	_guiProtocol = JSONUtils::asString(_configurationRoot["mms"], "guiProtocol", "");
+	_logger->info(__FILEREF__ + "Configuration item" + ", mms->guiProtocol: " + _guiProtocol);
+	_guiHostname = JSONUtils::asString(_configurationRoot["mms"], "guiHostname", "");
+	_logger->info(__FILEREF__ + "Configuration item" + ", mms->guiHostname: " + _guiHostname);
 	_guiPort = JSONUtils::asInt(_configurationRoot["mms"], "guiPort", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", mms->guiPort: " + to_string(_guiPort)
-	);
+	_logger->info(__FILEREF__ + "Configuration item" + ", mms->guiPort: " + to_string(_guiPort));
 
-	_encoderUser =
-		JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", ffmpeg->encoderUser: " + _encoderUser
-	);
-	_encoderPassword = JSONUtils::asString(
-		_configurationRoot["ffmpeg"], "encoderPassword", ""
-	);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", ffmpeg->encoderPassword: " + _encoderPassword
-	);
+	_encoderUser = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");
+	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderUser: " + _encoderUser);
+	_encoderPassword = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderPassword", "");
+	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderPassword: " + _encoderPassword);
 }
 
 int APICommon::operator()()
@@ -132,10 +96,7 @@ int APICommon::operator()()
 	// calls The nginx process is configured to proxy the requests to
 	// 127.0.0.1:<port> specified by spawn-fcgi
 	int sock_fd = 0;
-	_logger->info(
-		__FILEREF__ + "APICommon::FCGX_OpenSocket" +
-		", threadId: " + sThreadId + ", sock_fd: " + to_string(sock_fd)
-	);
+	_logger->info(__FILEREF__ + "APICommon::FCGX_OpenSocket" + ", threadId: " + sThreadId + ", sock_fd: " + to_string(sock_fd));
 	FCGX_InitRequest(&request, sock_fd, 0);
 
 	bool shutdown = false;
@@ -145,22 +106,15 @@ int APICommon::operator()()
 
 		int returnAcceptCode;
 		{
-			_logger->info(
-				__FILEREF__ + "APICommon::ready" + ", _requestIdentifier: " +
-				to_string(_requestIdentifier) + ", threadId: " + sThreadId
-			);
+			_logger->info(__FILEREF__ + "APICommon::ready" + ", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId);
 			lock_guard<mutex> locker(*_fcgiAcceptMutex);
 
-			_logger->debug(
-				__FILEREF__ + "APICommon::listen" + ", _requestIdentifier: " +
-				to_string(_requestIdentifier) + ", threadId: " + sThreadId
-			);
+			_logger->debug(__FILEREF__ + "APICommon::listen" + ", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId);
 
 			returnAcceptCode = FCGX_Accept_r(&request);
 		}
 		_logger->debug(
-			__FILEREF__ + "FCGX_Accept_r" + ", _requestIdentifier: " +
-			to_string(_requestIdentifier) + ", threadId: " + sThreadId +
+			__FILEREF__ + "FCGX_Accept_r" + ", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId +
 			", returnAcceptCode: " + to_string(returnAcceptCode)
 		);
 
@@ -173,10 +127,7 @@ int APICommon::operator()()
 			continue;
 		}
 
-		_logger->debug(
-			__FILEREF__ + "Request to be managed" + ", _requestIdentifier: " +
-			to_string(_requestIdentifier) + ", threadId: " + sThreadId
-		);
+		_logger->debug(__FILEREF__ + "Request to be managed" + ", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId);
 
 		//        fcgi_streambuf cin_fcgi_streambuf(request->in);
 		//        fcgi_streambuf cout_fcgi_streambuf(request->out);
@@ -201,8 +152,7 @@ int APICommon::operator()()
 			{
 				unordered_map<string, string>::iterator it;
 
-				if ((it = requestDetails.find("QUERY_STRING")) !=
-					requestDetails.end())
+				if ((it = requestDetails.find("QUERY_STRING")) != requestDetails.end())
 					fillQueryString(it->second, queryParameters);
 
 				// requestToUploadBinary =
@@ -211,29 +161,20 @@ int APICommon::operator()()
 
 			{
 				unordered_map<string, string>::iterator it;
-				if ((it = requestDetails.find("REQUEST_METHOD")) !=
-						requestDetails.end() &&
-					(it->second == "POST" || it->second == "PUT"))
+				if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end() && (it->second == "POST" || it->second == "PUT"))
 				{
-					if ((it = requestDetails.find("CONTENT_LENGTH")) !=
-						requestDetails.end())
+					if ((it = requestDetails.find("CONTENT_LENGTH")) != requestDetails.end())
 					{
 						if (it->second != "")
 						{
 							contentLength = stol(it->second);
-							if (/* !requestToUploadBinary && */ contentLength >
-								_maxAPIContentLength)
+							if (/* !requestToUploadBinary && */ contentLength > _maxAPIContentLength)
 							{
-								string errorMessage =
-									string("No binary request, ContentLength "
-										   "too long") +
-									", _requestIdentifier: " +
-									to_string(_requestIdentifier) +
-									", threadId: " + sThreadId +
-									", contentLength: " +
-									to_string(contentLength) +
-									", _maxAPIContentLength: " +
-									to_string(_maxAPIContentLength);
+								string errorMessage = string("No binary request, ContentLength "
+															 "too long") +
+													  ", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId +
+													  ", contentLength: " + to_string(contentLength) +
+													  ", _maxAPIContentLength: " + to_string(_maxAPIContentLength);
 
 								_logger->error(__FILEREF__ + errorMessage);
 
@@ -288,8 +229,7 @@ int APICommon::operator()()
 					{
 						char *content = new char[contentLength];
 
-						contentLength =
-							FCGX_GetStr(content, contentLength, request.in);
+						contentLength = FCGX_GetStr(content, contentLength, request.in);
 						// cin.read(content, contentLength);
 						// contentLength = cin.gcount();     // Returns the
 						// number of characters extracted by the last
@@ -348,17 +288,12 @@ int APICommon::operator()()
 		{
 			unordered_map<string, string>::iterator it;
 
-			if ((it = requestDetails.find("REQUEST_URI")) !=
-				requestDetails.end())
+			if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
 				requestURI = it->second;
 		}
 
-		tuple<
-			int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool,
-			bool, bool, bool, bool, bool, bool>
-			userKeyWorkspaceAndFlags;
-		bool basicAuthenticationPresent =
-			basicAuthenticationRequired(requestURI, queryParameters);
+		tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool> userKeyWorkspaceAndFlags;
+		bool basicAuthenticationPresent = basicAuthenticationRequired(requestURI, queryParameters);
 		string apiKey;
 		if (basicAuthenticationPresent)
 		{
@@ -366,55 +301,38 @@ int APICommon::operator()()
 			{
 				unordered_map<string, string>::iterator it;
 
-				if ((it = requestDetails.find("HTTP_AUTHORIZATION")) ==
-					requestDetails.end())
+				if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
 				{
-					_logger->error(
-						__FILEREF__ + "No APIKey present into the request"
-					);
+					_logger->error(__FILEREF__ + "No APIKey present into the request");
 
 					throw WrongBasicAuthentication();
 				}
 
 				string authorizationPrefix = "Basic ";
-				if (!(it->second.size() >= authorizationPrefix.size() &&
-					  0 ==
-						  it->second.compare(
-							  0, authorizationPrefix.size(), authorizationPrefix
-						  )))
+				if (!(it->second.size() >= authorizationPrefix.size() && 0 == it->second.compare(0, authorizationPrefix.size(), authorizationPrefix)))
 				{
 					_logger->error(
-						__FILEREF__ +
-						"No 'Basic' authorization is present into the request" +
-						", _requestIdentifier: " +
-						to_string(_requestIdentifier) + ", threadId: " +
-						sThreadId + ", Authorization: " + it->second
+						__FILEREF__ + "No 'Basic' authorization is present into the request" +
+						", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId + ", Authorization: " + it->second
 					);
 
 					throw WrongBasicAuthentication();
 				}
 
-				string usernameAndPasswordBase64 =
-					it->second.substr(authorizationPrefix.length());
-				string usernameAndPassword =
-					Convert::base64_decode(usernameAndPasswordBase64);
+				string usernameAndPasswordBase64 = it->second.substr(authorizationPrefix.length());
+				string usernameAndPassword = Convert::base64_decode(usernameAndPasswordBase64);
 				size_t userNameSeparator = usernameAndPassword.find(":");
 				if (userNameSeparator == string::npos)
 				{
 					_logger->error(
-						__FILEREF__ + "Wrong Authentication format" +
-						", _requestIdentifier: " +
-						to_string(_requestIdentifier) + ", threadId: " +
-						sThreadId + ", usernameAndPasswordBase64: " +
-						usernameAndPasswordBase64 +
-						", usernameAndPassword: " + usernameAndPassword
+						__FILEREF__ + "Wrong Authentication format" + ", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " +
+						sThreadId + ", usernameAndPasswordBase64: " + usernameAndPasswordBase64 + ", usernameAndPassword: " + usernameAndPassword
 					);
 
 					throw WrongBasicAuthentication();
 				}
 
-				string userKey =
-					usernameAndPassword.substr(0, userNameSeparator);
+				string userKey = usernameAndPassword.substr(0, userNameSeparator);
 				apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
 				if (_accessToDBAllowed)
@@ -432,13 +350,9 @@ int APICommon::operator()()
 							__FILEREF__ +
 							"Username of the basic authorization (UserKey) is "
 							"not the same UserKey the apiKey is referring" +
-							", _requestIdentifier: " +
-							to_string(_requestIdentifier) +
-							", threadId: " + sThreadId +
-							", username of basic authorization (userKey): " +
-							userKey + ", userKey associated to the APIKey: " +
-							to_string(get<0>(userKeyWorkspaceAndFlags)) +
-							", apiKey: " + apiKey
+							", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId +
+							", username of basic authorization (userKey): " + userKey +
+							", userKey associated to the APIKey: " + to_string(get<0>(userKeyWorkspaceAndFlags)) + ", apiKey: " + apiKey
 						);
 
 						throw WrongBasicAuthentication();
@@ -452,10 +366,8 @@ int APICommon::operator()()
 							__FILEREF__ +
 							"Username/password of the basic authorization are "
 							"wrong" +
-							", _requestIdentifier: " +
-							to_string(_requestIdentifier) +
-							", threadId: " + sThreadId +
-							", userKey: " + userKey + ", apiKey: " + apiKey
+							", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId + ", userKey: " + userKey +
+							", apiKey: " + apiKey
 						);
 
 						throw WrongBasicAuthentication();
@@ -470,9 +382,7 @@ int APICommon::operator()()
 			}
 			catch (WrongBasicAuthentication &e)
 			{
-				_logger->error(
-					__FILEREF__ + "APIKey failed" + ", e.what(): " + e.what()
-				);
+				_logger->error(__FILEREF__ + "APIKey failed" + ", e.what(): " + e.what());
 
 				string errorMessage = e.what();
 				_logger->error(__FILEREF__ + errorMessage);
@@ -487,8 +397,7 @@ int APICommon::operator()()
 			catch (APIKeyNotFoundOrExpired &e)
 			{
 				_logger->error(
-					__FILEREF__ + "_mmsEngine->checkAPIKey failed" +
-					", _requestIdentifier: " + to_string(_requestIdentifier) +
+					__FILEREF__ + "_mmsEngine->checkAPIKey failed" + ", _requestIdentifier: " + to_string(_requestIdentifier) +
 					", threadId: " + sThreadId + ", e.what(): " + e.what()
 				);
 
@@ -505,8 +414,7 @@ int APICommon::operator()()
 			catch (runtime_error &e)
 			{
 				_logger->error(
-					__FILEREF__ + "_mmsEngine->checkAPIKey failed" +
-					", _requestIdentifier: " + to_string(_requestIdentifier) +
+					__FILEREF__ + "_mmsEngine->checkAPIKey failed" + ", _requestIdentifier: " + to_string(_requestIdentifier) +
 					", threadId: " + sThreadId + ", e.what(): " + e.what()
 				);
 
@@ -523,8 +431,7 @@ int APICommon::operator()()
 			catch (exception &e)
 			{
 				_logger->error(
-					__FILEREF__ + "_mmsEngine->checkAPIKey failed" +
-					", _requestIdentifier: " + to_string(_requestIdentifier) +
+					__FILEREF__ + "_mmsEngine->checkAPIKey failed" + ", _requestIdentifier: " + to_string(_requestIdentifier) +
 					", threadId: " + sThreadId + ", e.what(): " + e.what()
 				);
 
@@ -540,15 +447,13 @@ int APICommon::operator()()
 			}
 		}
 
-		chrono::system_clock::time_point startManageRequest =
-			chrono::system_clock::now();
+		chrono::system_clock::time_point startManageRequest = chrono::system_clock::now();
 		try
 		{
 			unordered_map<string, string>::iterator it;
 
 			string requestMethod;
-			if ((it = requestDetails.find("REQUEST_METHOD")) !=
-				requestDetails.end())
+			if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
 				requestMethod = it->second;
 
 			// string xCatraMMSResumeHeader;
@@ -564,42 +469,35 @@ int APICommon::operator()()
 			{
 				unordered_map<string, string>::iterator it;
 
-				if ((it = requestDetails.find("HTTP_X_RESPONSEBODYCOMPRESSED")
-					) != requestDetails.end() &&
-					it->second == "true")
+				if ((it = requestDetails.find("HTTP_X_RESPONSEBODYCOMPRESSED")) != requestDetails.end() && it->second == "true")
 				{
 					responseBodyCompressed = true;
 				}
 			}
 
 			manageRequestAndResponse(
-				sThreadId, _requestIdentifier, responseBodyCompressed, request,
-				requestURI, requestMethod, queryParameters,
-				basicAuthenticationPresent, userKeyWorkspaceAndFlags, apiKey,
-				contentLength, requestBody, requestDetails
+				sThreadId, _requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, queryParameters,
+				basicAuthenticationPresent, userKeyWorkspaceAndFlags, apiKey, contentLength, requestBody, requestDetails
 			);
 		}
 		catch (AlreadyLocked &e)
 		{
 			_logger->error(
-				__FILEREF__ + "manageRequestAndResponse failed" +
-				", _requestIdentifier: " + to_string(_requestIdentifier) +
+				__FILEREF__ + "manageRequestAndResponse failed" + ", _requestIdentifier: " + to_string(_requestIdentifier) +
 				", threadId: " + sThreadId + ", e: " + e.what()
 			);
 		}
 		catch (runtime_error &e)
 		{
 			_logger->error(
-				__FILEREF__ + "manageRequestAndResponse failed" +
-				", _requestIdentifier: " + to_string(_requestIdentifier) +
+				__FILEREF__ + "manageRequestAndResponse failed" + ", _requestIdentifier: " + to_string(_requestIdentifier) +
 				", threadId: " + sThreadId + ", e: " + e.what()
 			);
 		}
 		catch (exception &e)
 		{
 			_logger->error(
-				__FILEREF__ + "manageRequestAndResponse failed" +
-				", _requestIdentifier: " + to_string(_requestIdentifier) +
+				__FILEREF__ + "manageRequestAndResponse failed" + ", _requestIdentifier: " + to_string(_requestIdentifier) +
 				", threadId: " + sThreadId + ", e: " + e.what()
 			);
 		}
@@ -612,29 +510,17 @@ int APICommon::operator()()
 
 			string clientIPAddress = getClientIPAddress(requestDetails);
 
-			chrono::system_clock::time_point endManageRequest =
-				chrono::system_clock::now();
+			chrono::system_clock::time_point endManageRequest = chrono::system_clock::now();
 			_logger->info(
-				__FILEREF__ + "manageRequestAndResponse" +
-				", _requestIdentifier: " + to_string(_requestIdentifier) +
-				", threadId: " + sThreadId + ", clientIPAddress: @" +
-				clientIPAddress + "@" + ", method: @" + method + "@" +
-				", requestURI: " + requestURI +
-				", basicAuthenticationPresent: " +
-				to_string(basicAuthenticationPresent) +
-				", @MMS statistics@ - manageRequestDuration (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(
-							  endManageRequest - startManageRequest
-				)
-							  .count()) +
-				"@"
+				__FILEREF__ + "manageRequestAndResponse" + ", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId +
+				", clientIPAddress: @" + clientIPAddress + "@" + ", method: @" + method + "@" + ", requestURI: " + requestURI +
+				", basicAuthenticationPresent: " + to_string(basicAuthenticationPresent) + ", @MMS statistics@ - manageRequestDuration (secs): @" +
+				to_string(chrono::duration_cast<chrono::seconds>(endManageRequest - startManageRequest).count()) + "@"
 			);
 		}
 
 		_logger->info(
-			__FILEREF__ + "APICommon::request finished" +
-			", _requestIdentifier: " + to_string(_requestIdentifier) +
-			", threadId: " + sThreadId
+			__FILEREF__ + "APICommon::request finished" + ", _requestIdentifier: " + to_string(_requestIdentifier) + ", threadId: " + sThreadId
 		);
 
 		FCGX_Finish_r(&request);
@@ -642,9 +528,7 @@ int APICommon::operator()()
 		// Note: the fcgi_streambuf destructor will auto flush
 	}
 
-	_logger->info(
-		__FILEREF__ + "APICommon SHUTDOWN" + ", threadId: " + sThreadId
-	);
+	_logger->info(__FILEREF__ + "APICommon SHUTDOWN" + ", threadId: " + sThreadId);
 
 	// restore stdio streambufs
 	//    cin.rdbuf(cin_streambuf);
@@ -654,9 +538,7 @@ int APICommon::operator()()
 	return 0;
 }
 
-bool APICommon::basicAuthenticationRequired(
-	string requestURI, unordered_map<string, string> queryParameters
-)
+bool APICommon::basicAuthenticationRequired(string requestURI, unordered_map<string, string> queryParameters)
 {
 	bool basicAuthenticationRequired = true;
 
@@ -671,12 +553,9 @@ bool APICommon::basicAuthenticationRequired(
 	}
 	string method = methodIt->second;
 
-	if (method == "registerUser" || method == "confirmRegistration" ||
-		method == "createTokenToResetPassword" || method == "resetPassword" ||
-		method == "login" ||
-		method == "manageHTTPStreamingManifest_authorizationThroughParameter" ||
-		method == "deliveryAuthorizationThroughParameter" ||
-		method == "deliveryAuthorizationThroughPath" ||
+	if (method == "registerUser" || method == "confirmRegistration" || method == "createTokenToResetPassword" || method == "resetPassword" ||
+		method == "login" || method == "manageHTTPStreamingManifest_authorizationThroughParameter" ||
+		method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath" ||
 		method == "status" // often used as healthy check
 	)
 	{
@@ -987,11 +866,9 @@ endLine;
 */
 
 void APICommon::sendSuccess(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed,
-	FCGX_Request &request, string requestURI, string requestMethod,
-	int htmlResponseCode, string responseBody, string contentType,
-	string cookieName, string cookieValue, string cookiePath,
-	bool enableCorsGETHeader, string originHeader
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestURI, string requestMethod,
+	int htmlResponseCode, string responseBody, string contentType, string cookieName, string cookieValue, string cookiePath, bool enableCorsGETHeader,
+	string originHeader
 )
 {
 	string endLine = "\r\n";
@@ -1002,16 +879,13 @@ void APICommon::sendSuccess(
 	//            + getHtmlStandardMessage(htmlResponseCode)
 	//            + endLine;
 
-	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " +
-						getHtmlStandardMessage(htmlResponseCode) + endLine;
+	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " + getHtmlStandardMessage(htmlResponseCode) + endLine;
 
 	string localContentType;
 	if (responseBody != "")
 	{
 		if (contentType == "")
-			localContentType =
-				string("Content-Type: application/json; charset=utf-8") +
-				endLine;
+			localContentType = string("Content-Type: application/json; charset=utf-8") + endLine;
 		else
 			localContentType = contentType + endLine;
 	}
@@ -1034,49 +908,33 @@ void APICommon::sendSuccess(
 		if (originHeader != "")
 			origin = originHeader;
 
-		corsGETHeader =
-			"Access-Control-Allow-Origin: " + origin + endLine +
-			"Access-Control-Allow-Methods: GET, POST, OPTIONS" + endLine +
-			"Access-Control-Allow-Credentials: true" + endLine +
-			"Access-Control-Allow-Headers: "
-			"DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,"
-			"Content-Type,Range" +
-			endLine +
-			"Access-Control-Expose-Headers: Content-Length,Content-Range" +
-			endLine;
+		corsGETHeader = "Access-Control-Allow-Origin: " + origin + endLine + "Access-Control-Allow-Methods: GET, POST, OPTIONS" + endLine +
+						"Access-Control-Allow-Credentials: true" + endLine +
+						"Access-Control-Allow-Headers: "
+						"DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,"
+						"Content-Type,Range" +
+						endLine + "Access-Control-Expose-Headers: Content-Length,Content-Range" + endLine;
 	}
 
 	if (responseBodyCompressed)
 	{
-		string compressedResponseBody =
-			Compressor::compress_string(responseBody);
+		string compressedResponseBody = Compressor::compress_string(responseBody);
 
 		long contentLength = compressedResponseBody.size();
 
-		string headResponse = httpStatus + localContentType +
-							  (cookieHeader == "" ? "" : cookieHeader) +
-							  (corsGETHeader == "" ? "" : corsGETHeader) +
-							  "Content-Length: " + to_string(contentLength) +
-							  endLine + "X-CompressedBody: true" + endLine +
-							  endLine;
+		string headResponse = httpStatus + localContentType + (cookieHeader == "" ? "" : cookieHeader) + (corsGETHeader == "" ? "" : corsGETHeader) +
+							  "Content-Length: " + to_string(contentLength) + endLine + "X-CompressedBody: true" + endLine + endLine;
 
 		FCGX_FPrintF(request.out, headResponse.c_str());
 
 		_logger->info(
-			__FILEREF__ + "sendSuccess" +
-			", requestIdentifier: " + to_string(requestIdentifier) +
-			", threadId: " + sThreadId + ", requestURI: " + requestURI +
-			", requestMethod: " + requestMethod +
-			", headResponse.size: " + to_string(headResponse.size()) +
-			", responseBody.size: @" + to_string(responseBody.size()) + "@" +
-			", compressedResponseBody.size: @" + to_string(contentLength) + "@"
+			__FILEREF__ + "sendSuccess" + ", requestIdentifier: " + to_string(requestIdentifier) + ", threadId: " + sThreadId +
+			", requestURI: " + requestURI + ", requestMethod: " + requestMethod + ", headResponse.size: " + to_string(headResponse.size()) +
+			", responseBody.size: @" + to_string(responseBody.size()) + "@" + ", compressedResponseBody.size: @" + to_string(contentLength) + "@"
 			// + ", response: " + completeHttpResponse
 		);
 
-		FCGX_PutStr(
-			compressedResponseBody.data(), compressedResponseBody.size(),
-			request.out
-		);
+		FCGX_PutStr(compressedResponseBody.data(), compressedResponseBody.size(), request.out);
 	}
 	else
 	{
@@ -1093,35 +951,25 @@ void APICommon::sendSuccess(
 		{
 			string toBeSearched = "%";
 			string replacedWith = "%%";
-			string newResponseBody =
-				regex_replace(responseBody, regex(toBeSearched), replacedWith);
+			string newResponseBody = regex_replace(responseBody, regex(toBeSearched), replacedWith);
 
-			completeHttpResponse =
-				httpStatus + localContentType +
-				(cookieHeader == "" ? "" : cookieHeader) +
-				(corsGETHeader == "" ? "" : corsGETHeader) +
-				"Content-Length: " + to_string(contentLength) + endLine +
-				endLine + newResponseBody;
+			completeHttpResponse = httpStatus + localContentType + (cookieHeader == "" ? "" : cookieHeader) +
+								   (corsGETHeader == "" ? "" : corsGETHeader) + "Content-Length: " + to_string(contentLength) + endLine + endLine +
+								   newResponseBody;
 		}
 		else
 		{
-			completeHttpResponse =
-				httpStatus + localContentType +
-				(cookieHeader == "" ? "" : cookieHeader) +
-				(corsGETHeader == "" ? "" : corsGETHeader) +
-				"Content-Length: " + to_string(contentLength) + endLine +
-				endLine + responseBody;
+			completeHttpResponse = httpStatus + localContentType + (cookieHeader == "" ? "" : cookieHeader) +
+								   (corsGETHeader == "" ? "" : corsGETHeader) + "Content-Length: " + to_string(contentLength) + endLine + endLine +
+								   responseBody;
 		}
 
 		// _logger->info(__FILEREF__ + "HTTP Success"
 		//     + ", response: " + completeHttpResponse
 		// );
 		_logger->info(
-			__FILEREF__ + "sendSuccess" +
-			", requestIdentifier: " + to_string(requestIdentifier) +
-			", threadId: " + sThreadId + ", requestURI: " + requestURI +
-			", requestMethod: " + requestMethod + ", responseBody.size: @" +
-			to_string(responseBody.size()) + "@"
+			__FILEREF__ + "sendSuccess" + ", requestIdentifier: " + to_string(requestIdentifier) + ", threadId: " + sThreadId +
+			", requestURI: " + requestURI + ", requestMethod: " + requestMethod + ", responseBody.size: @" + to_string(responseBody.size()) + "@"
 			// + ", response: " + completeHttpResponse
 		);
 
@@ -1209,22 +1057,16 @@ void APICommon::sendRedirect(FCGX_Request &request, string locationURL)
 
 	int htmlResponseCode = 301;
 
-	string completeHttpResponse =
-		string("Status: ") + to_string(htmlResponseCode) + " " +
-		getHtmlStandardMessage(htmlResponseCode) + endLine +
-		"Location: " + locationURL + endLine + endLine;
+	string completeHttpResponse = string("Status: ") + to_string(htmlResponseCode) + " " + getHtmlStandardMessage(htmlResponseCode) + endLine +
+								  "Location: " + locationURL + endLine + endLine;
 
-	_logger->info(
-		__FILEREF__ + "HTTP Success" + ", response: " + completeHttpResponse
-	);
+	_logger->info(__FILEREF__ + "HTTP Success" + ", response: " + completeHttpResponse);
 
 	FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 	// cout << completeHttpResponse;
 }
 
-void APICommon::sendHeadSuccess(
-	FCGX_Request &request, int htmlResponseCode, unsigned long fileSize
-)
+void APICommon::sendHeadSuccess(FCGX_Request &request, int htmlResponseCode, unsigned long fileSize)
 {
 	string endLine = "\r\n";
 
@@ -1234,16 +1076,11 @@ void APICommon::sendHeadSuccess(
 	//            + getHtmlStandardMessage(htmlResponseCode)
 	//            + endLine;
 
-	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " +
-						getHtmlStandardMessage(htmlResponseCode) + endLine;
+	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " + getHtmlStandardMessage(htmlResponseCode) + endLine;
 
-	string completeHttpResponse = httpStatus + "Content-Range: bytes 0-" +
-								  to_string(fileSize) + endLine + endLine;
+	string completeHttpResponse = httpStatus + "Content-Range: bytes 0-" + to_string(fileSize) + endLine + endLine;
 
-	_logger->info(
-		__FILEREF__ + "HTTP HEAD Success" +
-		", response: " + completeHttpResponse
-	);
+	_logger->info(__FILEREF__ + "HTTP HEAD Success" + ", response: " + completeHttpResponse);
 
 	FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 	//    cout << completeHttpResponse;
@@ -1259,24 +1096,16 @@ void APICommon::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
 	//            + getHtmlStandardMessage(htmlResponseCode)
 	//            + endLine;
 
-	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " +
-						getHtmlStandardMessage(htmlResponseCode) + endLine;
+	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " + getHtmlStandardMessage(htmlResponseCode) + endLine;
 
-	string completeHttpResponse = httpStatus +
-								  "X-CatraMMS-Resume: " + to_string(fileSize) +
-								  endLine + endLine;
+	string completeHttpResponse = httpStatus + "X-CatraMMS-Resume: " + to_string(fileSize) + endLine + endLine;
 
-	_logger->info(
-		__FILEREF__ + "HTTP HEAD Success" +
-		", response: " + completeHttpResponse
-	);
+	_logger->info(__FILEREF__ + "HTTP HEAD Success" + ", response: " + completeHttpResponse);
 
 	// cout << completeHttpResponse;
 }
 
-void APICommon::sendError(
-	FCGX_Request &request, int htmlResponseCode, string errorMessage
-)
+void APICommon::sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage)
 {
 	string endLine = "\r\n";
 
@@ -1287,8 +1116,7 @@ void APICommon::sendError(
 	if (errorMessage.find("%") != string::npos)
 	{
 		string temporaryResponseBody =
-			string("{ ") + "\"status\": " + to_string(htmlResponseCode) + ", " +
-			"\"error\": " + "\"" + errorMessage + "\"" + " " + "}";
+			string("{ ") + "\"status\": " + to_string(htmlResponseCode) + ", " + "\"error\": " + "\"" + errorMessage + "\"" + " " + "}";
 
 		// 2020-02-08: content length has to be calculated before the
 		// substitution from % to %% because for FCGX_FPrintF (below used) %% is
@@ -1297,15 +1125,11 @@ void APICommon::sendError(
 
 		string toBeSearched = "%";
 		string replacedWith = "%%";
-		responseBody = regex_replace(
-			temporaryResponseBody, regex(toBeSearched), replacedWith
-		);
+		responseBody = regex_replace(temporaryResponseBody, regex(toBeSearched), replacedWith);
 	}
 	else
 	{
-		responseBody = string("{ ") +
-					   "\"status\": " + to_string(htmlResponseCode) + ", " +
-					   "\"error\": " + "\"" + errorMessage + "\"" + " " + "}";
+		responseBody = string("{ ") + "\"status\": " + to_string(htmlResponseCode) + ", " + "\"error\": " + "\"" + errorMessage + "\"" + " " + "}";
 
 		// 2020-02-08: content length has to be calculated before the
 		// substitution from % to %% because for FCGX_FPrintF (below used) %% is
@@ -1318,17 +1142,12 @@ void APICommon::sendError(
 	//            + to_string(htmlResponseCode) + " "
 	//            + getHtmlStandardMessage(htmlResponseCode)
 	//            + endLine;
-	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " +
-						getHtmlStandardMessage(htmlResponseCode) + endLine;
+	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " + getHtmlStandardMessage(htmlResponseCode) + endLine;
 
-	string completeHttpResponse =
-		httpStatus + "Content-Type: application/json; charset=utf-8" + endLine +
-		"Content-Length: " + to_string(contentLength) + endLine + endLine +
-		responseBody;
+	string completeHttpResponse = httpStatus + "Content-Type: application/json; charset=utf-8" + endLine +
+								  "Content-Length: " + to_string(contentLength) + endLine + endLine + responseBody;
 
-	_logger->info(
-		__FILEREF__ + "HTTP Error" + ", response: " + completeHttpResponse
-	);
+	_logger->info(__FILEREF__ + "HTTP Error" + ", response: " + completeHttpResponse);
 
 	FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 
@@ -1346,8 +1165,7 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
 	if (errorMessage.find("%") != string::npos)
 	{
 		string temporaryResponseBody =
-			string("{ ") + "\"status\": " + to_string(htmlResponseCode) + ", " +
-			"\"error\": " + "\"" + errorMessage + "\"" + " " + "}";
+			string("{ ") + "\"status\": " + to_string(htmlResponseCode) + ", " + "\"error\": " + "\"" + errorMessage + "\"" + " " + "}";
 
 		// 2020-02-08: content length has to be calculated before the
 		// substitution from % to %% because for FCGX_FPrintF (below used) %% is
@@ -1356,15 +1174,11 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
 
 		string toBeSearched = "%";
 		string replacedWith = "%%";
-		responseBody = regex_replace(
-			temporaryResponseBody, regex(toBeSearched), replacedWith
-		);
+		responseBody = regex_replace(temporaryResponseBody, regex(toBeSearched), replacedWith);
 	}
 	else
 	{
-		responseBody = string("{ ") +
-					   "\"status\": " + to_string(htmlResponseCode) + ", " +
-					   "\"error\": " + "\"" + errorMessage + "\"" + " " + "}";
+		responseBody = string("{ ") + "\"status\": " + to_string(htmlResponseCode) + ", " + "\"error\": " + "\"" + errorMessage + "\"" + " " + "}";
 
 		// 2020-02-08: content length has to be calculated before the
 		// substitution from % to %% because for FCGX_FPrintF (below used) %% is
@@ -1377,23 +1191,17 @@ void APICommon::sendError(int htmlResponseCode, string errorMessage)
 	//            + to_string(htmlResponseCode) + " "
 	//            + getHtmlStandardMessage(htmlResponseCode)
 	//            + endLine;
-	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " +
-						getHtmlStandardMessage(htmlResponseCode) + endLine;
+	string httpStatus = string("Status: ") + to_string(htmlResponseCode) + " " + getHtmlStandardMessage(htmlResponseCode) + endLine;
 
-	string completeHttpResponse =
-		httpStatus + "Content-Type: application/json; charset=utf-8" + endLine +
-		"Content-Length: " + to_string(contentLength) + endLine + endLine +
-		responseBody;
+	string completeHttpResponse = httpStatus + "Content-Type: application/json; charset=utf-8" + endLine +
+								  "Content-Length: " + to_string(contentLength) + endLine + endLine + responseBody;
 
-	_logger->info(
-		__FILEREF__ + "HTTP Error" + ", response: " + completeHttpResponse
-	);
+	_logger->info(__FILEREF__ + "HTTP Error" + ", response: " + completeHttpResponse);
 
 	// cout << completeHttpResponse;
 }
 
-string
-APICommon::getClientIPAddress(unordered_map<string, string> &requestDetails)
+string APICommon::getClientIPAddress(unordered_map<string, string> &requestDetails)
 {
 
 	string clientIPAddress;
@@ -1430,18 +1238,14 @@ string APICommon::getHtmlStandardMessage(int htmlResponseCode)
 	case 500:
 		return string("Internal Server Error");
 	default:
-		string errorMessage =
-			__FILEREF__ + "HTTP status code not managed" +
-			", htmlResponseCode: " + to_string(htmlResponseCode);
+		string errorMessage = __FILEREF__ + "HTTP status code not managed" + ", htmlResponseCode: " + to_string(htmlResponseCode);
 		_logger->error(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 }
 
-void APICommon::fillEnvironmentDetails(
-	const char *const *envp, unordered_map<string, string> &requestDetails
-)
+void APICommon::fillEnvironmentDetails(const char *const *envp, unordered_map<string, string> &requestDetails)
 {
 
 	int valueIndex;
@@ -1452,10 +1256,7 @@ void APICommon::fillEnvironmentDetails(
 
 		if ((valueIndex = environmentKeyValue.find("=")) == string::npos)
 		{
-			_logger->error(
-				__FILEREF__ + "Unexpected environment variable" +
-				", environmentKeyValue: " + environmentKeyValue
-			);
+			_logger->error(__FILEREF__ + "Unexpected environment variable" + ", environmentKeyValue: " + environmentKeyValue);
 
 			continue;
 		}
@@ -1466,21 +1267,13 @@ void APICommon::fillEnvironmentDetails(
 		requestDetails[key] = value;
 
 		if (key == "REQUEST_URI")
-			_logger->info(
-				__FILEREF__ + "Environment variable" + ", key/Name: " + key +
-				"=" + value
-			);
+			_logger->info(__FILEREF__ + "Environment variable" + ", key/Name: " + key + "=" + value);
 		else
-			_logger->debug(
-				__FILEREF__ + "Environment variable" + ", key/Name: " + key +
-				"=" + value
-			);
+			_logger->debug(__FILEREF__ + "Environment variable" + ", key/Name: " + key + "=" + value);
 	}
 }
 
-void APICommon::fillQueryString(
-	string queryString, unordered_map<string, string> &queryParameters
-)
+void APICommon::fillQueryString(string queryString, unordered_map<string, string> &queryParameters)
 {
 
 	stringstream ss(queryString);
@@ -1494,10 +1287,7 @@ void APICommon::fillQueryString(
 
 			if ((keySeparator = token.find("=")) == string::npos)
 			{
-				_logger->error(
-					__FILEREF__ + "Wrong query parameter format" +
-					", token: " + token
-				);
+				_logger->error(__FILEREF__ + "Wrong query parameter format" + ", token: " + token);
 
 				continue;
 			}
@@ -1507,10 +1297,7 @@ void APICommon::fillQueryString(
 
 			queryParameters[key] = value;
 
-			_logger->info(
-				__FILEREF__ + "Query parameter" + ", key/Name: " + key + "=" +
-				value
-			);
+			_logger->info(__FILEREF__ + "Query parameter" + ", key/Name: " + key + "=" + value);
 		}
 	}
 }
@@ -1669,7 +1456,7 @@ json APICommon::loadConfigurationFile(const char *configurationPathName)
 	}
 	catch (...)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"wrong json configuration format"
 			", configurationPathName: {}",
 			configurationPathName

@@ -37,12 +37,12 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 
 	string detailsYouTubeProfilesPath;
 	{
-		detailsYouTubeProfilesPath = fmt::format("{}/{}-youTubeProfiles.txt", _ffmpegTempDir, ingestionJobKey);
+		detailsYouTubeProfilesPath = std::format("{}/{}-youTubeProfiles.txt", _ffmpegTempDir, ingestionJobKey);
 
 		// string youTubeExecuteCommand = _pythonPathName + " " + _youTubeDlPath + "/youtube-dl " + "--list-formats " + youTubeURL + " " + " > " +
 		// 						   detailsYouTubeProfilesPath + " 2>&1";
 		string youTubeExecuteCommand =
-			fmt::format("{} {}/youtube-dl --list-formats {} > {} 2>&1", _pythonPathName, _youTubeDlPath, youTubeURL, detailsYouTubeProfilesPath);
+			std::format("{} {}/youtube-dl --list-formats {} > {} 2>&1", _pythonPathName, _youTubeDlPath, youTubeURL, detailsYouTubeProfilesPath);
 
 		try
 		{
@@ -67,7 +67,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 				else
 					lastPartOfFfmpegOutputFile = string("file not found: ") + detailsYouTubeProfilesPath;
 
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"retrieveStreamingYouTubeURL: youTube command failed"
 					", ingestionJobKey: {}"
 					", executeCommandStatus: {}"
@@ -78,7 +78,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
-				errorMessage = fmt::format(
+				errorMessage = std::format(
 					"retrieveStreamingYouTubeURL: command failed"
 					", ingestionJobKey: {}",
 					ingestionJobKey
@@ -87,7 +87,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 			}
 			else if (!fs::exists(detailsYouTubeProfilesPath))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"retrieveStreamingYouTubeURL: youTube command failed. no profiles file created"
 					", ingestionJobKey: {}"
 					", executeCommandStatus: {}"
@@ -97,7 +97,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
-				errorMessage = fmt::format(
+				errorMessage = std::format(
 					"retrieveStreamingYouTubeURL: command failed. no profiles file created"
 					", ingestionJobKey: {}",
 					ingestionJobKey
@@ -119,7 +119,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"retrieveStreamingYouTubeURL, youTube command failed"
 				", ingestionJobKey: {}"
 				", e.what(): {}",
@@ -141,7 +141,7 @@ pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey
 		}
 		catch (exception &e)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"retrieveStreamingYouTubeURL, youTube command failed"
 				", ingestionJobKey: {}"
 				", e.what(): {}",

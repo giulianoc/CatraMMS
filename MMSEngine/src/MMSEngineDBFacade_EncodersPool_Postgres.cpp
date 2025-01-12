@@ -26,7 +26,7 @@ int64_t MMSEngineDBFacade::addEncoder(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Encoder(label, external, enabled, protocol, "
 				"publicServerName, internalServerName, port "
 				") values ("
@@ -226,7 +226,7 @@ void MMSEngineDBFacade::modifyEncoder(
 				throw runtime_error(errorMessage);
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Encoder {} "
 				"where encoderKey = {} returning 1) select count(*) from rows",
 				setSQL, encoderKey
@@ -363,7 +363,7 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Encoder where encoderKey = {} "
 				"returning 1) select count(*) from rows",
 				encoderKey
@@ -536,7 +536,7 @@ string MMSEngineDBFacade::encoder_columnAsString(string columnName, int64_t enco
 {
 	try
 	{
-		string requestedColumn = fmt::format("mms_encoder:.{}", columnName);
+		string requestedColumn = std::format("mms_encoder:.{}", columnName);
 		vector<string> requestedColumns = vector<string>(1, requestedColumn);
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
 
@@ -678,7 +678,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 	{
 		if (rows > _maxRows)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
@@ -696,7 +696,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Using startIndex/row without orderBy will give inconsistent results"
 				", startIndex: {}"
 				", rows: {}"
@@ -712,19 +712,19 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 		{
 			string where;
 			if (encoderKey != -1)
-				where += fmt::format("{} encoderKey = {} ", where.size() > 0 ? "and" : "", encoderKey);
+				where += std::format("{} encoderKey = {} ", where.size() > 0 ? "and" : "", encoderKey);
 
 			string limit;
 			string offset;
 			string orderByCondition;
 			if (rows != -1)
-				limit = fmt::format("limit {} ", rows);
+				limit = std::format("limit {} ", rows);
 			if (startIndex != -1)
-				offset = fmt::format("offset {} ", startIndex);
+				offset = std::format("offset {} ", startIndex);
 			if (orderBy != "")
-				orderByCondition = fmt::format("order by {} ", orderBy);
+				orderByCondition = std::format("order by {} ", orderBy);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select {} "
 				"from MMS_Encoder "
 				"{} {} "
@@ -748,7 +748,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 
 			if (empty(res) && encoderKey != -1 && notFoundAsException)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"encoder not found"
 					", encoderKey: {}",
 					encoderKey
@@ -1008,7 +1008,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncoderWorkspaceMapping (workspaceKey, encoderKey) "
 				"values ({}, {})",
 				workspaceKey, encoderKey
@@ -1075,7 +1075,7 @@ bool MMSEngineDBFacade::encoderWorkspaceMapping_isPresent(int64_t workspaceKey, 
 	{
 		bool isPresent;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select count(*) from MMS_EncoderWorkspaceMapping "
 				"where workspaceKey = {} and encoderKey = {}",
 				workspaceKey, encoderKey
@@ -1205,7 +1205,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, str
 		{
 			string encoderLabel = JSONUtils::asString(sharedEncodersLabel[encoderIndex]);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encoderKey from MMS_Encoder "
 				"where label = {}",
 				trans.quote(encoderLabel)
@@ -1345,7 +1345,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 		// se l'encoder che vogliamo rimuovere da un workspace è all'interno di qualche EncodersPool,
 		// bisogna rimuoverlo
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_EncoderEncodersPoolMapping "
 				"where encodersPoolKey in (select encodersPoolKey from MMS_EncodersPool where workspaceKey = {}) "
 				"and encoderKey = {} returning 1) select count(*) from rows",
@@ -1363,7 +1363,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_EncoderWorkspaceMapping "
 				"where workspaceKey = {} and encoderKey = {} returning 1) select count(*) from rows",
 				workspaceKey, encoderKey
@@ -1496,7 +1496,7 @@ json MMSEngineDBFacade::getEncoderWorkspacesAssociation(int64_t encoderKey)
 	{
 		json encoderWorkspacesAssociatedRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select w.workspaceKey, w.name "
 				"from MMS_Workspace w, MMS_EncoderWorkspaceMapping ewm "
 				"where w.workspaceKey = ewm.workspaceKey and ewm.encoderKey = {}",
@@ -1725,54 +1725,54 @@ json MMSEngineDBFacade::getEncoderList(
 		if (encoderKey != -1)
 		{
 			if (sqlWhere != "")
-				sqlWhere += fmt::format("and e.encoderKey = {} ", encoderKey);
+				sqlWhere += std::format("and e.encoderKey = {} ", encoderKey);
 			else
-				sqlWhere += fmt::format("e.encoderKey = {} ", encoderKey);
+				sqlWhere += std::format("e.encoderKey = {} ", encoderKey);
 		}
 		if (label != "")
 		{
 			if (sqlWhere != "")
-				sqlWhere += fmt::format("and LOWER(e.label) like LOWER({}) ", trans.quote("%" + label + "%"));
+				sqlWhere += std::format("and LOWER(e.label) like LOWER({}) ", trans.quote("%" + label + "%"));
 			else
-				sqlWhere += fmt::format("LOWER(e.label) like LOWER({}) ", trans.quote("%" + label + "%"));
+				sqlWhere += std::format("LOWER(e.label) like LOWER({}) ", trans.quote("%" + label + "%"));
 		}
 		if (serverName != "")
 		{
 			if (sqlWhere != "")
-				sqlWhere += fmt::format(
+				sqlWhere += std::format(
 					"and (e.publicServerName like {} or e.internalServerName like {}) ", trans.quote("%" + serverName + "%"),
 					trans.quote("%" + serverName + "%")
 				);
 			else
 				sqlWhere +=
-					fmt::format("(e.publicServerName like {} or e.internalServerName like {}) ", trans.quote(serverName), trans.quote(serverName));
+					std::format("(e.publicServerName like {} or e.internalServerName like {}) ", trans.quote(serverName), trans.quote(serverName));
 		}
 		if (port != -1)
 		{
 			if (sqlWhere != "")
-				sqlWhere += fmt::format("and e.port = {} ", port);
+				sqlWhere += std::format("and e.port = {} ", port);
 			else
-				sqlWhere += fmt::format("e.port = {} ", port);
+				sqlWhere += std::format("e.port = {} ", port);
 		}
 
 		if (allEncoders)
 		{
 			// using just MMS_Encoder
 			if (sqlWhere != "")
-				sqlWhere = fmt::format("where {}", sqlWhere);
+				sqlWhere = std::format("where {}", sqlWhere);
 		}
 		else
 		{
 			// join with MMS_EncoderWorkspaceMapping
 			if (sqlWhere != "")
-				sqlWhere = fmt::format(
+				sqlWhere = std::format(
 							   "where e.encoderKey = ewm.encoderKey "
 							   "and ewm.workspaceKey = {} and ",
 							   workspaceKey
 						   ) +
 						   sqlWhere;
 			else
-				sqlWhere = fmt::format(
+				sqlWhere = std::format(
 					"where e.encoderKey = ewm.encoderKey "
 					"and ewm.workspaceKey = {} ",
 					workspaceKey
@@ -1784,11 +1784,11 @@ json MMSEngineDBFacade::getEncoderList(
 			string sqlStatement;
 			if (allEncoders)
 			{
-				sqlStatement = fmt::format("select count(*) from MMS_Encoder e {}", sqlWhere);
+				sqlStatement = std::format("select count(*) from MMS_Encoder e {}", sqlWhere);
 			}
 			else
 			{
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select count(*) "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm {}",
 					sqlWhere
@@ -1816,14 +1816,14 @@ json MMSEngineDBFacade::getEncoderList(
 
 			string sqlStatement;
 			if (allEncoders)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port "
 					"from MMS_Encoder e {} {} limit {} offset {}",
 					sqlWhere, orderByCondition, rows, start
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm {} {} limit {} offset {}",
@@ -2170,7 +2170,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey)
 		string label;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select label from MMS_EncodersPool "
 				"where encodersPoolKey = {}",
 				encodersPoolKey
@@ -2360,15 +2360,15 @@ json MMSEngineDBFacade::getEncodersPoolList(
 
 		// label == NULL is the "internal" EncodersPool representing the default encoders pool
 		// for a workspace, the one using all the internal encoders associated to the workspace
-		string sqlWhere = fmt::format("where workspaceKey = {} and label is not NULL ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} and label is not NULL ", workspaceKey);
 		if (encodersPoolKey != -1)
-			sqlWhere += fmt::format("and encodersPoolKey = {} ", encodersPoolKey);
+			sqlWhere += std::format("and encodersPoolKey = {} ", encodersPoolKey);
 		if (label != "")
-			sqlWhere += fmt::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
+			sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_EncodersPool {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_EncodersPool {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -2388,7 +2388,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 				orderByCondition = "order by label " + labelOrder + " ";
 
 			string sqlStatement =
-				fmt::format("select encodersPoolKey, label from MMS_EncodersPool {} {} limit {} offset {}", sqlWhere, orderByCondition, rows, start);
+				std::format("select encodersPoolKey, label from MMS_EncodersPool {} {} limit {} offset {}", sqlWhere, orderByCondition, rows, start);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row : res)
@@ -2405,7 +2405,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 
 				json encodersRoot = json::array();
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select encoderKey from MMS_EncoderEncodersPoolMapping "
 						"where encodersPoolKey = {}",
 						encodersPoolKey
@@ -2417,7 +2417,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 						int64_t encoderKey = row["encoderKey"].as<int64_t>();
 
 						{
-							string sqlStatement = fmt::format(
+							string sqlStatement = std::format(
 								"select encoderKey, label, external, enabled, protocol, "
 								"publicServerName, internalServerName, port "
 								"from MMS_Encoder "
@@ -2588,7 +2588,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, string label, v
 		// check: every encoderKey shall be already associated to the workspace
 		for (int64_t encoderKey : encoderKeys)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select count(*) from MMS_EncoderWorkspaceMapping "
 				"where workspaceKey = {} and encoderKey = {} ",
 				workspaceKey, encoderKey
@@ -2612,7 +2612,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, string label, v
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodersPool(workspaceKey, label, "
 				"lastEncoderIndexUsed) values ( "
 				"{}, {}, 0) returning encodersPoolKey",
@@ -2631,7 +2631,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, string label, v
 
 		for (int64_t encoderKey : encoderKeys)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncoderEncodersPoolMapping(encodersPoolKey, "
 				"encoderKey) values ( "
 				"{}, {})",
@@ -2769,7 +2769,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 		// check: every encoderKey shall be already associated to the workspace
 		for (int64_t encoderKey : newEncoderKeys)
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select count(*) from MMS_EncoderWorkspaceMapping "
 				"where workspaceKey = {} and encoderKey = {} ",
 				workspaceKey, encoderKey
@@ -2793,7 +2793,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select label from MMS_EncodersPool "
 				"where encodersPoolKey = {} ",
 				encodersPoolKey
@@ -2812,7 +2812,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 				string savedLabel = res[0]["label"].as<string>();
 				if (savedLabel != newLabel)
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"WITH rows AS (update MMS_EncodersPool "
 						"set label = {} "
 						"where encodersPoolKey = {} returning 1) select count(*) from rows",
@@ -2841,7 +2841,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 
 				vector<int64_t> savedEncoderKeys;
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select encoderKey from MMS_EncoderEncodersPoolMapping "
 						"where encodersPoolKey = {}",
 						encodersPoolKey
@@ -2869,7 +2869,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 				{
 					if (find(savedEncoderKeys.begin(), savedEncoderKeys.end(), newEncoderKey) == savedEncoderKeys.end())
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"insert into MMS_EncoderEncodersPoolMapping("
 							"encodersPoolKey, encoderKey) values ( "
 							"{}, {})",
@@ -2893,7 +2893,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 				{
 					if (find(newEncoderKeys.begin(), newEncoderKeys.end(), savedEncoderKey) == newEncoderKeys.end())
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"WITH rows AS (delete from MMS_EncoderEncodersPoolMapping "
 							"where encodersPoolKey = {} and encoderKey = {} "
 							"returning 1) select count(*) from rows",
@@ -3040,7 +3040,7 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_EncodersPool where encodersPoolKey = {} "
 				"returning 1) select count(*) from rows",
 				encodersPoolKey
@@ -3192,14 +3192,14 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			// 	anche se si dovesse riutilizzare un encoder, non è un problema, meglio evitare blocchi/deadlock
 			string sqlStatement;
 			if (encodersPoolLabel == "")
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
 					"where workspaceKey = {} "
 					"and label is null", // for update",
 					workspaceKey
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select encodersPoolKey, lastEncoderIndexUsed from MMS_EncodersPool "
 					"where workspaceKey = {} "
 					"and label = {}", // for update",
@@ -3216,7 +3216,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			);
 			if (empty(res))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"encodersPool was not found"
 					", workspaceKey: {}"
 					", encodersPoolLabel: {}",
@@ -3235,13 +3235,13 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		{
 			string sqlStatement;
 			if (encodersPoolLabel == "")
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select count(*) from MMS_EncoderWorkspaceMapping "
 					"where workspaceKey = {} ",
 					workspaceKey
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select count(*) from MMS_EncoderEncodersPoolMapping "
 					"where encodersPoolKey = {} ",
 					encodersPoolKey
@@ -3278,7 +3278,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 
 			string sqlStatement;
 			if (encodersPoolLabel == "")
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select e.encoderKey, e.enabled, e.external, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm "
@@ -3288,7 +3288,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 					workspaceKey, newLastEncoderIndexUsed
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select e.encoderKey, e.enabled, e.external, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port "
 					"from MMS_Encoder e, MMS_EncoderEncodersPoolMapping eepm "
@@ -3308,7 +3308,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			);
 			if (empty(res))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Encoder details not found"
 					", workspaceKey: {}"
 					", encodersPoolKey: {}",
@@ -3384,7 +3384,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 
 		if (!encoderFound)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Encoder was not found"
 				", workspaceKey: {}"
 				", encodersPoolLabel: {}"
@@ -3397,7 +3397,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodersPool set lastEncoderIndexUsed = {} "
 				"where encodersPoolKey = {} returning 1) select count(*) from rows",
 				newLastEncoderIndexUsed, encodersPoolKey
@@ -3579,7 +3579,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 		{
 			int64_t encodersPoolKey;
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select encodersPoolKey from MMS_EncodersPool "
 					"where workspaceKey = {} "
 					"and label = {} ",
@@ -3607,7 +3607,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 			}
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select count(*) from MMS_EncoderEncodersPoolMapping "
 					"where encodersPoolKey = {} ",
 					encodersPoolKey
@@ -3625,7 +3625,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 		}
 		else
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select count(*) from MMS_EncoderWorkspaceMapping "
 				"where workspaceKey = {} ",
 				workspaceKey
@@ -3762,7 +3762,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 		string internalServerName;
 		int port;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select external, protocol, publicServerName, internalServerName, port "
 				"from MMS_Encoder where encoderKey = {} ",
 				encoderKey

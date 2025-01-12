@@ -105,7 +105,7 @@ void MMSEngineProcessor::localCopyContentThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"local copy Content failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"

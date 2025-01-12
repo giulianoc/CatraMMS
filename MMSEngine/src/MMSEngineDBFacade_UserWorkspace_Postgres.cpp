@@ -3,6 +3,7 @@
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/fmt/bundled/format.h"
 #include <random>
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
@@ -19,7 +20,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 
 	try
 	{
-		string sqlStatement = fmt::format(
+		string sqlStatement = std::format(
 			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, "
 			"wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
@@ -186,7 +187,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 
 	try
 	{
-		string sqlStatement = fmt::format(
+		string sqlStatement = std::format(
 			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority "
 			"wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
@@ -375,25 +376,32 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 
 		{
 			// This method is called only in case of MMS user (no ldapEnabled)
-			char strExpirationUtcDate[64];
+			// char strExpirationUtcDate[64];
+			string sExpirationUtcDate;
 			{
 				tm tmDateTime;
 				time_t utcTime = chrono::system_clock::to_time_t(userExpirationLocalDate);
 
 				gmtime_r(&utcTime, &tmDateTime);
 
+				/*
 				sprintf(
 					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 				);
+				*/
+				sExpirationUtcDate = std::format(
+					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+				);
 			}
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_User (name, eMailAddress, password, country, timezone, "
 				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
 				"{}, {}, {}, {}, {}, NOW() at time zone 'utc', false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"NULL) returning userKey",
 				trans.quote(trimUserName), trans.quote(userEmailAddress), trans.quote(userPassword), trans.quote(userCountry),
-				trans.quote(userTimezone), trans.quote(strExpirationUtcDate)
+				trans.quote(userTimezone), trans.quote(sExpirationUtcDate)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			userKey = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -573,19 +581,26 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 
 		{
 			// This method is called only in case of MMS user (no ldapEnabled)
-			char strExpirationUtcDate[64];
+			// char strExpirationUtcDate[64];
+			string strExpirationUtcDate;
 			{
 				tm tmDateTime;
 				time_t utcTime = chrono::system_clock::to_time_t(userExpirationLocalDate);
 
 				gmtime_r(&utcTime, &tmDateTime);
 
+				/*
 				sprintf(
 					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 				);
+				*/
+				strExpirationUtcDate = std::format(
+					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+				);
 			}
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_User (name, eMailAddress, password, country, timezone, "
 				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
 				"{}, {}, {}, {}, {}, NOW() at time zone 'utc', "
@@ -607,7 +622,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 		{
 			// this is a registration of a user because of a share workspace
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select workspaceKey from MMS_Code "
 					"where code = {} and userEmail = {} and type = {}",
 					trans.quote(shareWorkspaceCode), trans.quote(userEmailAddress), trans.quote(toString(CodeType::ShareWorkspace))
@@ -634,7 +649,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 			}
 
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_Code set userKey = {}, type = {} "
 					"where code = {} returning 1) select count(*) from rows",
 					userKey, trans.quote(toString(CodeType::UserRegistrationComingFromShareWorkspace)), trans.quote(shareWorkspaceCode)
@@ -1065,7 +1080,7 @@ string MMSEngineDBFacade::createCode(
 
 			try
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_Code (code, workspaceKey, userKey, userEmail, "
 					"type, permissions, creationDate) values ("
 					"{}, {}, {}, {}, {}, {}, NOW() at time zone 'utc')",
@@ -1155,19 +1170,26 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 			if (!isTimezoneValid(userTimezone))
 				userTimezone = "CET";
 
-			char strExpirationUtcDate[64];
+			// char strExpirationUtcDate[64];
+			string strExpirationUtcDate;
 			{
 				tm tmDateTime;
 				time_t utcTime = chrono::system_clock::to_time_t(userExpirationLocalDate);
 
 				gmtime_r(&utcTime, &tmDateTime);
 
+				/*
 				sprintf(
 					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 				);
+				*/
+				strExpirationUtcDate = std::format(
+					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+				);
 			}
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_User (name, eMailAddress, password, country, timezone, "
 				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
 				"{}, {}, {}, {}, {}, NOW() at time zone 'utc', false, to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
@@ -1498,7 +1520,8 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			bool isOwner = false;
 			bool isDefault = false;
 
-			char strExpirationUtcDate[64];
+			// char strExpirationUtcDate[64];
+			string strExpirationUtcDate;
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
 					chrono::system_clock::now() + chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
@@ -1508,12 +1531,18 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 
 				gmtime_r(&utcTime, &tmDateTime);
 
+				/*
 				sprintf(
 					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 				);
+				*/
+				strExpirationUtcDate = std::format(
+					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+				);
 			}
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
 				"permissions, creationDate, expirationDate) values ("
 				"{}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', "
@@ -1591,7 +1620,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 			bool enabled = false;
 			string workspaceDirectoryName = "tempName";
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Workspace ("
 				"creationDate,              name, directoryName, workspaceType, "
 				"deliveryURL, enabled, maxEncodingPriority, encodingPeriod, "
@@ -1615,7 +1644,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Workspace set directoryName = {} where workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				trans.quote(to_string(workspaceKey)), workspaceKey
@@ -1640,7 +1669,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_WorkspaceCost ("
 				"workspaceKey, maxStorageInGB, currentCostForStorage, "
 				"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
@@ -1675,7 +1704,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 		);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_WorkspaceMoreInfo (workspaceKey, currentDirLevel1, "
 				"currentDirLevel2, currentDirLevel3, startDateTime, endDateTime, "
 				"currentIngestionsNumber) values ("
@@ -1699,7 +1728,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 		// These encoders will not be saved in MMS_EncoderEncodersPoolMapping but they
 		// will be retrieved directly by MMS_EncoderWorkspaceMapping
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_EncodersPool(workspaceKey, label, lastEncoderIndexUsed) "
 				"values ({}, NULL, 0)",
 				workspaceKey
@@ -1781,7 +1810,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 		int64_t workspaceKey;
 		CodeType codeType;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select userKey, permissions, workspaceKey, type "
 				"from MMS_Code "
 				"where code = {} and type in ({}, {}) and "
@@ -1820,7 +1849,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 		// check if the apiKey is already present (maybe this is the second time the confirmRegistration API is called
 		bool apiKeyAlreadyPresent = false;
 		{
-			string sqlStatement = fmt::format("select apiKey from MMS_APIKey where userKey = {} and workspaceKey = {}", userKey, workspaceKey);
+			string sqlStatement = std::format("select apiKey from MMS_APIKey where userKey = {} and workspaceKey = {}", userKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -1846,7 +1875,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 			{
 				bool enabled = true;
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_Workspace set enabled = {} where workspaceKey = {} "
 					"returning 1) select count(*) from rows",
 					enabled, workspaceKey
@@ -1875,7 +1904,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 		string emailAddress;
 		string name;
 		{
-			string sqlStatement = fmt::format("select name, eMailAddress from MMS_User where userKey = {}", userKey);
+			string sqlStatement = std::format("select name, eMailAddress from MMS_User where userKey = {}", userKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -1911,7 +1940,8 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 			bool isOwner = codeType == CodeType::UserRegistration ? true : false;
 			bool isDefault = false;
 
-			char strExpirationUtcDate[64];
+			// char strExpirationUtcDate[64];
+			string strExpirationUtcDate;
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
 					chrono::system_clock::now() + chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
@@ -1921,12 +1951,18 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 
 				gmtime_r(&utcTime, &tmDateTime);
 
+				/*
 				sprintf(
 					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 				);
+				*/
+				strExpirationUtcDate = std::format(
+					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+				);
 			}
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
 				"permissions, creationDate, expirationDate) values ("
 				"                        {},      {},       {},            {},       {}, "
@@ -2064,7 +2100,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 		{
 			int64_t userKey;
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select userKey from MMS_User "
 					"where eMailAddress = {}",
 					trans->quote(adminEmailAddress)
@@ -2092,7 +2128,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 
 			bool apiKeyAlreadyPresentForAdminUser = false;
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select count(*) from MMS_APIKey "
 					"where userKey = {} and workspaceKey = {}",
 					userKey, workspaceKey
@@ -2117,7 +2153,8 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 			string sourceApiKey = adminEmailAddress + "__SEP__" + to_string(e());
 			apiKey = Encrypt::opensslEncrypt(sourceApiKey);
 
-			char strExpirationUtcDate[64];
+			// char strExpirationUtcDate[64];
+			string strExpirationUtcDate;
 			{
 				chrono::system_clock::time_point apiKeyExpirationDate =
 					chrono::system_clock::now() + chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
@@ -2127,12 +2164,18 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(
 
 				gmtime_r(&utcTime, &tmDateTime);
 
+				/*
 				sprintf(
 					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 				);
+				*/
+				strExpirationUtcDate = std::format(
+					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+				);
 			}
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, isDefault, "
 				"permissions, creationDate, expirationDate) values ("
 				"{}, {}, {}, {}, {}, {}, NOW() at time zone 'utc', to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'))",
@@ -2202,7 +2245,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 		bool admin = false;
 		bool isOwner = false;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select isOwner, permissions "
 				"from MMS_APIKey where workspaceKey = {} and userKey = {}",
 				workspaceKey, userKey
@@ -2239,7 +2282,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 		//	calcoliamo questi user
 		vector<tuple<int64_t, string, string>> usersToBeRemoved;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select u.userKey, u.name, u.eMailAddress from MMS_APIKey ak, MMS_User u "
 				"where ak.userKey = u.userKey and ak.workspaceKey = {}",
 				workspaceKey
@@ -2252,7 +2295,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 				string name = row["name"].as<string>();
 				string eMailAddress = row["eMailAddress"].as<string>();
 
-				string sqlStatement = fmt::format("select count(*) from MMS_APIKey where userKey = {}", userKey);
+				string sqlStatement = std::format("select count(*) from MMS_APIKey where userKey = {}", userKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int count = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
@@ -2283,7 +2326,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 			// in all the tables depending from Workspace we have 'on delete cascade'
 			// So all should be removed automatically from DB
 			string sqlStatement =
-				fmt::format("WITH rows AS (delete from MMS_Workspace where workspaceKey = {} returning 1) select count(*) from rows", workspaceKey);
+				std::format("WITH rows AS (delete from MMS_Workspace where workspaceKey = {} returning 1) select count(*) from rows", workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
 			SPDLOG_INFO(
@@ -2313,7 +2356,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 
 			// in all the tables depending from User we have 'on delete cascade'
 			// So all should be removed automatically from DB
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_User where userKey in ({}) "
 				"returning 1) select count(*) from rows",
 				sUsers
@@ -2442,7 +2485,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 		bool admin = false;
 		bool isOwner = false;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select isOwner, permissions "
 				"from MMS_APIKey where workspaceKey = {} and userKey = {}",
 				workspaceKey, userKey
@@ -2483,7 +2526,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 		string eMailAddress;
 		{
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select name, eMailAddress from MMS_User "
 					"where userKey = {}",
 					userKey
@@ -2499,7 +2542,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 				);
 				if (empty(res))
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"The user does not exist"
 						", userKey: {}",
 						userKey
@@ -2513,7 +2556,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 				eMailAddress = res[0]["eMailAddress"].as<string>();
 			}
 			{
-				string sqlStatement = fmt::format("select count(*) from MMS_APIKey where userKey = {}", userKey);
+				string sqlStatement = std::format("select count(*) from MMS_APIKey where userKey = {}", userKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				int count = trans.exec1(sqlStatement)[0].as<int64_t>();
 				SPDLOG_INFO(
@@ -2534,7 +2577,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_APIKey where userKey = {} and workspaceKey = {} returning 1) "
 				"select count(*) from rows",
 				userKey, workspaceKey
@@ -2555,7 +2598,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 		{
 			// in all the tables depending from User we have 'on delete cascade'
 			// So all should be removed automatically from DB
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_User where userKey = {} "
 				"returning 1) select count(*) from rows",
 				userKey
@@ -2688,7 +2731,7 @@ MMSEngineDBFacade::checkAPIKey(string apiKey, bool fromMaster)
 		int64_t workspaceKey;
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select userKey, workspaceKey, permissions from MMS_APIKey "
 				"where apiKey = {} and expirationDate >= NOW() at time zone 'utc'",
 				trans.quote(apiKey)
@@ -2877,7 +2920,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 		try
 		{
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select userKey, name, country, timezone, insolvent, "
 					"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 					"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate "
@@ -3102,7 +3145,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 		try
 		{
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_User set lastSuccessfulLogin = NOW() at time zone 'utc' "
 					"where userKey = {} returning 1) select count(*) from rows",
 					userKey
@@ -3289,14 +3332,14 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 		{
 			string sqlStatement;
 			if (admin)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select count(*) from MMS_Workspace w, MMS_APIKey a "
 					"where w.workspaceKey = a.workspaceKey "
 					"and a.userKey = {}",
 					userKey
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select count(*) from MMS_Workspace w, MMS_APIKey a "
 					"where w.workspaceKey = a.workspaceKey "
 					"and a.userKey = {} "
@@ -3319,7 +3362,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 		{
 			string sqlStatement;
 			if (admin)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
 					"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
@@ -3333,7 +3376,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 					userKey
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
 					"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
@@ -3485,7 +3528,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 		{
 			// if admin returns all the workspaces of the user (even the one not enabled)
 			// if NOT admin returns only the one having isEnabled = 1
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
 				"w.languageCode, w.timezone, "
@@ -3521,7 +3564,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			}
 			else
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, "
 					"a.apiKey, a.isOwner, a.isDefault, "
@@ -3808,7 +3851,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(
 			if (admin)
 			{
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select u.userKey as workspaceOwnerUserKey, u.name as workspaceOwnerUserName "
 						"from MMS_APIKey ak, MMS_User u "
 						"where ak.userKey = u.userKey "
@@ -3910,7 +3953,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 		bool admin = false;
 		bool isOwner = false;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select isOwner, permissions from MMS_APIKey "
 				"where workspaceKey = {} and userKey = {}",
 				workspaceKey, userKey
@@ -3962,7 +4005,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("enabled = {}", newEnabled);
+				setSQL += std::format("enabled = {}", newEnabled);
 				oneParameterPresent = true;
 			}
 
@@ -3970,7 +4013,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("maxEncodingPriority = {}", trans.quote(newMaxEncodingPriority));
+				setSQL += std::format("maxEncodingPriority = {}", trans.quote(newMaxEncodingPriority));
 				oneParameterPresent = true;
 			}
 
@@ -3978,7 +4021,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("encodingPeriod = {}", trans.quote(newEncodingPeriod));
+				setSQL += std::format("encodingPeriod = {}", trans.quote(newEncodingPeriod));
 				oneParameterPresent = true;
 			}
 
@@ -3986,13 +4029,13 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("maxIngestionsNumber = {}", newMaxIngestionsNumber);
+				setSQL += std::format("maxIngestionsNumber = {}", newMaxIngestionsNumber);
 				oneParameterPresent = true;
 			}
 
 			if (oneParameterPresent)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_Workspace {} "
 					"where workspaceKey = {} returning 1) select count(*) from rows",
 					setSQL, workspaceKey
@@ -4023,7 +4066,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				// 2023-02-13: nel caso in cui un admin vuole cambiare la data di scadenza di un workspace,
 				//		questo cambiamento deve avvenire per tutte le chiavi presenti
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_APIKey "
 					"set expirationDate = to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') "
 					"where workspaceKey = {} returning 1) select count(*) from rows",
@@ -4058,7 +4101,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("name = {}", trans.quote(newName));
+				setSQL += std::format("name = {}", trans.quote(newName));
 				oneParameterPresent = true;
 			}
 
@@ -4066,7 +4109,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("languageCode = {}", trans.quote(newLanguageCode));
+				setSQL += std::format("languageCode = {}", trans.quote(newLanguageCode));
 				oneParameterPresent = true;
 			}
 
@@ -4074,13 +4117,13 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("timezone = {}", trans.quote(newTimezone));
+				setSQL += std::format("timezone = {}", trans.quote(newTimezone));
 				oneParameterPresent = true;
 			}
 
 			if (oneParameterPresent)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_Workspace {} "
 					"where workspaceKey = {} returning 1) select count(*) from rows",
 					setSQL, workspaceKey
@@ -4115,7 +4158,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("maxStorageInGB = {}", maxStorageInGB);
+				setSQL += std::format("maxStorageInGB = {}", maxStorageInGB);
 				oneParameterPresent = true;
 			}
 
@@ -4123,7 +4166,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("currentCostForStorage = {}", currentCostForStorage);
+				setSQL += std::format("currentCostForStorage = {}", currentCostForStorage);
 				oneParameterPresent = true;
 			}
 
@@ -4131,7 +4174,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("dedicatedEncoder_power_1 = {}", dedicatedEncoder_power_1);
+				setSQL += std::format("dedicatedEncoder_power_1 = {}", dedicatedEncoder_power_1);
 				oneParameterPresent = true;
 			}
 
@@ -4139,7 +4182,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("currentCostForDedicatedEncoder_power_1 = {}", currentCostForDedicatedEncoder_power_1);
+				setSQL += std::format("currentCostForDedicatedEncoder_power_1 = {}", currentCostForDedicatedEncoder_power_1);
 				oneParameterPresent = true;
 			}
 
@@ -4147,7 +4190,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("dedicatedEncoder_power_2 = {}", dedicatedEncoder_power_2);
+				setSQL += std::format("dedicatedEncoder_power_2 = {}", dedicatedEncoder_power_2);
 				oneParameterPresent = true;
 			}
 
@@ -4155,7 +4198,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("currentCostForDedicatedEncoder_power_2 = {}", currentCostForDedicatedEncoder_power_2);
+				setSQL += std::format("currentCostForDedicatedEncoder_power_2 = {}", currentCostForDedicatedEncoder_power_2);
 				oneParameterPresent = true;
 			}
 
@@ -4163,7 +4206,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("dedicatedEncoder_power_3 = {}", dedicatedEncoder_power_3);
+				setSQL += std::format("dedicatedEncoder_power_3 = {}", dedicatedEncoder_power_3);
 				oneParameterPresent = true;
 			}
 
@@ -4171,7 +4214,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("currentCostForDedicatedEncoder_power_3 = {}", currentCostForDedicatedEncoder_power_3);
+				setSQL += std::format("currentCostForDedicatedEncoder_power_3 = {}", currentCostForDedicatedEncoder_power_3);
 				oneParameterPresent = true;
 			}
 
@@ -4179,7 +4222,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("CDN_type_1 = {}", CDN_type_1);
+				setSQL += std::format("CDN_type_1 = {}", CDN_type_1);
 				oneParameterPresent = true;
 			}
 
@@ -4187,7 +4230,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("currentCostForCDN_type_1 = {}", currentCostForCDN_type_1);
+				setSQL += std::format("currentCostForCDN_type_1 = {}", currentCostForCDN_type_1);
 				oneParameterPresent = true;
 			}
 
@@ -4195,7 +4238,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("support_type_1 = {}", support_type_1);
+				setSQL += std::format("support_type_1 = {}", support_type_1);
 				oneParameterPresent = true;
 			}
 
@@ -4203,13 +4246,13 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("currentCostForSupport_type_1 = {}", currentCostForSupport_type_1);
+				setSQL += std::format("currentCostForSupport_type_1 = {}", currentCostForSupport_type_1);
 				oneParameterPresent = true;
 			}
 
 			if (oneParameterPresent)
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_WorkspaceCost {} "
 					"where workspaceKey = {} returning 1) select count(*) from rows",
 					setSQL, workspaceKey
@@ -4254,7 +4297,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 			string permissions = JSONUtils::toString(permissionsRoot);
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_APIKey set permissions = {} "
 				"where workspaceKey = {} and userKey = {} returning 1) select count(*) from rows",
 				trans.quote(permissions), workspaceKey, userKey
@@ -4280,7 +4323,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
 				"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
@@ -4424,7 +4467,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 		string apiKey;
 		{
 			string sqlStatement =
-				fmt::format("select apiKey from MMS_APIKey where workspaceKey = {} and userKey = {}", workspaceKeyToBeSetAsDefault, userKey);
+				std::format("select apiKey from MMS_APIKey where workspaceKey = {} and userKey = {}", workspaceKeyToBeSetAsDefault, userKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -4447,7 +4490,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_APIKey set isDefault = false "
 				"where userKey = {} returning 1) select count(*) from rows",
 				userKey
@@ -4464,7 +4507,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_APIKey set isDefault = true "
 				"where apiKey = {} returning 1) select count(*) from rows",
 				trans.quote(apiKey)
@@ -4694,7 +4737,7 @@ json MMSEngineDBFacade::getWorkspaceCost(shared_ptr<PostgresConnection> conn, no
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select maxStorageInGB, currentCostForStorage, "
 				"dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1, "
 				"dedicatedEncoder_power_2, currentCostForDedicatedEncoder_power_2, "
@@ -4716,7 +4759,7 @@ json MMSEngineDBFacade::getWorkspaceCost(shared_ptr<PostgresConnection> conn, no
 			);
 			if (empty(res))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"no workspace cost found"
 					", workspaceKey: {}",
 					workspaceKey
@@ -4785,7 +4828,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(shared_ptr<PostgresC
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
 				"where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = {} "
 				"and externalReadOnlyStorage = false",
@@ -4810,7 +4853,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(shared_ptr<PostgresC
 		}
 
 		{
-			string sqlStatement = fmt::format("select maxStorageInGB from MMS_WorkspaceCost where workspaceKey = {}", workspaceKey);
+			string sqlStatement = std::format("select maxStorageInGB from MMS_WorkspaceCost where workspaceKey = {}", workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -4886,7 +4929,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails(int64_t userKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format("select name, eMailAddress from MMS_User where userKey = {}", userKey);
+			string sqlStatement = std::format("select name, eMailAddress from MMS_User where userKey = {}", userKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -5053,7 +5096,7 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail(string email, boo
 	try
 	{
 		{
-			string sqlStatement = fmt::format("select userKey, name from MMS_User where eMailAddress = {}", trans.quote(email));
+			string sqlStatement = std::format("select userKey, name from MMS_User where eMailAddress = {}", trans.quote(email));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -5212,7 +5255,7 @@ json MMSEngineDBFacade::updateUser(
 			{
 				string savedPassword;
 				{
-					string sqlStatement = fmt::format("select password from MMS_User where userKey = {}", userKey);
+					string sqlStatement = std::format("select password from MMS_User where userKey = {}", userKey);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.exec(sqlStatement);
 					SPDLOG_INFO(
@@ -5245,7 +5288,7 @@ json MMSEngineDBFacade::updateUser(
 
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("password = {}", trans.quote(newPassword));
+				setSQL += std::format("password = {}", trans.quote(newPassword));
 				oneParameterPresent = true;
 			}
 
@@ -5253,7 +5296,7 @@ json MMSEngineDBFacade::updateUser(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("name = {}", trans.quote(name));
+				setSQL += std::format("name = {}", trans.quote(name));
 				oneParameterPresent = true;
 			}
 
@@ -5261,7 +5304,7 @@ json MMSEngineDBFacade::updateUser(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("eMailAddress = {}", trans.quote(email));
+				setSQL += std::format("eMailAddress = {}", trans.quote(email));
 				oneParameterPresent = true;
 			}
 
@@ -5269,7 +5312,7 @@ json MMSEngineDBFacade::updateUser(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("country = {}", trans.quote(country));
+				setSQL += std::format("country = {}", trans.quote(country));
 				oneParameterPresent = true;
 			}
 
@@ -5280,7 +5323,7 @@ json MMSEngineDBFacade::updateUser(
 
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("timezone = {}", trans.quote(timezone));
+				setSQL += std::format("timezone = {}", trans.quote(timezone));
 				oneParameterPresent = true;
 			}
 
@@ -5288,7 +5331,7 @@ json MMSEngineDBFacade::updateUser(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("insolvent = {}", insolvent);
+				setSQL += std::format("insolvent = {}", insolvent);
 				oneParameterPresent = true;
 			}
 
@@ -5296,11 +5339,11 @@ json MMSEngineDBFacade::updateUser(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += fmt::format("expirationDate = {}", trans.quote(expirationUtcDate));
+				setSQL += std::format("expirationDate = {}", trans.quote(expirationUtcDate));
 				oneParameterPresent = true;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_User {} "
 				"where userKey = {} returning 1) select count(*) from rows",
 				setSQL, userKey
@@ -5328,7 +5371,7 @@ json MMSEngineDBFacade::updateUser(
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select "
 				"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 				"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
@@ -5498,7 +5541,7 @@ string MMSEngineDBFacade::createResetPasswordToken(int64_t userKey)
 		resetPasswordToken = to_string(e());
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_ResetPasswordToken (token, userKey, creationDate) "
 				"values ({}, {}, NOW() at time zone 'utc')",
 				trans.quote(resetPasswordToken), userKey
@@ -5630,7 +5673,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 
 		int userKey;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select u.name, u.eMailAddress, u.userKey "
 				"from MMS_ResetPasswordToken rp, MMS_User u "
 				"where rp.userKey = u.userKey and rp.token = {} "
@@ -5663,7 +5706,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_User set password = {} "
 				"where userKey = {} returning 1) select count(*) from rows",
 				trans.quote(newPassword), userKey

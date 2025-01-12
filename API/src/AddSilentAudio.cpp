@@ -203,7 +203,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 	catch (runtime_error &e)
 	{
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (runtime_error)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -224,7 +224,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 	catch (exception &e)
 	{
 		string eWhat = e.what();
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"{} API failed (exception)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"

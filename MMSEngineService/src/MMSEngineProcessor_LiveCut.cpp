@@ -305,22 +305,34 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					string currentChunkStartTime;
 					string currentChunkEndTime;
 					{
-						char strDateTime[64];
+						// char strDateTime[64];
 						tm tmDateTime;
 
 						localtime_r(&currentUtcChunkStartTime, &tmDateTime);
+						/*
 						sprintf(
 							strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 						);
 						currentChunkStartTime = strDateTime;
+						*/
+						currentChunkStartTime = std::format(
+							"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+						);
 
 						localtime_r(&currentUtcChunkEndTime, &tmDateTime);
+						/*
 						sprintf(
 							strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 						);
 						currentChunkEndTime = strDateTime;
+						*/
+						currentChunkEndTime = std::format(
+							"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+						);
 					}
 
 					SPDLOG_INFO(
@@ -335,16 +347,22 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					{
 						string previousUtcChunkEndTime;
 						{
-							char strDateTime[64];
+							// char strDateTime[64];
 							tm tmDateTime;
 
 							localtime_r(&utcPreviousUtcChunkEndTime, &tmDateTime);
 
+							/*
 							sprintf(
 								strDateTime, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 								tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
 							);
 							previousUtcChunkEndTime = strDateTime;
+							*/
+							previousUtcChunkEndTime = std::format(
+								"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+								tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
+							);
 						}
 
 						// it is not the next chunk
@@ -755,7 +773,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			CurlWrapper::httpPostString(
 				_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 				"application/json", // contentType
-				otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			)
 				.second;
 
@@ -863,7 +881,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		{
 			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, "recordingCode"))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -887,7 +905,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, "start"))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -902,7 +920,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, "end"))
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -1000,7 +1018,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						string userData = JSONUtils::asString(mediaItemRoot, "userData", "");
 						if (userData == "")
 						{
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"recording media item without userData!!!"
 								", _processorIdentifier: {}"
 								", ingestionJobKey: {}"
@@ -1022,24 +1040,36 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					string currentChunkStartTime;
 					string currentChunkEndTime;
 					{
-						char strDateTime[64];
+						// char strDateTime[64];
 						tm tmDateTime;
 
 						int64_t currentUtcChunkStartTime = currentUtcChunkStartTimeInMilliSecs / 1000;
 						localtime_r(&currentUtcChunkStartTime, &tmDateTime);
+						/*
 						sprintf(
 							strDateTime, "%04d-%02d-%02d %02d:%02d:%02d.%03d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec, (int)(currentUtcChunkStartTimeInMilliSecs % 1000)
 						);
 						currentChunkStartTime = strDateTime;
+						*/
+						currentChunkStartTime = std::format(
+							"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}.{:0>3}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec, (int)(currentUtcChunkStartTimeInMilliSecs % 1000)
+						);
 
 						int64_t currentUtcChunkEndTime = currentUtcChunkEndTimeInMilliSecs / 1000;
 						localtime_r(&currentUtcChunkEndTime, &tmDateTime);
+						/*
 						sprintf(
 							strDateTime, "%04d-%02d-%02d %02d:%02d:%02d.%03d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec, (int)(currentUtcChunkEndTimeInMilliSecs % 1000)
 						);
 						currentChunkEndTime = strDateTime;
+						*/
+						currentChunkEndTime = std::format(
+							"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}.{:0>3}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
+							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec, (int)(currentUtcChunkEndTimeInMilliSecs % 1000)
+						);
 					}
 
 					SPDLOG_INFO(
@@ -1058,22 +1088,29 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					{
 						string previousUtcChunkEndTime;
 						{
-							char strDateTime[64];
+							// char strDateTime[64];
 							tm tmDateTime;
 
 							int64_t utcPreviousUtcChunkEndTime = utcPreviousUtcChunkEndTimeInMilliSecs / 1000;
 							localtime_r(&utcPreviousUtcChunkEndTime, &tmDateTime);
 
+							/*
 							sprintf(
 								strDateTime, "%04d-%02d-%02d %02d:%02d:%02d.%03d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1,
 								tmDateTime.tm_mday, tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec,
 								(int)(utcPreviousUtcChunkEndTimeInMilliSecs % 1000)
 							);
 							previousUtcChunkEndTime = strDateTime;
+							*/
+							previousUtcChunkEndTime = std::format(
+								"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}.{:0>3}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1,
+								tmDateTime.tm_mday, tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec,
+								(int)(utcPreviousUtcChunkEndTimeInMilliSecs % 1000)
+							);
 						}
 
 						// it is not the next chunk
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"Next chunk was not found"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -1110,7 +1147,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							firstRequestedChunk = false;
 
 							// it is not the first chunk
-							string errorMessage = fmt::format(
+							string errorMessage = std::format(
 								"First chunk was not found"
 								", _processorIdentifier: {}"
 								", ingestionJobKey: {}"
@@ -1210,7 +1247,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 		if (!firstRequestedChunk || !lastRequestedChunk)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Chunks not available"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -1283,7 +1320,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			json concatDemuxerRoot;
 			json concatDemuxerParametersRoot;
 			{
-				concatDemuxerRoot["label"] = fmt::format(
+				concatDemuxerRoot["label"] = std::format(
 					"Concat from {} ({}) to {} ({})", utcFirstChunkStartTimeInMilliSecs, firstChunkStartTime, utcLastChunkEndTimeInMilliSecs,
 					lastChunkEndTime
 				);
@@ -1305,7 +1342,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 			json cutRoot;
 			{
-				cutLabel = fmt::format(
+				cutLabel = std::format(
 					"Cut (Live) from {} ({}) to {} ({})", utcCutPeriodStartTimeInMilliSeconds, cutPeriodStartTimeInMilliSeconds,
 					utcCutPeriodEndTimeInMilliSeconds, cutPeriodEndTimeInMilliSeconds
 				);
@@ -1426,7 +1463,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 			json workflowRoot;
 			{
-				workflowRoot["label"] = fmt::format(
+				workflowRoot["label"] = std::format(
 					"{}. Cut from {} ({}) to {} ({})", ingestionJobLabel, utcCutPeriodStartTimeInMilliSeconds, cutPeriodStartTimeInMilliSeconds,
 					utcCutPeriodEndTimeInMilliSeconds, cutPeriodEndTimeInMilliSeconds
 				);
@@ -1442,7 +1479,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		json workflowResponseRoot = CurlWrapper::httpPostStringAndGetJson(
 			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 			"application/json", // contentType
-			otherHeaders, fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
 		/*
@@ -1492,7 +1529,7 @@ task Live-Recorder.
 			{
 				if (!JSONUtils::isMetadataPresent(workflowResponseRoot, "tasks"))
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"LiveCut workflow ingestion: wrong response, tasks not found"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -1517,7 +1554,7 @@ task Live-Recorder.
 				}
 				if (cutIngestionJobKey == -1)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"LiveCut workflow ingestion: wrong response, cutLabel not found"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"

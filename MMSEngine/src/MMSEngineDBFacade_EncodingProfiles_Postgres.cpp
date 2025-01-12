@@ -12,7 +12,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encodingProfilesSetKey from MMS_EncodingProfilesSet "
 				"where workspaceKey = {} and contentType = {} and label = {}",
 				workspaceKey, trans->quote(toString(contentType)), trans->quote(label)
@@ -32,7 +32,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 
 				if (removeEncodingProfilesIfPresent)
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"WITH rows AS (delete from MMS_EncodingProfilesSetMapping "
 						"where encodingProfilesSetKey = {} returning 1) select count(*) from rows",
 						encodingProfilesSetKey
@@ -51,7 +51,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 			}
 			else
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, workspaceKey, contentType, label) values ("
 					"DEFAULT, {}, {}, {}) returning encodingProfilesSetKey",
 					workspaceKey, trans->quote(toString(contentType)), trans->quote(label)
@@ -233,7 +233,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encodingProfileKey from MMS_EncodingProfile "
 				"where (workspaceKey = {} or workspaceKey is null) and contentType = {} and label = {}",
 				workspaceKey, trans.quote(toString(contentType)), trans.quote(label)
@@ -251,7 +251,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 			{
 				encodingProfileKey = res[0]["encodingProfileKey"].as<int64_t>();
 
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
 					"where encodingProfileKey = {} returning 1) select count(*) from rows",
 					trans.quote(toString(deliveryTechnology)), trans.quote(jsonProfile), encodingProfileKey
@@ -276,7 +276,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 			}
 			else
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"insert into MMS_EncodingProfile ("
 					"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
 					"DEFAULT, {}, {}, {}, {}, {}) returning encodingProfileKey",
@@ -298,7 +298,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 		if (encodingProfilesSetKey != -1)
 		{
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select encodingProfilesSetKey from MMS_EncodingProfilesSetMapping "
 					"where encodingProfilesSetKey = {} and encodingProfileKey = {}",
 					encodingProfilesSetKey, encodingProfileKey
@@ -315,7 +315,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				if (empty(res))
 				{
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"select workspaceKey from MMS_EncodingProfilesSet "
 							"where encodingProfilesSetKey = {}",
 							encodingProfilesSetKey
@@ -347,7 +347,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					}
 
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey) "
 							"values ({}, {})",
 							encodingProfilesSetKey, encodingProfileKey
@@ -419,7 +419,7 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_EncodingProfile "
 				"where encodingProfileKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
 				encodingProfileKey, workspaceKey
@@ -547,7 +547,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encodingProfileKey from MMS_EncodingProfile "
 				"where (workspaceKey = {} or workspaceKey is null) and contentType = {} and label = {}",
 				workspaceKey, trans->quote(toString(contentType)), trans->quote(label)
@@ -578,7 +578,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 
 		{
 			{
-				string sqlStatement = fmt::format(
+				string sqlStatement = std::format(
 					"select encodingProfilesSetKey from MMS_EncodingProfilesSetMapping "
 					"where encodingProfilesSetKey = {} and encodingProfileKey = {}",
 					encodingProfilesSetKey, encodingProfileKey
@@ -595,7 +595,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 				if (empty(res))
 				{
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"select workspaceKey from MMS_EncodingProfilesSet "
 							"where encodingProfilesSetKey = {}",
 							encodingProfilesSetKey
@@ -627,7 +627,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 					}
 
 					{
-						string sqlStatement = fmt::format(
+						string sqlStatement = std::format(
 							"insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey) "
 							"values ({}, {})",
 							encodingProfilesSetKey, encodingProfileKey
@@ -699,7 +699,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_EncodingProfilesSet "
 				"where encodingProfilesSetKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
 				encodingProfilesSetKey, workspaceKey
@@ -861,15 +861,15 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 			contentListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (encodingProfilesSetKey != -1)
-			sqlWhere += fmt::format("and encodingProfilesSetKey = {} ", encodingProfilesSetKey);
+			sqlWhere += std::format("and encodingProfilesSetKey = {} ", encodingProfilesSetKey);
 		if (contentTypePresent)
-			sqlWhere += fmt::format("and contentType = {} ", trans.quote(toString(contentType)));
+			sqlWhere += std::format("and contentType = {} ", trans.quote(toString(contentType)));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_EncodingProfilesSet {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_EncodingProfilesSet {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -884,7 +884,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 
 		json encodingProfilesSetsRoot = json::array();
 		{
-			string sqlStatement = fmt::format("select encodingProfilesSetKey, contentType, label from MMS_EncodingProfilesSet {}", sqlWhere);
+			string sqlStatement = std::format("select encodingProfilesSetKey, contentType, label from MMS_EncodingProfilesSet {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			for (auto row : res)
@@ -905,7 +905,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 
 				json encodingProfilesRoot = json::array();
 				{
-					string sqlStatement = fmt::format(
+					string sqlStatement = std::format(
 						"select ep.encodingProfileKey, ep.contentType, ep.label, ep.deliveryTechnology, ep.jsonProfile "
 						"from MMS_EncodingProfilesSetMapping epsm, MMS_EncodingProfile ep "
 						"where epsm.encodingProfileKey = ep.encodingProfileKey and "
@@ -1126,17 +1126,17 @@ json MMSEngineDBFacade::getEncodingProfileList(
 			contentListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where (workspaceKey = {} or workspaceKey is null) ", workspaceKey);
+		string sqlWhere = std::format("where (workspaceKey = {} or workspaceKey is null) ", workspaceKey);
 		if (encodingProfileKey != -1)
-			sqlWhere += fmt::format("and encodingProfileKey = {} ", encodingProfileKey);
+			sqlWhere += std::format("and encodingProfileKey = {} ", encodingProfileKey);
 		if (contentTypePresent)
-			sqlWhere += fmt::format("and contentType = {} ", trans.quote(toString(contentType)));
+			sqlWhere += std::format("and contentType = {} ", trans.quote(toString(contentType)));
 		if (label != "")
-			sqlWhere += fmt::format("and lower(label) like lower({}) ", trans.quote("%" + label + "%"));
+			sqlWhere += std::format("and lower(label) like lower({}) ", trans.quote("%" + label + "%"));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_EncodingProfile {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_EncodingProfile {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -1151,7 +1151,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 
 		json encodingProfilesRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select workspaceKey, encodingProfileKey, label, contentType, deliveryTechnology, "
 				"jsonProfile from MMS_EncodingProfile {}",
 				sqlWhere
@@ -1333,7 +1333,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 	{
 		{
 			string sqlStatement =
-				fmt::format("select workspaceKey from MMS_EncodingProfilesSet where encodingProfilesSetKey = {}", encodingProfilesSetKey);
+				std::format("select workspaceKey from MMS_EncodingProfilesSet where encodingProfilesSetKey = {}", encodingProfilesSetKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
 			SPDLOG_INFO(
@@ -1368,7 +1368,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = {}", encodingProfilesSetKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1496,7 +1496,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 	{
 		int64_t encodingProfilesSetKey;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = {} and label = {}", workspaceKey, trans.quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1525,7 +1525,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 		}
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = {}", encodingProfilesSetKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1657,13 +1657,13 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 		{
 			string sqlStatement;
 			if (contentTypeToBeUsed)
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select encodingProfileKey from MMS_EncodingProfile where "
 					"(workspaceKey = {} or workspaceKey is null) and contentType = {} and label = {}",
 					workspaceKey, trans.quote(toString(contentType)), trans.quote(encodingProfileLabel)
 				);
 			else
-				sqlStatement = fmt::format(
+				sqlStatement = std::format(
 					"select encodingProfileKey from MMS_EncodingProfile where "
 					"(workspaceKey = {} or workspaceKey is null) and label = {}",
 					workspaceKey, trans.quote(encodingProfileLabel)
@@ -1818,7 +1818,7 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 		string jsonProfile;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select label, contentType, deliveryTechnology, jsonProfile from MMS_EncodingProfile where "
 				"(workspaceKey = {} or workspaceKey is null) and encodingProfileKey = {}",
 				workspaceKey, encodingProfileKey

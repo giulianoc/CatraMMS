@@ -31,7 +31,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 		if (inputsRoot == nullptr || inputsRoot.size() == 0)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"No inputsRoot are present"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -88,7 +88,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 		if (utcProxyPeriodEnd <= utcNow)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"Too late to activate the proxy"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -484,7 +484,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 			if (killedByUser)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Encoding killed by the User"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"

@@ -92,7 +92,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 				encodeContentResponse = CurlWrapper::httpPostStringAndGetJson(
 					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
 					body, "application/json", // contentType
-					otherHeaders, fmt::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
+					otherHeaders, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 				);
 			}
 			catch (runtime_error &e)

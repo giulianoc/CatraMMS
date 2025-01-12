@@ -31,24 +31,31 @@ void FFMpeg::streamingToFile(int64_t ingestionJobKey, bool regenerateTimestamps,
 	try
 	{
 		{
-			char sUtcTimestamp[64];
+			// char sUtcTimestamp[64];
 			tm tmUtcTimestamp;
 			time_t utcTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 			localtime_r(&utcTimestamp, &tmUtcTimestamp);
+			/*
 			sprintf(
 				sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d", tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday,
 				tmUtcTimestamp.tm_hour, tmUtcTimestamp.tm_min, tmUtcTimestamp.tm_sec
 			);
 
-			_outputFfmpegPathFileName = fmt::format("{}/{}_{}_{}.log", _ffmpegTempDir, "streamingToFile", _currentIngestionJobKey, sUtcTimestamp);
+			_outputFfmpegPathFileName = std::format("{}/{}_{}_{}.log", _ffmpegTempDir, "streamingToFile", _currentIngestionJobKey, sUtcTimestamp);
+			*/
+			_outputFfmpegPathFileName = std::format(
+				"{}/{}_{}_{:0>4}-{:0>2}-{:0>2}-{:0>2}-{:0>2}-{:0>2}.log", _ffmpegTempDir, "streamingToFile", _currentIngestionJobKey,
+				tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday, tmUtcTimestamp.tm_hour, tmUtcTimestamp.tm_min,
+				tmUtcTimestamp.tm_sec
+			);
 		}
 
 		// 2022-06-06: cosa succede se sourceReferenceURL rappresenta un live?
 		//		- destinationPathName diventerà enorme!!!
 		//	Per questo motivo ho inserito un timeout di X hours
 		int maxStreamingHours = 5;
-		ffmpegExecuteCommand = fmt::format(
+		ffmpegExecuteCommand = std::format(
 			"{}/ffmpeg {} -y -i \"{}\" -t {} "
 			// -map 0:v and -map 0:a is to get all video-audio tracks
 			"-map 0:v -c:v copy -map 0:a -c:a copy "
@@ -85,7 +92,7 @@ void FFMpeg::streamingToFile(int64_t ingestionJobKey, bool regenerateTimestamps,
 			// in this case it is enought to avoid to copy all the tracks, leave ffmpeg
 			// to choice the track and it works
 			{
-				ffmpegExecuteCommand = fmt::format(
+				ffmpegExecuteCommand = std::format(
 					"{}/ffmpeg {} -y -i \"{}\" -t {} "
 					"-c:v copy -c:a copy "
 					//  -q: 0 is best Quality, 2 is normal, 9 is strongest compression
@@ -177,7 +184,7 @@ Error opening input files: Server returned 4XX Client Error, but not one of 40{0
 		 */
 		size_t pos = lastPartOfFfmpegOutputFile.rfind("Error opening input files: Server returned 4XX");
 		if (pos != string::npos)
-			throw runtime_error(fmt::format("streamingToFile: {}", lastPartOfFfmpegOutputFile.substr(pos)));
+			throw runtime_error(std::format("streamingToFile: {}", lastPartOfFfmpegOutputFile.substr(pos)));
 		else
 			throw e;
 	}

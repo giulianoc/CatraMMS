@@ -19,7 +19,7 @@ json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, strin
 	{
 		int64_t confKey;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_YouTube(workspaceKey, label, tokenType, "
 				"refreshToken, accessToken) values ("
 				"{}, {}, {}, {}, {}) returning confKey",
@@ -212,7 +212,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				oneParameterPresent = true;
 			}
 
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_YouTube {} "
 				"where confKey = {} and workspaceKey = {} returning 1) SELECT count(*) FROM rows",
 				setSQL, confKey, workspaceKey
@@ -243,7 +243,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 
 		json youTubeConfRoot;
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, label, tokenType, refreshToken, accessToken "
 				"from MMS_Conf_YouTube "
 				"where confKey = {} and workspaceKey = {}",
@@ -401,7 +401,7 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_YouTube where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -556,13 +556,13 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 			}
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (label != "")
-			sqlWhere += fmt::format("and LOWER(label) = LOWER({}) ", trans.quote(label));
+			sqlWhere += std::format("and LOWER(label) = LOWER({}) ", trans.quote(label));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_YouTube {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_YouTube {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -577,7 +577,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 
 		json youTubeRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, label, tokenType, refreshToken, accessToken "
 				"from MMS_Conf_YouTube {}",
 				sqlWhere
@@ -745,7 +745,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 		);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select tokenType, refreshToken, accessToken "
 				"from MMS_Conf_YouTube "
 				"where workspaceKey = {} and label = {}",
@@ -889,7 +889,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(int64_t workspaceKey, string label, s
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_Facebook(workspaceKey, label, modificationDate, userAccessToken) "
 				"values ({}, {}, now() at time zone 'utc', {}) returning confKey",
 				workspaceKey, trans.quote(label), trans.quote(userAccessToken)
@@ -1015,7 +1015,7 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_Facebook set label = {}, userAccessToken = {}, "
 				"modificationDate = now() at time zone 'utc' "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -1153,7 +1153,7 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_Facebook where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -1315,15 +1315,15 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 			facebookConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (confKey != -1)
-			sqlWhere += fmt::format("and confKey = {} ", confKey);
+			sqlWhere += std::format("and confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += fmt::format("and label = {} ", trans.quote(label));
+			sqlWhere += std::format("and label = {} ", trans.quote(label));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_Facebook {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_Facebook {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -1338,7 +1338,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 
 		json facebookRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, label, userAccessToken, "
 				"to_char(modificationDate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as modificationDate "
 				"from MMS_Conf_Facebook {}",
@@ -1496,7 +1496,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 		);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select userAccessToken from MMS_Conf_Facebook where workspaceKey = {} and label = {}", workspaceKey,
 				trans.quote(facebookConfigurationLabel)
 			);
@@ -1633,7 +1633,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(int64_t workspaceKey, string label, str
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_Twitch(workspaceKey, label, modificationDate, refreshToken) "
 				"values ({}, {}, now() at time zone 'utc', {}) returning confKey",
 				workspaceKey, trans.quote(label), trans.quote(refreshToken)
@@ -1759,7 +1759,7 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_Twitch set label = {}, refreshToken = {}, "
 				"modificationDate = now() at time zone 'utc' "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -1897,7 +1897,7 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_Twitch where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -2059,15 +2059,15 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 			twitchConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (confKey != -1)
-			sqlWhere += fmt::format("and confKey = {} ", confKey);
+			sqlWhere += std::format("and confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += fmt::format("and label = {} ", trans.quote(label));
+			sqlWhere += std::format("and label = {} ", trans.quote(label));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_Twitch {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_Twitch {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -2082,7 +2082,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 
 		json twitchRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, label, refreshToken, "
 				"to_char(modificationDate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as modificationDate "
 				"from MMS_Conf_Twitch {}",
@@ -2240,7 +2240,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 		);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select refreshToken from MMS_Conf_Twitch where workspaceKey = {} and label = {}", workspaceKey, trans.quote(twitchConfigurationLabel)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -2376,7 +2376,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(int64_t workspaceKey, string label, str
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"insert into MMS_Conf_Tiktok(workspaceKey, label, modificationDate, token) "
 				"values ({}, {}, now() at time zone 'utc', {}) returning confKey",
 				workspaceKey, trans.quote(label), trans.quote(token)
@@ -2502,7 +2502,7 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_Conf_Tiktok set label = {}, token = {}, "
 				"modificationDate = now() at time zone 'utc' "
 				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
@@ -2640,7 +2640,7 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"WITH rows AS (delete from MMS_Conf_Tiktok where confKey = {} and workspaceKey = {} "
 				"returning 1) select count(*) from rows",
 				confKey, workspaceKey
@@ -2802,15 +2802,15 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 			tiktokConfListRoot[field] = requestParametersRoot;
 		}
 
-		string sqlWhere = fmt::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (confKey != -1)
-			sqlWhere += fmt::format("and confKey = {} ", confKey);
+			sqlWhere += std::format("and confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += fmt::format("and label = {} ", trans.quote(label));
+			sqlWhere += std::format("and label = {} ", trans.quote(label));
 
 		json responseRoot;
 		{
-			string sqlStatement = fmt::format("select count(*) from MMS_Conf_Tiktok {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_Tiktok {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
@@ -2825,7 +2825,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 
 		json tiktokRoot = json::array();
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select confKey, label, token, "
 				"to_char(modificationDate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as modificationDate "
 				"from MMS_Conf_Tiktok {}",
@@ -2983,7 +2983,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 		);
 
 		{
-			string sqlStatement = fmt::format(
+			string sqlStatement = std::format(
 				"select token from MMS_Conf_Tiktok where workspaceKey = {} and label = {}", workspaceKey, trans.quote(tiktokConfigurationLabel)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

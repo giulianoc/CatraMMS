@@ -154,7 +154,7 @@ void MMSEngineProcessor::removeContentThread(
 			}
 			catch (exception e)
 			{
-				string errorMessage = fmt::format(
+				string errorMessage = std::format(
 					"Remove content failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"

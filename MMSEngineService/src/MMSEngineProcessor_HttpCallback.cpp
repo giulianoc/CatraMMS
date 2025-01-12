@@ -209,7 +209,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					}
 					catch (exception e)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"http callback failed"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -433,7 +433,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					}
 					catch (exception e)
 					{
-						string errorMessage = fmt::format(
+						string errorMessage = std::format(
 							"http callback failed"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -617,7 +617,7 @@ void MMSEngineProcessor::userHttpCallback(
 				}
 
 				CurlWrapper::httpPutFormData(
-					userURL, formData, callbackTimeoutInSeconds, fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+					userURL, formData, callbackTimeoutInSeconds, std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
 			else
@@ -628,7 +628,7 @@ void MMSEngineProcessor::userHttpCallback(
 
 				CurlWrapper::httpPutString(
 					userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), httpBody, contentType, otherHeaders,
-					fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+					std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
 		}
@@ -652,7 +652,7 @@ void MMSEngineProcessor::userHttpCallback(
 				}
 
 				CurlWrapper::httpPostFormData(
-					userURL, formData, callbackTimeoutInSeconds, fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+					userURL, formData, callbackTimeoutInSeconds, std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
 			else
@@ -663,7 +663,7 @@ void MMSEngineProcessor::userHttpCallback(
 
 				CurlWrapper::httpPostString(
 					userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), httpBody, contentType, otherHeaders,
-					fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+					std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
 		}
@@ -672,7 +672,7 @@ void MMSEngineProcessor::userHttpCallback(
 			vector<string> otherHeaders;
 			CurlWrapper::httpGet(
 				userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), otherHeaders,
-				fmt::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+				std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 			);
 		}
 	}

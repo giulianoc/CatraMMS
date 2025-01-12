@@ -45,7 +45,7 @@ void FFMpeg::liveProxy2(
 	// Creating multi outputs: https://trac.ffmpeg.org/wiki/Creating%20multiple%20outputs
 	if (inputsRoot->size() == 0)
 	{
-		string errorMessage = fmt::format(
+		string errorMessage = std::format(
 			"liveProxy. No input parameters"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -344,19 +344,26 @@ void FFMpeg::liveProxy2(
 		try
 		{
 			{
-				char sUtcTimestamp[64];
+				// char sUtcTimestamp[64];
 				tm tmUtcTimestamp;
 				time_t utcTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 				localtime_r(&utcTimestamp, &tmUtcTimestamp);
+				/*
 				sprintf(
 					sUtcTimestamp, "%04d-%02d-%02d-%02d-%02d-%02d", tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday,
 					tmUtcTimestamp.tm_hour, tmUtcTimestamp.tm_min, tmUtcTimestamp.tm_sec
 				);
 
-				_outputFfmpegPathFileName = fmt::format(
+				_outputFfmpegPathFileName = std::format(
 					"{}/{}_{}_{}_{}.{}.log", _ffmpegTempDir, "liveProxy", _currentIngestionJobKey, _currentEncodingJobKey, sUtcTimestamp,
 					currentInputIndex
+				);
+				*/
+				_outputFfmpegPathFileName = std::format(
+					"{}/{}_{}_{}_{:0>4}-{:0>2}-{:0>2}-{:0>2}-{:0>2}-{:0>2}.{}.log", _ffmpegTempDir, "liveProxy", _currentIngestionJobKey,
+					_currentEncodingJobKey, tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday, tmUtcTimestamp.tm_hour,
+					tmUtcTimestamp.tm_min, tmUtcTimestamp.tm_sec, currentInputIndex
 				);
 			}
 
@@ -502,7 +509,7 @@ void FFMpeg::liveProxy2(
 			string errorMessage;
 			if (iReturnedStatus == 9) // 9 means: SIGKILL
 			{
-				errorMessage = fmt::format(
+				errorMessage = std::format(
 					"ffmpeg: ffmpeg execution command failed because killed by the user"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
@@ -531,7 +538,7 @@ void FFMpeg::liveProxy2(
 				{
 					stoppedBySigQuitOrTerm = true;
 
-					errorMessage = fmt::format(
+					errorMessage = std::format(
 						"ffmpeg execution stopped by SIGQUIT/SIGTERM (3/15): ffmpeg command failed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -547,7 +554,7 @@ void FFMpeg::liveProxy2(
 				}
 				else
 				{
-					errorMessage = fmt::format(
+					errorMessage = std::format(
 						"ffmpeg: ffmpeg execution command failed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1444,7 +1451,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 								{
 									if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalDeliveryURL"))
 									{
-										string errorMessage = fmt::format(
+										string errorMessage = std::format(
 											"imageoverlay filter without imagePhysicalDeliveryURL"
 											", ingestionJobKey: {}"
 											", imageoverlay filter: {}",
@@ -1461,7 +1468,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 								{
 									if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathName"))
 									{
-										string errorMessage = fmt::format(
+										string errorMessage = std::format(
 											"imageoverlay filter without imagePhysicalDeliveryURL"
 											", ingestionJobKey: {}"
 											", imageoverlay filter: {}",
@@ -1586,7 +1593,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 								{
 									if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalDeliveryURL"))
 									{
-										string errorMessage = fmt::format(
+										string errorMessage = std::format(
 											"imageoverlay filter without imagePhysicalDeliveryURL"
 											", ingestionJobKey: {}"
 											", imageoverlay filter: {}",
@@ -1603,7 +1610,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 								{
 									if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathName"))
 									{
-										string errorMessage = fmt::format(
+										string errorMessage = std::format(
 											"imageoverlay filter without imagePhysicalDeliveryURL"
 											", ingestionJobKey: {}"
 											", imageoverlay filter: {}",
@@ -1770,7 +1777,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				//	...
 				//	file 'XXX_YYY_endlessPlaylist.txt'
 
-				string endlessPlaylistListFileName = fmt::format("{}_{}_endlessPlaylist.txt", ingestionJobKey, encodingJobKey);
+				string endlessPlaylistListFileName = std::format("{}_{}_endlessPlaylist.txt", ingestionJobKey, encodingJobKey);
 				endlessPlaylistListPathName = _ffmpegEndlessRecursivePlaylistDir + "/" + endlessPlaylistListFileName;
 				;
 
@@ -1784,7 +1791,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				ofstream playlistListFile(endlessPlaylistListPathName.c_str(), ofstream::trunc);
 				if (!playlistListFile)
 				{
-					string errorMessage = fmt::format(
+					string errorMessage = std::format(
 						"Error creating ffmpegEndlessRecursivePlaylist file"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1830,7 +1837,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 							//	Per questo motivo aggiungiamo, come prefisso al source file name,
 							//	ingestionJobKey and encodingJobKey
 							destBinaryFileName =
-								fmt::format("{}_{}_{}", ingestionJobKey, encodingJobKey, sourcePhysicalReference.substr(fileNameIndex + 1));
+								std::format("{}_{}_{}", ingestionJobKey, encodingJobKey, sourcePhysicalReference.substr(fileNameIndex + 1));
 
 							size_t extensionIndex = destBinaryFileName.find_last_of(".");
 							if (extensionIndex != string::npos)
@@ -1863,7 +1870,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 
 							CurlWrapper::downloadFile(
 								sourcePhysicalReference, destBinaryPathName, progressDownloadCallback, &progressData, 500,
-								fmt::format(", ingestionJobKey: {}", ingestionJobKey)
+								std::format(", ingestionJobKey: {}", ingestionJobKey)
 							);
 						}
 						// playlist and dowloaded files will be removed by the calling FFMpeg::liveProxy2 method
@@ -1936,7 +1943,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 								{
 									if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalDeliveryURL"))
 									{
-										string errorMessage = fmt::format(
+										string errorMessage = std::format(
 											"imageoverlay filter without imagePhysicalDeliveryURL"
 											", ingestionJobKey: {}"
 											", imageoverlay filter: {}",
@@ -1953,7 +1960,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 								{
 									if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathName"))
 									{
-										string errorMessage = fmt::format(
+										string errorMessage = std::format(
 											"imageoverlay filter without imagePhysicalDeliveryURL"
 											", ingestionJobKey: {}"
 											", imageoverlay filter: {}",
@@ -2091,7 +2098,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 							{
 								if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalDeliveryURL"))
 								{
-									string errorMessage = fmt::format(
+									string errorMessage = std::format(
 										"imageoverlay filter without imagePhysicalDeliveryURL"
 										", ingestionJobKey: {}"
 										", imageoverlay filter: {}",
@@ -2108,7 +2115,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 							{
 								if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathName"))
 								{
-									string errorMessage = fmt::format(
+									string errorMessage = std::format(
 										"imageoverlay filter without imagePhysicalDeliveryURL"
 										", ingestionJobKey: {}"
 										", imageoverlay filter: {}",
@@ -2442,7 +2449,7 @@ void FFMpeg::outputsRootToFfmpeg(
 		/*
 		if (ffmpegDrawTextFilter != "" && encodingProfileDetailsRoot == nullptr)
 		{
-			string errorMessage = fmt::format(
+			string errorMessage = std::format(
 				"text-overlay requires an encoding profile"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -2932,7 +2939,7 @@ void FFMpeg::outputsRootToFfmpeg_clean(int64_t ingestionJobKey, int64_t encoding
 					if (JSONUtils::isMetadataPresent(videoFilterRoot, "type") && videoFilterRoot["type"] == "drawtext")
 					{
 						string textTemporaryFileName =
-							fmt::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
+							std::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
 						if (fs::exists(textTemporaryFileName))
 						{
 							_logger->info(__FILEREF__ + "Remove" + ", textTemporaryFileName: " + textTemporaryFileName);
