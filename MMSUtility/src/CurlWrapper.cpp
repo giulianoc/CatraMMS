@@ -3352,18 +3352,21 @@ string CurlWrapper::httpPostPutFormData(
 		try
 		{
 			// we could apply md5 to utc time
-			string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
-
-			string endOfLine = "\r\n";
-
-			// fill in formData
 			string sFormData;
-			for (pair<string, string> data : formData)
+			string boundary;
 			{
-				sFormData += ("--" + boundary + endOfLine);
-				sFormData += ("Content-Disposition: form-data; name=\"" + data.first + "\"" + endOfLine + endOfLine + data.second + endOfLine);
+				boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
+
+				string endOfLine = "\r\n";
+
+				// fill in formData
+				for (pair<string, string> data : formData)
+				{
+					sFormData += ("--" + boundary + endOfLine);
+					sFormData += ("Content-Disposition: form-data; name=\"" + data.first + "\"" + endOfLine + endOfLine + data.second + endOfLine);
+				}
+				sFormData += ("--" + boundary + "--" + endOfLine + endOfLine);
 			}
-			sFormData += ("--" + boundary + "--" + endOfLine + endOfLine);
 
 			// curlpp::Cleanup cleaner;
 			// curlpp::Easy request;
@@ -3465,6 +3468,7 @@ string CurlWrapper::httpPostPutFormData(
 			// list<string> headers;
 			// headers.push_back("Content-Type: multipart/form-data; boundary=\"" + boundary + "\"");
 			headersList = curl_slist_append(headersList, std::format("Content-Type: multipart/form-data; boundary=\"{}\"", boundary).c_str());
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headersList);
 
 			// request.setOpt(new curlpp::options::PostFields(sFormData));
 			// request.setOpt(new curlpp::options::PostFieldSize(sFormData.length()));

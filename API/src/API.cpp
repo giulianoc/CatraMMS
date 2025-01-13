@@ -22,6 +22,7 @@
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
 #include <openssl/evp.h>
 #include <regex>
@@ -82,7 +83,11 @@ API::API(
 	}
 
 	_maxPageSize = JSONUtils::asInt(_configurationRoot["postgres"], "maxPageSize", 5);
-	logger->info(__FILEREF__ + "Configuration item" + ", postgres->maxPageSize: " + to_string(_maxPageSize));
+	SPDLOG_INFO(
+		"Configuration item"
+		", postgres->maxPageSize: {}",
+		_maxPageSize
+	);
 
 	string encodingPeriod = JSONUtils::asString(_configurationRoot["api"]["workspaceDefaults"], "encodingPeriod", "daily");
 	SPDLOG_INFO(

@@ -16,6 +16,7 @@
 #include "JSONUtils.h"
 #include "Validator.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/spdlog.h"
 #include <regex>
 
 void API::addYouTubeConf(
@@ -25,8 +26,11 @@ void API::addYouTubeConf(
 {
 	string api = "addYouTubeConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -43,8 +47,12 @@ void API::addYouTubeConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -53,8 +61,12 @@ void API::addYouTubeConf(
 			field = "tokenType";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -65,8 +77,12 @@ void API::addYouTubeConf(
 				field = "refreshToken";
 				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -77,8 +93,12 @@ void API::addYouTubeConf(
 				field = "accessToken";
 				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -483,8 +503,12 @@ void API::addFacebookConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -493,8 +517,12 @@ void API::addFacebookConf(
 			field = "UserAccessToken";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -584,8 +612,12 @@ void API::modifyFacebookConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -594,8 +626,12 @@ void API::modifyFacebookConf(
 			field = "UserAccessToken";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -839,8 +875,12 @@ void API::addTwitchConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -849,8 +889,12 @@ void API::addTwitchConf(
 			field = "RefreshToken";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -940,8 +984,12 @@ void API::modifyTwitchConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -950,8 +998,12 @@ void API::modifyTwitchConf(
 			field = "RefreshToken";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1195,8 +1247,12 @@ void API::addTiktokConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1205,8 +1261,12 @@ void API::addTiktokConf(
 			field = "Token";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1296,8 +1356,12 @@ void API::modifyTiktokConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1306,8 +1370,12 @@ void API::modifyTiktokConf(
 			field = "Token";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1578,8 +1646,12 @@ void API::addStream(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1588,8 +1660,12 @@ void API::addStream(
 			field = "sourceType";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2527,8 +2603,12 @@ void API::addSourceTVStream(
 			string field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2546,8 +2626,12 @@ void API::addSourceTVStream(
 			field = "name";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2559,8 +2643,12 @@ void API::addSourceTVStream(
 			field = "frequency";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3193,8 +3281,12 @@ void API::addAWSChannelConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3203,8 +3295,12 @@ void API::addAWSChannelConf(
 			field = "channelId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3213,8 +3309,12 @@ void API::addAWSChannelConf(
 			field = "rtmpURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3223,8 +3323,12 @@ void API::addAWSChannelConf(
 			field = "playURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3233,8 +3337,12 @@ void API::addAWSChannelConf(
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3327,8 +3435,12 @@ void API::modifyAWSChannelConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3337,8 +3449,12 @@ void API::modifyAWSChannelConf(
 			field = "channelId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3347,8 +3463,12 @@ void API::modifyAWSChannelConf(
 			field = "rtmpURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}

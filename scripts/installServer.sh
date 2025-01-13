@@ -244,7 +244,8 @@ install-packages()
 		echo ""
 		read -n 1 -s -r -p "install openjdk..."
 		echo ""
-		apt install -y openjdk-11-jdk
+		#apt install -y openjdk-11-jdk
+		apt install -y openjdk-21-jdk
 	fi
 
 	if [ "$moduleType" == "engine" ]; then
