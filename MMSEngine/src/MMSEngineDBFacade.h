@@ -1297,7 +1297,7 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	// void saveGEOInfo(string ipAddress, transaction_base *trans, shared_ptr<PostgresConnection> conn);
-	json getGEOInfo(string ip);
+	json getGEOInfo(int64_t geoInfoKey);
 	void updateRequestStatisticGEOInfo();
 	void updateLoginStatisticGEOInfo();
 	vector<tuple<string, string, string, string, string, string, string, string, string>> getGEOInfo_ipAPI(vector<string> &ips);

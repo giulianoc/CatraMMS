@@ -3281,7 +3281,7 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 		{
 			string sqlStatement = std::format(
 				"select u.name as userName, u.eMailAddress as emailAddress, s.loginStatisticKey, "
-				"s.userKey, s.ip, "
+				"s.userKey, s.ip, s.geoinfokey, "
 				"to_char(s.successfulLogin, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedSuccessfulLogin "
 				"from MMS_LoginStatistic s, MMS_User u {}"
 				"order by s.successfulLogin desc "
@@ -3310,14 +3310,18 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 				if (row["ip"].is_null())
 					statisticRoot[field] = nullptr;
 				else
-				{
 					string ip = row["ip"].as<string>();
 
-					statisticRoot[field] = ip;
-					if (ip != "")
+				field = "geoInfoKey";
+				if (row["geoinfokey"].is_null())
+					statisticRoot[field] = nullptr;
+				else
+				{
+					int64_t geoInfoKey = row["geoinfokey"].as<int64_t>();
+					statisticRoot[field] = geoInfoKey;
 					{
 						field = "geoInfo";
-						statisticRoot[field] = getGEOInfo(ip);
+						statisticRoot[field] = getGEOInfo(geoInfoKey);
 					}
 				}
 
@@ -3439,12 +3443,12 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 	return statisticsListRoot;
 }
 
-json MMSEngineDBFacade::getGEOInfo(string ip)
+json MMSEngineDBFacade::getGEOInfo(int64_t geoInfoKey)
 {
 	SPDLOG_INFO(
 		"getGEOInfo"
-		", ip: {}",
-		ip
+		", geoInfoKey: {}",
+		geoInfoKey
 	);
 
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -3463,11 +3467,9 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 
 		{
 			string sqlStatement = std::format(
-				"select continent, continentCode, country, countryCode, region, city, org, isp, "
-				"to_char(lastGEOUpdate, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedLastGEOUpdate, "
-				"to_char(lastTimeUsed, 'YYYY-MM-DD\"T\"HH24:MI:SSZ') as formattedLastTimeUsed "
-				"from MMS_GEOInfo where ip = {} ",
-				trans.quote(ip)
+				"select continent, continentCode, country, countryCode, region, city, org, isp "
+				"from MMS_GEOInfo where geoinfokey = {} ",
+				geoInfoKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
@@ -3482,9 +3484,9 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 			if (empty(res))
 			{
 				SPDLOG_WARN(
-					"ip was not found"
-					", ip: {}",
-					ip
+					"geoInfoKey was not found"
+					", geoInfoKey: {}",
+					geoInfoKey
 				);
 
 				trans.commit();
@@ -3541,15 +3543,6 @@ json MMSEngineDBFacade::getGEOInfo(string ip)
 				geoInfoRoot[field] = nullptr;
 			else
 				geoInfoRoot[field] = res[0][field].as<string>();
-
-			field = "lastGEOUpdate";
-			if (res[0]["formattedLastGEOUpdate"].is_null())
-				geoInfoRoot[field] = nullptr;
-			else
-				geoInfoRoot[field] = res[0]["formattedLastGEOUpdate"].as<string>();
-
-			field = "lastTimeUsed";
-			geoInfoRoot[field] = res[0]["formattedLastTimeUsed"].as<string>();
 		}
 
 		trans.commit();
