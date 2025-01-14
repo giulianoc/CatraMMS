@@ -3310,7 +3310,7 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 				if (row["ip"].is_null())
 					statisticRoot[field] = nullptr;
 				else
-					string ip = row["ip"].as<string>();
+					statisticRoot[field] = row["ip"].as<string>();
 
 				field = "geoInfoKey";
 				if (row["geoinfokey"].is_null())
