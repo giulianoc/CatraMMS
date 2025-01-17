@@ -76,49 +76,44 @@ void API::ingestion(
 			// it starts from the root and validate recursively the entire body
 			validator.validateIngestedRootMetadata(workspace->_workspaceKey, requestBodyRoot);
 
-			string field = "type";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, "type"))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: type";
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string rootType = JSONUtils::asString(requestBodyRoot, field, "");
+			string rootType = JSONUtils::asString(requestBodyRoot, "type", "");
 
-			string rootLabel;
-			field = "label";
-			rootLabel = JSONUtils::asString(requestBodyRoot, field, "");
+			string rootLabel = JSONUtils::asString(requestBodyRoot, "label", "");
+			bool rootHidden = JSONUtils::asBool(requestBodyRoot, "hidden", false);
 
 #ifdef __POSTGRES__
 			int64_t ingestionRootKey =
-				_mmsEngineDBFacade->addWorkflow(conn, trans, workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
+				_mmsEngineDBFacade->addWorkflow(conn, trans, workspace->_workspaceKey, userKey, rootType, rootLabel, rootHidden, requestBody.c_str());
 #else
 			int64_t ingestionRootKey =
 				_mmsEngineDBFacade->addIngestionRoot(conn, workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
 #endif
-			field = "ingestionRootKey";
-			requestBodyRoot[field] = ingestionRootKey;
+			requestBodyRoot["ingestionRootKey"] = ingestionRootKey;
 
-			field = "task";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, "task"))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + "task";
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			json &taskRoot = requestBodyRoot[field];
+			json &taskRoot = requestBodyRoot["task"];
 
-			field = "type";
-			if (!JSONUtils::isMetadataPresent(taskRoot, field))
+			if (!JSONUtils::isMetadataPresent(taskRoot, "type"))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
+				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + "type";
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string taskType = JSONUtils::asString(taskRoot, field, "");
+			string taskType = JSONUtils::asString(taskRoot, "type", "");
 
 			if (taskType == "GroupOfTasks")
 			{
@@ -3497,6 +3492,8 @@ void API::ingestionRootsStatus(
 			status = statusIt->second;
 		}
 
+		bool hiddenToo = getQueryParameter(queryParameters, "hiddenToo", true, false);
+
 		bool asc = true;
 		auto ascIt = queryParameters.find("asc");
 		if (ascIt != queryParameters.end() && ascIt->second != "")
@@ -3531,7 +3528,7 @@ void API::ingestionRootsStatus(
 			json ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
 				workspace, ingestionRootKey, mediaItemKey, start, rows,
 				// startAndEndIngestionDatePresent,
-				startIngestionDate, endIngestionDate, label, status, asc, dependencyInfo, ingestionJobOutputs,
+				startIngestionDate, endIngestionDate, label, status, asc, dependencyInfo, ingestionJobOutputs, hiddenToo,
 				// 2022-12-18: IngestionRoot dovrebbe essere stato aggiunto
 				// da tempo
 				false

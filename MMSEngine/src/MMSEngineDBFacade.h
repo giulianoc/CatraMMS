@@ -1451,7 +1451,7 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	int64_t addWorkflow(
-		shared_ptr<PostgresConnection> conn, work &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel,
+		shared_ptr<PostgresConnection> conn, work &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, bool rootHidden,
 		string metaDataContent
 	);
 #else
@@ -1568,7 +1568,7 @@ class MMSEngineDBFacade
 		shared_ptr<Workspace> workspace, int64_t ingestionRootKey, int64_t mediaItemKey, int start, int rows,
 		// bool startAndEndIngestionDatePresent,
 		string startIngestionDate, string endIngestionDate, string label, string status, bool asc, bool dependencyInfo, bool ingestionJobOutputs,
-		bool fromMaster
+		bool hiddenToo, bool fromMaster
 	);
 
 	json getIngestionJobsStatus(

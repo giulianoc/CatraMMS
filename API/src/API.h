@@ -64,6 +64,7 @@ class API : public FastCGIAPI
 
   private:
 	shared_ptr<spdlog::logger> _logger;
+	json _configurationRoot;
 
 	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool> _userKeyWorkspaceAndFlags;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;

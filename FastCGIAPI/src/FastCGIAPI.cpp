@@ -68,7 +68,7 @@ string FastCGIAPI::unescape(const string &url)
 void FastCGIAPI::init(json configurationRoot, mutex *fcgiAcceptMutex)
 {
 	_shutdown = false;
-	_configurationRoot = configurationRoot;
+	// _configurationRoot = configurationRoot;
 	_fcgiAcceptMutex = fcgiAcceptMutex;
 
 	_fcgxFinishDone = false;
@@ -81,12 +81,12 @@ void FastCGIAPI::init(json configurationRoot, mutex *fcgiAcceptMutex)
 
 	_requestIdentifier = 0;
 
-	loadConfiguration();
+	loadConfiguration(configurationRoot);
 }
 
-void FastCGIAPI::loadConfiguration()
+void FastCGIAPI::loadConfiguration(json configurationRoot)
 {
-	_maxAPIContentLength = JSONUtils::asInt64(_configurationRoot["api"], "maxContentLength", 0);
+	_maxAPIContentLength = JSONUtils::asInt64(configurationRoot["api"], "maxContentLength", 0);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", api->maxContentLength: {}",

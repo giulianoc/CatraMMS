@@ -71,6 +71,7 @@ class FFMPEGEncoder : public FastCGIAPI
 
   private:
 	shared_ptr<spdlog::logger> _logger;
+	json _configurationRoot;
 
 	mutex *_cpuUsageMutex;
 	deque<int> *_cpuUsage;

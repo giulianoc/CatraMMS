@@ -33,7 +33,7 @@ class FastCGIAPI
 	static string escape(const string &url);
 	static string unescape(const string &url);
 
-	void loadConfiguration();
+	void loadConfiguration(json configurationRoot);
 
 	int operator()();
 
@@ -43,7 +43,7 @@ class FastCGIAPI
 
   protected:
 	bool _shutdown;
-	json _configurationRoot;
+	// json _configurationRoot;
 
 	bool _fcgxFinishDone;
 

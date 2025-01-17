@@ -77,6 +77,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 {
 
 	_logger = spdlog::default_logger();
+	_configurationRoot = configurationRoot;
 	_encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)

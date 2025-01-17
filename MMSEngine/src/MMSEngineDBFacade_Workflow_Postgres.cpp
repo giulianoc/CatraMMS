@@ -153,7 +153,8 @@ void MMSEngineDBFacade::endWorkflow(
 }
 
 int64_t MMSEngineDBFacade::addWorkflow(
-	shared_ptr<PostgresConnection> conn, work &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, string metaDataContent
+	shared_ptr<PostgresConnection> conn, work &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, bool rootHidden,
+	string metaDataContent
 )
 {
 	int64_t ingestionRootKey;
@@ -162,11 +163,11 @@ int64_t MMSEngineDBFacade::addWorkflow(
 	{
 		{
 			string sqlStatement = std::format(
-				"insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, userKey, type, label, "
+				"insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, userKey, type, label, hidden, "
 				"metaDataContent, ingestionDate, lastUpdate, status) "
-				"values (                       DEFAULT,          {},            {},       {},    {}, "
+				"values (                       DEFAULT,          {},           {},      {},   {},     {}, "
 				"{},               NOW() at time zone 'utc',         NOW() at time zone 'utc',      {}) returning ingestionRootKey",
-				workspaceKey, userKey, trans.quote(rootType), trans.quote(rootLabel), trans.quote(metaDataContent),
+				workspaceKey, userKey, trans.quote(rootType), trans.quote(rootLabel), rootHidden, trans.quote(metaDataContent),
 				trans.quote(toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -502,7 +503,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 	shared_ptr<Workspace> workspace, int64_t ingestionRootKey, int64_t mediaItemKey, int start, int rows,
 	// bool startAndEndIngestionDatePresent,
 	string startIngestionDate, string endIngestionDate, string label, string status, bool asc, bool dependencyInfo, bool ingestionJobOutputs,
-	bool fromMaster
+	bool hiddenToo, bool fromMaster
 )
 {
 	json statusListRoot;
@@ -566,6 +567,9 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			field = "status";
 			requestParametersRoot[field] = status;
 
+			field = "hiddenToo";
+			requestParametersRoot[field] = hiddenToo;
+
 			field = "requestParameters";
 			statusListRoot[field] = requestParametersRoot;
 		}
@@ -617,6 +621,8 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			sqlWhere += std::format("and ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
 		if (label != "")
 			sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
+		if (!hiddenToo)
+			sqlWhere += std::format("and hidden = {} ", false);
 		{
 			string allStatus = "all";
 			// compare case insensitive

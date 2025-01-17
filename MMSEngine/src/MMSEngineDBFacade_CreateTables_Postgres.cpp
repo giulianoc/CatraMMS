@@ -1343,14 +1343,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create table if not exists MMS_IngestionRoot ("
 								  "ingestionRootKey           bigint GENERATED ALWAYS AS IDENTITY,"
 								  "workspaceKey               bigint NOT NULL,"
-								  "userKey    				bigint NOT NULL,"
+								  "userKey    								bigint NOT NULL,"
 								  "type                       text NOT NULL,"
 								  "label                      text NULL,"
-								  "metaDataContent			jsonb NOT NULL,"
+								  "hidden 										boolean NOT NULL,"
+								  "metaDataContent						jsonb NOT NULL,"
 								  "processedMetaDataContent	text NULL,"
 								  "ingestionDate              timestamp without time zone NOT NULL,"
 								  "lastUpdate                 timestamp without time zone default (now() at time zone 'utc'),"
-								  "status           			text NOT NULL,"
+								  "status           					text NOT NULL,"
 								  "constraint MMS_IngestionRoot_PK PRIMARY KEY (ingestionRootKey), "
 								  "constraint MMS_IngestionRoot_FK foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
@@ -1381,7 +1382,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx2 on MMS_IngestionRoot (workspaceKey, ingestionDate)";
+			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx2 on MMS_IngestionRoot (workspaceKey, ingestionDate, hidden)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
