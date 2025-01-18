@@ -325,7 +325,7 @@ cpu_usage()
 
 memory_usage()
 {
-	maxMemoryUsage=60.0
+	maxMemoryUsage=70.0
 
 	memoryUsage=$(free -m | awk '{if (NR==2)printf("%.2f", $3*100/$2)}')
 	if [[ $memoryUsage == *","* ]]; then

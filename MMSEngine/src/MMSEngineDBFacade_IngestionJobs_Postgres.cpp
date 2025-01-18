@@ -30,9 +30,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 			DBConnectionPoolStats dbConnectionPoolStats = connectionPool->get_stats();
 
-			_logger->info(
-				__FILEREF__ + "DB connection pool stats" + ", _poolSize: " + to_string(dbConnectionPoolStats._poolSize) +
-				", _borrowedSize: " + to_string(dbConnectionPoolStats._borrowedSize)
+			SPDLOG_INFO(
+				"DB connection pool stats"
+				", _poolSize: {}"
+				", _borrowedSize: {}",
+				dbConnectionPoolStats._poolSize, dbConnectionPoolStats._borrowedSize
 			);
 		}
 
@@ -49,8 +51,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 			int initialGetIngestionJobsCurrentIndex = _getIngestionJobsCurrentIndex;
 
-			_logger->info(
-				__FILEREF__ + "getIngestionsToBeManaged" + ", initialGetIngestionJobsCurrentIndex: " + to_string(initialGetIngestionJobsCurrentIndex)
+			SPDLOG_INFO(
+				"getIngestionsToBeManaged"
+				", initialGetIngestionJobsCurrentIndex: {}",
+				initialGetIngestionJobsCurrentIndex
 			);
 
 			int mysqlRowCount = _ingestionJobsSelectPageSize;
@@ -182,11 +186,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(row["status"].as<string>());
 					IngestionType ingestionType = MMSEngineDBFacade::toIngestionType(row["ingestionType"].as<string>());
 
-					_logger->info(
-						__FILEREF__ + "getIngestionsToBeManaged (result set loop)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", ingestionJobLabel: " + ingestionJobLabel +
-						", initialGetIngestionJobsCurrentIndex: " + to_string(initialGetIngestionJobsCurrentIndex) +
-						", resultSetIndex: " + to_string(resultSetIndex) + "/" + to_string(res.size())
+					SPDLOG_INFO(
+						"getIngestionsToBeManaged (result set loop)"
+						", ingestionJobKey: {}"
+						", ingestionJobLabel: {}"
+						", initialGetIngestionJobsCurrentIndex: {}"
+						", resultSetIndex: {}/{}",
+						ingestionJobKey, ingestionJobLabel, initialGetIngestionJobsCurrentIndex, resultSetIndex, res.size()
 					);
 					resultSetIndex++;
 
@@ -204,9 +210,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 					if (ingestionJobToBeManaged)
 					{
-						_logger->info(
-							__FILEREF__ + "Adding jobs to be processed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							", ingestionStatus: " + toString(ingestionStatus)
+						SPDLOG_INFO(
+							"Adding jobs to be processed"
+							", ingestionJobKey: {}"
+							", ingestionStatus: {}",
+							ingestionJobKey, toString(ingestionStatus)
 						);
 
 						shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
@@ -222,10 +230,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					}
 					else
 					{
-						_logger->info(
-							__FILEREF__ + "Ingestion job cannot be processed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							", ingestionStatus: " + toString(ingestionStatus) + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey) +
-							", dependOnSuccess: " + to_string(dependOnSuccess) + ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
+						SPDLOG_INFO(
+							"Ingestion job cannot be processed"
+							", ingestionJobKey: {}"
+							", ingestionStatus: {}"
+							", dependOnIngestionJobKey: {}"
+							", dependOnSuccess: {}"
+							", ingestionStatusDependency: {}",
+							ingestionJobKey, toString(ingestionStatus), dependOnIngestionJobKey, dependOnSuccess, toString(ingestionStatusDependency)
 						);
 					}
 				}
@@ -238,10 +250,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 				);
 
-				_logger->info(
-					__FILEREF__ + "getIngestionsToBeManaged" + ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex) +
-					", res.size: " + to_string(res.size()) + ", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size()) +
-					", moreRows: " + to_string(moreRows)
+				SPDLOG_INFO(
+					"getIngestionsToBeManaged"
+					", _getIngestionJobsCurrentIndex: {}"
+					", res.size: {}"
+					", ingestionsToBeManaged.size(): {}"
+					", moreRows: {}",
+					_getIngestionJobsCurrentIndex, res.size(), ingestionsToBeManaged.size(), moreRows
 				);
 
 				if (res.size() == 0)
@@ -252,12 +267,15 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 			pointAfterNotLive = chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ + "getIngestionsToBeManaged (exit)" + ", _getIngestionJobsCurrentIndex: " + to_string(_getIngestionJobsCurrentIndex) +
-				", ingestionsToBeManaged.size(): " + to_string(ingestionsToBeManaged.size()) + ", moreRows: " + to_string(moreRows) +
-				", onlyTasksNotInvolvingMMSEngineThreads: " + to_string(onlyTasksNotInvolvingMMSEngineThreads) +
-				", select not live elapsed (millisecs): " +
-				to_string(chrono::duration_cast<chrono::milliseconds>(pointAfterNotLive - pointAfterLive).count())
+			SPDLOG_INFO(
+				"getIngestionsToBeManaged (exit)"
+				", _getIngestionJobsCurrentIndex: {}"
+				", ingestionsToBeManaged.size(): {}"
+				", moreRows: {}"
+				", onlyTasksNotInvolvingMMSEngineThreads: {}"
+				", select not live elapsed (millisecs): {}",
+				_getIngestionJobsCurrentIndex, ingestionsToBeManaged.size(), moreRows, onlyTasksNotInvolvingMMSEngineThreads,
+				chrono::duration_cast<chrono::milliseconds>(pointAfterNotLive - pointAfterLive).count()
 			);
 		}
 
@@ -309,10 +327,15 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", processorMMS: " + processorMMS +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", processorMMS: {}"
+					", ingestionJobKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					processorMMS, ingestionJobKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -323,17 +346,22 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 		conn = nullptr;
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-		_logger->info(
-			__FILEREF__ + "getIngestionsToBeManaged statistics" +
-			", total elapsed (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()) +
-			", select live elapsed (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(pointAfterLive - startPoint).count()) +
-			", select not live elapsed (millisecs): " +
-			to_string(chrono::duration_cast<chrono::milliseconds>(pointAfterNotLive - pointAfterLive).count()) +
-			", processing entries elapsed (millisecs): " +
-			to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - pointAfterNotLive).count()) +
-			", ingestionsToBeManaged.size: " + to_string(ingestionsToBeManaged.size()) + ", maxIngestionJobs: " + to_string(maxIngestionJobs) +
-			", liveProxyToBeIngested: " + to_string(liveProxyToBeIngested) + ", liveRecorderToBeIngested: " + to_string(liveRecorderToBeIngested) +
-			", othersToBeIngested: " + to_string(othersToBeIngested)
+		SPDLOG_INFO(
+			"getIngestionsToBeManaged statistics"
+			", total elapsed (millisecs): {}"
+			", select live elapsed (millisecs): {}"
+			", select not live elapsed (millisecs): {}"
+			", processing entries elapsed (millisecs): {}"
+			", ingestionsToBeManaged.size: {}"
+			", maxIngestionJobs: {}"
+			", liveProxyToBeIngested: {}"
+			", liveRecorderToBeIngested: "
+			", othersToBeIngested: {}",
+			chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count(),
+			chrono::duration_cast<chrono::milliseconds>(pointAfterLive - startPoint).count(),
+			chrono::duration_cast<chrono::milliseconds>(pointAfterNotLive - pointAfterLive).count(),
+			chrono::duration_cast<chrono::milliseconds>(endPoint - pointAfterNotLive).count(), ingestionsToBeManaged.size(), maxIngestionJobs,
+			liveProxyToBeIngested, liveRecorderToBeIngested, othersToBeIngested
 		);
 	}
 	catch (sql_error const &e)
@@ -552,23 +580,32 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "Dependency for the IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey) + ", dependOnSuccess: " + to_string(dependOnSuccess) +
-						", status: " + "no row"
+					SPDLOG_INFO(
+						"Dependency for the IngestionJob"
+						", ingestionJobKey: {}"
+						", dependOnIngestionJobKey: {}"
+						", dependOnSuccess: {}"
+						", status: no row",
+						ingestionJobKey, dependOnIngestionJobKey, dependOnSuccess
 					);
 				}
-				_logger->info(
-					__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement + ", dependOnIngestionJobKey: " +
-					to_string(dependOnIngestionJobKey) + ", res.size: " + to_string(res.size()) + ", elapsed (millisecs): @" +
-					to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
+				SPDLOG_INFO(
+					"@SQL statistics@"
+					", sqlStatement: {}"
+					", dependOnIngestionJobKey: {}"
+					", res.size: {}"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, dependOnIngestionJobKey, res.size(),
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 			}
 			else
 			{
-				_logger->info(
-					__FILEREF__ + "Dependency for the IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", dependOnIngestionJobKey: " + "null"
+				SPDLOG_INFO(
+					"Dependency for the IngestionJob"
+					", ingestionJobKey: {}"
+					", dependOnIngestionJobKey: null",
+					ingestionJobKey
 				);
 			}
 		}
