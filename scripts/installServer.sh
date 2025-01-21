@@ -999,7 +999,7 @@ install-mms-packages()
 	if [ "$moduleType" != "integration" ]; then
 		packageName=CatraLibraries
 		echo ""
-		catraLibrariesVersion=1.0.1990
+		catraLibrariesVersion=1.0.2000
 		echo -n "$packageName version (i.e.: $catraLibrariesVersion)? "
 		read version
 		if [ "$version" == "" ]; then

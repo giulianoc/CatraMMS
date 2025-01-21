@@ -17,6 +17,7 @@
 #include "Validator.h"
 #include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
+#include <format>
 #include <regex>
 
 void API::addYouTubeConf(
@@ -108,14 +109,14 @@ void API::addYouTubeConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -127,7 +128,7 @@ void API::addYouTubeConf(
 			if (!validator.isYouTubeTokenTypeValid(tokenType))
 			{
 				string errorMessage = string("The 'tokenType' is not valid") + ", tokenType: " + tokenType;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -137,7 +138,7 @@ void API::addYouTubeConf(
 				if (refreshToken == "")
 				{
 					string errorMessage = "The 'refreshToken' is not valid (empty)";
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -147,7 +148,7 @@ void API::addYouTubeConf(
 				if (accessToken == "")
 				{
 					string errorMessage = "The 'accessToken' is not valid (empty)";
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -159,13 +160,21 @@ void API::addYouTubeConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addYouTubeConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addYouTubeConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addYouTubeConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addYouTubeConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -174,10 +183,16 @@ void API::addYouTubeConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -185,10 +200,16 @@ void API::addYouTubeConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -203,8 +224,11 @@ void API::modifyYouTubeConf(
 {
 	string api = "modifyYouTubeConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -253,14 +277,14 @@ void API::modifyYouTubeConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -276,8 +300,7 @@ void API::modifyYouTubeConf(
 				if (!validator.isYouTubeTokenTypeValid(tokenType))
 				{
 					string errorMessage = string("The 'tokenType' is not valid");
-					_logger->error(__FILEREF__ + errorMessage);
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -287,8 +310,7 @@ void API::modifyYouTubeConf(
 					if (!refreshTokenModified || refreshToken == "")
 					{
 						string errorMessage = string("The 'refreshToken' is not valid");
-						_logger->error(__FILEREF__ + errorMessage);
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -298,7 +320,7 @@ void API::modifyYouTubeConf(
 					if (!accessTokenModified || accessToken == "")
 					{
 						string errorMessage = string("The 'accessToken' is not valid");
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -314,13 +336,21 @@ void API::modifyYouTubeConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyYouTubeConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyYouTubeConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyYouTubeConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyYouTubeConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -329,10 +359,16 @@ void API::modifyYouTubeConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -340,10 +376,16 @@ void API::modifyYouTubeConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -358,7 +400,11 @@ void API::removeYouTubeConf(
 {
 	string api = "removeYouTubeConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -370,7 +416,7 @@ void API::removeYouTubeConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -384,13 +430,21 @@ void API::removeYouTubeConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeYouTubeConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeYouTubeConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeYouTubeConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeYouTubeConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -399,10 +453,15 @@ void API::removeYouTubeConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -410,10 +469,15 @@ void API::removeYouTubeConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -428,7 +492,11 @@ void API::youTubeConfList(
 {
 	string api = "youTubeConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -458,10 +526,15 @@ void API::youTubeConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -469,10 +542,15 @@ void API::youTubeConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -487,8 +565,11 @@ void API::addFacebookConf(
 {
 	string api = "addFacebookConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -531,14 +612,14 @@ void API::addFacebookConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -552,13 +633,21 @@ void API::addFacebookConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFacebookConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addFacebookConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFacebookConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addFacebookConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -567,10 +656,16 @@ void API::addFacebookConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -578,10 +673,16 @@ void API::addFacebookConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -596,8 +697,11 @@ void API::modifyFacebookConf(
 {
 	string api = "modifyFacebookConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -640,14 +744,14 @@ void API::modifyFacebookConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -660,7 +764,7 @@ void API::modifyFacebookConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -674,13 +778,21 @@ void API::modifyFacebookConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyFacebookConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyFacebookConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -689,10 +801,16 @@ void API::modifyFacebookConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -700,10 +818,16 @@ void API::modifyFacebookConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -718,7 +842,11 @@ void API::removeFacebookConf(
 {
 	string api = "removeFacebookConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -730,7 +858,7 @@ void API::removeFacebookConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -744,13 +872,21 @@ void API::removeFacebookConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeFacebookConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeFacebookConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -759,10 +895,15 @@ void API::removeFacebookConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -770,10 +911,15 @@ void API::removeFacebookConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -788,7 +934,11 @@ void API::facebookConfList(
 {
 	string api = "facebookConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -830,10 +980,15 @@ void API::facebookConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -841,10 +996,15 @@ void API::facebookConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -859,8 +1019,11 @@ void API::addTwitchConf(
 {
 	string api = "addTwitchConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -903,14 +1066,14 @@ void API::addTwitchConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -924,13 +1087,21 @@ void API::addTwitchConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addTwitchConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addTwitchConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addTwitchConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addTwitchConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -939,10 +1110,16 @@ void API::addTwitchConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -950,10 +1127,16 @@ void API::addTwitchConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -968,8 +1151,11 @@ void API::modifyTwitchConf(
 {
 	string api = "modifyTwitchConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -1012,14 +1198,14 @@ void API::modifyTwitchConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1032,7 +1218,7 @@ void API::modifyTwitchConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -1046,13 +1232,21 @@ void API::modifyTwitchConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyTwitchConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyTwitchConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyTwitchConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyTwitchConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1061,10 +1255,16 @@ void API::modifyTwitchConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1072,10 +1272,16 @@ void API::modifyTwitchConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1090,7 +1296,11 @@ void API::removeTwitchConf(
 {
 	string api = "removeTwitchConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -1102,7 +1312,7 @@ void API::removeTwitchConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -1116,13 +1326,21 @@ void API::removeTwitchConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeTwitchConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeTwitchConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeTwitchConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeTwitchConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1131,10 +1349,15 @@ void API::removeTwitchConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1142,10 +1365,15 @@ void API::removeTwitchConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1160,7 +1388,11 @@ void API::twitchConfList(
 {
 	string api = "twitchConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -1202,10 +1434,15 @@ void API::twitchConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1213,10 +1450,15 @@ void API::twitchConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1231,8 +1473,11 @@ void API::addTiktokConf(
 {
 	string api = "addTiktokConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -1275,14 +1520,14 @@ void API::addTiktokConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1296,13 +1541,21 @@ void API::addTiktokConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addTiktokConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addTiktokConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addTiktokConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addTiktokConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1311,10 +1564,16 @@ void API::addTiktokConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1322,10 +1581,16 @@ void API::addTiktokConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1340,8 +1605,11 @@ void API::modifyTiktokConf(
 {
 	string api = "modifyTiktokConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -1384,14 +1652,14 @@ void API::modifyTiktokConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1404,7 +1672,7 @@ void API::modifyTiktokConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -1418,13 +1686,21 @@ void API::modifyTiktokConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyTiktokConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyTiktokConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyTiktokConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyTiktokConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1433,10 +1709,16 @@ void API::modifyTiktokConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1444,10 +1726,16 @@ void API::modifyTiktokConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1462,7 +1750,11 @@ void API::removeTiktokConf(
 {
 	string api = "removeTiktokConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -1474,7 +1766,7 @@ void API::removeTiktokConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -1488,13 +1780,21 @@ void API::removeTiktokConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeTiktokConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeTiktokConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeTiktokConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeTiktokConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1503,10 +1803,15 @@ void API::removeTiktokConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1514,10 +1819,15 @@ void API::removeTiktokConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1532,7 +1842,11 @@ void API::tiktokConfList(
 {
 	string api = "tiktokConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -1574,10 +1888,15 @@ void API::tiktokConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1585,10 +1904,15 @@ void API::tiktokConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1603,8 +1927,11 @@ void API::addStream(
 {
 	string api = "addStream";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -1750,14 +2077,14 @@ void API::addStream(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1776,13 +2103,21 @@ void API::addStream(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1791,10 +2126,16 @@ void API::addStream(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1802,10 +2143,16 @@ void API::addStream(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1820,8 +2167,11 @@ void API::modifyStream(
 {
 	string api = "modifyStream";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -2111,14 +2461,14 @@ void API::modifyStream(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2150,7 +2500,7 @@ void API::modifyStream(
 			if (confKey == -1 && labelKey == "")
 			{
 				string errorMessage = string("The 'confKey/label' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -2174,13 +2524,21 @@ void API::modifyStream(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -2189,10 +2547,16 @@ void API::modifyStream(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2200,10 +2564,16 @@ void API::modifyStream(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2218,7 +2588,11 @@ void API::removeStream(
 {
 	string api = "removeStream";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -2249,7 +2623,7 @@ void API::removeStream(
 			if (confKey == -1 && label == "")
 			{
 				string errorMessage = string("The 'confKey/label' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -2262,13 +2636,21 @@ void API::removeStream(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -2277,10 +2659,15 @@ void API::removeStream(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2288,10 +2675,15 @@ void API::removeStream(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2306,7 +2698,11 @@ void API::streamList(
 {
 	string api = "streamList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -2342,7 +2738,7 @@ void API::streamList(
 
 				string errorMessage =
 					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2395,7 +2791,11 @@ void API::streamList(
 				sourceTypeIt->second == "TV")
 				sourceType = sourceTypeIt->second;
 			else
-				_logger->warn(__FILEREF__ + "streamList: 'sourceType' parameter is unknown" + ", sourceType: " + sourceTypeIt->second);
+				SPDLOG_WARN(
+					"streamList: 'sourceType' parameter is unknown"
+					", sourceType: {}",
+					sourceTypeIt->second
+				);
 		}
 
 		string type;
@@ -2469,7 +2869,11 @@ void API::streamList(
 			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
 				labelOrder = labelOrderIt->second;
 			else
-				_logger->warn(__FILEREF__ + "liveURLList: 'labelOrder' parameter is unknown" + ", labelOrder: " + labelOrderIt->second);
+				SPDLOG_WARN(
+					"liveURLList: 'labelOrder' parameter is unknown"
+					", labelOrder: {}",
+					labelOrderIt->second
+				);
 		}
 
 		{
@@ -2485,10 +2889,15 @@ void API::streamList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2496,10 +2905,15 @@ void API::streamList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2514,7 +2928,11 @@ void API::streamFreePushEncoderPort(
 {
 	string api = "streamFreePushEncoderPort";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -2523,7 +2941,7 @@ void API::streamFreePushEncoderPort(
 		if (encoderKeyIt == queryParameters.end() || encoderKeyIt->second == "")
 		{
 			string errorMessage = string("The 'encoderKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -2541,10 +2959,15 @@ void API::streamFreePushEncoderPort(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2552,10 +2975,15 @@ void API::streamFreePushEncoderPort(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2570,8 +2998,11 @@ void API::addSourceTVStream(
 {
 	string api = "addSourceTVStream";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -2693,14 +3124,14 @@ void API::addSourceTVStream(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2717,13 +3148,21 @@ void API::addSourceTVStream(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceTVStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addSourceTVStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addSourceTVStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addSourceTVStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -2732,10 +3171,16 @@ void API::addSourceTVStream(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2743,10 +3188,16 @@ void API::addSourceTVStream(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2761,8 +3212,11 @@ void API::modifySourceTVStream(
 {
 	string api = "modifySourceTVStream";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -2946,14 +3400,14 @@ void API::modifySourceTVStream(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2966,7 +3420,7 @@ void API::modifySourceTVStream(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -2987,13 +3441,21 @@ void API::modifySourceTVStream(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceTVStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifySourceTVStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifySourceTVStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifySourceTVStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -3002,10 +3464,16 @@ void API::modifySourceTVStream(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3013,10 +3481,16 @@ void API::modifySourceTVStream(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3031,7 +3505,11 @@ void API::removeSourceTVStream(
 {
 	string api = "removeSourceTVStream";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -3043,7 +3521,7 @@ void API::removeSourceTVStream(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -3057,13 +3535,21 @@ void API::removeSourceTVStream(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceTVStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeSourceTVStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeSourceTVStream failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeSourceTVStream failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -3072,10 +3558,15 @@ void API::removeSourceTVStream(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3083,10 +3574,15 @@ void API::removeSourceTVStream(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3101,7 +3597,11 @@ void API::sourceTVStreamList(
 {
 	string api = "sourceTVStreamList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -3137,7 +3637,7 @@ void API::sourceTVStreamList(
 
 				string errorMessage =
 					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3218,7 +3718,11 @@ void API::sourceTVStreamList(
 			if (nameOrderIt->second == "asc" || nameOrderIt->second == "desc")
 				nameOrder = nameOrderIt->second;
 			else
-				_logger->warn(__FILEREF__ + "tvChannelList: 'nameOrder' parameter is unknown" + ", nameOrder: " + nameOrderIt->second);
+				SPDLOG_WARN(
+					"tvChannelList: 'nameOrder' parameter is unknown"
+					", nameOrder: {}",
+					nameOrderIt->second
+				);
 		}
 
 		{
@@ -3233,10 +3737,15 @@ void API::sourceTVStreamList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3244,10 +3753,15 @@ void API::sourceTVStreamList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3262,8 +3776,11 @@ void API::addAWSChannelConf(
 {
 	string api = "addAWSChannelConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -3351,14 +3868,14 @@ void API::addAWSChannelConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3372,13 +3889,21 @@ void API::addAWSChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAWSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addAWSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAWSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addAWSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -3387,10 +3912,16 @@ void API::addAWSChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3398,10 +3929,16 @@ void API::addAWSChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3416,8 +3953,11 @@ void API::modifyAWSChannelConf(
 {
 	string api = "modifyAWSChannelConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -3477,8 +4017,12 @@ void API::modifyAWSChannelConf(
 			field = "playURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3487,8 +4031,12 @@ void API::modifyAWSChannelConf(
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3497,14 +4045,14 @@ void API::modifyAWSChannelConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3517,7 +4065,7 @@ void API::modifyAWSChannelConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -3531,13 +4079,21 @@ void API::modifyAWSChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyAWSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyAWSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyAWSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyAWSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -3546,10 +4102,16 @@ void API::modifyAWSChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3557,10 +4119,16 @@ void API::modifyAWSChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3575,7 +4143,11 @@ void API::removeAWSChannelConf(
 {
 	string api = "removeAWSChannelConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -3587,7 +4159,7 @@ void API::removeAWSChannelConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -3601,13 +4173,21 @@ void API::removeAWSChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAWSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeAWSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAWSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeAWSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -3616,10 +4196,15 @@ void API::removeAWSChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3627,10 +4212,15 @@ void API::removeAWSChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3645,7 +4235,11 @@ void API::awsChannelConfList(
 {
 	string api = "awsChannelConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -3685,10 +4279,15 @@ void API::awsChannelConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3696,10 +4295,15 @@ void API::awsChannelConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3714,8 +4318,11 @@ void API::addCDN77ChannelConf(
 {
 	string api = "addCDN77ChannelConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -3734,8 +4341,12 @@ void API::addCDN77ChannelConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3744,8 +4355,12 @@ void API::addCDN77ChannelConf(
 			field = "rtmpURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3754,8 +4369,12 @@ void API::addCDN77ChannelConf(
 			field = "resourceURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3764,8 +4383,12 @@ void API::addCDN77ChannelConf(
 			field = "filePath";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3777,8 +4400,12 @@ void API::addCDN77ChannelConf(
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3787,14 +4414,14 @@ void API::addCDN77ChannelConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3809,13 +4436,21 @@ void API::addCDN77ChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addCDN77ChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addCDN77ChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addCDN77ChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addCDN77ChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -3824,10 +4459,16 @@ void API::addCDN77ChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3835,10 +4476,16 @@ void API::addCDN77ChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3853,8 +4500,11 @@ void API::modifyCDN77ChannelConf(
 {
 	string api = "modifyCDN77ChannelConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -3873,8 +4523,12 @@ void API::modifyCDN77ChannelConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3883,8 +4537,12 @@ void API::modifyCDN77ChannelConf(
 			field = "rtmpURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3893,8 +4551,12 @@ void API::modifyCDN77ChannelConf(
 			field = "resourceURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3903,8 +4565,12 @@ void API::modifyCDN77ChannelConf(
 			field = "filePath";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3913,8 +4579,12 @@ void API::modifyCDN77ChannelConf(
 			field = "secureToken";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3923,8 +4593,12 @@ void API::modifyCDN77ChannelConf(
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3933,14 +4607,14 @@ void API::modifyCDN77ChannelConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3953,7 +4627,7 @@ void API::modifyCDN77ChannelConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -3967,13 +4641,21 @@ void API::modifyCDN77ChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyCDN77ChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyCDN77ChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -3982,10 +4664,16 @@ void API::modifyCDN77ChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3993,10 +4681,16 @@ void API::modifyCDN77ChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4011,7 +4705,11 @@ void API::removeCDN77ChannelConf(
 {
 	string api = "removeCDN77ChannelConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -4023,7 +4721,7 @@ void API::removeCDN77ChannelConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -4037,13 +4735,21 @@ void API::removeCDN77ChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeCDN77ChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeCDN77ChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeCDN77ChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeCDN77ChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -4052,10 +4758,15 @@ void API::removeCDN77ChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4063,10 +4774,15 @@ void API::removeCDN77ChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4081,7 +4797,11 @@ void API::cdn77ChannelConfList(
 {
 	string api = "cdn77ChannelConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -4107,10 +4827,15 @@ void API::cdn77ChannelConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4118,10 +4843,15 @@ void API::cdn77ChannelConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4136,8 +4866,11 @@ void API::addRTMPChannelConf(
 {
 	string api = "addRTMPChannelConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -4157,8 +4890,12 @@ void API::addRTMPChannelConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4167,8 +4904,12 @@ void API::addRTMPChannelConf(
 			field = "rtmpURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4189,8 +4930,12 @@ void API::addRTMPChannelConf(
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4199,14 +4944,14 @@ void API::addRTMPChannelConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4221,13 +4966,21 @@ void API::addRTMPChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addRTMPChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addRTMPChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addRTMPChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addRTMPChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -4236,10 +4989,16 @@ void API::addRTMPChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4247,10 +5006,16 @@ void API::addRTMPChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4265,8 +5030,11 @@ void API::modifyRTMPChannelConf(
 {
 	string api = "modifyRTMPChannelConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -4286,8 +5054,12 @@ void API::modifyRTMPChannelConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4296,8 +5068,12 @@ void API::modifyRTMPChannelConf(
 			field = "rtmpURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4306,8 +5082,12 @@ void API::modifyRTMPChannelConf(
 			field = "streamName";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4316,8 +5096,12 @@ void API::modifyRTMPChannelConf(
 			field = "userName";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4326,8 +5110,12 @@ void API::modifyRTMPChannelConf(
 			field = "password";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4336,8 +5124,12 @@ void API::modifyRTMPChannelConf(
 			field = "playURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4346,8 +5138,12 @@ void API::modifyRTMPChannelConf(
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4356,14 +5152,14 @@ void API::modifyRTMPChannelConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4376,7 +5172,7 @@ void API::modifyRTMPChannelConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -4392,13 +5188,21 @@ void API::modifyRTMPChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyRTMPChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyRTMPChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyRTMPChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyRTMPChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -4407,10 +5211,16 @@ void API::modifyRTMPChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4418,10 +5228,16 @@ void API::modifyRTMPChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4436,7 +5252,11 @@ void API::removeRTMPChannelConf(
 {
 	string api = "removeRTMPChannelConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -4448,7 +5268,7 @@ void API::removeRTMPChannelConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -4462,13 +5282,21 @@ void API::removeRTMPChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeRTMPChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeRTMPChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeRTMPChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeRTMPChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -4477,10 +5305,15 @@ void API::removeRTMPChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4488,10 +5321,15 @@ void API::removeRTMPChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4506,7 +5344,11 @@ void API::rtmpChannelConfList(
 {
 	string api = "rtmpChannelConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -4547,10 +5389,15 @@ void API::rtmpChannelConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4558,10 +5405,15 @@ void API::rtmpChannelConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4576,8 +5428,11 @@ void API::addHLSChannelConf(
 {
 	string api = "addHLSChannelConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -4595,8 +5450,12 @@ void API::addHLSChannelConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4605,8 +5464,12 @@ void API::addHLSChannelConf(
 			field = "deliveryCode";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4621,8 +5484,12 @@ void API::addHLSChannelConf(
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4631,14 +5498,14 @@ void API::addHLSChannelConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4653,13 +5520,21 @@ void API::addHLSChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addHLSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addHLSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addHLSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addHLSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -4668,10 +5543,16 @@ void API::addHLSChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4679,10 +5560,16 @@ void API::addHLSChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4697,8 +5584,11 @@ void API::modifyHLSChannelConf(
 {
 	string api = "modifyHLSChannelConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -4716,8 +5606,12 @@ void API::modifyHLSChannelConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4726,8 +5620,12 @@ void API::modifyHLSChannelConf(
 			field = "deliveryCode";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4736,8 +5634,12 @@ void API::modifyHLSChannelConf(
 			field = "segmentDuration";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4746,8 +5648,12 @@ void API::modifyHLSChannelConf(
 			field = "playlistEntriesNumber";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4756,8 +5662,12 @@ void API::modifyHLSChannelConf(
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4766,14 +5676,14 @@ void API::modifyHLSChannelConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4786,7 +5696,7 @@ void API::modifyHLSChannelConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -4802,13 +5712,21 @@ void API::modifyHLSChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyHLSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyHLSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyHLSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyHLSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -4817,10 +5735,16 @@ void API::modifyHLSChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4828,10 +5752,16 @@ void API::modifyHLSChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4846,7 +5776,11 @@ void API::removeHLSChannelConf(
 {
 	string api = "removeHLSChannelConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -4858,7 +5792,7 @@ void API::removeHLSChannelConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -4872,13 +5806,21 @@ void API::removeHLSChannelConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeHLSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeHLSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeHLSChannelConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeHLSChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -4887,10 +5829,15 @@ void API::removeHLSChannelConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4898,10 +5845,15 @@ void API::removeHLSChannelConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4916,7 +5868,11 @@ void API::hlsChannelConfList(
 {
 	string api = "hlsChannelConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -4957,10 +5913,15 @@ void API::hlsChannelConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4968,10 +5929,15 @@ void API::hlsChannelConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4986,8 +5952,11 @@ void API::addFTPConf(
 {
 	string api = "addFTPConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -5006,8 +5975,12 @@ void API::addFTPConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5016,8 +5989,12 @@ void API::addFTPConf(
 			field = "Server";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5026,8 +6003,12 @@ void API::addFTPConf(
 			field = "Port";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5036,8 +6017,12 @@ void API::addFTPConf(
 			field = "UserName";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5046,8 +6031,12 @@ void API::addFTPConf(
 			field = "Password";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5056,8 +6045,12 @@ void API::addFTPConf(
 			field = "RemoteDirectory";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5066,14 +6059,14 @@ void API::addFTPConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5087,13 +6080,21 @@ void API::addFTPConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFTPConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addFTPConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFTPConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addFTPConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -5102,10 +6103,16 @@ void API::addFTPConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5113,10 +6120,16 @@ void API::addFTPConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5131,8 +6144,11 @@ void API::modifyFTPConf(
 {
 	string api = "modifyFTPConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -5151,8 +6167,12 @@ void API::modifyFTPConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5161,8 +6181,12 @@ void API::modifyFTPConf(
 			field = "Server";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5171,8 +6195,12 @@ void API::modifyFTPConf(
 			field = "Port";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5181,8 +6209,12 @@ void API::modifyFTPConf(
 			field = "UserName";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5191,8 +6223,12 @@ void API::modifyFTPConf(
 			field = "Password";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5201,8 +6237,12 @@ void API::modifyFTPConf(
 			field = "RemoteDirectory";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5211,14 +6251,14 @@ void API::modifyFTPConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5231,7 +6271,7 @@ void API::modifyFTPConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -5245,13 +6285,21 @@ void API::modifyFTPConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFTPConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyFTPConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFTPConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyFTPConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -5260,10 +6308,16 @@ void API::modifyFTPConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5271,10 +6325,16 @@ void API::modifyFTPConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5289,7 +6349,11 @@ void API::removeFTPConf(
 {
 	string api = "removeFTPConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -5301,7 +6365,7 @@ void API::removeFTPConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -5315,13 +6379,21 @@ void API::removeFTPConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFTPConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeFTPConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFTPConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeFTPConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -5330,10 +6402,15 @@ void API::removeFTPConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5341,10 +6418,15 @@ void API::removeFTPConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5358,7 +6440,11 @@ void API::ftpConfList(
 {
 	string api = "ftpConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -5373,10 +6459,15 @@ void API::ftpConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5384,10 +6475,15 @@ void API::ftpConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5402,8 +6498,11 @@ void API::addEMailConf(
 {
 	string api = "addEMailConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -5420,8 +6519,12 @@ void API::addEMailConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5430,8 +6533,12 @@ void API::addEMailConf(
 			field = "Addresses";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5440,8 +6547,12 @@ void API::addEMailConf(
 			field = "Subject";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5450,8 +6561,12 @@ void API::addEMailConf(
 			field = "Message";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5460,14 +6575,14 @@ void API::addEMailConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5481,13 +6596,21 @@ void API::addEMailConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEMailConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addEMailConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEMailConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addEMailConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -5496,10 +6619,16 @@ void API::addEMailConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5507,10 +6636,16 @@ void API::addEMailConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5525,8 +6660,11 @@ void API::modifyEMailConf(
 {
 	string api = "modifyEMailConf";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -5543,8 +6681,12 @@ void API::modifyEMailConf(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5553,8 +6695,12 @@ void API::modifyEMailConf(
 			field = "Addresses";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5563,8 +6709,12 @@ void API::modifyEMailConf(
 			field = "Subject";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5573,8 +6723,12 @@ void API::modifyEMailConf(
 			field = "Message";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5583,14 +6737,14 @@ void API::modifyEMailConf(
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5603,7 +6757,7 @@ void API::modifyEMailConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -5617,13 +6771,21 @@ void API::modifyEMailConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEMailConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyEMailConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEMailConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyEMailConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -5632,10 +6794,16 @@ void API::modifyEMailConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5643,10 +6811,16 @@ void API::modifyEMailConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5661,7 +6835,11 @@ void API::removeEMailConf(
 {
 	string api = "removeEMailConf";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -5673,7 +6851,7 @@ void API::removeEMailConf(
 			if (confKeyIt == queryParameters.end())
 			{
 				string errorMessage = string("The 'confKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -5687,13 +6865,21 @@ void API::removeEMailConf(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEMailConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEMailConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEMailConf failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEMailConf failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -5702,10 +6888,15 @@ void API::removeEMailConf(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5713,10 +6904,15 @@ void API::removeEMailConf(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5730,7 +6926,11 @@ void API::emailConfList(
 {
 	string api = "emailConfList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -5745,10 +6945,15 @@ void API::emailConfList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -5756,10 +6961,15 @@ void API::emailConfList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
 		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 

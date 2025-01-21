@@ -1346,7 +1346,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "userKey    								bigint NOT NULL,"
 								  "type                       text NOT NULL,"
 								  "label                      text NULL,"
-								  "hidden 										boolean NOT NULL,"
+								  "hidden 										boolean NOT NULL default false,"
 								  "metaDataContent						jsonb NOT NULL,"
 								  "processedMetaDataContent	text NULL,"
 								  "ingestionDate              timestamp without time zone NOT NULL,"

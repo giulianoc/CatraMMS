@@ -4,6 +4,7 @@
 // #include "catralibraries/Encrypt.h"
 #include "CurlWrapper.h"
 #include "catralibraries/StringUtils.h"
+#include <format>
 #include <regex>
 
 void API::createDeliveryAuthorization(
@@ -101,8 +102,8 @@ void API::createDeliveryAuthorization(
 			) // || (encodingProfileKey == -1 && encodingProfileLabel == "")) commentato perchè profile -1 indica 'source profile'
 			&& ingestionJobKey == -1)
 		{
-			string errorMessage = string("The 'physicalPathKey' or the (mediaItemKey-uniqueName)/(encodingProfileKey-encodingProfileLabel) or "
-										 "ingestionJobKey parameters have to be present");
+			string errorMessage = "The 'physicalPathKey' or the (mediaItemKey-uniqueName)/(encodingProfileKey-encodingProfileLabel) or "
+								  "ingestionJobKey parameters have to be present";
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
@@ -268,7 +269,7 @@ void API::createDeliveryAuthorization(
 				api, e.what()
 			);
 
-			string errorMessage = string("Internal server error");
+			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -296,7 +297,7 @@ void API::createDeliveryAuthorization(
 			api, e.what()
 		);
 
-		string errorMessage = string("Internal server error");
+		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
@@ -722,7 +723,7 @@ void API::createBulkOfDeliveryAuthorization(
 				api, e.what()
 			);
 
-			string errorMessage = string("Internal server error");
+			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -750,7 +751,7 @@ void API::createBulkOfDeliveryAuthorization(
 			api, e.what()
 		);
 
-		string errorMessage = string("Internal server error");
+		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);

@@ -37,7 +37,12 @@ void API::ingestion(
 {
 	string api = "ingestion";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -78,8 +83,9 @@ void API::ingestion(
 
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, "type"))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: type";
-				_logger->error(errorMessage);
+				string errorMessage = std::format("Field is not present or it is null"
+												  ", Field: type");
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -99,8 +105,9 @@ void API::ingestion(
 
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, "task"))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + "task";
-				_logger->error(errorMessage);
+				string errorMessage = std::format("Field is not present or it is null"
+												  ", Field: task");
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -108,8 +115,9 @@ void API::ingestion(
 
 			if (!JSONUtils::isMetadataPresent(taskRoot, "type"))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + "type";
-				_logger->error(errorMessage);
+				string errorMessage = std::format("Field is not present or it is null"
+												  ", Field: type");
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -204,7 +212,11 @@ void API::ingestion(
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
 
-			_logger->error(__FILEREF__ + "Ingestion locked" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"Ingestion locked"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -217,7 +229,11 @@ void API::ingestion(
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
 
-			_logger->error(__FILEREF__ + "request body parsing failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"request body parsing failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -230,7 +246,11 @@ void API::ingestion(
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
 
-			_logger->error(__FILEREF__ + "request body parsing failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"request body parsing failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -240,17 +260,24 @@ void API::ingestion(
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-		_logger->info(
-			__FILEREF__ + "Ingestion" + ", @MMS statistics@ - elapsed (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+		SPDLOG_INFO(
+			"Ingestion"
+			", @MMS statistics@ - elapsed (secs): @{}@",
+			chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
 		);
 	}
 	catch (AlreadyLocked &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -258,10 +285,16 @@ void API::ingestion(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -269,10 +302,16 @@ void API::ingestion(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -286,17 +325,26 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 
 	try
 	{
-		_logger->info(__FILEREF__ + "manageWorkflowVariables" + ", requestBody: " + requestBody);
+		SPDLOG_INFO(
+			"manageWorkflowVariables"
+			", requestBody: {}",
+			requestBody
+		);
 
 		if (variablesValuesToBeUsedRoot == nullptr)
 		{
-			_logger->info(__FILEREF__ + "manageWorkflowVariables" + ", there are no variables");
+			SPDLOG_INFO("manageWorkflowVariables"
+						", there are no variables");
 		}
 		else
 		{
 			string sVariablesValuesToBeUsedRoot = JSONUtils::toString(variablesValuesToBeUsedRoot);
 
-			_logger->info(__FILEREF__ + "manageWorkflowVariables" + ", sVariablesValuesToBeUsedRoot: " + sVariablesValuesToBeUsedRoot);
+			SPDLOG_INFO(
+				"manageWorkflowVariables"
+				", sVariablesValuesToBeUsedRoot: {}",
+				sVariablesValuesToBeUsedRoot
+			);
 		}
 
 		requestBodyRoot = JSONUtils::toJson(requestBody);
@@ -346,7 +394,7 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 			{
 				string localRequestBody = requestBody;
 
-				_logger->info(__FILEREF__ + "variables processing...");
+				SPDLOG_INFO("variables processing...");
 
 				for (auto &[keyRoot, valRoot] : variablesRoot.items())
 				{
@@ -354,7 +402,11 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 					if (sKey.length() > 2)
 						sKey = sKey.substr(1, sKey.length() - 2);
 
-					_logger->info(__FILEREF__ + "variable processing" + ", sKey: " + sKey);
+					SPDLOG_INFO(
+						"variable processing"
+						", sKey: {}",
+						sKey
+					);
 
 					string variableToBeReplaced;
 					string sValue;
@@ -450,16 +502,24 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 							}
 							else
 							{
-								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody" + ", variableType: " + variableType +
-													  ", requestBody: " + requestBody;
-								_logger->error(errorMessage);
+								string errorMessage = std::format(
+									"Wrong Variable Type parsing RequestBody"
+									", variableType: {}"
+									", requestBody: {}",
+									variableType, requestBody
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
 
-							_logger->info(
-								__FILEREF__ + "variable information" + ", sKey: " + sKey + ", variableType: " + variableType +
-								", variableIsNull: " + to_string(variableIsNull) + ", sValue: " + sValue
+							SPDLOG_INFO(
+								"variable information"
+								", sKey: {}"
+								", variableType: {}"
+								", variableIsNull: {}"
+								", sValue: {}",
+								sKey, variableType, variableIsNull, sValue
 							);
 						}
 						else
@@ -507,21 +567,34 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 							}
 							else
 							{
-								string errorMessage = __FILEREF__ + "Wrong Variable Type parsing RequestBody" + ", variableType: " + variableType +
-													  ", requestBody: " + requestBody;
-								_logger->error(errorMessage);
+								string errorMessage = std::format(
+									"Wrong Variable Type parsing RequestBody"
+									", variableType: {}"
+									", requestBody: {}",
+									variableType, requestBody
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
 
-							_logger->info(
-								__FILEREF__ + "variable information" + ", sKey: " + sKey + ", variableType: " + variableType +
-								", variableIsNull: " + to_string(variableIsNull) + ", sValue: " + sValue
+							SPDLOG_INFO(
+								"variable information"
+								", sKey: {}"
+								", variableType: {}"
+								", variableIsNull: {}"
+								", sValue: {}",
+								sKey, variableType, variableIsNull, sValue
 							);
 						}
 					}
 
-					_logger->info(__FILEREF__ + "requestBody, replace" + ", variableToBeReplaced: " + variableToBeReplaced + ", sValue: " + sValue);
+					SPDLOG_INFO(
+						"requestBody, replace"
+						", variableToBeReplaced: {}"
+						", sValue: {}",
+						variableToBeReplaced, sValue
+					);
 					size_t index = 0;
 					while (true)
 					{
@@ -539,7 +612,11 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 					}
 				}
 
-				_logger->info(__FILEREF__ + "requestBody after the replacement of the variables" + ", localRequestBody: " + localRequestBody);
+				SPDLOG_INFO(
+					"requestBody after the replacement of the variables"
+					", localRequestBody: {}",
+					localRequestBody
+				);
 
 				requestBodyRoot = JSONUtils::toJson(localRequestBody);
 			}
@@ -547,15 +624,24 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"requestBody json is not well format"
+			", requestBody: {}"
+			", e.what(): {}",
+			requestBody, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"requestBody json is not well format"
+			", requestBody: {}",
+			requestBody
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -598,10 +684,13 @@ void API::manageReferencesInput(
 				sDependOnIngestionJobKeysOverallInput += (string(", ") + to_string(dependOnIngestionJobKeysOverallInput.at(referenceIndex)));
 		}
 
-		_logger->info(
-			__FILEREF__ + "manageReferencesInput" + ", taskOrGroupOfTasksLabel: " + taskOrGroupOfTasksLabel + ", IngestionType: " + ingestionType +
-			", parametersSectionPresent: " + to_string(parametersSectionPresent) +
-			", sDependOnIngestionJobKeysOverallInput: " + sDependOnIngestionJobKeysOverallInput
+		SPDLOG_INFO(
+			"manageReferencesInput"
+			", taskOrGroupOfTasksLabel: {}"
+			", IngestionType: {}"
+			", parametersSectionPresent: {}"
+			", sDependOnIngestionJobKeysOverallInput: {}",
+			taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, sDependOnIngestionJobKeysOverallInput
 		);
 	}
 
@@ -659,10 +748,12 @@ void API::manageReferencesInput(
 					}
 					catch (exception e)
 					{
-						string errorMessage = string("dependenciesToBeAddedToReferencesAt is not "
-													 "well format") +
-											  ", dependenciesToBeAddedToReferencesAt: " + dependenciesToBeAddedToReferencesAt;
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"dependenciesToBeAddedToReferencesAt is not well format"
+							", dependenciesToBeAddedToReferencesAt: {}",
+							dependenciesToBeAddedToReferencesAt
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -688,9 +779,13 @@ void API::manageReferencesInput(
 
 				if (referenceLabel == "")
 				{
-					string errorMessage = __FILEREF__ + "The 'label' value cannot be empty" + ", processing label: " + taskOrGroupOfTasksLabel +
-										  ", referenceLabel: " + referenceLabel;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"The 'label' value cannot be empty"
+						", processing label: {}"
+						", referenceLabel: {}",
+						taskOrGroupOfTasksLabel, referenceLabel
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -699,19 +794,25 @@ void API::manageReferencesInput(
 
 				if (ingestionJobKeys.size() == 0)
 				{
-					string errorMessage = __FILEREF__ + "The 'label' value is not found" + ", processing label: " + taskOrGroupOfTasksLabel +
-										  ", referenceLabel: " + referenceLabel;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"The 'label' value is not found"
+						", processing label: {}"
+						", referenceLabel: {}",
+						taskOrGroupOfTasksLabel, referenceLabel
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 				else if (ingestionJobKeys.size() > 1)
 				{
-					string errorMessage = __FILEREF__ +
-										  "The 'label' value cannot be used in more than one "
-										  "Task" +
-										  ", referenceLabel: " + referenceLabel + ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size());
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"The 'label' value cannot be used in more than one Task"
+						", referenceLabel: {}"
+						", ingestionJobKeys.size(): {}",
+						referenceLabel, ingestionJobKeys.size()
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -760,12 +861,17 @@ void API::manageReferencesInput(
 		*/
 	}
 
-	_logger->info(
-		__FILEREF__ + "add to referencesRoot all the inherited references?" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-		", taskOrGroupOfTasksLabel: " + taskOrGroupOfTasksLabel + ", IngestionType: " + ingestionType +
-		", parametersSectionPresent: " + to_string(parametersSectionPresent) + ", referencesSectionPresent: " + to_string(referencesSectionPresent) +
-		", dependenciesToBeAddedToReferencesAtIndex: " + to_string(dependenciesToBeAddedToReferencesAtIndex) +
-		", dependOnIngestionJobKeysOverallInput.size(): " + to_string(dependOnIngestionJobKeysOverallInput.size())
+	SPDLOG_INFO(
+		"add to referencesRoot all the inherited references?"
+		", ingestionRootKey: {}"
+		", taskOrGroupOfTasksLabel: {}"
+		", IngestionType: {}"
+		", parametersSectionPresent: {}"
+		", referencesSectionPresent: {}"
+		", dependenciesToBeAddedToReferencesAtIndex: {}"
+		", dependOnIngestionJobKeysOverallInput.size(): {}",
+		ingestionRootKey, taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, referencesSectionPresent,
+		dependenciesToBeAddedToReferencesAtIndex, dependOnIngestionJobKeysOverallInput.size()
 	);
 
 	// add to referencesRoot all the inherited references
@@ -781,11 +887,15 @@ void API::manageReferencesInput(
 				int previousReferencesRootSize = referencesRoot.size();
 				int dependOnIngestionJobKeysSize = dependOnIngestionJobKeysOverallInput.size();
 
-				_logger->info(
-					__FILEREF__ + "add to referencesRoot all the inherited references" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-					", taskOrGroupOfTasksLabel: " + taskOrGroupOfTasksLabel + ", previousReferencesRootSize: " +
-					to_string(previousReferencesRootSize) + ", dependOnIngestionJobKeysSize: " + to_string(dependOnIngestionJobKeysSize) +
-					", dependenciesToBeAddedToReferencesAtIndex: " + to_string(dependenciesToBeAddedToReferencesAtIndex)
+				SPDLOG_INFO(
+					"add to referencesRoot all the inherited references"
+					", ingestionRootKey: {}"
+					", taskOrGroupOfTasksLabel: |{}"
+					", previousReferencesRootSize: {}"
+					", dependOnIngestionJobKeysSize: {}"
+					", dependenciesToBeAddedToReferencesAtIndex: {}",
+					ingestionRootKey, taskOrGroupOfTasksLabel, previousReferencesRootSize, dependOnIngestionJobKeysSize,
+					dependenciesToBeAddedToReferencesAtIndex
 				);
 
 				// referencesRoot.resize(
@@ -793,9 +903,11 @@ void API::manageReferencesInput(
 				// );
 				for (int index = previousReferencesRootSize - 1; index >= dependenciesToBeAddedToReferencesAtIndex; index--)
 				{
-					_logger->info(
-						__FILEREF__ + "making 'space' in referencesRoot" + ", ingestionRootKey: " + to_string(ingestionRootKey) + ", from " +
-						to_string(index) + " to " + to_string(index + dependOnIngestionJobKeysSize)
+					SPDLOG_INFO(
+						"making 'space' in referencesRoot"
+						", ingestionRootKey: {}"
+						", from {} to {}",
+						ingestionRootKey, index, index + dependOnIngestionJobKeysSize
 					);
 
 					referencesRoot[index + dependOnIngestionJobKeysSize] = referencesRoot[index];
@@ -804,9 +916,11 @@ void API::manageReferencesInput(
 				for (int index = dependenciesToBeAddedToReferencesAtIndex;
 					 index < dependenciesToBeAddedToReferencesAtIndex + dependOnIngestionJobKeysSize; index++)
 				{
-					_logger->info(
-						__FILEREF__ + "fill in dependOnIngestionJobKey" + ", ingestionRootKey: " + to_string(ingestionRootKey) + ", from " +
-						to_string(index - dependenciesToBeAddedToReferencesAtIndex) + " to " + to_string(index)
+					SPDLOG_INFO(
+						"fill in dependOnIngestionJobKey"
+						", ingestionRootKey: {}"
+						", from {} to {}",
+						ingestionRootKey, index - dependenciesToBeAddedToReferencesAtIndex, index
 					);
 
 					json referenceRoot;
@@ -878,10 +992,13 @@ void API::manageReferencesInput(
 	{
 		string taskMetadata = JSONUtils::toString(parametersRoot);
 
-		_logger->info(
-			__FILEREF__ + "testttttttt" + ", taskMetadata: " + taskMetadata + ", referencesSectionPresent: " + to_string(referencesSectionPresent) +
-			", dependenciesToBeAddedToReferencesAtIndex: " + to_string(dependenciesToBeAddedToReferencesAtIndex) +
-			", dependOnIngestionJobKeysOverallInput.size: " + to_string(dependOnIngestionJobKeysOverallInput.size())
+		SPDLOG_INFO(
+			"testttttttt"
+			", taskMetadata: {}"
+			", referencesSectionPresent: {}"
+			", dependenciesToBeAddedToReferencesAtIndex: {}"
+			", dependOnIngestionJobKeysOverallInput.size: {}",
+			taskMetadata, referencesSectionPresent, dependenciesToBeAddedToReferencesAtIndex, dependOnIngestionJobKeysOverallInput.size()
 		);
 	}
 }
@@ -929,9 +1046,12 @@ vector<int64_t> API::ingestionSingleTask(
 	field = "label";
 	taskLabel = JSONUtils::asString(taskRoot, field, "");
 
-	_logger->info(
-		__FILEREF__ + "Processing SingleTask..." + ", ingestionRootKey: " + to_string(ingestionRootKey) + ", type: " + type +
-		", taskLabel: " + taskLabel
+	SPDLOG_INFO(
+		"Processing SingleTask..."
+		", ingestionRootKey: {}"
+		", type: {}"
+		", taskLabel: {}",
+		ingestionRootKey, type, taskLabel
 	);
 
 	field = "parameters";
@@ -1041,12 +1161,15 @@ vector<int64_t> API::ingestionSingleTask(
 
 				if (encodingProfilesSetKeys.size() == 0)
 				{
-					string errorMessage = __FILEREF__ +
-										  "No EncodingProfileKey into the "
-										  "encodingProfilesSetKey" +
-										  ", encodingProfilesSetKey/encodingProfilesSetLabel: " + encodingProfilesSetReference +
-										  ", ingestionRootKey: " + to_string(ingestionRootKey) + ", type: " + type + ", taskLabel: " + taskLabel;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"No EncodingProfileKey into the encodingProfilesSetKey"
+						", encodingProfilesSetKey/encodingProfilesSetLabel: {}"
+						", ingestionRootKey: {}"
+						", type: {}"
+						", taskLabel: {}",
+						encodingProfilesSetReference, ingestionRootKey, type, taskLabel
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1065,8 +1188,13 @@ vector<int64_t> API::ingestionSingleTask(
 
 			if (!profilesSetPresent && !multiReferencesPresent)
 			{
-				string errorMessage = __FILEREF__ + "It's not possible to be here" + ", type: " + type + ", taskLabel: " + taskLabel;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"It's not possible to be here"
+					", type: {}"
+					", taskLabel: {}",
+					type, taskLabel
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1217,9 +1345,12 @@ vector<int64_t> API::ingestionSingleTask(
 		}
 		else
 		{
-			_logger->info(
-				__FILEREF__ + "No special management for Encode" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-				", taskLabel: " + taskLabel + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+			SPDLOG_INFO(
+				"No special management for Encode"
+				", ingestionRootKey: {}"
+				", taskLabel: {}"
+				", workspace->_workspaceKey: {}",
+				ingestionRootKey, taskLabel, workspace->_workspaceKey
 			);
 		}
 	}
@@ -1313,9 +1444,12 @@ vector<int64_t> API::ingestionSingleTask(
 		}
 		else
 		{
-			_logger->info(
-				__FILEREF__ + "No special management for Face-Recognition" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-				", taskLabel: " + taskLabel + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+			SPDLOG_INFO(
+				"No special management for Face-Recognition"
+				", ingestionRootKey: {}"
+				", taskLabel: {}"
+				", workspace->_workspaceKey: {}",
+				ingestionRootKey, taskLabel, workspace->_workspaceKey
 			);
 		}
 	}
@@ -1465,9 +1599,15 @@ json internalMMSRoot;
 
 			if (referenceLabel == "")
 			{
-				string errorMessage = __FILEREF__ + "The 'label' value cannot be empty" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-									  ", type: " + type + ", taskLabel: " + taskLabel + ", referenceLabel: " + referenceLabel;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"The 'label' value cannot be empty"
+					", ingestionRootKey: {}"
+					", type: {}"
+					", taskLabel: {}"
+					", referenceLabel: {}",
+					ingestionRootKey, type, taskLabel, referenceLabel
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1476,18 +1616,30 @@ json internalMMSRoot;
 
 			if (ingestionJobKeys.size() == 0)
 			{
-				string errorMessage = __FILEREF__ + "The 'label' value is not found" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-									  ", type: " + type + ", taskLabel: " + taskLabel + ", referenceLabel: " + referenceLabel;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"The 'label' value is not found"
+					", ingestionRootKey: {}"
+					", type: {}"
+					", taskLabel: {}"
+					", referenceLabel: {}",
+					ingestionRootKey, type, taskLabel, referenceLabel
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			else if (ingestionJobKeys.size() > 1)
 			{
-				string errorMessage = __FILEREF__ + "The 'label' value cannot be used in more than one Task" +
-									  ", ingestionRootKey: " + to_string(ingestionRootKey) + ", type: " + type + ", taskLabel: " + taskLabel +
-									  ", referenceLabel: " + referenceLabel + ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size());
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"The 'label' value cannot be used in more than one Task"
+					", ingestionRootKey: {}"
+					", type: {}"
+					", taskLabel: {}"
+					", referenceLabel: {}"
+					", ingestionJobKeys.size(): {}",
+					ingestionRootKey, type, taskLabel, referenceLabel, ingestionJobKeys.size()
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1510,7 +1662,7 @@ json internalMMSRoot;
 									  "No workflowAsLibraryType/WorkflowAsLibraryLabel "
 									  "parameters into the Workflow-As-Library Task" +
 									  ", ingestionRootKey: " + to_string(ingestionRootKey) + ", type: " + type + ", taskLabel: " + taskLabel;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1542,7 +1694,7 @@ json internalMMSRoot;
 									  "found" +
 									  ", ingestionRootKey: " + to_string(ingestionRootKey) + ", type: " + type + ", taskLabel: " + taskLabel +
 									  ", workflowLibraryContent: " + workflowLibraryContent;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1608,7 +1760,7 @@ json internalMMSRoot;
 	// just log initial parameters
 	/*
 {
-			_logger->info(__FILEREF__ + "IngestionJob to be added"
+			SPDLOG_INFO(__FILEREF__ + "IngestionJob to be added"
 					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
 					+ ", type: " + type
 					+ ", taskLabel: " + taskLabel
@@ -1652,11 +1804,14 @@ JSONUtils::toString(parametersRoot)
 						// stato appena aggiunto
 						true, waitForGlobalIngestionJobKeys
 					);
-					_logger->info(
-						__FILEREF__ + "ingestionJob_IngestionJobKeys" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-						", taskLabel: " + taskLabel + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
-						", waitForGlobalIngestionLabel: " + waitForGlobalIngestionLabel +
-						", waitForGlobalIngestionJobKeys.size(): " + to_string(waitForGlobalIngestionJobKeys.size())
+					SPDLOG_INFO(
+						"ingestionJob_IngestionJobKeys"
+						", ingestionRootKey: {}"
+						", taskLabel: {}"
+						", workspace->_workspaceKey: {}"
+						", waitForGlobalIngestionLabel: {}"
+						", waitForGlobalIngestionJobKeys.size(): {}",
+						ingestionRootKey, taskLabel, workspace->_workspaceKey, waitForGlobalIngestionLabel, waitForGlobalIngestionJobKeys.size()
 					);
 				}
 			}
@@ -1694,11 +1849,18 @@ JSONUtils::toString(parametersRoot)
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "add IngestionJob" + ", ingestionRootKey: " + to_string(ingestionRootKey) + ", taskLabel: " + taskLabel +
-		", taskMetadata: " + taskMetadata + ", IngestionType: " + type + ", processingStartingFrom: " + processingStartingFrom +
-		", dependOnIngestionJobKeysForStarting.size(): " + to_string(dependOnIngestionJobKeysForStarting.size()) + ", dependOnSuccess: " +
-		to_string(dependOnSuccess) + ", waitForGlobalIngestionJobKeys.size(): " + to_string(waitForGlobalIngestionJobKeys.size())
+	SPDLOG_INFO(
+		"add IngestionJob"
+		", ingestionRootKey: {}"
+		", taskLabel: {}"
+		", taskMetadata: {}"
+		", IngestionType: {}"
+		", processingStartingFrom: {}"
+		", dependOnIngestionJobKeysForStarting.size(): {}"
+		", dependOnSuccess: {}"
+		", waitForGlobalIngestionJobKeys.size(): {}",
+		ingestionRootKey, taskLabel, taskMetadata, type, processingStartingFrom, dependOnIngestionJobKeysForStarting.size(), dependOnSuccess,
+		waitForGlobalIngestionJobKeys.size()
 	);
 
 #ifdef __POSTGRES__
@@ -1715,9 +1877,12 @@ JSONUtils::toString(parametersRoot)
 	field = "ingestionJobKey";
 	taskRoot[field] = localDependOnIngestionJobKeyExecution;
 
-	_logger->info(
-		__FILEREF__ + "Save Label..." + ", ingestionRootKey: " + to_string(ingestionRootKey) + ", taskLabel: " + taskLabel +
-		", localDependOnIngestionJobKeyExecution: " + to_string(localDependOnIngestionJobKeyExecution)
+	SPDLOG_INFO(
+		"Save Label..."
+		", ingestionRootKey: {}"
+		", taskLabel: {}"
+		", localDependOnIngestionJobKeyExecution: {}",
+		ingestionRootKey, taskLabel, localDependOnIngestionJobKeyExecution
 	);
 	if (taskLabel != "")
 		(mapLabelAndIngestionJobKey[taskLabel]).push_back(localDependOnIngestionJobKeyExecution);
@@ -1829,8 +1994,11 @@ vector<int64_t> API::ingestionGroupOfTasks(
 	string field = "label";
 	groupOfTaskLabel = JSONUtils::asString(groupOfTasksRoot, field, "");
 
-	_logger->info(
-		__FILEREF__ + "Processing GroupOfTasks..." + ", ingestionRootKey: " + to_string(ingestionRootKey) + ", groupOfTaskLabel: " + groupOfTaskLabel
+	SPDLOG_INFO(
+		"Processing GroupOfTasks..."
+		", ingestionRootKey: {}"
+		", groupOfTaskLabel: {}",
+		ingestionRootKey, groupOfTaskLabel
 	);
 
 	// initialize parametersRoot
@@ -1838,7 +2006,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 	if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
 	{
 		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1850,7 +2018,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1862,7 +2030,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 	else
 	{
 		string errorMessage = __FILEREF__ + "executionType field is wrong" + ", executionType: " + executionType;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1871,7 +2039,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
 		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1882,7 +2050,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 Validation.cpp if (tasksRoot.size() == 0)
 {
 	string errorMessage = __FILEREF__ + "No Tasks are present inside the
-GroupOfTasks item"; _logger->error(errorMessage);
+GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 
 	throw runtime_error(errorMessage);
 }
@@ -1911,7 +2079,7 @@ GroupOfTasks item"; _logger->error(errorMessage);
 		if (!JSONUtils::isMetadataPresent(taskRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2090,7 +2258,7 @@ GroupOfTasks item"; _logger->error(errorMessage);
 					if (referenceLabel == "")
 					{
 						string errorMessage = __FILEREF__ + "The 'label' value cannot be empty" + ", referenceLabel: " + referenceLabel;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2101,7 +2269,7 @@ GroupOfTasks item"; _logger->error(errorMessage);
 					{
 						string errorMessage = __FILEREF__ + "The 'label' value is not found" + ", referenceLabel: " + referenceLabel +
 											  ", groupOfTasksRoot: " + JSONUtils::toString(groupOfTasksRoot);
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2112,7 +2280,7 @@ GroupOfTasks item"; _logger->error(errorMessage);
 											  "Task" +
 											  ", referenceLabel: " + referenceLabel +
 											  ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size());
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2133,13 +2301,13 @@ GroupOfTasks item"; _logger->error(errorMessage);
 		}
 		else if (newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size() > 0)
 		{
-			_logger->info(
-				__FILEREF__ + "add to referencesOutputRoot all the inherited references?" + ", ingestionRootKey: " + to_string(ingestionRootKey) +
-				", groupOfTaskLabel: " + groupOfTaskLabel + ", referencesOutputPresent: " + to_string(referencesOutputPresent) +
-				", "
-				"newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size():"
-				" " +
-				to_string(newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size())
+			SPDLOG_INFO(
+				"add to referencesOutputRoot all the inherited references?"
+				", ingestionRootKey: {}"
+				", groupOfTaskLabel: {}"
+				", referencesOutputPresent: {}"
+				", newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size(): {}",
+				ingestionRootKey, groupOfTaskLabel, referencesOutputPresent, newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size()
 			);
 
 			// Enter here if No ReferencesOutput tag is present (so we have to
@@ -2157,17 +2325,13 @@ GroupOfTasks item"; _logger->error(errorMessage);
 				referencesOutputIngestionJobKeys.push_back(newDependOnIngestionJobKeysOverallInputBecauseOfTasks.at(referenceIndex));
 			}
 
-			_logger->info(
-				__FILEREF__ +
-				"Since ReferencesOutput is not present, set automatically the "
-				"ReferencesOutput array tag using the ingestionJobKey of the "
-				"Tasks" +
-				", ingestionRootKey: " + to_string(ingestionRootKey) + ", groupOfTaskLabel: " + groupOfTaskLabel +
-				", "
-				"newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size():"
-				" " +
-				to_string(newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size()) +
-				", referencesOutputRoot.size: " + to_string(referencesOutputRoot.size())
+			SPDLOG_INFO(
+				"Since ReferencesOutput is not present, set automatically the ReferencesOutput array tag using the ingestionJobKey of the Tasks"
+				", ingestionRootKey: {}"
+				", groupOfTaskLabel: {}"
+				", newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size(): {}"
+				", referencesOutputRoot.size: {}",
+				ingestionRootKey, groupOfTaskLabel, newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size(), referencesOutputRoot.size()
 			);
 
 			field = "referencesOutput";
@@ -2217,15 +2381,19 @@ GroupOfTasks item"; _logger->error(errorMessage);
 		taskMetadata = JSONUtils::toString(parametersRoot);
 	}
 
-	_logger->info(
-		__FILEREF__ + "add IngestionJob (Group of Tasks)" + ", ingestionRootKey: " + to_string(ingestionRootKey) + ", groupOfTaskLabel: " +
-		groupOfTaskLabel + ", taskMetadata: " + taskMetadata + ", IngestionType: " + type + ", processingStartingFrom: " + processingStartingFrom +
-		", newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size(): " + to_string(newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size()) +
-		", "
-		"newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput.size("
-		"): " +
-		to_string(newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput.size()) + ", dependOnSuccess: " + to_string(dependOnSuccess) +
-		", referencesOutputPresent: " + to_string(referencesOutputPresent)
+	SPDLOG_INFO(
+		"add IngestionJob (Group of Tasks)"
+		", ingestionRootKey: {}"
+		", groupOfTaskLabel: {}"
+		", taskMetadata: {}"
+		", IngestionType: {}"
+		", processingStartingFrom: {}"
+		", newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size(): {}"
+		", newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput.size(): {}"
+		", dependOnSuccess: {}"
+		", referencesOutputPresent: {}",
+		ingestionRootKey, groupOfTaskLabel, taskMetadata, type, processingStartingFrom, newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size(),
+		newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput.size(), dependOnSuccess, referencesOutputPresent
 	);
 
 	// - By default we fill newDependOnIngestionJobKeysOverallInput with the
@@ -2269,9 +2437,12 @@ GroupOfTasks item"; _logger->error(errorMessage);
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "Save Label..." + ", ingestionRootKey: " + to_string(ingestionRootKey) + ", groupOfTaskLabel: " + groupOfTaskLabel +
-		", localDependOnIngestionJobKeyExecution: " + to_string(localDependOnIngestionJobKeyExecution)
+	SPDLOG_INFO(
+		"Save Label..."
+		", ingestionRootKey: {}"
+		", groupOfTaskLabel: {}"
+		", localDependOnIngestionJobKeyExecution: {}",
+		ingestionRootKey, groupOfTaskLabel, localDependOnIngestionJobKeyExecution
 	);
 	if (groupOfTaskLabel != "")
 		(mapLabelAndIngestionJobKey[groupOfTaskLabel]).push_back(localDependOnIngestionJobKeyExecution);
@@ -2417,7 +2588,7 @@ void API::ingestionEvents(
 		if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2427,7 +2598,7 @@ void API::ingestionEvents(
 		if (!JSONUtils::isMetadataPresent(taskRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2530,7 +2701,7 @@ void API::ingestionEvents(
 		if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2540,7 +2711,7 @@ void API::ingestionEvents(
 		if (!JSONUtils::isMetadataPresent(taskRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2652,7 +2823,7 @@ void API::ingestionEvents(
 		if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2662,7 +2833,7 @@ void API::ingestionEvents(
 		if (!JSONUtils::isMetadataPresent(taskRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2748,7 +2919,7 @@ void API::uploadedBinary(
 		if (_noFileSystemAccess)
 		{
 			string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2757,7 +2928,7 @@ void API::uploadedBinary(
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
 			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2767,7 +2938,7 @@ void API::uploadedBinary(
 		if (binaryPathFileIt == requestDetails.end())
 		{
 			string errorMessage = string("'HTTP_X_FILE' item is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2799,7 +2970,7 @@ void API::uploadedBinary(
 				string errorMessage = string("Content-Range is not well done. Expected format: "
 											 "'Content-Range: bytes <start>-<end>/<size>'") +
 									  ", contentRange: " + contentRange;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2833,7 +3004,7 @@ void API::uploadedBinary(
 								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
 								  ", destBinaryPathName: " + destBinaryPathName + ", e.what: " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2843,7 +3014,7 @@ void API::uploadedBinary(
 								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
 								  ", destBinaryPathName: " + destBinaryPathName + ", e.what: " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2853,7 +3024,7 @@ void API::uploadedBinary(
 								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
 								  ", destBinaryPathName: " + destBinaryPathName;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2864,27 +3035,40 @@ void API::uploadedBinary(
 		{
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Moving file from nginx area to ingestion user area" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", sourceBinaryPathFile: " + sourceBinaryPathFile + ", destBinaryPathName: " + destBinaryPathName
+				SPDLOG_INFO(
+					"Moving file from nginx area to ingestion user area"
+					", ingestionJobKey: {}"
+					", sourceBinaryPathFile: {}"
+					", destBinaryPathName: {}",
+					ingestionJobKey, sourceBinaryPathFile, destBinaryPathName
 				);
 
 				MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, _logger);
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = string("Error to move file") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", sourceBinaryPathFile: " + sourceBinaryPathFile + ", destBinaryPathName: " + destBinaryPathName +
-									  ", e.what: " + e.what();
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"Error to move file"
+					", ingestionJobKey: {}"
+					", sourceBinaryPathFile: {}"
+					", destBinaryPathName: {}"
+					", e.what: {}",
+					ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, e.what()
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			catch (exception &e)
 			{
-				string errorMessage = string("Error to move file") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", sourceBinaryPathFile: " + sourceBinaryPathFile + ", destBinaryPathName: " + destBinaryPathName;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"Error to move file"
+					", ingestionJobKey: {}"
+					", sourceBinaryPathFile: {}"
+					", destBinaryPathName: {}",
+					ingestionJobKey, sourceBinaryPathFile, destBinaryPathName
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2911,7 +3095,7 @@ void API::uploadedBinary(
 									+ ", ingestionJobKey: " +
 		to_string(ingestionJobKey)
 							;
-							_logger->error(__FILEREF__ + errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 					}
@@ -2919,9 +3103,11 @@ void API::uploadedBinary(
 			*/
 
 			bool sourceBinaryTransferred = true;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", sourceBinaryTransferred: {}",
+				ingestionJobKey, sourceBinaryTransferred
 			);
 			_mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred(ingestionJobKey, sourceBinaryTransferred);
 		}
@@ -2942,13 +3128,19 @@ void API::uploadedBinary(
 				unsigned long destBinaryPathNameSizeInBytes = fs::file_size(destBinaryPathName);
 				unsigned long sourceBinaryPathFileSizeInBytes = fs::file_size(sourceBinaryPathFile);
 
-				_logger->info(
-					__FILEREF__ + "Content-Range before concat" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", contentRangeStart: " + to_string(contentRangeStart) + ", contentRangeEnd: " + to_string(contentRangeEnd) +
-					", contentRangeSize: " + to_string(contentRangeSize) + ", segmentedContent: " + to_string(segmentedContent) +
-					", destBinaryPathName: " + destBinaryPathName + ", destBinaryPathNameSizeInBytes: " + to_string(destBinaryPathNameSizeInBytes) +
-					", sourceBinaryPathFile: " + sourceBinaryPathFile +
-					", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes)
+				SPDLOG_INFO(
+					"Content-Range before concat"
+					", ingestionJobKey: {}"
+					", contentRangeStart: {}"
+					", contentRangeEnd: {}"
+					", contentRangeSize: {}"
+					", segmentedContent: {}"
+					", destBinaryPathName: {}"
+					", destBinaryPathNameSizeInBytes: {}"
+					", sourceBinaryPathFile: {}"
+					", sourceBinaryPathFileSizeInBytes: {}",
+					ingestionJobKey, contentRangeStart, contentRangeEnd, contentRangeSize, segmentedContent, destBinaryPathName,
+					destBinaryPathNameSizeInBytes, sourceBinaryPathFile, sourceBinaryPathFileSizeInBytes
 				);
 
 				// waiting in case of nfs delay
@@ -2962,17 +3154,23 @@ void API::uploadedBinary(
 
 				if (contentRangeStart != destBinaryPathNameSizeInBytes)
 				{
-					string errorMessage = string("Content-Range. This is NOT the next expected "
-												 "chunk because Content-Range start is different "
-												 "from fileSizeInBytes") +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										  ", contentRangeStart: " + to_string(contentRangeStart) +
-										  ", contentRangeEnd: " + to_string(contentRangeEnd) + ", contentRangeSize: " + to_string(contentRangeSize) +
-										  ", segmentedContent: " + to_string(segmentedContent) + ", destBinaryPathName: " + destBinaryPathName +
-										  ", sourceBinaryPathFile: " + sourceBinaryPathFile +
-										  ", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes) +
-										  ", destBinaryPathNameSizeInBytes (expected): " + to_string(destBinaryPathNameSizeInBytes);
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"Content-Range. This is NOT the next expected "
+						"chunk because Content-Range start is different "
+						"from fileSizeInBytes"
+						", ingestionJobKey: {}"
+						", contentRangeStart: {}"
+						", contentRangeEnd: {}"
+						", contentRangeSize: {}"
+						", segmentedContent: {}"
+						", destBinaryPathName: {}"
+						", sourceBinaryPathFile: {}"
+						", sourceBinaryPathFileSizeInBytes: {}"
+						", destBinaryPathNameSizeInBytes (expected): {}",
+						ingestionJobKey, contentRangeStart, contentRangeEnd, contentRangeSize, segmentedContent, destBinaryPathName,
+						sourceBinaryPathFile, sourceBinaryPathFileSizeInBytes, destBinaryPathNameSizeInBytes
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2996,23 +3194,35 @@ void API::uploadedBinary(
 						ifSource.close();
 					}
 
-					_logger->info(
-						__FILEREF__ + "Content-Range after concat" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", contentRangeStart: " + to_string(contentRangeStart) + ", contentRangeEnd: " + to_string(contentRangeEnd) +
-						", contentRangeSize: " + to_string(contentRangeSize) + ", segmentedContent: " + to_string(segmentedContent) +
-						", destBinaryPathName: " + destBinaryPathName + ", destBinaryPathNameSizeInBytes: " +
-						to_string(fs::file_size(destBinaryPathName)) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
-						", sourceBinaryPathFileSizeInBytes: " + to_string(sourceBinaryPathFileSizeInBytes) +
-						", concat elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - start).count())
+					SPDLOG_INFO(
+						"Content-Range after concat"
+						", ingestionJobKey: {}"
+						", contentRangeStart: {}"
+						", contentRangeEnd: {}"
+						", contentRangeSize: {}"
+						", segmentedContent: {}"
+						", destBinaryPathName: {}"
+						", destBinaryPathNameSizeInBytes: {}"
+						", sourceBinaryPathFile: {}"
+						", sourceBinaryPathFileSizeInBytes: {}"
+						", concat elapsed (secs): {}",
+						ingestionJobKey, contentRangeStart, contentRangeEnd, contentRangeSize, segmentedContent, destBinaryPathName,
+						fs::file_size(destBinaryPathName), sourceBinaryPathFile, sourceBinaryPathFileSizeInBytes,
+						chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - start).count()
 					);
 
 					fs::remove_all(sourceBinaryPathFile);
 				}
 				catch (exception &e)
 				{
-					string errorMessage = string("Content-Range. Error to concat file") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										  ", destBinaryPathName: " + destBinaryPathName + ", sourceBinaryPathFile: " + sourceBinaryPathFile;
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"Content-Range. Error to concat file"
+						", ingestionJobKey: {}"
+						", destBinaryPathName: {}"
+						", sourceBinaryPathFile: {}",
+						ingestionJobKey, destBinaryPathName, sourceBinaryPathFile
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3023,31 +3233,40 @@ void API::uploadedBinary(
 
 				if (contentRangeStart != 0)
 				{
-					string errorMessage = string("Content-Range. This is the first chunk of the "
-												 "file and Content-Range start has to be 0") +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", contentRangeStart: " + to_string(contentRangeStart);
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"Content-Range. This is the first chunk of the "
+						"file and Content-Range start has to be 0"
+						", ingestionJobKey: {}",
+						", contentRangeStart: {}", ingestionJobKey, contentRangeStart
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 
 				try
 				{
-					_logger->info(
-						__FILEREF__ +
+					SPDLOG_INFO(
 						"Content-Range. Moving file from nginx area to "
-						"ingestion user area" +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
-						", destBinaryPathName: " + destBinaryPathName
+						"ingestion user area"
+						", ingestionJobKey: {}"
+						", sourceBinaryPathFile: {}"
+						", destBinaryPathName: {}",
+						ingestionJobKey, sourceBinaryPathFile, destBinaryPathName
 					);
 
 					MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, _logger);
 				}
 				catch (exception &e)
 				{
-					string errorMessage = string("Content-Range. Error to move file") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										  ", sourceBinaryPathFile: " + sourceBinaryPathFile + ", destBinaryPathName: " + destBinaryPathName;
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"Content-Range. Error to move file"
+						", ingestionJobKey: {}"
+						", sourceBinaryPathFile: {}"
+						", destBinaryPathName: {}",
+						ingestionJobKey, sourceBinaryPathFile, destBinaryPathName
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3078,7 +3297,7 @@ void API::uploadedBinary(
 										+ ", ingestionJobKey: " +
 				to_string(ingestionJobKey)
 								;
-								_logger->error(__FILEREF__ + errorMessage);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 						}
@@ -3086,17 +3305,21 @@ void API::uploadedBinary(
 				*/
 
 				bool sourceBinaryTransferred = true;
-				_logger->info(
-					__FILEREF__ + "Content-Range. Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
+				SPDLOG_INFO(
+					"Content-Range. Update IngestionJob"
+					", ingestionJobKey: {}"
+					", sourceBinaryTransferred: {}",
+					ingestionJobKey, sourceBinaryTransferred
 				);
 				_mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred(ingestionJobKey, sourceBinaryTransferred);
 			}
 			else
 			{
-				_logger->info(
-					__FILEREF__ + "Content-Range. Update IngestionJob (uploading progress)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", uploadingProgress: " + to_string(uploadingProgress)
+				SPDLOG_INFO(
+					"Content-Range. Update IngestionJob (uploading progress)"
+					", ingestionJobKey: {}"
+					", uploadingProgress: {}",
+					ingestionJobKey, uploadingProgress
 				);
 				_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress(ingestionJobKey, uploadingProgress);
 			}
@@ -3107,10 +3330,15 @@ void API::uploadedBinary(
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3118,10 +3346,15 @@ void API::uploadedBinary(
 	}
 	catch (exception e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3152,13 +3385,16 @@ void API::fileUploadProgressCheck()
 
 			if (itr->_callFailures >= _maxProgressCallFailures)
 			{
-				_logger->error(
-					__FILEREF__ +
-					"fileUploadProgressCheck: remove entry because of too many "
-					"call failures" +
-					", ingestionJobKey: " + to_string(itr->_ingestionJobKey) + ", progressId: " + itr->_progressId +
-					", binaryVirtualHostName: " + itr->_binaryVirtualHostName + ", binaryListenHost: " + itr->_binaryListenHost +
-					", callFailures: " + to_string(itr->_callFailures) + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
+				SPDLOG_ERROR(
+					"fileUploadProgressCheck: remove entry because of too many call failures"
+					", ingestionJobKey: {}"
+					", progressId: {}"
+					", binaryVirtualHostName: {}"
+					", binaryListenHost: {}"
+					", callFailures: {}"
+					", _maxProgressCallFailures: {}",
+					itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, itr->_callFailures,
+					_maxProgressCallFailures
 				);
 				itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr); // returns iterator to the next element
 
@@ -3167,15 +3403,28 @@ void API::fileUploadProgressCheck()
 
 			try
 			{
-				string progressURL = string("http://:") + itr->_binaryListenHost + ":" + to_string(_webServerPort) + _progressURI;
+				string progressURL = std::format("http://:{}:{}{}", itr->_binaryListenHost, _webServerPort, _progressURI);
+				string progressIdHeader = std::format("X-Progress-ID: {}", itr->_progressId);
+				string hostHeader = std::format("Host: {}", itr->_binaryVirtualHostName);
+				/*
+				string progressURL = string("http://:") + itr->_binaryListenHost + ":"
+					+ to_string(_webServerPort) + _progressURI;
 				string progressIdHeader = string("X-Progress-ID: ") + itr->_progressId;
 				string hostHeader = string("Host: ") + itr->_binaryVirtualHostName;
+				*/
 
-				_logger->info(
-					__FILEREF__ + "Call for upload progress" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-					", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-					", binaryListenHost: " + itr->_binaryListenHost + ", callFailures: " + to_string(itr->_callFailures) +
-					", progressURL: " + progressURL + ", progressIdHeader: " + progressIdHeader + ", hostHeader: " + hostHeader
+				SPDLOG_INFO(
+					"Call for upload progress"
+					", ingestionJobKey: {}"
+					", progressId: {}"
+					", binaryVirtualHostName: {}"
+					", binaryListenHost: {}"
+					", callFailures: {}"
+					", progressURL: {}"
+					", progressIdHeader: {}"
+					", hostHeader: {}",
+					itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, itr->_callFailures, progressURL,
+					progressIdHeader, hostHeader
 				);
 
 				vector<string> otherHeaders;
@@ -3218,43 +3467,62 @@ void API::fileUploadProgressCheck()
 
 						if (itr->_contentRangePresent)
 						{
-							_logger->info(
-								__FILEREF__ + "Upload just finished" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-								", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-								", binaryListenHost: " + itr->_binaryListenHost + ", relativeProgress: " + to_string(relativeProgress) +
-								", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage) + ", absoluteProgress: " +
-								to_string(absoluteProgress) + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage) +
-								", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
+							SPDLOG_INFO(
+								"Upload just finished"
+								", ingestionJobKey: {}"
+								", progressId: {}"
+								", binaryVirtualHostName: {}"
+								", binaryListenHost: {}"
+								", relativeProgress: {}"
+								", relativeUploadingPercentage: {}"
+								", absoluteProgress: {}"
+								", absoluteUploadingPercentage: {}"
+								", lastPercentageUpdated: {}",
+								itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, relativeProgress,
+								relativeUploadingPercentage, absoluteProgress, absoluteUploadingPercentage, itr->_lastPercentageUpdated
 							);
 						}
 						else
 						{
-							_logger->info(
-								__FILEREF__ + "Upload just finished" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-								", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-								", binaryListenHost: " + itr->_binaryListenHost + ", relativeProgress: " + to_string(relativeProgress) +
-								", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage) +
-								", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
+							SPDLOG_INFO(
+								"Upload just finished"
+								", ingestionJobKey: {}"
+								", progressId: {}"
+								", binaryVirtualHostName: {}"
+								", binaryListenHost: {}"
+								", relativeProgress: {}"
+								", relativeUploadingPercentage: {}"
+								", lastPercentageUpdated: {}",
+								itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, relativeProgress,
+								relativeUploadingPercentage, itr->_lastPercentageUpdated
 							);
 						}
 
 						if (itr->_contentRangePresent)
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-								", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-								", binaryListenHost: " + itr->_binaryListenHost +
-								", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+							SPDLOG_INFO(
+								"Update IngestionJob"
+								", ingestionJobKey: {}"
+								", progressId: {}"
+								", binaryVirtualHostName: {}"
+								", binaryListenHost: {}"
+								", absoluteUploadingPercentage: {}",
+								itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost,
+								absoluteUploadingPercentage
 							);
 							_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress(itr->_ingestionJobKey, absoluteUploadingPercentage);
 						}
 						else
 						{
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-								", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-								", binaryListenHost: " + itr->_binaryListenHost +
-								", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
+							SPDLOG_INFO(
+								"Update IngestionJob"
+								", ingestionJobKey: {}"
+								", progressId: {}"
+								", binaryVirtualHostName: {}"
+								", binaryListenHost: {}"
+								", relativeUploadingPercentage: {}",
+								itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost,
+								relativeUploadingPercentage
 							);
 							_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress(itr->_ingestionJobKey, relativeUploadingPercentage);
 						}
@@ -3265,13 +3533,16 @@ void API::fileUploadProgressCheck()
 					}
 					else if (state == "error")
 					{
-						_logger->error(
-							__FILEREF__ +
-							"fileUploadProgressCheck: remove entry because "
-							"state is 'error'" +
-							", ingestionJobKey: " + to_string(itr->_ingestionJobKey) + ", progressId: " + itr->_progressId +
-							", binaryVirtualHostName: " + itr->_binaryVirtualHostName + ", binaryListenHost: " + itr->_binaryListenHost +
-							", callFailures: " + to_string(itr->_callFailures) + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
+						SPDLOG_ERROR(
+							"fileUploadProgressCheck: remove entry because state is 'error'"
+							", ingestionJobKey: {}"
+							", progressId: {}"
+							", binaryVirtualHostName: {}"
+							", binaryListenHost: {}"
+							", callFailures: {}"
+							", _maxProgressCallFailures: {}",
+							itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, itr->_callFailures,
+							_maxProgressCallFailures
 						);
 						itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr); // returns iterator to the next element
 
@@ -3301,26 +3572,41 @@ void API::fileUploadProgressCheck()
 
 						if (itr->_contentRangePresent)
 						{
-							_logger->info(
-								__FILEREF__ + "Upload still running" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-								", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-								", binaryListenHost: " + itr->_binaryListenHost + ", relativeProgress: " + to_string(relativeProgress) +
-								", absoluteProgress: " + to_string(absoluteProgress) +
-								", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated) +
-								", relativeReceived: " + to_string(relativeReceived) + ", absoluteReceived: " + to_string(absoluteReceived) +
-								", relativeSize: " + to_string(relativeSize) + ", absoluteSize: " + to_string(absoluteSize) +
-								", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage) +
-								", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+							SPDLOG_INFO(
+								"Upload still running"
+								", ingestionJobKey: {}"
+								", progressId: {}"
+								", binaryVirtualHostName: {}"
+								", binaryListenHost: {}"
+								", relativeProgress: {}"
+								", absoluteProgress: {}"
+								", lastPercentageUpdated: {}"
+								", relativeReceived: {}"
+								", absoluteReceived: {}"
+								", relativeSize: {}"
+								", absoluteSize: {}"
+								", relativeUploadingPercentage: {}"
+								", absoluteUploadingPercentage: {}",
+								itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, relativeProgress,
+								absoluteProgress, itr->_lastPercentageUpdated, relativeReceived, absoluteReceived, relativeSize, absoluteSize,
+								relativeUploadingPercentage, absoluteUploadingPercentage
 							);
 						}
 						else
 						{
-							_logger->info(
-								__FILEREF__ + "Upload still running" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-								", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-								", binaryListenHost: " + itr->_binaryListenHost + ", progress: " + to_string(relativeProgress) +
-								", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated) + ", received: " + to_string(relativeReceived) +
-								", size: " + to_string(relativeSize) + ", uploadingPercentage: " + to_string(relativeUploadingPercentage)
+							SPDLOG_INFO(
+								"Upload still running"
+								", ingestionJobKey: {}"
+								", progressId: {}"
+								", binaryVirtualHostName: {}"
+								", binaryListenHost: {}"
+								", progress: {}"
+								", lastPercentageUpdated: {}"
+								", received: {}"
+								", size: {}"
+								", uploadingPercentage: {}",
+								itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, relativeProgress,
+								itr->_lastPercentageUpdated, relativeReceived, relativeSize, relativeUploadingPercentage
 							);
 						}
 
@@ -3328,11 +3614,15 @@ void API::fileUploadProgressCheck()
 						{
 							if (itr->_lastPercentageUpdated != absoluteUploadingPercentage)
 							{
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-									", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-									", binaryListenHost: " + itr->_binaryListenHost +
-									", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+								SPDLOG_INFO(
+									"Update IngestionJob"
+									", ingestionJobKey: {}"
+									", progressId: {}"
+									", binaryVirtualHostName: {}"
+									", binaryListenHost: {}"
+									", absoluteUploadingPercentage: {}",
+									itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost,
+									absoluteUploadingPercentage
 								);
 								_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress(itr->_ingestionJobKey, absoluteUploadingPercentage);
 
@@ -3343,11 +3633,15 @@ void API::fileUploadProgressCheck()
 						{
 							if (itr->_lastPercentageUpdated != relativeUploadingPercentage)
 							{
-								_logger->info(
-									__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-									", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-									", binaryListenHost: " + itr->_binaryListenHost +
-									", uploadingPercentage: " + to_string(relativeUploadingPercentage)
+								SPDLOG_INFO(
+									"Update IngestionJob"
+									", ingestionJobKey: {}"
+									", progressId: {}"
+									", binaryVirtualHostName: {}"
+									", binaryListenHost: {}"
+									", uploadingPercentage: {}",
+									itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost,
+									relativeUploadingPercentage
 								);
 								_mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress(itr->_ingestionJobKey, relativeUploadingPercentage);
 
@@ -3357,42 +3651,60 @@ void API::fileUploadProgressCheck()
 					}
 					else
 					{
-						string errorMessage = string("file upload progress. State is wrong") + ", state: " + state +
-											  ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) + ", progressId: " + itr->_progressId +
-											  ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-											  ", binaryListenHost: " + itr->_binaryListenHost + ", callFailures: " + to_string(itr->_callFailures) +
-											  ", progressURL: " + progressURL + ", progressIdHeader: " + progressIdHeader;
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"file upload progress. State is wrong"
+							", state: {}"
+							", ingestionJobKey: {}"
+							", progressId: {}"
+							", binaryVirtualHostName: {}"
+							", binaryListenHost: {}"
+							", callFailures: {}"
+							", progressURL: {}"
+							", progressIdHeader: {}",
+							state, itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, itr->_callFailures,
+							progressURL, progressIdHeader
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
 				catch (...)
 				{
-					string errorMessage = string("response Body json is not well format")
+					string errorMessage = "response Body json is not well format"
 						// + ", sResponse: " + sResponse
 						;
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 			catch (runtime_error e)
 			{
-				_logger->error(
-					__FILEREF__ + "Call for upload progress failed (runtime_error)" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-					", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-					", binaryListenHost: " + itr->_binaryListenHost + ", callFailures: " + to_string(itr->_callFailures) + ", exception: " + e.what()
+				SPDLOG_ERROR(
+					"Call for upload progress failed"
+					", ingestionJobKey: {}"
+					", progressId: {}"
+					", binaryVirtualHostName: {}"
+					", binaryListenHost: {}"
+					", callFailures: {}"
+					", exception: {}",
+					itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, itr->_callFailures, e.what()
 				);
 
 				itr->_callFailures = itr->_callFailures + 1;
 			}
 			catch (exception e)
 			{
-				_logger->error(
-					__FILEREF__ + "Call for upload progress failed (exception)" + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey) +
-					", progressId: " + itr->_progressId + ", binaryVirtualHostName: " + itr->_binaryVirtualHostName +
-					", binaryListenHost: " + itr->_binaryListenHost + ", callFailures: " + to_string(itr->_callFailures) + ", exception: " + e.what()
+				SPDLOG_ERROR(
+					"Call for upload progress failed"
+					", ingestionJobKey: {}"
+					", progressId: {}"
+					", binaryVirtualHostName: {}"
+					", binaryListenHost: {}"
+					", callFailures: {}"
+					", exception: {}",
+					itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, itr->_callFailures, e.what()
 				);
 
 				itr->_callFailures = itr->_callFailures + 1;
@@ -3411,7 +3723,12 @@ void API::ingestionRootsStatus(
 {
 	string api = "ingestionRootsStatus";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -3449,9 +3766,13 @@ void API::ingestionRootsStatus(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3541,10 +3862,16 @@ void API::ingestionRootsStatus(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3552,10 +3879,16 @@ void API::ingestionRootsStatus(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3570,7 +3903,12 @@ void API::ingestionRootMetaDataContent(
 {
 	string api = "ingestionRootMetaDataContent";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -3578,8 +3916,8 @@ void API::ingestionRootMetaDataContent(
 		auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
 		if (ingestionRootKeyIt == queryParameters.end() || ingestionRootKeyIt->second == "")
 		{
-			string errorMessage = string("The 'ingestionRootKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'ingestionRootKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -3623,10 +3961,16 @@ void API::ingestionRootMetaDataContent(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3634,10 +3978,16 @@ void API::ingestionRootMetaDataContent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3652,7 +4002,12 @@ void API::ingestionJobsStatus(
 {
 	string api = "ingestionJobsStatus";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -3683,9 +4038,13 @@ void API::ingestionJobsStatus(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3875,10 +4234,16 @@ void API::ingestionJobsStatus(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3886,10 +4251,16 @@ void API::ingestionJobsStatus(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -3904,7 +4275,12 @@ void API::cancelIngestionJob(
 {
 	string api = "API::cancelIngestionJob";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -3912,8 +4288,8 @@ void API::cancelIngestionJob(
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
 		{
-			string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'ingestionJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -3975,19 +4351,25 @@ void API::cancelIngestionJob(
 
 		if (!forceCancel && ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 		{
-			string errorMessage = string("The IngestionJob cannot be removed because of his Status") +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus);
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"The IngestionJob cannot be removed because of his Status"
+				", ingestionJobKey: {}"
+				", ingestionStatus: {}",
+				ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus)
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_CanceledByUser" +
-			", errorMessage: " + ""
+		SPDLOG_INFO(
+			"Update IngestionJob"
+			", ingestionJobKey: {}"
+			", IngestionStatus: End_CanceledByUser"
+			", errorMessage: ",
+			ingestionJobKey
 		);
 		_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_CanceledByUser, "");
 
@@ -3999,10 +4381,16 @@ void API::cancelIngestionJob(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4010,10 +4398,16 @@ void API::cancelIngestionJob(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4021,10 +4415,16 @@ void API::cancelIngestionJob(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4039,7 +4439,12 @@ void API::updateIngestionJob(
 {
 	string api = "updateIngestionJob";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -4047,8 +4452,8 @@ void API::updateIngestionJob(
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
 		{
-			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'ingestionJobKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -4058,9 +4463,11 @@ void API::updateIngestionJob(
 
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "ingestionJob_IngestionTypeStatus" + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
-				", ingestionJobKey: " + to_string(ingestionJobKey)
+			SPDLOG_INFO(
+				"ingestionJob_IngestionTypeStatus"
+				", workspace->_workspaceKey: {}"
+				", ingestionJobKey: {}",
+				workspace->_workspaceKey, ingestionJobKey
 			);
 
 			auto [ingestionType, ingestionStatus] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatus(
@@ -4071,11 +4478,14 @@ void API::updateIngestionJob(
 
 			if (ingestionStatus != MMSEngineDBFacade::IngestionStatus::Start_TaskQueued)
 			{
-				string errorMessage = string("It is not possible to update an IngestionJob that "
-											 "it is not in Start_TaskQueued status") +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus);
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"It is not possible to update an IngestionJob that "
+					"it is not in Start_TaskQueued status"
+					", ingestionJobKey: {}"
+					", ingestionStatus: {}",
+					ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus)
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4085,8 +4495,12 @@ void API::updateIngestionJob(
 			string field = "IngestionType";
 			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 			{
-				string errorMessage = string("IngestionType field is missing") + ", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"IngestionType field is missing"
+					", ingestionJobKey: {}",
+					ingestionJobKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4096,11 +4510,14 @@ void API::updateIngestionJob(
 			{
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder)
 				{
-					string errorMessage = string("It was requested an Update of Live-Recorder "
-												 "but IngestionType is not a LiveRecorder") +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										  ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"It was requested an Update of Live-Recorder "
+						"but IngestionType is not a LiveRecorder"
+						", ingestionJobKey: {}"
+						", ingestionType: {}",
+						ingestionJobKey, MMSEngineDBFacade::toString(ingestionType)
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4168,9 +4585,11 @@ void API::updateIngestionJob(
 						DateTime::sDateSecondsToUtc(newRecordingPeriodEnd);
 					}
 
-					_logger->info(
-						__FILEREF__ + "Update IngestionJob" + ", workspaceKey: " + to_string(workspace->_workspaceKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey)
+					SPDLOG_INFO(
+						"Update IngestionJob"
+						", workspaceKey: {}"
+						", ingestionJobKey: {}",
+						workspace->_workspaceKey, ingestionJobKey
 					);
 
 					_mmsEngineDBFacade->updateIngestionJob_LiveRecorder(
@@ -4179,9 +4598,11 @@ void API::updateIngestionJob(
 						recordingVirtualVODModified, newRecordingVirtualVOD, admin
 					);
 
-					_logger->info(
-						__FILEREF__ + "IngestionJob updated" + ", workspaceKey: " + to_string(workspace->_workspaceKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey)
+					SPDLOG_INFO(
+						"IngestionJob updated"
+						", workspaceKey: {}"
+						", ingestionJobKey: {}",
+						workspace->_workspaceKey, ingestionJobKey
 					);
 				}
 			}
@@ -4195,10 +4616,14 @@ void API::updateIngestionJob(
 		}
 		catch (DBRecordNotFound &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error: ") + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -4206,10 +4631,14 @@ void API::updateIngestionJob(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error: ") + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -4217,10 +4646,14 @@ void API::updateIngestionJob(
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"{} failed"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "Internal server error";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -4229,16 +4662,28 @@ void API::updateIngestionJob(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4253,7 +4698,11 @@ void API::ingestionJobSwitchToEncoder(
 {
 	string api = "ingestionJobSwitchToEncoder";
 
-	SPDLOG_INFO("Received {}", api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -4536,10 +4985,14 @@ void API::ingestionJobSwitchToEncoder(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"{} failed"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4547,10 +5000,15 @@ void API::ingestionJobSwitchToEncoder(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4558,10 +5016,15 @@ void API::ingestionJobSwitchToEncoder(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -4576,7 +5039,12 @@ void API::changeLiveProxyPlaylist(
 {
 	string api = "changeLiveProxyPlaylist";
 
-	SPDLOG_INFO("Received {}", api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -4718,7 +5186,7 @@ void API::changeLiveProxyPlaylist(
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null" +
 									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4734,7 +5202,7 @@ void API::changeLiveProxyPlaylist(
 				string errorMessage = __FILEREF__ + "The LiveProxy IngestionJob has to have timePeriod" +
 									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
 									  ", timePeriod: " + to_string(timePeriod);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6124,15 +6592,20 @@ void API::changeLiveProxyOverlayText(
 {
 	string api = "changeLiveProxyOverlayText";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
 		{
-			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'ingestionJobKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -6163,7 +6636,7 @@ void API::changeLiveProxyOverlayText(
 						", ingestionType: {}",
 						broadcasterIngestionJobKey, MMSEngineDBFacade::toString(ingestionType)
 					);
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -6179,7 +6652,7 @@ void API::changeLiveProxyOverlayText(
 						", ingestionType: {}",
 						broadcasterIngestionJobKey, sIngestionStatus, MMSEngineDBFacade::toString(ingestionType)
 					);
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -6205,7 +6678,7 @@ void API::changeLiveProxyOverlayText(
 						", broadcasterEncoderKey: {}", ", broadcasterIngestionJobKey: {}", broadcasterEncodingJobKey, broadcasterEncoderKey,
 						broadcasterIngestionJobKey
 					);
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -6228,10 +6701,15 @@ void API::changeLiveProxyOverlayText(
 		}
 		catch (DBRecordNotFound &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"API failed"
+				", API: {}"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error: ") + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -6239,10 +6717,15 @@ void API::changeLiveProxyOverlayText(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"API failed"
+				", API: {}"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error: ") + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -6250,10 +6733,15 @@ void API::changeLiveProxyOverlayText(
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"API failed"
+				", API: {}"
+				", e.what(): {}",
+				api, e.what()
+			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "Internal server error";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -6265,13 +6753,25 @@ void API::changeLiveProxyOverlayText(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		throw e;
 	}

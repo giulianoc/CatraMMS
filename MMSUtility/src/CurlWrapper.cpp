@@ -1058,7 +1058,7 @@ string CurlWrapper::httpGet(
 					api, referenceToLog, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(response, regex("\n"), " "),
 					responseCode
 				);
-				SPDLOG_ERROR(message);
+				SPDLOG_WARN(message);
 
 				throw runtime_error(message);
 			}
@@ -1624,7 +1624,7 @@ string CurlWrapper::httpDelete(
 					api, referenceToLog, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(response, regex("\n"), " "),
 					responseCode
 				);
-				SPDLOG_ERROR(message);
+				SPDLOG_WARN(message);
 
 				throw runtime_error(message);
 			}
@@ -2238,7 +2238,7 @@ pair<string, string> CurlWrapper::httpPostPutString(
 					", responseCode: {}",
 					api, referenceToLog, chrono::duration_cast<chrono::seconds>(end - start).count(), responseHeaderAndBody, responseCode
 				);
-				SPDLOG_ERROR(message);
+				SPDLOG_WARN(message);
 
 				throw runtime_error(message);
 			}
@@ -2960,7 +2960,7 @@ string CurlWrapper::httpPostPutFile(
 					api, referenceToLog, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(response, regex("\n"), " "),
 					responseCode
 				);
-				SPDLOG_ERROR(message);
+				SPDLOG_WARN(message);
 
 				throw runtime_error(message);
 			}
@@ -3544,7 +3544,7 @@ string CurlWrapper::httpPostPutFormData(
 					api, referenceToLog, chrono::duration_cast<chrono::seconds>(end - start).count(), regex_replace(response, regex("\n"), " "),
 					responseCode
 				);
-				SPDLOG_ERROR(message);
+				SPDLOG_WARN(message);
 
 				throw runtime_error(message);
 			}
@@ -4268,7 +4268,7 @@ string CurlWrapper::httpPostPutFileByFormData(
 					api, referenceToLog, chrono::duration_cast<chrono::seconds>(end - start).count(), curlUploadFormData.formData,
 					curlUploadFormData.endOfFormData, regex_replace(response, regex("\n"), " "), responseCode
 				);
-				SPDLOG_ERROR(message);
+				SPDLOG_WARN(message);
 
 				throw runtime_error(message);
 			}

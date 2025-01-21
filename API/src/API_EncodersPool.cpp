@@ -14,6 +14,8 @@
 #include "API.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "spdlog/spdlog.h"
+#include <format>
 #include <regex>
 
 void API::addEncoder(
@@ -23,8 +25,11 @@ void API::addEncoder(
 {
 	string api = "addEncoder";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -44,8 +49,12 @@ void API::addEncoder(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -60,8 +69,12 @@ void API::addEncoder(
 			field = "Protocol";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -70,8 +83,12 @@ void API::addEncoder(
 			field = "PublicServerName";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -80,8 +97,12 @@ void API::addEncoder(
 			field = "InternalServerName";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -102,15 +123,24 @@ void API::addEncoder(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}",
+				requestBody
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -124,13 +154,21 @@ void API::addEncoder(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -139,10 +177,16 @@ void API::addEncoder(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -150,10 +194,16 @@ void API::addEncoder(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -168,8 +218,11 @@ void API::modifyEncoder(
 {
 	string api = "modifyEncoder";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -264,15 +317,25 @@ void API::modifyEncoder(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -284,8 +347,8 @@ void API::modifyEncoder(
 			auto encoderKeyIt = queryParameters.find("encoderKey");
 			if (encoderKeyIt == queryParameters.end())
 			{
-				string errorMessage = string("The 'encoderKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = "The 'encoderKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -302,13 +365,21 @@ void API::modifyEncoder(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -317,10 +388,16 @@ void API::modifyEncoder(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -328,10 +405,16 @@ void API::modifyEncoder(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -346,7 +429,11 @@ void API::removeEncoder(
 {
 	string api = "removeEncoder";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -357,8 +444,8 @@ void API::removeEncoder(
 			auto encoderKeyIt = queryParameters.find("encoderKey");
 			if (encoderKeyIt == queryParameters.end())
 			{
-				string errorMessage = string("The 'encoderKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = "The 'encoderKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -372,13 +459,21 @@ void API::removeEncoder(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -387,10 +482,15 @@ void API::removeEncoder(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -398,10 +498,15 @@ void API::removeEncoder(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -416,7 +521,11 @@ void API::encoderList(
 {
 	string api = "encoderList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -504,7 +613,11 @@ void API::encoderList(
 			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
 				labelOrder = labelOrderIt->second;
 			else
-				_logger->warn(__FILEREF__ + "encoderList: 'labelOrder' parameter is unknown" + ", labelOrder: " + labelOrderIt->second);
+				SPDLOG_WARN(
+					"encoderList: 'labelOrder' parameter is unknown"
+					", labelOrder: {}",
+					labelOrderIt->second
+				);
 		}
 
 		bool runningInfo = false;
@@ -541,10 +654,15 @@ void API::encoderList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -552,10 +670,15 @@ void API::encoderList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -570,7 +693,11 @@ void API::encodersPoolList(
 {
 	string api = "encoderList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -600,9 +727,13 @@ void API::encodersPoolList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -631,7 +762,11 @@ void API::encodersPoolList(
 			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
 				labelOrder = labelOrderIt->second;
 			else
-				_logger->warn(__FILEREF__ + "encodersPoolList: 'labelOrder' parameter is unknown" + ", labelOrder: " + labelOrderIt->second);
+				SPDLOG_WARN(
+					"encodersPoolList: 'labelOrder' parameter is unknown"
+					", labelOrder: {}",
+					labelOrderIt->second
+				);
 		}
 
 		{
@@ -645,10 +780,15 @@ void API::encodersPoolList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -656,10 +796,15 @@ void API::encodersPoolList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -674,8 +819,11 @@ void API::addEncodersPool(
 {
 	string api = "addEncodersPool";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -690,8 +838,12 @@ void API::addEncodersPool(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -710,15 +862,24 @@ void API::addEncodersPool(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}",
+				requestBody
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -732,13 +893,21 @@ void API::addEncodersPool(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodersPool failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addEncodersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodersPool failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addEncodersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -747,10 +916,16 @@ void API::addEncodersPool(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -758,10 +933,16 @@ void API::addEncodersPool(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -776,8 +957,11 @@ void API::modifyEncodersPool(
 {
 	string api = "modifyEncodersPool";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -789,8 +973,8 @@ void API::modifyEncodersPool(
 		auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
 		if (encodersPoolKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'encodersPoolKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'encodersPoolKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -805,8 +989,12 @@ void API::modifyEncodersPool(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -825,15 +1013,25 @@ void API::modifyEncodersPool(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -847,13 +1045,21 @@ void API::modifyEncodersPool(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncodersPool failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyEncodersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyEncodersPool failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifyEncodersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -862,10 +1068,16 @@ void API::modifyEncodersPool(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -873,10 +1085,16 @@ void API::modifyEncodersPool(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -891,7 +1109,11 @@ void API::removeEncodersPool(
 {
 	string api = "removeEncodersPool";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -902,8 +1124,8 @@ void API::removeEncodersPool(
 			auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
 			if (encodersPoolKeyIt == queryParameters.end())
 			{
-				string errorMessage = string("The 'encodersPoolKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = "The 'encodersPoolKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -917,13 +1139,21 @@ void API::removeEncodersPool(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodersPool failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEncodersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodersPool failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEncodersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -932,10 +1162,15 @@ void API::removeEncodersPool(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -943,10 +1178,15 @@ void API::removeEncodersPool(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -961,7 +1201,11 @@ void API::addAssociationWorkspaceEncoder(
 {
 	string api = "addAssociationWorkspaceEncoder";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -972,8 +1216,8 @@ void API::addAssociationWorkspaceEncoder(
 			auto workspaceKeyIt = queryParameters.find("workspaceKey");
 			if (workspaceKeyIt == queryParameters.end())
 			{
-				string errorMessage = string("The 'workspaceKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = "The 'workspaceKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -985,8 +1229,8 @@ void API::addAssociationWorkspaceEncoder(
 			auto encoderKeyIt = queryParameters.find("encoderKey");
 			if (encoderKeyIt == queryParameters.end())
 			{
-				string errorMessage = string("The 'encoderKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = "The 'encoderKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -1000,13 +1244,21 @@ void API::addAssociationWorkspaceEncoder(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1015,10 +1267,15 @@ void API::addAssociationWorkspaceEncoder(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1026,10 +1283,15 @@ void API::addAssociationWorkspaceEncoder(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1044,7 +1306,11 @@ void API::removeAssociationWorkspaceEncoder(
 {
 	string api = "removeAssociationWorkspaceEncoder";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey));
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -1055,8 +1321,8 @@ void API::removeAssociationWorkspaceEncoder(
 			auto workspaceKeyIt = queryParameters.find("workspaceKey");
 			if (workspaceKeyIt == queryParameters.end())
 			{
-				string errorMessage = string("The 'workspaceKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = "The 'workspaceKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -1068,8 +1334,8 @@ void API::removeAssociationWorkspaceEncoder(
 			auto encoderKeyIt = queryParameters.find("encoderKey");
 			if (encoderKeyIt == queryParameters.end())
 			{
-				string errorMessage = string("The 'encoderKey' parameter is not found");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = "The 'encoderKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 400, errorMessage);
 
@@ -1083,13 +1349,21 @@ void API::removeAssociationWorkspaceEncoder(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1098,10 +1372,15 @@ void API::removeAssociationWorkspaceEncoder(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1109,10 +1388,15 @@ void API::removeAssociationWorkspaceEncoder(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 

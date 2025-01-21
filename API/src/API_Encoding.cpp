@@ -29,7 +29,12 @@ void API::encodingJobsStatus(
 {
 	string api = "encodingJobsStatus";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -59,9 +64,13 @@ void API::encodingJobsStatus(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -163,10 +172,16 @@ void API::encodingJobsStatus(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -174,10 +189,16 @@ void API::encodingJobsStatus(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -192,7 +213,12 @@ void API::encodingJobPriority(
 {
 	string api = "encodingJobPriority";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -235,9 +261,11 @@ void API::encodingJobPriority(
 
 			if (!newEncodingJobPriorityPresent && !tryEncodingAgain)
 			{
-				_logger->warn(
-					__FILEREF__ + "Useless API call, no encoding update was done" + ", newEncodingJobPriorityPresent: " +
-					to_string(newEncodingJobPriorityPresent) + ", tryEncodingAgain: " + to_string(tryEncodingAgain)
+				SPDLOG_WARN(
+					"Useless API call, no encoding update was done"
+					", newEncodingJobPriorityPresent: {}"
+					", tryEncodingAgain: {}",
+					newEncodingJobPriorityPresent, tryEncodingAgain
 				);
 			}
 
@@ -248,10 +276,16 @@ void API::encodingJobPriority(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -259,10 +293,16 @@ void API::encodingJobPriority(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -279,8 +319,9 @@ void API::killOrCancelEncodingJob(
 
 	SPDLOG_INFO(
 		"Received {}"
+		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, requestBody
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -392,16 +433,20 @@ void API::killOrCancelEncodingJob(
 
 								if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 								{
-									_logger->info(
-										__FILEREF__ + "killEncodingJob and updateEncodingJobIsKilled failed, force update of the status" +
-										", encoderKey: " + to_string(encoderKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", encodingJobKey: " + to_string(encodingJobKey)
+									SPDLOG_INFO(
+										"killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
+										", encoderKey: {}"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}",
+										encoderKey, ingestionJobKey, encodingJobKey
 									);
 
 									{
-										_logger->info(
-											__FILEREF__ + "updateEncodingJob KilledByUser" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											", encodingJobKey: " + to_string(encodingJobKey)
+										SPDLOG_INFO(
+											"updateEncodingJob KilledByUser"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}",
+											ingestionJobKey, encodingJobKey
 										);
 
 										_mmsEngineDBFacade->updateEncodingJob(
@@ -457,16 +502,20 @@ void API::killOrCancelEncodingJob(
 
 								if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 								{
-									_logger->info(
-										__FILEREF__ + "killEncodingJob and updateEncodingJobIsKilled failed, force update of the status" +
-										", encoderKey: " + to_string(encoderKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", encodingJobKey: " + to_string(encodingJobKey)
+									SPDLOG_INFO(
+										"killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
+										", encoderKey: {}"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}",
+										encoderKey, ingestionJobKey, encodingJobKey
 									);
 
 									{
-										_logger->info(
-											__FILEREF__ + "updateEncodingJob KilledByUser" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											", encodingJobKey: " + to_string(encodingJobKey)
+										SPDLOG_INFO(
+											"updateEncodingJob KilledByUser"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}",
+											ingestionJobKey, encodingJobKey
 										);
 
 										_mmsEngineDBFacade->updateEncodingJob(
@@ -703,7 +752,7 @@ void API::killOrCancelEncodingJob(
 			api, requestBody, e.what()
 		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
+		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
@@ -720,7 +769,7 @@ void API::killOrCancelEncodingJob(
 			api, requestBody, e.what()
 		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
+		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
@@ -737,7 +786,7 @@ void API::killOrCancelEncodingJob(
 			api, requestBody, e.what()
 		);
 
-		string errorMessage = string("Internal server error");
+		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
@@ -753,7 +802,11 @@ void API::encodingProfilesSetsList(
 {
 	string api = "encodingProfilesSetsList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -786,10 +839,15 @@ void API::encodingProfilesSetsList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -797,10 +855,15 @@ void API::encodingProfilesSetsList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -815,7 +878,11 @@ void API::encodingProfilesList(
 {
 	string api = "encodingProfilesList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -863,10 +930,15 @@ void API::encodingProfilesList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -874,10 +946,15 @@ void API::encodingProfilesList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -892,15 +969,20 @@ void API::addUpdateEncodingProfilesSet(
 {
 	string api = "addUpdateEncodingProfilesSet";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
 		auto sContentTypeIt = queryParameters.find("contentType");
 		if (sContentTypeIt == queryParameters.end())
 		{
-			string errorMessage = string("'contentType' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'contentType' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -926,8 +1008,12 @@ void API::addUpdateEncodingProfilesSet(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -989,7 +1075,11 @@ void API::addUpdateEncodingProfilesSet(
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
 
-			_logger->error(__FILEREF__ + "request body parsing failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"request body parsing failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1002,7 +1092,11 @@ void API::addUpdateEncodingProfilesSet(
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
 
-			_logger->error(__FILEREF__ + "request body parsing failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"request body parsing failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1011,10 +1105,16 @@ void API::addUpdateEncodingProfilesSet(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1022,10 +1122,16 @@ void API::addUpdateEncodingProfilesSet(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1040,15 +1146,20 @@ void API::addEncodingProfile(
 {
 	string api = "addEncodingProfile";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
 		auto sContentTypeIt = queryParameters.find("contentType");
 		if (sContentTypeIt == queryParameters.end())
 		{
-			string errorMessage = string("'contentType' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'contentType' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1068,8 +1179,12 @@ void API::addEncodingProfile(
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1100,11 +1215,12 @@ void API::addEncodingProfile(
 					deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 				*/
 
-				_logger->info(
-					__FILEREF__ + "deliveryTechnology" + ", fileFormat: " +
-					fileFormat
+				SPDLOG_INFO(
+					"deliveryTechnology"
+					", fileFormat: {}"
 					// + ", fileFormatLowerCase: " + fileFormatLowerCase
-					+ ", deliveryTechnology: " + MMSEngineDBFacade::toString(deliveryTechnology)
+					", deliveryTechnology: {}",
+					fileFormat, MMSEngineDBFacade::toString(deliveryTechnology)
 				);
 			}
 
@@ -1121,13 +1237,21 @@ void API::addEncodingProfile(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodingProfile failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addEncodingProfile failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodingProfile failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addEncodingProfile failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1136,10 +1260,16 @@ void API::addEncodingProfile(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1147,10 +1277,16 @@ void API::addEncodingProfile(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1165,15 +1301,19 @@ void API::removeEncodingProfile(
 {
 	string api = "removeEncodingProfile";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
 		auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
 		if (encodingProfileKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("'encodingProfileKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'encodingProfileKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1187,13 +1327,21 @@ void API::removeEncodingProfile(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfile failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEncodingProfile failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfile failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEncodingProfile failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1204,10 +1352,15 @@ void API::removeEncodingProfile(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1215,10 +1368,15 @@ void API::removeEncodingProfile(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1233,15 +1391,19 @@ void API::removeEncodingProfilesSet(
 {
 	string api = "removeEncodingProfilesSet";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
 		auto encodingProfilesSetKeyIt = queryParameters.find("encodingProfilesSetKey");
 		if (encodingProfilesSetKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("'encodingProfilesSetKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'encodingProfilesSetKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1255,13 +1417,21 @@ void API::removeEncodingProfilesSet(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfilesSet failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEncodingProfilesSet failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfilesSet failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeEncodingProfilesSet failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -1272,10 +1442,15 @@ void API::removeEncodingProfilesSet(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1283,10 +1458,15 @@ void API::removeEncodingProfilesSet(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1324,18 +1504,26 @@ void API::killEncodingJob(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "killEncoding URL failed (runtime_error)" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ffmpegEncoderURL: " + ffmpegEncoderURL + ", exception: " + e.what() + ", response.str(): " + response.str()
+		SPDLOG_ERROR(
+			"killEncoding URL failed"
+			", encodingJobKey: {}"
+			", ffmpegEncoderURL: {}"
+			", exception: {}"
+			", response.str(): {}",
+			encodingJobKey, ffmpegEncoderURL, e.what(), response.str()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "killEncoding URL failed (exception)" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ffmpegEncoderURL: " + ffmpegEncoderURL + ", exception: " + e.what() + ", response.str(): " + response.str()
+		SPDLOG_ERROR(
+			"killEncoding URL failed"
+			", encodingJobKey: {}"
+			", ffmpegEncoderURL: {}"
+			", exception: {}"
+			", response.str(): {}",
+			encodingJobKey, ffmpegEncoderURL, e.what(), response.str()
 		);
 
 		throw e;
