@@ -10,9 +10,12 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 {
 	string api = "addSilentAudio";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-		", requestBody: " + JSONUtils::toString(metadataRoot)
+	SPDLOG_INFO(
+		"Received {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", requestBody: {}",
+		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	try
@@ -55,9 +58,12 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = sourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(
-							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+						SPDLOG_INFO(
+							"Creating directory"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}",
+							_ingestionJobKey, _encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -77,9 +83,12 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(
-							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+						SPDLOG_INFO(
+							"Creating directory"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}",
+							_ingestionJobKey, _encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -117,9 +126,12 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 
 				_encoding->_ffmpegTerminatedSuccessful = true;
 
-				_logger->info(
-					__FILEREF__ + "Encode content finished" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+				SPDLOG_INFO(
+					"Encode content finished"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", encodedStagingAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName
 				);
 			}
 			catch (FFMpegEncodingKilledByUser &e)
@@ -132,10 +144,12 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 					throw e;
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "ffmpeg failed but we will continue with the next one" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingJobKey) +
-						", stopIfReferenceProcessingError: " + to_string(stopIfReferenceProcessingError)
+					SPDLOG_INFO(
+						"ffmpeg failed but we will continue with the next one"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", stopIfReferenceProcessingError: {}",
+						_ingestionJobKey, _encodingJobKey, stopIfReferenceProcessingError
 					);
 
 					continue;
@@ -147,10 +161,12 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 					throw e;
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "ffmpeg failed but we will continue with the next one" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingJobKey) +
-						", stopIfReferenceProcessingError: " + to_string(stopIfReferenceProcessingError)
+					SPDLOG_INFO(
+						"ffmpeg failed but we will continue with the next one"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", stopIfReferenceProcessingError: {}",
+						_ingestionJobKey, _encodingJobKey, stopIfReferenceProcessingError
 					);
 
 					continue;
@@ -160,11 +176,13 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 			if (externalEncoder)
 			{
 				{
-					_logger->info(
-						__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingJobKey) + ", sourceAssetPathName: " + sourceAssetPathName
+					SPDLOG_INFO(
+						"Remove file"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", sourceAssetPathName: {}",
+						_ingestionJobKey, _encodingJobKey, sourceAssetPathName
 					);
-
 					fs::remove_all(sourceAssetPathName);
 				}
 

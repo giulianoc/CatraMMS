@@ -1507,6 +1507,21 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			// viene usato dalla select di getIngestionsToBeManaged
+			string sqlStatement = "create index if not exists MMS_IngestionJob_idx9 on MMS_IngestionJob(priority, processingstartingfrom, "
+								  "(toBeManaged_virtual = true), processorMMS, scheduleStart_virtual) NULLS NOT DISTINCT";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.exec0(sqlStatement);
+			SPDLOG_INFO(
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			);
+		}
+
+		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx10 on MMS_IngestionJob (status)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
@@ -1565,21 +1580,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// viene usato dalla select di getIngestionsToBeManaged
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx14 on MMS_IngestionJob (processorMMS, status, "
 								  "sourceBinaryTransferred, processingStartingFrom, scheduleStart_virtual)";
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
-			SPDLOG_INFO(
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-		}
-
-		{
-			// viene usato dalla select di getIngestionsToBeManaged
-			string sqlStatement = "create index if not exists MMS_IngestionJob_idx15 on MMS_IngestionJob(priority, processingstartingfrom, "
-								  "toBeManaged_virtual, processorMMS, scheduleStart_virtual) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			SPDLOG_INFO(

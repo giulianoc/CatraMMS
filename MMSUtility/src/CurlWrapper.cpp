@@ -5389,14 +5389,11 @@ size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *f)
 }
 
 void CurlWrapper::sendEmail(
-	string emailServerURL, // i.e.: smtps://smtppro.zoho.eu:465
-	string from,		   // i.e.: info@catramms-cloud.com
-	string tosCommaSeparated, string ccsCommaSeparated, string subject, vector<string> &emailBody,
-	// 2023-02-18: usiamo 'from' come username perchè, mi è sembrato che ZOHO
-	// blocca l'email
-	//	se username e from sono diversi
-	// string userName,	// i.e.: info@catramms-cloud.com
-	string password
+	string emailServerURL, // i.e.: smtps://xxx.xxx.xxx:465
+	string userName,	   // i.e.: xxx@xxx.com
+	// 2023-02-18: mi è sembrato che il provider blocca l'email se username e from sono diversi!!!
+	string password, string from, string tosCommaSeparated, string ccsCommaSeparated, string subject, vector<string> &emailBody,
+	string contentType // i.e.: text/html; charset=\"UTF-8\"
 )
 {
 	// see: https://everything.curl.dev/usingcurl/smtp
@@ -5409,7 +5406,7 @@ void CurlWrapper::sendEmail(
 
 	{
 		// add From
-		curlUploadEmailData.emailLines.push_back(string("From: <") + from + ">" + "\r\n");
+		curlUploadEmailData.emailLines.push_back(std::format("From: <{}>\r\n", from));
 
 		// add To
 		{
@@ -5423,13 +5420,13 @@ void CurlWrapper::sendEmail(
 				if (!address.empty())
 				{
 					if (addresses == "")
-						addresses = string("<") + address + ">";
+						addresses = std::format("<{}>", address);
 					else
-						addresses += (string(", <") + address + ">");
+						addresses += std::format(", <{}>", address);
 				}
 			}
 
-			curlUploadEmailData.emailLines.push_back(string("To: ") + addresses + "\r\n");
+			curlUploadEmailData.emailLines.push_back(std::format("To: {}\r\n", addresses));
 		}
 
 		// add Cc
@@ -5445,17 +5442,17 @@ void CurlWrapper::sendEmail(
 				if (!address.empty())
 				{
 					if (addresses == "")
-						addresses = string("<") + address + ">";
+						addresses = std::format("<{}>", address);
 					else
-						addresses += (string(", <") + address + ">");
+						addresses += std::format(", <{}>", address);
 				}
 			}
 
-			curlUploadEmailData.emailLines.push_back(string("Cc: ") + addresses + "\r\n");
+			curlUploadEmailData.emailLines.push_back(std::format("Cc: {}\r\n", addresses));
 		}
 
-		curlUploadEmailData.emailLines.push_back(string("Subject: ") + subject + "\r\n");
-		curlUploadEmailData.emailLines.push_back(string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n");
+		curlUploadEmailData.emailLines.push_back(std::format("Subject: {}\r\n", subject));
+		curlUploadEmailData.emailLines.push_back(std::format("Content-Type: {}\r\n", contentType));
 		curlUploadEmailData.emailLines.push_back("\r\n"); // empty line to divide headers from body, see RFC5322
 		curlUploadEmailData.emailLines.insert(curlUploadEmailData.emailLines.end(), emailBody.begin(), emailBody.end());
 	}

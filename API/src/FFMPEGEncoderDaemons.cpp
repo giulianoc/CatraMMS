@@ -8,6 +8,7 @@
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
+#include "spdlog/spdlog.h"
 #include <sstream>
 
 FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
@@ -30,20 +31,24 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_cpuUsageThreadShutdown = false;
 
 		_monitorCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
-		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->monitorCheckInSeconds: " + to_string(_monitorCheckInSeconds));
+		SPDLOG_INFO(
+			"Configuration item"
+			", ffmpeg->monitorCheckInSeconds: {}",
+			_monitorCheckInSeconds
+		);
 
 		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
 		_maxRealTimeInfoTimestampDiscontinuity = 400;
 	}
 	catch (runtime_error &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
+		// error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
 	catch (exception &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
+		// error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
@@ -56,13 +61,13 @@ FFMPEGEncoderDaemons::~FFMPEGEncoderDaemons()
 	}
 	catch (runtime_error &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
+		// error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
 	catch (exception &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
+		// error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
@@ -164,14 +169,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveProxy->_childPid == 0 || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor. LiveProxy changed" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-						", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid) +
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count()) +
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childPid: {}"
+						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, sourceLiveProxy->_childPid,
+						copiedLiveProxy->_proxyStart.time_since_epoch().count(), sourceLiveProxy->_proxyStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -191,7 +198,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					/*
 					if (liveProxyLiveTimeInMinutes <= 3)
 					{
-						_logger->info(
+						info(
 							__FILEREF__ + "liveProxyMonitor. Checks are not done because too early" + ", ingestionJobKey: " +
 							to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
 							", liveProxyLiveTimeInMinutes: " + to_string(liveProxyLiveTimeInMinutes)
@@ -204,14 +211,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveProxy->_childPid == 0 || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor. LiveProxy changed" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-						", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid) +
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count()) +
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childPid: {}"
+						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, sourceLiveProxy->_childPid,
+						copiedLiveProxy->_proxyStart.time_since_epoch().count(), sourceLiveProxy->_proxyStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -225,9 +234,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				bool rtmpOutputFound = false;
 				if (liveProxyWorking && liveProxyLiveTimeInSeconds > 3 * 60)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor manifest check" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel
+					SPDLOG_INFO(
+						"liveProxyMonitor manifest check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
 					);
 
 					for (int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size(); outputIndex++)
@@ -255,10 +267,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											liveProxyWorking = false;
 
-											_logger->error(
-												__FILEREF__ + "liveProxyMonitor. Manifest file does not exist" +
-												", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-												to_string(copiedLiveProxy->_encodingJobKey) + ", manifestFilePathName: " + manifestFilePathName
+											SPDLOG_ERROR(
+												"liveProxyMonitor. Manifest file does not exist"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", manifestFilePathName: {}",
+												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestFilePathName
 											);
 
 											localErrorMessage = " restarted because of 'manifest file is missing'";
@@ -286,14 +300,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											{
 												liveProxyWorking = false;
 
-												_logger->error(
-													__FILEREF__ + "liveProxyMonitor. Manifest file was not updated " + "in the last " +
-													to_string(maxLastManifestFileUpdateInSeconds) + " seconds" +
-													", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-													to_string(copiedLiveProxy->_encodingJobKey) + ", manifestFilePathName: " + manifestFilePathName +
-													", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) +
-													" seconds ago" +
-													", maxLastManifestFileUpdateInSeconds: " + to_string(maxLastManifestFileUpdateInSeconds)
+												SPDLOG_ERROR(
+													"liveProxyMonitor. Manifest file was not updated in the last {} seconds"
+													", ingestionJobKey: {}"
+													", encodingJobKey: {}"
+													", manifestFilePathName: {}"
+													", lastManifestFileUpdateInSeconds: {} seconds ago"
+													", maxLastManifestFileUpdateInSeconds: {}",
+													maxLastManifestFileUpdateInSeconds, copiedLiveProxy->_ingestionJobKey,
+													copiedLiveProxy->_encodingJobKey, manifestFilePathName, lastManifestFileUpdateInSeconds,
+													maxLastManifestFileUpdateInSeconds
 												);
 
 												localErrorMessage = " restarted because of 'manifest file was not updated'";
@@ -306,21 +322,25 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							catch (runtime_error &e)
 							{
-								string errorMessage = string("liveProxyMonitor (HLS) on manifest path name failed") +
-													  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-													  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-													  ", e.what(): " + e.what();
-
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = std::format(
+									"liveProxyMonitor (HLS) on manifest path name failed"
+									", copiedLiveProxy->_ingestionJobKey: {}"
+									", copiedLiveProxy->_encodingJobKey: {}"
+									", e.what(): {}",
+									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+								);
+								SPDLOG_ERROR(errorMessage);
 							}
 							catch (exception &e)
 							{
-								string errorMessage = string("liveProxyMonitor (HLS) on manifest path name failed") +
-													  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-													  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-													  ", e.what(): " + e.what();
-
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = std::format(
+									"liveProxyMonitor (HLS) on manifest path name failed"
+									", copiedLiveProxy->_ingestionJobKey: {}"
+									", copiedLiveProxy->_encodingJobKey: {}"
+									", e.what(): {}",
+									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+								);
+								SPDLOG_ERROR(errorMessage);
 							}
 						}
 						else // rtmp (Proxy) or SRT (Grid)
@@ -332,14 +352,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveProxy->_childPid == 0 || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor. LiveProxy changed" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-						", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid) +
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count()) +
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childPid: {}"
+						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, sourceLiveProxy->_childPid,
+						copiedLiveProxy->_proxyStart.time_since_epoch().count(), to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
 					);
 
 					continue;
@@ -349,10 +371,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				{
 					try
 					{
-						_logger->info(
-							__FILEREF__ + "liveProxyMonitor nonMonotonousDTSInOutputLog check" +
-							", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-							", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel
+						SPDLOG_INFO(
+							"liveProxyMonitor nonMonotonousDTSInOutputLog check"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", configurationLabel: {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
 						);
 
 						// First health check (rtmp), looks the log and check there is no message like
@@ -362,14 +386,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						{
 							liveProxyWorking = false;
 
-							_logger->error(
-								__FILEREF__ +
+							SPDLOG_ERROR(
 								"liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. "
-								"LiveProxy (ffmpeg) is killed in order to be started again" +
-								", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-								to_string(copiedLiveProxy->_encodingJobKey)
-								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
-								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+								"LiveProxy (ffmpeg) is killed in order to be started again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", copiedLiveProxy->_childPid: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, copiedLiveProxy->_childPid
 							);
 
 							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
@@ -377,34 +400,40 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) Non-monotonous DTS failed") +
-											  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor (rtmp) Non-monotonous DTS failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) Non-monotonous DTS failed") +
-											  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor (rtmp) Non-monotonous DTS failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
 				if (sourceLiveProxy->_childPid == 0 || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor. LiveProxy changed" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-						", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid) +
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count()) +
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childPid: {}"
+						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, sourceLiveProxy->_childPid,
+						copiedLiveProxy->_proxyStart.time_since_epoch().count(), sourceLiveProxy->_proxyStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -421,9 +450,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// in order to be sure the manifest file was already created
 				if (liveProxyWorking && liveProxyLiveTimeInSeconds > 3 * 60)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor segments check" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel
+					SPDLOG_INFO(
+						"liveProxyMonitor segments check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
 					);
 
 					for (int outputIndex = 0; outputIndex < copiedLiveProxy->_outputsRoot.size(); outputIndex++)
@@ -466,12 +498,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
 											if (manifestFilePathIndex == string::npos)
 											{
-												string errorMessage =
-													__FILEREF__ + "liveProxyMonitor. No manifestDirectoryPath find in the m3u8/mpd file path name" +
-													", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-													", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-													", manifestFilePathName: " + manifestFilePathName;
-												_logger->error(errorMessage);
+												string errorMessage = std::format(
+													"liveProxyMonitor. No manifestDirectoryPath find in the m3u8/mpd file path name"
+													", copiedLiveProxy->_ingestionJobKey: {}"
+													", copiedLiveProxy->_encodingJobKey: {}"
+													", manifestFilePathName: {}",
+													copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestFilePathName
+												);
+												SPDLOG_ERROR(errorMessage);
 
 												throw runtime_error(errorMessage);
 											}
@@ -520,16 +554,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 																chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
 															if (lastFileUpdateInSeconds > liveProxyChunkRetentionInSeconds)
 															{
-																_logger->info(
-																	__FILEREF__ + "liveProxyMonitor. chunk to be removed, too old" +
-																	", copiedLiveProxy->_ingestionJobKey: " +
-																	to_string(copiedLiveProxy->_ingestionJobKey) +
-																	", copiedLiveProxy->_encodingJobKey: " +
-																	to_string(copiedLiveProxy->_encodingJobKey) +
-																	", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved +
-																	", lastFileUpdateInSeconds: " + to_string(lastFileUpdateInSeconds) +
-																	" seconds ago" + ", liveProxyChunkRetentionInSeconds: " +
-																	to_string(liveProxyChunkRetentionInSeconds)
+																SPDLOG_INFO(
+																	"liveProxyMonitor. chunk to be removed, too old"
+																	", copiedLiveProxy->_ingestionJobKey: {}"
+																	", copiedLiveProxy->_encodingJobKey: {}"
+																	", segmentPathNameToBeRemoved: {}"
+																	", lastFileUpdateInSeconds: {} seconds ago"
+																	", liveProxyChunkRetentionInSeconds: {}",
+																	copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
+																	segmentPathNameToBeRemoved, lastFileUpdateInSeconds,
+																	liveProxyChunkRetentionInSeconds
 																);
 
 																chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
@@ -543,23 +577,31 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 													}
 													catch (runtime_error &e)
 													{
-														string errorMessage =
-															__FILEREF__ + "liveProxyMonitor. listing directory failed" +
-															", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-															", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-															", manifestDirectoryPathName: " + manifestDirectoryPathName + ", e.what(): " + e.what();
-														_logger->error(errorMessage);
+														string errorMessage = std::format(
+															"liveProxyMonitor. listing directory failed"
+															", copiedLiveProxy->_ingestionJobKey: {}"
+															", copiedLiveProxy->_encodingJobKey: {}"
+															", manifestDirectoryPathName: {}"
+															", e.what(): {}",
+															copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
+															manifestDirectoryPathName, e.what()
+														);
+														SPDLOG_ERROR(errorMessage);
 
 														// throw e;
 													}
 													catch (exception &e)
 													{
-														string errorMessage =
-															__FILEREF__ + "liveProxyMonitor. listing directory failed" +
-															", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-															", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-															", manifestDirectoryPathName: " + manifestDirectoryPathName + ", e.what(): " + e.what();
-														_logger->error(errorMessage);
+														string errorMessage = std::format(
+															"liveProxyMonitor. listing directory failed"
+															", copiedLiveProxy->_ingestionJobKey: {}"
+															", copiedLiveProxy->_encodingJobKey: {}"
+															", manifestDirectoryPathName: {}"
+															", e.what(): {}",
+															copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
+															manifestDirectoryPathName, e.what()
+														);
+														SPDLOG_ERROR(errorMessage);
 
 														// throw e;
 													}
@@ -568,20 +610,24 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										}
 										catch (runtime_error &e)
 										{
-											_logger->error(
-												__FILEREF__ + "liveProxyMonitor. scan LiveProxy files failed" +
-												", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-												", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-												", manifestDirectoryPathName: " + manifestDirectoryPathName + ", e.what(): " + e.what()
+											SPDLOG_ERROR(
+												"liveProxyMonitor. scan LiveProxy files failed"
+												", _ingestionJobKey: {}"
+												", _encodingJobKey: {}"
+												", manifestDirectoryPathName: {}"
+												", e.what(): {}",
+												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestDirectoryPathName,
+												e.what()
 											);
 										}
 										catch (...)
 										{
-											_logger->error(
-												__FILEREF__ + "liveProxyMonitor. scan LiveProxy files failed" +
-												", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-												", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-												", manifestDirectoryPathName: " + manifestDirectoryPathName
+											SPDLOG_ERROR(
+												"liveProxyMonitor. scan LiveProxy files failed"
+												", _ingestionJobKey: {}"
+												", _encodingJobKey: {}"
+												", manifestDirectoryPathName: {}",
+												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestDirectoryPathName
 											);
 										}
 
@@ -589,12 +635,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											// if we are here, it means the ffmpeg command is not generating the ts files
 
-											_logger->error(
-												__FILEREF__ + "liveProxyMonitor. Chunks were not generated" +
-												", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-												", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-												", manifestDirectoryPathName: " + manifestDirectoryPathName +
-												", firstChunkRead: " + to_string(firstChunkRead)
+											SPDLOG_ERROR(
+												"liveProxyMonitor. Chunks were not generated"
+												", copiedLiveProxy->_ingestionJobKey: {}"
+												", copiedLiveProxy->_encodingJobKey: {}"
+												", manifestDirectoryPathName: {}"
+												", firstChunkRead: {}",
+												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestDirectoryPathName,
+												firstChunkRead
 											);
 
 											chunksWereNotGenerated = true;
@@ -602,15 +650,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											liveProxyWorking = false;
 											localErrorMessage = " restarted because of 'no segments were generated'";
 
-											_logger->error(
-												__FILEREF__ +
+											SPDLOG_ERROR(
 												"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor. Live Proxy is not "
-												"working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again" +
-												", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-												", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", manifestFilePathName: " +
-												manifestFilePathName
-												// + ", channelLabel: " + copiedLiveProxy->_channelLabel
-												+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+												"working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", manifestFilePathName: {}"
+												", copiedLiveProxy->_childPid: {}",
+												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestFilePathName,
+												copiedLiveProxy->_childPid
 											);
 
 											// we killed the process, we do not care to remove the too old segments
@@ -623,21 +671,25 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											{
 												try
 												{
-													_logger->info(
-														__FILEREF__ + "liveProxyMonitor. Remove chunk because too old" +
-														", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-														", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-														", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+													SPDLOG_INFO(
+														"liveProxyMonitor. Remove chunk because too old"
+														", copiedLiveProxy->_ingestionJobKey: {}"
+														", copiedLiveProxy->_encodingJobKey: {}"
+														", segmentPathNameToBeRemoved: {}",
+														copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
+														segmentPathNameToBeRemoved
 													);
 													fs::remove_all(segmentPathNameToBeRemoved);
 												}
 												catch (runtime_error &e)
 												{
-													_logger->error(
-														__FILEREF__ + "liveProxyMonitor. remove failed" +
-														", _ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-														", _encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-														", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved + ", e.what(): " + e.what()
+													SPDLOG_ERROR(
+														"liveProxyMonitor. remove failed"
+														", copiedLiveProxy->_ingestionJobKey: {}"
+														", copiedLiveProxy->_encodingJobKey: {}"
+														", segmentPathNameToBeRemoved: {}",
+														copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
+														segmentPathNameToBeRemoved
 													);
 												}
 											}
@@ -647,21 +699,25 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							catch (runtime_error &e)
 							{
-								string errorMessage = string("liveProxyMonitor (HLS) on segments (and retention) failed") +
-													  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-													  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-													  ", e.what(): " + e.what();
-
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = std::format(
+									"liveProxyMonitor (HLS) on segments (and retention) failed"
+									", copiedLiveProxy->_ingestionJobKey: {}"
+									", copiedLiveProxy->_encodingJobKey: {}"
+									", e.what(): {}",
+									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+								);
+								SPDLOG_ERROR(errorMessage);
 							}
 							catch (exception &e)
 							{
-								string errorMessage = string("liveProxyMonitor (HLS) on segments (and retention) failed") +
-													  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-													  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-													  ", e.what(): " + e.what();
-
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = std::format(
+									"liveProxyMonitor (HLS) on segments (and retention) failed"
+									", copiedLiveProxy->_ingestionJobKey: {}"
+									", copiedLiveProxy->_encodingJobKey: {}"
+									", e.what(): {}",
+									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+								);
+								SPDLOG_ERROR(errorMessage);
 							}
 						}
 					}
@@ -669,14 +725,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveProxy->_childPid == 0 || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor. LiveProxy changed" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-						", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid) +
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count()) +
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childPid: {}"
+						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, sourceLiveProxy->_childPid,
+						copiedLiveProxy->_proxyStart.time_since_epoch().count(), sourceLiveProxy->_proxyStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -813,37 +871,51 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) real time info check failed") +
-											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", e.what(): " + e.what();
-						_logger->warn(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor (rtmp) real time info check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+						SPDLOG_WARN(errorMessage);
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) real time info check failed") +
-											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", e.what(): " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor (rtmp) real time info check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) real time info check failed") +
-											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", e.what(): " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor (rtmp) real time info check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
 				if (sourceLiveProxy->_childPid == 0 || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor. LiveProxy changed" + ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-						", sourceLiveProxy->_childPid: " + to_string(sourceLiveProxy->_childPid) +
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(copiedLiveProxy->_proxyStart.time_since_epoch().count()) +
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): " +
-						to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childPid: {}"
+						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, sourceLiveProxy->_childPid,
+						copiedLiveProxy->_proxyStart.time_since_epoch().count(), sourceLiveProxy->_proxyStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -851,24 +923,25 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (liveProxyWorking) // && rtmpOutputFound)
 				{
-					_logger->info(
-						__FILEREF__ + "liveProxyMonitor forbiddenErrorInOutputLog check" +
-						", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel
+					SPDLOG_INFO(
+						"liveProxyMonitor forbiddenErrorInOutputLog check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
 					);
 
 					try
 					{
 						if (sourceLiveProxy->_ffmpeg->forbiddenErrorInOutputLog())
 						{
-							_logger->error(
-								__FILEREF__ +
+							SPDLOG_ERROR(
 								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP "
-								"error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again" +
-								", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) + ", encodingJobKey: " +
-								to_string(copiedLiveProxy->_encodingJobKey)
-								// + ", channelLabel: " + copiedLiveProxy->_channelLabel
-								+ ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid)
+								"error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", copiedLiveProxy->_childPid: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, copiedLiveProxy->_childPid
 							);
 
 							liveProxyWorking = false;
@@ -877,27 +950,36 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed") +
-											  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-						_logger->warn(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+						SPDLOG_WARN(errorMessage);
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed") +
-											  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", configurationLabel: " + configurationLabel + ", e.what(): " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed") +
-											  ", copiedLiveProxy->_ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", copiedLiveProxy->_encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", configurationLabel: " + configurationLabel + ", e.what(): " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -955,40 +1037,54 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveProxyMonitor. ProcessUtility::kill/quit/term Process failed") +
-											  ", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) +
-											  ", configurationLabel: " + configurationLabel +
-											  ", copiedLiveProxy->_childPid: " + to_string(copiedLiveProxy->_childPid) + ", e.what(): " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveProxyMonitor. ProcessUtility::kill/quit/term Process failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", configurationLabel: {}"
+							", copiedLiveProxy->_childPid: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel, copiedLiveProxy->_childPid,
+							e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
-				_logger->info(
-					__FILEREF__ + "liveProxyMonitor " + to_string(liveProxyIndex) + "/" + to_string(liveProxyAndGridRunningCounter) +
-					", ingestionJobKey: " + to_string(copiedLiveProxy->_ingestionJobKey) +
-					", encodingJobKey: " + to_string(copiedLiveProxy->_encodingJobKey) + ", configurationLabel: " + configurationLabel +
-					", @MMS statistics@ - elapsed time: @" +
-					to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - now).count()) + "@"
+				SPDLOG_INFO(
+					"liveProxyMonitor {}/{}"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", configurationLabel: {}"
+					", @MMS statistics@ - elapsed time: @{}@",
+					liveProxyIndex, liveProxyAndGridRunningCounter, copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
+					configurationLabel, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - now).count()
 				);
 			}
-			_logger->info(
-				__FILEREF__ + "liveProxyMonitor" + ", liveProxyAndGridRunningCounter: " + to_string(liveProxyAndGridRunningCounter) +
-				", @MMS statistics@ - elapsed (millisecs): " +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
+			SPDLOG_INFO(
+				"liveProxyMonitor"
+				", liveProxyAndGridRunningCounter: {}"
+				", @MMS statistics@ - elapsed (millisecs): {}",
+				liveProxyAndGridRunningCounter, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count()
 			);
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("liveProxyMonitor failed") + ", e.what(): " + e.what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"liveProxyMonitor failed"
+				", e.what(): {}",
+				e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("liveProxyMonitor failed") + ", e.what(): " + e.what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"liveProxyMonitor failed"
+				", e.what(): {}",
+				e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 		}
 
 		// recording
@@ -1025,17 +1121,20 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						liveRecordingNotRunningCounter++;
 					}
 				}
-				_logger->info(
-					__FILEREF__ + "liveRecordingMonitor, numbers" +
-					", total LiveRecording: " + to_string(liveRecordingRunningCounter + liveRecordingNotRunningCounter) +
-					", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter) +
-					", liveRecordingNotRunningCounter: " + to_string(liveRecordingNotRunningCounter)
+				SPDLOG_INFO(
+					"liveRecordingMonitor, numbers"
+					", total LiveRecording: {}"
+					", liveRecordingRunningCounter: {}"
+					", liveRecordingNotRunningCounter: {}",
+					liveRecordingRunningCounter + liveRecordingNotRunningCounter, liveRecordingRunningCounter, liveRecordingNotRunningCounter
 				);
 			}
-			_logger->info(
-				__FILEREF__ + "liveRecordingMonitor clone" + ", copiedRunningLiveRecordingCapability.size: " +
-				to_string(copiedRunningLiveRecordingCapability.size()) + ", @MMS statistics@ - elapsed (millisecs): " +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
+			SPDLOG_INFO(
+				"liveRecordingMonitor clone"
+				", copiedRunningLiveRecordingCapability.size: "
+				", @MMS statistics@ - elapsed (millisecs): ",
+				copiedRunningLiveRecordingCapability.size(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startClone).count()
 			);
 
 			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
@@ -1045,9 +1144,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				shared_ptr<FFMPEGEncoderBase::LiveRecording> copiedLiveRecording = copiedRunningLiveRecordingCapability[liveRecordingIndex];
 				shared_ptr<FFMPEGEncoderBase::LiveRecording> sourceLiveRecording = sourceLiveRecordingCapability[liveRecordingIndex];
 
-				_logger->info(
-					__FILEREF__ + "liveRecordingMonitor" + ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-					", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel
+				SPDLOG_INFO(
+					"liveRecordingMonitor"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", channelLabel: {}",
+					copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 				);
 
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -1057,14 +1159,17 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel + ", sourceLiveRecording->_childPid: " +
-						to_string(sourceLiveRecording->_childPid) + ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count()) +
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveRecordingMonitor. LiveRecorder changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}"
+						", sourceLiveRecording->_childPid: {}"
+						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
+						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+						sourceLiveRecording->_childPid, copiedLiveRecording->_recordingStart.time_since_epoch().count(),
+						sourceLiveRecording->_recordingStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -1086,7 +1191,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				/*
 			if (liveRecordingLiveTimeInMinutes <= (segmentDurationInSeconds / 60) + 5)
 			{
-				_logger->info(
+				info(
 					__FILEREF__ + "liveRecordingMonitor. Checks are not done because too early" + ", ingestionJobKey: " +
 					to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
 					", channelLabel: " + copiedLiveRecording->_channelLabel +
@@ -1100,13 +1205,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel + ", sourceLiveRecording->_childPid: " +
-						to_string(sourceLiveRecording->_childPid) + ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count()) +
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " +
+					SPDLOG_INFO(
+						"liveRecordingMonitor. LiveRecorder changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}"
+						", sourceLiveRecording->_childPid: {}"
+						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
+						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+						sourceLiveRecording->_childPid, copiedLiveRecording->_recordingStart.time_since_epoch().count(),
 						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
 					);
 
@@ -1120,10 +1228,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// in order to be sure the manifest file was already created
 				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. liveRecorder.list check" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel
+					SPDLOG_INFO(
+						"liveRecordingMonitor. liveRecorder.list check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 					);
 
 					try
@@ -1142,12 +1252,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							{
 								int sleepTimeInSeconds = 5;
 
-								_logger->warn(
-									__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist, let's check again" +
-									", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-									", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-									", liveRecordingLiveTimeInSeconds: " + to_string(liveRecordingLiveTimeInSeconds) +
-									", segmentListPathName: " + segmentListPathName + ", sleepTimeInSeconds: " + to_string(sleepTimeInSeconds)
+								SPDLOG_WARN(
+									"liveRecordingMonitor. Segment list file does not exist, let's check again"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", liveRecordingLiveTimeInSeconds: {}"
+									", segmentListPathName: {}"
+									", sleepTimeInSeconds: {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds,
+									segmentListPathName, sleepTimeInSeconds
 								);
 
 								this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
@@ -1159,11 +1272,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							{
 								liveRecorderWorking = false;
 
-								_logger->error(
-									__FILEREF__ + "liveRecordingMonitor. Segment list file does not exist" +
-									", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-									", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", liveRecordingLiveTimeInSeconds: " +
-									to_string(liveRecordingLiveTimeInSeconds) + ", segmentListPathName: " + segmentListPathName
+								SPDLOG_ERROR(
+									"liveRecordingMonitor. Segment list file does not exist"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", liveRecordingLiveTimeInSeconds: {}"
+									", segmentListPathName: {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds,
+									segmentListPathName
 								);
 
 								localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
@@ -1186,15 +1302,17 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								{
 									liveRecorderWorking = false;
 
-									_logger->error(
-										__FILEREF__ + "liveRecordingMonitor. Segment list file was not updated " + "in the last " +
-										to_string(maxLastSegmentListFileUpdateInSeconds) + " seconds" +
-										", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-										", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-										", liveRecordingLiveTimeInSeconds: " + to_string(liveRecordingLiveTimeInSeconds) +
-										", segmentListPathName: " + segmentListPathName +
-										", lastSegmentListFileUpdateInSeconds: " + to_string(lastSegmentListFileUpdateInSeconds) + " seconds ago" +
-										", maxLastSegmentListFileUpdateInSeconds: " + to_string(maxLastSegmentListFileUpdateInSeconds)
+									SPDLOG_ERROR(
+										"liveRecordingMonitor. Segment list file was not updated in the last {} seconds"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", liveRecordingLiveTimeInSeconds: {}"
+										", segmentListPathName: {}"
+										", lastSegmentListFileUpdateInSeconds: {} seconds ago"
+										", maxLastSegmentListFileUpdateInSeconds: {}",
+										maxLastSegmentListFileUpdateInSeconds, copiedLiveRecording->_ingestionJobKey,
+										copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds, segmentListPathName,
+										lastSegmentListFileUpdateInSeconds, maxLastSegmentListFileUpdateInSeconds
 									);
 
 									localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
@@ -1204,34 +1322,41 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveRecordingMonitor on path name failed") +
-											  ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveRecordingMonitor on path name failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("liveRecordingMonitor on path name failed") +
-											  ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveRecordingMonitor on path name failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
 				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel + ", sourceLiveRecording->_childPid: " +
-						to_string(sourceLiveRecording->_childPid) + ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count()) +
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveRecordingMonitor. LiveRecorder changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}"
+						", sourceLiveRecording->_childPid: {}"
+						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
+						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+						sourceLiveRecording->_childPid, copiedLiveRecording->_recordingStart.time_since_epoch().count(),
+						sourceLiveRecording->_recordingStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -1246,10 +1371,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				bool rtmpOutputFound = false;
 				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. manifest check" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel
+					SPDLOG_INFO(
+						"liveRecordingMonitor. manifest check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 					);
 
 					json outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
@@ -1277,10 +1404,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									{
 										liveRecorderWorking = false;
 
-										_logger->error(
-											__FILEREF__ + "liveRecorderMonitor. Manifest file does not exist" +
-											", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-											to_string(copiedLiveRecording->_encodingJobKey) + ", manifestFilePathName: " + manifestFilePathName
+										SPDLOG_ERROR(
+											"liveRecorderMonitor. Manifest file does not exist"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}"
+											", manifestFilePathName: {}",
+											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestFilePathName
 										);
 
 										localErrorMessage = " restarted because of 'manifest file is missing'";
@@ -1308,13 +1437,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											liveRecorderWorking = false;
 
-											_logger->error(
-												__FILEREF__ + "liveRecorderMonitor. Manifest file was not updated " + "in the last " +
-												to_string(maxLastManifestFileUpdateInSeconds) + " seconds" +
-												", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-												to_string(copiedLiveRecording->_encodingJobKey) + ", manifestFilePathName: " + manifestFilePathName +
-												", lastManifestFileUpdateInSeconds: " + to_string(lastManifestFileUpdateInSeconds) + " seconds ago" +
-												", maxLastManifestFileUpdateInSeconds: " + to_string(maxLastManifestFileUpdateInSeconds)
+											SPDLOG_ERROR(
+												"liveRecorderMonitor. Manifest file was not updated in the last {} seconds"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", manifestFilePathName: {}"
+												", lastManifestFileUpdateInSeconds: {} seconds ago"
+												", maxLastManifestFileUpdateInSeconds: {}",
+												maxLastManifestFileUpdateInSeconds, copiedLiveRecording->_ingestionJobKey,
+												copiedLiveRecording->_encodingJobKey, manifestFilePathName, lastManifestFileUpdateInSeconds,
+												maxLastManifestFileUpdateInSeconds
 											);
 
 											localErrorMessage = " restarted because of 'manifest file was not updated'";
@@ -1326,21 +1458,25 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							catch (runtime_error &e)
 							{
-								string errorMessage = string("liveRecorderMonitor (HLS) on manifest path name failed") +
-													  ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-													  ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-													  ", e.what(): " + e.what();
-
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = std::format(
+									"liveRecorderMonitor (HLS) on manifest path name failed"
+									", copiedLiveRecording->_ingestionJobKey: {}"
+									", copiedLiveRecording->_encodingJobKey: {}"
+									", e.what(): {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+								);
+								SPDLOG_ERROR(errorMessage);
 							}
 							catch (exception &e)
 							{
-								string errorMessage = string("liveRecorderMonitor (HLS) on manifest path name failed") +
-													  ", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-													  ", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-													  ", e.what(): " + e.what();
-
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = std::format(
+									"liveRecorderMonitor (HLS) on manifest path name failed"
+									", copiedLiveRecording->_ingestionJobKey: {}"
+									", copiedLiveRecording->_encodingJobKey: {}"
+									", e.what(): {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+								);
+								SPDLOG_ERROR(errorMessage);
 							}
 						}
 						else // rtmp (Proxy)
@@ -1352,14 +1488,17 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel + ", sourceLiveRecording->_childPid: " +
-						to_string(sourceLiveRecording->_childPid) + ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count()) +
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveRecordingMonitor. LiveRecorder changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}"
+						", sourceLiveRecording->_childPid: {}"
+						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
+						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+						sourceLiveRecording->_childPid, copiedLiveRecording->_recordingStart.time_since_epoch().count(),
+						sourceLiveRecording->_recordingStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -1369,10 +1508,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				{
 					try
 					{
-						_logger->info(
-							__FILEREF__ + "liveRecordingMonitor. nonMonotonousDTSInOutputLog check" +
-							", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-							to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel
+						SPDLOG_INFO(
+							"liveRecordingMonitor. nonMonotonousDTSInOutputLog check"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", channelLabel: {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 						);
 
 						// First health check (rtmp), looks the log and check there is no message like
@@ -1382,13 +1523,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						{
 							liveRecorderWorking = false;
 
-							_logger->error(
-								__FILEREF__ +
+							SPDLOG_ERROR(
 								"liveRecorderMonitor (rtmp). Live Recorder is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. "
-								"LiveRecorder (ffmpeg) is killed in order to be started again" +
-								", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-								to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-								", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
+								"LiveRecorder (ffmpeg) is killed in order to be started again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", channelLabel: {}"
+								", copiedLiveRecording->_childPid: {}",
+								copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+								copiedLiveRecording->_childPid
 							);
 
 							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
@@ -1396,32 +1539,41 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveRecorderMonitor (rtmp) Non-monotonous DTS failed") +
-											  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveRecorderMonitor (rtmp) Non-monotonous DTS failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("liveRecorderMonitor (rtmp) Non-monotonous DTS failed") +
-											  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveRecorderMonitor (rtmp) Non-monotonous DTS failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
 				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel + ", sourceLiveRecording->_childPid: " +
-						to_string(sourceLiveRecording->_childPid) + ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count()) +
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveRecordingMonitor. LiveRecorder changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}"
+						", sourceLiveRecording->_childPid: {}"
+						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
+						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+						sourceLiveRecording->_childPid, copiedLiveRecording->_recordingStart.time_since_epoch().count(),
+						sourceLiveRecording->_recordingStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -1439,10 +1591,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// in order to be sure the manifest file was already created
 				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. segment check" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel
+					SPDLOG_INFO(
+						"liveRecordingMonitor. segment check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 					);
 
 					json outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
@@ -1474,12 +1628,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
 										if (manifestFilePathIndex == string::npos)
 										{
-											string errorMessage =
-												__FILEREF__ + "liveRecordingMonitor. No manifestDirectoryPath find in the m3u8/mpd file path name" +
-												", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-												", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-												", manifestFilePathName: " + manifestFilePathName;
-											_logger->error(errorMessage);
+											string errorMessage = std::format(
+												"liveRecordingMonitor. No manifestDirectoryPath find in the m3u8/mpd file path name"
+												", liveRecorder->_ingestionJobKey: {}"
+												", liveRecorder->_encodingJobKey: {}"
+												", manifestFilePathName: {}",
+												copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestFilePathName
+											);
+											SPDLOG_ERROR(errorMessage);
 
 											throw runtime_error(errorMessage);
 										}
@@ -1504,14 +1660,17 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											// long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
 											long liveProxyChunkRetentionInSeconds =
 												(outputSegmentDurationInSeconds * outputPlaylistEntriesNumber) + (10 * 60); // 10 minutes
-											_logger->info(
-												__FILEREF__ + "liveRecordingMonitor. segment check" +
-												", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-												", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-												", channelLabel: " + copiedLiveRecording->_channelLabel +
-												", outputSegmentDurationInSeconds: " + to_string(outputSegmentDurationInSeconds) +
-												", outputPlaylistEntriesNumber: " + to_string(outputPlaylistEntriesNumber) +
-												", liveProxyChunkRetentionInSeconds: " + to_string(liveProxyChunkRetentionInSeconds)
+											SPDLOG_INFO(
+												"liveRecordingMonitor. segment check"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", channelLabel: {}"
+												", outputSegmentDurationInSeconds: {}"
+												", outputPlaylistEntriesNumber: {}"
+												", liveProxyChunkRetentionInSeconds: {}",
+												copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+												copiedLiveRecording->_channelLabel, outputSegmentDurationInSeconds, outputPlaylistEntriesNumber,
+												liveProxyChunkRetentionInSeconds
 											);
 
 											for (fs::directory_entry const &entry : fs::directory_iterator(manifestDirectoryPathName))
@@ -1543,15 +1702,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 															chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
 														if (lastFileUpdateInSeconds > liveProxyChunkRetentionInSeconds)
 														{
-															_logger->info(
-																__FILEREF__ + "liveRecordingMonitor. chunk to be removed, too old" +
-																", copiedLiveRecording->_ingestionJobKey: " +
-																to_string(copiedLiveRecording->_ingestionJobKey) +
-																", copiedLiveRecording->_encodingJobKey: " +
-																to_string(copiedLiveRecording->_encodingJobKey) +
-																", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved +
-																", lastFileUpdateInSeconds: " + to_string(lastFileUpdateInSeconds) + " seconds ago" +
-																", liveProxyChunkRetentionInSeconds: " + to_string(liveProxyChunkRetentionInSeconds)
+															SPDLOG_INFO(
+																"liveRecordingMonitor. chunk to be removed, too old"
+																", copiedLiveRecording->_ingestionJobKey: {}"
+																", copiedLiveRecording->_encodingJobKey: {}"
+																", segmentPathNameToBeRemoved: {}"
+																", lastFileUpdateInSeconds: {} seconds ago"
+																", liveProxyChunkRetentionInSeconds: {}",
+																copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+																segmentPathNameToBeRemoved, lastFileUpdateInSeconds, liveProxyChunkRetentionInSeconds
 															);
 
 															chunksTooOldToBeRemoved.push_back(segmentPathNameToBeRemoved);
@@ -1565,23 +1724,31 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												}
 												catch (runtime_error &e)
 												{
-													string errorMessage =
-														__FILEREF__ + "liveRecordingMonitor. listing directory failed" +
-														", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-														", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-														", manifestDirectoryPathName: " + manifestDirectoryPathName + ", e.what(): " + e.what();
-													_logger->error(errorMessage);
+													string errorMessage = std::format(
+														"liveRecordingMonitor. listing directory failed"
+														", copiedLiveRecording->_ingestionJobKey: {}"
+														", copiedLiveRecording->_encodingJobKey: {}"
+														", manifestDirectoryPathName: {}"
+														", e.what(): {}",
+														copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+														manifestDirectoryPathName, e.what()
+													);
+													SPDLOG_ERROR(errorMessage);
 
 													// throw e;
 												}
 												catch (exception &e)
 												{
-													string errorMessage =
-														__FILEREF__ + "liveRecordingMonitor. listing directory failed" +
-														", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-														", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-														", manifestDirectoryPathName: " + manifestDirectoryPathName + ", e.what(): " + e.what();
-													_logger->error(errorMessage);
+													string errorMessage = std::format(
+														"liveRecordingMonitor. listing directory failed"
+														", copiedLiveRecording->_ingestionJobKey: {}"
+														", copiedLiveRecording->_encodingJobKey: {}"
+														", manifestDirectoryPathName: {}"
+														", e.what(): {}",
+														copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+														manifestDirectoryPathName, e.what()
+													);
+													SPDLOG_ERROR(errorMessage);
 
 													// throw e;
 												}
@@ -1590,20 +1757,24 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 									catch (runtime_error &e)
 									{
-										_logger->error(
-											__FILEREF__ + "liveRecordingMonitor. scan LiveRecorder files failed" +
-											", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											", manifestDirectoryPathName: " + manifestDirectoryPathName + ", e.what(): " + e.what()
+										SPDLOG_ERROR(
+											"liveRecordingMonitor. scan LiveRecorder files failed"
+											", _ingestionJobKey: {}"
+											", _encodingJobKey: {}"
+											", manifestDirectoryPathName: {}"
+											", e.what(): {}",
+											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestDirectoryPathName,
+											e.what()
 										);
 									}
 									catch (...)
 									{
-										_logger->error(
-											__FILEREF__ + "liveRecordingMonitor. scan LiveRecorder files failed" +
-											", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											", manifestDirectoryPathName: " + manifestDirectoryPathName
+										SPDLOG_ERROR(
+											"liveRecordingMonitor. scan LiveRecorder files failed"
+											", _ingestionJobKey: {}"
+											", _encodingJobKey: {}"
+											", manifestDirectoryPathName: {}",
+											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestDirectoryPathName
 										);
 									}
 
@@ -1611,12 +1782,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									{
 										// if we are here, it means the ffmpeg command is not generating the ts files
 
-										_logger->error(
-											__FILEREF__ + "liveRecorderMonitor. Chunks were not generated" +
-											", liveRecorder->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											", liveRecorder->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											", manifestDirectoryPathName: " + manifestDirectoryPathName +
-											", firstChunkRead: " + to_string(firstChunkRead)
+										SPDLOG_ERROR(
+											"liveRecordingMonitor. Chunks were not generated"
+											", _ingestionJobKey: {}"
+											", _encodingJobKey: {}"
+											", manifestDirectoryPathName: {}"
+											", firstChunkRead: {}",
+											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestDirectoryPathName,
+											firstChunkRead
 										);
 
 										chunksWereNotGenerated = true;
@@ -1624,14 +1797,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										liveRecorderWorking = false;
 										localErrorMessage = " restarted because of 'no segments were generated'";
 
-										_logger->error(
-											__FILEREF__ +
+										SPDLOG_ERROR(
 											"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecorderMonitor. Live Recorder is not "
-											"working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again" +
-											", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " +
-											to_string(copiedLiveRecording->_encodingJobKey) + ", manifestFilePathName: " + manifestFilePathName +
-											", channelLabel: " + copiedLiveRecording->_channelLabel +
-											", liveRecorder->_childPid: " + to_string(copiedLiveRecording->_childPid)
+											"working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
+											", _ingestionJobKey: {}"
+											", _encodingJobKey: {}"
+											", manifestDirectoryPathName: {}"
+											", channelLabel: {}"
+											", liveRecorder->_childPid: {}",
+											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestDirectoryPathName,
+											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childPid
 										);
 
 										// we killed the process, we do not care to remove the too old segments
@@ -1644,21 +1819,26 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											try
 											{
-												_logger->info(
-													__FILEREF__ + "liveRecorderMonitor. Remove chunk because too old" +
-													", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-													", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-													", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved
+												SPDLOG_INFO(
+													"liveRecordingMonitor. Remove chunk because too old"
+													", _ingestionJobKey: {}"
+													", _encodingJobKey: {}"
+													", segmentPathNameToBeRemoved: {}",
+													copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+													segmentPathNameToBeRemoved
 												);
 												fs::remove_all(segmentPathNameToBeRemoved);
 											}
 											catch (runtime_error &e)
 											{
-												_logger->error(
-													__FILEREF__ + "liveRecordingMonitor. remove failed" +
-													", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-													", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-													", segmentPathNameToBeRemoved: " + segmentPathNameToBeRemoved + ", e.what(): " + e.what()
+												SPDLOG_ERROR(
+													"liveRecordingMonitor. remove failed"
+													", _ingestionJobKey: {}"
+													", _encodingJobKey: {}"
+													", segmentPathNameToBeRemoved: {}"
+													", e.what: {}",
+													copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+													segmentPathNameToBeRemoved, e.what()
 												);
 											}
 										}
@@ -1667,21 +1847,25 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							catch (runtime_error &e)
 							{
-								string errorMessage = string("liveRecorderMonitor (HLS) on segments (and retention) failed") +
-													  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-													  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-													  ", e.what(): " + e.what();
-
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = std::format(
+									"liveRecorderMonitor (HLS) on segments (and retention) failed"
+									", copiedLiveRecording->_ingestionJobKey: {}"
+									", copiedLiveRecording->_encodingJobKey: {}"
+									", e.what(): {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+								);
+								SPDLOG_ERROR(errorMessage);
 							}
 							catch (exception &e)
 							{
-								string errorMessage = string("liveRecorderMonitor (HLS) on segments (and retention) failed") +
-													  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-													  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-													  ", e.what(): " + e.what();
-
-								_logger->error(__FILEREF__ + errorMessage);
+								string errorMessage = std::format(
+									"liveRecorderMonitor (HLS) on segments (and retention) failed"
+									", copiedLiveRecording->_ingestionJobKey: {}"
+									", copiedLiveRecording->_encodingJobKey: {}"
+									", e.what(): {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+								);
+								SPDLOG_ERROR(errorMessage);
 							}
 						}
 					}
@@ -1689,14 +1873,17 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. LiveRecorder changed" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel + ", sourceLiveRecording->_childPid: " +
-						to_string(sourceLiveRecording->_childPid) + ", copiedLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count()) +
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): " +
-						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"liveRecordingMonitor. LiveRecorder changed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", channelLabel: {}"
+						", sourceLiveRecording->_childPid: {}"
+						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
+						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+						sourceLiveRecording->_childPid, copiedLiveRecording->_recordingStart.time_since_epoch().count(),
+						sourceLiveRecording->_recordingStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -1706,10 +1893,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// perchè voglio cmq avere i dati real time
 				if (liveRecorderWorking) // && copiedLiveRecording->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
-					_logger->info(
-						__FILEREF__ + "liveRecordingMonitor. areRealTimeInfoChanged check" + ", ingestionJobKey: " +
-						to_string(copiedLiveRecording->_ingestionJobKey) + ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-						", channelLabel: " + copiedLiveRecording->_channelLabel
+					SPDLOG_INFO(
+						"liveRecordingMonitor. areRealTimeInfoChanged check"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", channelLabel: {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 					);
 
 					try
@@ -1830,37 +2019,51 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
-						string errorMessage = string("liveRecorderMonitor (rtmp) real time info check failed") +
-											  ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", e.what(): " + e.what();
-						_logger->warn(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveRecorderMonitor (rtmp) real time info check failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
+						SPDLOG_WARN(errorMessage);
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveRecorderMonitor (rtmp) real time info check failed") +
-											  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", e.what(): " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveRecorderMonitor (rtmp) real time info check failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("liveRecorderMonitor (rtmp) real time info check failed") +
-											  ", _ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", e.what(): " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveRecorderMonitor (rtmp) real time info check failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
 				if (!liveRecorderWorking)
 				{
-					_logger->error(
-						__FILEREF__ +
+					SPDLOG_ERROR(
 						"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor. Live Recording is not working (segment "
-						"list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again" +
-						", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", liveRecordingLiveTimeInSeconds: " +
-						to_string(liveRecordingLiveTimeInSeconds) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-						", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid)
+						"list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", liveRecordingLiveTimeInSeconds: {}"
+						", channelLabel: {}"
+						", copiedLiveRecording->_childPid: {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds,
+						copiedLiveRecording->_channelLabel, copiedLiveRecording->_childPid
 					);
 
 					try
@@ -1888,41 +2091,54 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("liveRecordingMonitor. ProcessUtility::kill/quit Process failed") +
-											  ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", channelLabel: " + copiedLiveRecording->_channelLabel +
-											  ", copiedLiveRecording->_childPid: " + to_string(copiedLiveRecording->_childPid) +
-											  ", e.what(): " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"liveRecordingMonitor. ProcessUtility::kill/quit Process failed"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", channelLabel: {}"
+							", copiedLiveRecording->_childPid: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+							copiedLiveRecording->_childPid, e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
-				_logger->info(
-					__FILEREF__ + "liveRecordingMonitor " + to_string(liveRecordingIndex) + "/" + to_string(liveRecordingRunningCounter) +
-					", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-					", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel +
-					", @MMS statistics@ - elapsed time: @" +
-					to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - now).count()) + "@"
+				SPDLOG_INFO(
+					"liveRecordingMonitor {}/{}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", channelLabel: {}"
+					", @MMS statistics@ - elapsed time: @{}@",
+					liveRecordingIndex, liveRecordingRunningCounter, copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+					copiedLiveRecording->_channelLabel, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - now).count()
 				);
 			}
-			_logger->info(
-				__FILEREF__ + "liveRecordingMonitor" + ", liveRecordingRunningCounter: " + to_string(liveRecordingRunningCounter) +
-				", @MMS statistics@ - elapsed (millisecs): " +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count())
+			SPDLOG_INFO(
+				"liveRecordingMonitor"
+				", liveRecordingRunningCounter: {}"
+				", @MMS statistics@ - elapsed (millisecs): {}",
+				liveRecordingRunningCounter, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count()
 			);
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("liveRecordingMonitor failed") + ", e.what(): " + e.what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"liveRecordingMonitor failed"
+				", e.what(): {}",
+				e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("liveRecordingMonitor failed") + ", e.what(): " + e.what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"liveRecordingMonitor failed"
+				", e.what(): {}",
+				e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 		}
 
 		this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
@@ -1960,20 +2176,24 @@ void FFMPEGEncoderDaemons::startCPUUsageThread()
 				for (int cpuUsage : *_cpuUsage)
 					lastCPUUsage += (to_string(cpuUsage) + " ");
 
-				_logger->info(__FILEREF__ + "cpuUsageThread" + ", lastCPUUsage: " + lastCPUUsage);
+				SPDLOG_INFO(
+					"cpuUsageThread"
+					", lastCPUUsage: {}",
+					lastCPUUsage
+				);
 			}
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("cpuUsage thread failed") + ", e.what(): " + e.what();
+			string errorMessage = std::format("cpuUsage thread failed", ", e.what(): {}", e.what());
 
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("cpuUsage thread failed") + ", e.what(): " + e.what();
+			string errorMessage = std::format("cpuUsage thread failed", ", e.what(): {}", e.what());
 
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 		}
 	}
 }

@@ -11,9 +11,12 @@ void EncodeContent::encodeContent(json metadataRoot)
 {
 	string api = "encodeContent";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-		", requestBody: " + JSONUtils::toString(metadataRoot)
+	SPDLOG_INFO(
+		"Received {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", requestBody: {}",
+		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	bool externalEncoder = false;
@@ -59,10 +62,14 @@ void EncodeContent::encodeContent(json metadataRoot)
 		field = "sourceFileExtension";
 		if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field +
-								  ", sourceToBeEncodedRoot: " + JSONUtils::toString(sourceToBeEncodedRoot);
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", Field: {}",
+				_ingestionJobKey, _encodingJobKey, field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -75,9 +82,14 @@ void EncodeContent::encodeContent(json metadataRoot)
 			field = "sourceTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -89,9 +101,12 @@ void EncodeContent::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = sourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(
-						__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+					SPDLOG_INFO(
+						"Creating directory"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", directoryPathName: {}",
+						_ingestionJobKey, _encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -106,9 +121,14 @@ void EncodeContent::encodeContent(json metadataRoot)
 			field = "sourcePhysicalDeliveryURL";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -117,9 +137,14 @@ void EncodeContent::encodeContent(json metadataRoot)
 			field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -134,9 +159,14 @@ void EncodeContent::encodeContent(json metadataRoot)
 			field = "mmsSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -148,19 +178,26 @@ void EncodeContent::encodeContent(json metadataRoot)
 				field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 		}
 
-		_logger->info(
-			__FILEREF__ + "encoding content..." + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", sourceAssetPathName: " + sourceAssetPathName +
-			", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+		SPDLOG_INFO(
+			"encoding content..."
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", sourceAssetPathName: {}",
+			_ingestionJobKey, _encodingJobKey, sourceAssetPathName
 		);
 
 		_encoding->_ffmpeg->encodeContent(
@@ -171,29 +208,39 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
 
-		_logger->info(
-			__FILEREF__ + "encoded content" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", sourceAssetPathName: " + sourceAssetPathName +
-			", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+		SPDLOG_INFO(
+			"encoded content"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", sourceAssetPathName: {}"
+			", encodedStagingAssetPathName: {}",
+			_ingestionJobKey, _encodingJobKey, sourceAssetPathName, encodedStagingAssetPathName
 		);
 
 		if (externalEncoder)
 		{
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", sourceAssetPathName: " + sourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", sourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, sourceAssetPathName
 				);
-
 				fs::remove_all(sourceAssetPathName);
 			}
 
 			field = "sourceMediaItemKey";
 			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -202,9 +249,14 @@ void EncodeContent::encodeContent(json metadataRoot)
 			field = "encodingProfileKey";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -226,27 +278,38 @@ void EncodeContent::encodeContent(json metadataRoot)
 				field = "encodedNFSStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 				string encodedNFSStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
 				// move encodedStagingAssetPathName (encodedTranscoderStagingAssetPathName) in encodedNFSStagingAssetPathName
-				_logger->info(
-					__FILEREF__ + "moving file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName +
-					", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
+				SPDLOG_INFO(
+					"moving file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", encodedStagingAssetPathName: {}"
+					", encodedNFSStagingAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName
 				);
 				int64_t moveElapsedInSeconds =
 					MMSStorage::move(_ingestionJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName, _logger);
-				_logger->info(
-					__FILEREF__ + "moved file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName +
-					", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName +
-					", moveElapsedInSeconds: " + to_string(moveElapsedInSeconds)
+				SPDLOG_INFO(
+					"moved file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", encodedStagingAssetPathName: {}"
+					", encodedNFSStagingAssetPathName: {}"
+					", moveElapsedInSeconds: {}",
+					_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName, moveElapsedInSeconds
 				);
 			}
 		}
@@ -257,11 +320,13 @@ void EncodeContent::encodeContent(json metadataRoot)
 		{
 			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", sourceAssetPathName: " + sourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", sourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, sourceAssetPathName
 				);
-
 				fs::remove_all(sourceAssetPathName);
 			}
 
@@ -272,7 +337,13 @@ void EncodeContent::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+					SPDLOG_INFO(
+						"removeDirectory"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", directoryPathName: {}",
+						_ingestionJobKey, _encodingJobKey, directoryPathName
+					);
 					fs::remove_all(directoryPathName);
 				}
 			}
@@ -301,11 +372,13 @@ void EncodeContent::encodeContent(json metadataRoot)
 		{
 			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", sourceAssetPathName: " + sourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", sourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, sourceAssetPathName
 				);
-
 				fs::remove_all(sourceAssetPathName);
 			}
 
@@ -316,7 +389,13 @@ void EncodeContent::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+					SPDLOG_INFO(
+						"removeDirectory"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", directoryPathName: {}",
+						_ingestionJobKey, _encodingJobKey, directoryPathName
+					);
 					fs::remove_all(directoryPathName);
 				}
 			}
@@ -346,11 +425,13 @@ void EncodeContent::encodeContent(json metadataRoot)
 		{
 			if (sourceAssetPathName != "" && fs::exists(sourceAssetPathName))
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", sourceAssetPathName: " + sourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", sourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, sourceAssetPathName
 				);
-
 				fs::remove_all(sourceAssetPathName);
 			}
 
@@ -361,7 +442,13 @@ void EncodeContent::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+					SPDLOG_INFO(
+						"removeDirectory"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", directoryPathName: {}",
+						_ingestionJobKey, _encodingJobKey, directoryPathName
+					);
 					fs::remove_all(directoryPathName);
 				}
 			}

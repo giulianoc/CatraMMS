@@ -87,6 +87,10 @@ class FastCGIAPI
 	string getQueryParameter(
 		unordered_map<string, string> &queryParameters, string parameterName, string defaultParameter, bool mandatory, bool *isParamPresent = nullptr
 	);
+	string getQueryParameter(
+		unordered_map<string, string> &queryParameters, string parameterName, const char *defaultParameter, bool mandatory,
+		bool *isParamPresent = nullptr
+	);
 	vector<int32_t> getQueryParameter(
 		unordered_map<string, string> &queryParameters, string parameterName, char delim, vector<int32_t> defaultParameter, bool mandatory,
 		bool *isParamPresent = nullptr

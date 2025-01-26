@@ -13,6 +13,7 @@
 
 #include "API.h"
 #include "JSONUtils.h"
+#include "spdlog/spdlog.h"
 #include <regex>
 
 void API::addInvoice(
@@ -22,7 +23,11 @@ void API::addInvoice(
 {
 	string api = "addInvoice";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
 
 	try
 	{
@@ -38,8 +43,12 @@ void API::addInvoice(
 			string field = "userKey";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -48,8 +57,12 @@ void API::addInvoice(
 			field = "description";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -58,8 +71,12 @@ void API::addInvoice(
 			field = "amount";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -71,15 +88,24 @@ void API::addInvoice(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format",
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}",
+				requestBody
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -102,13 +128,21 @@ void API::addInvoice(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addInvoice failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addInvoice failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addInvoice failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addInvoice failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -117,10 +151,16 @@ void API::addInvoice(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -128,10 +168,16 @@ void API::addInvoice(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -146,7 +192,7 @@ void API::invoiceList(
 {
 	string api = "invoiceList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
@@ -169,9 +215,13 @@ void API::invoiceList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -191,10 +241,15 @@ void API::invoiceList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -202,10 +257,15 @@ void API::invoiceList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 

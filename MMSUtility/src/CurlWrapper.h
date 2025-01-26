@@ -217,13 +217,8 @@ class CurlWrapper
 	);
 
 	static void sendEmail(
-		string emailServerURL, // i.e.: smtps://smtppro.zoho.eu:465
-		string from,		   // i.e.: info@catramms-cloud.com
-		string tosCommaSeparated, string ccsCommaSeparated, string subject, vector<string> &emailBody,
-		// 2023-02-18: usiamo 'from' come username perchè, mi è sembrato che ZOHO blocca l'email
-		//	se username e from sono diversi
-		// string userName,	// i.e.: info@catramms-cloud.com
-		string password
+		string emailServerURL, string useName, string password, string from, string tosCommaSeparated, string ccsCommaSeparated, string subject,
+		vector<string> &emailBody, string contentType
 	);
 
   private:

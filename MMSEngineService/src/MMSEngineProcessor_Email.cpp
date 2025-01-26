@@ -326,7 +326,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		CurlWrapper::sendEmail(
 			_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 			_emailUserName,	   // i.e.: info@catramms-cloud.com
-			tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, _emailPassword
+			_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, "text/html; charset=\"UTF-8\""
 		);
 		// EMailSender emailSender(_logger, _configuration);
 		// bool useMMSCCToo = false;

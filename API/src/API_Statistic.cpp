@@ -14,6 +14,7 @@
 #include "API.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "spdlog/spdlog.h"
 #include <regex>
 
 void API::addRequestStatistic(
@@ -23,8 +24,11 @@ void API::addRequestStatistic(
 {
 	string api = "addRequestStatistic";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", requestBody: " + requestBody
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -42,8 +46,12 @@ void API::addRequestStatistic(
 			string field = "userId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -61,8 +69,12 @@ void API::addRequestStatistic(
 
 			if (physicalPathKey == -1 && confStreamKey == -1)
 			{
-				string errorMessage = __FILEREF__ + "physicalPathKey or confStreamKey has to be present" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"physicalPathKey or confStreamKey has to be present"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -70,8 +82,12 @@ void API::addRequestStatistic(
 			field = "title";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -79,15 +95,24 @@ void API::addRequestStatistic(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}",
+				requestBody
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -102,13 +127,21 @@ void API::addRequestStatistic(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addRequestStatistic failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addRequestStatistic failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->addRequestStatistic failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addRequestStatistic failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -117,10 +150,16 @@ void API::addRequestStatistic(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -128,10 +167,16 @@ void API::addRequestStatistic(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -146,7 +191,11 @@ void API::requestStatisticList(
 {
 	string api = "requestStatisticList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -169,9 +218,13 @@ void API::requestStatisticList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -213,8 +266,8 @@ void API::requestStatisticList(
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'startStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -226,8 +279,8 @@ void API::requestStatisticList(
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
 		if (endStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'endStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -247,10 +300,15 @@ void API::requestStatisticList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -258,10 +316,15 @@ void API::requestStatisticList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -276,7 +339,11 @@ void API::requestStatisticPerContentList(
 {
 	string api = "requestStatisticPerContentList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -299,9 +366,13 @@ void API::requestStatisticPerContentList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -344,8 +415,8 @@ void API::requestStatisticPerContentList(
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'startStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -357,8 +428,8 @@ void API::requestStatisticPerContentList(
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
 		if (endStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'endStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -389,10 +460,15 @@ void API::requestStatisticPerContentList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -400,10 +476,15 @@ void API::requestStatisticPerContentList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -418,7 +499,11 @@ void API::requestStatisticPerUserList(
 {
 	string api = "requestStatisticPerUserList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -441,9 +526,13 @@ void API::requestStatisticPerUserList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -485,8 +574,8 @@ void API::requestStatisticPerUserList(
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'startStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -498,8 +587,8 @@ void API::requestStatisticPerUserList(
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
 		if (endStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'endStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -530,10 +619,15 @@ void API::requestStatisticPerUserList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -541,10 +635,15 @@ void API::requestStatisticPerUserList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -559,7 +658,11 @@ void API::requestStatisticPerMonthList(
 {
 	string api = "requestStatisticPerMonthList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -582,9 +685,13 @@ void API::requestStatisticPerMonthList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -626,8 +733,8 @@ void API::requestStatisticPerMonthList(
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'startStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -639,8 +746,8 @@ void API::requestStatisticPerMonthList(
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
 		if (endStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'endStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -671,10 +778,15 @@ void API::requestStatisticPerMonthList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -682,10 +794,15 @@ void API::requestStatisticPerMonthList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -700,7 +817,11 @@ void API::requestStatisticPerDayList(
 {
 	string api = "requestStatisticPerDayList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -723,9 +844,13 @@ void API::requestStatisticPerDayList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -767,8 +892,8 @@ void API::requestStatisticPerDayList(
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'startStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -780,8 +905,8 @@ void API::requestStatisticPerDayList(
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
 		if (endStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'endStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -812,10 +937,15 @@ void API::requestStatisticPerDayList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -823,10 +953,15 @@ void API::requestStatisticPerDayList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -841,7 +976,11 @@ void API::requestStatisticPerHourList(
 {
 	string api = "requestStatisticPerHourList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -864,9 +1003,13 @@ void API::requestStatisticPerHourList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -908,8 +1051,8 @@ void API::requestStatisticPerHourList(
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'startStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -921,8 +1064,8 @@ void API::requestStatisticPerHourList(
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
 		if (endStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'endStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -953,10 +1096,15 @@ void API::requestStatisticPerHourList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -964,10 +1112,15 @@ void API::requestStatisticPerHourList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -982,7 +1135,11 @@ void API::requestStatisticPerCountryList(
 {
 	string api = "requestStatisticPerCountryList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -1005,9 +1162,13 @@ void API::requestStatisticPerCountryList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1049,8 +1210,8 @@ void API::requestStatisticPerCountryList(
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'startStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1062,8 +1223,8 @@ void API::requestStatisticPerCountryList(
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
 		if (endStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'endStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1094,10 +1255,15 @@ void API::requestStatisticPerCountryList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1105,10 +1271,15 @@ void API::requestStatisticPerCountryList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1123,7 +1294,11 @@ void API::loginStatisticList(
 {
 	string api = "loginStatisticList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
 
 	try
 	{
@@ -1146,9 +1321,13 @@ void API::loginStatisticList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1158,8 +1337,8 @@ void API::loginStatisticList(
 		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
 		if (startStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'startStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1171,8 +1350,8 @@ void API::loginStatisticList(
 		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
 		if (endStatisticDateIt == queryParameters.end())
 		{
-			string errorMessage = string("'endStatisticDate' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1190,10 +1369,15 @@ void API::loginStatisticList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -1201,10 +1385,15 @@ void API::loginStatisticList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 

@@ -15,6 +15,7 @@
 #include <regex>
 
 #include "API.h"
+#include "spdlog/spdlog.h"
 
 void API::updateMediaItem(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
@@ -23,7 +24,12 @@ void API::updateMediaItem(
 {
 	string api = "updateMediaItem";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -31,8 +37,8 @@ void API::updateMediaItem(
 		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
 		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second == "")
 		{
-			string errorMessage = string("'mediaItemKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'mediaItemKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -47,7 +53,7 @@ void API::updateMediaItem(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + e.what());
+			SPDLOG_ERROR(e.what());
 
 			sendError(request, 400, e.what());
 
@@ -109,8 +115,11 @@ void API::updateMediaItem(
 
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "Updating MediaItem" + ", userKey: " + to_string(userKey) + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			SPDLOG_INFO(
+				"Updating MediaItem"
+				", userKey: {}"
+				", workspaceKey: {}",
+				userKey, workspace->_workspaceKey
 			);
 
 			json mediaItemRoot = _mmsEngineDBFacade->updateMediaItem(
@@ -118,9 +127,11 @@ void API::updateMediaItem(
 				newRetentionInMinutes, tagsModified, newTagsRoot, uniqueNameModified, newUniqueName, crossReferencesRoot, admin
 			);
 
-			_logger->info(
-				__FILEREF__ + "MediaItem updated" + ", workspaceKey: " + to_string(workspace->_workspaceKey) +
-				", mediaItemKey: " + to_string(mediaItemKey)
+			SPDLOG_INFO(
+				"MediaItem updated"
+				", workspaceKey: {}"
+				", mediaItemKey: {}",
+				workspace->_workspaceKey, mediaItemKey
 			);
 
 			string responseBody = JSONUtils::toString(mediaItemRoot);
@@ -129,10 +140,16 @@ void API::updateMediaItem(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"API failed"
+				", API: {}"
+				", requestBody: {}"
+				", e.what(): {}",
+				api, requestBody, e.what()
+			);
 
-			string errorMessage = string("Internal server error: ") + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -140,10 +157,16 @@ void API::updateMediaItem(
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"API failed"
+				", API: {}"
+				", requestBody: {}"
+				", e.what(): {}",
+				api, requestBody, e.what()
+			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "Internal server error";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -152,16 +175,28 @@ void API::updateMediaItem(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -176,7 +211,12 @@ void API::updatePhysicalPath(
 {
 	string api = "updatePhysicalPath";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -186,8 +226,8 @@ void API::updatePhysicalPath(
 		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
 		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second == "")
 		{
-			string errorMessage = string("'mediaItemKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'mediaItemKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -199,8 +239,8 @@ void API::updatePhysicalPath(
 		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
 		if (physicalPathKeyIt == queryParameters.end() || physicalPathKeyIt->second == "")
 		{
-			string errorMessage = string("'physicalPathKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'physicalPathKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -215,7 +255,7 @@ void API::updatePhysicalPath(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + e.what());
+			SPDLOG_ERROR(e.what());
 
 			sendError(request, 400, e.what());
 
@@ -228,8 +268,12 @@ void API::updatePhysicalPath(
 			{
 				if (!JSONUtils::isMetadataPresent(metadataRoot, field))
 				{
-					string errorMessage = string("Json field is not present or it is null") + ", Json field: " + field;
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"Json field is not present or it is null"
+						", Json field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					sendError(request, 400, errorMessage);
 
@@ -242,16 +286,22 @@ void API::updatePhysicalPath(
 
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "Updating MediaItem" + ", userKey: " + to_string(userKey) + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+			SPDLOG_INFO(
+				"Updating MediaItem"
+				", userKey: {}"
+				", workspaceKey: {}",
+				userKey, workspace->_workspaceKey
 			);
 
 			json mediaItemRoot =
 				_mmsEngineDBFacade->updatePhysicalPath(workspace->_workspaceKey, mediaItemKey, physicalPathKey, newRetentionInMinutes, admin);
 
-			_logger->info(
-				__FILEREF__ + "PhysicalPath updated" + ", workspaceKey: " + to_string(workspace->_workspaceKey) +
-				", mediaItemKey: " + to_string(mediaItemKey) + ", physicalPathKey: " + to_string(physicalPathKey)
+			SPDLOG_INFO(
+				"PhysicalPath updated"
+				", workspaceKey: {}"
+				", mediaItemKey: {}"
+				", physicalPathKey: {}",
+				workspace->_workspaceKey, mediaItemKey, physicalPathKey
 			);
 
 			string responseBody = JSONUtils::toString(mediaItemRoot);
@@ -260,10 +310,16 @@ void API::updatePhysicalPath(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"API failed"
+				", API: {}"
+				", requestBody: {}"
+				", e.what(): {}",
+				api, requestBody, e.what()
+			);
 
-			string errorMessage = string("Internal server error: ") + e.what();
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -271,10 +327,16 @@ void API::updatePhysicalPath(
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + api + " failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"API failed"
+				", API: {}"
+				", requestBody: {}"
+				", e.what(): {}",
+				api, requestBody, e.what()
+			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "Internal server error";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -283,16 +345,28 @@ void API::updatePhysicalPath(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -307,7 +381,12 @@ void API::mediaItemsList(
 {
 	string api = "mediaItemsList";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -335,9 +414,13 @@ void API::mediaItemsList(
 
 			// rows = _maxPageSize;
 
-			string errorMessage =
-				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -404,17 +487,23 @@ void API::mediaItemsList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 
-		_logger->info(
-			__FILEREF__ + api + ", @API statistics@ - elapsed (seconds): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startAPI).count()) + "@"
+		SPDLOG_INFO(
+			"{}, @API statistics@ - elapsed (seconds): @{}@", api,
+			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startAPI).count()
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -422,10 +511,16 @@ void API::mediaItemsList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -440,7 +535,12 @@ void API::tagsList(
 {
 	string api = "tagsList";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
 
 	try
 	{
@@ -463,9 +563,13 @@ void API::tagsList(
 
 				// rows = _maxPageSize;
 
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -516,10 +620,16 @@ void API::tagsList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -527,10 +637,16 @@ void API::tagsList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = "Internal server error";
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 

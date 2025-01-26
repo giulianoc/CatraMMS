@@ -438,27 +438,24 @@ int FastCGIAPI::operator()()
 			);
 		}
 		{
-			string method;
-
-			auto methodIt = queryParameters.find("method");
-			if (methodIt != queryParameters.end())
-				method = methodIt->second;
+			string method = getQueryParameter(queryParameters, "method", "", false);
 
 			string clientIPAddress = getClientIPAddress(requestDetails);
 
 			chrono::system_clock::time_point endManageRequest = chrono::system_clock::now();
-			SPDLOG_INFO(
-				"manageRequestAndResponse"
-				", _requestIdentifier: {}"
-				", threadId: {}"
-				", clientIPAddress: @{}@"
-				", method: @{}@"
-				", requestURI: {}"
-				", authorizationPresent: {}"
-				", @MMS statistics@ - manageRequestDuration (millisecs): @{}@",
-				_requestIdentifier, sThreadId, clientIPAddress, method, requestURI, authorizationPresent,
-				chrono::duration_cast<chrono::milliseconds>(endManageRequest - startManageRequest).count()
-			);
+			if (!requestURI.ends_with("/status"))
+				SPDLOG_INFO(
+					"manageRequestAndResponse"
+					", _requestIdentifier: {}"
+					", threadId: {}"
+					", clientIPAddress: @{}@"
+					", method: @{}@"
+					", requestURI: {}"
+					", authorizationPresent: {}"
+					", @MMS statistics@ - manageRequestDuration (millisecs): @{}@",
+					_requestIdentifier, sThreadId, clientIPAddress, method, requestURI, authorizationPresent,
+					chrono::duration_cast<chrono::milliseconds>(endManageRequest - startManageRequest).count()
+				);
 		}
 
 		SPDLOG_DEBUG(
@@ -651,16 +648,17 @@ void FastCGIAPI::sendSuccess(
 			);
 		}
 
-		SPDLOG_INFO(
-			"sendSuccess"
-			", requestIdentifier: {}"
-			", threadId: {}"
-			", requestURI: {}"
-			", requestMethod: {}"
-			", responseBody.size: @{}@"
-			", completeHttpResponse: {}",
-			requestIdentifier, sThreadId, requestURI, requestMethod, responseBody.size(), completeHttpResponse
-		);
+		if (!requestURI.ends_with("/status"))
+			SPDLOG_INFO(
+				"sendSuccess"
+				", requestIdentifier: {}"
+				", threadId: {}"
+				", requestURI: {}"
+				", requestMethod: {}"
+				", responseBody.size: @{}@"
+				", completeHttpResponse: {}",
+				requestIdentifier, sThreadId, requestURI, requestMethod, responseBody.size(), completeHttpResponse
+			);
 
 		// si potrebbe usare anche FCGX_PutStr, in questo caso
 		// non bisogna gestire %% (vedi sopra)
@@ -1077,6 +1075,13 @@ string FastCGIAPI::getQueryParameter(
 	}
 
 	return parameterValue;
+}
+
+string FastCGIAPI::getQueryParameter(
+	unordered_map<string, string> &queryParameters, string parameterName, const char *defaultParameter, bool mandatory, bool *isParamPresent
+)
+{
+	return getQueryParameter(queryParameters, parameterName, string(defaultParameter), mandatory, isParamPresent);
 }
 
 vector<int32_t> FastCGIAPI::getQueryParameter(

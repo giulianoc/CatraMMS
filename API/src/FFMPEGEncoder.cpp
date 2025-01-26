@@ -79,42 +79,64 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_logger = spdlog::default_logger();
 	_configurationRoot = configurationRoot;
 	_encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encodingCompletedRetentionInSeconds: {}",
+		_encodingCompletedRetentionInSeconds
 	);
 
 	_mmsAPITimeoutInSeconds = JSONUtils::asInt(_configurationRoot["api"], "timeoutInSeconds", 120);
-	_logger->info(__FILEREF__ + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->timeoutInSeconds: {}",
+		_mmsAPITimeoutInSeconds
+	);
 
 	_cpuUsageThresholdForEncoding = JSONUtils::asInt(_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50);
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->cpuUsageThresholdForEncoding: " + to_string(_cpuUsageThresholdForEncoding));
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->cpuUsageThresholdForEncoding: {}",
+		_cpuUsageThresholdForEncoding
+	);
 	_cpuUsageThresholdForRecording = JSONUtils::asInt(_configurationRoot["ffmpeg"], "cpuUsageThresholdForRecording", 60);
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->cpuUsageThresholdForRecording: " + to_string(_cpuUsageThresholdForRecording));
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->cpuUsageThresholdForRecording: {}",
+		_cpuUsageThresholdForRecording
+	);
 	_cpuUsageThresholdForProxy = JSONUtils::asInt(_configurationRoot["ffmpeg"], "cpuUsageThresholdForProxy", 70);
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->cpuUsageThresholdForProxy: " + to_string(_cpuUsageThresholdForProxy));
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->cpuUsageThresholdForProxy: {}",
+		_cpuUsageThresholdForProxy
+	);
 	_intervalInSecondsBetweenEncodingAcceptForInternalEncoder =
 		JSONUtils::asInt(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAcceptForInternalEncoder", 5);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", "
-		"ffmpeg->intervalInSecondsBetweenEncodingAcceptForInternalEncoder:"
-		" " +
-		to_string(_intervalInSecondsBetweenEncodingAcceptForInternalEncoder)
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->intervalInSecondsBetweenEncodingAcceptForInternalEncoder: {}",
+		_intervalInSecondsBetweenEncodingAcceptForInternalEncoder
 	);
 	_intervalInSecondsBetweenEncodingAcceptForExternalEncoder =
 		JSONUtils::asInt(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAcceptForExternalEncoder", 120);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", "
-		"ffmpeg->intervalInSecondsBetweenEncodingAcceptForExternalEncoder:"
-		" " +
-		to_string(_intervalInSecondsBetweenEncodingAcceptForExternalEncoder)
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->intervalInSecondsBetweenEncodingAcceptForExternalEncoder: {}",
+		_intervalInSecondsBetweenEncodingAcceptForExternalEncoder
 	);
 
 	_encoderUser = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderUser: " + _encoderUser);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encoderUser: {}",
+		_encoderUser
+	);
 	_encoderPassword = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderPassword", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderPassword: " + _encoderPassword);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encoderPassword: {}",
+		_encoderPassword
+	);
 
 	_cpuUsageMutex = cpuUsageMutex;
 	_cpuUsage = cpuUsage;
@@ -162,9 +184,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	auto methodIt = queryParameters.find("method");
 	if (methodIt == queryParameters.end())
 	{
-		_logger->error(__FILEREF__ + "The 'method' parameter is not found");
+		SPDLOG_ERROR("The 'method' parameter is not found");
 
-		string errorMessage = string("Internal server error");
+		string errorMessage = "Internal server error";
 
 		sendError(request, 500, errorMessage);
 
@@ -185,10 +207,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "status failed" + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"status failed"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -220,10 +247,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "status failed" + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"status failed"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -237,8 +269,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'ingestionJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -249,8 +281,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'encodingJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -296,9 +328,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				else
 					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey) + ", " + NoEncodingAvailable().what();
 
-				_logger->error(
-					__FILEREF__ + errorMessage + ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning) +
-					", freeEncodingFound: " + to_string(freeEncodingFound)
+				SPDLOG_ERROR(
+					"{}"
+					", encodingAlreadyRunning: {}"
+					", freeEncodingFound: {}",
+					errorMessage, encodingAlreadyRunning, freeEncodingFound
 				);
 
 				sendError(request, 400, errorMessage);
@@ -339,7 +373,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 										  to_string(intervalInSecondsBetweenEncodingAccept) + ", secondsToWait: " + to_string(secondsToWait) + ", " +
 										  NoEncodingAvailable().what();
 
-					_logger->warn(__FILEREF__ + errorMessage);
+					SPDLOG_WARN(errorMessage);
 
 					sendError(request, 400, errorMessage);
 
@@ -349,17 +383,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "Accept a new encoding request" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", encodingJobKey: " + to_string(encodingJobKey) +
-						", "
-						"elapsedSecondsSinceLastEncodingAcc"
-						"epted: " +
-						to_string(elapsedSecondsSinceLastEncodingAccepted) +
-						", "
-						"intervalInSecondsBetweenEncodingAc"
-						"cept: " +
-						to_string(intervalInSecondsBetweenEncodingAccept)
+					SPDLOG_INFO(
+						"Accept a new encoding request"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", elapsedSecondsSinceLastEncodingAccepted: {}"
+						", intervalInSecondsBetweenEncodingAccept: {}",
+						ingestionJobKey, encodingJobKey, elapsedSecondsSinceLastEncodingAccepted, intervalInSecondsBetweenEncodingAccept
 					);
 				}
 
@@ -381,9 +411,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_ffmpegTerminatedSuccessful = false;
 
-				_logger->info(
-					__FILEREF__ + "Creating " + method + " thread" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", requestBody: " + requestBody
+				SPDLOG_INFO(
+					"Creating {} thread"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", requestBody: {}",
+					method, ingestionJobKey, encodingJobKey, requestBody
 				);
 				if (method == "videoSpeed")
 				{
@@ -456,11 +489,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					selectedEncoding->_available = true;
 					selectedEncoding->_childPid = 0; // not running
 
-					string errorMessage = string("wrong method") + ", method: " + method;
-
-					_logger->error(
-						__FILEREF__ + errorMessage + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", encodingJobKey: " + to_string(encodingJobKey)
+					string errorMessage = std::format(
+						"wrong method"
+						", method: {}",
+						method
+					);
+					SPDLOG_ERROR(
+						"{}"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}",
+						errorMessage, ingestionJobKey, encodingJobKey
 					);
 
 					sendError(request, 500, errorMessage);
@@ -475,13 +513,17 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedEncoding->_available = true;
 				selectedEncoding->_childPid = 0; // not running
 
-				_logger->error(
-					__FILEREF__ + method + " failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", requestBody: " + requestBody + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"{} failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", requestBody: {}"
+					", e.what(): {}",
+					method, ingestionJobKey, encodingJobKey, requestBody, e.what()
 				);
 
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format("Internal server error: {}", e.what());
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 500, errorMessage);
 
@@ -502,13 +544,17 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "sendSuccess failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey) + ", requestBody: " + requestBody + ", e.what(): " + e.what()
+			SPDLOG_ERROR(
+				"sendSuccess failed"
+				", ingestionJobKey: {}"
+				", selectedEncoding->_encodingJobKey: {}"
+				", requestBody: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, requestBody, e.what()
 			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -520,8 +566,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'ingestionJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -532,8 +578,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'encodingJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -573,13 +619,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				string errorMessage;
 				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey) + ", " + EncodingIsAlreadyRunning().what();
+					errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, EncodingIsAlreadyRunning().what());
 				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey) + ", " + NoEncodingAvailable().what();
-
-				_logger->error(
-					__FILEREF__ + errorMessage + ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning) +
-					", freeEncodingFound: " + to_string(freeEncodingFound)
+					errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingAvailable().what());
+				SPDLOG_ERROR(
+					"{}"
+					", encodingAlreadyRunning: {}"
+					", freeEncodingFound: {}",
+					errorMessage, encodingAlreadyRunning, freeEncodingFound
 				);
 
 				sendError(request, 400, errorMessage);
@@ -623,7 +670,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								+ ", " +
 				NoEncodingAvailable().what();
 
-						_logger->warn(__FILEREF__ +
+						warn(__FILEREF__ +
 				errorMessage);
 
 						sendError(request, 400,
@@ -654,11 +701,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveRecording->_killToRestartByEngine = false;
 				selectedLiveRecording->_encodingJobKey = encodingJobKey;
 
-				_logger->info(
-					__FILEREF__ + "Creating liveRecorder thread" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", "
-					"selectedLiveRecording->_encodingJobKey: " +
-					to_string(encodingJobKey) + ", requestBody: " + requestBody
+				SPDLOG_INFO(
+					"Creating liveRecorder thread"
+					", ingestionJobKey: {}"
+					", selectedLiveRecording->_encodingJobKey: {}"
+					", requestBody: {}",
+					ingestionJobKey, encodingJobKey, requestBody
 				);
 				thread liveRecorderThread(
 					&FFMPEGEncoder::liveRecorderThread, this, selectedLiveRecording, ingestionJobKey, encodingJobKey, requestBody
@@ -673,15 +721,17 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveRecording->_available = true;
 				selectedLiveRecording->_childPid = 0; // not running
 
-				_logger->error(
-					__FILEREF__ + "liveRecorder failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", "
-					"selectedLiveRecording->_encodingJobKey: " +
-					to_string(encodingJobKey) + ", requestBody: " + requestBody + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"liveRecorder failed"
+					", ingestionJobKey: {}"
+					", selectedLiveRecording->_encodingJobKey: {}"
+					", requestBody: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, requestBody, e.what()
 				);
 
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format("Internal server error: {}", e.what());
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 500, errorMessage);
 
@@ -702,13 +752,17 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "liveRecorderThread failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey) + ", requestBody: " + requestBody + ", e.what(): " + e.what()
+			SPDLOG_ERROR(
+				"liveRecorderThread failed"
+				", ingestionJobKey: {}"
+				", selectedEncoding->_encodingJobKey: {}"
+				", requestBody: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, requestBody, e.what()
 			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -724,8 +778,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'ingestionJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -736,8 +790,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'encodingJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -777,14 +831,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			{
 				string errorMessage;
 				if (encodingAlreadyRunning)
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey) + ", " + EncodingIsAlreadyRunning().what();
+					errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, EncodingIsAlreadyRunning().what());
 				else
-					errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey) + ", " + NoEncodingAvailable().what();
-
-				_logger->error(
-					__FILEREF__ + errorMessage + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", encodingAlreadyRunning: " + to_string(encodingAlreadyRunning) +
-					", freeEncodingFound: " + to_string(freeEncodingFound)
+					errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingAvailable().what());
+				SPDLOG_ERROR(
+					"{}"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", encodingAlreadyRunning: {}"
+					", freeEncodingFound: {}",
+					errorMessage, ingestionJobKey, encodingJobKey, encodingAlreadyRunning, freeEncodingFound
 				);
 
 				sendError(request, 400, errorMessage);
@@ -835,7 +891,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								+ ", " +
 				NoEncodingAvailable().what();
 
-						_logger->warn(__FILEREF__ +
+						warn(__FILEREF__ +
 				errorMessage);
 
 						sendError(request, 400,
@@ -855,12 +911,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				if (method == "liveProxy")
 				{
-					_logger->info(
-						__FILEREF__ + "Creating liveProxy thread" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", "
-						"selectedLiveProxy->_"
-						"encodingJobKey: " +
-						to_string(encodingJobKey) + ", requestBody: " + requestBody
+					SPDLOG_INFO(
+						"Creating liveProxy thread"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", requestBody: {}",
+						ingestionJobKey, encodingJobKey, requestBody
 					);
 					thread liveProxyThread(&FFMPEGEncoder::liveProxyThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey, requestBody);
 					liveProxyThread.detach();
@@ -868,29 +924,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				/*
 				else if (method == "vodProxy")
 				{
-						_logger->info(__FILEREF__ +
-				"Creating vodProxy thread"
-								+ ",
-				selectedLiveProxy->_encodingJobKey: " +
-				to_string(encodingJobKey)
-								+ ",
-				requestBody: " + requestBody
-						);
-						thread
-				vodProxyThread(&FFMPEGEncoder::vodProxyThread,
-								this,
-				selectedLiveProxy, encodingJobKey, requestBody);
-				vodProxyThread.detach();
 				}
 				*/
 				else if (method == "liveGrid")
 				{
-					_logger->info(
-						__FILEREF__ + "Creating liveGrid thread" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", "
-						"selectedLiveProxy->_"
-						"encodingJobKey: " +
-						to_string(encodingJobKey) + ", requestBody: " + requestBody
+					SPDLOG_INFO(
+						"Creating liveGrid thread"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", requestBody: {}",
+						ingestionJobKey, encodingJobKey, requestBody
 					);
 					thread liveGridThread(&FFMPEGEncoder::liveGridThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey, requestBody);
 					liveGridThread.detach();
@@ -898,19 +941,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				/*
 				else // if (method == "countdown")
 				{
-						_logger->info(__FILEREF__ +
-				"Creating countdown thread"
-								+ ",
-				selectedLiveProxy->_encodingJobKey: " +
-				to_string(encodingJobKey)
-								+ ",
-				requestBody: " + requestBody
-						);
-						thread
-				awaitingTheBeginningThread(&FFMPEGEncoder::awaitingTheBeginningThread,
-								this,
-				selectedLiveProxy, encodingJobKey, requestBody);
-				awaitingTheBeginningThread.detach();
 				}
 				*/
 
@@ -922,13 +952,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveProxy->_available = true;
 				selectedLiveProxy->_childPid = 0; // not running
 
-				_logger->error(
-					__FILEREF__ + "liveProxyThread failed" + ", method: " + method + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey) + ", requestBody: " + requestBody + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"liveProxyThread failed"
+					", method: {}"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", requestBody: {}"
+					", e.what(): {}",
+					method, ingestionJobKey, encodingJobKey, requestBody, e.what()
 				);
 
-				string errorMessage = string("Internal server error");
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format("Internal server error: {}", e.what());
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 500, errorMessage);
 
@@ -949,17 +984,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ +
-				"liveProxy/vodProxy/liveGrid/awaitingTheBeginning "
-				"Thread "
-				"failed" +
-				", method: " + method + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", selectedLiveProxy->_encodingJobKey: " + to_string(encodingJobKey) + ", requestBody: " + requestBody + ", e.what(): " + e.what()
+			SPDLOG_ERROR(
+				"liveProxy/vodProxy/liveGrid/awaitingTheBeginning Thread failed"
+				", method: {}"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", requestBody: {}"
+				", e.what(): {}",
+				method, ingestionJobKey, encodingJobKey, requestBody, e.what()
 			);
 
-			string errorMessage = string("Internal server error");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("Internal server error: {}", e.what());
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -1171,14 +1207,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
 
 						chrono::system_clock::time_point endEncodingProgress = chrono::system_clock::now();
-						_logger->info(
-							__FILEREF__ +
-							"getEncodingProgress "
-							"statistics" +
-							", @MMS statistics@ - "
-							"encodingProgress (secs): "
-							"@" +
-							to_string(chrono::duration_cast<chrono::seconds>(endEncodingProgress - startEncodingProgress).count()) + "@"
+						SPDLOG_INFO(
+							"getEncodingProgress statistics"
+							", @MMS statistics@ - encodingProgress (secs): @{}@",
+							chrono::duration_cast<chrono::seconds>(endEncodingProgress - startEncodingProgress).count()
 						);
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
@@ -1206,7 +1238,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 							", e.what(): {}",
 							ingestionJobKey, encodingJobKey, e.what()
 						);
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						// sendError(request, 500,
 						// errorMessage);
@@ -1311,8 +1343,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'ingestionJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1323,8 +1355,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'encodingJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1350,7 +1382,6 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				", encodingCompleted: {}",
 				ingestionJobKey, ingestionJobKey, encodingCompleted
 			);
-
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -1361,8 +1392,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto filterNameIt = queryParameters.find("filterName");
 		if (filterNameIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'filterName' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'filterName' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1393,8 +1424,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				", liveProxyFound: {}",
 				ingestionJobKey, ingestionJobKey, liveProxyFound
 			);
-
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
 
@@ -1438,12 +1468,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					string field = "mmsWorkflowIngestionURL";
 					if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " +
-											  to_string(ingestionJobKey)
-											  // + ", encodingJobKey: " +
-											  // to_string(encodingJobKey)
-											  + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", Field: {}",
+							ingestionJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1518,7 +1549,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		if (ingestionJobKeyIt == queryParameters.end())
 		{
 			string errorMessage = string("The 'ingestionJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1533,7 +1564,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		if (encodingJobKeyIt == queryParameters.end())
 		{
 			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1611,8 +1642,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		if (!encodingFound && !liveProxyFound && !liveRecorderFound)
 		{
-			string errorMessage = "ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) + ", " +
-								  NoEncodingJobKeyFound().what();
+			string errorMessage = std::format(
+				"ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", {}",
+				ingestionJobKey, encodingJobKey, NoEncodingJobKeyFound().what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
@@ -1641,7 +1676,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				ingestionJobKey, encodingJobKey, selectedEncoding->_childPid
 			);
 
-			string errorMessage = string("Internal server error");
+			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -1679,9 +1714,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("ProcessUtility::killProcess failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", _childPid: " + to_string(selectedEncoding->_childPid) +
-								  ", e.what(): " + e.what();
+			string errorMessage = std::format(
+				"ProcessUtility::killProcess failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", _childPid: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, selectedEncoding->_childPid, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -1717,7 +1757,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		the ADMIN permission"
 					", isAdminAPI: " + to_string(isAdminAPI)
 					);
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 403, errorMessage);
 
@@ -1728,8 +1768,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'encodingJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1742,7 +1782,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		if (interruptPlaylistIt != queryParameters.end())
 			interruptPlaylist = interruptPlaylistIt->second == "true";
 
-		_logger->info(__FILEREF__ + "Received changeLiveProxyPlaylist" + ", encodingJobKey: " + to_string(encodingJobKey));
+		SPDLOG_INFO(
+			"Received changeLiveProxyPlaylist"
+			", encodingJobKey: {}",
+			encodingJobKey
+		);
 
 		bool encodingFound = false;
 
@@ -1753,7 +1797,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + e.what());
+			SPDLOG_ERROR(e.what());
 
 			sendError(request, 500, e.what());
 
@@ -1778,9 +1822,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 			if (!encodingFound)
 			{
-				string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey) + ", " + NoEncodingJobKeyFound().what();
-
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 500, errorMessage);
 
@@ -1789,9 +1832,11 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			}
 
 			{
-				_logger->info(
-					__FILEREF__ + "Replacing the LiveProxy playlist" + ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey)
+				SPDLOG_INFO(
+					"Replacing the LiveProxy playlist"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}",
+					selectedLiveProxy->_ingestionJobKey, encodingJobKey
 				);
 
 				lock_guard<mutex> locker(selectedLiveProxy->_inputsRootMutex);
@@ -1811,12 +1856,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				}
 				catch (runtime_error &e)
 				{
-					string errorMessage = string("ProcessUtility::"
-												 "termProcess failed") +
-										  ", ingestionJobKey: " + to_string(selectedLiveProxy->_ingestionJobKey) +
-										  ", encodingJobKey: " + to_string(selectedLiveProxy->_encodingJobKey) +
-										  ", _childPid: " + to_string(selectedLiveProxy->_childPid) + ", e.what(): " + e.what();
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"ProcessUtility::termProcess failed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _childPid: {}"
+						", e.what(): {}",
+						selectedLiveProxy->_ingestionJobKey, selectedLiveProxy->_encodingJobKey, selectedLiveProxy->_childPid, e.what()
+					);
+					SPDLOG_ERROR(errorMessage);
 				}
 			}
 		}
@@ -1838,8 +1886,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'encodingJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -1870,8 +1918,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			if (!encodingFound)
 			{
 				string errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
-
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 500, errorMessage);
 
@@ -1923,7 +1970,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		the ADMIN permission"
 					", isAdminAPI: " + to_string(isAdminAPI)
 					);
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 403, errorMessage);
 
@@ -1934,8 +1981,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
 		if (encodingJobKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("The 'encodingJobKey' parameter is not found");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "The 'encodingJobKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -2015,7 +2062,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						+ ", " +
 	NoEncodingJobKeyFound().what();
 
-	_logger->error(__FILEREF__ + errorMessage);
+	SPDLOG_ERROR(errorMessage);
 
 	sendError(request, 400, errorMessage);
 
@@ -2040,7 +2087,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								+ ", e.what(): "
 	+ e.what()
 										;
-						_logger->info(__FILEREF__ +
+						info(__FILEREF__ +
 	errorMessage);
 
 						sendError(request, 500,
@@ -2057,7 +2104,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								+ ", e.what(): "
 	+ e.what()
 			;
-						_logger->error(__FILEREF__ +
+						error(__FILEREF__ +
 	errorMessage);
 
 						sendError(request, 500,
@@ -2097,7 +2144,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								+ ", e.what(): "
 	+ e.what()
 										;
-						_logger->info(__FILEREF__ +
+						info(__FILEREF__ +
 	errorMessage);
 
 						sendError(request, 500,
@@ -2114,7 +2161,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								+ ", e.what(): "
 	+ e.what()
 			;
-						_logger->error(__FILEREF__ +
+						error(__FILEREF__ +
 	errorMessage);
 
 						sendError(request, 500,
@@ -2157,7 +2204,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 								+ ",
 	encodingCompleted: " + to_string(encodingCompleted)
 								;
-				_logger->info(__FILEREF__ + errorMessage);
+				info(__FILEREF__ + errorMessage);
 
 				sendError(request, 500, errorMessage);
 
@@ -2168,9 +2215,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	}
 	else
 	{
-		string errorMessage =
-			string("No API is matched") + ", requestURI: " + requestURI + ", method: " + method + ", requestMethod: " + requestMethod;
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"No API is matched"
+			", requestURI: {}"
+			", method: {}"
+			", requestMethod: {}",
+			requestURI, method, requestMethod
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 400, errorMessage);
 
@@ -2185,7 +2237,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 	/* this statistics information is already present in APICommon.cpp
 	chrono::system_clock::time_point endManageRequestAndResponse =
-	chrono::system_clock::now(); _logger->info(__FILEREF__ +
+	chrono::system_clock::now(); info(__FILEREF__ +
 	"manageRequestAndResponse"
 			+ ", method: " + method
 			+ ", @MMS statistics@ - duration
@@ -2260,7 +2312,7 @@ void FFMPEGEncoder::encodeContentThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2269,7 +2321,7 @@ void FFMPEGEncoder::encodeContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2278,7 +2330,7 @@ void FFMPEGEncoder::encodeContentThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2301,11 +2353,11 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2314,7 +2366,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2337,11 +2389,11 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2350,7 +2402,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2373,15 +2425,15 @@ void FFMPEGEncoder::generateFramesThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 }
 
@@ -2396,15 +2448,15 @@ void FFMPEGEncoder::slideShowThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 }
 
@@ -2420,11 +2472,11 @@ void FFMPEGEncoder::videoSpeedThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2433,7 +2485,7 @@ void FFMPEGEncoder::videoSpeedThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2456,11 +2508,11 @@ void FFMPEGEncoder::addSilentAudioThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2469,7 +2521,7 @@ void FFMPEGEncoder::addSilentAudioThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2492,11 +2544,11 @@ void FFMPEGEncoder::pictureInPictureThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2505,7 +2557,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2528,11 +2580,11 @@ void FFMPEGEncoder::introOutroOverlayThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2541,7 +2593,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2564,11 +2616,11 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2577,7 +2629,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2656,11 +2708,11 @@ void FFMPEGEncoder::liveProxyThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (FFMpegURLForbidden &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2669,7 +2721,7 @@ void FFMPEGEncoder::liveProxyThread(
 	}
 	catch (FFMpegURLNotFound &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2678,7 +2730,7 @@ void FFMPEGEncoder::liveProxyThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2687,7 +2739,7 @@ void FFMPEGEncoder::liveProxyThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2710,11 +2762,11 @@ void FFMPEGEncoder::liveGridThread(
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 	}
 	catch (FFMpegURLForbidden &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2723,7 +2775,7 @@ void FFMPEGEncoder::liveGridThread(
 	}
 	catch (FFMpegURLNotFound &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2732,7 +2784,7 @@ void FFMPEGEncoder::liveGridThread(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2741,7 +2793,7 @@ void FFMPEGEncoder::liveGridThread(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + e.what());
+		SPDLOG_ERROR(e.what());
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2768,12 +2820,11 @@ void FFMPEGEncoder::encodingCompletedRetention()
 
 	chrono::system_clock::time_point end = chrono::system_clock::now();
 
-	_logger->info(
-		__FILEREF__ + "encodingCompletedRetention" + ", encodingCompletedMap size: " + to_string(_encodingCompletedMap->size()) +
-		", @MMS statistics@ - duration encodingCompleted retention "
-		"processing "
-		"(secs): @" +
-		to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+	SPDLOG_INFO(
+		"encodingCompletedRetention"
+		", encodingCompletedMap size: {}"
+		", @MMS statistics@ - duration encodingCompleted retention processing (secs): @{}@",
+		_encodingCompletedMap->size(), chrono::duration_cast<chrono::seconds>(end - start).count()
 	);
 }
 
@@ -2799,7 +2850,12 @@ int FFMPEGEncoder::getMaxEncodingsCapability(void)
 		string lastCPUUsage;
 		for (int cpuUsage : *_cpuUsage)
 			lastCPUUsage += (to_string(cpuUsage) + " ");
-		_logger->info(__FILEREF__ + "getMaxXXXXCapability" + ", lastCPUUsage: " + lastCPUUsage + ", maxCapability: " + to_string(maxCapability));
+		SPDLOG_INFO(
+			"getMaxXXXXCapability"
+			", lastCPUUsage: {}"
+			", maxCapability: {}",
+			lastCPUUsage, maxCapability
+		);
 
 		return maxCapability;
 	}
@@ -2853,7 +2909,7 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(int64_t ingestionJobKey)
 					maxLiveProxiesCapability =
 	JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
 							"maxLiveProxiesCapability",
-	1); _logger->info(__FILEREF__ + "Configuration item"
+	1); info(__FILEREF__ + "Configuration item"
 							+ ",
 	ffmpeg->maxLiveProxiesCapability: " +
 	to_string(maxLiveProxiesCapability)
@@ -2862,7 +2918,7 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(int64_t ingestionJobKey)
 					if (maxLiveProxiesCapability >
 	VECTOR_MAX_CAPACITY)
 					{
-							_logger->error(__FILEREF__
+							error(__FILEREF__
 	+ "getMaxXXXXCapability. maxLiveProxiesCapability cannot be bigger than
 	VECTOR_MAX_CAPACITY"
 									+ ",
@@ -2886,7 +2942,7 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(int64_t ingestionJobKey)
 			}
 			else
 			{
-					_logger->error(__FILEREF__ +
+					error(__FILEREF__ +
 	"getMaxXXXXCapability. Encoder Capability Configuration Path Name is not
 	present"
 							+ ",
@@ -2897,7 +2953,7 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(int64_t ingestionJobKey)
 	}
 	catch (exception e)
 	{
-			_logger->error(__FILEREF__ + "getMaxXXXXCapability
+			error(__FILEREF__ + "getMaxXXXXCapability
 	failed"
 					+ ",
 	_encoderCapabilityConfigurationPathName: " +
@@ -2905,7 +2961,7 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(int64_t ingestionJobKey)
 			);
 	}
 
-	_logger->info(__FILEREF__ + "getMaxXXXXCapability"
+	info(__FILEREF__ + "getMaxXXXXCapability"
 			+ ", maxLiveProxiesCapability: " +
 	to_string(maxLiveProxiesCapability)
 	);
@@ -2936,7 +2992,12 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 		string lastCPUUsage;
 		for (int cpuUsage : *_cpuUsage)
 			lastCPUUsage += (to_string(cpuUsage) + " ");
-		_logger->info(__FILEREF__ + "getMaxXXXXCapability" + ", lastCPUUsage: " + lastCPUUsage + ", maxCapability: " + to_string(maxCapability));
+		SPDLOG_INFO(
+			"getMaxXXXXCapability"
+			", lastCPUUsage: {}"
+			", maxCapability: {}",
+			lastCPUUsage, maxCapability
+		);
 
 		return maxCapability;
 	}
@@ -2955,7 +3016,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 					maxLiveRecordingsCapability =
 	JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
 							"maxLiveRecordingsCapability",
-	1); _logger->info(__FILEREF__ + "Configuration item"
+	1); info(__FILEREF__ + "Configuration item"
 							+ ",
 	ffmpeg->maxLiveRecordingsCapability: " +
 	to_string(maxLiveRecordingsCapability)
@@ -2964,7 +3025,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 					if (maxLiveRecordingsCapability >
 	VECTOR_MAX_CAPACITY)
 					{
-							_logger->error(__FILEREF__
+							error(__FILEREF__
 	+ "getMaxXXXXCapability. maxLiveRecordingsCapability cannot be bigger
 	than VECTOR_MAX_CAPACITY"
 									+ ",
@@ -2987,7 +3048,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 			}
 			else
 			{
-					_logger->error(__FILEREF__ +
+					error(__FILEREF__ +
 	"getMaxXXXXCapability. Encoder Capability Configuration Path Name is not
 	present"
 							+ ",
@@ -2998,7 +3059,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 	}
 	catch (exception e)
 	{
-			_logger->error(__FILEREF__ +
+			error(__FILEREF__ +
 	"getMaxLiveRecordingsCapability failed"
 					+ ",
 	_encoderCapabilityConfigurationPathName: " +
@@ -3006,7 +3067,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability(void)
 			);
 	}
 
-	_logger->info(__FILEREF__ + "getMaxXXXXCapability"
+	info(__FILEREF__ + "getMaxXXXXCapability"
 			+ ", maxLiveRecordingsCapability: " +
 	to_string(maxLiveRecordingsCapability)
 	);

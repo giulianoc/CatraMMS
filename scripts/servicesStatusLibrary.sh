@@ -638,6 +638,9 @@ mms_api_timing_check_service()
 			    else if (method == "uploadedBinary"	\
 			    )	\
 				    maxDuration = 3000;	\
+			    else if (method == "changeLiveProxyPlaylist"	\
+			    )	\
+				    maxDuration = 3000;	\
           if (duration > maxDuration)  \
             warningMessage=warningMessage""datetime" - "method" - "duration"/"maxAPIDuration"\n";  \
         } \

@@ -1,39 +1,36 @@
 
 #include "FFMPEGEncoderBase.h"
 #include "JSONUtils.h"
-// #include "MMSCURL.h"
-// #include <sstream>
-// #include "catralibraries/Encrypt.h"
-// #include "catralibraries/ProcessUtility.h"
-// #include "catralibraries/StringUtils.h"
+#include "spdlog/spdlog.h"
 
-FFMPEGEncoderBase::FFMPEGEncoderBase(
-	json configurationRoot,
-	shared_ptr<spdlog::logger> logger)
+FFMPEGEncoderBase::FFMPEGEncoderBase(json configurationRoot, shared_ptr<spdlog::logger> logger)
 {
 	try
 	{
 		_logger = logger;
 
 		_mmsAPITimeoutInSeconds = JSONUtils::asInt(configurationRoot["api"], "timeoutInSeconds", 120);
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds)
+		SPDLOG_INFO(
+			"Configuration item"
+			", api->timeoutInSeconds: {}",
+			_mmsAPITimeoutInSeconds
 		);
 		_mmsBinaryTimeoutInSeconds = JSONUtils::asInt(configurationRoot["api"]["binary"], "timeoutInSeconds", 120);
-		_logger->info(__FILEREF__ + "Configuration item"
-			+ ", api->binary->timeoutInSeconds: " + to_string(_mmsBinaryTimeoutInSeconds)
+		SPDLOG_INFO(
+			"Configuration item"
+			", api->binary->timeoutInSeconds: {}",
+			_mmsBinaryTimeoutInSeconds
 		);
-
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
+		// error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
+		// error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
@@ -44,24 +41,21 @@ FFMPEGEncoderBase::~FFMPEGEncoderBase()
 	try
 	{
 	}
-	catch(runtime_error& e)
+	catch (runtime_error &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
+		// error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
-	catch(exception& e)
+	catch (exception &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
+		// error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
 }
 
-long FFMPEGEncoderBase::getAddContentIngestionJobKey(
-	int64_t ingestionJobKey,
-	string ingestionResponse
-)
+long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, string ingestionResponse)
 {
 	try
 	{
@@ -90,35 +84,37 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(
 			}
 		}
 		*/
-        json ingestionResponseRoot = JSONUtils::toJson(ingestionResponse);
+		json ingestionResponseRoot = JSONUtils::toJson(ingestionResponse);
 
 		string field = "tasks";
 		if (!JSONUtils::isMetadataPresent(ingestionResponseRoot, field))
 		{
-			string errorMessage = __FILEREF__
+			string errorMessage = std::format(
 				"ingestion workflow. Response Body json is not well format"
-				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-				+ ", ingestionResponse: " + ingestionResponse
-			;
-			_logger->error(errorMessage);
+				", ingestionJobKey: {}"
+				", ingestionResponse: {}",
+				ingestionJobKey, ingestionResponse
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		json tasksRoot = ingestionResponseRoot[field];
 
-		for(int taskIndex = 0; taskIndex < tasksRoot.size(); taskIndex++)
+		for (int taskIndex = 0; taskIndex < tasksRoot.size(); taskIndex++)
 		{
 			json ingestionJobRoot = tasksRoot[taskIndex];
 
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
-				string errorMessage = __FILEREF__
+				string errorMessage = std::format(
 					"ingestion workflow. Response Body json is not well format"
-					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-					+ ", ingestionResponse: " + ingestionResponse
-				;
-				_logger->error(errorMessage);
+					", ingestionJobKey: {}"
+					", ingestionResponse: {}",
+					ingestionJobKey, ingestionResponse
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -129,12 +125,13 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(
 				field = "ingestionJobKey";
 				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				{
-					string errorMessage = __FILEREF__
+					string errorMessage = std::format(
 						"ingestion workflow. Response Body json is not well format"
-						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ingestionResponse: " + ingestionResponse
-					;
-					_logger->error(errorMessage);
+						", ingestionJobKey: {}"
+						", ingestionResponse: {}",
+						ingestionJobKey, ingestionResponse
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -146,16 +143,16 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(
 
 		return addContentIngestionJobKey;
 	}
-	catch(...)
+	catch (...)
 	{
-		string errorMessage =
-			string("ingestion workflow. Response Body json is not well format")
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
-			+ ", ingestionResponse: " + ingestionResponse
-		;
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"ingestion workflow. Response Body json is not well format"
+			", ingestionJobKey: {}"
+			", ingestionResponse: {}",
+			ingestionJobKey, ingestionResponse
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 }
-

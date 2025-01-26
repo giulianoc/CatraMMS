@@ -15,6 +15,8 @@
 #include "JSONUtils.h"
 #include "Validator.h"
 #include "catralibraries/Convert.h"
+#include "spdlog/spdlog.h"
+#include <format>
 #include <sstream>
 
 void API::workflowsAsLibraryList(
@@ -24,7 +26,7 @@ void API::workflowsAsLibraryList(
 {
 	string api = "workflowsAsLibraryList";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
@@ -36,10 +38,15 @@ void API::workflowsAsLibraryList(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -47,10 +54,15 @@ void API::workflowsAsLibraryList(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -65,7 +77,7 @@ void API::workflowAsLibraryContent(
 {
 	string api = "workflowAsLibraryContent";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
@@ -73,8 +85,8 @@ void API::workflowAsLibraryContent(
 		auto workflowLibraryKeyIt = queryParameters.find("workflowLibraryKey");
 		if (workflowLibraryKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("'workflowLibraryKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'workflowLibraryKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -88,10 +100,15 @@ void API::workflowAsLibraryContent(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -99,10 +116,15 @@ void API::workflowAsLibraryContent(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -117,7 +139,11 @@ void API::saveWorkflowAsLibrary(
 {
 	string api = "saveWorkflowAsLibrary";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
 
 	try
 	{
@@ -137,8 +163,12 @@ void API::saveWorkflowAsLibrary(
 				string field = "label";
 				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -147,8 +177,8 @@ void API::saveWorkflowAsLibrary(
 				auto workflowAsLibraryScopeIt = queryParameters.find("scope");
 				if (workflowAsLibraryScopeIt == queryParameters.end())
 				{
-					string errorMessage = string("'scope' URI parameter is missing");
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = "'scope' URI parameter is missing";
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -156,9 +186,12 @@ void API::saveWorkflowAsLibrary(
 
 				if (workflowAsLibraryScope == "MMS" && !admin)
 				{
-					string errorMessage =
-						string("APIKey does not have the permission to add/update MMS WorkflowAsLibrary") + ", admin: " + to_string(admin);
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"APIKey does not have the permission to add/update MMS WorkflowAsLibrary"
+						", admin: {}",
+						admin
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					// sendError(request, 403, errorMessage);
 
@@ -185,10 +218,16 @@ void API::saveWorkflowAsLibrary(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -196,10 +235,16 @@ void API::saveWorkflowAsLibrary(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", requestBody: " + requestBody + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -214,15 +259,15 @@ void API::removeWorkflowAsLibrary(
 {
 	string api = "removeWorkflowAsLibrary";
 
-	_logger->info(__FILEREF__ + "Received " + api);
+	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
 		auto workflowLibraryKeyIt = queryParameters.find("workflowLibraryKey");
 		if (workflowLibraryKeyIt == queryParameters.end())
 		{
-			string errorMessage = string("'workflowLibraryKey' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'workflowLibraryKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -234,8 +279,8 @@ void API::removeWorkflowAsLibrary(
 		auto workflowAsLibraryScopeIt = queryParameters.find("scope");
 		if (workflowAsLibraryScopeIt == queryParameters.end())
 		{
-			string errorMessage = string("'scope' URI parameter is missing");
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = "'scope' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 400, errorMessage);
 
@@ -245,12 +290,12 @@ void API::removeWorkflowAsLibrary(
 
 		if (workflowAsLibraryScope == "MMS" && !admin)
 		{
-			string errorMessage = string(
+			string errorMessage = std::format(
 				"APIKey does not have the permission to add/update MMS WorkflowAsLibrary"
-				", admin: " +
-				to_string(admin)
+				", admin: {}",
+				admin
 			);
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 403, errorMessage);
 
@@ -266,13 +311,21 @@ void API::removeWorkflowAsLibrary(
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeWorkflowAsLibrary failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeWorkflowAsLibrary failed" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
+				", e.what(): {}",
+				e.what()
+			);
 
 			throw e;
 		}
@@ -283,10 +336,15 @@ void API::removeWorkflowAsLibrary(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -294,10 +352,15 @@ void API::removeWorkflowAsLibrary(
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "API failed" + ", API: " + api + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
 
-		string errorMessage = string("Internal server error");
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
