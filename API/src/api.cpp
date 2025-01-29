@@ -6,6 +6,7 @@
 #include <libxml/xpathInternals.h>
 
 #include "CurlWrapper.h"
+#include "spdlog/common.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -35,6 +36,128 @@ void signalHandler(int signal)
 			", signal: {}",
 			signal
 		);
+}
+
+shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
+{
+	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"], "pathName", "");
+	string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["api"], "errorPathName", "");
+	string logType = JSONUtils::asString(configurationRoot["log"]["api"], "type", "");
+	bool stdout = JSONUtils::asBool(configurationRoot["log"]["api"], "stdout", false);
+
+	std::vector<spdlog::sink_ptr> sinks;
+	{
+		string logLevel = JSONUtils::asString(configurationRoot["log"]["api"], "level", "");
+		if (logType == "daily")
+		{
+			int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
+
+			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
+			sinks.push_back(dailySink);
+			if (logLevel == "debug")
+				dailySink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				dailySink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				dailySink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				dailySink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				dailySink->set_level(spdlog::level::critical);
+
+			auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
+			sinks.push_back(errorDailySink);
+			errorDailySink->set_level(spdlog::level::err);
+		}
+		else if (logType == "rotating")
+		{
+			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
+			int maxFiles = JSONUtils::asInt(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
+
+			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(rotatingSink);
+			if (logLevel == "debug")
+				rotatingSink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				rotatingSink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				rotatingSink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				rotatingSink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				rotatingSink->set_level(spdlog::level::critical);
+
+			auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(errorRotatingSink);
+			errorRotatingSink->set_level(spdlog::level::err);
+		}
+
+		if (stdout)
+		{
+			auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
+			sinks.push_back(stdoutSink);
+			stdoutSink->set_level(spdlog::level::debug);
+		}
+	}
+
+	auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
+	spdlog::register_logger(logger);
+
+	// trigger flush if the log severity is error or higher
+	logger->flush_on(spdlog::level::trace);
+
+	logger->set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+
+	string pattern = JSONUtils::asString(configurationRoot["log"]["api"], "pattern", "");
+	spdlog::set_pattern(pattern);
+
+	// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+	// spdlog::register_logger(logger);
+
+	spdlog::set_default_logger(logger);
+
+	return logger;
+}
+
+void registerSlowQueryLogger(json configurationRoot)
+{
+	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pathName", "");
+	string logType = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "type", "");
+
+	std::vector<spdlog::sink_ptr> sinks;
+	{
+		if (logType == "daily")
+		{
+			int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
+
+			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
+			sinks.push_back(dailySink);
+			dailySink->set_level(spdlog::level::warn);
+		}
+		else if (logType == "rotating")
+		{
+			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
+			int maxFiles = JSONUtils::asInt(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
+
+			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(rotatingSink);
+			rotatingSink->set_level(spdlog::level::warn);
+		}
+	}
+
+	auto logger = std::make_shared<spdlog::logger>("slow-query", begin(sinks), end(sinks));
+	spdlog::register_logger(logger);
+
+	// trigger flush if the log severity is error or higher
+	logger->flush_on(spdlog::level::trace);
+
+	// inizializza il livello del logger a trace in modo che ogni messaggio possa raggiungere i logger nei sinks
+	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
+
+	string pattern = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pattern", "");
+	logger->set_pattern(pattern);
 }
 
 int main(int argc, char **argv)
@@ -68,83 +191,8 @@ int main(int argc, char **argv)
 
 		json configuration = FastCGIAPI::loadConfigurationFile(configurationPathName);
 
-		string logPathName = JSONUtils::asString(configuration["log"]["api"], "pathName", "");
-		string logErrorPathName = JSONUtils::asString(configuration["log"]["api"], "errorPathName", "");
-		string logType = JSONUtils::asString(configuration["log"]["api"], "type", "");
-		bool stdout = JSONUtils::asBool(configuration["log"]["api"], "stdout", false);
-
-		std::vector<spdlog::sink_ptr> sinks;
-		{
-			string logLevel = JSONUtils::asString(configuration["log"]["api"], "level", "");
-			if (logType == "daily")
-			{
-				int logRotationHour = JSONUtils::asInt(configuration["log"]["api"]["daily"], "rotationHour", 1);
-				int logRotationMinute = JSONUtils::asInt(configuration["log"]["api"]["daily"], "rotationMinute", 1);
-
-				auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
-				sinks.push_back(dailySink);
-				if (logLevel == "debug")
-					dailySink->set_level(spdlog::level::debug);
-				else if (logLevel == "info")
-					dailySink->set_level(spdlog::level::info);
-				else if (logLevel == "warn")
-					dailySink->set_level(spdlog::level::warn);
-				else if (logLevel == "err")
-					dailySink->set_level(spdlog::level::err);
-				else if (logLevel == "critical")
-					dailySink->set_level(spdlog::level::critical);
-
-				auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
-				sinks.push_back(errorDailySink);
-				errorDailySink->set_level(spdlog::level::err);
-			}
-			else if (logType == "rotating")
-			{
-				int64_t maxSizeInKBytes = JSONUtils::asInt64(configuration["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
-				int maxFiles = JSONUtils::asInt(configuration["log"]["api"]["rotating"], "maxFiles", 10);
-
-				auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
-				sinks.push_back(rotatingSink);
-				if (logLevel == "debug")
-					rotatingSink->set_level(spdlog::level::debug);
-				else if (logLevel == "info")
-					rotatingSink->set_level(spdlog::level::info);
-				else if (logLevel == "warn")
-					rotatingSink->set_level(spdlog::level::warn);
-				else if (logLevel == "err")
-					rotatingSink->set_level(spdlog::level::err);
-				else if (logLevel == "critical")
-					rotatingSink->set_level(spdlog::level::critical);
-
-				auto errorRotatingSink =
-					make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
-				sinks.push_back(errorRotatingSink);
-				errorRotatingSink->set_level(spdlog::level::err);
-			}
-
-			if (stdout)
-			{
-				auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
-				sinks.push_back(stdoutSink);
-				stdoutSink->set_level(spdlog::level::debug);
-			}
-		}
-
-		auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
-		spdlog::register_logger(logger);
-
-		// trigger flush if the log severity is error or higher
-		logger->flush_on(spdlog::level::trace);
-
-		spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
-
-		string pattern = JSONUtils::asString(configuration["log"]["api"], "pattern", "");
-		spdlog::set_pattern(pattern);
-
-		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-		// spdlog::register_logger(logger);
-
-		spdlog::set_default_logger(logger);
+		shared_ptr<spdlog::logger> logger = setMainLogger(configuration);
+		registerSlowQueryLogger(configuration);
 
 		// install a signal handler
 		signal(SIGSEGV, signalHandler);
@@ -164,7 +212,8 @@ int main(int argc, char **argv)
 		logger->info(__FILEREF__ + "Configuration item" + ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize));
 #endif
 		logger->info(__FILEREF__ + "Creating MMSEngineDBFacade");
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(configuration, masterDbPoolSize, slaveDbPoolSize, logger);
+		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade =
+			make_shared<MMSEngineDBFacade>(configuration, configuration["log"]["api"]["slowQuery"], masterDbPoolSize, slaveDbPoolSize, logger);
 
 		logger->info(__FILEREF__ + "Creating MMSStorage" + ", noFileSystemAccess: " + to_string(noFileSystemAccess));
 		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, mmsEngineDBFacade, configuration, logger);

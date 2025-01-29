@@ -21,7 +21,9 @@
 
 // http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
 
-MMSEngineDBFacade::MMSEngineDBFacade(json configuration, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger)
+MMSEngineDBFacade::MMSEngineDBFacade(
+	json configuration, json slowQueryConfigurationRoot, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger
+)
 {
 	_logger = logger;
 	_configuration = configuration;
@@ -176,6 +178,9 @@ MMSEngineDBFacade::MMSEngineDBFacade(json configuration, size_t masterDbPoolSize
 		_slavePostgresConnectionPool = make_shared<DBConnectionPool<PostgresConnection>>(slaveDbPoolSize, _postgresSlaveConnectionFactory);
 	}
 
+	// slow query
+	loadMaxQueryElapsedConfiguration(slowQueryConfigurationRoot);
+
 	_lastConnectionStatsReport = chrono::system_clock::now();
 
 	_logger->info(__FILEREF__ + "createTablesIfNeeded...");
@@ -186,6 +191,42 @@ MMSEngineDBFacade::MMSEngineDBFacade(json configuration, size_t masterDbPoolSize
 }
 
 MMSEngineDBFacade::~MMSEngineDBFacade() {}
+
+void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigurationRoot)
+{
+	_defaultMaxQueryElapsed = JSONUtils::asInt(slowQueryConfigurationRoot, "defaultMaxQueryElapsed", 100);
+	SPDLOG_DEBUG(
+		"Configuration item"
+		", defaultMaxQueryElapsed: {}",
+		_defaultMaxQueryElapsed
+	);
+
+	_maxQueryElapsed.clear();
+	json maxQueryElapsedRoot = slowQueryConfigurationRoot["maxQueryElapsed"];
+	if (maxQueryElapsedRoot != nullptr)
+	{
+		for (auto &[keyRoot, valRoot] : maxQueryElapsedRoot.items())
+		{
+			string queryLabel = JSONUtils::asString(keyRoot, "", "");
+			long maxQueryElapsed = JSONUtils::asInt(valRoot, "", 100);
+			_maxQueryElapsed.insert(make_pair(queryLabel, maxQueryElapsed));
+		}
+	}
+}
+
+long MMSEngineDBFacade::maxQueryElapsed(const string queryLabel)
+{
+	if (queryLabel == "default" || queryLabel.empty())
+		return _defaultMaxQueryElapsed;
+	else
+	{
+		auto it = _maxQueryElapsed.find(queryLabel);
+		if (it != _maxQueryElapsed.end())
+			return it->second;
+		else
+			return _defaultMaxQueryElapsed;
+	}
+}
 
 void MMSEngineDBFacade::loadSqlColumnsSchema()
 {

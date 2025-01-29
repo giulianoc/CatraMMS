@@ -35,6 +35,90 @@ void signalHandler(int signal)
 		);
 }
 
+shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
+{
+	string logPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "pathName", "");
+	string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "errorPathName", "");
+	string logType = JSONUtils::asString(configurationRoot["log"]["encoder"], "type", "");
+	bool stdout = JSONUtils::asBool(configurationRoot["log"]["encoder"], "stdout", false);
+
+	std::vector<spdlog::sink_ptr> sinks;
+	{
+		string logLevel = JSONUtils::asString(configurationRoot["log"]["encoder"], "level", "");
+		if (logType == "daily")
+		{
+			int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
+
+			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
+			sinks.push_back(dailySink);
+			if (logLevel == "debug")
+				dailySink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				dailySink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				dailySink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				dailySink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				dailySink->set_level(spdlog::level::critical);
+
+			auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
+			sinks.push_back(errorDailySink);
+			errorDailySink->set_level(spdlog::level::err);
+		}
+		else if (logType == "rotating")
+		{
+			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["encoder"]["rotating"], "maxSizeInKBytes", 1000);
+			int maxFiles = JSONUtils::asInt(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
+
+			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(rotatingSink);
+			if (logLevel == "debug")
+				rotatingSink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				rotatingSink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				rotatingSink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				rotatingSink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				rotatingSink->set_level(spdlog::level::critical);
+
+			auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(errorRotatingSink);
+			errorRotatingSink->set_level(spdlog::level::err);
+		}
+
+		if (stdout)
+		{
+			auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
+			sinks.push_back(stdoutSink);
+			stdoutSink->set_level(spdlog::level::debug);
+		}
+	}
+
+	auto logger = std::make_shared<spdlog::logger>("Encoder", begin(sinks), end(sinks));
+	spdlog::register_logger(logger);
+
+	// shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
+	// shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
+
+	// trigger flush if the log severity is error or higher
+	logger->flush_on(spdlog::level::trace);
+
+	logger->set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+	string pattern = JSONUtils::asString(configurationRoot["log"]["encoder"], "pattern", "");
+	spdlog::set_pattern(pattern);
+
+	// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+	// spdlog::register_logger(logger);
+
+	spdlog::set_default_logger(logger);
+
+	return logger;
+}
+
 int main(int argc, char **argv)
 {
 	try
@@ -51,85 +135,7 @@ int main(int argc, char **argv)
 
 		json configurationRoot = FastCGIAPI::loadConfigurationFile(configurationPathName);
 
-		string logPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "pathName", "");
-		string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "errorPathName", "");
-		string logType = JSONUtils::asString(configurationRoot["log"]["encoder"], "type", "");
-		bool stdout = JSONUtils::asBool(configurationRoot["log"]["encoder"], "stdout", false);
-
-		std::vector<spdlog::sink_ptr> sinks;
-		{
-			string logLevel = JSONUtils::asString(configurationRoot["log"]["api"], "level", "");
-			if (logType == "daily")
-			{
-				int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
-				int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
-
-				auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
-				sinks.push_back(dailySink);
-				if (logLevel == "debug")
-					dailySink->set_level(spdlog::level::debug);
-				else if (logLevel == "info")
-					dailySink->set_level(spdlog::level::info);
-				else if (logLevel == "warn")
-					dailySink->set_level(spdlog::level::warn);
-				else if (logLevel == "err")
-					dailySink->set_level(spdlog::level::err);
-				else if (logLevel == "critical")
-					dailySink->set_level(spdlog::level::critical);
-
-				auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
-				sinks.push_back(errorDailySink);
-				errorDailySink->set_level(spdlog::level::err);
-			}
-			else if (logType == "rotating")
-			{
-				int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["encoder"]["rotating"], "maxSizeInKBytes", 1000);
-				int maxFiles = JSONUtils::asInt(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
-
-				auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
-				sinks.push_back(rotatingSink);
-				if (logLevel == "debug")
-					rotatingSink->set_level(spdlog::level::debug);
-				else if (logLevel == "info")
-					rotatingSink->set_level(spdlog::level::info);
-				else if (logLevel == "warn")
-					rotatingSink->set_level(spdlog::level::warn);
-				else if (logLevel == "err")
-					rotatingSink->set_level(spdlog::level::err);
-				else if (logLevel == "critical")
-					rotatingSink->set_level(spdlog::level::critical);
-
-				auto errorRotatingSink =
-					make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
-				sinks.push_back(errorRotatingSink);
-				errorRotatingSink->set_level(spdlog::level::err);
-			}
-
-			if (stdout)
-			{
-				auto stdoutSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
-				sinks.push_back(stdoutSink);
-				stdoutSink->set_level(spdlog::level::debug);
-			}
-		}
-
-		auto logger = std::make_shared<spdlog::logger>("Encoder", begin(sinks), end(sinks));
-		spdlog::register_logger(logger);
-
-		// shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
-		// shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
-
-		// trigger flush if the log severity is error or higher
-		logger->flush_on(spdlog::level::trace);
-
-		spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
-		string pattern = JSONUtils::asString(configurationRoot["log"]["encoder"], "pattern", "");
-		spdlog::set_pattern(pattern);
-
-		// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-		// spdlog::register_logger(logger);
-
-		spdlog::set_default_logger(logger);
+		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot);
 
 		// install a signal handler
 		signal(SIGSEGV, signalHandler);

@@ -45,6 +45,15 @@ using namespace nlohmann::literals;
 
 using namespace std;
 
+#define SQLQUERYLOG(queryLabel, elapsed, ...)                                                                                                        \
+	SPDLOG_DEBUG(__VA_ARGS__);                                                                                                                       \
+	if (elapsed > maxQueryElapsed(queryLabel))                                                                                                       \
+	{                                                                                                                                                \
+		auto logger = spdlog::get("slow-query");                                                                                                     \
+		if (logger != nullptr)                                                                                                                       \
+			SPDLOG_LOGGER_WARN(logger, __VA_ARGS__);                                                                                                 \
+	}
+
 struct LoginFailed : public exception
 {
 	char const *what() const throw() { return "email and/or password are wrong"; };
@@ -120,7 +129,6 @@ struct NoMoreSpaceInMMSPartition : public exception
 
 class MMSEngineDBFacade
 {
-
   public:
 	enum class CodeType
 	{
@@ -1195,7 +1203,9 @@ class MMSEngineDBFacade
 	}
 
   public:
-	MMSEngineDBFacade(json configuration, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger);
+	MMSEngineDBFacade(
+		json configuration, json slowQueryConfigurationRoot, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger
+	);
 
 	~MMSEngineDBFacade();
 
@@ -2396,6 +2406,11 @@ class MMSEngineDBFacade
 	json _configuration;
 	PostgresHelper _postgresHelper;
 	int _maxRows;
+
+	long _defaultMaxQueryElapsed;
+	map<string, long> _maxQueryElapsed;
+	void loadMaxQueryElapsedConfiguration(json slowQueryConfigurationRoot);
+	long maxQueryElapsed(const string queryLabel);
 
 #ifdef __POSTGRES__
 #else
