@@ -202,14 +202,17 @@ void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigura
 	);
 
 	_maxQueryElapsed.clear();
-	json maxQueryElapsedRoot = slowQueryConfigurationRoot["maxQueryElapsed"];
-	if (maxQueryElapsedRoot != nullptr)
+	if (slowQueryConfigurationRoot != nullptr)
 	{
-		for (auto &[keyRoot, valRoot] : maxQueryElapsedRoot.items())
+		json maxQueryElapsedRoot = slowQueryConfigurationRoot["maxQueryElapsed"];
+		if (maxQueryElapsedRoot != nullptr)
 		{
-			string queryLabel = JSONUtils::asString(keyRoot, "", "");
-			long maxQueryElapsed = JSONUtils::asInt(valRoot, "", 100);
-			_maxQueryElapsed.insert(make_pair(queryLabel, maxQueryElapsed));
+			for (auto &[keyRoot, valRoot] : maxQueryElapsedRoot.items())
+			{
+				string queryLabel = JSONUtils::asString(keyRoot, "", "");
+				long maxQueryElapsed = JSONUtils::asInt(valRoot, "", 100);
+				_maxQueryElapsed.insert(make_pair(queryLabel, maxQueryElapsed));
+			}
 		}
 	}
 }

@@ -26,7 +26,7 @@ int main(int iArgc, char *pArgv[])
 	spdlog::set_default_logger(logger);
 
 	logger->info(__FILEREF__ + "Creating MMSEngineDBFacade");
-	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(configuration, 3, 3, logger);
+	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(configuration, nullptr, 3, 3, logger);
 
 	try
 	{
