@@ -59,7 +59,7 @@ fi
 #sleepIfNeeded
 removePreviousVersions
 
-mmsStopALL.sh
+~/mmsStopALL.sh
 
 echo "cd /opt/catramms"
 cd /opt/catramms
@@ -79,14 +79,14 @@ ln -s CatraMMS-$version CatraMMS
 
 cd
 
-mmsStatusALL.sh
+~/mmsStatusALL.sh
 
 echo ""
 
 #per il transcoder serve un po piuu di tempo
 sleep 2
 
-mmsStatusALL.sh
+~/mmsStatusALL.sh
 
-mmsStartALL.sh
+~/mmsStartALL.sh
 

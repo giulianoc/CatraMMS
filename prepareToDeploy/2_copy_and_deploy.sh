@@ -30,17 +30,20 @@ deploy()
 	scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms
 	echo ""
 
-	ssh -P $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"
+	echo "deploy..."
+	ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"
 
-	if [ "$serverType" = "api" -o "$serverType" = "api-and-delivery" -o "$serverType" = "delivery" ]
+	if [ "$serverType" = "api" -o "$serverType" = "api-and-delivery" -o "$serverType" = "delivery" ]; then
 		tailCommand="tail -f logs/mmsAPI/mmsAPI-error.log"
-	elif [ "$serverType" = "engine" ]
+	elif [ "$serverType" = "engine" ]; then
 		tailCommand="tail -f logs/mmsEngineService/mmsEngineService-error.log"
-	elif [ "$serverType" = "encoder" -o "$serverType" = "externalEncoder" ]
+	elif [ "$serverType" = "encoder" -o "$serverType" = "externalEncoder" ]; then
 		tailCommand="tail -f logs/mmsEncoder/mmsEncoder-error.log"
 	fi
-	if [ "$tailCommand" != "" ]
-		ssh -P $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tail -f logs/mmsAPI/mmsAPI.log"
+	if [ "$tailCommand" != "" ]; then
+		echo "tail on errors..."
+		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tail -f logs/mmsAPI/mmsAPI.log"
+	fi
 }
 
 echo -n "deploy su mms cloud/test? " 
@@ -49,12 +52,14 @@ if [ "$deploy" == "y" ]; then
 	index=0
 	while [ $index -lt $testServersNumber ]
 	do
-		serverName=${testServers[$((index*5+0))]}
-		serverAddress=${testServers[$((index*5+1))]}
-		serverKey=${testServers[$((index*5+2))]}
-		serverPort=${testServers[$((index*5+3))]}
-		serverType=${testServers[$((index*5+4))]}
+		serverName=${testServers[$((index*6+0))]}
+		serverAddress=${testServers[$((index*6+1))]}
+		serverKey=${testServers[$((index*6+2))]}
+		serverPort=${testServers[$((index*6+3))]}
+		serverType=${testServers[$((index*6+4))]}
+		serverPrivateIP=${testServers[$((index*6+5))]}
 
+		#./hcloud load-balancer add-target --ip 10.0.1.4 mms-api-prod
 		deploy $serverName $serverAddress $serverPort $serverKey $serverType
 
 		index=$((index+1))
