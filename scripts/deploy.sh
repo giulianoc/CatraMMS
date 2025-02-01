@@ -79,14 +79,14 @@ ln -s CatraMMS-$version CatraMMS
 
 cd
 
-~/mmsStatusALL.sh
+/home/mms/mmsStatusALL.sh
 
 echo ""
 
 #per il transcoder serve un po piuu di tempo
 sleep 2
 
-~/mmsStatusALL.sh
+/home/mms/mmsStatusALL.sh
 
-~/mmsStartALL.sh
+/home/mms/mmsStartALL.sh
 
