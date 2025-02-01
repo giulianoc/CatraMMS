@@ -73,8 +73,9 @@ do
 			mms_service_running_by_processName $serviceName $processName
 
 			echo "" >> $debugFilename
-			serviceName=engine
-			mms_sql_timing_check_service $serviceName
+			serviceType=engine
+			#mms_sql_timing_check_service $serviceType
+			logfile_slowquery_newlines_check $serviceType
 			;;
 		"api")
 			echo "" >> $debugFilename
@@ -89,8 +90,9 @@ do
 			mms_api_timing_check_service
 
 			echo "" >> $debugFilename
-			serviceName=api
-			mms_sql_timing_check_service $serviceName
+			serviceType=api
+			#mms_sql_timing_check_service $serviceType
+			logfile_slowquery_newlines_check $serviceType
 
 			shift
 

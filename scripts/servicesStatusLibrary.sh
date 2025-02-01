@@ -729,67 +729,6 @@ mms_webservices_timing_check_service()
 	fi
 }
 
-mms_sql_timing_check_service()
-{
-	serviceName=$1
-
-	lastLogTimestampCheckedFile=/tmp/alarm_mms_sql_timing_check_service_info
-
-	if [ -f "$lastLogTimestampCheckedFile" ]; then
-		lastLogTimestampChecked=$(cat $lastLogTimestampCheckedFile)
-	else
-		lastLogTimestampChecked=-1
-	fi
-
-	if [ "$serviceName" == "engine" ]; then
-		logFilePathName=/var/catramms/logs/mmsEngineService/mmsEngineService.log
-	elif [ "$serviceName" == "api" ]; then
-		logFilePathName=/var/catramms/logs/mmsAPI/mmsAPI.log
-	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, wrong serviceName: $serviceName" >> $debugFilename
-		return 1
-	fi
-
-	#incrementato a 300 perchè capita di avere poco piu di 200 anche per query perfettamente indicizzate che impiegano al 99.9% 1 millisecs
-	# e poco piu di 200 nello 0.1%
-	maxSQLDuration=500
-	warningMessage=$(grep "statement, sqlStatement" $logFilePathName | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxSQLDuration=$maxSQLDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
-	{	\
-		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
-		newLastLogTimestampChecked=mktime(datespec);	\
-		if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) {	\
-			datetime=substr($0, 2, 23);	\
-			sqlStatement=$2;	\
-			duration=$6;	\
-			label=$7;	\
-			if (label == "getIngestionsToBeManaged")	\
-				maxSQLDuration = 3000;	\
-			else if (label == "getIngestionRootsStatus")	\
-				maxSQLDuration = 400;	\
-			if (duration > maxSQLDuration)	\
-				warningMessage=warningMessage""datetime" - "label" - "sqlStatement" - "duration"/"maxSQLDuration"\n";	\
-		}	\
-	}	\
-	END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
-
-	if [ "$warningMessage" = "" ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, mms sql ($serviceName) timing is fine" >> $debugFilename
-
-		alarmNotificationPathFileName="/tmp/alarm_mms_sql_timing_check_service"
-		if [ -f "$alarmNotificationPathFileName" ]; then
-			rm -f $alarmNotificationPathFileName
-		fi
-
-		return 0
-	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
-
-		alarmNotificationPeriod=$((60 * 5))		#5 minuti
-		notify "$(hostname)" "alarm_mms_sql_timing_check_service" "alarm_mms_sql_timing_check_service" $alarmNotificationPeriod "$warningMessage"
-		return 1
-	fi
-}
-
 server_reachable()
 {
 	ip_address=$1
@@ -811,6 +750,130 @@ server_reachable()
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
 		alarmDetails="The $host_name ($ip_address) mms server IS NOT reachable"
 		notify "$(hostname)" "alarm_mms_server_reachable" "alarm_mms_server_reachable_$host_name" $alarmNotificationPeriod "$alarmDetails"
+		return 1
+	fi
+}
+
+#replaced by logfile_slowquery_newlines_check
+#mms_sql_timing_check_service()
+#{
+	#serviceName=$1
+
+	#lastLogTimestampCheckedFile=/tmp/alarm_mms_sql_timing_check_service_info
+
+	#if [ -f "$lastLogTimestampCheckedFile" ]; then
+		#lastLogTimestampChecked=$(cat $lastLogTimestampCheckedFile)
+	#else
+		#lastLogTimestampChecked=-1
+	#fi
+
+	#if [ "$serviceName" == "engine" ]; then
+		#logFilePathName=/var/catramms/logs/mmsEngineService/mmsEngineService.log
+	#elif [ "$serviceName" == "api" ]; then
+		#logFilePathName=/var/catramms/logs/mmsAPI/mmsAPI.log
+	#else
+		#echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, wrong serviceName: $serviceName" >> $debugFilename
+		#return 1
+	#fi
+
+	#incrementato a 300 perchè capita di avere poco piu di 200 anche per query perfettamente indicizzate che impiegano al 99.9% 1 millisecs
+	# e poco piu di 200 nello 0.1%
+	#maxSQLDuration=500
+	#warningMessage=$(grep "statement, sqlStatement" $logFilePathName | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxSQLDuration=$maxSQLDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
+	#{	\
+		#datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
+		#newLastLogTimestampChecked=mktime(datespec);	\
+		#if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) {	\
+			#datetime=substr($0, 2, 23);	\
+			#sqlStatement=$2;	\
+			#duration=$6;	\
+			#label=$7;	\
+			#if (label == "getIngestionsToBeManaged")	\
+				#maxSQLDuration = 3000;	\
+			#else if (label == "getIngestionRootsStatus")	\
+				#maxSQLDuration = 400;	\
+			#if (duration > maxSQLDuration)	\
+				#warningMessage=warningMessage""datetime" - "label" - "sqlStatement" - "duration"/"maxSQLDuration"\n";	\
+		#}	\
+	#}	\
+	#END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
+
+	#if [ "$warningMessage" = "" ]; then
+		#echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, mms sql ($serviceName) timing is fine" >> $debugFilename
+
+		#alarmNotificationPathFileName="/tmp/alarm_mms_sql_timing_check_service"
+		#if [ -f "$alarmNotificationPathFileName" ]; then
+			#rm -f $alarmNotificationPathFileName
+		#fi
+
+		#return 0
+	#else
+		#echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
+
+		#alarmNotificationPeriod=$((60 * 5))		#5 minuti
+		#notify "$(hostname)" "alarm_mms_sql_timing_check_service" "alarm_mms_sql_timing_check_service" $alarmNotificationPeriod "$warningMessage"
+		#return 1
+	#fi
+#}
+
+logfile_slowquery_newlines_check()
+{
+	serverType=$1
+
+	if [ "$serviceType" == "engine" ]; then
+		logFilePathName=/var/catramms/logs/mmsEngineService/mmsEngineService-slowquery.log
+	elif [ "$serviceType" == "api" ]; then
+		logFilePathName=/var/catramms/logs/mmsAPI/mmsAPI-slowquery.log
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, wrong serverType: $serverType" >> $debugFilename
+		return 1
+	fi
+
+	lastLogTimestampCheckedFile=/tmp/alarm_mms_sql_timing_check_service_info
+	if [ ! -f "$lastLogTimestampCheckedFile" ]; then
+    echo "0" > "$lastLogTimestampCheckedFile"
+	fi
+
+	# Leggi l'ultimo offset salvato
+	lastOffset=$(cat "$lastLogTimestampCheckedFile")
+
+	# Calcola la dimensione attuale del file di log
+	currentLogFileSize=$(stat -c%s "$logFilePathName")
+
+	# Se il file è stato ruotato o cancellato, riparti da 0
+	if [ "$currentLogFileSize" -lt "$lastOffset" ]; then
+    lastOffset=0
+	fi
+
+	# Mostra le nuove righe dal file di log
+	warningMessage=$(tail -c +$((lastOffset + 1)) "$logFilePathName" | awk ' \
+		BEGIN { FS="@"; }	\
+		{	\
+			datetime=substr($0, 2, 23);	\
+			sqlStatement=$2;	\
+			duration=$6;	\
+			label=$7;	\
+				warningMessage=warningMessage""datetime" - "label" - "sqlStatement" - "duration"\n";	\
+		}	\
+		END { printf("%s", warningMessage); } ')
+
+	# Aggiorna l'offset per la prossima esecuzione
+	echo "$currentLogFileSize" > "$lastLogTimestampCheckedFile"
+
+	if [ "$warningMessage" = "" ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, mms sql ($serviceName) timing is fine" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_sql_timing_check_service"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 5))		#5 minuti
+		notify "$(hostname)" "alarm_mms_sql_timing_check_service" "alarm_mms_sql_timing_check_service" $alarmNotificationPeriod "$warningMessage"
 		return 1
 	fi
 }
