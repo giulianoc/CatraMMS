@@ -129,10 +129,10 @@ void registerSlowQueryLogger(json configurationRoot)
 		", log->api->slowQuery->pathName: {}",
 		logPathName
 	);
-	string logType = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "type", "");
+	string logType = JSONUtils::asString(configurationRoot["log"]["api"], "type", "");
 	SPDLOG_INFO(
 		"Configuration item"
-		", log->api->slowQuery->type: {}",
+		", log->api->type: {}",
 		logType
 	);
 
@@ -168,10 +168,10 @@ void registerSlowQueryLogger(json configurationRoot)
 	// inizializza il livello del logger a trace in modo che ogni messaggio possa raggiungere i logger nei sinks
 	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
 
-	string pattern = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pattern", "");
+	string pattern = JSONUtils::asString(configurationRoot["log"]["api"], "pattern", "");
 	SPDLOG_INFO(
 		"Configuration item"
-		", log->api->slowQuery->pattern: {}",
+		", log->api->pattern: {}",
 		pattern
 	);
 	logger->set_pattern(pattern);
