@@ -19,10 +19,10 @@ do
 	index=0
 	while [ $index -lt $prodServersNumber ]
 	do
-		serverName=${prodServers[$((index*5+0))]}
-		serverAddress=${prodServers[$((index*5+1))]}
+		serverName=${prodServers[$((index*6+0))]}
+		serverAddress=${prodServers[$((index*6+1))]}
 		#serverKey=${prodServers[$((index*4+2))]}
-		serverPort=${prodServers[$((index*5+3))]}
+		serverPort=${prodServers[$((index*6+3))]}
 
 		echo "server_reachable serverName" >> $debugFilename
 		server_reachable $serverAddress $serverPort $serverName
@@ -42,10 +42,10 @@ do
 	index=0
 	while [ $index -lt $testServersNumber ]
 	do
-		serverName=${testServers[$((index*5+0))]}
-		serverAddress=${testServers[$((index*5+1))]}
+		serverName=${testServers[$((index*6+0))]}
+		serverAddress=${testServers[$((index*6+1))]}
 		#serverKey=${testServers[$((index*4+2))]}
-		serverPort=${testServers[$((index*5+3))]}
+		serverPort=${testServers[$((index*6+3))]}
 
 		echo "server_reachable serverName" >> $debugFilename
 		server_reachable $serverAddress $serverPort $serverName

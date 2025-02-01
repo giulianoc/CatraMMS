@@ -25,12 +25,14 @@ int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int a
 		);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		int64_t invoiceKey = trans.exec1(sqlStatement)[0].as<int64_t>();
-		SPDLOG_INFO(
+		long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+		SQLQUERYLOG(
+			"default", elapsed,
 			"SQL statement"
 			", sqlStatement: @{}@"
 			", getConnectionId: @{}@"
 			", elapsed (millisecs): @{}@",
-			sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+			sqlStatement, conn->getConnectionId(), elapsed
 		);
 
 		/*
@@ -218,12 +220,14 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 			string sqlStatement = std::format("select count(*) from MMS_Invoice {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO(
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), elapsed
 			);
 
 			field = "numFound";
@@ -281,12 +285,14 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 
 				invoicesRoot.push_back(invoiceRoot);
 			}
-			SPDLOG_INFO(
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), elapsed
 			);
 		}
 

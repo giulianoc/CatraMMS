@@ -37,12 +37,14 @@ void MMSEngineDBFacade::endWorkflow(
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO(
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -172,12 +174,14 @@ int64_t MMSEngineDBFacade::addWorkflow(
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			ingestionRootKey = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO(
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), elapsed
 			);
 		}
 	}
@@ -351,12 +355,14 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 
 			chrono::system_clock::time_point endSql = chrono::system_clock::now();
 			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
-			SPDLOG_INFO(
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
+				sqlStatement, conn->getConnectionId(), elapsed
 			);
 
 			if (empty(res) && ingestionRootKey != -1 && notFoundAsException)
@@ -589,12 +595,14 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 				result res = trans.exec(sqlStatement);
 				for (auto row : res)
 					ingestionRookKeys.push_back(row["ingestionRootKey"].as<int64_t>());
-				SPDLOG_INFO(
+				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+				SQLQUERYLOG(
+					"default", elapsed,
 					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+					sqlStatement, conn->getConnectionId(), elapsed
 				);
 			}
 
@@ -636,12 +644,14 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
 			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
-			SPDLOG_INFO(
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+				sqlStatement, conn->getConnectionId(), elapsed
 			);
 		}
 
@@ -732,7 +742,9 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 
 				workflowsRoot.push_back(workflowRoot);
 			}
-			SPDLOG_INFO(
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -892,13 +904,14 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
-					SPDLOG_INFO(
+					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+					SQLQUERYLOG(
+						"default", elapsed,
 						"SQL statement"
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
 						", elapsed (millisecs): @{}@",
-						sqlStatement, conn->getConnectionId(),
-						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+						sqlStatement, conn->getConnectionId(), elapsed
 					);
 					totalRowsRemoved += rowsUpdated;
 					if (rowsUpdated == 0)
@@ -979,15 +992,16 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 							totalRowsUpdated++;
 						}
 					}
-					SPDLOG_INFO(
+					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+					SQLQUERYLOG(
+						"default", elapsed,
 						"SQL statement"
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
 						", elapsed (millisecs): @{}@"
 						", res.size: {}"
 						", totalRowsUpdated: {}",
-						sqlStatement, conn->getConnectionId(),
-						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count(), res.size(), totalRowsUpdated
+						sqlStatement, conn->getConnectionId(), elapsed, res.size(), totalRowsUpdated
 					);
 
 					toBeExecutedAgain = false;
@@ -1066,13 +1080,14 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_CanceledByMMS, errorMessage);
 						totalRowsUpdated++;
 					}
-					SPDLOG_INFO(
+					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+					SQLQUERYLOG(
+						"default", elapsed,
 						"SQL statement"
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
 						", elapsed (millisecs): @{}@",
-						sqlStatement, conn->getConnectionId(),
-						chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
+						sqlStatement, conn->getConnectionId(), elapsed
 					);
 
 					toBeExecutedAgain = false;

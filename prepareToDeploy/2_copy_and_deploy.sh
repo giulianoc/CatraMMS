@@ -26,11 +26,19 @@ deploy()
 
 	#tarFileName e version sono già inizializzate (vedi sopra)
 
+	echo ""
+	echo ""
 	echo $serverName
 	scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms
 	echo ""
 
+	echo ""
+	echo ""
 	echo "deploy..."
+	if ! ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "[ -f '/opt/catramms/CatraMMS/scripts/deploy.sh' ]"; then
+		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tar xvfz /opt/catramms/$tarFileName -C /opt/catramms"
+		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "ln -s /opt/catramms/$moduleName-$version /opt/catramms/CatraMMS"
+	fi
 	ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"
 
 	if [ "$serverType" = "api" -o "$serverType" = "api-and-delivery" -o "$serverType" = "delivery" ]; then
@@ -41,8 +49,10 @@ deploy()
 		tailCommand="tail -f logs/mmsEncoder/mmsEncoder-error.log"
 	fi
 	if [ "$tailCommand" != "" ]; then
+		echo ""
+		echo ""
 		echo "tail on errors..."
-		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tail -f logs/mmsAPI/mmsAPI.log"
+		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "$tailCommand"
 	fi
 }
 
@@ -73,22 +83,35 @@ if [ "$deploy" == "y" ]; then
 	index=0
 	while [ $index -lt $prodServersNumber ]
 	do
-		serverName=${prodServers[$((index*5+0))]}
-		serverAddress=${prodServers[$((index*5+1))]}
-		serverKey=${prodServers[$((index*5+2))]}
-		serverPort=${prodServers[$((index*5+3))]}
-		serverType=${prodServers[$((index*5+4))]}
+		serverName=${prodServers[$((index*6+0))]}
+		serverAddress=${prodServers[$((index*6+1))]}
+		serverKey=${prodServers[$((index*6+2))]}
+		serverPort=${prodServers[$((index*6+3))]}
+		serverType=${prodServers[$((index*6+4))]}
+		serverPrivateIP=${prodServers[$((index*6+5))]}
 
 		if [ "$serverType" == "integration" ]; then
 			index=$((index+1))
 			continue
 		fi
 
-		echo $serverName
-		scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms
-		echo ""
-
-		ssh -P $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"
+		if [ "$serverType" = "api" ]; then
+			echo ""
+			echo ""
+			echo "Remove server from the load balancer..."
+			./hcloud load-balancer remove-target --ip $serverPrivateIP mms-api-prod
+			echo "Waiting load balancer command..."
+			sleep 5
+		fi
+		deploy $serverName $serverAddress $serverPort $serverKey $serverType
+		if [ "$serverType" = "api" ]; then
+			echo ""
+			echo ""
+			echo "Add server to the load balancer..."
+			./hcloud load-balancer add-target --ip $serverPrivateIP mms-api-prod
+			echo "Waiting load balancer command..."
+			sleep 5
+		fi
 
 		index=$((index+1))
 	done
