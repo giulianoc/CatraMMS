@@ -158,6 +158,8 @@ void registerSlowQueryLogger(json configurationRoot)
 
 	string pattern = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pattern", "");
 	logger->set_pattern(pattern);
+
+	logger->warn("Test...");
 }
 
 int main(int argc, char **argv)
