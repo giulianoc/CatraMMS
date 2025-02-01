@@ -744,7 +744,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
-				"default", elapsed,
+				"getIngestionRootsStatus", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"

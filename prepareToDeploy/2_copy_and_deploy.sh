@@ -1,5 +1,11 @@
 #!/bin/bash
 
+requestedServerType
+if [ $# -eq 1 ]
+then
+	requestedServerType=$1
+fi
+
 date
 
 version=$(cat ./version.txt)
@@ -69,6 +75,12 @@ if [ "$deploy" == "y" ]; then
 		serverType=${testServers[$((index*6+4))]}
 		serverPrivateIP=${testServers[$((index*6+5))]}
 
+		if [ "$requestedServerType" != "" ] && [[ ! $requestedServerType == *"$serverType"* ]]; then
+			# entra se requestedServerType != "" e requestedServerType non è contenuto in serverType
+			index=$((index+1))
+			continue
+		fi
+
 		#./hcloud load-balancer add-target --ip 10.0.1.4 mms-api-prod
 		deploy $serverName $serverAddress $serverPort $serverKey $serverType
 
@@ -91,6 +103,12 @@ if [ "$deploy" == "y" ]; then
 		serverPrivateIP=${prodServers[$((index*6+5))]}
 
 		if [ "$serverType" == "integration" ]; then
+			index=$((index+1))
+			continue
+		fi
+
+		if [ "$requestedServerType" != "" ] && [[ ! $requestedServerType == *"$serverType"* ]]; then
+			# entra se requestedServerType != "" e requestedServerType non è contenuto in serverType
 			index=$((index+1))
 			continue
 		fi

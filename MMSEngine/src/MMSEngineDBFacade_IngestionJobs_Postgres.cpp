@@ -243,7 +243,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				}
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
-					"default", elapsed,
+					"getIngestionsToBeManaged", elapsed,
 					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
