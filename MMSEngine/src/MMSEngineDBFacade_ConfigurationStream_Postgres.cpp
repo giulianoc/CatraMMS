@@ -1338,12 +1338,13 @@ json MMSEngineDBFacade::getStreamList(
 				streamsRoot.push_back(streamRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			// per questa query abbiamo l'indice ma recupera tanti dati e prende un po piu di tempo
 			SQLQUERYLOG(
-				"default", elapsed,
+				"getStreamList", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
+				", elapsed (millisecs): @{}@getStreamList@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
 		}

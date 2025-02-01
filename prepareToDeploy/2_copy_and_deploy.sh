@@ -1,10 +1,12 @@
 #!/bin/bash
 
-requestedServerType
-if [ $# -eq 1 ]
+if [ $# -ne 1 -a $# -ne 2 ]
 then
-	requestedServerType=$1
+	echo "Usage: $0 <serverType: api, delivery, engine, encoder, externalEncoder> <servername>"
+	exit 1
 fi
+requestedServerType=$1
+requestedServerName=$2
 
 date
 
@@ -81,7 +83,12 @@ if [ "$deploy" == "y" ]; then
 			continue
 		fi
 
-		#./hcloud load-balancer add-target --ip 10.0.1.4 mms-api-prod
+		if [ "$requestedServerName" != "" -a "$requestedServerName" != "$serverName" ]; then
+			index=$((index+1))
+			continue
+		fi
+
+		#hcloud load-balancer add-target --ip 10.0.1.4 mms-api-prod
 		deploy $serverName $serverAddress $serverPort $serverKey $serverType
 
 		index=$((index+1))
@@ -113,11 +120,16 @@ if [ "$deploy" == "y" ]; then
 			continue
 		fi
 
+		if [ "$requestedServerName" != "" -a "$requestedServerName" != "$serverName" ]; then
+			index=$((index+1))
+			continue
+		fi
+
 		if [ "$serverType" = "api" ]; then
 			echo ""
 			echo ""
-			echo "Remove server from the load balancer..."
-			./hcloud load-balancer remove-target --ip $serverPrivateIP mms-api-prod
+			echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $serverPrivateIP mms-api-prod"
+			hcloud load-balancer remove-target --ip $serverPrivateIP mms-api-prod
 			echo "Waiting load balancer command..."
 			sleep 5
 		fi
@@ -125,8 +137,8 @@ if [ "$deploy" == "y" ]; then
 		if [ "$serverType" = "api" ]; then
 			echo ""
 			echo ""
-			echo "Add server to the load balancer..."
-			./hcloud load-balancer add-target --ip $serverPrivateIP mms-api-prod
+			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $serverPrivateIP mms-api-prod"
+			hcloud load-balancer add-target --ip $serverPrivateIP mms-api-prod
 			echo "Waiting load balancer command..."
 			sleep 5
 		fi
