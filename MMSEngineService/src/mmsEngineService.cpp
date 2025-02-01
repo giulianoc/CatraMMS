@@ -145,7 +145,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 void registerSlowQueryLogger(json configurationRoot)
 {
 	string logPathName = JSONUtils::asString(configurationRoot["log"]["mms"]["slowQuery"], "pathName", "");
-	string logType = JSONUtils::asString(configurationRoot["log"]["mms"]["slowQuery"], "type", "");
+	string logType = JSONUtils::asString(configurationRoot["log"]["mms"], "type", "");
 
 	std::vector<spdlog::sink_ptr> sinks;
 	{
@@ -178,7 +178,7 @@ void registerSlowQueryLogger(json configurationRoot)
 	// inizializza il livello del logger a trace in modo che ogni messaggio possa raggiungere i logger nei sinks
 	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
 
-	string pattern = JSONUtils::asString(configurationRoot["log"]["mms"]["slowQuery"], "pattern", "");
+	string pattern = JSONUtils::asString(configurationRoot["log"]["mms"], "pattern", "");
 	logger->set_pattern(pattern);
 }
 

@@ -176,7 +176,7 @@ void registerSlowQueryLogger(json configurationRoot)
 	);
 	logger->set_pattern(pattern);
 
-	logger->warn("Test...");
+	// logger->warn("Test...");
 }
 
 int main(int argc, char **argv)
