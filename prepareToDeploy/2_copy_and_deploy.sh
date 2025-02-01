@@ -16,6 +16,33 @@ tarFileName=$moduleName-$version.tar.gz
 
 source /opt/catrasoftware/CatraMMS/scripts/servers.sh
 
+deploy()
+{
+	serverName=$1
+	serverAddress=$2
+	serverPort=$3
+	serverKey=$4
+	serverType=$5
+
+	#tarFileName e version sono già inizializzate (vedi sopra)
+
+	echo $serverName
+	scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms
+	echo ""
+
+	ssh -P $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"
+
+	if [ "$serverType" = "api" -o "$serverType" = "api-and-delivery" -o "$serverType" = "delivery" ]
+		tailCommand="tail -f logs/mmsAPI/mmsAPI-error.log"
+	elif [ "$serverType" = "engine" ]
+		tailCommand="tail -f logs/mmsEngineService/mmsEngineService-error.log"
+	elif [ "$serverType" = "encoder" -o "$serverType" = "externalEncoder" ]
+		tailCommand="tail -f logs/mmsEncoder/mmsEncoder-error.log"
+	fi
+	if [ "$tailCommand" != "" ]
+		ssh -P $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tail -f logs/mmsAPI/mmsAPI.log"
+}
+
 echo -n "deploy su mms cloud/test? " 
 read deploy
 if [ "$deploy" == "y" ]; then
@@ -26,10 +53,9 @@ if [ "$deploy" == "y" ]; then
 		serverAddress=${testServers[$((index*5+1))]}
 		serverKey=${testServers[$((index*5+2))]}
 		serverPort=${testServers[$((index*5+3))]}
+		serverType=${testServers[$((index*5+4))]}
 
-		echo $serverName
-		scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms
-		echo ""
+		deploy $serverName $serverAddress $serverPort $serverKey $serverType
 
 		index=$((index+1))
 	done
@@ -56,6 +82,8 @@ if [ "$deploy" == "y" ]; then
 		echo $serverName
 		scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms
 		echo ""
+
+		ssh -P $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"
 
 		index=$((index+1))
 	done

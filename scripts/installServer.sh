@@ -248,6 +248,13 @@ install-packages()
 		apt install -y openjdk-21-jdk
 	fi
 
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then
+		echo ""
+		read -n 1 -s -r -p "install hetzner cloud..."
+		echo ""
+		apt install -y hcloud-cli
+	fi
+
 	if [ "$moduleType" == "engine" ]; then
 
 		dbType="postgres"
