@@ -13,6 +13,7 @@
 
 #include "API.h"
 #include "JSONUtils.h"
+#include "spdlog/spdlog.h"
 
 chrono::system_clock::time_point lastSIGSEGVSignal = chrono::system_clock::now();
 void signalHandler(int signal)
@@ -123,8 +124,19 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 void registerSlowQueryLogger(json configurationRoot)
 {
 	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pathName", "");
+	SPDLOG_INFO(
+		"Configuration item"
+		", log->api->slowQuery->pathName: {}",
+		logPathName
+	);
 	string logType = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "type", "");
+	SPDLOG_INFO(
+		"Configuration item"
+		", log->api->slowQuery->type: {}",
+		logType
+	);
 
+	SPDLOG_INFO("registerSlowQueryLogger");
 	std::vector<spdlog::sink_ptr> sinks;
 	{
 		if (logType == "daily")
@@ -157,6 +169,11 @@ void registerSlowQueryLogger(json configurationRoot)
 	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
 
 	string pattern = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pattern", "");
+	SPDLOG_INFO(
+		"Configuration item"
+		", log->api->slowQuery->pattern: {}",
+		pattern
+	);
 	logger->set_pattern(pattern);
 
 	logger->warn("Test...");
