@@ -35,7 +35,7 @@ removePreviousVersions()
 		tenDaysInMinutes=14400
 
 		echo ""
-		echo ""
+		echo "------------------------------------------------------------------------------------------------------------------------------------------"
 		echo "Remove previous versions (retention $tenDaysInMinutes)"
 		echo "find /opt/catramms -maxdepth 1 -mmin +$tenDaysInMinutes -name \"CatraMMS-*\" -not -path \"${currentPathNameVersion}*\" -exec rm -rf {} \;"
 		find /opt/catramms -maxdepth 1 -mmin +$tenDaysInMinutes -name "CatraMMS-*" -not -path "${currentPathNameVersion}*" -exec rm -rf {} \;
@@ -61,6 +61,9 @@ fi
 #sleepIfNeeded
 removePreviousVersions
 
+echo ""
+echo "------------------------------------------------------------------------------------------------------------------------------------------"
+echo "mmsStopAll.sh"
 ~/mmsStopALL.sh
 
 echo "cd /opt/catramms"
@@ -74,9 +77,9 @@ sleep 1
 #echo "tar xvfz CatraMMS-$version-$linuxName.tar.gz"
 #tar xvfz CatraMMS-$version-$linuxName.tar.gz
 echo ""
-echo ""
-echo "tar xvfz CatraMMS-$version.tar.gz"
-tar xvfz CatraMMS-$version.tar.gz
+echo "------------------------------------------------------------------------------------------------------------------------------------------"
+echo "tar xfz CatraMMS-$version.tar.gz"
+tar xfz CatraMMS-$version.tar.gz
 
 echo ""
 echo ""
@@ -85,16 +88,21 @@ ln -s CatraMMS-$version CatraMMS
 
 cd
 
+echo ""
+echo "------------------------------------------------------------------------------------------------------------------------------------------"
+echo "mmsStatusALL.sh"
 /home/mms/mmsStatusALL.sh
 
 #per il transcoder serve un po piuu di tempo
 sleep 2
 
 echo ""
-echo ""
+echo "------------------------------------------------------------------------------------------------------------------------------------------"
+echo "mmsStatusALL.sh"
 /home/mms/mmsStatusALL.sh
 
 echo ""
-echo ""
+echo "------------------------------------------------------------------------------------------------------------------------------------------"
+echo "mmsStartALL.sh"
 /home/mms/mmsStartALL.sh
 

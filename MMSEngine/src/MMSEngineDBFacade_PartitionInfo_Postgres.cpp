@@ -58,14 +58,14 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 				);
 
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_PartitionInfo set currentFreeSizeInBytes = {}, "
+					"update MMS_PartitionInfo set currentFreeSizeInBytes = {}, "
 					"lastUpdateFreeSize = NOW() at time zone 'utc' "
-					"where partitionKey = {} returning 1) select count(*) from rows",
+					"where partitionKey = {} ",
 					currentFreeSizeInBytes, partitionKey
 				);
 				SPDLOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				trans.exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -277,16 +277,16 @@ pair<int, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFreeSpace(in
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_PartitionInfo set currentFreeSizeInBytes = {}, "
+				"update MMS_PartitionInfo set currentFreeSizeInBytes = {}, "
 				"lastUpdateFreeSize = NOW() at time zone 'utc' "
-				"where partitionKey = {} returning 1) select count(*) from rows",
+				"where partitionKey = {} ",
 				newCurrentFreeSizeInBytes, partitionToBeUsed
 			);
 			SPDLOG_INFO(
 				"mon currentFreeSizeInBytes. getPartitionToBeUsedAndUpdateFreeSpace, newCurrentFreeSizeInBytes: {}", newCurrentFreeSizeInBytes
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -457,13 +457,13 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(int partitionKey, u
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_PartitionInfo set currentFreeSizeInBytes = {} "
-				"where partitionKey = {} returning 1) select count(*) from rows",
+				"update MMS_PartitionInfo set currentFreeSizeInBytes = {} "
+				"where partitionKey = {} ",
 				newCurrentFreeSizeInBytes, partitionKey
 			);
 			SPDLOG_INFO("mon currentFreeSizeInBytes. updatePartitionBecauseOfDeletion, newCurrentFreeSizeInBytes: {}", newCurrentFreeSizeInBytes);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

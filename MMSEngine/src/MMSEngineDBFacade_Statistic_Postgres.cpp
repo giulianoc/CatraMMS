@@ -555,22 +555,21 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 
 					{
 						string sqlStatement = std::format(
-							"WITH rows AS (update MMS_RequestStatistic "
+							"update MMS_RequestStatistic "
 							"set geoInfoKey = {} "
-							"where ipAddress = {} and geoInfoKey is null returning 1) select count(*) from rows",
+							"where ipAddress = {} and geoInfoKey is null ",
 							geoInfoKey, trans.quote(ip)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+						trans.exec0(sqlStatement);
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
 							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
-							", elapsed (millisecs): @{}@"
-							", rowsUpdated: {}",
-							sqlStatement, conn->getConnectionId(), elapsed, rowsUpdated
+							", elapsed (millisecs): @{}@",
+							sqlStatement, conn->getConnectionId(), elapsed
 						);
 					}
 				}
@@ -835,22 +834,21 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 
 					{
 						string sqlStatement = std::format(
-							"WITH rows AS (update MMS_LoginStatistic "
+							"update MMS_LoginStatistic "
 							"set geoInfoKey = {} "
-							"where ip = {} and geoInfoKey is null returning 1) select count(*) from rows",
+							"where ip = {} and geoInfoKey is null ",
 							geoInfoKey, trans.quote(ip)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+						trans.exec0(sqlStatement);
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
 							"SQL statement"
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
-							", elapsed (millisecs): @{}@"
-							", rowsUpdated: {}",
-							sqlStatement, conn->getConnectionId(), elapsed, rowsUpdated
+							", elapsed (millisecs): @{}@",
+							sqlStatement, conn->getConnectionId(), elapsed
 						);
 					}
 				}

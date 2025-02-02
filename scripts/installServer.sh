@@ -742,6 +742,10 @@ create-directory()
 		fi
 		chown -R mms:mms /mnt/local-data/logs
 		chown -R mms:mms /mnt/local-data/cache
+
+		if [ ! -e /var/catramms/logs ]; then
+			ln -s /mnt/local-data/logs /var/catramms
+		fi
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
@@ -837,19 +841,21 @@ install-mms-packages()
 	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
 
-	packageName=libpqxx
-	echo ""
-	libpqxxVersion=7.9.2
-	echo -n "$packageName version (i.e.: $libpqxxVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$libpqxxVersion
+	if [ "$moduleType" != "integration" ]; then
+		packageName=libpqxx
+		echo ""
+		libpqxxVersion=7.9.2
+		echo -n "$packageName version (i.e.: $libpqxxVersion)? "
+		read version
+		if [ "$version" == "" ]; then
+			version=$libpqxxVersion
+		fi
+		package=$packageName-$version
+		echo "Downloading $package..."
+		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+		ln -rs /opt/catramms/$package /opt/catramms/$packageName
 	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 
 
 	packageName=nginx
@@ -891,7 +897,7 @@ install-mms-packages()
 	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
 	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
 
-	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "integration" ]; then
+	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then
 
 		echo ""
 		tomcatVersion=9.0.97
@@ -1114,6 +1120,16 @@ install-mms-packages()
 
 		chown -R mms:mms ~mms/mms
 	fi
+	if [ "$moduleType" == "integration" ]; then
+		packageName=integrationMmsConf
+		echo ""
+		package=$packageName
+		echo "Downloading $package..."
+		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+		tar xvfz ~/$package.tar.gz -C ~mms
+
+		chown -R mms:mms ~mms/mms
+	fi
 
 	chown -R mms:mms /opt/catramms
 	chown -R mms:mms /var/catramms
@@ -1161,6 +1177,10 @@ install-mms-packages()
 firewall-rules()
 {
 	moduleType=$1
+
+	if [ "$moduleType" == "integration" ]; then
+		return
+	fi
 
 	read -n 1 -s -r -p "firewall-rules..."
 	echo ""
@@ -1385,6 +1405,10 @@ echo ""
 echo ""
 
 read -n 1 -s -r -p "verificare /etc/hosts"
+echo ""
+echo ""
+
+read -n 1 -s -r -p "in caso di integration, copiare il file .htpasswd in /etc (serve per il download di EPG e APK)"
 echo ""
 echo ""
 

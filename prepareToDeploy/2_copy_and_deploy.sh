@@ -44,7 +44,7 @@ deploy()
 	echo ""
 	echo "deploy..."
 	if ! ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "[ -f '/opt/catramms/CatraMMS/scripts/deploy.sh' ]"; then
-		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tar xvfz /opt/catramms/$tarFileName -C /opt/catramms"
+		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tar xfz /opt/catramms/$tarFileName -C /opt/catramms"
 		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "ln -s /opt/catramms/$moduleName-$version /opt/catramms/CatraMMS"
 	fi
 	ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"

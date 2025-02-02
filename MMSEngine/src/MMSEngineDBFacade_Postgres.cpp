@@ -391,16 +391,15 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			//	In caso di trasferimenti incompleti, resettiamo (Start_TaskQueued e processorMMS null) in modo
 			//	che _mmsEngineDBFacade->getIngestionsToBeManaged li possa riprocessare
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob set status = {}, processorMMS = null "
+				"update MMS_IngestionJob set status = {}, processorMMS = null "
 				"where processorMMS = {} and "
-				"status in ({}, {}, {}) and sourceBinaryTransferred = false "
-				"returning 1) select count(*) from rows",
+				"status in ({}, {}, {}) and sourceBinaryTransferred = false ",
 				trans.quote(toString(IngestionStatus::Start_TaskQueued)), trans.quote(processorMMS),
 				trans.quote(toString(IngestionStatus::SourceDownloadingInProgress)), trans.quote(toString(IngestionStatus::SourceMovingInProgress)),
 				trans.quote(toString(IngestionStatus::SourceCopingInProgress))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -494,14 +493,13 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			);
 			// non uso "not like 'End_%'" per motivi di performance
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob set processorMMS = NULL where processorMMS = {} "
+				"update MMS_IngestionJob set processorMMS = NULL where processorMMS = {} "
 				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
-				"'SourceUploadingInProgress') " // , 'EncodingQueued') "
-				"returning 1) select count(*) from rows",
+				"'SourceUploadingInProgress') " // , 'EncodingQueued') ",
 				trans.quote(processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -524,12 +522,12 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			//   "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ?";
 			/*
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = null "
-				"where processorMMS = {} and status = {} returning 1) select count(*) from rows",
+				"update MMS_EncodingJob set status = {}, processorMMS = null "
+				"where processorMMS = {} and status = {} ",
 				trans.quote(toString(EncodingStatus::ToBeProcessed)), trans.quote(processorMMS), trans.quote(toString(EncodingStatus::Processing))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -547,12 +545,12 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				processorMMS
 			);
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = NULL "
-				"where processorMMSForRetention = {} returning 1) select count(*) from rows",
+				"update MMS_MediaItem set processorMMSForRetention = NULL "
+				"where processorMMSForRetention = {} ",
 				trans.quote(processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2074,12 +2072,12 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 		if (authorizationOK)
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_DeliveryAuthorization set currentRetriesNumber = currentRetriesNumber + 1 "
-				"where deliveryAuthorizationKey = {} returning 1) select count(*) from rows",
+				"update MMS_DeliveryAuthorization set currentRetriesNumber = currentRetriesNumber + 1 "
+				"where deliveryAuthorizationKey = {} ",
 				deliveryAuthorizationKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

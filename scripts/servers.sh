@@ -188,15 +188,15 @@ prodServers[$((serverIndex*6+4))]=integration
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=aws-integration-3
-prodServers[$((serverIndex*6+1))]=ec2-54-78-165-54.eu-west-1.compute.amazonaws.com
+prodServers[$((serverIndex*6+0))]=aws-integration-5
+prodServers[$((serverIndex*6+1))]=ec2-18-200-160-66.eu-west-1.compute.amazonaws.com
 prodServers[$((serverIndex*6+2))]=aws-hdea-key-integration-ireland
 prodServers[$((serverIndex*6+3))]=22
 prodServers[$((serverIndex*6+4))]=integration
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=aws-integration-4
+prodServers[$((serverIndex*6+0))]=aws-integration-6
 prodServers[$((serverIndex*6+1))]=ec2-63-34-124-54.eu-west-1.compute.amazonaws.com
 prodServers[$((serverIndex*6+2))]=aws-hdea-key-integration-ireland
 prodServers[$((serverIndex*6+3))]=22

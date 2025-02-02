@@ -157,14 +157,14 @@ void MMSEngineDBFacade::modifyFTPConf(
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_FTP set label = {}, server = {}, port = {}, "
+				"update MMS_Conf_FTP set label = {}, server = {}, port = {}, "
 				"userName = {}, password = {}, remoteDirectory = {} "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {} ",
 				trans.quote(label), trans.quote(server), port, trans.quote(userName), trans.quote(password), trans.quote(remoteDirectory), confKey,
 				workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -174,19 +174,19 @@ void MMSEngineDBFacade::modifyFTPConf(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();
@@ -907,13 +907,13 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_EMail set label = {}, addresses = {}, subject = {}, "
+				"update MMS_Conf_EMail set label = {}, addresses = {}, subject = {}, "
 				"message = {} "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {} ",
 				trans.quote(label), trans.quote(addresses), trans.quote(subject), trans.quote(message), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -923,19 +923,19 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();

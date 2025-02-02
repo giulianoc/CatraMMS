@@ -986,12 +986,12 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJobDependency set dependOnIngestionJobKey = {} "
-				"where dependOnIngestionJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_IngestionJobDependency set dependOnIngestionJobKey = {} "
+				"where dependOnIngestionJobKey = {} ",
 				newDependOnIngestionJobKey, previousDependOnIngestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1001,6 +1001,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				string errorMessage = __FILEREF__ + "no update was done" + ", newDependOnIngestionJobKey: " + to_string(newDependOnIngestionJobKey) +
@@ -1010,6 +1011,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		_logger->info(
@@ -1227,12 +1229,12 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob set metadataContent = {} "
-				"where ingestionJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_IngestionJob set metadataContent = {} "
+				"where ingestionJobKey = {} ",
 				trans.quote(metadataContent), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1242,6 +1244,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				string errorMessage = __FILEREF__ + "no update was done" + ", metadataContent: " + metadataContent +
@@ -1251,6 +1254,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		_logger->info(
@@ -1526,21 +1530,21 @@ void MMSEngineDBFacade::updateIngestionJob(
 
 				if (errorMessageForSQL == "")
 					sqlStatement = std::format(
-						"WITH rows AS (update MMS_IngestionJob set status = {}, "
+						"update MMS_IngestionJob set status = {}, "
 						"{} endProcessing = NOW() at time zone 'utc' "
-						"where ingestionJobKey = {} returning 1) select count(*) from rows",
+						"where ingestionJobKey = {} ",
 						trans->quote(toString(newIngestionStatus)), processorMMSUpdate, ingestionJobKey
 					);
 				else
 					sqlStatement = std::format(
-						"WITH rows AS (update MMS_IngestionJob set status = {}, "
+						"update MMS_IngestionJob set status = {}, "
 						"errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20), "
 						"{} endProcessing = NOW() at time zone 'utc' "
-						"where ingestionJobKey = {} returning 1) select count(*) from rows",
+						"where ingestionJobKey = {} ",
 						trans->quote(toString(newIngestionStatus)), trans->quote(errorMessageForSQL), processorMMSUpdate, ingestionJobKey
 					);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+				trans->exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1550,6 +1554,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 					", elapsed (millisecs): @{}@",
 					sqlStatement, conn->getConnectionId(), elapsed
 				);
+				/*
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "no update was done" + ", processorMMS: " + processorMMS +
@@ -1561,6 +1566,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 					// Also the exception caused a crash of the process
 					// throw runtime_error(errorMessage);
 				}
+				*/
 			}
 			else
 			{
@@ -1576,21 +1582,21 @@ void MMSEngineDBFacade::updateIngestionJob(
 
 				if (errorMessageForSQL == "")
 					sqlStatement = std::format(
-						"WITH rows AS (update MMS_IngestionJob set status = {} "
+						"update MMS_IngestionJob set status = {} "
 						"{} "
-						"where ingestionJobKey = {} returning 1) select count(*) from rows",
+						"where ingestionJobKey = {} ",
 						trans->quote(toString(newIngestionStatus)), processorMMSUpdate, ingestionJobKey
 					);
 				else
 					sqlStatement = std::format(
-						"WITH rows AS (update MMS_IngestionJob set status = {}, "
+						"update MMS_IngestionJob set status = {}, "
 						"errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20) "
 						"{} "
-						"where ingestionJobKey = {} returning 1) select count(*) from rows",
+						"where ingestionJobKey = {} ",
 						trans->quote(toString(newIngestionStatus)), trans->quote(errorMessageForSQL), processorMMSUpdate, ingestionJobKey
 					);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+				trans->exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1600,6 +1606,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 					", elapsed (millisecs): @{}@",
 					sqlStatement, conn->getConnectionId(), elapsed
 				);
+				/*
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "no update was done" + ", processorMMS: " + processorMMS +
@@ -1611,6 +1618,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 					// Also the exception caused a crash of the process
 					// throw runtime_error(errorMessage);
 				}
+				*/
 			}
 
 			bool updateIngestionRootStatus = true;
@@ -1706,16 +1714,15 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 		{
 			// like: non lo uso per motivi di performance
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob "
+				"update MMS_IngestionJob "
 				"set errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20) "
 				"where ingestionJobKey = {} "
 				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
-				"'SourceUploadingInProgress', 'EncodingQueued') " // not like 'End_%' "
-				"returning 1) select count(*) from rows",
+				"'SourceUploadingInProgress', 'EncodingQueued') ", // not like 'End_%' "
 				trans.quote(errorMessageForSQL), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1725,6 +1732,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				string errorMessage = __FILEREF__ + "no update was done" + ", errorMessageForSQL: " + errorMessageForSQL +
@@ -1738,6 +1746,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 			{
 				_logger->info(__FILEREF__ + "IngestionJob updated successful" + ", ingestionJobKey: " + to_string(ingestionJobKey));
 			}
+			*/
 		}
 
 		trans.commit();
@@ -1986,16 +1995,16 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				);
 
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_IngestionJob set status = {}, "
+					"update MMS_IngestionJob set status = {}, "
 					"startProcessing = case when startProcessing IS NULL then NOW() at time zone 'utc' else startProcessing end, "
-					"endProcessing = NOW() at time zone 'utc' where ingestionJobKey {} returning 1) select count(*) from rows",
+					"endProcessing = NOW() at time zone 'utc' where ingestionJobKey {} ",
 					trans->quote(toString(IngestionStatus::End_NotToBeExecuted)),
 					hierarchicalIngestionJobKeysDependencies.find(",") != string::npos
 						? std::format("in ({})", hierarchicalIngestionJobKeysDependencies)
 						: std::format("= {}", hierarchicalIngestionJobKeysDependencies)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+				trans->exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -2332,12 +2341,12 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob set downloadingProgress = {} "
-				"where ingestionJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_IngestionJob set downloadingProgress = {} "
+				"where ingestionJobKey = {} ",
 				downloadingPercentage, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2347,6 +2356,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				// we tried to update a value but the same value was already in the table,
@@ -2358,6 +2368,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		{
@@ -2508,12 +2519,12 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob set uploadingProgress = {} "
-				"where ingestionJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_IngestionJob set uploadingProgress = {} "
+				"where ingestionJobKey = {} ",
 				uploadingPercentage, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2523,6 +2534,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				// we tried to update a value but the same value was already in the table,
@@ -2534,6 +2546,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		{
@@ -2684,19 +2697,19 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 			string sqlStatement;
 			if (sourceBinaryTransferred)
 				sqlStatement = std::format(
-					"WITH rows AS (update MMS_IngestionJob set sourceBinaryTransferred = {}, "
+					"update MMS_IngestionJob set sourceBinaryTransferred = {}, "
 					"uploadingProgress = 100 "
-					"where ingestionJobKey = {} returning 1) select count(*) from rows",
+					"where ingestionJobKey = {} ",
 					sourceBinaryTransferred, ingestionJobKey
 				);
 			else
 				sqlStatement = std::format(
-					"WITH rows AS (update MMS_IngestionJob set sourceBinaryTransferred = {} "
-					"where ingestionJobKey = {} returning 1) select count(*) from rows",
+					"update MMS_IngestionJob set sourceBinaryTransferred = {} "
+					"where ingestionJobKey = {} ",
 					sourceBinaryTransferred, ingestionJobKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2706,6 +2719,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				// we tried to update a value but the same value was already in the table,
@@ -2717,6 +2731,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		trans.commit();
@@ -5587,12 +5602,12 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 			setSQL = "set " + setSQL + " ";
 
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob {} "
-				"where ingestionJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_IngestionJob {} "
+				"where ingestionJobKey = {} ",
 				setSQL, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5622,13 +5637,13 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 			if (recordingVirtualVODModified && !newRecordingVirtualVOD)
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_IngestionJob "
+					"update MMS_IngestionJob "
 					"set metaDataContent = metaDataContent - 'liveRecorderVirtualVOD' "
-					"where ingestionJobKey = {} returning 1) select count(*) from rows",
+					"where ingestionJobKey = {} ",
 					ingestionJobKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				trans.exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,

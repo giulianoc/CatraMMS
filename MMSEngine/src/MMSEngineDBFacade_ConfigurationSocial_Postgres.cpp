@@ -215,12 +215,12 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 			}
 
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_YouTube {} "
-				"where confKey = {} and workspaceKey = {} returning 1) SELECT count(*) FROM rows",
+				"update MMS_Conf_YouTube {} "
+				"where confKey = {} and workspaceKey = {} ",
 				setSQL, confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -230,19 +230,19 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		json youTubeConfRoot;
@@ -1032,13 +1032,13 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_Facebook set label = {}, userAccessToken = {}, "
+				"update MMS_Conf_Facebook set label = {}, userAccessToken = {}, "
 				"modificationDate = now() at time zone 'utc' "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {} ",
 				trans.quote(label), trans.quote(userAccessToken), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1048,19 +1048,19 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();
@@ -1788,13 +1788,13 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_Twitch set label = {}, refreshToken = {}, "
+				"update MMS_Conf_Twitch set label = {}, refreshToken = {}, "
 				"modificationDate = now() at time zone 'utc' "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {} ",
 				trans.quote(label), trans.quote(refreshToken), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1804,19 +1804,19 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();
@@ -2543,13 +2543,13 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_Tiktok set label = {}, token = {}, "
+				"update MMS_Conf_Tiktok set label = {}, token = {}, "
 				"modificationDate = now() at time zone 'utc' "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {} ",
 				trans.quote(label), trans.quote(token), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2559,19 +2559,19 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();

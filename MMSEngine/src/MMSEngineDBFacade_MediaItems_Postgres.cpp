@@ -594,19 +594,18 @@ json MMSEngineDBFacade::updateMediaItem(
 			setSQL = "set " + setSQL + " ";
 
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_MediaItem {} "
+				"update MMS_MediaItem {} "
 				"where mediaItemKey = {} "
 				// 2021-02: in case the user is not the owner and it is a shared workspace
 				//		the workspacekey will not match
 				// 2021-03: I think the above comment is wrong, the user, in that case,
 				//		will use an APIKey of the correct workspace, even if this is shared.
 				//		So let's add again the below sql condition
-				"and workspaceKey = {} "
-				"returning 1) select count(*) from rows",
+				"and workspaceKey = {} ",
 				setSQL, mediaItemKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -794,13 +793,12 @@ json MMSEngineDBFacade::updatePhysicalPath(
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_PhysicalPath set retentionInMinutes = {} "
-				"where physicalPathKey = {} and mediaItemKey = {} "
-				"returning 1) select count(*) from rows",
+				"update MMS_PhysicalPath set retentionInMinutes = {} "
+				"where physicalPathKey = {} and mediaItemKey = {} ",
 				newRetentionInMinutes == -1 ? "null" : to_string(newRetentionInMinutes), physicalPathKey, mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -6259,13 +6257,12 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 			// delete it if present
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (delete from MMS_ExternalUniqueName "
-					"where workspaceKey = {} and mediaItemKey = {} "
-					"returning 1) select count(*) from rows",
+					"delete from MMS_ExternalUniqueName "
+					"where workspaceKey = {} and mediaItemKey = {} ",
 					workspaceKey, mediaItemKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+				trans->exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -6331,14 +6328,13 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 					{
 						string sqlStatement = std::format(
-							"WITH rows AS (update MMS_ExternalUniqueName "
+							"update MMS_ExternalUniqueName "
 							"set uniqueName = uniqueName || '-' || '{}' || '-' || '{}' "
-							"where workspaceKey = {} and uniqueName = {} "
-							"returning 1) select count(*) from rows",
+							"where workspaceKey = {} and uniqueName = {} ",
 							mediaItemKey, chrono::system_clock::now().time_since_epoch().count(), workspaceKey, trans->quote(uniqueName)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+						trans->exec0(sqlStatement);
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -6352,14 +6348,13 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 					{
 						string sqlStatement = std::format(
-							"WITH rows AS (update MMS_MediaItem "
+							"update MMS_MediaItem "
 							"set markedAsRemoved = true "
-							"where workspaceKey = {} and mediaItemKey = {} "
-							"returning 1) select count(*) from rows",
+							"where workspaceKey = {} and mediaItemKey = {} ",
 							workspaceKey, mediaItemKeyOfCurrentUniqueName
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+						trans->exec0(sqlStatement);
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -6422,14 +6417,13 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					{
 						{
 							string sqlStatement = std::format(
-								"WITH rows AS (update MMS_ExternalUniqueName "
+								"update MMS_ExternalUniqueName "
 								"set uniqueName = uniqueName || '-' || '{}' || '-' || '{}' "
-								"where workspaceKey = {} and uniqueName = {} "
-								"returning 1) select count(*) from rows",
+								"where workspaceKey = {} and uniqueName = {} ",
 								mediaItemKey, chrono::system_clock::now().time_since_epoch().count(), workspaceKey, trans->quote(uniqueName)
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+							trans->exec0(sqlStatement);
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -6443,14 +6437,13 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 						{
 							string sqlStatement = std::format(
-								"WITH rows AS (update MMS_MediaItem "
+								"update MMS_MediaItem "
 								"set markedAsRemoved = true "
-								"where workspaceKey = {} and mediaItemKey = {} "
-								"returning 1) select count(*) from rows",
+								"where workspaceKey = {} and mediaItemKey = {} ",
 								workspaceKey, mediaItemKeyOfCurrentUniqueName
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+							trans->exec0(sqlStatement);
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -6467,14 +6460,13 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_ExternalUniqueName "
+					"update MMS_ExternalUniqueName "
 					"set uniqueName = {} "
-					"where workspaceKey = {} and mediaItemKey = {} "
-					"returning 1) select count(*) from rows",
+					"where workspaceKey = {} and mediaItemKey = {} ",
 					trans->quote(uniqueName), workspaceKey, mediaItemKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+				trans->exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -6943,22 +6935,20 @@ void MMSEngineDBFacade::manageCrossReferences(
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_CrossReference "
-				"where sourceMediaItemKey = {} or targetMediaItemKey = {} "
-				"returning 1) select count(*) from rows",
+				"delete from MMS_CrossReference "
+				"where sourceMediaItemKey = {} or targetMediaItemKey = {} ",
 				mediaItemKey, mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans->exec1(sqlStatement)[0].as<int64_t>();
+			trans->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
-				", rowsUpdated: {}"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, rowsUpdated, conn->getConnectionId(), elapsed
+				sqlStatement, conn->getConnectionId(), elapsed
 			);
 		}
 
@@ -7324,13 +7314,12 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_PhysicalPath "
-				"where physicalPathKey = {} "
-				"returning 1) select count(*) from rows",
+				"delete from MMS_PhysicalPath "
+				"where physicalPathKey = {} ",
 				physicalPathKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -7340,6 +7329,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				// probable because encodingPercentage was already the same in the table
@@ -7349,6 +7339,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		trans.commit();

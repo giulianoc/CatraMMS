@@ -2375,10 +2375,9 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 		{
 			// in all the tables depending from Workspace we have 'on delete cascade'
 			// So all should be removed automatically from DB
-			string sqlStatement =
-				std::format("WITH rows AS (delete from MMS_Workspace where workspaceKey = {} returning 1) select count(*) from rows", workspaceKey);
+			string sqlStatement = std::format("delete from MMS_Workspace where workspaceKey = {} ", workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2408,13 +2407,9 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 
 			// in all the tables depending from User we have 'on delete cascade'
 			// So all should be removed automatically from DB
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_User where userKey in ({}) "
-				"returning 1) select count(*) from rows",
-				sUsers
-			);
+			string sqlStatement = std::format("delete from MMS_User where userKey in ({}) ", sUsers);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2637,13 +2632,9 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 		}
 
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_APIKey where userKey = {} and workspaceKey = {} returning 1) "
-				"select count(*) from rows",
-				userKey, workspaceKey
-			);
+			string sqlStatement = std::format("delete from MMS_APIKey where userKey = {} and workspaceKey = {} ", userKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2660,13 +2651,9 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 		{
 			// in all the tables depending from User we have 'on delete cascade'
 			// So all should be removed automatically from DB
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_User where userKey = {} "
-				"returning 1) select count(*) from rows",
-				userKey
-			);
+			string sqlStatement = std::format("delete from MMS_User where userKey = {} ", userKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3214,12 +3201,12 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 		{
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_User set lastSuccessfulLogin = NOW() at time zone 'utc' "
-					"where userKey = {} returning 1) select count(*) from rows",
+					"update MMS_User set lastSuccessfulLogin = NOW() at time zone 'utc' "
+					"where userKey = {} ",
 					userKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				trans.exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -3229,6 +3216,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 					", elapsed (millisecs): @{}@",
 					sqlStatement, conn->getConnectionId(), elapsed
 				);
+				/*
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "no update was done" + ", userKey: " + to_string(userKey) +
@@ -3237,6 +3225,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 
 					// throw runtime_error(errorMessage);
 				}
+				*/
 			}
 
 			trans.commit();
@@ -4117,12 +4106,12 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			if (oneParameterPresent)
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_Workspace {} "
-					"where workspaceKey = {} returning 1) select count(*) from rows",
+					"update MMS_Workspace {} "
+					"where workspaceKey = {} ",
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				trans.exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4132,6 +4121,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					", elapsed (millisecs): @{}@",
 					sqlStatement, conn->getConnectionId(), elapsed
 				);
+				/*
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "no update was done" + ", workspaceKey: " + to_string(workspaceKey) +
@@ -4143,6 +4133,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 					// throw runtime_error(errorMessage);
 				}
+				*/
 			}
 
 			if (expirationDateChanged)
@@ -4150,13 +4141,13 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				// 2023-02-13: nel caso in cui un admin vuole cambiare la data di scadenza di un workspace,
 				//		questo cambiamento deve avvenire per tutte le chiavi presenti
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_APIKey "
+					"update MMS_APIKey "
 					"set expirationDate = to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') "
-					"where workspaceKey = {} returning 1) select count(*) from rows",
+					"where workspaceKey = {} ",
 					trans.quote(newExpirationUtcDate), workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				trans.exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4166,6 +4157,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					", elapsed (millisecs): @{}@",
 					sqlStatement, conn->getConnectionId(), elapsed
 				);
+				/*
 				if (rowsUpdated == 0)
 				{
 					string errorMessage = __FILEREF__ + "no update was done" + ", newExpirationUtcDate: " + newExpirationUtcDate +
@@ -4175,6 +4167,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 					// throw runtime_error(errorMessage);
 				}
+				*/
 			}
 		}
 
@@ -4209,12 +4202,12 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			if (oneParameterPresent)
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_Workspace {} "
-					"where workspaceKey = {} returning 1) select count(*) from rows",
+					"update MMS_Workspace {} "
+					"where workspaceKey = {} ",
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				trans.exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4224,6 +4217,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					", elapsed (millisecs): @{}@",
 					sqlStatement, conn->getConnectionId(), elapsed
 				);
+				/*
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "no update was done" + ", workspaceKey: " + to_string(workspaceKey) +
@@ -4233,6 +4227,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 					// throw runtime_error(errorMessage);
 				}
+				*/
 			}
 		}
 
@@ -4340,22 +4335,22 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			if (oneParameterPresent)
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_WorkspaceCost {} "
-					"where workspaceKey = {} returning 1) select count(*) from rows",
+					"update MMS_WorkspaceCost {} "
+					"where workspaceKey = {} ",
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				trans.exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
 					"SQL statement"
 					", sqlStatement: @{}@"
-					", rowsUpdated: {}"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, rowsUpdated, conn->getConnectionId(), elapsed
+					sqlStatement, conn->getConnectionId(), elapsed
 				);
+				/*
 				if (rowsUpdated != 1)
 				{
 					string errorMessage = __FILEREF__ + "no update was done" + ", workspaceKey: " + to_string(workspaceKey) +
@@ -4365,6 +4360,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 					// throw runtime_error(errorMessage);
 				}
+				*/
 			}
 		}
 
@@ -4386,12 +4382,12 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			string permissions = JSONUtils::toString(permissionsRoot);
 
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_APIKey set permissions = {} "
-				"where workspaceKey = {} and userKey = {} returning 1) select count(*) from rows",
+				"update MMS_APIKey set permissions = {} "
+				"where workspaceKey = {} and userKey = {} ",
 				trans.quote(permissions), workspaceKey, userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4401,6 +4397,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				string errorMessage = __FILEREF__ + "no update was done" + ", workspaceKey: " + to_string(workspaceKey) +
@@ -4410,6 +4407,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		{
@@ -4585,12 +4583,12 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_APIKey set isDefault = false "
-				"where userKey = {} returning 1) select count(*) from rows",
+				"update MMS_APIKey set isDefault = false "
+				"where userKey = {} ",
 				userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4604,12 +4602,12 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_APIKey set isDefault = true "
-				"where apiKey = {} returning 1) select count(*) from rows",
+				"update MMS_APIKey set isDefault = true "
+				"where apiKey = {} ",
 				trans.quote(apiKey)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5453,12 +5451,12 @@ json MMSEngineDBFacade::updateUser(
 			}
 
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_User {} "
-				"where userKey = {} returning 1) select count(*) from rows",
+				"update MMS_User {} "
+				"where userKey = {} ",
 				setSQL, userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5468,6 +5466,7 @@ json MMSEngineDBFacade::updateUser(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				string errorMessage = __FILEREF__ + "no update was done" + ", userKey: " + to_string(userKey) + ", name: " + name +
@@ -5479,6 +5478,7 @@ json MMSEngineDBFacade::updateUser(
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		{
@@ -5824,12 +5824,12 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_User set password = {} "
-				"where userKey = {} returning 1) select count(*) from rows",
+				"update MMS_User set password = {} "
+				"where userKey = {} ",
 				trans.quote(newPassword), userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

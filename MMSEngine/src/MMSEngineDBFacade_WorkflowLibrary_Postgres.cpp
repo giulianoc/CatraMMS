@@ -175,14 +175,14 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 				}
 
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_WorkflowLibrary set lastUpdateUserKey = {}, "
+					"update MMS_WorkflowLibrary set lastUpdateUserKey = {}, "
 					"thumbnailMediaItemKey = {}, jsonWorkflow = {} "
-					"where workflowLibraryKey = {} returning 1) select count(*) from rows",
+					"where workflowLibraryKey = {} ",
 					userKey == -1 ? "null" : to_string(userKey), thumbnailMediaItemKey == -1 ? "null" : to_string(thumbnailMediaItemKey),
 					trans.quote(jsonWorkflow), workflowLibraryKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				trans.exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,

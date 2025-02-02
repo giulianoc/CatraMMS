@@ -470,12 +470,12 @@ json MMSEngineDBFacade::modifyStream(
 			}
 
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_Stream {} "
-				"where {} = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_Stream {} "
+				"where {} = {} and workspaceKey = {} ",
 				setSQL, confKey != -1 ? "confKey" : "label", confKey != -1 ? to_string(confKey) : trans.quote(label), workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -485,19 +485,19 @@ json MMSEngineDBFacade::modifyStream(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		json streamsRoot;
@@ -3200,12 +3200,12 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			}
 
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_SourceTVStream {} "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_SourceTVStream {} "
+				"where confKey = {} ",
 				setSQL, confKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3215,19 +3215,19 @@ json MMSEngineDBFacade::modifySourceTVStream(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		json sourceTVStreamsRoot;

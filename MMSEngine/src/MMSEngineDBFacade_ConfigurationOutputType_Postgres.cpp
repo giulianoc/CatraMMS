@@ -152,14 +152,15 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 	try
 	{
 		{
+			// elimino WITH rows AS se non serve perchè influenza le performance
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_AWSChannel set label = {}, channelId = {}, rtmpURL = {}, "
+				"update MMS_Conf_AWSChannel set label = {}, channelId = {}, rtmpURL = {}, "
 				"playURL = {}, type = {} "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {}",
 				trans.quote(label), trans.quote(channelId), trans.quote(rtmpURL), trans.quote(playURL), trans.quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -169,19 +170,19 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();
@@ -1271,14 +1272,14 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_CDN77Channel set label = {}, rtmpURL = {}, resourceURL = {}, "
+				"update MMS_Conf_CDN77Channel set label = {}, rtmpURL = {}, resourceURL = {}, "
 				"filePath = {}, secureToken = {}, type = {} "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {}",
 				trans.quote(label), trans.quote(rtmpURL), trans.quote(resourceURL), trans.quote(filePath),
 				secureToken == "" ? "null" : trans.quote(secureToken), trans.quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1288,19 +1289,19 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();
@@ -2019,12 +2020,12 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 
 				{
 					string sqlStatement = std::format(
-						"WITH rows AS (update MMS_Conf_CDN77Channel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
-						"where reservedByIngestionJobKey in ({}) returning 1) select count(*) from rows",
+						"update MMS_Conf_CDN77Channel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+						"where reservedByIngestionJobKey in ({}) ",
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+					trans.exec0(sqlStatement);
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -2034,6 +2035,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 						", elapsed (millisecs): @{}@",
 						sqlStatement, conn->getConnectionId(), elapsed
 					);
+					/*
 					if (rowsUpdated == 0)
 					{
 						SPDLOG_WARN(
@@ -2045,6 +2047,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 
 						// throw runtime_error(errorMessage);
 					}
+					*/
 				}
 			}
 		}
@@ -2583,15 +2586,15 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_RTMPChannel set label = {}, rtmpURL = {}, streamName = {}, "
+				"update MMS_Conf_RTMPChannel set label = {}, rtmpURL = {}, streamName = {}, "
 				"userName = {}, password = {}, playURL = {}, type = {} "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {} ",
 				trans.quote(label), trans.quote(rtmpURL), streamName == "" ? "null" : trans.quote(streamName),
 				userName == "" ? "null" : trans.quote(userName), password == "" ? "null" : trans.quote(password),
 				playURL == "" ? "null" : trans.quote(playURL), trans.quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2601,19 +2604,19 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();
@@ -3356,12 +3359,12 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 
 				{
 					string sqlStatement = std::format(
-						"WITH rows AS (update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
-						"where reservedByIngestionJobKey in ({}) returning 1) select count(*) from rows",
+						"update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+						"where reservedByIngestionJobKey in ({}) ",
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+					trans.exec0(sqlStatement);
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -3371,6 +3374,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 						", elapsed (millisecs): @{}@",
 						sqlStatement, conn->getConnectionId(), elapsed
 					);
+					/*
 					if (rowsUpdated == 0)
 					{
 						string errorMessage =
@@ -3379,6 +3383,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 
 						// throw runtime_error(errorMessage);
 					}
+					*/
 				}
 			}
 		}
@@ -3922,14 +3927,14 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_HLSChannel set label = {}, deliveryCode = {}, segmentDuration = {}, "
+				"update MMS_Conf_HLSChannel set label = {}, deliveryCode = {}, segmentDuration = {}, "
 				"playlistEntriesNumber = {}, type = {} "
-				"where confKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"where confKey = {} and workspaceKey = {} ",
 				trans.quote(label), deliveryCode, segmentDuration == -1 ? "null" : to_string(segmentDuration),
 				playlistEntriesNumber == -1 ? "null" : to_string(playlistEntriesNumber), trans.quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3939,19 +3944,19 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", sqlStatement: " + sqlStatement
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();
@@ -4675,12 +4680,12 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 
 				{
 					string sqlStatement = std::format(
-						"WITH rows AS (update MMS_Conf_HLSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
-						"where reservedByIngestionJobKey in ({}) returning 1) select count(*) from rows",
+						"update MMS_Conf_HLSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+						"where reservedByIngestionJobKey in ({}) ",
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+					trans.exec0(sqlStatement);
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -4690,6 +4695,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 						", elapsed (millisecs): @{}@",
 						sqlStatement, conn->getConnectionId(), elapsed
 					);
+					/*
 					if (rowsUpdated == 0)
 					{
 						string errorMessage =
@@ -4698,6 +4704,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 
 						// throw runtime_error(errorMessage);
 					}
+					*/
 				}
 			}
 		}

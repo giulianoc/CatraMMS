@@ -229,12 +229,12 @@ void MMSEngineDBFacade::modifyEncoder(
 			}
 
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Encoder {} "
-				"where encoderKey = {} returning 1) select count(*) from rows",
+				"update MMS_Encoder {} "
+				"where encoderKey = {} ",
 				setSQL, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -244,19 +244,19 @@ void MMSEngineDBFacade::modifyEncoder(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
-			if (rowsUpdated != 1)
-			{
-				/*
-				string errorMessage = __FILEREF__ + "no update was done"
-						+ ", confKey: " + to_string(confKey)
-						+ ", rowsUpdated: " + to_string(rowsUpdated)
-						+ ", lastSQLCommand: " + lastSQLCommand
-				;
-				_logger->warn(errorMessage);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", lastSQLCommand: " + lastSQLCommand
+			;
+			_logger->warn(errorMessage);
 
-				throw runtime_error(errorMessage);
-				*/
-			}
+			throw runtime_error(errorMessage);
+		}
+			*/
 		}
 
 		trans.commit();
@@ -1357,13 +1357,13 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 		// bisogna rimuoverlo
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_EncoderEncodersPoolMapping "
+				"delete from MMS_EncoderEncodersPoolMapping "
 				"where encodersPoolKey in (select encodersPoolKey from MMS_EncodersPool where workspaceKey = {}) "
-				"and encoderKey = {} returning 1) select count(*) from rows",
+				"and encoderKey = {} ",
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3450,12 +3450,12 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_EncodersPool set lastEncoderIndexUsed = {} "
-				"where encodersPoolKey = {} returning 1) select count(*) from rows",
+				"update MMS_EncodersPool set lastEncoderIndexUsed = {} "
+				"where encodersPoolKey = {} ",
 				newLastEncoderIndexUsed, encodersPoolKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3465,6 +3465,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 				", elapsed (millisecs): @{}@",
 				sqlStatement, conn->getConnectionId(), elapsed
 			);
+			/*
 			if (rowsUpdated != 1)
 			{
 				SPDLOG_WARN(
@@ -3481,6 +3482,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 
 				// throw runtime_error(errorMessage);
 			}
+			*/
 		}
 
 		trans.commit();
