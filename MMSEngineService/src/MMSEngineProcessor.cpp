@@ -9,6 +9,7 @@
 #include "FFMpeg.h"
 #include "GEOInfoTimes.h"
 #include "JSONUtils.h"
+#include "StatisticTimer.h"
 #include "ThreadsStatisticTimes.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/System.h"
@@ -1335,6 +1336,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 
 	bool alreadyExecuted = true;
 
+	StatisticTimer statisticTimer("handleGEOInfoEventThread");
+
 	try
 	{
 		SPDLOG_INFO(string() + "GEOInfo: oncePerDayExecution" + ", _processorIdentifier: " + to_string(_processorIdentifier));
@@ -1358,12 +1361,11 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 
 	if (!alreadyExecuted)
 	{
-		chrono::system_clock::time_point startRequestStatistic = chrono::system_clock::now();
-
 		try
 		{
-			SPDLOG_INFO("updateRequestStatisticGEOInfo...");
+			statisticTimer.start("updateRequestStatisticGEOInfo");
 			_mmsEngineDBFacade->updateRequestStatisticGEOInfo();
+			statisticTimer.stop("updateRequestStatisticGEOInfo");
 		}
 		catch (runtime_error &e)
 		{
@@ -1389,12 +1391,12 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 			// no throw since it is running in a detached thread
 			// throw e;
 		}
-
-		chrono::system_clock::time_point startLoginStatistic = chrono::system_clock::now();
 
 		try
 		{
+			statisticTimer.start("updateLoginStatisticGEOInfo");
 			_mmsEngineDBFacade->updateLoginStatisticGEOInfo();
+			statisticTimer.stop("updateLoginStatisticGEOInfo");
 		}
 		catch (runtime_error &e)
 		{
@@ -1420,20 +1422,14 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 			// no throw since it is running in a detached thread
 			// throw e;
 		}
-
-		chrono::system_clock::time_point end = chrono::system_clock::now();
-
-		SPDLOG_INFO(
-			"GEOInfo: updateGEOInfo finished"
-			", _processorIdentifier: {}"
-			", @MMS statistics@ - RequestStatistic duration (secs): @{}@"
-			", @MMS statistics@ - LoginStatistic duration (secs): @{}@"
-			", @MMS statistics@ - total duration (secs): @{}@",
-			_processorIdentifier, chrono::duration_cast<chrono::seconds>(startLoginStatistic - startRequestStatistic).count(),
-			chrono::duration_cast<chrono::seconds>(end - startLoginStatistic).count(),
-			chrono::duration_cast<chrono::seconds>(end - startRequestStatistic).count()
-		);
 	}
+	SPDLOG_INFO(
+		"GEOInfo: updateGEOInfo finished"
+		", _processorIdentifier: {}"
+		", alreadyExecuted: {}"
+		", statistics: {}",
+		_processorIdentifier, alreadyExecuted, statisticTimer.toString()
+	);
 }
 
 void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
