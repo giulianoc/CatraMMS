@@ -77,7 +77,7 @@ if [ "$deploy" == "y" ]; then
 		serverType=${testServers[$((index*6+4))]}
 		serverPrivateIP=${testServers[$((index*6+5))]}
 
-		if [ "$requestedServerType" != "" ] && [[ ! $requestedServerType == *"$serverType"* ]]; then
+		if [ "$requestedServerType" != "" ] && [[ ! "$serverType" == *"$requestedServerType"* ]]; then
 			# entra se requestedServerType != "" e requestedServerType non è contenuto in serverType
 			index=$((index+1))
 			continue
@@ -114,7 +114,7 @@ if [ "$deploy" == "y" ]; then
 			continue
 		fi
 
-		if [ "$requestedServerType" != "" ] && [[ ! $requestedServerType == *"$serverType"* ]]; then
+		if [ "$requestedServerType" != "" ] && [[ ! "$serverType" == *"$requestedServerType"* ]]; then
 			# entra se requestedServerType != "" e requestedServerType non è contenuto in serverType
 			index=$((index+1))
 			continue

@@ -12,6 +12,7 @@
 #include "ThreadsStatisticTimes.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/System.h"
+#include "spdlog/spdlog.h"
 
 MMSEngineProcessor::MMSEngineProcessor(
 	int processorIdentifier, shared_ptr<spdlog::logger> logger, shared_ptr<MultiEventsSet> multiEventsSet,
@@ -1361,6 +1362,7 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 
 		try
 		{
+			SPDLOG_INFO("updateRequestStatisticGEOInfo...");
 			_mmsEngineDBFacade->updateRequestStatisticGEOInfo();
 		}
 		catch (runtime_error &e)
