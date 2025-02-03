@@ -1342,7 +1342,7 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 	{
 		SPDLOG_INFO(string() + "GEOInfo: oncePerDayExecution" + ", _processorIdentifier: " + to_string(_processorIdentifier));
 
-		alreadyExecuted = _mmsEngineDBFacade->oncePerDayExecution(MMSEngineDBFacade::OncePerDayType::GEOInfo);
+		alreadyExecuted = _mmsEngineDBFacade->onceExecution(MMSEngineDBFacade::OnceType::GEOInfo);
 	}
 	catch (runtime_error &e)
 	{
@@ -1376,6 +1376,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 				_processorIdentifier, e.what()
 			);
 
+			statisticTimer.stop("updateRequestStatisticGEOInfo");
+
 			// no throw since it is running in a detached thread
 			// throw e;
 		}
@@ -1387,6 +1389,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 				", exception: {}",
 				_processorIdentifier, e.what()
 			);
+
+			statisticTimer.stop("updateRequestStatisticGEOInfo");
 
 			// no throw since it is running in a detached thread
 			// throw e;
@@ -1407,6 +1411,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 				_processorIdentifier, e.what()
 			);
 
+			statisticTimer.stop("updateLoginStatisticGEOInfo");
+
 			// no throw since it is running in a detached thread
 			// throw e;
 		}
@@ -1418,6 +1424,8 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 				", exception: {}",
 				_processorIdentifier, e.what()
 			);
+
+			statisticTimer.stop("updateLoginStatisticGEOInfo");
 
 			// no throw since it is running in a detached thread
 			// throw e;

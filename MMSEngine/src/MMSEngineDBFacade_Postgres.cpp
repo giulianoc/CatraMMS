@@ -2357,9 +2357,9 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 	}
 }
 
-bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
+bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 {
-	_logger->info(__FILEREF__ + "oncePerDayExecution");
+	_logger->info(__FILEREF__ + "onceExecution");
 	bool alreadyExecuted;
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -2382,7 +2382,7 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 					and has to be executed
 		*/
 
-		string today_yyyy_mm_dd;
+		string now;
 		{
 			tm tmDateTime;
 			// char strDateTime[64];
@@ -2392,14 +2392,17 @@ bool MMSEngineDBFacade::oncePerDayExecution(OncePerDayType oncePerDayType)
 
 			// sprintf(strDateTime, "%04d-%02d-%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday);
 			// today_yyyy_mm_dd = strDateTime;
-			today_yyyy_mm_dd = std::format("{:0>4}-{:0>2}-{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday);
+			now = std::format(
+				"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday, tmDateTime.tm_hour,
+				tmDateTime.tm_min
+			);
 		}
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_OncePerDayExecution set lastExecutionTime = {} "
-				"where type = {} returning 1) select count(*) from rows",
-				trans.quote(today_yyyy_mm_dd), trans.quote(toString(oncePerDayType))
+				"WITH rows AS (update MMS_OncePerDayExecution set lastExecutionTime = {0} "
+				"where type = {1} and lastExecutionTime is distinct from {0} returning 1) select count(*) from rows",
+				trans.quote(now), trans.quote(toString(onceType))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();

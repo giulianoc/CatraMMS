@@ -205,38 +205,38 @@ class MMSEngineDBFacade
 			));
 	}
 
-	enum class OncePerDayType
+	enum class OnceType
 	{
 		DBDataRetention = 0,
 		GEOInfo = 1
 	};
-	static const char *toString(const OncePerDayType &oncePerDayType)
+	static const char *toString(const OnceType &onceType)
 	{
-		switch (oncePerDayType)
+		switch (onceType)
 		{
-		case OncePerDayType::DBDataRetention:
+		case OnceType::DBDataRetention:
 			return "DBDataRetention";
-		case OncePerDayType::GEOInfo:
+		case OnceType::GEOInfo:
 			return "GEOInfo";
 		default:
-			throw runtime_error(fmt::format("toString with a wrong oncePerDayType: {}", static_cast<int>(oncePerDayType)));
+			throw runtime_error(fmt::format("toString with a wrong onceType: {}", static_cast<int>(onceType)));
 		}
 	}
-	static OncePerDayType toOncePerDayType(const string &oncePerDayType)
+	static OnceType toOnceType(const string &onceType)
 	{
 		string lowerCase;
-		lowerCase.resize(oncePerDayType.size());
-		transform(oncePerDayType.begin(), oncePerDayType.end(), lowerCase.begin(), [](unsigned char c) { return tolower(c); });
+		lowerCase.resize(onceType.size());
+		transform(onceType.begin(), onceType.end(), lowerCase.begin(), [](unsigned char c) { return tolower(c); });
 
 		if (lowerCase == "dbdataretention")
-			return OncePerDayType::DBDataRetention;
+			return OnceType::DBDataRetention;
 		if (lowerCase == "geoinfo")
-			return OncePerDayType::GEOInfo;
+			return OnceType::GEOInfo;
 		else
 			throw runtime_error(fmt::format(
-				"toOncePerDayType with a wrong OncePerDayType"
-				", oncePerDayType: {}",
-				oncePerDayType
+				"toOnceType with a wrong OnceType"
+				", onceType: {}",
+				onceType
 			));
 	}
 
@@ -2397,7 +2397,7 @@ class MMSEngineDBFacade
 
 	string getStreamingYouTubeLiveURL(shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t confKey, string liveURL);
 
-	bool oncePerDayExecution(OncePerDayType oncePerDayType);
+	bool onceExecution(OnceType onceType);
 
 	static DeliveryTechnology fileFormatToDeliveryTechnology(string fileFormat);
 

@@ -1,42 +1,6 @@
 
 #include "MMSEngineProcessor.h"
-/*
-#include <stdio.h>
-
-#include "CheckEncodingTimes.h"
-#include "CheckIngestionTimes.h"
-#include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "ContentRetentionTimes.h"
-#include "DBDataRetentionTimes.h"
-#include "FFMpeg.h"
-#include "GEOInfoTimes.h"
-#include "JSONUtils.h"
-#include "MMSCURL.h"
-#include "PersistenceLock.h"
-#include "ThreadsStatisticTimes.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-#include <fstream>
-#include <iomanip>
-#include <regex>
-#include <sstream>
-// #include "EMailSender.h"
-#include "Magick++.h"
-// #include <openssl/md5.h>
-#include "spdlog/spdlog.h"
-#include <openssl/evp.h>
-
-#define MD5BUFFERSIZE 16384
-*/
+#include "StatisticTimer.h"
 
 void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> processorsThreadsNumber)
 {
@@ -370,17 +334,25 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 	bool alreadyExecuted = true;
 
+	StatisticTimer statisticTimer("handleDBDataRetentionEventThread");
+
 	try
 	{
-		SPDLOG_INFO(string() + "DBDataRetention: oncePerDayExecution" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+		SPDLOG_INFO(
+			"DBDataRetention: onceExecution"
+			", _processorIdentifier: {}",
+			_processorIdentifier
+		);
 
-		alreadyExecuted = _mmsEngineDBFacade->oncePerDayExecution(MMSEngineDBFacade::OncePerDayType::DBDataRetention);
+		alreadyExecuted = _mmsEngineDBFacade->onceExecution(MMSEngineDBFacade::OnceType::DBDataRetention);
 	}
 	catch (runtime_error &e)
 	{
 		SPDLOG_ERROR(
-			string() + "DBDataRetention: Ingestion Data failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", exception: " + e.what()
+			"DBDataRetention: onceExecution failed"
+			", _processorIdentifier: {}"
+			", exception: {}",
+			_processorIdentifier, e.what()
 		);
 
 		// no throw since it is running in a detached thread
@@ -389,8 +361,10 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() + "DBDataRetention: Ingestion Data failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", exception: " + e.what()
+			"DBDataRetention: onceExecution failed"
+			", _processorIdentifier: {}"
+			", exception: {}",
+			_processorIdentifier, e.what()
 		);
 
 		// no throw since it is running in a detached thread
@@ -399,218 +373,216 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 	if (!alreadyExecuted)
 	{
+		try
 		{
-			chrono::system_clock::time_point start = chrono::system_clock::now();
-
-			SPDLOG_INFO(string() + "DBDataRetention: Ingestion Data started" + ", _processorIdentifier: " + to_string(_processorIdentifier));
-
-			try
-			{
-				_mmsEngineDBFacade->retentionOfIngestionData();
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					string() + "DBDataRetention: Ingestion Data failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-			catch (exception &e)
-			{
-				SPDLOG_ERROR(
-					string() + "DBDataRetention: Ingestion Data failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-
-			chrono::system_clock::time_point end = chrono::system_clock::now();
 			SPDLOG_INFO(
-				string() + "DBDataRetention: Ingestion Data finished" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+				"DBDataRetention: retentionOfIngestionData"
+				", _processorIdentifier: {}",
+				_processorIdentifier
 			);
+			statisticTimer.start("retentionOfIngestionData");
+			_mmsEngineDBFacade->retentionOfIngestionData();
+			statisticTimer.stop("retentionOfIngestionData");
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: retentionOfIngestionData failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
+			);
+
+			statisticTimer.stop("retentionOfIngestionData");
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: retentionOfIngestionData failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
+			);
+
+			statisticTimer.stop("retentionOfIngestionData");
+
+			// no throw since it is running in a detached thread
+			// throw e;
 		}
 
+		try
 		{
-			chrono::system_clock::time_point start = chrono::system_clock::now();
-
-			SPDLOG_INFO(string() + "DBDataRetention: Delivery Autorization started" + ", _processorIdentifier: " + to_string(_processorIdentifier));
-
-			try
-			{
-				_mmsEngineDBFacade->retentionOfDeliveryAuthorization();
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					string() + "DBDataRetention: Delivery Autorization failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-			catch (exception &e)
-			{
-				SPDLOG_ERROR(
-					string() + "DBDataRetention: Delivery Autorization failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-
-			chrono::system_clock::time_point end = chrono::system_clock::now();
 			SPDLOG_INFO(
-				string() + "DBDataRetention: Delivery Autorization finished" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+				"DBDataRetention: retentionOfDeliveryAuthorization"
+				", _processorIdentifier: {}",
+				_processorIdentifier
 			);
+			statisticTimer.start("retentionOfDeliveryAuthorization");
+			_mmsEngineDBFacade->retentionOfDeliveryAuthorization();
+			statisticTimer.stop("retentionOfDeliveryAuthorization");
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: retentionOfDeliveryAuthorization failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
+			);
+
+			statisticTimer.stop("retentionOfDeliveryAuthorization");
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: retentionOfDeliveryAuthorization failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
+			);
+
+			statisticTimer.stop("retentionOfDeliveryAuthorization");
+
+			// no throw since it is running in a detached thread
+			// throw e;
 		}
 
+		try
 		{
-			chrono::system_clock::time_point start = chrono::system_clock::now();
-
-			SPDLOG_INFO(string() + "DBDataRetention: Statistic Data started" + ", _processorIdentifier: " + to_string(_processorIdentifier));
-
-			try
-			{
-				_mmsEngineDBFacade->retentionOfStatisticData();
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					string() + "DBDataRetention: Statistic Data failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-			catch (exception &e)
-			{
-				SPDLOG_ERROR(
-					string() + "DBDataRetention: Statistic Data failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-
-			chrono::system_clock::time_point end = chrono::system_clock::now();
 			SPDLOG_INFO(
-				string() + "DBDataRetention: Statistic Data finished" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+				"DBDataRetention: retentionOfStatisticData"
+				", _processorIdentifier: {}",
+				_processorIdentifier
 			);
+			statisticTimer.start("retentionOfStatisticData");
+			_mmsEngineDBFacade->retentionOfStatisticData();
+			statisticTimer.stop("retentionOfStatisticData");
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: retentionOfStatisticData failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
+			);
+
+			statisticTimer.stop("retentionOfStatisticData");
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: retentionOfStatisticData failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
+			);
+
+			statisticTimer.stop("retentionOfStatisticData");
+
+			// no throw since it is running in a detached thread
+			// throw e;
 		}
 
+		try
 		{
-			chrono::system_clock::time_point start = chrono::system_clock::now();
-
+			// Scenarios: IngestionJob in final status but EncodingJob not
+			// in final status
 			SPDLOG_INFO(
-				string() +
-				"DBDataRetention: Fix of EncodingJobs having wrong status "
-				"started" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+				"DBDataRetention: fixEncodingJobsHavingWrongStatus"
+				", _processorIdentifier: {}",
+				_processorIdentifier
+			);
+			statisticTimer.start("fixEncodingJobsHavingWrongStatus");
+			_mmsEngineDBFacade->fixEncodingJobsHavingWrongStatus();
+			statisticTimer.stop("fixEncodingJobsHavingWrongStatus");
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: fixEncodingJobsHavingWrongStatus failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
 			);
 
-			try
-			{
-				// Scenarios: IngestionJob in final status but EncodingJob not
-				// in final status
-				_mmsEngineDBFacade->fixEncodingJobsHavingWrongStatus();
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					string() +
-					"DBDataRetention: Fix of EncodingJobs having wrong status "
-					"failed" +
-					", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what()
-				);
+			statisticTimer.stop("fixEncodingJobsHavingWrongStatus");
 
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-			catch (exception &e)
-			{
-				SPDLOG_ERROR(
-					string() +
-					"DBDataRetention: Fix of EncodingJobs having wrong status "
-					"failed" +
-					", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-
-			chrono::system_clock::time_point end = chrono::system_clock::now();
-			SPDLOG_INFO(
-				string() +
-				"DBDataRetention: Fix of EncodingJobs having wrong status "
-				"finished" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) + ", @MMS statistics@ - duration (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: fixEncodingJobsHavingWrongStatus failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
 			);
+
+			statisticTimer.stop("fixEncodingJobsHavingWrongStatus");
+
+			// no throw since it is running in a detached thread
+			// throw e;
 		}
 
+		try
 		{
-			chrono::system_clock::time_point start = chrono::system_clock::now();
-
 			SPDLOG_INFO(
-				string() +
-				"DBDataRetention: Fix of IngestionJobs having wrong status "
-				"started" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+				"DBDataRetention: fixIngestionJobsHavingWrongStatus"
+				", _processorIdentifier: {}",
+				_processorIdentifier
+			);
+			// Scenarios: EncodingJob in final status but IngestionJob not
+			// in final status
+			//		even it it was passed long time
+			statisticTimer.start("fixIngestionJobsHavingWrongStatus");
+			_mmsEngineDBFacade->fixIngestionJobsHavingWrongStatus();
+			statisticTimer.stop("fixIngestionJobsHavingWrongStatus");
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: fixIngestionJobsHavingWrongStatus failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
 			);
 
-			try
-			{
-				// Scenarios: EncodingJob in final status but IngestionJob not
-				// in final status
-				//		even it it was passed long time
-				_mmsEngineDBFacade->fixIngestionJobsHavingWrongStatus();
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					string() +
-					"DBDataRetention: Fix of IngestionJobs having wrong status "
-					"failed" +
-					", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what()
-				);
+			statisticTimer.stop("fixIngestionJobsHavingWrongStatus");
 
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-			catch (exception &e)
-			{
-				SPDLOG_ERROR(
-					string() +
-					"DBDataRetention: Fix of IngestionJobs having wrong status "
-					"failed" +
-					", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-			}
-
-			chrono::system_clock::time_point end = chrono::system_clock::now();
-			SPDLOG_INFO(
-				string() +
-				"DBDataRetention: Fix of IngestionJobs having wrong status "
-				"finished" +
-				", _processorIdentifier: " + to_string(_processorIdentifier) + ", @MMS statistics@ - duration (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"DBDataRetention: fixIngestionJobsHavingWrongStatus failed"
+				", _processorIdentifier: {}"
+				", exception: {}",
+				_processorIdentifier, e.what()
 			);
+
+			statisticTimer.stop("fixIngestionJobsHavingWrongStatus");
+
+			// no throw since it is running in a detached thread
+			// throw e;
 		}
 	}
+	SPDLOG_INFO(
+		"DBDataRetention"
+		", _processorIdentifier: {}"
+		", alreadyExecuted: {}"
+		", statisticTimer: {}",
+		_processorIdentifier, alreadyExecuted, statisticTimer.toString()
+	);
 }

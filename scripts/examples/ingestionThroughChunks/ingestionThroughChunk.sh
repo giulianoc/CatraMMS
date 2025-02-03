@@ -3,16 +3,17 @@ mmsUserKey=$1
 mmsAPIKey=$2
 title=$3
 tag=$4
-ingester=$5
-retention=$6
-binaryFilePathName=$7
+uniqueName=$5
+ingester=$6
+retention=$7
+binaryFilePathName=$8
 #i.e. if IngestionNumber 2/171 was interrupted, continueFromIndex has to be 2
-continueFromIndex=$8
+continueFromIndex=$9
 
-if [ $# -lt 7 -o $# -gt 8 ]; then
-	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <tag> <ingester> <retention> <binaryFilePathName> [<continueFromIndex>]"
+if [ $# -lt 8 -o $# -gt 9 ]; then
+	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <tag> <uniqueName> <ingester> <retention> <binaryFilePathName> [<continueFromIndex>]"
 
-	echo "The current parameters number is: $#, it shall be 7 or 8"
+	echo "The current parameters number is: $#, it shall be 8 or 9"
 	paramIndex=1
 	for param in "$@"
 	do
@@ -21,7 +22,7 @@ if [ $# -lt 7 -o $# -gt 8 ]; then
 	done
 
 	exit 1
-elif [ $# -eq 7 ]; then
+elif [ $# -eq 8 ]; then
 	continueFromIndex=""
 fi
 
@@ -35,7 +36,7 @@ if [ "$continueFromIndex" = "" ]; then
 	fileFormat=$extension
 
 	#echo "./helper/ingestionWorkflow.sh $mmsUserKey \"$mmsAPIKey\" \"$title\" \"$tag\" \"$ingester\" $retention $fileFormat"
-	ingestionJobKey=$(./helper/ingestionWorkflow.sh $mmsUserKey "$mmsAPIKey" "$title" "$tag" "$ingester" $retention $fileFormat)
+	ingestionJobKey=$(./helper/ingestionWorkflow.sh $mmsUserKey "$mmsAPIKey" "$title" "$tag" "$uniqueName" $ingester" $retention $fileFormat)
 
 	if [ "$ingestionJobKey" = "" ]; then
 		echo "ingestionWorkflow.sh failed"
@@ -48,7 +49,7 @@ if [ "$continueFromIndex" = "" ]; then
 
 	rm -f ./helper/ingestionWorkflowResult.json
 
-	echo "$ingestionJobKey" > /tmp/$filename.ingestionJobKey
+	echo "$ingestionJobKey" > "/tmp/$filename.ingestionJobKey"
 else
 	#it has to be continued, retrieve the ingestionJobKey
 
@@ -56,7 +57,7 @@ else
 	continueFromIndex=$((continueFromIndex-1))
 
 	filename=$(basename -- "$binaryFilePathName")
-	ingestionJobKey=$(cat /tmp/$filename.ingestionJobKey)
+	ingestionJobKey=$(cat "/tmp/$filename.ingestionJobKey")
 	if [ "$ingestionJobKey" = "" ]; then
 		echo "ingestionJobKey not found, it is not possible to continue the upload"
 
@@ -72,5 +73,5 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-rm -f /tmp/$filename.ingestionJobKey
+rm -f "/tmp/$filename.ingestionJobKey"
 

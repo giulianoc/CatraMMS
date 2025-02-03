@@ -96,7 +96,7 @@
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
 		// every time is requested.
-		// The UserData are involved in searches as well
+		// The UserData is involved in searches as well
 		"userData": { },
 
 		// optional: it specifies the retention of the content (MediaItem retention). Once the retention expires,

@@ -1,6 +1,6 @@
 
-if [ $# -lt 5 -o $# -gt 7 ]; then
-	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <tag> <ingester> [<retention> <fileFormat>]"
+if [ $# -lt 6 -o $# -gt 8 ]; then
+	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <tag> <uniqueName> <ingester> [<retention> <fileFormat>]"
 
 	exit 1
 fi
@@ -11,14 +11,15 @@ mmsUserKey=$1
 mmsAPIKey=$2
 title=$3
 tag=$4
-ingester=$5
-if [ $# -gt 5 ]; then
-	retention=$6
+uniqueName=$5
+ingester=$6
+if [ $# -gt 6 ]; then
+	retention=$7
 else
 	retention="3d"
 fi
-if [ $# -gt 6 ]; then
-	fileFormat=$7
+if [ $# -gt 7 ]; then
+	fileFormat=$8
 else
 	fileFormat="mp4"
 fi

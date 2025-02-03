@@ -698,10 +698,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create table if not exists MMS_OncePerDayExecution ("
+			string sqlStatement = "create table if not exists MMS_OnceExecution ("
 								  "type						text NOT NULL,"
 								  "lastExecutionTime			text NULL,"
-								  "constraint MMS_OncePerDayExecution_PK PRIMARY KEY (type))";
+								  "constraint MMS_OnceExecution_PK PRIMARY KEY (type))";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -715,13 +715,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 		{
-			OncePerDayType oncePerDayType = OncePerDayType::DBDataRetention;
+			OnceType onceType = OnceType::DBDataRetention;
 
 			string sqlStatement = std::format(
-				"insert into MMS_OncePerDayExecution (type, lastExecutionTime) "
+				"insert into MMS_OnceExecution (type, lastExecutionTime) "
 				"select {}, NULL where not exists "
-				"(select type from MMS_OncePerDayExecution where type = {})",
-				trans.quote(MMSEngineDBFacade::toString(oncePerDayType)), trans.quote(MMSEngineDBFacade::toString(oncePerDayType))
+				"(select type from MMS_OnceExecution where type = {})",
+				trans.quote(MMSEngineDBFacade::toString(onceType)), trans.quote(MMSEngineDBFacade::toString(onceType))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
@@ -736,13 +736,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 		{
-			OncePerDayType oncePerDayType = OncePerDayType::GEOInfo;
+			OnceType onceType = OnceType::GEOInfo;
 
 			string sqlStatement = std::format(
-				"insert into MMS_OncePerDayExecution (type, lastExecutionTime) "
+				"insert into MMS_OnceExecution (type, lastExecutionTime) "
 				"select {}, NULL where not exists "
-				"(select type from MMS_OncePerDayExecution where type = {})",
-				trans.quote(MMSEngineDBFacade::toString(oncePerDayType)), trans.quote(MMSEngineDBFacade::toString(oncePerDayType))
+				"(select type from MMS_OnceExecution where type = {})",
+				trans.quote(MMSEngineDBFacade::toString(onceType)), trans.quote(MMSEngineDBFacade::toString(onceType))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
