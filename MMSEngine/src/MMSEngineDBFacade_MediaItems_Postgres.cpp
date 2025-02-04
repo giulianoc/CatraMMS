@@ -1930,11 +1930,11 @@ json MMSEngineDBFacade::getMediaItemsList(
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
-				"default", elapsed,
+				"getMediaItemsList", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
+				", elapsed (millisecs): @{}@getMediaItemsList@",
 				sqlStatement, conn->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 			);

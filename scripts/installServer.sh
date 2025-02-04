@@ -1130,6 +1130,18 @@ install-mms-packages()
 
 		chown -R mms:mms ~mms/mms
 	fi
+	if [ "$moduleType" == "engine" ]; then
+		echo "" > ~/.psqlrc
+		echo "-- evita che l’output sparisce" >> ~/.psqlrc
+		echo "\setenv LESS -FX" >> ~/.psqlrc
+		echo "" >> ~/.psqlrc
+		echo "\timing on" >> ~/.psqlrc
+		echo "" >> ~/.psqlrc
+		echo "-- senza \s e \t abbiamo un output simile a mysql" >> ~/.psqlrc
+		echo "-– \x off" >> ~/.psqlrc
+		echo "-- enable tuple, per avere solo tuple è necessario anche \x off" >> ~/.psqlrc
+		echo "-– \t on" >> ~/.psqlrc
+	fi
 
 	chown -R mms:mms /opt/catramms
 	chown -R mms:mms /var/catramms

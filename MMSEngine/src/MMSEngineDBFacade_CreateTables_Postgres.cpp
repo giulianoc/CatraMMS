@@ -2004,8 +2004,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create index if not exists MMS_MediaItem_idx8 on MMS_MediaItem (workspaceKey, contentType, "
-								  "liveRecordingChunk_virtual, ingestionDate)";
+			// usato da getMediaItemsList
+			string sqlStatement = "create index if not exists MMS_MediaItem_idx8 on MMS_MediaItem (workspaceKey, "
+								  "markedAsRemoved, contentType, liveRecordingChunk_virtual, ingestionDate)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();

@@ -6,15 +6,19 @@
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
 void GenerateFrames::encodeContent(json metadataRoot)
 {
 	string api = "generateFrames";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-		", requestBody: " + JSONUtils::toString(metadataRoot)
+	SPDLOG_INFO(
+		"Received {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", requestBody: {}",
+		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	bool externalEncoder = false;
@@ -41,9 +45,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		string field = "sourceFileExtension";
 		if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", Field: {}",
+				_ingestionJobKey, _encodingJobKey, field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -56,9 +65,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			field = "transcoderStagingImagesDirectory";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -73,9 +87,12 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
 					if (endOfDirectoryIndex == string::npos)
 					{
-						string errorMessage = __FILEREF__ + "No directory find in the asset file name" +
-											  ", sourceTranscoderStagingAssetPathName: " + sourceTranscoderStagingAssetPathName;
-						_logger->error(errorMessage);
+						string errorMessage = fmt::format(
+							"No directory find in the asset file name"
+							", sourceTranscoderStagingAssetPathName: {}",
+							sourceTranscoderStagingAssetPathName
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -86,8 +103,10 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				{
 					bool noErrorIfExists = true;
 					bool recursive = true;
-					_logger->info(
-						__FILEREF__ + "Creating directory" + ", sourceTranscoderStagingAssetDirectory: " + sourceTranscoderStagingAssetDirectory
+					SPDLOG_INFO(
+						"Creating directory"
+						", sourceTranscoderStagingAssetDirectory: {}",
+						sourceTranscoderStagingAssetDirectory
 					);
 					fs::create_directories(sourceTranscoderStagingAssetDirectory);
 					fs::permissions(
@@ -108,9 +127,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			field = "sourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -119,9 +143,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			field = "nfsImagesDirectory";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -184,20 +213,29 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							size_t extensionIndex = entry.path().filename().string().find_last_of(".");
 							if (extensionIndex == string::npos)
 							{
-								string errorMessage = __FILEREF__ + "No extension find in the asset file name" +
-													  ", entry.path().filename().string(): " + entry.path().filename().string();
-								_logger->error(errorMessage);
+								string errorMessage = fmt::format(
+									"No extension find in the asset file name"
+									", entry.path().filename().string(): {}",
+									entry.path().filename().string()
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
 							outputFileFormat = entry.path().filename().string().substr(extensionIndex + 1);
 						}
 
-						_logger->info(
-							__FILEREF__ + "ingest Frame" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingJobKey) + ", externalEncoder: " + to_string(externalEncoder) +
-							", imagesDirectory: " + imagesDirectory + ", generatedFrameFileName: " + entry.path().filename().string() +
-							", addContentTitle: " + addContentTitle + ", outputFileFormat: " + outputFileFormat
+						SPDLOG_INFO(
+							"ingest Frame"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", externalEncoder: {}"
+							", imagesDirectory: {}"
+							", generatedFrameFileName: {}"
+							", addContentTitle: {}"
+							", outputFileFormat: {}",
+							_ingestionJobKey, _encodingJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
+							outputFileFormat
 						);
 
 						addContentIngestionJobKeys.push_back(generateFrames_ingestFrame(
@@ -207,29 +245,47 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "generateFrames_ingestFrame failed" + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-							", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", externalEncoder: " + to_string(externalEncoder) +
-							", imagesDirectory: " + imagesDirectory + ", generatedFrameFileName: " + entry.path().filename().string() +
-							", addContentTitle: " + addContentTitle + ", outputFileFormat: " + outputFileFormat + ", e.what(): " + e.what()
+						SPDLOG_ERROR(
+							"generateFrames_ingestFrame failed"
+							", _encodingJobKey: {}"
+							", _ingestionJobKey: {}"
+							", externalEncoder: {}"
+							", imagesDirectory: {}"
+							", generatedFrameFileName: {}"
+							", addContentTitle: {}"
+							", outputFileFormat: {}"
+							", e.what(): {}",
+							_encodingJobKey, _ingestionJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
+							outputFileFormat, e.what()
 						);
 
 						throw e;
 					}
 					catch (exception &e)
 					{
-						_logger->error(
-							__FILEREF__ + "generateFrames_ingestFrame failed" + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-							", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", externalEncoder: " + to_string(externalEncoder) +
-							", imagesDirectory: " + imagesDirectory + ", generatedFrameFileName: " + entry.path().filename().string() +
-							", addContentTitle: " + addContentTitle + ", outputFileFormat: " + outputFileFormat + ", e.what(): " + e.what()
+						SPDLOG_ERROR(
+							"generateFrames_ingestFrame failed"
+							", _encodingJobKey: {}"
+							", _ingestionJobKey: {}"
+							", externalEncoder: {}"
+							", imagesDirectory: {}"
+							", generatedFrameFileName: {}"
+							", addContentTitle: {}"
+							", outputFileFormat: {}"
+							", e.what(): {}",
+							_encodingJobKey, _ingestionJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
+							outputFileFormat, e.what()
 						);
 
 						throw e;
 					}
 
 					{
-						_logger->info(__FILEREF__ + "remove" + ", framePathName: " + entry.path().string());
+						SPDLOG_INFO(
+							"remove"
+							", framePathName: {}",
+							entry.path().string()
+						);
 						fs::remove_all(entry.path());
 					}
 
@@ -237,9 +293,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				}
 				catch (runtime_error &e)
 				{
-					string errorMessage = __FILEREF__ + "listing directory failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					string errorMessage = fmt::format(
+						"listing directory failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_ingestionJobKey, _encodingJobKey, e.what()
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					_completedWithError = true;
 					_encoding->pushErrorMessage(errorMessage);
@@ -248,9 +309,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				}
 				catch (exception &e)
 				{
-					string errorMessage = __FILEREF__ + "listing directory failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					string errorMessage = fmt::format(
+						"listing directory failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_ingestionJobKey, _encodingJobKey, e.what()
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					_completedWithError = true;
 					_encoding->pushErrorMessage(errorMessage);
@@ -261,8 +327,11 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 			if (fs::exists(imagesDirectory))
 			{
-				_logger->info(
-					__FILEREF__ + "Remove" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", imagesDirectory: " + imagesDirectory
+				SPDLOG_INFO(
+					"Remove"
+					", _ingestionJobKey: {}"
+					", imagesDirectory: {}",
+					_ingestionJobKey, imagesDirectory
 				);
 				fs::remove_all(imagesDirectory);
 			}
@@ -273,11 +342,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				string field = "mmsIngestionURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " +
-										  to_string(_ingestionJobKey)
-										  // + ", _encodingJobKey: " + to_string(_encodingJobKey)
-										  + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -328,11 +400,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					string field = "response";
 					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " +
-											  to_string(_ingestionJobKey)
-											  // + ", _encodingJobKey: " + to_string(_encodingJobKey)
-											  + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -341,11 +416,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					field = "ingestionJobs";
 					if (!JSONUtils::isMetadataPresent(responseRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " +
-											  to_string(_ingestionJobKey)
-											  // + ", _encodingJobKey: " + to_string(_encodingJobKey)
-											  + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -353,10 +431,12 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 					if (ingestionJobsRoot.size() != 1)
 					{
-						string errorMessage = __FILEREF__ + "Wrong ingestionJobs number" + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-							// + ", _encodingJobKey: " + to_string(_encodingJobKey)
-							;
-						_logger->error(errorMessage);
+						string errorMessage = fmt::format(
+							"Wrong ingestionJobs number"
+							", _ingestionJobKey: {}",
+							_ingestionJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -366,11 +446,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					field = "status";
 					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " +
-											  to_string(_ingestionJobKey)
-											  // + ", _encodingJobKey: " + to_string(_encodingJobKey)
-											  + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -379,9 +462,12 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					string prefix = "End_";
 					if (ingestionJobStatus.size() >= prefix.size() && 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
 					{
-						_logger->info(
-							__FILEREF__ + "addContentIngestionJobKey finished" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey) + ", ingestionJobStatus: " + ingestionJobStatus
+						SPDLOG_INFO(
+							"addContentIngestionJobKey finished"
+							", _ingestionJobKey: {}"
+							", addContentIngestionJobKey: {}"
+							", ingestionJobStatus: {}",
+							_ingestionJobKey, addContentIngestionJobKey, ingestionJobStatus
 						);
 
 						addContentIngestionJobKeys.erase(addContentIngestionJobKeys.begin());
@@ -391,35 +477,47 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					{
 						int secondsToSleep = 5;
 
-						_logger->info(
-							__FILEREF__ + "addContentIngestionJobKey not finished, sleeping..." + ", _ingestionJobKey: " +
-							to_string(_ingestionJobKey) + ", addContentIngestionJobKey: " + to_string(addContentIngestionJobKey) +
-							", ingestionJobStatus: " + ingestionJobStatus + ", secondsToSleep: " + to_string(secondsToSleep)
+						SPDLOG_INFO(
+							"addContentIngestionJobKey not finished, sleeping..."
+							", _ingestionJobKey: {}"
+							", addContentIngestionJobKey: {}"
+							", ingestionJobStatus: {}"
+							", secondsToSleep: {}",
+							_ingestionJobKey, addContentIngestionJobKey, ingestionJobStatus, secondsToSleep
 						);
 
 						this_thread::sleep_for(chrono::seconds(secondsToSleep));
 					}
 				}
 
-				_logger->info(
-					__FILEREF__ + "Waiting result..." + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", addContentToBeWaited: " + to_string(addContentToBeWaited) + ", addContentFinished: " + to_string(addContentFinished) +
-					", maxSecondsWaiting: " + to_string(maxSecondsWaiting) +
-					", elapsedInSeconds: " + to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startWaiting).count())
+				SPDLOG_INFO(
+					"Waiting result..."
+					", _ingestionJobKey: {}"
+					", addContentToBeWaited: {}"
+					", addContentFinished: {}"
+					", maxSecondsWaiting: {}"
+					", elapsedInSeconds: {}",
+					_ingestionJobKey, addContentToBeWaited, addContentFinished, maxSecondsWaiting,
+					chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startWaiting).count()
 				);
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "waiting addContent ingestion failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey)
-					// + ", _encodingJobKey: " + to_string(_encodingJobKey)
-					;
-				_logger->error(errorMessage);
+				string errorMessage = fmt::format(
+					"waiting addContent ingestion failed"
+					", _ingestionJobKey: {}",
+					_ingestionJobKey
+				);
+				SPDLOG_ERROR(errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "generateFrames finished" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", _completedWithError: " + to_string(_completedWithError)
+		SPDLOG_INFO(
+			"generateFrames finished"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _completedWithError: {}",
+			_ingestionJobKey, _encodingJobKey, _completedWithError
 		);
 	}
 	catch (FFMpegEncodingKilledByUser &e)
@@ -428,7 +526,11 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		{
 			if (imagesDirectory != "" && fs::exists(imagesDirectory))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", imagesDirectory: " + imagesDirectory);
+				SPDLOG_INFO(
+					"Remove"
+					", imagesDirectory: {}",
+					imagesDirectory
+				);
 				fs::remove_all(imagesDirectory);
 			}
 		}
@@ -456,7 +558,11 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		{
 			if (imagesDirectory != "" && fs::exists(imagesDirectory))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", imagesDirectory: " + imagesDirectory);
+				SPDLOG_INFO(
+					"Remove"
+					", imagesDirectory: {}",
+					imagesDirectory
+				);
 				fs::remove_all(imagesDirectory);
 			}
 		}
@@ -486,7 +592,11 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		{
 			if (imagesDirectory != "" && fs::exists(imagesDirectory))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", imagesDirectory: " + imagesDirectory);
+				SPDLOG_INFO(
+					"Remove"
+					", imagesDirectory: {}",
+					imagesDirectory
+				);
 				fs::remove_all(imagesDirectory);
 			}
 		}
@@ -557,11 +667,14 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			string field = "mmsWorkflowIngestionURL";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " +
-									  to_string(ingestionJobKey)
-									  // + ", encodingJobKey: " + to_string(encodingJobKey)
-									  + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -582,18 +695,26 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingestion workflow failed (runtime_error)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingestion workflow failed"
+			", ingestionJobKey: {}"
+			", mmsWorkflowIngestionURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingestion workflow failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingestion workflow failed"
+			", ingestionJobKey: {}"
+			", mmsWorkflowIngestionURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
 		throw e;
@@ -601,9 +722,12 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 
 	if (addContentIngestionJobKey == -1)
 	{
-		string errorMessage =
-			string("Ingested URL failed, addContentIngestionJobKey is not valid") + ", ingestionJobKey: " + to_string(ingestionJobKey);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = fmt::format(
+			"Ingested URL failed, addContentIngestionJobKey is not valid"
+			", ingestionJobKey: {}",
+			ingestionJobKey
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -619,11 +743,14 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			string field = "mmsBinaryIngestionURL";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " +
-									  to_string(ingestionJobKey)
-									  // + ", encodingJobKey: " + to_string(encodingJobKey)
-									  + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -640,18 +767,26 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingestion binary failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsBinaryURL: " + mmsBinaryURL +
-			", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingestion binary failed"
+			", ingestionJobKey: {}"
+			", mmsBinaryURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingestion binary failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsBinaryURL: " + mmsBinaryURL +
-			", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingestion binary failed"
+			", ingestionJobKey: {}"
+			", mmsBinaryURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
 		);
 
 		throw e;
