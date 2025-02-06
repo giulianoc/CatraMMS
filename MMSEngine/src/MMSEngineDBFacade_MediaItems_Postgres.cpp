@@ -1121,8 +1121,6 @@ json MMSEngineDBFacade::getMediaItemsList(
 			mediaItemsListRoot[field] = requestParametersRoot;
 		}
 
-		chrono::milliseconds internalSqlDuration(0);
-
 		int64_t newMediaItemKey = mediaItemKey;
 		if (mediaItemKey == -1)
 		{
@@ -1130,9 +1128,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 			{
 				try
 				{
-					chrono::milliseconds localSqlDuration(0);
-					newMediaItemKey = physicalPath_columnAsInt64("mediaitemkey", physicalPathKey, &localSqlDuration, fromMaster);
-					internalSqlDuration += localSqlDuration;
+					newMediaItemKey = physicalPath_columnAsInt64("mediaitemkey", physicalPathKey, nullptr, fromMaster);
 				}
 				catch (DBRecordNotFound &e)
 				{
@@ -1150,9 +1146,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 			{
 				try
 				{
-					chrono::milliseconds localSqlDuration(0);
-					newMediaItemKey = externalUniqueName_columnAsInt64(workspaceKey, "mediaitemkey", uniqueName, -1, &localSqlDuration, fromMaster);
-					internalSqlDuration += localSqlDuration;
+					newMediaItemKey = externalUniqueName_columnAsInt64(workspaceKey, "mediaitemkey", uniqueName, -1, nullptr, fromMaster);
 				}
 				catch (DBRecordNotFound &e)
 				{
@@ -1298,6 +1292,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 			"limit {} offset {}",
 			sqlWhere, orderByCondition, rows, start
 		);
+		chrono::milliseconds internalSqlDuration(0);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		result res = trans.exec(sqlStatement);
 
@@ -1928,15 +1923,14 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 				mediaItemsRoot.push_back(mediaItemRoot);
 			}
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count();
 			SQLQUERYLOG(
 				"getMediaItemsList", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@getMediaItemsList@",
-				sqlStatement, conn->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
+				sqlStatement, conn->getConnectionId(), elapsed
 			);
 		}
 
