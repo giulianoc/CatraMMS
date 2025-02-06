@@ -19,9 +19,10 @@ LiveRecorder::LiveRecorder(
 	_tvChannelPort_CurrentOffset = tvChannelPort_CurrentOffset;
 
 	_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: " + to_string(_liveRecorderChunksIngestionCheckInSeconds)
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: {}",
+		_liveRecorderChunksIngestionCheckInSeconds
 	);
 };
 
@@ -37,7 +38,13 @@ void LiveRecorder::encodeContent(string requestBody)
 {
 	string api = "liveRecorder";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", _encodingJobKey: " + to_string(_encodingJobKey) + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", requestBody: {}",
+		api, _ingestionJobKey, _encodingJobKey, requestBody
+	);
 
 	string tvMulticastIP;
 	string tvMulticastPort;
@@ -82,7 +89,7 @@ void LiveRecorder::encodeContent(string requestBody)
 		{
 			bool noErrorIfExists = true;
 			bool recursive = true;
-			_logger->info(__FILEREF__ + "Creating directory"
+			info(__FILEREF__ + "Creating directory"
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 			);
 			fs::createDirectory(_liveRecording->_chunksNFSStagingContentsPath,
@@ -120,10 +127,14 @@ void LiveRecorder::encodeContent(string requestBody)
 			field = "start";
 			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-									  ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_liveRecording->_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -133,10 +144,14 @@ void LiveRecorder::encodeContent(string requestBody)
 			field = "end";
 			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-									  ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_liveRecording->_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -149,10 +164,14 @@ void LiveRecorder::encodeContent(string requestBody)
 			field = "segmentDuration";
 			if (!JSONUtils::isMetadataPresent(_liveRecording->_ingestedParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-									  ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_liveRecording->_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -289,10 +308,13 @@ void LiveRecorder::encodeContent(string requestBody)
 
 		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName))
 		{
-			_logger->info(
-				__FILEREF__ + "remove" + ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingJobKey) +
-				", segmentListPathName: " + _liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", segmentListPathName: {}",
+				_liveRecording->_ingestionJobKey, _encodingJobKey,
+				_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName
 			);
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
@@ -340,29 +362,40 @@ void LiveRecorder::encodeContent(string requestBody)
 					{
 						try
 						{
-							_logger->info(
-								__FILEREF__ + "removeDirectory" + ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingJobKey) + ", manifestDirectoryPath: " + manifestDirectoryPath
+							SPDLOG_INFO(
+								"removeDirectory"
+								", ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", manifestDirectoryPath: {}",
+								_liveRecording->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
 						catch (runtime_error &e)
 						{
-							string errorMessage = __FILEREF__ + "remove directory failed" +
-												  ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-												  ", _encodingJobKey: " + to_string(_encodingJobKey) +
-												  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"remove directory failed"
+								", ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", manifestDirectoryPath: {}"
+								", e.what(): {}",
+								_liveRecording->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
 						catch (exception &e)
 						{
-							string errorMessage = __FILEREF__ + "remove directory failed" +
-												  ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-												  ", _encodingJobKey: " + to_string(_encodingJobKey) +
-												  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"remove directory failed"
+								", ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", manifestDirectoryPath: {}"
+								", e.what(): {}",
+								_liveRecording->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
@@ -378,9 +411,13 @@ void LiveRecorder::encodeContent(string requestBody)
 		_liveRecording->_segmenterType = "hlsSegmenter";
 		// _liveRecording->_segmenterType = "streamSegmenter";
 
-		_logger->info(
-			__FILEREF__ + "liveRecorder. _ffmpeg->liveRecorder" + ", ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", streamSourceType: " + _liveRecording->_streamSourceType + ", liveURL: " + liveURL
+		SPDLOG_INFO(
+			"liveRecorder. _ffmpeg->liveRecorder"
+			", ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", streamSourceType: {}"
+			", liveURL: {}",
+			_liveRecording->_ingestionJobKey, _encodingJobKey, _liveRecording->_streamSourceType, liveURL
 		);
 		_liveRecording->_ffmpeg->liveRecorder2(
 			_liveRecording->_ingestionJobKey, _encodingJobKey, _liveRecording->_externalEncoder,
@@ -422,9 +459,11 @@ void LiveRecorder::encodeContent(string requestBody)
 		_liveRecording->_encodingParametersRoot = nullptr;
 		_liveRecording->_killedBecauseOfNotWorking = false;
 
-		_logger->info(
-			__FILEREF__ + "liveRecorded finished" + ", _liveRecording->_ingestionJobKey: " + to_string(_liveRecording->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey)
+		SPDLOG_INFO(
+			"liveRecorded finished"
+			", _liveRecording->_ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			_liveRecording->_ingestionJobKey, _encodingJobKey
 		);
 
 		_liveRecording->_ingestionJobKey = 0;
@@ -435,9 +474,10 @@ void LiveRecorder::encodeContent(string requestBody)
 		// The monitor directory was removed inside the ffmpeg method
 		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName))
 		{
-			_logger->info(
-				__FILEREF__ + "remove" + ", segmentListPathName: " + _liveRecording->_chunksTranscoderStagingContentsPath +
-				_liveRecording->_segmentListFileName
+			SPDLOG_INFO(
+				"remove"
+				", segmentListPathName: {}",
+				_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName
 			);
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
@@ -458,9 +498,10 @@ void LiveRecorder::encodeContent(string requestBody)
 		// The monitor directory was removed inside the ffmpeg method
 		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName))
 		{
-			_logger->info(
-				__FILEREF__ + "remove" + ", segmentListPathName: " + _liveRecording->_chunksTranscoderStagingContentsPath +
-				_liveRecording->_segmentListFileName
+			SPDLOG_INFO(
+				"remove"
+				", segmentListPathName: {}",
+				_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName
 			);
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
@@ -509,9 +550,10 @@ void LiveRecorder::encodeContent(string requestBody)
 		// The monitor directory was removed inside the ffmpeg method
 		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName))
 		{
-			_logger->info(
-				__FILEREF__ + "remove" + ", segmentListPathName: " + _liveRecording->_chunksTranscoderStagingContentsPath +
-				_liveRecording->_segmentListFileName
+			SPDLOG_INFO(
+				"remove"
+				", segmentListPathName: {}",
+				_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName
 			);
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
@@ -551,9 +593,10 @@ void LiveRecorder::encodeContent(string requestBody)
 		// The monitor directory was removed inside the ffmpeg method
 		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName))
 		{
-			_logger->info(
-				__FILEREF__ + "remove" + ", segmentListPathName: " + _liveRecording->_chunksTranscoderStagingContentsPath +
-				_liveRecording->_segmentListFileName
+			SPDLOG_INFO(
+				"remove"
+				", segmentListPathName: {}",
+				_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName
 			);
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
@@ -593,9 +636,10 @@ void LiveRecorder::encodeContent(string requestBody)
 		// The monitor directory was removed inside the ffmpeg method
 		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName))
 		{
-			_logger->info(
-				__FILEREF__ + "remove" + ", segmentListPathName: " + _liveRecording->_chunksTranscoderStagingContentsPath +
-				_liveRecording->_segmentListFileName
+			SPDLOG_INFO(
+				"remove"
+				", segmentListPathName: {}",
+				_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName
 			);
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}
@@ -635,9 +679,10 @@ void LiveRecorder::encodeContent(string requestBody)
 		// The monitor directory was removed inside the ffmpeg method
 		if (fs::exists(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName))
 		{
-			_logger->info(
-				__FILEREF__ + "remove" + ", segmentListPathName: " + _liveRecording->_chunksTranscoderStagingContentsPath +
-				_liveRecording->_segmentListFileName
+			SPDLOG_INFO(
+				"remove"
+				", segmentListPathName: {}",
+				_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName
 			);
 			fs::remove_all(_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName);
 		}

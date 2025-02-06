@@ -2007,11 +2007,11 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				trans->exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
-					"default", elapsed,
+					"manageIngestionJobStatusUpdate", elapsed,
 					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
-					", elapsed (millisecs): @{}@",
+					", elapsed (millisecs): @{}@manageIngestionJobStatusUpdate@",
 					sqlStatement, conn->getConnectionId(), elapsed
 				);
 			}

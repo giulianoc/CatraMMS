@@ -5,14 +5,18 @@
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/DateTime.h"
 #include "spdlog/spdlog.h"
+#include <format>
 
 void IntroOutroOverlay::encodeContent(json metadataRoot)
 {
 	string api = "introOutroOverlay";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-		", requestBody: " + JSONUtils::toString(metadataRoot)
+	SPDLOG_INFO(
+		"Received {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", requestBody: {}",
+		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	try
@@ -32,9 +36,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			string field = "introSourceFileExtension";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -46,9 +55,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			string field = "mainSourceFileExtension";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -60,9 +74,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			string field = "outroSourceFileExtension";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -80,9 +99,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				string field = "introSourceTranscoderStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -94,9 +118,12 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = introSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(
-							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+						SPDLOG_INFO(
+							"Creating directory"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}",
+							_ingestionJobKey, _encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -111,9 +138,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				field = "introSourcePhysicalDeliveryURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -129,9 +161,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				string field = "mainSourceTranscoderStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -143,9 +180,12 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = mainSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(
-							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+						SPDLOG_INFO(
+							"Creating directory"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}",
+							_ingestionJobKey, _encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -160,9 +200,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				field = "mainSourcePhysicalDeliveryURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -178,9 +223,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				string field = "outroSourceTranscoderStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -192,9 +242,12 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = outroSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(
-							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+						SPDLOG_INFO(
+							"Creating directory"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}",
+							_ingestionJobKey, _encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -209,9 +262,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				field = "outroSourcePhysicalDeliveryURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -226,9 +284,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			string field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -240,9 +303,12 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(
-						__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+					SPDLOG_INFO(
+						"Creating directory"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", directoryPathName: {}",
+						_ingestionJobKey, _encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -259,9 +325,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			string field = "introSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -270,9 +341,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			field = "mainSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -281,9 +357,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			field = "outroSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -292,9 +373,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -354,13 +440,16 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						int64_t currentDistanceFromHalf = abs(mod - ((candidateChunkPeriodInSeconds * 1000) / 2));
 						if (currentDistanceFromHalf < selectedDistanceFromHalf)
 						{
-							_logger->info(
-								__FILEREF__ + "selectedChunkPeriodInSeconds, changing period" + ", ingestionJobKey: " + to_string(_ingestionJobKey) +
-								", encodingJobKey: " + to_string(_encodingJobKey) +
-								", prev selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds) +
-								", new selectedChunkPeriodInSeconds: " + to_string(candidateChunkPeriodInSeconds) +
-								", prev selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf) +
-								", new selectedDistanceFromHalf: " + to_string(currentDistanceFromHalf)
+							SPDLOG_INFO(
+								"selectedChunkPeriodInSeconds, changing period"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", prev selectedChunkPeriodInSeconds: {}"
+								", new selectedChunkPeriodInSeconds: {}"
+								", prev selectedDistanceFromHalf: {}"
+								", new selectedDistanceFromHalf: {}",
+								_ingestionJobKey, _encodingJobKey, selectedChunkPeriodInSeconds, candidateChunkPeriodInSeconds,
+								selectedDistanceFromHalf, currentDistanceFromHalf
 							);
 
 							selectedDistanceFromHalf = currentDistanceFromHalf;
@@ -371,11 +460,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					candidateChunkPeriodInSeconds++;
 				}
 			}
-			_logger->info(
-				__FILEREF__ + "selectedChunkPeriodInSeconds" + ", ingestionJobKey: " + to_string(_ingestionJobKey) + ", encodingJobKey: " +
-				to_string(_encodingJobKey) + ", mainSourceDurationInMilliSeconds: " + to_string(mainSourceDurationInMilliSeconds) +
-				", selectedChunkPeriodInSeconds: " + to_string(selectedChunkPeriodInSeconds) +
-				", selectedDistanceFromHalf: " + to_string(selectedDistanceFromHalf)
+			SPDLOG_INFO(
+				"selectedChunkPeriodInSeconds"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", mainSourceDurationInMilliSeconds: {}"
+				", selectedChunkPeriodInSeconds: {}"
+				", selectedDistanceFromHalf: {}",
+				_ingestionJobKey, _encodingJobKey, mainSourceDurationInMilliSeconds, selectedChunkPeriodInSeconds, selectedDistanceFromHalf
 			);
 
 			// implementazione che utilizza lo split del video
@@ -388,9 +480,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			string field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -399,10 +496,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			size_t endOfDirectoryIndex = encodedTranscoderStagingAssetPathName.find_last_of("/");
 			if (endOfDirectoryIndex == string::npos)
 			{
-				string errorMessage = __FILEREF__ + "encodedTranscoderStagingAssetPathName is not well formed" +
-									  ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-									  ", encodedTranscoderStagingAssetPathName: " + encodedTranscoderStagingAssetPathName;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"encodedTranscoderStagingAssetPathName is not well formed"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", encodedTranscoderStagingAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, encodedTranscoderStagingAssetPathName
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -472,9 +573,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						}
 						else
 						{
-							string errorMessage = __FILEREF__ + "chunk file is not present" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-												  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", currentFile: " + currentFile;
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"chunk file is not present"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", currentFile: {}",
+								_ingestionJobKey, _encodingJobKey, currentFile
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -512,9 +618,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						}
 						else
 						{
-							string errorMessage = __FILEREF__ + "chunk file is not present" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-												  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", currentFile: " + currentFile;
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"chunk file is not present"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", currentFile: {}",
+								_ingestionJobKey, _encodingJobKey, currentFile
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -547,9 +658,14 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						}
 						else
 						{
-							string errorMessage = __FILEREF__ + "chunk file is not present" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-												  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", currentFile: " + currentFile;
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"chunk file is not present"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", currentFile: {}",
+								_ingestionJobKey, _encodingJobKey, currentFile
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -560,24 +676,33 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				_encoding->_ffmpeg->concat(_ingestionJobKey, true, concatSourcePhysicalPaths, encodedStagingAssetPathName);
 
-				_logger->info(
-					__FILEREF__ + "removing temporary directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", stagingBasePath: " + stagingBasePath
+				SPDLOG_INFO(
+					"removing temporary directory"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", stagingBasePath: {}",
+					_ingestionJobKey, _encodingJobKey, stagingBasePath
 				);
 				fs::remove_all(stagingBasePath);
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ + "Intro outro procedure failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"Intro outro procedure failed"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", e.what(): {}",
+					_ingestionJobKey, _encodingJobKey, e.what()
 				);
 
 				if (fs::exists(stagingBasePath))
 				{
-					_logger->info(
-						__FILEREF__ + "removing temporary directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingJobKey) + ", stagingBasePath: " + stagingBasePath
+					SPDLOG_INFO(
+						"removing temporary directory"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", stagingBasePath: {}",
+						_ingestionJobKey, _encodingJobKey, stagingBasePath
 					);
 					fs::remove_all(stagingBasePath);
 				}
@@ -598,7 +723,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -611,7 +736,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", encodedTranscoderStagingAssetPathName: " + encodedTranscoderStagingAssetPathName;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -619,7 +744,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			stagingBasePath = encodedTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);
 			if (!fs::exists(stagingBasePath))
 			{
-				_logger->info(__FILEREF__ + "Creating directory"
+				info(__FILEREF__ + "Creating directory"
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", stagingBasePath: " + stagingBasePath
@@ -783,7 +908,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				sourcePhysicalPaths,
 				encodedStagingAssetPathName);
 
-			_logger->info(__FILEREF__ + "removing temporary files"
+			info(__FILEREF__ + "removing temporary files"
 				+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 				+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 				+ ", mainBeginPathName: " + mainBeginPathName
@@ -819,35 +944,47 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
 
-		_logger->info(
-			__FILEREF__ + "introOutroOverlay encoding content finished" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+		SPDLOG_INFO(
+			"introOutroOverlay encoding content finished"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", encodedStagingAssetPathName: {}",
+			_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName
 		);
 
 		if (externalEncoder)
 		{
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", introSourceAssetPathName: " + introSourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", introSourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, introSourceAssetPathName
 				);
 
 				fs::remove_all(introSourceAssetPathName);
 			}
 
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", mainSourceAssetPathName: " + mainSourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", mainSourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, mainSourceAssetPathName
 				);
 
 				fs::remove_all(mainSourceAssetPathName);
 			}
 
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", outroSourceAssetPathName: " + outroSourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", outroSourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, outroSourceAssetPathName
 				);
 
 				fs::remove_all(outroSourceAssetPathName);

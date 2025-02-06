@@ -87,7 +87,7 @@ void FastCGIAPI::init(json configurationRoot, mutex *fcgiAcceptMutex)
 void FastCGIAPI::loadConfiguration(json configurationRoot)
 {
 	_maxAPIContentLength = JSONUtils::asInt64(configurationRoot["api"], "maxContentLength", 0);
-	SPDLOG_DEBUG(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", api->maxContentLength: {}",
 		_maxAPIContentLength
@@ -112,7 +112,7 @@ int FastCGIAPI::operator()()
 	// The nginx process is configured to proxy the requests to 127.0.0.1:<port>
 	// specified by spawn-fcgi
 	int sock_fd = 0;
-	SPDLOG_DEBUG(
+	SPDLOG_TRACE(
 		"FastCGIAPI::FCGX_OpenSocket"
 		", threadId: {}"
 		", sock_fd: {}",
@@ -126,7 +126,7 @@ int FastCGIAPI::operator()()
 
 		int returnAcceptCode;
 		{
-			SPDLOG_DEBUG(
+			SPDLOG_TRACE(
 				"FastCGIAPI::ready"
 				", _requestIdentifier: {}"
 				", threadId: {}",
@@ -134,7 +134,7 @@ int FastCGIAPI::operator()()
 			);
 			lock_guard<mutex> locker(*_fcgiAcceptMutex);
 
-			SPDLOG_DEBUG(
+			SPDLOG_TRACE(
 				"FastCGIAPI::listen"
 				", _requestIdentifier: {}"
 				", threadId: {}",
@@ -146,7 +146,7 @@ int FastCGIAPI::operator()()
 
 			returnAcceptCode = FCGX_Accept_r(&request);
 		}
-		SPDLOG_DEBUG(
+		SPDLOG_TRACE(
 			"FCGX_Accept_r"
 			", _requestIdentifier: {}"
 			", threadId: {}"
@@ -165,7 +165,7 @@ int FastCGIAPI::operator()()
 
 		_fcgxFinishDone = false;
 
-		SPDLOG_DEBUG(
+		SPDLOG_TRACE(
 			"Request to be managed"
 			", _requestIdentifier: {}"
 			", threadId: {}",
@@ -458,7 +458,7 @@ int FastCGIAPI::operator()()
 				);
 		}
 
-		SPDLOG_DEBUG(
+		SPDLOG_TRACE(
 			"FastCGIAPI::request finished"
 			", _requestIdentifier: {}"
 			", threadId: {}",
@@ -1262,13 +1262,13 @@ void FastCGIAPI::fillEnvironmentDetails(const char *const *envp, unordered_map<s
 		requestDetails[key] = value;
 
 		if (key == "REQUEST_URI")
-			SPDLOG_DEBUG(
+			SPDLOG_TRACE(
 				"Environment variable"
 				", key/Name: {}={}",
 				key, value
 			);
 		else
-			SPDLOG_DEBUG(
+			SPDLOG_TRACE(
 				"Environment variable"
 				", key/Name: {}={}",
 				key, value
@@ -1304,7 +1304,7 @@ void FastCGIAPI::fillQueryString(string queryString, unordered_map<string, strin
 
 			queryParameters[key] = value;
 
-			SPDLOG_DEBUG(
+			SPDLOG_TRACE(
 				"Query parameter"
 				", key/Name: {}={}",
 				key, value

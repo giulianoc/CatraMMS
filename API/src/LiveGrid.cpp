@@ -28,7 +28,13 @@ void LiveGrid::encodeContent(string requestBody)
 {
 	string api = "liveGrid";
 
-	_logger->info(__FILEREF__ + "Received " + api + ", _encodingJobKey: " + to_string(_encodingJobKey) + ", requestBody: " + requestBody);
+	SPDLOG_INFO(
+		"Received {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", requestBody: {}",
+		api, _ingestionJobKey, _encodingJobKey, requestBody
+	);
 
 	try
 	{
@@ -67,26 +73,38 @@ void LiveGrid::encodeContent(string requestBody)
 					{
 						try
 						{
-							_logger->info(__FILEREF__ + "removeDirectory" + ", manifestDirectoryPath: " + manifestDirectoryPath);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", manifestDirectoryPath: {}" +
+								manifestDirectoryPath
+							);
 							fs::remove_all(manifestDirectoryPath);
 						}
 						catch (runtime_error &e)
 						{
-							string errorMessage = __FILEREF__ + "remove directory failed" +
-												  ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey) +
-												  ", _encodingJobKey: " + to_string(_encodingJobKey) +
-												  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"remove directory failed"
+								", ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", manifestDirectoryPath: {}"
+								", e.what(): {}",
+								_liveProxyData->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
 						catch (exception &e)
 						{
-							string errorMessage = __FILEREF__ + "remove directory failed" +
-												  ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey) +
-												  ", _encodingJobKey: " + to_string(_encodingJobKey) +
-												  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"remove directory failed"
+								", ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", manifestDirectoryPath: {}"
+								", e.what(): {}",
+								_liveProxyData->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
@@ -104,9 +122,11 @@ void LiveGrid::encodeContent(string requestBody)
 			);
 		}
 
-		_logger->info(
-			__FILEREF__ + "_ffmpeg->liveGridBy... finished" + ", ingestionJobKey: " + to_string(_liveProxyData->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey)
+		SPDLOG_INFO(
+			"_ffmpeg->liveGridBy... finished"
+			", ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			_liveProxyData->_ingestionJobKey, _encodingJobKey
 			// + ", _liveProxyData->_channelLabel: " + _liveProxyData->_channelLabel
 		);
 	}

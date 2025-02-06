@@ -29,28 +29,34 @@ LiveRecorderDaemons::LiveRecorderDaemons(
 		_liveRecorderVirtualVODIngestionThreadShutdown = false;
 
 		_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
-		_logger->info(
-			__FILEREF__ + "Configuration item" +
-			", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: " + to_string(_liveRecorderChunksIngestionCheckInSeconds)
+		SPDLOG_INFO(
+			"Configuration item"
+			", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: {}",
+			_liveRecorderChunksIngestionCheckInSeconds
 		);
 
 		_liveRecorderVirtualVODRetention = JSONUtils::asString(configurationRoot["ffmpeg"], "liveRecorderVirtualVODRetention", "15m");
-		_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->liveRecorderVirtualVODRetention: " + _liveRecorderVirtualVODRetention);
+		SPDLOG_INFO(
+			"Configuration item"
+			", ffmpeg->liveRecorderVirtualVODRetention: {}",
+			_liveRecorderVirtualVODRetention
+		);
 		_liveRecorderVirtualVODIngestionInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds", 5);
-		_logger->info(
-			__FILEREF__ + "Configuration item" +
-			", ffmpeg->liveRecorderVirtualVODIngestionInSeconds: " + to_string(_liveRecorderVirtualVODIngestionInSeconds)
+		SPDLOG_INFO(
+			"Configuration item"
+			", ffmpeg->liveRecorderVirtualVODIngestionInSeconds: {}",
+			_liveRecorderVirtualVODIngestionInSeconds
 		);
 	}
 	catch (runtime_error &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
+		// error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
 	catch (exception &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic addThread failed"
+		// error(__FILEREF__ + "threadsStatistic addThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
@@ -63,13 +69,13 @@ LiveRecorderDaemons::~LiveRecorderDaemons()
 	}
 	catch (runtime_error &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
+		// error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
 	catch (exception &e)
 	{
-		// _logger->error(__FILEREF__ + "threadsStatistic removeThread failed"
+		// error(__FILEREF__ + "threadsStatistic removeThread failed"
 		// 	+ ", exception: " + e.what()
 		// );
 	}
@@ -90,10 +96,12 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 			{
 				if (liveRecording->_childPid != 0) // running
 				{
-					_logger->info(
-						__FILEREF__ + "processSegmenterOutput ..." + ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(liveRecording->_encodingJobKey) +
-						", liveRecording->_segmenterType: " + liveRecording->_segmenterType
+					SPDLOG_INFO(
+						"processSegmenterOutput ..."
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", liveRecording->_segmenterType: {}",
+						liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, liveRecording->_segmenterType
 					);
 
 					chrono::system_clock::time_point startSingleChannelIngestionChunks = chrono::system_clock::now();
@@ -152,48 +160,57 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("processSegmenterOutput failed") +
-											  ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey) +
-											  ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(
+							"processSegmenterOutput failed"
+							", liveRecording->_ingestionJobKey: {}"
+							", liveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, e.what()
+						);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("processSegmenterOutput failed") +
-											  ", liveRecording->_ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey) +
-											  ", liveRecording->_encodingJobKey: " + to_string(liveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(
+							"processSegmenterOutput failed"
+							", liveRecording->_ingestionJobKey: {}"
+							", liveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, e.what()
+						);
 					}
 
-					_logger->info(
-						__FILEREF__ + "Single Channel Ingestion Chunks" + ", ingestionJobKey: " + to_string(liveRecording->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(liveRecording->_encodingJobKey) + ", @MMS statistics@ - elapsed time: @" +
-						to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startSingleChannelIngestionChunks).count()) +
-						"@"
+					SPDLOG_INFO(
+						"Single Channel Ingestion Chunks"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", @MMS statistics@ - elapsed time: @{}@",
+						liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey,
+						chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startSingleChannelIngestionChunks).count()
 					);
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "All Channels Ingestion Chunks" + ", @MMS statistics@ - elapsed time: @" +
-				to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startAllChannelsIngestionChunks).count()) + "@"
+			SPDLOG_INFO(
+				"All Channels Ingestion Chunks"
+				", @MMS statistics@ - elapsed time: @{}@",
+				chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startAllChannelsIngestionChunks).count()
 			);
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("liveRecorderChunksIngestion failed") + ", e.what(): " + e.what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(
+				"liveRecorderChunksIngestion failed"
+				", e.what(): {}",
+				e.what()
+			);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("liveRecorderChunksIngestion failed") + ", e.what(): " + e.what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(
+				"liveRecorderChunksIngestion failed"
+				", e.what(): {}",
+				e.what()
+			);
 		}
 
 		this_thread::sleep_for(chrono::seconds(_liveRecorderChunksIngestionCheckInSeconds));
@@ -248,17 +265,21 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 						liveRecordingNotVirtualVODCounter++;
 					}
 				}
-				_logger->info(
-					__FILEREF__ + "virtualVOD, numbers" +
-					", total LiveRecording: " + to_string(liveRecordingVirtualVODCounter + liveRecordingNotVirtualVODCounter) +
-					", liveRecordingVirtualVODCounter: " + to_string(liveRecordingVirtualVODCounter) +
-					", liveRecordingNotVirtualVODCounter: " + to_string(liveRecordingNotVirtualVODCounter)
+				SPDLOG_INFO(
+					"virtualVOD, numbers"
+					", total LiveRecording: {}"
+					", liveRecordingVirtualVODCounter: {}"
+					", liveRecordingNotVirtualVODCounter: {}",
+					liveRecordingVirtualVODCounter + liveRecordingNotVirtualVODCounter, liveRecordingVirtualVODCounter,
+					liveRecordingNotVirtualVODCounter
 				);
 			}
-			_logger->info(
-				__FILEREF__ + "virtualVOD clone" + ", copiedRunningLiveRecordingCapability.size: " +
-				to_string(copiedRunningLiveRecordingCapability.size()) + ", @MMS statistics@ - elapsed (millisecs): " +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startClone).count())
+			SPDLOG_INFO(
+				"virtualVOD clone"
+				", copiedRunningLiveRecordingCapability.size: {}"
+				", @MMS statistics@ - elapsed (millisecs): {}",
+				copiedRunningLiveRecordingCapability.size(),
+				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startClone).count()
 			);
 
 			chrono::system_clock::time_point startAllChannelsVirtualVOD = chrono::system_clock::now();
@@ -268,27 +289,27 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 				shared_ptr<FFMPEGEncoderBase::LiveRecording> copiedLiveRecording = copiedRunningLiveRecordingCapability[liveRecordingIndex];
 				shared_ptr<FFMPEGEncoderBase::LiveRecording> sourceLiveRecording = sourceLiveRecordingCapability[liveRecordingIndex];
 
-				_logger->info(
-					__FILEREF__ + "virtualVOD" + ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-					", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " + copiedLiveRecording->_channelLabel
+				SPDLOG_INFO(
+					"virtualVOD"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", channelLabel: {}",
+					copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 				);
 
 				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
-					_logger->info(
-						__FILEREF__ + "virtualVOD. LiveRecorder changed" + ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", channelLabel: " +
-						copiedLiveRecording->_channelLabel + ", sourceLiveRecording->_childPid: " + to_string(sourceLiveRecording->_childPid) +
-						", "
-						"copiedLiveRecording->_recordingStart.time_since_epoch("
-						")."
-						"count(): " +
-						to_string(copiedLiveRecording->_recordingStart.time_since_epoch().count()) +
-						", "
-						"sourceLiveRecording->_recordingStart.time_since_epoch("
-						")."
-						"count(): " +
-						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					SPDLOG_INFO(
+						"virtualVOD. LiveRecorder changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}"
+						", sourceLiveRecording->_childPid: {}"
+						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
+						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+						sourceLiveRecording->_childPid, copiedLiveRecording->_recordingStart.time_since_epoch().count(),
+						sourceLiveRecording->_recordingStart.time_since_epoch().count()
 					);
 
 					continue;
@@ -299,14 +320,21 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 
 					virtualVODsNumber++;
 
-					_logger->info(
-						__FILEREF__ + "buildAndIngestVirtualVOD ..." + ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", externalEncoder: " +
-						to_string(copiedLiveRecording->_externalEncoder) + ", childPid: " + to_string(copiedLiveRecording->_childPid) +
-						", virtualVOD: " + to_string(copiedLiveRecording->_virtualVOD) + ", virtualVODsNumber: " + to_string(virtualVODsNumber) +
-						", monitorVirtualVODManifestDirectoryPath: " + copiedLiveRecording->_monitorVirtualVODManifestDirectoryPath +
-						", monitorVirtualVODManifestFileName: " + copiedLiveRecording->_monitorVirtualVODManifestFileName +
-						", virtualVODStagingContentsPath: " + copiedLiveRecording->_virtualVODStagingContentsPath
+					SPDLOG_INFO(
+						"buildAndIngestVirtualVOD ..."
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", externalEncoder: {}"
+						", childPid: {}"
+						", virtualVOD: {}"
+						", virtualVODsNumber: {}"
+						", monitorVirtualVODManifestDirectoryPath: {}"
+						", monitorVirtualVODManifestFileName: {}"
+						", virtualVODStagingContentsPath: {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_externalEncoder,
+						copiedLiveRecording->_childPid, copiedLiveRecording->_virtualVOD, virtualVODsNumber,
+						copiedLiveRecording->_monitorVirtualVODManifestDirectoryPath, copiedLiveRecording->_monitorVirtualVODManifestFileName,
+						copiedLiveRecording->_virtualVODStagingContentsPath
 					);
 
 					long segmentsNumber = 0;
@@ -347,10 +375,14 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 							string field = "mmsWorkflowIngestionURL";
 							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot, field))
 							{
-								string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-													  ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-													  ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", Field: " + field;
-								_logger->error(errorMessage);
+								string errorMessage = std::format(
+									"Field is not present or it is null"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", Field: {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, field
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -359,10 +391,14 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 							field = "mmsBinaryIngestionURL";
 							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot, field))
 							{
-								string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-													  ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-													  ", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", Field: " + field;
-								_logger->error(errorMessage);
+								string errorMessage = std::format(
+									"Field is not present or it is null"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", Field: {}",
+									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, field
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -382,48 +418,58 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("buildAndIngestVirtualVOD failed") +
-											  ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(
+							"buildAndIngestVirtualVOD failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("buildAndIngestVirtualVOD failed") +
-											  ", copiedLiveRecording->_ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-											  ", copiedLiveRecording->_encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) +
-											  ", e.what(): " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(
+							"buildAndIngestVirtualVOD failed"
+							", copiedLiveRecording->_ingestionJobKey: {}"
+							", copiedLiveRecording->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						);
 					}
 
-					_logger->info(
-						__FILEREF__ + "Single Channel Virtual VOD" + ", ingestionJobKey: " + to_string(copiedLiveRecording->_ingestionJobKey) +
-						", encodingJobKey: " + to_string(copiedLiveRecording->_encodingJobKey) + ", segmentsNumber: " + to_string(segmentsNumber) +
-						", @MMS statistics@ - elapsed time (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startSingleChannelVirtualVOD).count()) + "@"
+					SPDLOG_INFO(
+						"Single Channel Virtual VOD"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", segmentsNumber: {}"
+						", @MMS statistics@ - elapsed time (secs): @{}@",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, segmentsNumber,
+						chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startSingleChannelVirtualVOD).count()
 					);
 				}
 			}
 
-			_logger->info(
-				__FILEREF__ + "All Channels Virtual VOD" + ", @MMS statistics@ - elapsed time: @" +
-				to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startAllChannelsVirtualVOD).count()) + "@"
+			SPDLOG_INFO(
+				"All Channels Virtual VOD"
+				", @MMS statistics@ - elapsed time: @{}@",
+				chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startAllChannelsVirtualVOD).count()
 			);
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = string("liveRecorderVirtualVODIngestion failed") + ", e.what(): " + e.what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(
+				"liveRecorderVirtualVODIngestion failed"
+				", e.what(): {}",
+				e.what()
+			);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("liveRecorderVirtualVODIngestion failed") + ", e.what(): " + e.what();
-
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(
+				"liveRecorderVirtualVODIngestion failed"
+				", e.what(): {}",
+				e.what()
+			);
 		}
 
 		if (virtualVODsNumber < 5)
@@ -455,25 +501,32 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 	int64_t newLastRecordedSegmentUtcStartTimeInMillisecs = lastRecordedSegmentUtcStartTimeInMillisecs;
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "processStreamSegmenterOutput" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-			to_string(encodingJobKey)
-			// + ", highAvailability: " + to_string(highAvailability)
-			// + ", main: " + to_string(main)
-			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds) + ", outputFileFormat: " + outputFileFormat +
-			", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-			", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", segmentListFileName: " + segmentListFileName +
-			", recordedFileNamePrefix: " + recordedFileNamePrefix + ", lastRecordedAssetFileName: " + lastRecordedAssetFileName +
-			", lastRecordedAssetDurationInSeconds: " + to_string(lastRecordedAssetDurationInSeconds)
+		SPDLOG_INFO(
+			"processStreamSegmenterOutput"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", segmentDurationInSeconds: {}"
+			", outputFileFormat: {}"
+			", chunksTranscoderStagingContentsPath: {}"
+			", chunksNFSStagingContentsPath: {}"
+			", segmentListFileName: {}"
+			", recordedFileNamePrefix: {}"
+			", lastRecordedAssetFileName: {}"
+			", lastRecordedAssetDurationInSeconds: {}",
+			ingestionJobKey, encodingJobKey, segmentDurationInSeconds, outputFileFormat, chunksTranscoderStagingContentsPath,
+			chunksNFSStagingContentsPath, segmentListFileName, recordedFileNamePrefix, lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds
 		);
 
 		ifstream segmentList(chunksTranscoderStagingContentsPath + segmentListFileName);
 		if (!segmentList)
 		{
-			string errorMessage = __FILEREF__ + "No segment list file found yet" +
-								  ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-								  ", segmentListFileName: " + segmentListFileName + ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
-			_logger->warn(errorMessage);
+			SPDLOG_WARN(
+				"No segment list file found yet"
+				", chunksTranscoderStagingContentsPath: {}"
+				", segmentListFileName: {}"
+				", lastRecordedAssetFileName: {}",
+				chunksTranscoderStagingContentsPath, segmentListFileName, lastRecordedAssetFileName
+			);
 
 			return make_tuple(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds, newLastRecordedSegmentUtcStartTimeInMillisecs);
 			// throw runtime_error(errorMessage);
@@ -501,17 +554,20 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				}
 			}
 
-			_logger->info(__FILEREF__ + "processing LiveRecorder file" + ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
+			SPDLOG_INFO(
+				"processing LiveRecorder file"
+				", currentRecordedAssetFileName: {}",
+				currentRecordedAssetFileName
+			);
 
 			if (!fs::exists(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName))
 			{
 				// it could be the scenario where mmsEngineService is restarted,
 				// the segments list file still contains obsolete filenames
-				_logger->error(
-					__FILEREF__ +
+				SPDLOG_ERROR(
 					"file not existing"
-					", currentRecordedAssetPathName: " +
-					chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
+					", currentRecordedAssetPathName: {}{}",
+					chunksTranscoderStagingContentsPath, currentRecordedAssetFileName
 				);
 
 				continue;
@@ -531,7 +587,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				long secondsToWait = _secondsToWaitNFSBuffers
 					- (utcNow - utcCurrentRecordedFileCreationTime);
 
-				_logger->info(__FILEREF__ + "processing LiveRecorder file too
+				info(__FILEREF__ + "processing LiveRecorder file too
 			young"
 					+ ", secondsToWait: " + to_string(secondsToWait));
 				this_thread::sleep_for(chrono::seconds(secondsToWait));
@@ -542,11 +598,14 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				ingestionJobKey, encodingJobKey, utcCurrentRecordedFileCreationTime, chunksTranscoderStagingContentsPath, recordedFileNamePrefix,
 				segmentDurationInSeconds, isFirstChunk
 			);
-			_logger->info(
-				__FILEREF__ + "isLastLiveRecorderFile" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-				", recordedFileNamePrefix: " + recordedFileNamePrefix +
-				", ingestionRowToBeUpdatedAsSuccess: " + to_string(ingestionRowToBeUpdatedAsSuccess)
+			SPDLOG_INFO(
+				"isLastLiveRecorderFile"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", chunksTranscoderStagingContentsPath: {}"
+				", recordedFileNamePrefix: {}"
+				", ingestionRowToBeUpdatedAsSuccess: {}",
+				ingestionJobKey, encodingJobKey, chunksTranscoderStagingContentsPath, recordedFileNamePrefix, ingestionRowToBeUpdatedAsSuccess
 			);
 
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
@@ -564,7 +623,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				int64_t durationInMilliSeconds;
 
 
-				_logger->info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
+				info(__FILEREF__ + "Calling ffmpeg.getMediaInfo"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", chunksTranscoderStagingContentsPath +
@@ -587,7 +646,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				if (newLastRecordedAssetDurationInSeconds !=
 			segmentDurationInSeconds)
 				{
-					_logger->warn(__FILEREF__ + "segment duration is different
+					warn(__FILEREF__ + "segment duration is different
 			from file duration"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
@@ -602,7 +661,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 			}
 			catch(exception& e)
 			{
-				_logger->error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
+				error(__FILEREF__ + "ffmpeg.getMediaInfo failed"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", chunksTranscoderStagingContentsPath +
@@ -748,31 +807,36 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 			if (isFirstChunk)
 			{
-				_logger->info(
-					__FILEREF__ +
-					"The first asset file name is not ingested because it does "
-					"not "
-					"contain the entire period and it will be removed" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName +
-					", title: " + addContentTitle
+				SPDLOG_INFO(
+					"The first asset file name is not ingested because it does not contain the entire period and it will be removed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", currentRecordedAssetPathName: {}{}"
+					", title: {}",
+					ingestionJobKey, encodingJobKey, chunksTranscoderStagingContentsPath, currentRecordedAssetFileName, addContentTitle
 				);
 
-				_logger->info(
-					__FILEREF__ + "Remove" + ", currentRecordedAssetPathName: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName
+				SPDLOG_INFO(
+					"Remove"
+					", currentRecordedAssetPathName: {}{}",
+					chunksTranscoderStagingContentsPath, currentRecordedAssetFileName
 				);
-
 				fs::remove_all(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 			}
 			else
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "ingest Recorded media" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-						to_string(encodingJobKey) + ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-						", currentRecordedAssetFileName: " + currentRecordedAssetFileName +
-						", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", addContentTitle: " + addContentTitle
+					SPDLOG_INFO(
+						"ingest Recorded media"
+						", ingestionJobKey: {}"
+						", encodingJobKey: "
+						", chunksTranscoderStagingContentsPath: {}"
+						", currentRecordedAssetFileName: {}"
+						", chunksNFSStagingContentsPath: {}"
+						", addContentTitle: {}",
+						ingestionJobKey, encodingJobKey, chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
+						chunksNFSStagingContentsPath, addContentTitle
 					);
 
 					if (externalEncoder)
@@ -789,24 +853,38 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				}
 				catch (runtime_error &e)
 				{
-					_logger->error(
-						__FILEREF__ + "ingestRecordedMedia failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", externalEncoder: " + to_string(externalEncoder) +
-						", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath + ", currentRecordedAssetFileName: " +
-						currentRecordedAssetFileName + ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath +
-						", addContentTitle: " + addContentTitle + ", outputFileFormat: " + outputFileFormat + ", e.what(): " + e.what()
+					SPDLOG_ERROR(
+						"ingestRecordedMedia failed"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", externalEncoder: {}"
+						", chunksTranscoderStagingContentsPath: {}"
+						", currentRecordedAssetFileName: {}"
+						", chunksNFSStagingContentsPath: {}"
+						", addContentTitle: {}"
+						", outputFileFormat: {}"
+						", e.what(): {}",
+						encodingJobKey, ingestionJobKey, externalEncoder, chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
+						chunksNFSStagingContentsPath, addContentTitle, outputFileFormat, e.what()
 					);
 
 					// throw e;
 				}
 				catch (exception &e)
 				{
-					_logger->error(
-						__FILEREF__ + "ingestRecordedMedia failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", externalEncoder: " + to_string(externalEncoder) +
-						", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath + ", currentRecordedAssetFileName: " +
-						currentRecordedAssetFileName + ", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath +
-						", addContentTitle: " + addContentTitle + ", outputFileFormat: " + outputFileFormat
+					SPDLOG_ERROR(
+						"ingestRecordedMedia failed"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", externalEncoder: {}"
+						", chunksTranscoderStagingContentsPath: {}"
+						", currentRecordedAssetFileName: {}"
+						", chunksNFSStagingContentsPath: {}"
+						", addContentTitle: {}"
+						", outputFileFormat: {}"
+						", e.what(): {}",
+						encodingJobKey, ingestionJobKey, externalEncoder, chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
+						chunksNFSStagingContentsPath, addContentTitle, outputFileFormat, e.what()
 					);
 
 					// throw e;
@@ -828,21 +906,30 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processStreamSegmenterOutput failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-			", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", segmentListFileName: " + segmentListFileName +
-			", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processStreamSegmenterOutput failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", chunksTranscoderStagingContentsPath: {}"
+			", chunksNFSStagingContentsPath: {}"
+			", segmentListFileName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, chunksTranscoderStagingContentsPath, chunksNFSStagingContentsPath, segmentListFileName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processStreamSegmenterOutput failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-			", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", segmentListFileName: " + segmentListFileName
+		SPDLOG_ERROR(
+			"processStreamSegmenterOutput failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", chunksTranscoderStagingContentsPath: {}"
+			", chunksNFSStagingContentsPath: {}"
+			", segmentListFileName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, chunksTranscoderStagingContentsPath, chunksNFSStagingContentsPath, segmentListFileName, e.what()
 		);
 
 		throw e;
@@ -865,16 +952,20 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "processHLSSegmenterOutput" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-			to_string(encodingJobKey)
-			// + ", highAvailability: " + to_string(highAvailability)
-			// + ", main: " + to_string(main)
-			+ ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds) + ", outputFileFormat: " + outputFileFormat +
-			", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-			", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", segmentListFileName: " + segmentListFileName +
-			", recordedFileNamePrefix: " + recordedFileNamePrefix + ", lastRecordedAssetFileName: " + lastRecordedAssetFileName +
-			", lastRecordedAssetDurationInSeconds: " + to_string(lastRecordedAssetDurationInSeconds)
+		SPDLOG_INFO(
+			"processHLSSegmenterOutput"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", segmentDurationInSeconds: {}"
+			", outputFileFormat: {}"
+			", chunksTranscoderStagingContentsPath: {}"
+			", chunksNFSStagingContentsPath: {}"
+			", segmentListFileName: {}"
+			", recordedFileNamePrefix: {}"
+			", lastRecordedAssetFileName: {}"
+			", lastRecordedAssetDurationInSeconds: {}",
+			ingestionJobKey, encodingJobKey, segmentDurationInSeconds, outputFileFormat, chunksTranscoderStagingContentsPath,
+			chunksNFSStagingContentsPath, segmentListFileName, recordedFileNamePrefix, lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds
 		);
 
 		double toBeIngestedSegmentDuration = -1.0;
@@ -887,22 +978,25 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 
 			bool toBeIngested = false;
 
-			_logger->info(
-				__FILEREF__ + "Reading manifest" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) +
-				", chunksTranscoderStagingContentsPath + "
-				"segmentListFileName: " +
-				chunksTranscoderStagingContentsPath + segmentListFileName
+			SPDLOG_INFO(
+				"Reading manifest"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", chunksTranscoderStagingContentsPath + segmentListFileName: {}{}",
+				ingestionJobKey, encodingJobKey, chunksTranscoderStagingContentsPath, segmentListFileName
 			);
 
 			ifstream segmentList;
 			segmentList.open(chunksTranscoderStagingContentsPath + segmentListFileName, ifstream::in);
 			if (!segmentList)
 			{
-				string errorMessage = __FILEREF__ + "No segment list file found yet" +
-									  ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-									  ", segmentListFileName: " + segmentListFileName + ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(
+					"No segment list file found yet"
+					", chunksTranscoderStagingContentsPath: {}"
+					", segmentListFileName: {}"
+					", lastRecordedAssetFileName: {}",
+					chunksTranscoderStagingContentsPath, segmentListFileName, lastRecordedAssetFileName
+				);
 
 				return make_tuple(lastRecordedAssetFileName, lastRecordedAssetDurationInSeconds, newLastRecordedSegmentUtcStartTimeInMillisecs);
 				// throw runtime_error(errorMessage);
@@ -912,16 +1006,25 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 			string manifestLine;
 			while (getline(segmentList, manifestLine))
 			{
-				_logger->info(
-					__FILEREF__ + "Reading manifest line" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", manifestLine: " + manifestLine +
-					", toBeIngested: " + to_string(toBeIngested) + ", toBeIngestedSegmentDuration: " + to_string(toBeIngestedSegmentDuration) +
-					", toBeIngestedSegmentUtcStartTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs) +
-					", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName +
-					", currentSegmentDuration: " + to_string(currentSegmentDuration) + ", currentSegmentUtcStartTimeInMillisecs: " +
-					to_string(currentSegmentUtcStartTimeInMillisecs) + ", currentSegmentFileName: " + currentSegmentFileName +
-					", lastRecordedAssetFileName: " + lastRecordedAssetFileName + ", newLastRecordedAssetFileName: " + newLastRecordedAssetFileName +
-					", newLastRecordedSegmentUtcStartTimeInMillisecs: " + to_string(newLastRecordedSegmentUtcStartTimeInMillisecs)
+				SPDLOG_INFO(
+					"Reading manifest line"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", manifestLine: {}"
+					", toBeIngested: {}"
+					", toBeIngestedSegmentDuration: {}"
+					", toBeIngestedSegmentUtcStartTimeInMillisecs: {}"
+					", toBeIngestedSegmentFileName: {}"
+					", currentSegmentDuration: {}"
+					", currentSegmentUtcStartTimeInMillisecs: {}"
+					", currentSegmentFileName: {}"
+					", lastRecordedAssetFileName: {}"
+					", newLastRecordedAssetFileName: {}"
+					", newLastRecordedSegmentUtcStartTimeInMillisecs: {}",
+					ingestionJobKey, encodingJobKey, manifestLine, toBeIngested, toBeIngestedSegmentDuration,
+					toBeIngestedSegmentUtcStartTimeInMillisecs, toBeIngestedSegmentFileName, currentSegmentDuration,
+					currentSegmentUtcStartTimeInMillisecs, currentSegmentFileName, lastRecordedAssetFileName, newLastRecordedAssetFileName,
+					newLastRecordedSegmentUtcStartTimeInMillisecs
 				);
 
 				// #EXTINF:14.640000,
@@ -938,9 +1041,14 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 					size_t endOfSegmentDuration = manifestLine.find(",");
 					if (endOfSegmentDuration == string::npos)
 					{
-						string errorMessage = string("wrong manifest line format") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", manifestLine: " + manifestLine;
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"wrong manifest line format"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", manifestLine: {}",
+							ingestionJobKey, encodingJobKey, manifestLine
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -966,9 +1074,12 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "manifest line not used by our algorithm" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", encodingJobKey: " + to_string(encodingJobKey) + ", manifestLine: " + manifestLine
+					SPDLOG_INFO(
+						"manifest line not used by our algorithm"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", manifestLine: {}",
+						ingestionJobKey, encodingJobKey, manifestLine
 					);
 
 					continue;
@@ -1009,12 +1120,14 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 						int64_t toBeIngestedSegmentUtcEndTimeInMillisecs =
 							toBeIngestedSegmentUtcStartTimeInMillisecs + (toBeIngestedSegmentDuration * 1000);
 
-						_logger->info(
-							__FILEREF__ + "processing LiveRecorder file" +
-							", toBeIngestedSegmentDuration: " + to_string(toBeIngestedSegmentDuration) +
-							", toBeIngestedSegmentUtcStartTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs) +
-							", toBeIngestedSegmentUtcEndTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcEndTimeInMillisecs) +
-							", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName
+						SPDLOG_INFO(
+							"processing LiveRecorder file"
+							", toBeIngestedSegmentDuration: {}"
+							", toBeIngestedSegmentUtcStartTimeInMillisecs: {}"
+							", toBeIngestedSegmentUtcEndTimeInMillisecs: {}"
+							", toBeIngestedSegmentFileName: {}",
+							toBeIngestedSegmentDuration, toBeIngestedSegmentUtcStartTimeInMillisecs, toBeIngestedSegmentUtcEndTimeInMillisecs,
+							toBeIngestedSegmentFileName
 						);
 
 						if (!fs::exists(chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName))
@@ -1022,11 +1135,10 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 							// it could be the scenario where mmsEngineService
 							// is restarted, the segments list file still
 							// contains obsolete filenames
-							_logger->error(
-								__FILEREF__ +
+							SPDLOG_ERROR(
 								"file not existing"
-								", currentRecordedAssetPathName: " +
-								chunksTranscoderStagingContentsPath + toBeIngestedSegmentFileName
+								", currentRecordedAssetPathName: {}{}",
+								chunksTranscoderStagingContentsPath, toBeIngestedSegmentFileName
 							);
 
 							return make_tuple(
@@ -1051,20 +1163,12 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 							// Questo controllo garantisce anche che i tempi
 							// 'start time' siano consistenti (sempre crescenti)
 
-							_logger->warn(
-								__FILEREF__ +
-								"media item not ingested because his start "
-								"time <= last "
-								"ingested start time" +
-								", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName +
-								", toBeIngestedSegmentUtcStartTimeInMillisecs "
-								"(new start "
-								"time): " +
-								to_string(toBeIngestedSegmentUtcStartTimeInMillisecs) +
-								", "
-								"newLastRecordedSegmentUtcStartTimeInMillisecs "
-								"(previous start time): " +
-								to_string(newLastRecordedSegmentUtcStartTimeInMillisecs)
+							SPDLOG_WARN(
+								"media item not ingested because his start time <= last ingested start time"
+								", toBeIngestedSegmentFileName: {}"
+								", toBeIngestedSegmentUtcStartTimeInMillisecs (new start time): {}"
+								", newLastRecordedSegmentUtcStartTimeInMillisecs (previous start time): {}",
+								toBeIngestedSegmentFileName, toBeIngestedSegmentUtcStartTimeInMillisecs, newLastRecordedSegmentUtcStartTimeInMillisecs
 							);
 
 							return make_tuple(
@@ -1213,14 +1317,16 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 							{
 								try
 								{
-									_logger->info(
-										__FILEREF__ + "ingest Recorded media" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", encodingJobKey: " + to_string(encodingJobKey) +
-										", "
-										"chunksTranscoderStagingContentsPath:"
-										" " +
-										chunksTranscoderStagingContentsPath + ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName +
-										", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", addContentTitle: " + addContentTitle
+									SPDLOG_INFO(
+										"ingest Recorded media"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", chunksTranscoderStagingContentsPath: {}"
+										", toBeIngestedSegmentFileName: {}"
+										", chunksNFSStagingContentsPath: {}"
+										", addContentTitle: {}",
+										ingestionJobKey, encodingJobKey, chunksTranscoderStagingContentsPath, toBeIngestedSegmentFileName,
+										chunksNFSStagingContentsPath, addContentTitle
 									);
 
 									if (externalEncoder)
@@ -1237,30 +1343,38 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 								}
 								catch (runtime_error &e)
 								{
-									_logger->error(
-										__FILEREF__ + "ingestRecordedMedia failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", externalEncoder: " + to_string(externalEncoder) +
-										", "
-										"chunksTranscoderStagingContentsPath:"
-										" " +
-										chunksTranscoderStagingContentsPath + ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName +
-										", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", addContentTitle: " + addContentTitle +
-										", outputFileFormat: " + outputFileFormat + ", e.what(): " + e.what()
+									SPDLOG_ERROR(
+										"ingestRecordedMedia failed"
+										", encodingJobKey: {}"
+										", ingestionJobKey: {}"
+										", externalEncoder: {}"
+										", chunksTranscoderStagingContentsPath: {}"
+										", toBeIngestedSegmentFileName: {}"
+										", chunksNFSStagingContentsPath: {}"
+										", addContentTitle: {}"
+										", outputFileFormat: {}"
+										", e.what(): {}",
+										encodingJobKey, ingestionJobKey, externalEncoder, chunksTranscoderStagingContentsPath,
+										toBeIngestedSegmentFileName, chunksNFSStagingContentsPath, addContentTitle, outputFileFormat, e.what()
 									);
 
 									// throw e;
 								}
 								catch (exception &e)
 								{
-									_logger->error(
-										__FILEREF__ + "ingestRecordedMedia failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", externalEncoder: " + to_string(externalEncoder) +
-										", "
-										"chunksTranscoderStagingContentsPath:"
-										" " +
-										chunksTranscoderStagingContentsPath + ", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName +
-										", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", addContentTitle: " + addContentTitle +
-										", outputFileFormat: " + outputFileFormat
+									SPDLOG_ERROR(
+										"ingestRecordedMedia failed"
+										", encodingJobKey: {}"
+										", ingestionJobKey: {}"
+										", externalEncoder: {}"
+										", chunksTranscoderStagingContentsPath: {}"
+										", toBeIngestedSegmentFileName: {}"
+										", chunksNFSStagingContentsPath: {}"
+										", addContentTitle: {}"
+										", outputFileFormat: {}"
+										", e.what(): {}",
+										encodingJobKey, ingestionJobKey, externalEncoder, chunksTranscoderStagingContentsPath,
+										toBeIngestedSegmentFileName, chunksNFSStagingContentsPath, addContentTitle, outputFileFormat, e.what()
 									);
 
 									// throw e;
@@ -1299,19 +1413,23 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 				// kills the recording process,
 				//	so the playlist is reset and start from scratch.
 
-				_logger->warn(
-					__FILEREF__ +
-					"Filename not found: probable the playlist was reset (may "
-					"be "
-					"because of a kill of the monitor process)" +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", toBeIngested: " + to_string(toBeIngested) + ", toBeIngestedSegmentDuration: " + to_string(toBeIngestedSegmentDuration) +
-					", toBeIngestedSegmentUtcStartTimeInMillisecs: " + to_string(toBeIngestedSegmentUtcStartTimeInMillisecs) +
-					", toBeIngestedSegmentFileName: " + toBeIngestedSegmentFileName +
-					", currentSegmentDuration: " + to_string(currentSegmentDuration) + ", currentSegmentUtcStartTimeInMillisecs: " +
-					to_string(currentSegmentUtcStartTimeInMillisecs) + ", currentSegmentFileName: " + currentSegmentFileName +
-					", lastRecordedAssetFileName: " + lastRecordedAssetFileName + ", newLastRecordedAssetFileName: " + newLastRecordedAssetFileName +
-					", newLastRecordedSegmentUtcStartTimeInMillisecs: " + to_string(newLastRecordedSegmentUtcStartTimeInMillisecs)
+				SPDLOG_WARN(
+					"Filename not found: probable the playlist was reset (may be because of a kill of the monitor process)"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}"
+					", toBeIngested: {}"
+					", toBeIngestedSegmentDuration: {}"
+					", toBeIngestedSegmentUtcStartTimeInMillisecs: {}"
+					", toBeIngestedSegmentFileName: {}"
+					", currentSegmentDuration: {}"
+					", currentSegmentUtcStartTimeInMillisecs: {}"
+					", currentSegmentFileName: {}"
+					", lastRecordedAssetFileName: {}"
+					", newLastRecordedAssetFileName: {}"
+					", newLastRecordedSegmentUtcStartTimeInMillisecs: {}",
+					encodingJobKey, ingestionJobKey, toBeIngested, toBeIngestedSegmentDuration, toBeIngestedSegmentUtcStartTimeInMillisecs,
+					toBeIngestedSegmentFileName, currentSegmentDuration, currentSegmentUtcStartTimeInMillisecs, currentSegmentFileName,
+					lastRecordedAssetFileName, newLastRecordedAssetFileName, newLastRecordedSegmentUtcStartTimeInMillisecs
 				);
 
 				newLastRecordedAssetFileName = "";
@@ -1322,21 +1440,30 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processHLSSegmenterOutput failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-			", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", segmentListFileName: " + segmentListFileName +
-			", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processHLSSegmenterOutput failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", chunksTranscoderStagingContentsPath: {}"
+			", chunksNFSStagingContentsPath: {}"
+			", segmentListFileName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, chunksTranscoderStagingContentsPath, chunksNFSStagingContentsPath, segmentListFileName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processHLSSegmenterOutput failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-			", chunksNFSStagingContentsPath: " + chunksNFSStagingContentsPath + ", segmentListFileName: " + segmentListFileName
+		SPDLOG_ERROR(
+			"processHLSSegmenterOutput failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", chunksTranscoderStagingContentsPath: {}"
+			", chunksNFSStagingContentsPath: {}"
+			", segmentListFileName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, chunksTranscoderStagingContentsPath, chunksNFSStagingContentsPath, segmentListFileName, e.what()
 		);
 
 		throw e;
@@ -1358,29 +1485,40 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		// This is done because the AddContent task has a move://... url
 		if (copy)
 		{
-			_logger->info(
-				__FILEREF__ + "Chunk copying" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", currentRecordedAssetFileName: " + currentRecordedAssetFileName + ", source: " + chunksTranscoderStagingContentsPath +
-				currentRecordedAssetFileName + ", dest: " + chunksNFSStagingContentsPath
+			SPDLOG_INFO(
+				"Chunk copying"
+				", ingestionJobKey: {}"
+				", currentRecordedAssetFileName: {}"
+				", source: {}{}"
+				", dest: {}",
+				ingestionJobKey, currentRecordedAssetFileName, chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
+				chunksNFSStagingContentsPath
 			);
 
 			chrono::system_clock::time_point startCopying = chrono::system_clock::now();
 			fs::copy(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
 			chrono::system_clock::time_point endCopying = chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ + "Chunk copied" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName + ", dest: " + chunksNFSStagingContentsPath +
-				", @MMS COPY statistics@ - copyingDuration (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(endCopying - startCopying).count()) + "@"
+			SPDLOG_INFO(
+				"Chunk copied"
+				", ingestionJobKey: {}"
+				", source: {}{}"
+				", dest: {}"
+				", @MMS COPY statistics@ - copyingDuration (secs): @{}@",
+				ingestionJobKey, chunksTranscoderStagingContentsPath, currentRecordedAssetFileName, chunksNFSStagingContentsPath,
+				chrono::duration_cast<chrono::seconds>(endCopying - startCopying).count()
 			);
 		}
 		else
 		{
-			_logger->info(
-				__FILEREF__ + "Chunk moving" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", currentRecordedAssetFileName: " + currentRecordedAssetFileName + ", source: " + chunksTranscoderStagingContentsPath +
-				currentRecordedAssetFileName + ", dest: " + chunksNFSStagingContentsPath
+			SPDLOG_INFO(
+				"Chunk moving"
+				", ingestionJobKey: {}"
+				", currentRecordedAssetFileName: {}"
+				", source: {}{}"
+				", dest: {}",
+				ingestionJobKey, currentRecordedAssetFileName, chunksTranscoderStagingContentsPath, currentRecordedAssetFileName,
+				chunksNFSStagingContentsPath
 			);
 
 			chrono::system_clock::time_point startMoving = chrono::system_clock::now();
@@ -1389,37 +1527,57 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			);
 			chrono::system_clock::time_point endMoving = chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ + "Chunk moved" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", source: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName + ", dest: " + chunksNFSStagingContentsPath +
-				", @MMS MOVE statistics@ - movingDuration (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()) + "@"
+			SPDLOG_INFO(
+				"Chunk moved"
+				", ingestionJobKey: {}"
+				", source: {}{}"
+				", dest: {}"
+				", @MMS MOVE statistics@ - movingDuration (secs): @{}@",
+				ingestionJobKey, chunksTranscoderStagingContentsPath, currentRecordedAssetFileName, chunksNFSStagingContentsPath,
+				chrono::duration_cast<chrono::seconds>(endMoving - startMoving).count()
 			);
 		}
 	}
 	catch (runtime_error e)
 	{
 		string errorMessage = e.what();
-		_logger->error(
-			__FILEREF__ + "Coping/Moving of the chunk failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + errorMessage
+		SPDLOG_ERROR(
+			"Coping/Moving of the chunk failed"
+			", ingestionJobKey: {}"
+			", exception: {}",
+			ingestionJobKey, errorMessage
 		);
 		if (errorMessage.find(string("errno: 28")) != string::npos)
-			_logger->error(
-				__FILEREF__ + "No space left on storage" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + errorMessage
+			SPDLOG_ERROR(
+				"No space left on storage"
+				", ingestionJobKey: {}"
+				", exception: {}",
+				ingestionJobKey, errorMessage
 			);
 
-		_logger->info(__FILEREF__ + "remove" + ", generated chunk: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
+		SPDLOG_INFO(
+			"remove"
+			", generated chunk: {}{}",
+			chunksTranscoderStagingContentsPath, currentRecordedAssetFileName
+		);
 		fs::remove_all(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingested URL failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingested URL failed"
+			", ingestionJobKey: {}"
+			", exception: {}",
+			ingestionJobKey, e.what()
 		);
 
-		_logger->info(__FILEREF__ + "remove" + ", generated chunk: " + chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
+		SPDLOG_INFO(
+			"remove"
+			", generated chunk: {}{}",
+			chunksTranscoderStagingContentsPath, currentRecordedAssetFileName
+		);
 		fs::remove_all(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 
 		throw e;
@@ -1463,11 +1621,13 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			string field = "mmsWorkflowIngestionURL";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " +
-									  to_string(ingestionJobKey)
-									  // + ", encodingJobKey: " + to_string(encodingJobKey)
-									  + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", Field: {}",
+					ingestionJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1486,18 +1646,26 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingested URL failed (runtime_error)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingested URL failed"
+			", ingestionJobKey: {}"
+			", mmsWorkflowIngestionURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Ingested URL failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"Ingested URL failed"
+			", ingestionJobKey: {}"
+			", mmsWorkflowIngestionURL: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
 		throw e;
@@ -1874,28 +2042,35 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Recording Workflow metadata generated" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", " + addContentTitle +
-			", " + currentRecordedAssetFileName + ", prev: " + to_string(utcPreviousChunkStartTime) + ", from: " + to_string(utcChunkStartTime) +
-			", to: " + to_string(utcChunkEndTime)
+		SPDLOG_INFO(
+			"Recording Workflow metadata generated"
+			", ingestionJobKey: {}"
+			", {}, {}, prev: {}, from: {}, to: {}",
+			ingestionJobKey, addContentTitle, currentRecordedAssetFileName, utcPreviousChunkStartTime, utcChunkStartTime, utcChunkEndTime
 		);
 
 		return workflowMetadata;
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(
-			__FILEREF__ + "buildRecordedMediaWorkflow failed (runtime_error)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"buildRecordedMediaWorkflow failed"
+			", ingestionJobKey: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, workflowMetadata, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "buildRecordedMediaWorkflow failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"buildRecordedMediaWorkflow failed"
+			", ingestionJobKey: {}"
+			", workflowMetadata: {}"
+			", exception: {}",
+			ingestionJobKey, workflowMetadata, e.what()
 		);
 
 		throw e;
@@ -1911,16 +2086,23 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "isLastLiveRecorderFile" + ", chunksTranscoderStagingContentsPath: " + chunksTranscoderStagingContentsPath +
-			", recordedFileNamePrefix: " + recordedFileNamePrefix + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds)
+		SPDLOG_INFO(
+			"isLastLiveRecorderFile"
+			", chunksTranscoderStagingContentsPath: {}"
+			", recordedFileNamePrefix: {}"
+			", segmentDurationInSeconds: {}",
+			chunksTranscoderStagingContentsPath, recordedFileNamePrefix, segmentDurationInSeconds
 		);
 
 		for (fs::directory_entry const &entry : fs::directory_iterator(chunksTranscoderStagingContentsPath))
 		{
 			try
 			{
-				_logger->info(__FILEREF__ + "readDirectory" + ", directoryEntry: " + entry.path().string());
+				SPDLOG_INFO(
+					"readDirectory"
+					", directoryEntry: {}",
+					entry.path().string()
+				);
 
 				// next statement is endWith and .lck is used during the move of
 				// a file
@@ -1957,15 +2139,23 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "listing directory failed" + ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"listing directory failed"
+					", e.what(): {}",
+					e.what()
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw e;
 			}
 			catch (exception &e)
 			{
-				string errorMessage = __FILEREF__ + "listing directory failed" + ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"listing directory failed"
+					", e.what(): {}",
+					e.what()
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw e;
 			}
@@ -1973,11 +2163,19 @@ bool LiveRecorderDaemons::isLastLiveRecorderFile(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "isLastLiveRecorderFile failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"isLastLiveRecorderFile failed"
+			", e.what(): {}",
+			e.what()
+		);
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "isLastLiveRecorderFile failed");
+		SPDLOG_ERROR(
+			"isLastLiveRecorderFile failed"
+			", e.what(): {}",
+			e.what()
+		);
 	}
 
 	return isLastLiveRecorderFile;
@@ -1990,17 +2188,25 @@ time_t LiveRecorderDaemons::getMediaLiveRecorderStartTime(
 	// liveRecorder_6405_48749_2019-02-02_22-11-00_1100374273.ts
 	// liveRecorder_<ingestionJobKey>_<FFMPEGEncoderBase::encodingJobKey>_YYYY-MM-DD_HH-MI-SS_<utc>.ts
 
-	_logger->info(
-		__FILEREF__ + "Received getMediaLiveRecorderStartTime" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", encodingJobKey: " + to_string(encodingJobKey) + ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName +
-		", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds) + ", isFirstChunk: " + to_string(isFirstChunk)
+	SPDLOG_INFO(
+		"Received getMediaLiveRecorderStartTime"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", mediaLiveRecorderFileName: {}"
+		", segmentDurationInSeconds: {}"
+		", isFirstChunk: {}",
+		ingestionJobKey, encodingJobKey, mediaLiveRecorderFileName, segmentDurationInSeconds, isFirstChunk
 	);
 
 	size_t endIndex = mediaLiveRecorderFileName.find_last_of(".");
 	if (mediaLiveRecorderFileName.length() < 20 || endIndex == string::npos)
 	{
-		string errorMessage = __FILEREF__ + "wrong media live recorder format" + ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"wrong media live recorder format"
+			", mediaLiveRecorderFileName: {}",
+			mediaLiveRecorderFileName
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2008,8 +2214,12 @@ time_t LiveRecorderDaemons::getMediaLiveRecorderStartTime(
 	size_t beginUTCIndex = mediaLiveRecorderFileName.find_last_of("_");
 	if (mediaLiveRecorderFileName.length() < 20 || beginUTCIndex == string::npos)
 	{
-		string errorMessage = __FILEREF__ + "wrong media live recorder format" + ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"wrong media live recorder format"
+			", mediaLiveRecorderFileName: {}",
+			mediaLiveRecorderFileName
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2043,19 +2253,25 @@ time_t LiveRecorderDaemons::getMediaLiveRecorderStartTime(
 
 			if (seconds <= halfSegmentDurationInSeconds)
 			{
-				_logger->warn(
-					__FILEREF__ + "Wrong seconds (start time), force it to 0" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName +
-					", seconds: " + to_string(seconds)
+				SPDLOG_WARN(
+					"Wrong seconds (start time), force it to 0"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", mediaLiveRecorderFileName: {}"
+					", seconds: {}",
+					ingestionJobKey, encodingJobKey, mediaLiveRecorderFileName, seconds
 				);
 				utcMediaLiveRecorderStartTime -= seconds;
 			}
 			else if (seconds > halfSegmentDurationInSeconds && seconds < segmentDurationInSeconds)
 			{
-				_logger->warn(
-					__FILEREF__ + "Wrong seconds (start time), increase it" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName +
-					", seconds: " + to_string(seconds)
+				SPDLOG_WARN(
+					"Wrong seconds (start time), increase it"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", mediaLiveRecorderFileName: {}"
+					", seconds: {}",
+					ingestionJobKey, encodingJobKey, mediaLiveRecorderFileName, seconds
 				);
 				utcMediaLiveRecorderStartTime += (segmentDurationInSeconds - seconds);
 			}
@@ -2069,7 +2285,7 @@ time_t LiveRecorderDaemons::getMediaLiveRecorderStartTime(
 
 	// liveRecorder_6405_2019-02-02_22-11-00.ts
 
-	_logger->info(__FILEREF__ + "getMediaLiveRecorderStartTime"
+	info(__FILEREF__ + "getMediaLiveRecorderStartTime"
 		", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
 	);
 
@@ -2080,7 +2296,7 @@ time_t LiveRecorderDaemons::getMediaLiveRecorderStartTime(
 		string errorMessage = __FILEREF__ + "wrong media live recorder format"
 			+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2110,7 +2326,7 @@ time_t LiveRecorderDaemons::getMediaLiveRecorderStartTime(
 	first chunk int seconds = stoi(mediaLiveRecorderFileName.substr(index - 2,
 	2)); if (seconds != 0)
 	{
-		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
+		warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
@@ -2147,9 +2363,13 @@ time_t LiveRecorderDaemons::getMediaLiveRecorderEndTime(int64_t ingestionJobKey,
 	// sometime I saw seconds 1 instead of 0 For this reason, 0 is set
 	if (tmDateTime.tm_sec != 0)
 	{
-		_logger->warn(
-			__FILEREF__ + "Wrong seconds (end time), force it to 0" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-			to_string(encodingJobKey) + ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName + ", seconds: " + to_string(tmDateTime.tm_sec)
+		SPDLOG_WARN(
+			"Wrong seconds (end time), force it to 0"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", mediaLiveRecorderFileName: {}"
+			", seconds: {}",
+			ingestionJobKey, encodingJobKey, mediaLiveRecorderFileName, tmDateTime.tm_sec
 		);
 		tmDateTime.tm_sec = 0;
 	}
@@ -2172,18 +2392,27 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 )
 {
 
-	_logger->info(
-		__FILEREF__ + "Received buildAndIngestVirtualVOD" + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-		", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", externalEncoder: " + to_string(externalEncoder)
-
-		+ ", sourceSegmentsDirectoryPathName: " + sourceSegmentsDirectoryPathName + ", sourceManifestFileName: " + sourceManifestFileName +
-		", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName
-
-		+ ", recordingCode: " + to_string(recordingCode) + ", liveRecorderIngestionJobLabel: " + liveRecorderIngestionJobLabel +
-		", liveRecorderVirtualVODUniqueName: " + liveRecorderVirtualVODUniqueName + ", liveRecorderVirtualVODRetention: " +
-		liveRecorderVirtualVODRetention + ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey) +
-		", liveRecorderUserKey: " + to_string(liveRecorderUserKey) + ", liveRecorderApiKey: " + liveRecorderApiKey +
-		", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", mmsBinaryIngestionURL: " + mmsBinaryIngestionURL
+	SPDLOG_INFO(
+		"Received buildAndIngestVirtualVOD"
+		", liveRecorderIngestionJobKey: {}"
+		", liveRecorderEncodingJobKey: {}"
+		", externalEncoder: {}"
+		", sourceSegmentsDirectoryPathName: {}"
+		", sourceManifestFileName: {}"
+		", stagingLiveRecorderVirtualVODPathName: {}"
+		", recordingCode: {}"
+		", liveRecorderIngestionJobLabel: {}"
+		", liveRecorderVirtualVODUniqueName: {}"
+		", liveRecorderVirtualVODRetention: {}"
+		", liveRecorderVirtualVODImageMediaItemKey: {}"
+		", liveRecorderUserKey: {}"
+		", liveRecorderApiKey: {}"
+		", mmsWorkflowIngestionURL: {}"
+		", mmsBinaryIngestionURL: {}",
+		liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, externalEncoder, sourceSegmentsDirectoryPathName, sourceManifestFileName,
+		stagingLiveRecorderVirtualVODPathName, recordingCode, liveRecorderIngestionJobLabel, liveRecorderVirtualVODUniqueName,
+		liveRecorderVirtualVODRetention, liveRecorderVirtualVODImageMediaItemKey, liveRecorderUserKey, liveRecorderApiKey, mmsWorkflowIngestionURL,
+		mmsBinaryIngestionURL
 	);
 
 	long segmentsNumber = 0;
@@ -2217,7 +2446,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 						", stagingLiveRecorderVirtualVODPathName: {}",
 						liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, stagingLiveRecorderVirtualVODPathName
 					);
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2252,7 +2481,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				", sourceManifestPathFileName: {}",
 				liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, sourceManifestPathFileName
 			);
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2269,7 +2498,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		// copy manifest and TS files into the
 		stagingLiveRecorderVirtualVODPathName
 		{
-			_logger->info(__FILEREF__ + "Coping directory"
+			info(__FILEREF__ + "Coping directory"
 				+ ", liveRecorderIngestionJobKey: " +
 		to_string(liveRecorderIngestionJobKey)
 				+ ", liveRecorderEncodingJobKey: " +
@@ -2289,7 +2518,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			chrono::system_clock::time_point endCoping =
 		chrono::system_clock::now();
 
-			_logger->info(__FILEREF__ + "Copied directory"
+			info(__FILEREF__ + "Copied directory"
 				+ ", liveRecorderIngestionJobKey: " +
 		to_string(liveRecorderIngestionJobKey)
 				+ ", liveRecorderEncodingJobKey: " +
@@ -2354,10 +2583,14 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 		if (!fs::exists(tmpManifestPathFileName.c_str()))
 		{
-			string errorMessage = string("manifest file not existing") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-								  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-								  ", tmpManifestPathFileName: " + tmpManifestPathFileName;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"manifest file not existing"
+				", liveRecorderIngestionJobKey: {}"
+				", liveRecorderEncodingJobKey: {}"
+				", tmpManifestPathFileName: {}",
+				liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, tmpManifestPathFileName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2383,11 +2616,14 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			ifstream ifManifestFile(tmpManifestPathFileName);
 			if (!ifManifestFile.is_open())
 			{
-				string errorMessage = string("Not authorized: manifest file not opened") +
-									  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-									  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-									  ", tmpManifestPathFileName: " + tmpManifestPathFileName;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"Not authorized: manifest file not opened"
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", tmpManifestPathFileName: {}",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, tmpManifestPathFileName
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2456,10 +2692,14 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 					size_t endOfSegmentDuration = manifestLine.find(",");
 					if (endOfSegmentDuration == string::npos)
 					{
-						string errorMessage =
-							string("wrong manifest line format") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", manifestLine: " + manifestLine;
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"wrong manifest line format"
+							", liveRecorderIngestionJobKey: {}"
+							", liveRecorderEncodingJobKey: {}"
+							", manifestLine: {}",
+							liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, manifestLine
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2487,14 +2727,17 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = string("copyFile failed, previous segments of the "
-													 "manifest "
-													 "will be omitted") +
-											  ", sourceTSPathFileName: " + sourceTSPathFileName + ", copiedTSPathFileName: " + copiedTSPathFileName +
-											  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-											  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-											  ", segmentsNumber: " + to_string(segmentsNumber) + ", e.what: " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(
+							"copyFile failed, previous segments of the manifest will be omitted"
+							", sourceTSPathFileName: {}"
+							", copiedTSPathFileName: {}"
+							", liveRecorderIngestionJobKey: {}"
+							", liveRecorderEncodingJobKey: {}"
+							", segmentsNumber: {}"
+							", e.what: {}",
+							sourceTSPathFileName, copiedTSPathFileName, liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, segmentsNumber,
+							e.what()
+						);
 
 						ofManifestFile.close();
 
@@ -2544,11 +2787,15 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 		if (segmentsNumber == 0)
 		{
-			string errorMessage = string("No segments found") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-								  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-								  ", sourceManifestPathFileName: " + sourceManifestPathFileName +
-								  ", destManifestPathFileName: " + destManifestPathFileName;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"No segments found"
+				", liveRecorderIngestionJobKey: {}"
+				", liveRecorderEncodingJobKey: {}"
+				", sourceManifestPathFileName: {}"
+				", destManifestPathFileName: {}",
+				liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, sourceManifestPathFileName, destManifestPathFileName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2562,11 +2809,14 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				size_t endOfPathIndex = stagingLiveRecorderVirtualVODPathName.find_last_of("/");
 				if (endOfPathIndex == string::npos)
 				{
-					string errorMessage = string("No stagingLiveRecorderVirtualVODDirectory found") +
-										  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-										  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-										  ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName;
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"No stagingLiveRecorderVirtualVODDirectory found"
+						", liveRecorderIngestionJobKey: {}"
+						", liveRecorderEncodingJobKey: {}"
+						", stagingLiveRecorderVirtualVODPathName: {}",
+						liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, stagingLiveRecorderVirtualVODPathName
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2608,11 +2858,15 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				);
 				if (executeCommandStatus != 0)
 				{
-					string errorMessage = string("ProcessUtility::execute failed") +
-										  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-										  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-										  ", executeCommandStatus: " + to_string(executeCommandStatus) + ", executeCommand: " + executeCommand;
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"ProcessUtility::execute failed"
+						", liveRecorderIngestionJobKey: {}"
+						", liveRecorderEncodingJobKey: {}"
+						", executeCommandStatus: {}"
+						", executeCommand: {}",
+						liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, executeCommandStatus, executeCommand
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2630,10 +2884,14 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = string("tar command failed") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-									  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-									  ", executeCommand: " + executeCommand;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"tar command failed"
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", executeCommand: {}",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, executeCommand
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2641,20 +2899,32 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = string("build the live recorder VOD failed") +
-							  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", e.what: " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"build the live recorder VOD failed"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", e.what: {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != "" && fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+			SPDLOG_INFO(
+				"Remove"
+				", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+				tarGzStagingLiveRecorderVirtualVODPathName
+			);
 			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		if (stagingLiveRecorderVirtualVODPathName != "" && fs::exists(stagingLiveRecorderVirtualVODPathName))
 		{
-			_logger->info(__FILEREF__ + "Remove directory" + ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName);
+			SPDLOG_INFO(
+				"Remove directory"
+				", stagingLiveRecorderVirtualVODPathName: {}",
+				stagingLiveRecorderVirtualVODPathName
+			);
 			fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 		}
 
@@ -2662,20 +2932,32 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("build the live recorder VOD failed") +
-							  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"build the live recorder VOD failed"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", e.what: {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != "" && fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+			SPDLOG_INFO(
+				"Remove"
+				", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+				tarGzStagingLiveRecorderVirtualVODPathName
+			);
 			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
 		if (stagingLiveRecorderVirtualVODPathName != "" && fs::exists(stagingLiveRecorderVirtualVODPathName))
 		{
-			_logger->info(__FILEREF__ + "Remove directory" + ", stagingLiveRecorderVirtualVODPathName: " + stagingLiveRecorderVirtualVODPathName);
+			SPDLOG_INFO(
+				"Remove directory"
+				", stagingLiveRecorderVirtualVODPathName: {}",
+				stagingLiveRecorderVirtualVODPathName
+			);
 			fs::remove_all(stagingLiveRecorderVirtualVODPathName);
 		}
 
@@ -2695,14 +2977,22 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	}
 	catch (runtime_error e)
 	{
-		string errorMessage = string("build workflowMetadata live recorder VOD failed") +
-							  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", e.what: " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"build workflowMetadata live recorder VOD failed"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", e.what: {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != "" && fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+			SPDLOG_INFO(
+				"Remove"
+				", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+				tarGzStagingLiveRecorderVirtualVODPathName
+			);
 			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
@@ -2710,14 +3000,22 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	}
 	catch (exception e)
 	{
-		string errorMessage = string("build workflowMetadata live recorder VOD failed") +
-							  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", e.what: " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"build workflowMetadata live recorder VOD failed"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", e.what: {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != "" && fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+			SPDLOG_INFO(
+				"Remove"
+				", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+				tarGzStagingLiveRecorderVirtualVODPathName
+			);
 			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
@@ -2745,15 +3043,24 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	}
 	catch (runtime_error e)
 	{
-		string errorMessage = string("ingest live recorder VOD failed") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-							  ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", workflowMetadata: " + workflowMetadata +
-							  ", e.what: " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"ingest live recorder VOD failed"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", mmsWorkflowIngestionURL: {}"
+			", workflowMetadata: {}"
+			", e.what: {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != "" && fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+			SPDLOG_INFO(
+				"Remove"
+				", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+				tarGzStagingLiveRecorderVirtualVODPathName
+			);
 			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
@@ -2761,14 +3068,24 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	}
 	catch (exception e)
 	{
-		string errorMessage = string("ingest live recorder VOD failed") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-							  ", mmsWorkflowIngestionURL: " + mmsWorkflowIngestionURL + ", workflowMetadata: " + workflowMetadata;
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"ingest live recorder VOD failed"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", mmsWorkflowIngestionURL: {}"
+			", workflowMetadata: {}"
+			", e.what: {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		if (tarGzStagingLiveRecorderVirtualVODPathName != "" && fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+			SPDLOG_INFO(
+				"Remove"
+				", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+				tarGzStagingLiveRecorderVirtualVODPathName
+			);
 			fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 		}
 
@@ -2783,10 +3100,12 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		{
 			if (addContentIngestionJobKey == -1)
 			{
-				string errorMessage = string("Ingested URL failed, addContentIngestionJobKey is "
-											 "not valid") +
-									  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey);
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"Ingested URL failed, addContentIngestionJobKey is not valid"
+					", liveRecorderIngestionJobKey: {}",
+					liveRecorderIngestionJobKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2802,20 +3121,32 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 			);
 
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+				SPDLOG_INFO(
+					"Remove"
+					", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+					tarGzStagingLiveRecorderVirtualVODPathName
+				);
 				fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 			}
 		}
 		catch (runtime_error e)
 		{
-			_logger->error(
-				__FILEREF__ + "Ingestion binary failed" + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-				", mmsBinaryURL: " + mmsBinaryURL + ", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+			SPDLOG_ERROR(
+				"Ingestion binary failed"
+				", liveRecorderIngestionJobKey: {}"
+				", mmsBinaryURL: {}"
+				", workflowMetadata: {}"
+				", exception: {}",
+				liveRecorderIngestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
 			);
 
 			if (tarGzStagingLiveRecorderVirtualVODPathName != "" && fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+				SPDLOG_INFO(
+					"Remove"
+					", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+					tarGzStagingLiveRecorderVirtualVODPathName
+				);
 				fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 			}
 
@@ -2823,14 +3154,22 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 		}
 		catch (exception e)
 		{
-			_logger->error(
-				__FILEREF__ + "Ingestion binary failed" + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-				", mmsBinaryURL: " + mmsBinaryURL + ", workflowMetadata: " + workflowMetadata + ", exception: " + e.what()
+			SPDLOG_ERROR(
+				"Ingestion binary failed"
+				", liveRecorderIngestionJobKey: {}"
+				", mmsBinaryURL: {}"
+				", workflowMetadata: {}"
+				", exception: {}",
+				liveRecorderIngestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
 			);
 
 			if (tarGzStagingLiveRecorderVirtualVODPathName != "" && fs::exists(tarGzStagingLiveRecorderVirtualVODPathName))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", tarGzStagingLiveRecorderVirtualVODPathName: " + tarGzStagingLiveRecorderVirtualVODPathName);
+				SPDLOG_INFO(
+					"Remove"
+					", tarGzStagingLiveRecorderVirtualVODPathName: {}",
+					tarGzStagingLiveRecorderVirtualVODPathName
+				);
 				fs::remove_all(tarGzStagingLiveRecorderVirtualVODPathName);
 			}
 
@@ -2979,27 +3318,36 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 			}
 			catch (MediaItemKeyNotFound e)
 			{
-				string errorMessage =
-					string("getMediaItemKeyDetailsByUniqueName failed") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-					", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-					", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey) + ", e.what: " + e.what();
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(
+					"getMediaItemKeyDetailsByUniqueName failed"
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", liveRecorderVirtualVODImageMediaItemKey: {}"
+					", e.what: {}",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, liveRecorderVirtualVODImageMediaItemKey, e.what()
+				);
 			}
 			catch (runtime_error e)
 			{
-				string errorMessage =
-					string("getMediaItemKeyDetailsByUniqueName failed") + ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-					", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-					", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey) + ", e.what: " + e.what();
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(
+					"getMediaItemKeyDetailsByUniqueName failed"
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", liveRecorderVirtualVODImageMediaItemKey: {}"
+					", e.what: {}",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, liveRecorderVirtualVODImageMediaItemKey, e.what()
+				);
 			}
 			catch (exception e)
 			{
-				string errorMessage = string("getMediaItemKeyDetailsByUniqueName failed") +
-									  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-									  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) +
-									  ", liveRecorderVirtualVODImageMediaItemKey: " + to_string(liveRecorderVirtualVODImageMediaItemKey);
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(
+					"getMediaItemKeyDetailsByUniqueName failed"
+					", liveRecorderIngestionJobKey: {}"
+					", liveRecorderEncodingJobKey: {}"
+					", liveRecorderVirtualVODImageMediaItemKey: {}"
+					", e.what: {}",
+					liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, liveRecorderVirtualVODImageMediaItemKey, e.what()
+				);
 			}
 		}
 
@@ -3021,29 +3369,39 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Live Recorder VOD Workflow metadata generated" +
-			", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-			", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", " + addContentLabel + ", "
+		SPDLOG_INFO(
+			"Live Recorder VOD Workflow metadata generated"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, addContentLabel
 		);
 
 		return workflowMetadata;
 	}
 	catch (runtime_error e)
 	{
-		string errorMessage = string("build workflowMetadata live recorder VOD failed") +
-							  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", e.what: " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"build workflowMetadata live recorder VOD failed"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", e.what: {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (exception e)
 	{
-		string errorMessage = string("build workflowMetadata live recorder VOD failed") +
-							  ", liveRecorderIngestionJobKey: " + to_string(liveRecorderIngestionJobKey) +
-							  ", liveRecorderEncodingJobKey: " + to_string(liveRecorderEncodingJobKey) + ", e.what: " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"build workflowMetadata live recorder VOD failed"
+			", liveRecorderIngestionJobKey: {}"
+			", liveRecorderEncodingJobKey: {}"
+			", e.what: {}",
+			liveRecorderIngestionJobKey, liveRecorderEncodingJobKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

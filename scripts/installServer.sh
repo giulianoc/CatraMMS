@@ -1392,7 +1392,9 @@ echo ""
 echo ""
 
 
-ssh-port
+if [ "$moduleType" != "integration" ]; then
+	ssh-port
+fi
 mms-account-creation
 time-zone
 install-packages $moduleType
