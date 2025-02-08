@@ -49,19 +49,19 @@ deploy()
 	fi
 	ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"
 
-	if [ "$serverType" = "api" -o "$serverType" = "api-and-delivery" -o "$serverType" = "delivery" ]; then
-		tailCommand="tail -f logs/mmsAPI/mmsAPI-error.log"
-	elif [ "$serverType" = "engine" ]; then
-		tailCommand="tail -f logs/mmsEngineService/mmsEngineService-error.log"
-	elif [ "$serverType" = "encoder" -o "$serverType" = "externalEncoder" ]; then
-		tailCommand="tail -f logs/mmsEncoder/mmsEncoder-error.log"
-	fi
-	if [ "$tailCommand" != "" ]; then
-		echo ""
-		echo ""
-		echo "tail on errors..."
-		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "$tailCommand"
-	fi
+	#if [ "$serverType" = "api" -o "$serverType" = "api-and-delivery" -o "$serverType" = "delivery" ]; then
+	#	tailCommand="tail -f logs/mmsAPI/mmsAPI-error.log"
+	#elif [ "$serverType" = "engine" ]; then
+	#	tailCommand="tail -f logs/mmsEngineService/mmsEngineService-error.log"
+	#elif [ "$serverType" = "encoder" -o "$serverType" = "externalEncoder" ]; then
+	#	tailCommand="tail -f logs/mmsEncoder/mmsEncoder-error.log"
+	#fi
+	#if [ "$tailCommand" != "" ]; then
+	#	echo ""
+	#	echo ""
+	#	echo "tail on errors..."
+	#	ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "$tailCommand"
+	#fi
 }
 
 echo -n "deploy su mms cloud/test? " 

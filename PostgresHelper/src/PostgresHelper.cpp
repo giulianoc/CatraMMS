@@ -352,7 +352,7 @@ string PostgresHelper::getQueryColumn(
 		if (requestedTableNameAlias.empty())
 			queryColumn = std::format(
 				"EXTRACT(EPOCH FROM {0} AT TIME ZONE 'UTC') * 1000 as {1}, "
-				"to_char({0}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as \"{1}:iso\"", // output: 2018-11-01T15:21:24Z
+				"to_char({0}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as \"{1}:iso\"", // output: 2018-11-01T15:21:24.000Z
 				sqlColumnSchema->columnName, columnName
 			);
 		else

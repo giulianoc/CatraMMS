@@ -10,7 +10,10 @@ void StatisticTimer::start(string label)
 {
 	auto it = _uncompletedTimers.find(label);
 	if (it != _uncompletedTimers.end())
-		SPDLOG_ERROR("StatisticTimer ({}): start cannot be done because the label ({}) is already present", _name, label);
+	{
+		SPDLOG_WARN("StatisticTimer ({}): the label ({}) is already present, we will update the time", _name, label);
+		it->second = chrono::system_clock::now();
+	}
 	else
 		_uncompletedTimers.insert(make_pair(label, chrono::system_clock::now()));
 }
@@ -21,7 +24,7 @@ chrono::system_clock::duration StatisticTimer::stop(string label)
 
 	auto it = _uncompletedTimers.find(label);
 	if (it == _uncompletedTimers.end())
-		SPDLOG_ERROR("StatisticTimer ({}): stop cannot be done because the label ({}) is not present", _name, label);
+		SPDLOG_WARN("StatisticTimer ({}): stop cannot be done because the label ({}) is not present", _name, label);
 	else
 	{
 		chrono::system_clock::time_point start = it->second;
@@ -37,7 +40,7 @@ chrono::system_clock::duration StatisticTimer::stop(string label)
 string StatisticTimer::toString()
 {
 	if (_uncompletedTimers.size() > 0)
-		SPDLOG_ERROR(
+		SPDLOG_WARN(
 			"StatisticTimer ({}) has {} timers not stopped: {}", _name, _uncompletedTimers.size(),
 			accumulate(
 				begin(_uncompletedTimers), end(_uncompletedTimers), string(),
@@ -62,7 +65,7 @@ string StatisticTimer::toString()
 json StatisticTimer::toJson()
 {
 	if (_uncompletedTimers.size() > 0)
-		SPDLOG_ERROR(
+		SPDLOG_WARN(
 			"StatisticTimer ({}) has {} timers not stopped: {}", _name, _uncompletedTimers.size(),
 			accumulate(
 				begin(_uncompletedTimers), end(_uncompletedTimers), string(),
