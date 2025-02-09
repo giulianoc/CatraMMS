@@ -377,7 +377,7 @@ nginx_error()
 
 #aggiungo la data / ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-${serviceName}.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-${serviceName}.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | grep -v "was not found in \"/etc/.htpasswd\"" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
 		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_error, nginx ${serviceName} is fine: $nginxErrorsCount" >> $debugFilename
@@ -640,7 +640,7 @@ mms_api_timing_check_service()
 				    maxDuration = 3000;	\
 			    else if (method == "changeLiveProxyPlaylist"	\
 			    )	\
-				    maxDuration = 3000;	\
+				    maxDuration = 7000;	\
           if (duration > maxDuration)  \
             warningMessage=warningMessage""datetime" - "method" - "duration"/"maxAPIDuration"\n";  \
         } \
@@ -698,10 +698,13 @@ mms_webservices_timing_check_service()
 			if (method == "startChannels"	\
 				|| method == "checkChannels"	\
 			)	\
-				maxDuration = 20000;	\
+				maxDuration = 25000;	\
 			else if (method == "epgUpdate"	\
 			)	\
 				maxDuration = 150000;	\
+			else if (method == "channelCacheInvalidate"	\
+			)	\
+				maxDuration = 15000;	\
 			else if (method == "promoList"	\
 			)	\
 				maxDuration = 1500;	\

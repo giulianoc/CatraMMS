@@ -281,6 +281,14 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
 							);
+
+							json parameters = _mmsEngineDBFacade->encodingJob_columnAsJson("parameters", _encodingItem->_encodingJobKey, true);
+							SPDLOG_INFO(
+								"liveProxy AAAAA APPENA SCRITTO"
+								", encodingJobKey: {}"
+								", parameters: {}",
+								_encodingItem->_encodingJobKey, JSONUtils::toString(parameters)
+							);
 						}
 						catch (runtime_error &e)
 						{
