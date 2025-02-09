@@ -1835,12 +1835,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							encodingType == MMSEngineDBFacade::EncodingType::Countdown)
 							_encodingItem->_encodingParametersRoot =
 								_mmsEngineDBFacade->encodingJob_columnAsJson("parameters", _encodingItem->_encodingJobKey, true);
-						SPDLOG_INFO(
-							"waitingLiveProxyOrLiveRecorder AAAAA APPENA LETTO"
-							", encodingJobKey: {}"
-							", parameters: {}",
-							_encodingItem->_encodingJobKey, JSONUtils::toString(_encodingItem->_encodingParametersRoot)
-						);
 
 						// 2024-12-01: ricarichiamo ingestedParameters perchè potrebbe essere stato modificato con un nuovo 'encodersDetails' (nello
 						// scenario in cui si vuole eseguire lo switch di un ingestionjob su un nuovo encoder)

@@ -189,7 +189,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							// throw e;
+							throw e;
 						}
 						catch (exception &e)
 						{
@@ -200,7 +200,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 							);
 
-							// throw e;
+							throw e;
 						}
 					}
 
@@ -281,17 +281,15 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
 							);
-
-							json parameters = _mmsEngineDBFacade->encodingJob_columnAsJson("parameters", _encodingItem->_encodingJobKey, true);
-							SPDLOG_INFO(
-								"liveProxy AAAAA APPENA SCRITTO"
-								", encodingJobKey: {}"
-								", parameters: {}",
-								_encodingItem->_encodingJobKey, JSONUtils::toString(parameters)
-							);
 						}
 						catch (runtime_error &e)
 						{
+							// 2025-02-09: scenario:
+							// - la conf della cdn77 era errata, conteneva uno \n a causa di un errato copia e incolla
+							// - updateOutputRtmpAndPlaURL falliva e dava una eccezione
+							// - questo catch aveva il throw commentato, quindi la procedura andava avanti
+							// - la libreria FFMgeg dava un errore perchè non trovava il campo rtmpurl nel json e non poteva costruire il comando
+							// ffmpeg Per cui questo è un errore bloccante e quindi ripristino il throw
 							SPDLOG_ERROR(
 								"updateEncodingJobParameters failed"
 								", _ingestionJobKey: {}"
@@ -300,7 +298,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							// throw e;
+							throw e;
 						}
 						catch (exception &e)
 						{
@@ -312,7 +310,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							// throw e;
+							throw e;
 						}
 					}
 				}
@@ -381,7 +379,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							// throw e;
+							throw e;
 						}
 						catch (exception &e)
 						{
@@ -393,7 +391,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							// throw e;
+							throw e;
 						}
 					}
 				}
@@ -470,7 +468,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							// throw e;
+							throw e;
 						}
 						catch (exception &e)
 						{
@@ -482,7 +480,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							// throw e;
+							throw e;
 						}
 					}
 				}
