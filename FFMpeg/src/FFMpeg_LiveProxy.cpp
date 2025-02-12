@@ -1697,9 +1697,7 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 			}
 		}
 
-		string otherInputOptions;
-		field = "otherInputOptions";
-		otherInputOptions = JSONUtils::asString(vodInputRoot, field, "");
+		string otherInputOptions = JSONUtils::asString(vodInputRoot, "otherInputOptions");
 
 		time_t utcNow;
 		{

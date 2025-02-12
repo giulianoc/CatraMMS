@@ -2386,7 +2386,10 @@ class MMSEngineDBFacade
 		bool pushUriToBeAdded
 	);
 
-	json getVodInputRoot(MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot);
+	json getVodInputRoot(
+		MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot,
+		string otherInputOptions
+	);
 
 	json getCountdownInputRoot(
 		string mmsSourceVideoAssetPathName, string mmsSourceVideoAssetDeliveryURL, int64_t physicalPathKey, int64_t videoDurationInMilliSeconds,

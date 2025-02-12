@@ -1851,15 +1851,15 @@ string MMSEngineDBFacade::getStreamPushServerUrl(
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
 json MMSEngineDBFacade::getVodInputRoot(
-	MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot
+	MMSEngineDBFacade::ContentType vodContentType, vector<tuple<int64_t, string, string, string>> &sources, json filtersRoot, string otherInputOptions
 )
 {
 	json vodInputRoot;
 
 	try
 	{
-		string field = "vodContentType";
-		vodInputRoot[field] = MMSEngineDBFacade::toString(vodContentType);
+		vodInputRoot["vodContentType"] = MMSEngineDBFacade::toString(vodContentType);
+		vodInputRoot["otherInputOptions"] = otherInputOptions;
 
 		json sourcesRoot = json::array();
 
@@ -1874,26 +1874,20 @@ json MMSEngineDBFacade::getVodInputRoot(
 
 			json sourceRoot;
 
-			field = "mediaItemTitle";
-			sourceRoot[field] = mediaItemTitle;
+			sourceRoot["mediaItemTitle"] = mediaItemTitle;
 
-			field = "sourcePhysicalPathName";
-			sourceRoot[field] = sourcePhysicalPathName;
+			sourceRoot["sourcePhysicalPathName"] = sourcePhysicalPathName;
 
-			field = "physicalPathKey";
-			sourceRoot[field] = physicalPathKey;
+			sourceRoot["physicalPathKey"] = physicalPathKey;
 
-			field = "sourcePhysicalDeliveryURL";
-			sourceRoot[field] = sourcePhysicalDeliveryURL;
+			sourceRoot["sourcePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
 
 			sourcesRoot.push_back(sourceRoot);
 		}
 
-		field = "sources";
-		vodInputRoot[field] = sourcesRoot;
+		vodInputRoot["sources"] = sourcesRoot;
 
-		field = "filters";
-		vodInputRoot[field] = filtersRoot;
+		vodInputRoot["filters"] = filtersRoot;
 	}
 	catch (runtime_error &e)
 	{

@@ -10,9 +10,12 @@ void SlideShow::encodeContent(json metadataRoot)
 {
 	string api = "slideShow";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey)
-		// + ", requestBody: " + requestBody already logged
+	SPDLOG_INFO(
+		"Received {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", requestBody: {}",
+		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	try
@@ -49,10 +52,14 @@ void SlideShow::encodeContent(json metadataRoot)
 					field = "sourceFileExtension";
 					if (!JSONUtils::isMetadataPresent(imageRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-											  ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -61,10 +68,14 @@ void SlideShow::encodeContent(json metadataRoot)
 					field = "sourcePhysicalDeliveryURL";
 					if (!JSONUtils::isMetadataPresent(imageRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-											  ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -73,10 +84,14 @@ void SlideShow::encodeContent(json metadataRoot)
 					field = "sourceTranscoderStagingAssetPathName";
 					if (!JSONUtils::isMetadataPresent(imageRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-											  ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -88,9 +103,12 @@ void SlideShow::encodeContent(json metadataRoot)
 						{
 							string directoryPathName = sourceTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(
-								__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+							SPDLOG_INFO(
+								"Creating directory"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", directoryPathName: {}",
+								_ingestionJobKey, _encodingJobKey, directoryPathName
 							);
 							fs::create_directories(directoryPathName);
 							fs::permissions(
@@ -126,10 +144,14 @@ void SlideShow::encodeContent(json metadataRoot)
 					field = "sourceFileExtension";
 					if (!JSONUtils::isMetadataPresent(audioRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-											  ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -138,10 +160,14 @@ void SlideShow::encodeContent(json metadataRoot)
 					field = "sourcePhysicalDeliveryURL";
 					if (!JSONUtils::isMetadataPresent(audioRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-											  ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -150,10 +176,14 @@ void SlideShow::encodeContent(json metadataRoot)
 					field = "sourceTranscoderStagingAssetPathName";
 					if (!JSONUtils::isMetadataPresent(audioRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-											  ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", Field: {}",
+							_ingestionJobKey, _encodingJobKey, field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -165,9 +195,12 @@ void SlideShow::encodeContent(json metadataRoot)
 						{
 							string directoryPathName = sourceTranscoderStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(
-								__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+							SPDLOG_INFO(
+								"Creating directory"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", directoryPathName: {}",
+								_ingestionJobKey, _encodingJobKey, directoryPathName
 							);
 							fs::create_directories(directoryPathName);
 							fs::permissions(
@@ -197,9 +230,14 @@ void SlideShow::encodeContent(json metadataRoot)
 			field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -211,9 +249,12 @@ void SlideShow::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(
-						__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+					SPDLOG_INFO(
+						"Creating directory"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", directoryPathName: {}",
+						_ingestionJobKey, _encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -230,9 +271,14 @@ void SlideShow::encodeContent(json metadataRoot)
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -248,39 +294,50 @@ void SlideShow::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
 
-		_logger->info(
-			__FILEREF__ + "slideShow finished" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey)
+		SPDLOG_INFO(
+			"slideShow finished"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			_ingestionJobKey, _encodingJobKey
 		);
 
 		if (externalEncoder)
 		{
 			for (string imagePathName : imagesPathNames)
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", imagePathName: " + imagePathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", imagePathName: {}",
+					_ingestionJobKey, _encodingJobKey, imagePathName
 				);
-
 				fs::remove_all(imagePathName);
 			}
 
 			for (string audioPathName : audiosPathNames)
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", audioPathName: " + audioPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", audioPathName: {}",
+					_ingestionJobKey, _encodingJobKey, audioPathName
 				);
-
 				fs::remove_all(audioPathName);
 			}
 
 			field = "targetFileFormat";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}

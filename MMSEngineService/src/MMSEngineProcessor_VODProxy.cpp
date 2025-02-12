@@ -262,9 +262,11 @@ void MMSEngineProcessor::manageVODProxy(
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				filtersRoot = parametersRoot[field];
 
+			string otherInputOptions = JSONUtils::asString(parametersRoot, "otherInputOptions");
+
 			// same json structure is used in
 			// API_Ingestion::changeLiveProxyPlaylist
-			json vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(vodContentType, sources, filtersRoot);
+			json vodInputRoot = _mmsEngineDBFacade->getVodInputRoot(vodContentType, sources, filtersRoot, otherInputOptions);
 
 			json inputRoot;
 			{

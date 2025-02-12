@@ -10,9 +10,12 @@ void PictureInPicture::encodeContent(json metadataRoot)
 {
 	string api = "pictureInPicture";
 
-	_logger->info(
-		__FILEREF__ + "Received " + api + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey) +
-		", requestBody: " + JSONUtils::toString(metadataRoot)
+	SPDLOG_INFO(
+		"Received {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", requestBody: {}",
+		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	try
@@ -32,9 +35,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			string field = "mainSourceFileExtension";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -46,9 +54,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			string field = "overlaySourceFileExtension";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -65,9 +78,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				string field = "mainSourceTranscoderStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -79,9 +97,12 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = mainSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(
-							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+						SPDLOG_INFO(
+							"Creating directory"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}",
+							_ingestionJobKey, _encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -96,9 +117,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				field = "mainSourcePhysicalDeliveryURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -114,9 +140,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				string field = "overlaySourceTranscoderStagingAssetPathName";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -128,9 +159,12 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = overlaySourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(
-							__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+						SPDLOG_INFO(
+							"Creating directory"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}",
+							_ingestionJobKey, _encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -145,9 +179,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				field = "overlaySourcePhysicalDeliveryURL";
 				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-										  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", Field: {}",
+						_ingestionJobKey, _encodingJobKey, field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -162,9 +201,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			string field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -176,9 +220,12 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					_logger->info(
-						__FILEREF__ + "Creating directory" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingJobKey) + ", directoryPathName: " + directoryPathName
+					SPDLOG_INFO(
+						"Creating directory"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", directoryPathName: {}",
+						_ingestionJobKey, _encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -195,9 +242,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			string field = "mainSourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -206,9 +258,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			field = "overlaySourceAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -217,9 +274,14 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingJobKey) + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", Field: {}",
+					_ingestionJobKey, _encodingJobKey, field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -251,28 +313,35 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
 
-		_logger->info(
-			__FILEREF__ + "PictureInPicture encoding content finished" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", encodedStagingAssetPathName: " + encodedStagingAssetPathName
+		SPDLOG_INFO(
+			"PictureInPicture encoding content finished"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", encodedStagingAssetPathName: {}",
+			_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName
 		);
 
 		if (externalEncoder)
 		{
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", mainSourceAssetPathName: " + mainSourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", mainSourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, mainSourceAssetPathName
 				);
-
 				fs::remove_all(mainSourceAssetPathName);
 			}
 
 			{
-				_logger->info(
-					__FILEREF__ + "Remove file" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingJobKey) + ", overlaySourceAssetPathName: " + overlaySourceAssetPathName
+				SPDLOG_INFO(
+					"Remove file"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", overlaySourceAssetPathName: {}",
+					_ingestionJobKey, _encodingJobKey, overlaySourceAssetPathName
 				);
-
 				fs::remove_all(overlaySourceAssetPathName);
 			}
 

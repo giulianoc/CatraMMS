@@ -10,6 +10,7 @@
 #include "JSONUtils.h"
 #include "LiveRecorderDaemons.h"
 #include "MMSStorage.h"
+#include "spdlog/spdlog.h"
 
 chrono::system_clock::time_point lastSIGSEGVSignal = chrono::system_clock::now();
 void signalHandler(int signal)
@@ -148,7 +149,11 @@ int main(int argc, char **argv)
 		FCGX_Init();
 
 		int threadsNumber = JSONUtils::asInt(configurationRoot["ffmpeg"], "encoderThreadsNumber", 1);
-		logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderThreadsNumber: " + to_string(threadsNumber));
+		SPDLOG_INFO(
+			"Configuration item"
+			", ffmpeg->encoderThreadsNumber: {}",
+			threadsNumber
+		);
 
 		mutex fcgiAcceptMutex;
 
@@ -181,7 +186,7 @@ int main(int argc, char **argv)
 		{
 			// int maxEncodingsCapability =  JSONUtils::asInt(
 			// 	encoderCapabilityConfiguration["ffmpeg"], "maxEncodingsCapability", 1);
-			// logger->info(__FILEREF__ + "Configuration item"
+			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
 			// );
 
@@ -197,7 +202,7 @@ int main(int argc, char **argv)
 
 			// int maxLiveProxiesCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
 			// 		"maxLiveProxiesCapability", 10);
-			// logger->info(__FILEREF__ + "Configuration item"
+			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
 			// );
 
@@ -214,7 +219,7 @@ int main(int argc, char **argv)
 
 			// int maxLiveRecordingsCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
 			// 		"maxLiveRecordingsCapability", 10);
-			// logger->info(__FILEREF__ + "Configuration item"
+			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)
 			// );
 
@@ -307,7 +312,7 @@ int main(int argc, char **argv)
 
 		CurlWrapper::globalTerminate();
 
-		logger->info(__FILEREF__ + "FFMPEGEncoder shutdown");
+		SPDLOG_INFO("FFMPEGEncoder shutdown");
 	}
 	catch (runtime_error &e)
 	{

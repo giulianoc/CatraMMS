@@ -5358,8 +5358,10 @@ void API::changeLiveProxyPlaylist(
 							}
 						}
 
-						field = "filters";
-						json filtersRoot = JSONUtils::asJson(broadcastDefaultPlaylistItemRoot, field, json());
+						json filtersRoot = JSONUtils::asJson(broadcastDefaultPlaylistItemRoot, "filters", json());
+
+						string otherInputOptions = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, "otherInputOptions");
+
 						/*
 						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
 							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
@@ -5367,7 +5369,7 @@ void API::changeLiveProxyPlaylist(
 
 						// the same json structure is used in
 						// MMSEngineProcessor::manageVODProxy
-						broadcastDefaultVodInputRoot = _mmsEngineDBFacade->getVodInputRoot(vodContentType, sources, filtersRoot);
+						broadcastDefaultVodInputRoot = _mmsEngineDBFacade->getVodInputRoot(vodContentType, sources, filtersRoot, otherInputOptions);
 					}
 					else if (broadcastDefaultMediaType == "Countdown")
 					{

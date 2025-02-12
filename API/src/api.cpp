@@ -221,20 +221,32 @@ int main(int argc, char **argv)
 
 #ifdef __POSTGRES__
 		size_t masterDbPoolSize = JSONUtils::asInt(configuration["postgres"]["master"], "apiPoolSize", 5);
-		logger->info(__FILEREF__ + "Configuration item" + ", postgres->master->apiPoolSize: " + to_string(masterDbPoolSize));
+		SPDLOG_INFO(
+			"Configuration item"
+			", postgres->master->apiPoolSize: {}",
+			masterDbPoolSize
+		);
 		size_t slaveDbPoolSize = JSONUtils::asInt(configuration["postgres"]["slave"], "apiPoolSize", 5);
-		logger->info(__FILEREF__ + "Configuration item" + ", postgres->slave->apiPoolSize: " + to_string(slaveDbPoolSize));
+		SPDLOG_INFO(
+			"Configuration item"
+			", postgres->slave->apiPoolSize: {}",
+			slaveDbPoolSize
+		);
 #else
 		size_t masterDbPoolSize = JSONUtils::asInt(configuration["database"]["master"], "apiPoolSize", 5);
-		logger->info(__FILEREF__ + "Configuration item" + ", database->master->apiPoolSize: " + to_string(masterDbPoolSize));
+		info(__FILEREF__ + "Configuration item" + ", database->master->apiPoolSize: " + to_string(masterDbPoolSize));
 		size_t slaveDbPoolSize = JSONUtils::asInt(configuration["database"]["slave"], "apiPoolSize", 5);
-		logger->info(__FILEREF__ + "Configuration item" + ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize));
+		info(__FILEREF__ + "Configuration item" + ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize));
 #endif
-		logger->info(__FILEREF__ + "Creating MMSEngineDBFacade");
+		SPDLOG_INFO("Creating MMSEngineDBFacade");
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade =
 			make_shared<MMSEngineDBFacade>(configuration, configuration["log"]["api"]["slowQuery"], masterDbPoolSize, slaveDbPoolSize, logger);
 
-		logger->info(__FILEREF__ + "Creating MMSStorage" + ", noFileSystemAccess: " + to_string(noFileSystemAccess));
+		SPDLOG_INFO(
+			"Creating MMSStorage"
+			", noFileSystemAccess: {}",
+			noFileSystemAccess
+		);
 		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, mmsEngineDBFacade, configuration, logger);
 
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
@@ -243,7 +255,11 @@ int main(int argc, char **argv)
 		FCGX_Init();
 
 		int threadsNumber = JSONUtils::asInt(configuration["api"], "threadsNumber", 1);
-		logger->info(__FILEREF__ + "Configuration item" + ", api->threadsNumber: " + to_string(threadsNumber));
+		SPDLOG_INFO(
+			"Configuration item"
+			", api->threadsNumber: {}",
+			threadsNumber
+		);
 
 		mutex fcgiAcceptMutex;
 		API::FileUploadProgressData fileUploadProgressData;
@@ -274,7 +290,7 @@ int main(int argc, char **argv)
 			apis[0]->stopUploadFileProgressThread();
 		}
 
-		logger->info(__FILEREF__ + "API shutdown");
+		SPDLOG_INFO("API shutdown");
 
 		// libxml
 		{

@@ -1,3 +1,4 @@
+#!/bin/bash
 
 if [ $# -lt 6 -o $# -gt 8 ]; then
 	echo "Usage: $0 <mmsUserKey> <mmsAPIKey> <title> <tag> <uniqueName> <ingester> [<retention> <fileFormat>]"
@@ -24,6 +25,9 @@ else
 	fileFormat="mp4"
 fi
 
+scriptPathName=$(readlink -f "$0")
+scriptDirectory=$(dirname "$scriptPathName")
+
 #if ! command -v jq &> /dev/null
 if ! [ -x "$(command -v jq)" ]
 then
@@ -32,14 +36,14 @@ then
     exit
 fi
 
-sed "s/\${title}/$title/g" ./helper/ingestionWorkflow.json | sed "s/\${tag}/$tag/g" | sed "s/\${ingester}/$ingester/g" | sed "s/\${retention}/$retention/g" | sed "s/\${fileFormat}/$fileFormat/g" > ./helper/ingestionWorkflow.json.new
+sed "s/\${title}/$title/g" $scriptDirectory/ingestionWorkflow.json | sed "s/\${tag}/$tag/g" | sed "s/\${uniqueName}/$uniqueName/g" | sed "s/\${ingester}/$ingester/g" | sed "s/\${retention}/$retention/g" | sed "s/\${fileFormat}/$fileFormat/g" > $scriptDirectory/ingestionWorkflow.json.new
 
-curl -o ./helper/ingestionWorkflowResult.json -k -s -X POST -u $mmsUserKey:$mmsAPIKey -d @./helper/ingestionWorkflow.json.new -H "Content-Type: application/json" https://$mmsAPIHostName/catramms/1.0.1/workflow
+curl -o $scriptDirectory/ingestionWorkflowResult.json -k -s -X POST -u $mmsUserKey:$mmsAPIKey -d @$scriptDirectory/ingestionWorkflow.json.new -H "Content-Type: application/json" https://$mmsAPIHostName/catramms/1.0.1/workflow
 
-rm ./helper/ingestionWorkflow.json.new
+rm $scriptDirectory/ingestionWorkflow.json.new
 
 #print ingestionJobKey
-jq '.tasks[] | select(.type == "Add-Content") | .ingestionJobKey' ./helper/ingestionWorkflowResult.json
+jq '.tasks[] | select(.type == "Add-Content") | .ingestionJobKey' $scriptDirectory/ingestionWorkflowResult.json
 
 #2022-06-29: not removed because printed by the caller script in case of error
 #	The file is also removed by the caller script
