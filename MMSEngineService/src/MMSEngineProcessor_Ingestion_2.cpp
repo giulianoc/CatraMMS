@@ -162,17 +162,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 
 			workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(localAssetIngestionEvent.getWorkspace());
 			workspaceIngestionBinaryPathName.append("/").append(localAssetIngestionEvent.getIngestionSourceFileName());
-			// 2025-02-14: viene aggiunto un profilo di encoding ad un mediaitem e viene eseguito da un encoder esterno.
-			// 	Per aggiungerlo il file viene ingestato tramite PUSH con il nome <ingestionkey>_source nella workspace ingestion directory.
-			// 	Il nome del file finale sarà <ingestionkey>_source.<encoding file format>.
-			// 	Il blocco che segue semplicemente aggiunge al nome '-'<encoding profile key> in modo che il file finale sarà
-			// 	<ingestionkey>_source-<encoding profile key>.<encoding file format>
-			// 	E' puramente un cambio estetico del nome del file. Se dovesse creare problemi puo essere eliminato
-			{
-				int64_t encodingProfileKey = JSONUtils::asInt64(parametersRoot, "encodingProfileKey", -1);
-				if (encodingProfileKey != -1)
-					workspaceIngestionBinaryPathName.append(std::format("-{}", encodingProfileKey));
-			}
 
 			string field = "fileFormat";
 			string fileFormat = JSONUtils::asString(parametersRoot, field, "");
