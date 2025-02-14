@@ -112,7 +112,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 
 	if (!JSONUtils::isMetadataPresent(filterRoot, "type"))
 	{
-		string errorMessage = string("filterRoot->type field does not exist");
+		string errorMessage = "filterRoot->type field does not exist";
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -554,7 +554,7 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 		}
 		else
 		{
-			string errorMessage = string("filterRoot->frameType is unknown");
+			string errorMessage = "filterRoot->frameType is unknown";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -581,7 +581,11 @@ string FFMpegFilters::getFilter(json filterRoot, int64_t streamingDurationInSeco
 	}
 	else
 	{
-		string errorMessage = string("filterRoot->type is unknown") + ", type: " + type;
+		string errorMessage = std::format(
+			"filterRoot->type is unknown"
+			", type: {}",
+			type
+		);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);

@@ -243,7 +243,7 @@ format code  extension  resolution note
 		{
 			string errorMessage =
 				__FILEREF__ + "retrieveStreamingYouTubeURL: no format code found" + ", ingestionJobKey: " + to_string(ingestionJobKey);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -252,7 +252,7 @@ format code  extension  resolution note
 	{
 		string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profile error processing or format code not found" +
 							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		if (fs::exists(detailsYouTubeProfilesPath))
 		{
@@ -266,7 +266,7 @@ format code  extension  resolution note
 	{
 		string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profiles error processing" +
 							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		if (fs::exists(detailsYouTubeProfilesPath))
 		{
@@ -299,7 +299,7 @@ format code  extension  resolution note
 				string errorMessage =
 					__FILEREF__ + "retrieveStreamingYouTubeURL: youTube command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", executeCommandStatus: " + to_string(executeCommandStatus) + ", youTubeExecuteCommand: " + youTubeExecuteCommand;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey);
@@ -311,7 +311,7 @@ format code  extension  resolution note
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", executeCommandStatus: " + to_string(executeCommandStatus) +
 									  ", youTubeExecuteCommand: " + youTubeExecuteCommand;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: command failed. no URL file created" +
@@ -350,7 +350,7 @@ format code  extension  resolution note
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed" +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			if (fs::exists(detailsYouTubeURLPath))
 			{
@@ -364,7 +364,7 @@ format code  extension  resolution note
 		{
 			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed" +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			if (fs::exists(detailsYouTubeURLPath))
 			{

@@ -13,6 +13,7 @@
 #include "FFMpegEncodingParameters.h"
 #include "FFMpegFilters.h"
 #include "JSONUtils.h"
+#include "spdlog/spdlog.h"
 #include <filesystem>
 #include <fstream>
 #include <regex>
@@ -91,18 +92,24 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: init failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: init failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: init failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: init failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
@@ -300,7 +307,11 @@ void FFMpegEncodingParameters::applyEncoding(
 							string segmentDirectory =
 								regex_replace(segmentTemplateDirectory, regex(_multiTrackTemplateVariable), to_string(videoHeight));
 
-							_logger->info(__FILEREF__ + "Creating directory" + ", : " + segmentDirectory);
+							SPDLOG_INFO(
+								"Creating directory"
+								", segmentDirectory: {}",
+								segmentDirectory
+							);
 							fs::create_directories(segmentDirectory);
 							fs::permissions(
 								segmentDirectory,
@@ -411,7 +422,11 @@ void FFMpegEncodingParameters::applyEncoding(
 					{
 						string segmentDirectory = regex_replace(segmentTemplateDirectory, regex(_multiTrackTemplateVariable), to_string(videoHeight));
 
-						_logger->info(__FILEREF__ + "Creating directory" + ", : " + segmentDirectory);
+						SPDLOG_INFO(
+							"Creating directory"
+							", segmentDirectory: {}",
+							segmentDirectory
+						);
 						fs::create_directories(segmentDirectory);
 						fs::permissions(
 							segmentDirectory,
@@ -893,18 +908,24 @@ void FFMpegEncodingParameters::applyEncoding(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: applyEncoding failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: applyEncoding failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: applyEncoding failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: applyEncoding failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
@@ -961,29 +982,39 @@ void FFMpegEncodingParameters::createManifestFile()
 			masterManifest += manifestRelativePathName + endLine;
 		}
 
-		string masterManifestPathFileName = _encodedStagingAssetPathName + "/" + manifestFileName;
+		string masterManifestPathFileName = std::format("{}/{}", _encodedStagingAssetPathName, manifestFileName);
 
-		_logger->info(
-			__FILEREF__ + "Writing Master Manifest File" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " +
-			to_string(_encodingJobKey) + ", masterManifestPathFileName: " + masterManifestPathFileName + ", masterManifest: " + masterManifest
+		SPDLOG_INFO(
+			"Writing Master Manifest File"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", masterManifestPathFileName: {}"
+			", masterManifest: {}",
+			_ingestionJobKey, _encodingJobKey, masterManifestPathFileName, masterManifest
 		);
 		ofstream ofMasterManifestFile(masterManifestPathFileName);
 		ofMasterManifestFile << masterManifest;
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: createManifestFile_audioGroup failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: createManifestFile_audioGroup failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
@@ -1049,9 +1080,11 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 
 		ffmpegAudioBitRateParameter = _audioBitRatesInfo[0];
 
-		_logger->info(
-			__FILEREF__ + "Special encoding in order to allow audio/language selection by the player" +
-			", _ingestionJobKey: " + to_string(_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingJobKey)
+		SPDLOG_INFO(
+			"Special encoding in order to allow audio/language selection by the player"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			_ingestionJobKey, _encodingJobKey
 		);
 
 		// the manifestFileName naming convention is used also in EncoderVideoAudioProxy.cpp
@@ -1315,18 +1348,24 @@ void FFMpegEncodingParameters::applyEncoding_audioGroup(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: applyEncoding_audioGroup failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: applyEncoding_audioGroup failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: applyEncoding_audioGroup failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: applyEncoding_audioGroup failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
@@ -1386,18 +1425,24 @@ void FFMpegEncodingParameters::createManifestFile_audioGroup()
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: createManifestFile_audioGroup failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: createManifestFile_audioGroup failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
@@ -1425,18 +1470,24 @@ string FFMpegEncodingParameters::getManifestFileName()
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: createManifestFile_audioGroup failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "FFMpeg: createManifestFile_audioGroup failed" + ", _ingestionJobKey: " + to_string(_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingJobKey) + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"FFMpeg: createManifestFile_audioGroup failed"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", e.what(): {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
 		);
 
 		throw e;
@@ -1464,10 +1515,9 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 	{
 		string sEncodingProfileDetailsRoot = JSONUtils::toString(encodingProfileDetailsRoot);
 
-		logger->info(
-			__FILEREF__ +
+		SPDLOG_INFO(
 			"settingFfmpegParameters"
-			", sEncodingProfileDetailsRoot: " +
+			", sEncodingProfileDetailsRoot: {}",
 			sEncodingProfileDetailsRoot
 		);
 	}
@@ -1479,8 +1529,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 		field = "fileFormat";
 		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-			logger->error(errorMessage);
+			string errorMessage = std::format(
+				"FFMpeg: Field is not present or it is null"
+				", Field: {}",
+				field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1579,8 +1633,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 				field = "codec";
 				if (!JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-					logger->error(errorMessage);
+					string errorMessage = std::format(
+						"FFMpeg: Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1623,7 +1681,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 						/*
 						string errorMessage = __FILEREF__ + "FFMpeg: codec is wrong"
 							+ ", codec: " + codec;
-						logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 						*/
@@ -1647,8 +1705,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 				field = "twoPasses";
 				if (!JSONUtils::isMetadataPresent(videoRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-					logger->error(errorMessage);
+					string errorMessage = std::format(
+						"FFMpeg: Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1712,8 +1774,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			field = "bitRates";
 			if (!JSONUtils::isMetadataPresent(videoRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-				logger->error(errorMessage);
+				string errorMessage = std::format(
+					"FFMpeg: Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1733,8 +1799,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 						field = "width";
 						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 						{
-							string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-							logger->error(errorMessage);
+							string errorMessage = std::format(
+								"FFMpeg: Field is not present or it is null"
+								", Field: {}",
+								field
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1745,8 +1815,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 						field = "height";
 						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 						{
-							string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-							logger->error(errorMessage);
+							string errorMessage = std::format(
+								"FFMpeg: Field is not present or it is null"
+								", Field: {}",
+								field
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1786,8 +1860,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 						field = "kBitRate";
 						if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 						{
-							string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-							logger->error(errorMessage);
+							string errorMessage = std::format(
+								"FFMpeg: Field is not present or it is null"
+								", Field: {}",
+								field
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1842,8 +1920,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 		field = "audio";
 		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-			logger->error(errorMessage);
+			string errorMessage = std::format(
+				"FFMpeg: Field is not present or it is null"
+				", Field: {}",
+				field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1855,8 +1937,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			field = "codec";
 			if (!JSONUtils::isMetadataPresent(audioRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-				logger->error(errorMessage);
+				string errorMessage = std::format(
+					"FFMpeg: Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1918,8 +2004,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 		field = "bitRates";
 		if (!JSONUtils::isMetadataPresent(audioRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-			logger->error(errorMessage);
+			string errorMessage = std::format(
+				"FFMpeg: Field is not present or it is null"
+				", Field: {}",
+				field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1936,8 +2026,12 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 					field = "kBitRate";
 					if (!JSONUtils::isMetadataPresent(bitRateInfo, field))
 					{
-						string errorMessage = __FILEREF__ + "FFMpeg: Field is not present or it is null" + ", Field: " + field;
-						logger->error(errorMessage);
+						string errorMessage = std::format(
+							"FFMpeg: Field is not present or it is null"
+							", Field: {}",
+							field
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1955,7 +2049,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
 void FFMpegEncodingParameters::addToArguments(string parameter, vector<string> &argumentList)
 {
-	// _logger->info(__FILEREF__ + "addToArguments"
+	// info(__FILEREF__ + "addToArguments"
 	// 		+ ", parameter: " + parameter
 	// );
 
@@ -1984,9 +2078,12 @@ void FFMpegEncodingParameters::encodingFileFormatValidation(string fileFormat, s
 		fileFormatLowerCase != "wmv" && fileFormatLowerCase != "yuv" && fileFormatLowerCase != "mpg" && fileFormatLowerCase != "mpeg" &&
 		fileFormatLowerCase != "mjpeg" && fileFormatLowerCase != "mxf")
 	{
-		string errorMessage = __FILEREF__ + "FFMpeg: fileFormat is wrong" + ", fileFormatLowerCase: " + fileFormatLowerCase;
-
-		logger->error(errorMessage);
+		string errorMessage = std::format(
+			"FFMpeg: fileFormat is wrong"
+			", fileFormatLowerCase: {}",
+			fileFormatLowerCase
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1996,9 +2093,12 @@ void FFMpegEncodingParameters::encodingAudioCodecValidation(string codec, shared
 {
 	if (codec != "aac" && codec != "libfdk_aac" && codec != "libvo_aacenc" && codec != "libvorbis" && codec != "pcm_s16le" && codec != "pcm_s32le")
 	{
-		string errorMessage = __FILEREF__ + "FFMpeg: Audio codec is wrong" + ", codec: " + codec;
-
-		logger->error(errorMessage);
+		string errorMessage = std::format(
+			"FFMpeg: Audio codec is wrong"
+			", codec: {}",
+			codec
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2011,9 +2111,13 @@ void FFMpegEncodingParameters::encodingVideoProfileValidation(string codec, stri
 		if (profile != "high" && profile != "baseline" && profile != "main" && profile != "high422" // used in case of mxf
 		)
 		{
-			string errorMessage = __FILEREF__ + "FFMpeg: Profile is wrong" + ", codec: " + codec + ", profile: " + profile;
-
-			logger->error(errorMessage);
+			string errorMessage = std::format(
+				"FFMpeg: Profile is wrong"
+				", codec: {}"
+				", profile: {}",
+				codec, profile
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2022,9 +2126,13 @@ void FFMpegEncodingParameters::encodingVideoProfileValidation(string codec, stri
 	{
 		if (profile != "best" && profile != "good")
 		{
-			string errorMessage = __FILEREF__ + "FFMpeg: Profile is wrong" + ", codec: " + codec + ", profile: " + profile;
-
-			logger->error(errorMessage);
+			string errorMessage = std::format(
+				"FFMpeg: Profile is wrong"
+				", codec: {}"
+				", profile: {}",
+				codec, profile
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2035,9 +2143,13 @@ void FFMpegEncodingParameters::encodingVideoProfileValidation(string codec, stri
 		{
 			if (profile.find_first_not_of("0123456789") != string::npos || stoi(profile) < 1 || stoi(profile) > 31)
 			{
-				string errorMessage = __FILEREF__ + "FFMpeg: Profile is wrong" + ", codec: " + codec + ", profile: " + profile;
-
-				logger->error(errorMessage);
+				string errorMessage = std::format(
+					"FFMpeg: Profile is wrong"
+					", codec: {}"
+					", profile: {}",
+					codec, profile
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2045,9 +2157,12 @@ void FFMpegEncodingParameters::encodingVideoProfileValidation(string codec, stri
 	}
 	else
 	{
-		string errorMessage = __FILEREF__ + "FFMpeg: codec is wrong" + ", codec: " + codec;
-
-		logger->error(errorMessage);
+		string errorMessage = std::format(
+			"FFMpeg: codec is wrong"
+			", codec: {}",
+			codec
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2069,21 +2184,33 @@ void FFMpegEncodingParameters::removeTwoPassesTemporaryFiles()
 				if (entry.path().filename().string().size() >= prefixPasslogFileName.size() &&
 					entry.path().filename().string().compare(0, prefixPasslogFileName.size(), prefixPasslogFileName) == 0)
 				{
-					_logger->info(__FILEREF__ + "Remove" + ", pathFileName: " + entry.path().string());
+					SPDLOG_INFO(
+						"Remove"
+						", pathFileName: {}",
+						entry.path().string()
+					);
 					fs::remove_all(entry.path());
 				}
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "listing directory failed" + ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"listing directory failed"
+					", e.what(): {}",
+					e.what()
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw e;
 			}
 			catch (exception &e)
 			{
-				string errorMessage = __FILEREF__ + "listing directory failed" + ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"listing directory failed"
+					", e.what(): {}",
+					e.what()
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw e;
 			}
@@ -2091,11 +2218,19 @@ void FFMpegEncodingParameters::removeTwoPassesTemporaryFiles()
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "removeTwoPassesTemporaryFiles failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"removeTwoPassesTemporaryFiles failed"
+			", e.what(): {}",
+			e.what()
+		);
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "removeTwoPassesTemporaryFiles failed");
+		SPDLOG_ERROR(
+			"removeTwoPassesTemporaryFiles failed"
+			", e.what(): {}",
+			e.what()
+		);
 	}
 }
 
@@ -2105,8 +2240,12 @@ string FFMpegEncodingParameters::getMultiTrackEncodedStagingTemplateAssetPathNam
 	size_t extensionIndex = _encodedStagingAssetPathName.find_last_of(".");
 	if (extensionIndex == string::npos)
 	{
-		string errorMessage = __FILEREF__ + "No extension found" + ", _encodedStagingAssetPathName: " + _encodedStagingAssetPathName;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"No extension found"
+			", _encodedStagingAssetPathName: {}",
+			_encodedStagingAssetPathName
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2155,7 +2294,11 @@ void FFMpegEncodingParameters::removeMultiTrackPathNames()
 
 	for (string sourcePathName : sourcesPathName)
 	{
-		_logger->info(__FILEREF__ + "Remove" + ", sourcePathName: " + sourcePathName);
+		SPDLOG_INFO(
+			"Remove"
+			", sourcePathName: {}",
+			sourcePathName
+		);
 		fs::remove_all(sourcePathName);
 	}
 }

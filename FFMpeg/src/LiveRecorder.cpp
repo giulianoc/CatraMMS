@@ -92,7 +92,7 @@ void FFMpeg::liveRecorder(
 			string errorMessage = __FILEREF__ + "No segmentListPath find in the segment path name" +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 								  ", segmentListPathName: " + segmentListPathName;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -169,7 +169,7 @@ void FFMpeg::liveRecorder(
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 								  ", utcNow: " + to_string(utcNow) + ", utcRecordingPeriodStartFixed: " + to_string(utcRecordingPeriodStartFixed) +
 								  ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd) + ", tooLateTime: " + to_string(tooLateTime);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -608,7 +608,7 @@ void FFMpeg::liveRecorder(
 						string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" +
 											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 											  ", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
@@ -787,7 +787,7 @@ void FFMpeg::liveRecorder(
 				{
 					string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", rtmpUrl: " + rtmpUrl;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -852,7 +852,7 @@ void FFMpeg::liveRecorder(
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							;
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -864,7 +864,7 @@ void FFMpeg::liveRecorder(
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							;
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 							*/
@@ -900,7 +900,7 @@ void FFMpeg::liveRecorder(
 						string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" +
 											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 											  ", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
@@ -997,7 +997,7 @@ void FFMpeg::liveRecorder(
 							+ ", encodingJobKey: " + to_string(encodingJobKey)
 							+ ", e.what(): " + e.what()
 						;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						// throw e;
 					}
@@ -1150,7 +1150,7 @@ void FFMpeg::liveRecorder(
 						string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" +
 											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 											  ", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
@@ -1329,7 +1329,7 @@ void FFMpeg::liveRecorder(
 				{
 					string errorMessage = __FILEREF__ + "udpUrl cannot be empty" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", udpUrl: " + udpUrl;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1394,7 +1394,7 @@ void FFMpeg::liveRecorder(
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							;
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1406,7 +1406,7 @@ void FFMpeg::liveRecorder(
 								+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 								+ ", encodingJobKey: " + to_string(encodingJobKey)
 							;
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 							*/
@@ -1442,7 +1442,7 @@ void FFMpeg::liveRecorder(
 						string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" +
 											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 											  ", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
@@ -1557,7 +1557,7 @@ void FFMpeg::liveRecorder(
 			{
 				string errorMessage = __FILEREF__ + "liveRecording. Wrong output type" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", encodingJobKey: " + to_string(encodingJobKey) + ", outputType: " + outputType;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1663,7 +1663,7 @@ void FFMpeg::liveRecorder(
 						", iReturnedStatus: " + to_string(iReturnedStatus) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
 						", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
 						", difference between real and expected duration: " + to_string(realDuration - streamingDuration);
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// in case of IP_PUSH the monitor thread, in case the client does not
 					// reconnect istantaneously, kills the process.
@@ -1717,7 +1717,7 @@ void FFMpeg::liveRecorder(
 					", encodingJobKey: " + to_string(encodingJobKey) + ", iReturnedStatus: " + to_string(iReturnedStatus) +
 					", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
 					", difference between real and expected duration: " + to_string(realDuration - streamingDuration);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "liveRecorder: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1764,7 +1764,7 @@ void FFMpeg::liveRecorder(
 							string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 												  ", encodingJobKey: " + to_string(encodingJobKey) +
 												  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
@@ -1773,7 +1773,7 @@ void FFMpeg::liveRecorder(
 							string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 												  ", encodingJobKey: " + to_string(encodingJobKey) +
 												  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
@@ -1799,7 +1799,7 @@ void FFMpeg::liveRecorder(
 					string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", segmentListPath: " + segmentListPath +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// throw e;
 				}
@@ -1808,7 +1808,7 @@ void FFMpeg::liveRecorder(
 					string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", segmentListPath: " + segmentListPath +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// throw e;
 				}
@@ -1868,7 +1868,7 @@ void FFMpeg::liveRecorder(
 						   ", encodingJobKey: " + to_string(encodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
 						   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
 						   ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		// copy ffmpeg log file
 		/*
@@ -1948,7 +1948,7 @@ void FFMpeg::liveRecorder(
 							string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 												  ", encodingJobKey: " + to_string(encodingJobKey) +
 												  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
@@ -1957,7 +1957,7 @@ void FFMpeg::liveRecorder(
 							string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 												  ", encodingJobKey: " + to_string(encodingJobKey) +
 												  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
@@ -1980,7 +1980,7 @@ void FFMpeg::liveRecorder(
 					string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", segmentListPath: " + segmentListPath +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// throw e;
 				}
@@ -1989,7 +1989,7 @@ void FFMpeg::liveRecorder(
 					string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", segmentListPath: " + segmentListPath +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// throw e;
 				}
@@ -2093,7 +2093,7 @@ void FFMpeg::liveRecorder2(
 			string errorMessage = __FILEREF__ + "No segmentListPath find in the segment path name" +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 								  ", segmentListPathName: " + segmentListPathName;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2170,7 +2170,7 @@ void FFMpeg::liveRecorder2(
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 								  ", utcNow: " + to_string(utcNow) + ", utcRecordingPeriodStartFixed: " + to_string(utcRecordingPeriodStartFixed) +
 								  ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd) + ", tooLateTime: " + to_string(tooLateTime);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2592,7 +2592,7 @@ void FFMpeg::liveRecorder2(
 						", iReturnedStatus: " + to_string(iReturnedStatus) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
 						", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
 						", difference between real and expected duration: " + to_string(realDuration - streamingDuration);
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// in case of IP_PUSH the monitor thread, in case the client does not
 					// reconnect istantaneously, kills the process.
@@ -2646,7 +2646,7 @@ void FFMpeg::liveRecorder2(
 					", encodingJobKey: " + to_string(encodingJobKey) + ", iReturnedStatus: " + to_string(iReturnedStatus) +
 					", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
 					", difference between real and expected duration: " + to_string(realDuration - streamingDuration);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "liveRecorder: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -2670,7 +2670,7 @@ void FFMpeg::liveRecorder2(
 		{
 			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
@@ -2678,7 +2678,7 @@ void FFMpeg::liveRecorder2(
 		{
 			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
@@ -2700,7 +2700,7 @@ void FFMpeg::liveRecorder2(
 					string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", segmentListPath: " + segmentListPath +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// throw e;
 				}
@@ -2709,7 +2709,7 @@ void FFMpeg::liveRecorder2(
 					string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", segmentListPath: " + segmentListPath +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// throw e;
 				}
@@ -2841,7 +2841,7 @@ void FFMpeg::liveRecorder2(
 		{
 			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
@@ -2849,7 +2849,7 @@ void FFMpeg::liveRecorder2(
 		{
 			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
@@ -2868,7 +2868,7 @@ void FFMpeg::liveRecorder2(
 					string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", segmentListPath: " + segmentListPath +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// throw e;
 				}
@@ -2877,7 +2877,7 @@ void FFMpeg::liveRecorder2(
 					string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", encodingJobKey: " + to_string(encodingJobKey) + ", segmentListPath: " + segmentListPath +
 										  ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// throw e;
 				}

@@ -242,7 +242,7 @@ void FFMpeg::slideShow(
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 				;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -256,7 +256,7 @@ void FFMpeg::slideShow(
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", twoPasses: " + to_string(twoPasses)
 				;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 				*/

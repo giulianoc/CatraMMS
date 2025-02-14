@@ -12,6 +12,7 @@
  */
 #include "FFMpeg.h"
 #include "catralibraries/ProcessUtility.h"
+#include "spdlog/spdlog.h"
 
 // destinationPathName will end with the new file format
 void FFMpeg::changeFileFormat(
@@ -39,11 +40,13 @@ void FFMpeg::changeFileFormat(
 	{
 		if (!fs::exists(sourcePhysicalPath))
 		{
-			string errorMessage = string("Source asset path name not existing") + ", ingestionJobKey: " +
-								  to_string(ingestionJobKey)
-								  // + ", encodingJobKey: " + to_string(encodingJobKey)
-								  + ", sourcePhysicalPath: " + sourcePhysicalPath;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"Source asset path name not existing"
+				", ingestionJobKey: {}"
+				", sourcePhysicalPath: {}",
+				ingestionJobKey, sourcePhysicalPath
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -124,9 +127,12 @@ void FFMpeg::changeFileFormat(
 		ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
 #endif
 
-		_logger->info(
-			__FILEREF__ + "changeFileFormat: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", physicalPathKey: " + to_string(physicalPathKey) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+		SPDLOG_INFO(
+			"changeFileFormat: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", physicalPathKey: {}"
+			", ffmpegExecuteCommand: {}",
+			ingestionJobKey, physicalPathKey, ffmpegExecuteCommand
 		);
 
 		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -134,9 +140,13 @@ void FFMpeg::changeFileFormat(
 		int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
 		if (executeCommandStatus != 0)
 		{
-			string errorMessage = __FILEREF__ + "changeFileFormat: ffmpeg command failed" +
-								  ", executeCommandStatus: " + to_string(executeCommandStatus) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"changeFileFormat: ffmpeg command failed"
+				", executeCommandStatus: {}"
+				", ffmpegExecuteCommand: {}",
+				executeCommandStatus, ffmpegExecuteCommand
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + "changeFileFormat: command failed";
@@ -145,29 +155,49 @@ void FFMpeg::changeFileFormat(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "changeContainer: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", physicalPathKey: " + to_string(physicalPathKey) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand +
-			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"changeContainer: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", physicalPathKey: {}"
+			", ffmpegExecuteCommand: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			ingestionJobKey, physicalPathKey, ffmpegExecuteCommand,
+			chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
 	{
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-		string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand +
-							  ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"ffmpeg: ffmpeg command failed"
+			", ffmpegExecuteCommand: {}"
+			", lastPartOfFfmpegOutputFile: {}"
+			", e.what(): {}",
+			ffmpegExecuteCommand, lastPartOfFfmpegOutputFile, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"Remove"
+			", _outputFfmpegPathFileName: {}",
+			_outputFfmpegPathFileName
+		);
 		fs::remove_all(_outputFfmpegPathFileName);
 
-		_logger->info(__FILEREF__ + "Remove" + ", destinationPathName: " + destinationPathName);
+		SPDLOG_INFO(
+			"Remove"
+			", destinationPathName: {}",
+			destinationPathName
+		);
 		fs::remove_all(destinationPathName);
 
 		throw e;
 	}
 
-	_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	SPDLOG_INFO(
+		"Remove"
+		", _outputFfmpegPathFileName: {}",
+		_outputFfmpegPathFileName
+	);
 	fs::remove_all(_outputFfmpegPathFileName);
 }

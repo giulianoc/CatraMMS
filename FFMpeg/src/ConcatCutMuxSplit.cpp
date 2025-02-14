@@ -13,24 +13,18 @@
 #include "FFMpeg.h"
 #include "FFMpegEncodingParameters.h"
 #include "catralibraries/ProcessUtility.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
-/*
-#include "FFMpegFilters.h"
-#include "JSONUtils.h"
-#include "MMSCURL.h"
-#include "catralibraries/StringUtils.h"
-#include <filesystem>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
 
 void FFMpeg::muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName, string destinationPathName)
 {
 	_currentApiName = APIName::MuxAllFiles;
 
-	_logger->info(
-		__FILEREF__ + toString(_currentApiName) + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", destinationPathName: " + destinationPathName
+	SPDLOG_INFO(
+		"{}"
+		", ingestionJobKey: {}"
+		", destinationPathName: {}",
+		toString(_currentApiName), ingestionJobKey, destinationPathName
 	);
 
 	for (string sourcePathName : sourcesPathName)
@@ -54,7 +48,7 @@ void FFMpeg::muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName
 		{
 			string errorMessage = string("Source asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", sourcePathName: " + sourcePathName;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -70,9 +64,11 @@ void FFMpeg::muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + toString(_currentApiName) + ": Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+		SPDLOG_INFO(
+			"{}: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}",
+			toString(_currentApiName), ingestionJobKey, ffmpegExecuteCommand
 		);
 
 		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -83,7 +79,7 @@ void FFMpeg::muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName
 			string errorMessage = __FILEREF__ + toString(_currentApiName) + ": ffmpeg command failed" +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", executeCommandStatus: " + to_string(executeCommandStatus) +
 								  ", ffmpegExecuteCommand: " + ffmpegExecuteCommand;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + toString(_currentApiName) + ": command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey);
@@ -92,17 +88,20 @@ void FFMpeg::muxAllFiles(int64_t ingestionJobKey, vector<string> sourcesPathName
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + toString(_currentApiName) + ": Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", @FFMPEG statistics@ - duration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"{}: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}"
+			", @FFMPEG statistics@ - duration (secs): @{}@",
+			toString(_currentApiName), ingestionJobKey, ffmpegExecuteCommand,
+			chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
 	{
 		string errorMessage = __FILEREF__ + "ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		// to hide the ffmpeg staff
 		errorMessage = __FILEREF__ + "command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
@@ -128,9 +127,11 @@ void FFMpeg::concat(int64_t ingestionJobKey, bool isVideo, vector<string> &sourc
 	ofstream concatListFile(concatenationListPathName.c_str(), ofstream::trunc);
 	for (string sourcePhysicalPath : sourcePhysicalPaths)
 	{
-		_logger->info(
-			__FILEREF__ + "ffmpeg: adding physical path" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", sourcePhysicalPath: " + sourcePhysicalPath
+		SPDLOG_INFO(
+			"ffmpeg: adding physical path"
+			", ingestionJobKey: {}"
+			", sourcePhysicalPath: {}",
+			ingestionJobKey, sourcePhysicalPath
 		);
 
 		if (!fs::exists(sourcePhysicalPath))
@@ -139,7 +140,7 @@ void FFMpeg::concat(int64_t ingestionJobKey, bool isVideo, vector<string> &sourc
 								  to_string(ingestionJobKey)
 								  // + ", encodingJobKey: " + to_string(encodingJobKey)
 								  + ", sourcePhysicalPath: " + sourcePhysicalPath;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -202,9 +203,11 @@ void FFMpeg::concat(int64_t ingestionJobKey, bool isVideo, vector<string> &sourc
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "concat: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+		SPDLOG_INFO(
+			"concat: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}",
+			ingestionJobKey, ffmpegExecuteCommand
 		);
 
 		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -224,7 +227,7 @@ void FFMpeg::concat(int64_t ingestionJobKey, bool isVideo, vector<string> &sourc
 			string errorMessage = __FILEREF__ + "concat: ffmpeg command failed" + ", executeCommandStatus: " + to_string(executeCommandStatus) +
 								  ", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", inputBuffer: " + inputBuffer;
 
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + "concat: command failed" + ", inputBuffer: " + inputBuffer;
@@ -233,10 +236,12 @@ void FFMpeg::concat(int64_t ingestionJobKey, bool isVideo, vector<string> &sourc
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "concat: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"concat: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			ingestionJobKey, ffmpegExecuteCommand, chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
@@ -247,12 +252,20 @@ void FFMpeg::concat(int64_t ingestionJobKey, bool isVideo, vector<string> &sourc
 							  "ffmpeg: ffmpeg command failed"
 							  // + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
 							  + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", concatenationListPathName: " + concatenationListPathName);
+		SPDLOG_INFO(
+			"Remove"
+			", concatenationListPathName: {}",
+			concatenationListPathName
+		);
 		fs::remove_all(concatenationListPathName);
 
-		_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"Remove"
+			", _outputFfmpegPathFileName: {}",
+			_outputFfmpegPathFileName
+		);
 		fs::remove_all(_outputFfmpegPathFileName);
 
 		// to hide the ffmpeg staff
@@ -261,9 +274,17 @@ void FFMpeg::concat(int64_t ingestionJobKey, bool isVideo, vector<string> &sourc
 	}
 
 	bool exceptionInCaseOfError = false;
-	_logger->info(__FILEREF__ + "Remove" + ", concatenationListPathName: " + concatenationListPathName);
+	SPDLOG_INFO(
+		"Remove"
+		", concatenationListPathName: {}",
+		concatenationListPathName
+	);
 	fs::remove_all(concatenationListPathName);
-	_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	SPDLOG_INFO(
+		"Remove"
+		", _outputFfmpegPathFileName: {}",
+		_outputFfmpegPathFileName
+	);
 	fs::remove_all(_outputFfmpegPathFileName);
 }
 
@@ -282,10 +303,14 @@ void FFMpeg::splitVideoInChunks(
 			  */
 	);
 
-	_logger->info(
-		__FILEREF__ + "Received " + toString(_currentApiName) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", sourcePhysicalPath: " + sourcePhysicalPath + ", chunksDurationInSeconds: " + to_string(chunksDurationInSeconds) +
-		", chunksDirectory: " + chunksDirectory + ", chunkBaseFileName: " + chunkBaseFileName
+	SPDLOG_INFO(
+		"Received {}"
+		", ingestionJobKey: {}"
+		", sourcePhysicalPath: {}"
+		", chunksDurationInSeconds: {}"
+		", chunksDirectory: {}"
+		", chunkBaseFileName: {}",
+		toString(_currentApiName), ingestionJobKey, sourcePhysicalPath, chunksDurationInSeconds, chunksDirectory, chunkBaseFileName
 	);
 
 	if (!fs::exists(sourcePhysicalPath))
@@ -294,7 +319,7 @@ void FFMpeg::splitVideoInChunks(
 							  to_string(ingestionJobKey)
 							  // + ", encodingJobKey: " + to_string(encodingJobKey)
 							  + ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -303,8 +328,11 @@ void FFMpeg::splitVideoInChunks(
 	{
 		if (!fs::exists(chunksDirectory))
 		{
-			_logger->info(
-				__FILEREF__ + "Creating directory" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", chunksDirectory: " + chunksDirectory
+			SPDLOG_INFO(
+				"Creating directory"
+				", ingestionJobKey: {}"
+				", chunksDirectory: {}",
+				ingestionJobKey, chunksDirectory
 			);
 			fs::create_directories(chunksDirectory);
 			fs::permissions(
@@ -344,7 +372,7 @@ void FFMpeg::splitVideoInChunks(
 		{
 			string errorMessage = __FILEREF__ + "sourcePhysicalPath is not well formed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", sourcePhysicalPath: " + sourcePhysicalPath;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -366,9 +394,11 @@ void FFMpeg::splitVideoInChunks(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "splitVideoInChunks: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+		SPDLOG_INFO(
+			"splitVideoInChunks: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}",
+			ingestionJobKey, ffmpegExecuteCommand
 		);
 
 		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -378,7 +408,7 @@ void FFMpeg::splitVideoInChunks(
 		{
 			string errorMessage = __FILEREF__ + "splitVideoInChunks: ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", executeCommandStatus: " + to_string(executeCommandStatus) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + "splitVideoInChunks: command failed";
@@ -387,10 +417,12 @@ void FFMpeg::splitVideoInChunks(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "splitVideoInChunks: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"splitVideoInChunks: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			ingestionJobKey, ffmpegExecuteCommand, chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
@@ -399,15 +431,23 @@ void FFMpeg::splitVideoInChunks(
 		string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
 							  ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"Remove"
+			", _outputFfmpegPathFileName: {}",
+			_outputFfmpegPathFileName
+		);
 		fs::remove_all(_outputFfmpegPathFileName);
 
 		throw e;
 	}
 
-	_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	SPDLOG_INFO(
+		"Remove"
+		", _outputFfmpegPathFileName: {}",
+		_outputFfmpegPathFileName
+	);
 	fs::remove_all(_outputFfmpegPathFileName);
 }
 
@@ -433,12 +473,20 @@ void FFMpeg::cutWithoutEncoding(
 			  */
 	);
 
-	_logger->info(
-		__FILEREF__ + "Received cutWithoutEncoding" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", sourcePhysicalPath: " + sourcePhysicalPath + ", isVideo: " + to_string(isVideo) + ", cutType: " + cutType +
-		", startKeyFrameSeekingInterval: " + startKeyFrameSeekingInterval + ", endKeyFrameSeekingInterval: " + endKeyFrameSeekingInterval +
-		", startTime: " + startTime + ", endTime: " + endTime + ", framesNumber: " + to_string(framesNumber) +
-		", cutMediaPathName: " + cutMediaPathName
+	SPDLOG_INFO(
+		"Received cutWithoutEncoding"
+		", ingestionJobKey: {}"
+		", sourcePhysicalPath: {}"
+		", isVideo: {}"
+		", cutType: {}"
+		", startKeyFrameSeekingInterval: {}"
+		", endKeyFrameSeekingInterval: {}"
+		", startTime: {}"
+		", endTime: {}"
+		", framesNumber: {}"
+		", cutMediaPathName: {}",
+		ingestionJobKey, sourcePhysicalPath, isVideo, cutType, startKeyFrameSeekingInterval, endKeyFrameSeekingInterval, startTime, endTime,
+		framesNumber, cutMediaPathName
 	);
 
 	if (!fs::exists(sourcePhysicalPath))
@@ -447,7 +495,7 @@ void FFMpeg::cutWithoutEncoding(
 							  to_string(ingestionJobKey)
 							  // + ", encodingJobKey: " + to_string(encodingJobKey)
 							  + ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -459,7 +507,7 @@ void FFMpeg::cutWithoutEncoding(
 		{
 			string errorMessage = __FILEREF__ + "cutMediaPathName is not well formed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", cutMediaPathName: " + cutMediaPathName;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -467,8 +515,11 @@ void FFMpeg::cutWithoutEncoding(
 		string cutMediaDirectory = cutMediaPathName.substr(0, endOfDirectoryIndex);
 		if (!fs::exists(cutMediaDirectory))
 		{
-			_logger->info(
-				__FILEREF__ + "Creating directory" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", cutMediaDirectory: " + cutMediaDirectory
+			SPDLOG_INFO(
+				"Creating directory"
+				", ingestionJobKey: {}"
+				", cutMediaDirectory: {}",
+				ingestionJobKey, cutMediaDirectory
 			);
 			fs::create_directories(cutMediaDirectory);
 			fs::permissions(
@@ -647,9 +698,11 @@ void FFMpeg::cutWithoutEncoding(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "cut: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+		SPDLOG_INFO(
+			"cut: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}",
+			ingestionJobKey, ffmpegExecuteCommand
 		);
 
 		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -659,7 +712,7 @@ void FFMpeg::cutWithoutEncoding(
 		{
 			string errorMessage = __FILEREF__ + "cut: ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", executeCommandStatus: " + to_string(executeCommandStatus) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + "cut: command failed";
@@ -668,10 +721,12 @@ void FFMpeg::cutWithoutEncoding(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "cut: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"cut: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			ingestionJobKey, ffmpegExecuteCommand, chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
@@ -680,15 +735,23 @@ void FFMpeg::cutWithoutEncoding(
 		string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
 							  ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"Remove"
+			", _outputFfmpegPathFileName: {}",
+			_outputFfmpegPathFileName
+		);
 		fs::remove_all(_outputFfmpegPathFileName);
 
 		throw e;
 	}
 
-	_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	SPDLOG_INFO(
+		"Remove"
+		", _outputFfmpegPathFileName: {}",
+		_outputFfmpegPathFileName
+	);
 	fs::remove_all(_outputFfmpegPathFileName);
 }
 
@@ -713,10 +776,16 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 		sourceVideoAssetPathName, stagingEncodedAssetPathName
 	);
 
-	_logger->info(
-		__FILEREF__ + "Received cutFrameAccurateWithEncoding" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", sourceVideoAssetPathName: " + sourceVideoAssetPathName + ", encodingJobKey: " + to_string(encodingJobKey) + ", startTime: " + startTime +
-		", endTime: " + endTime + ", framesNumber: " + to_string(framesNumber) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+	SPDLOG_INFO(
+		"Received cutFrameAccurateWithEncoding"
+		", ingestionJobKey: {}"
+		", sourceVideoAssetPathName: {}"
+		", encodingJobKey: {}"
+		", startTime: {}"
+		", endTime: {}"
+		", framesNumber: {}"
+		", stagingEncodedAssetPathName: {}",
+		ingestionJobKey, sourceVideoAssetPathName, encodingJobKey, startTime, endTime, framesNumber, stagingEncodedAssetPathName
 	);
 
 	try
@@ -727,7 +796,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 								  to_string(ingestionJobKey)
 								  // + ", encodingJobKey: " + to_string(encodingJobKey)
 								  + ", sourceVideoAssetPathName: " + sourceVideoAssetPathName;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -778,7 +847,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 		{
 			string errorMessage = __FILEREF__ + "encodingProfileDetailsRoot is mandatory" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -841,7 +910,7 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -855,16 +924,20 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ + "in case of cut we are not using two passes encoding. Changed it to false" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-										  ", twoPasses: " + to_string(twoPasses);
-					_logger->warn(errorMessage);
+					string errorMessage = std::format(
+						"in case of cut we are not using two passes encoding. Changed it to false"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", twoPasses: {}",
+						ingestionJobKey, encodingJobKey, twoPasses
+					);
+					SPDLOG_WARN(errorMessage);
 				}
 
 				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -890,10 +963,14 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-									  ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"encodingProfileParameter retrieving failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw e;
 			}
@@ -937,9 +1014,12 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				if (!ffmpegArgumentList.empty())
 					copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-				_logger->info(
-					__FILEREF__ + "cut with reencoding: Executing ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				SPDLOG_INFO(
+					"cut with reencoding: Executing ffmpeg command"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}"
+					", ffmpegArgumentList: {}",
+					encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str()
 				);
 
 				bool redirectionStdOutput = true;
@@ -952,11 +1032,15 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				*pChildPid = 0;
 				if (iReturnedStatus != 0)
 				{
-					string errorMessage = __FILEREF__ + "cut with reencoding: ffmpeg command failed" +
-										  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										  ", iReturnedStatus: " + to_string(iReturnedStatus) +
-										  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"cut with reencoding: ffmpeg command failed"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", iReturnedStatus: {}"
+						", ffmpegArgumentList: {}",
+						encodingJobKey, ingestionJobKey, iReturnedStatus, ffmpegArgumentListStream.str()
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					// to hide the ffmpeg staff
 					errorMessage = __FILEREF__ + "cut with reencoding: command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
@@ -966,11 +1050,14 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 
 				chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-				_logger->info(
-					__FILEREF__ + "cut with reencoding: Executed ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-					", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-					to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+				SPDLOG_INFO(
+					"cut with reencoding: Executed ffmpeg command"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}"
+					", ffmpegArgumentList: {}"
+					", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+					encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(),
+					chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 				);
 			}
 			catch (runtime_error &e)
@@ -980,18 +1067,36 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 				string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 				string errorMessage;
 				if (iReturnedStatus == 9) // 9 means: SIGKILL
-					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user" +
-								   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", encodingJobKey: " + to_string(encodingJobKey) +
-								   ", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-								   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+					errorMessage = std::format(
+						"ffmpeg: ffmpeg command failed because killed by the user"
+						", _outputFfmpegPathFileName: {}"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", ffmpegArgumentList: {}"
+						", lastPartOfFfmpegOutputFile: {}"
+						", e.what(): {}",
+						_outputFfmpegPathFileName, encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile,
+						e.what()
+					);
 				else
-					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-								   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-								   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+					errorMessage = std::format(
+						"ffmpeg: ffmpeg command failed"
+						", _outputFfmpegPathFileName: {}"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", ffmpegArgumentList: {}"
+						", lastPartOfFfmpegOutputFile: {}"
+						", e.what(): {}",
+						_outputFfmpegPathFileName, encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile,
+						e.what()
+					);
+				SPDLOG_ERROR(errorMessage);
 
-				_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				SPDLOG_INFO(
+					"Remove"
+					", _outputFfmpegPathFileName: {}",
+					_outputFfmpegPathFileName
+				);
 				fs::remove_all(_outputFfmpegPathFileName);
 
 				if (iReturnedStatus == 9) // 9 means: SIGKILL
@@ -1000,28 +1105,43 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 					throw e;
 			}
 
-			_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+			SPDLOG_INFO(
+				"Remove"
+				", _outputFfmpegPathFileName: {}",
+				_outputFfmpegPathFileName
+			);
 			fs::remove_all(_outputFfmpegPathFileName);
 		}
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceVideoAssetPathName: " + sourceVideoAssetPathName +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg cut with reencoding failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", sourceVideoAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, sourceVideoAssetPathName, stagingEncodedAssetPathName, e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"Remove"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName
 			);
 
 			// file in case of .3gp content OR directory in case of IPhone content
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				SPDLOG_INFO(
+					"Remove"
+					", stagingEncodedAssetPathName: {}",
+					stagingEncodedAssetPathName
+				);
 				fs::remove_all(stagingEncodedAssetPathName);
 			}
 		}
@@ -1030,22 +1150,33 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceVideoAssetPathName: " + sourceVideoAssetPathName +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg cut with reencoding failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", sourceVideoAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, sourceVideoAssetPathName, stagingEncodedAssetPathName, e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"Remove"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName
 			);
 
 			// file in case of .3gp content OR directory in case of IPhone content
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				SPDLOG_INFO(
+					"Remove"
+					", stagingEncodedAssetPathName: {}",
+					stagingEncodedAssetPathName
+				);
 				fs::remove_all(stagingEncodedAssetPathName);
 			}
 		}
@@ -1054,22 +1185,32 @@ void FFMpeg::cutFrameAccurateWithEncoding(
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg cut with reencoding failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceVideoAssetPathName: " + sourceVideoAssetPathName +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg cut with reencoding failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", sourceVideoAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}",
+			encodingJobKey, ingestionJobKey, sourceVideoAssetPathName, stagingEncodedAssetPathName
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"Remove"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName
 			);
 
 			// file in case of .3gp content OR directory in case of IPhone content
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+				SPDLOG_INFO(
+					"Remove"
+					", stagingEncodedAssetPathName: {}",
+					stagingEncodedAssetPathName
+				);
 				fs::remove_all(stagingEncodedAssetPathName);
 			}
 		}
@@ -1095,11 +1236,13 @@ void FFMpeg::extractTrackMediaToIngest(
 
 	if (!fs::exists(sourcePhysicalPath))
 	{
-		string errorMessage = string("Source asset path name not existing") + ", ingestionJobKey: " +
-							  to_string(ingestionJobKey)
-							  // + ", encodingJobKey: " + to_string(encodingJobKey)
-							  + ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"Source asset path name not existing"
+			", ingestionJobKey: {}"
+			", sourcePhysicalPath: {}",
+			ingestionJobKey, sourcePhysicalPath
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1164,9 +1307,11 @@ void FFMpeg::extractTrackMediaToIngest(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "extractTrackMediaToIngest: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+		SPDLOG_INFO(
+			"extractTrackMediaToIngest: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}",
+			ingestionJobKey, ffmpegExecuteCommand
 		);
 
 		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -1174,9 +1319,13 @@ void FFMpeg::extractTrackMediaToIngest(
 		int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
 		if (executeCommandStatus != 0)
 		{
-			string errorMessage = __FILEREF__ + "extractTrackMediaToIngest: ffmpeg command failed" +
-								  ", executeCommandStatus: " + to_string(executeCommandStatus) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"extractTrackMediaToIngest: ffmpeg command failed"
+				", executeCommandStatus: {}"
+				", ffmpegExecuteCommand: {}",
+				executeCommandStatus, ffmpegExecuteCommand
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + "extractTrackMediaToIngest: command failed";
@@ -1185,25 +1334,40 @@ void FFMpeg::extractTrackMediaToIngest(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "extractTrackMediaToIngest: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegExecuteCommand: " + ffmpegExecuteCommand + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"extractTrackMediaToIngest: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegExecuteCommand: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			ingestionJobKey, ffmpegExecuteCommand, chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
 	{
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-		string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand +
-							  ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"ffmpeg: ffmpeg command failed"
+			", ffmpegExecuteCommand: {}"
+			", lastPartOfFfmpegOutputFile: {}"
+			", e.what(): {}",
+			ffmpegExecuteCommand, lastPartOfFfmpegOutputFile, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"Remove"
+			", _outputFfmpegPathFileName: {}",
+			_outputFfmpegPathFileName
+		);
 		fs::remove_all(_outputFfmpegPathFileName);
 
 		throw e;
 	}
 
-	_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	SPDLOG_INFO(
+		"Remove"
+		", _outputFfmpegPathFileName: {}",
+		_outputFfmpegPathFileName
+	);
 	fs::remove_all(_outputFfmpegPathFileName);
 }

@@ -69,7 +69,7 @@ void FFMpeg::liveGrid(
 			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters" +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 								  ", outputsRoot.size: " + to_string(outputsRoot.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -108,7 +108,7 @@ void FFMpeg::liveGrid(
 			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters" +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 								  ", exception: " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -117,7 +117,7 @@ void FFMpeg::liveGrid(
 			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters" +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 								  ", exception: " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -727,7 +727,7 @@ void FFMpeg::liveGrid(
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", iReturnedStatus: " + to_string(iReturnedStatus) +
 								  ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
 								  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + "liveGrid: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -752,7 +752,7 @@ void FFMpeg::liveGrid(
 		{
 			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
@@ -760,7 +760,7 @@ void FFMpeg::liveGrid(
 		{
 			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
@@ -818,7 +818,7 @@ void FFMpeg::liveGrid(
 			}
 			*/
 		}
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		/*
 		_logger->info(__FILEREF__ + "Remove"
@@ -837,7 +837,7 @@ void FFMpeg::liveGrid(
 		{
 			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
@@ -845,7 +845,7 @@ void FFMpeg::liveGrid(
 		{
 			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}

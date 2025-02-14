@@ -13,6 +13,7 @@
 #include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/spdlog.h"
 
 FFMpeg::FFMpeg(json configuration, shared_ptr<spdlog::logger> logger)
 {
@@ -24,13 +25,21 @@ FFMpeg::FFMpeg(json configuration, shared_ptr<spdlog::logger> logger)
 	_ffmpegTtfFontDir = JSONUtils::asString(configuration["ffmpeg"], "ttfFontDir", "");
 
 	_youTubeDlPath = JSONUtils::asString(configuration["youTubeDl"], "path", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", youTubeDl->path: " + _youTubeDlPath);
+	SPDLOG_INFO(
+		"Configuration item"
+		", youTubeDl->path: {}",
+		_youTubeDlPath
+	);
 	_pythonPathName = JSONUtils::asString(configuration["youTubeDl"], "pythonPathName", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", youTubeDl->pythonPathName: " + _pythonPathName);
+	SPDLOG_INFO(
+		"Configuration item"
+		", youTubeDl->pythonPathName: {}",
+		_pythonPathName
+	);
 
 	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 	/*
-	_logger->info(__FILEREF__ + "Configuration item"
+	info(__FILEREF__ + "Configuration item"
 		+ ", storage->waitingNFSSync_attemptNumber: "
 		+ to_string(_waitingNFSSync_attemptNumber)
 	);
@@ -38,7 +47,7 @@ FFMpeg::FFMpeg(json configuration, shared_ptr<spdlog::logger> logger)
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
 		JSONUtils::asInt(configuration["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	/*
-	_logger->info(__FILEREF__ + "Configuration item"
+	info(__FILEREF__ + "Configuration item"
 		+ ", storage->waitingNFSSync_sleepTimeInSeconds: "
 		+ to_string(_waitingNFSSync_sleepTimeInSeconds)
 	);
@@ -70,9 +79,12 @@ void FFMpeg::encodingVideoCodecValidation(string codec, shared_ptr<spdlog::logge
 {
 	if (codec != "libx264" && codec != "libvpx" && codec != "rawvideo" && codec != "mpeg4" && codec != "xvid")
 	{
-		string errorMessage = __FILEREF__ + "ffmpeg: Video codec is wrong" + ", codec: " + codec;
-
-		logger->error(errorMessage);
+		string errorMessage = std::format(
+			"ffmpeg: Video codec is wrong"
+			", codec: {}",
+			codec
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -110,7 +122,7 @@ int FFMpeg::progressDownloadCallback(
 		// this is to have one decimal in the percentage
 		double downloadingPercentage = ((double)((int)(progress * 10))) / 10;
 
-		_logger->info(
+		info(
 			__FILEREF__ + "Download still running" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", downloadingPercentage: " + to_string(downloadingPercentage) + ", dltotal: " + to_string(dltotal) + ", dlnow: " + to_string(dlnow) +
 			", ultotal: " + to_string(ultotal) + ", ulnow: " + to_string(ulnow)
@@ -120,7 +132,7 @@ int FFMpeg::progressDownloadCallback(
 
 		if (lastPercentageUpdated != downloadingPercentage)
 		{
-			_logger->info(
+			info(
 				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", downloadingPercentage: " + to_string(downloadingPercentage)
 			);
@@ -210,9 +222,13 @@ void FFMpeg::renameOutputFfmpegPathFileName(int64_t ingestionJobKey, int64_t enc
 			tmUtcNow.tm_hour, tmUtcNow.tm_min, tmUtcNow.tm_sec
 		);
 
-		_logger->info(
-			__FILEREF__ + "move" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", outputFfmpegPathFileName: " + outputFfmpegPathFileName + ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
+		SPDLOG_INFO(
+			"move"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", outputFfmpegPathFileName: {}"
+			", debugOutputFfmpegPathFileName: {}",
+			ingestionJobKey, encodingJobKey, outputFfmpegPathFileName, debugOutputFfmpegPathFileName
 		);
 		// fs::rename works only if source and destination are on the same file systems
 		if (fs::exists(outputFfmpegPathFileName))
@@ -220,9 +236,13 @@ void FFMpeg::renameOutputFfmpegPathFileName(int64_t ingestionJobKey, int64_t enc
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "move failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", outputFfmpegPathFileName: " + outputFfmpegPathFileName + ", debugOutputFfmpegPathFileName: " + debugOutputFfmpegPathFileName
+		SPDLOG_ERROR(
+			"move failed"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", outputFfmpegPathFileName: {}"
+			", debugOutputFfmpegPathFileName: {}",
+			ingestionJobKey, encodingJobKey, outputFfmpegPathFileName, debugOutputFfmpegPathFileName
 		);
 	}
 }

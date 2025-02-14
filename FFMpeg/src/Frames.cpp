@@ -14,16 +14,6 @@
 #include "FFMpegEncodingParameters.h"
 #include "FFMpegFilters.h"
 #include "catralibraries/ProcessUtility.h"
-/*
-#include "JSONUtils.h"
-#include "MMSCURL.h"
-#include "catralibraries/StringUtils.h"
-#include <filesystem>
-#include <fstream>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
 
 void FFMpeg::generateFrameToIngest(
 	int64_t ingestionJobKey, string mmsAssetPathName, int64_t videoDurationInMilliSeconds, double startTimeInSeconds, string frameAssetPathName,
@@ -38,17 +28,27 @@ void FFMpeg::generateFrameToIngest(
 		videoDurationInMilliSeconds, mmsAssetPathName
 	);
 
-	_logger->info(
-		__FILEREF__ + "generateFrameToIngest" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName +
-		", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds) + ", startTimeInSeconds: " + to_string(startTimeInSeconds) +
-		", frameAssetPathName: " + frameAssetPathName + ", imageWidth: " + to_string(imageWidth) + ", imageHeight: " + to_string(imageHeight)
+	SPDLOG_INFO(
+		"generateFrameToIngest"
+		", ingestionJobKey: {}"
+		", mmsAssetPathName: {}"
+		", videoDurationInMilliSeconds: {}"
+		", startTimeInSeconds: {}"
+		", frameAssetPathName: {}"
+		", imageWidth: {}"
+		", imageHeight: {}",
+		ingestionJobKey, mmsAssetPathName, videoDurationInMilliSeconds, startTimeInSeconds, frameAssetPathName, imageWidth, imageHeight
 	);
 
 	if (!fs::exists(mmsAssetPathName))
 	{
-		string errorMessage =
-			string("Asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName;
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"Asset path name not existing"
+			", ingestionJobKey: {}"
+			", mmsAssetPathName: {}",
+			ingestionJobKey, mmsAssetPathName
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -106,9 +106,11 @@ void FFMpeg::generateFrameToIngest(
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-		_logger->info(
-			__FILEREF__ + "generateFramesToIngest: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+		SPDLOG_INFO(
+			"generateFramesToIngest: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegArgumentList: {}",
+			ingestionJobKey, ffmpegArgumentListStream.str()
 		);
 
 		bool redirectionStdOutput = true;
@@ -121,9 +123,14 @@ void FFMpeg::generateFrameToIngest(
 		*pChildPid = 0;
 		if (iReturnedStatus != 0)
 		{
-			string errorMessage = __FILEREF__ + "generateFrameToIngest: ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", iReturnedStatus: " + to_string(iReturnedStatus) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"generateFrameToIngest: ffmpeg command failed"
+				", ingestionJobKey: {}"
+				", iReturnedStatus: {}"
+				", ffmpegArgumentList: {}",
+				ingestionJobKey, iReturnedStatus, ffmpegArgumentListStream.str()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + "generateFrameToIngest: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey);
@@ -132,10 +139,12 @@ void FFMpeg::generateFrameToIngest(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "generateFrameToIngest: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"generateFrameToIngest: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffmpegArgumentList: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			ingestionJobKey, ffmpegArgumentListStream.str(), chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
@@ -145,17 +154,32 @@ void FFMpeg::generateFrameToIngest(
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
 		if (iReturnedStatus == 9) // 9 means: SIGKILL
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user" +
-						   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
-						   ", e.what(): " + e.what();
+			errorMessage = std::format(
+				"ffmpeg: ffmpeg command failed because killed by the user"
+				", _outputFfmpegPathFileName: {}"
+				", ingestionJobKey: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				_outputFfmpegPathFileName, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
 		else
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						   ", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+			errorMessage = std::format(
+				"ffmpeg: ffmpeg command failed"
+				", _outputFfmpegPathFileName: {}"
+				", ingestionJobKey: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				_outputFfmpegPathFileName, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
+		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"Remove"
+			", _outputFfmpegPathFileName: {}",
+			_outputFfmpegPathFileName
+		);
 		fs::remove_all(_outputFfmpegPathFileName);
 
 		if (iReturnedStatus == 9) // 9 means: SIGKILL
@@ -164,7 +188,11 @@ void FFMpeg::generateFrameToIngest(
 			throw e;
 	}
 
-	_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	SPDLOG_INFO(
+		"Remove"
+		", _outputFfmpegPathFileName: {}",
+		_outputFfmpegPathFileName
+	);
 	fs::remove_all(_outputFfmpegPathFileName);
 }
 
@@ -181,31 +209,54 @@ void FFMpeg::generateFramesToIngest(
 		// stagingEncodedAssetPathName
 	);
 
-	_logger->info(
-		__FILEREF__ + "generateFramesToIngest" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", encodingJobKey: " + to_string(encodingJobKey) + ", imagesDirectory: " + imagesDirectory + ", imageBaseFileName: " + imageBaseFileName +
-		", startTimeInSeconds: " + to_string(startTimeInSeconds) + ", framesNumber: " + to_string(framesNumber) + ", videoFilter: " + videoFilter +
-		", periodInSeconds: " + to_string(periodInSeconds) + ", mjpeg: " + to_string(mjpeg) + ", imageWidth: " + to_string(imageWidth) +
-		", imageHeight: " + to_string(imageHeight) + ", mmsAssetPathName: " + mmsAssetPathName +
-		", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
+	SPDLOG_INFO(
+		"generateFramesToIngest"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", imagesDirectory: {}"
+		", imageBaseFileName: {}"
+		", startTimeInSeconds: {}"
+		", framesNumber: {}"
+		", videoFilter: {}"
+		", periodInSeconds: {}"
+		", mjpeg: {}"
+		", imageWidth: {}"
+		", imageHeight: {}"
+		", mmsAssetPathName: {}"
+		", videoDurationInMilliSeconds: {}",
+		ingestionJobKey, encodingJobKey, imagesDirectory, imageBaseFileName, startTimeInSeconds, framesNumber, videoFilter, periodInSeconds, mjpeg,
+		imageWidth, imageHeight, mmsAssetPathName, videoDurationInMilliSeconds
 	);
 
 	if (!fs::exists(mmsAssetPathName))
 	{
-		string errorMessage = string("Asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", encodingJobKey: " + to_string(encodingJobKey) + ", mmsAssetPathName: " + mmsAssetPathName;
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"Asset path name not existing"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", mmsAssetPathName: {}",
+			ingestionJobKey, encodingJobKey, mmsAssetPathName
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 
 	if (fs::exists(imagesDirectory))
 	{
-		_logger->info(__FILEREF__ + "Remove" + ", imagesDirectory: " + imagesDirectory);
+		SPDLOG_INFO(
+			"Remove"
+			", imagesDirectory: {}",
+			imagesDirectory
+		);
 		fs::remove_all(imagesDirectory);
 	}
 	{
-		_logger->info(__FILEREF__ + "Create directory" + ", imagesDirectory: " + imagesDirectory);
+		SPDLOG_INFO(
+			"Create directory"
+			", imagesDirectory: {}",
+			imagesDirectory
+		);
 		fs::create_directories(imagesDirectory);
 		fs::permissions(
 			imagesDirectory,
@@ -351,9 +402,12 @@ void FFMpeg::generateFramesToIngest(
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-		_logger->info(
-			__FILEREF__ + "generateFramesToIngest: Executing ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+		SPDLOG_INFO(
+			"generateFramesToIngest: Executing ffmpeg command"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", ffmpegArgumentList: {}",
+			encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str()
 		);
 
 		bool redirectionStdOutput = true;
@@ -366,10 +420,15 @@ void FFMpeg::generateFramesToIngest(
 		*pChildPid = 0;
 		if (iReturnedStatus != 0)
 		{
-			string errorMessage = __FILEREF__ + "generateFramesToIngest: ffmpeg command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", iReturnedStatus: " + to_string(iReturnedStatus) +
-								  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"generateFramesToIngest: ffmpeg command failed"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}"
+				", iReturnedStatus: {}"
+				", ffmpegArgumentList: {}",
+				encodingJobKey, ingestionJobKey, iReturnedStatus, ffmpegArgumentListStream.str()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
 			errorMessage = __FILEREF__ + "generateFramesToIngest: command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
@@ -379,10 +438,14 @@ void FFMpeg::generateFramesToIngest(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "generateFramesToIngest: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"generateFramesToIngest: Executed ffmpeg command"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", ffmpegArgumentList: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(),
+			chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
@@ -392,24 +455,42 @@ void FFMpeg::generateFramesToIngest(
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 		string errorMessage;
 		if (iReturnedStatus == 9) // 9 means: SIGKILL
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user" +
-						   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", encodingJobKey: " + to_string(encodingJobKey) +
-						   ", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+			errorMessage = std::format(
+				"ffmpeg: ffmpeg command failed because killed by the user"
+				", _outputFfmpegPathFileName: {}"
+				", ingestionJobKey: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				_outputFfmpegPathFileName, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
 		else
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
-						   ", e.what(): " + e.what();
-		_logger->error(errorMessage);
+			errorMessage = std::format(
+				"ffmpeg: ffmpeg command failed"
+				", _outputFfmpegPathFileName: {}"
+				", ingestionJobKey: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				_outputFfmpegPathFileName, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
+		SPDLOG_ERROR(errorMessage);
 
 		if (fs::exists(imagesDirectory))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", imagesDirectory: " + imagesDirectory);
+			SPDLOG_INFO(
+				"Remove"
+				", imagesDirectory: {}",
+				imagesDirectory
+			);
 			fs::remove_all(imagesDirectory);
 		}
 
-		_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"Remove"
+			", _outputFfmpegPathFileName: {}",
+			_outputFfmpegPathFileName
+		);
 		fs::remove_all(_outputFfmpegPathFileName);
 
 		if (iReturnedStatus == 9) // 9 means: SIGKILL
@@ -418,6 +499,10 @@ void FFMpeg::generateFramesToIngest(
 			throw e;
 	}
 
-	_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+	SPDLOG_INFO(
+		"Remove"
+		", _outputFfmpegPathFileName: {}",
+		_outputFfmpegPathFileName
+	);
 	fs::remove_all(_outputFfmpegPathFileName);
 }

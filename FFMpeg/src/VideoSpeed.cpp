@@ -13,7 +13,6 @@
 #include "FFMpeg.h"
 #include "FFMpegEncodingParameters.h"
 #include "catralibraries/ProcessUtility.h"
-#include <regex>
 /*
 #include "FFMpegFilters.h"
 #include "JSONUtils.h"
@@ -21,14 +20,15 @@
 #include "catralibraries/StringUtils.h"
 #include <filesystem>
 #include <fstream>
+#include <regex>
 #include <sstream>
 #include <string>
 */
 
-void FFMpeg::pictureInPicture(
-	string mmsMainVideoAssetPathName, int64_t mainVideoDurationInMilliSeconds, string mmsOverlayVideoAssetPathName,
-	int64_t overlayVideoDurationInMilliSeconds, bool soundOfMain, string overlayPosition_X_InPixel, string overlayPosition_Y_InPixel,
-	string overlay_Width_InPixel, string overlay_Height_InPixel,
+void FFMpeg::videoSpeed(
+	string mmsSourceVideoAssetPathName, int64_t videoDurationInMilliSeconds,
+
+	string videoSpeedType, int videoSpeedSize,
 
 	json encodingProfileDetailsRoot,
 
@@ -37,40 +37,17 @@ void FFMpeg::pictureInPicture(
 {
 	int iReturnedStatus = 0;
 
-	_currentApiName = APIName::PictureInPicture;
+	_currentApiName = APIName::VideoSpeed;
 
-	setStatus(ingestionJobKey, encodingJobKey, mainVideoDurationInMilliSeconds, mmsMainVideoAssetPathName, stagingEncodedAssetPathName);
+	setStatus(ingestionJobKey, encodingJobKey, videoDurationInMilliSeconds, mmsSourceVideoAssetPathName, stagingEncodedAssetPathName);
 
 	try
 	{
-		if (!fs::exists(mmsMainVideoAssetPathName))
+		if (!fs::exists(mmsSourceVideoAssetPathName))
 		{
-			string errorMessage = string("Main video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", mmsMainVideoAssetPathName: " + mmsMainVideoAssetPathName;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		if (!fs::exists(mmsOverlayVideoAssetPathName))
-		{
-			string errorMessage = string("Overlay video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) +
-								  ", mmsOverlayVideoAssetPathName: " + mmsOverlayVideoAssetPathName;
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		// 2022-12-09: Aggiunto "- 1000" perchè in un caso era stato generato l'errore anche
-		// 	per pochi millisecondi di video overlay superiore al video main
-		if (mainVideoDurationInMilliSeconds < overlayVideoDurationInMilliSeconds - 1000)
-		{
-			string errorMessage = __FILEREF__ + "pictureInPicture: overlay video duration cannot be bigger than main video diration" +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", mainVideoDurationInMilliSeconds: " + to_string(mainVideoDurationInMilliSeconds) +
-								  ", overlayVideoDurationInMilliSeconds: " + to_string(overlayVideoDurationInMilliSeconds);
-			_logger->error(errorMessage);
+			string errorMessage = string("Source video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+								  ", encodingJobKey: " + to_string(encodingJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -133,7 +110,7 @@ void FFMpeg::pictureInPicture(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -142,19 +119,18 @@ void FFMpeg::pictureInPicture(
 				{
 					// siamo sicuri che non sia possibile?
 					/*
-					string errorMessage = __FILEREF__ + "in case of pictureInPicture it is not possible to have a two passes encoding"
+					string errorMessage = __FILEREF__ + "in case of videoSpeed it is not possible to have a two passes encoding"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ +
-										  "in case of pictureInPicture it is not possible to have a two passes encoding. Change it to false" +
+					string errorMessage = __FILEREF__ + "in case of videoSpeed it is not possible to have a two passes encoding. Change it to false" +
 										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 										  ", twoPasses: " + to_string(twoPasses);
 					_logger->warn(errorMessage);
@@ -186,7 +162,7 @@ void FFMpeg::pictureInPicture(
 				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed" +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 									  ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -209,46 +185,163 @@ void FFMpeg::pictureInPicture(
 			*/
 
 			_outputFfmpegPathFileName = std::format(
-				"{}/{}_{}_{}_{:0>4}-{:0>2}-{:0>2}-{:0>2}-{:0>2}-{:0>2}.log", _ffmpegTempDir, "pictureInPicture", _currentIngestionJobKey,
+				"{}/{}_{}_{}_{:0>4}-{:0>2}-{:0>2}-{:0>2}-{:0>2}-{:0>2}.log", _ffmpegTempDir, "videoSpeed", _currentIngestionJobKey,
 				_currentEncodingJobKey, tmUtcTimestamp.tm_year + 1900, tmUtcTimestamp.tm_mon + 1, tmUtcTimestamp.tm_mday, tmUtcTimestamp.tm_hour,
 				tmUtcTimestamp.tm_min, tmUtcTimestamp.tm_sec
 			);
 		}
 
 		{
-			string ffmpegOverlayPosition_X_InPixel = regex_replace(overlayPosition_X_InPixel, regex("mainVideo_width"), "main_w");
-			ffmpegOverlayPosition_X_InPixel = regex_replace(ffmpegOverlayPosition_X_InPixel, regex("overlayVideo_width"), "overlay_w");
+			string videoPTS;
+			string audioTempo;
 
-			string ffmpegOverlayPosition_Y_InPixel = regex_replace(overlayPosition_Y_InPixel, regex("mainVideo_height"), "main_h");
-			ffmpegOverlayPosition_Y_InPixel = regex_replace(ffmpegOverlayPosition_Y_InPixel, regex("overlayVideo_height"), "overlay_h");
-
-			string ffmpegOverlay_Width_InPixel = regex_replace(overlay_Width_InPixel, regex("overlayVideo_width"), "iw");
-
-			string ffmpegOverlay_Height_InPixel = regex_replace(overlay_Height_InPixel, regex("overlayVideo_height"), "ih");
-
-			/*
-			string ffmpegFilterComplex = string("-filter_complex 'overlay=")
-					+ ffmpegImagePosition_X_InPixel + ":"
-					+ ffmpegImagePosition_Y_InPixel + "'"
-					;
-			*/
-			string ffmpegFilterComplex = string("-filter_complex ");
-			if (soundOfMain)
-				ffmpegFilterComplex += "[1]scale=";
-			else
-				ffmpegFilterComplex += "[0]scale=";
-			ffmpegFilterComplex += (ffmpegOverlay_Width_InPixel + ":" + ffmpegOverlay_Height_InPixel);
-			ffmpegFilterComplex += "[pip];";
-
-			if (soundOfMain)
+			if (videoSpeedType == "SlowDown")
 			{
-				ffmpegFilterComplex += "[0][pip]overlay=";
+				switch (videoSpeedSize)
+				{
+				case 1:
+					videoPTS = "1.1";
+					audioTempo = "(1/1.1)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds / 100);
+
+					break;
+				case 2:
+					videoPTS = "1.2";
+					audioTempo = "(1/1.2)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 20 / 100);
+
+					break;
+				case 3:
+					videoPTS = "1.3";
+					audioTempo = "(1/1.3)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 30 / 100);
+
+					break;
+				case 4:
+					videoPTS = "1.4";
+					audioTempo = "(1/1.4)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 40 / 100);
+
+					break;
+				case 5:
+					videoPTS = "1.5";
+					audioTempo = "(1/1.5)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 50 / 100);
+
+					break;
+				case 6:
+					videoPTS = "1.6";
+					audioTempo = "(1/1.6)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 60 / 100);
+
+					break;
+				case 7:
+					videoPTS = "1.7";
+					audioTempo = "(1/1.7)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 70 / 100);
+
+					break;
+				case 8:
+					videoPTS = "1.8";
+					audioTempo = "(1/1.8)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 80 / 100);
+
+					break;
+				case 9:
+					videoPTS = "1.9";
+					audioTempo = "(1/1.9)";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 90 / 100);
+
+					break;
+				case 10:
+					videoPTS = "2";
+					audioTempo = "0.5";
+					_currentDurationInMilliSeconds += (videoDurationInMilliSeconds * 100 / 100);
+
+					break;
+				default:
+					videoPTS = "1.3";
+					audioTempo = "(1/1.3)";
+
+					break;
+				}
 			}
-			else
+			else // if (videoSpeedType == "SpeedUp")
 			{
-				ffmpegFilterComplex += "[pip][0]overlay=";
+				switch (videoSpeedSize)
+				{
+				case 1:
+					videoPTS = "(1/1.1)";
+					audioTempo = "1.1";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 10 / 100);
+
+					break;
+				case 2:
+					videoPTS = "(1/1.2)";
+					audioTempo = "1.2";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 20 / 100);
+
+					break;
+				case 3:
+					videoPTS = "(1/1.3)";
+					audioTempo = "1.3";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 30 / 100);
+
+					break;
+				case 4:
+					videoPTS = "(1/1.4)";
+					audioTempo = "1.4";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 40 / 100);
+
+					break;
+				case 5:
+					videoPTS = "(1/1.5)";
+					audioTempo = "1.5";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 50 / 100);
+
+					break;
+				case 6:
+					videoPTS = "(1/1.6)";
+					audioTempo = "1.6";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 60 / 100);
+
+					break;
+				case 7:
+					videoPTS = "(1/1.7)";
+					audioTempo = "1.7";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 70 / 100);
+
+					break;
+				case 8:
+					videoPTS = "(1/1.8)";
+					audioTempo = "1.8";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 80 / 100);
+
+					break;
+				case 9:
+					videoPTS = "(1/1.9)";
+					audioTempo = "1.9";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 90 / 100);
+
+					break;
+				case 10:
+					videoPTS = "0.5";
+					audioTempo = "2";
+					_currentDurationInMilliSeconds -= (videoDurationInMilliSeconds * 100 / 100);
+
+					break;
+				default:
+					videoPTS = "(1/1.3)";
+					audioTempo = "1.3";
+
+					break;
+				}
 			}
-			ffmpegFilterComplex += (ffmpegOverlayPosition_X_InPixel + ":" + ffmpegOverlayPosition_Y_InPixel);
+
+			string complexFilter = "-filter_complex [0:v]setpts=" + videoPTS + "*PTS[v];[0:a]atempo=" + audioTempo + "[a]";
+			string videoMap = "-map [v]";
+			string audioMap = "-map [a]";
+
 			vector<string> ffmpegArgumentList;
 			ostringstream ffmpegArgumentListStream;
 			{
@@ -256,22 +349,12 @@ void FFMpeg::pictureInPicture(
 				// global options
 				ffmpegArgumentList.push_back("-y");
 				// input options
-				if (soundOfMain)
-				{
-					ffmpegArgumentList.push_back("-i");
-					ffmpegArgumentList.push_back(mmsMainVideoAssetPathName);
-					ffmpegArgumentList.push_back("-i");
-					ffmpegArgumentList.push_back(mmsOverlayVideoAssetPathName);
-				}
-				else
-				{
-					ffmpegArgumentList.push_back("-i");
-					ffmpegArgumentList.push_back(mmsOverlayVideoAssetPathName);
-					ffmpegArgumentList.push_back("-i");
-					ffmpegArgumentList.push_back(mmsMainVideoAssetPathName);
-				}
+				ffmpegArgumentList.push_back("-i");
+				ffmpegArgumentList.push_back(mmsSourceVideoAssetPathName);
 				// output options
-				FFMpegEncodingParameters::addToArguments(ffmpegFilterComplex, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(complexFilter, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(videoMap, ffmpegArgumentList);
+				FFMpegEncodingParameters::addToArguments(audioMap, ffmpegArgumentList);
 
 				// encoding parameters
 				if (encodingProfileDetailsRoot != nullptr)
@@ -290,7 +373,7 @@ void FFMpeg::pictureInPicture(
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
 					_logger->info(
-						__FILEREF__ + "pictureInPicture: Executing ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
+						__FILEREF__ + "videoSpeed: Executing ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
 					);
 
@@ -304,14 +387,14 @@ void FFMpeg::pictureInPicture(
 					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
-						string errorMessage = __FILEREF__ + "pictureInPicture: ffmpeg command failed" +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
+						string errorMessage = __FILEREF__ + "videoSpeed: ffmpeg command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
+											  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 											  ", iReturnedStatus: " + to_string(iReturnedStatus) +
 											  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						// to hide the ffmpeg staff
-						errorMessage = __FILEREF__ + "pictureInPicture command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
+						errorMessage = __FILEREF__ + "videoSpeed command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
 									   ", ingestionJobKey: " + to_string(ingestionJobKey);
 						throw runtime_error(errorMessage);
 					}
@@ -319,7 +402,7 @@ void FFMpeg::pictureInPicture(
 					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
 					_logger->info(
-						__FILEREF__ + "pictureInPicture: Executed ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
+						__FILEREF__ + "videoSpeed: Executed ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
 						", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
 						to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
@@ -342,7 +425,7 @@ void FFMpeg::pictureInPicture(
 									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
 									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 					fs::remove_all(_outputFfmpegPathFileName);
@@ -358,7 +441,7 @@ void FFMpeg::pictureInPicture(
 			}
 
 			_logger->info(
-				__FILEREF__ + "pictureInPicture file generated" + ", encodingJobKey: " + to_string(encodingJobKey) +
+				__FILEREF__ + "VideoSpeed file generated" + ", encodingJobKey: " + to_string(encodingJobKey) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 			);
 
@@ -366,14 +449,15 @@ void FFMpeg::pictureInPicture(
 
 			if (ulFileSize == 0)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, pictureInPicture encoded file size is 0" +
+				string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0" +
 									  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-				_logger->error(errorMessage);
+
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "command failed, pictureInPicture encoded file size is 0" +
-							   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey);
+				errorMessage = __FILEREF__ + "command failed, encoded file size is 0" + ", encodingJobKey: " + to_string(encodingJobKey) +
+							   ", ingestionJobKey: " + to_string(ingestionJobKey);
 				throw runtime_error(errorMessage);
 			}
 		}
@@ -381,10 +465,9 @@ void FFMpeg::pictureInPicture(
 	catch (FFMpegEncodingKilledByUser &e)
 	{
 		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsMainVideoAssetPathName: " + mmsMainVideoAssetPathName +
-			", mmsOverlayVideoAssetPathName: " + mmsOverlayVideoAssetPathName + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", e.what(): " + e.what()
+			__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
+			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
@@ -406,10 +489,9 @@ void FFMpeg::pictureInPicture(
 	catch (runtime_error &e)
 	{
 		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsMainVideoAssetPathName: " + mmsMainVideoAssetPathName +
-			", mmsOverlayVideoAssetPathName: " + mmsOverlayVideoAssetPathName + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", e.what(): " + e.what()
+			__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
+			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
@@ -431,9 +513,9 @@ void FFMpeg::pictureInPicture(
 	catch (exception &e)
 	{
 		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg pictureInPicture failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsMainVideoAssetPathName: " + mmsMainVideoAssetPathName +
-			", mmsOverlayVideoAssetPathName: " + mmsOverlayVideoAssetPathName + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			__FILEREF__ + "ffmpeg: ffmpeg VideoSpeed failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
+			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
+			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))

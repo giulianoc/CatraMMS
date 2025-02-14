@@ -36,7 +36,7 @@ void FFMpeg::overlayImageOnVideo(
 		{
 			string errorMessage = string("Source video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -48,7 +48,7 @@ void FFMpeg::overlayImageOnVideo(
 				string errorMessage = string("Source image asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", encodingJobKey: " + to_string(encodingJobKey) +
 									  ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -112,7 +112,7 @@ void FFMpeg::overlayImageOnVideo(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -126,7 +126,7 @@ void FFMpeg::overlayImageOnVideo(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 					*/
@@ -165,7 +165,7 @@ void FFMpeg::overlayImageOnVideo(
 				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed" +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 									  ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -257,7 +257,7 @@ void FFMpeg::overlayImageOnVideo(
 											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 											  ", iReturnedStatus: " + to_string(iReturnedStatus) +
 											  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						// to hide the ffmpeg staff
 						errorMessage = __FILEREF__ + "overlayImageOnVideo command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
@@ -291,7 +291,7 @@ void FFMpeg::overlayImageOnVideo(
 									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
 									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
 					fs::remove_all(_outputFfmpegPathFileName);
@@ -318,7 +318,7 @@ void FFMpeg::overlayImageOnVideo(
 				string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0" +
 									  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "command failed, encoded file size is 0" + ", encodingJobKey: " + to_string(encodingJobKey) +
@@ -421,7 +421,7 @@ void FFMpeg::overlayTextOnVideo(
 		{
 			string errorMessage = string("Source video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", encodingJobKey: " + to_string(encodingJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -484,7 +484,7 @@ void FFMpeg::overlayTextOnVideo(
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -498,7 +498,7 @@ void FFMpeg::overlayTextOnVideo(
 						+ ", encodingJobKey: " + to_string(encodingJobKey)
 						+ ", twoPasses: " + to_string(twoPasses)
 					;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 					*/
@@ -537,7 +537,7 @@ void FFMpeg::overlayTextOnVideo(
 				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed" +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
 									  ", e.what(): " + e.what();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -650,7 +650,7 @@ void FFMpeg::overlayTextOnVideo(
 											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 											  ", iReturnedStatus: " + to_string(iReturnedStatus) +
 											  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						// to hide the ffmpeg staff
 						errorMessage = __FILEREF__ + "overlayTextOnVideo command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
@@ -684,7 +684,7 @@ void FFMpeg::overlayTextOnVideo(
 									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
 									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					_logger->info(__FILEREF__ + "Remove" + ", textTemporaryFileName: " + textTemporaryFileName);
 					fs::remove_all(textTemporaryFileName);
@@ -717,7 +717,7 @@ void FFMpeg::overlayTextOnVideo(
 				string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0" +
 									  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
 				errorMessage = __FILEREF__ + "command failed, encoded file size is 0" + ", encodingJobKey: " + to_string(encodingJobKey) +

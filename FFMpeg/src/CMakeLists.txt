@@ -21,24 +21,24 @@ set(SOURCES
     FFMpegFilters.cpp
     FFMpegEncodingParameters.cpp
     FFMpeg.cpp
-    FFMpeg_Monitoring.cpp
-    FFMpeg_EncodeContent.cpp
-    FFMpeg_Overlay.cpp
-    FFMpeg_IntroOutroOverlay.cpp
-    FFMpeg_VideoSpeed.cpp
-    FFMpeg_PictureInPicture.cpp
-    FFMpeg_SilentAudio.cpp
-    FFMpeg_MediaInfo.cpp
-    FFMpeg_ConcatCutMuxSplit.cpp
-    FFMpeg_Frames.cpp
-    FFMpeg_SlideShow.cpp
-    FFMpeg_LiveRecorder.cpp
-    FFMpeg_LiveProxy.cpp
-    FFMpeg_LiveGrid.cpp
-    FFMpeg_ChangeFileFormat.cpp
-    FFMpeg_StreamingToFile.cpp
-    FFMpeg_Incrontab.cpp
-    FFMpeg_Youtube.cpp)
+    Monitoring.cpp
+    EncodeContent.cpp
+    Overlay.cpp
+    IntroOutroOverlay.cpp
+    VideoSpeed.cpp
+    PictureInPicture.cpp
+    SilentAudio.cpp
+    MediaInfo.cpp
+    ConcatCutMuxSplit.cpp
+    Frames.cpp
+    SlideShow.cpp
+    LiveRecorder.cpp
+    LiveProxy.cpp
+    LiveGrid.cpp
+    ChangeFileFormat.cpp
+    StreamingToFile.cpp
+    Incrontab.cpp
+    Youtube.cpp)
 set(HEADERS FFMpegFilters.h FFMpegEncodingParameters.h FFMpeg.h)
 
 find_program(LSB_RELEASE_EXEC lsb_release)
